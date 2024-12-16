@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile.AndThePropertiesAreBeingEdited.AndAPropertyIsModified
 
-import android.graphics.BitmapFactory
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
@@ -15,94 +13,77 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.AfterClass
-import org.junit.BeforeClass
-import org.junit.Test
-import org.junit.runner.RunWith
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.net.URL
 
 private const val libraryId = 114
 private const val serviceFileId = 371
 
-@RunWith(AndroidJUnit4::class)
 class WhenCancellingAndEditingAgain {
-	companion object {
+	private var persistedTrackNumber = ""
 
-		private var persistedTrackNumber = ""
-
-		private var viewModel: Lazy<FileDetailsViewModel>? = lazy {
-			FileDetailsViewModel(
-				mockk {
-					every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
-				},
-				mockk {
-					every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
-						sequenceOf(
-							FileProperty(KnownFileProperties.Rating, "68"),
-							FileProperty("awkward", "prevent"),
-							FileProperty("feast", "wind"),
-							FileProperty(KnownFileProperties.Name, "please"),
-							FileProperty(KnownFileProperties.Artist, "brown"),
-							FileProperty(KnownFileProperties.Genre, "subject"),
-							FileProperty(KnownFileProperties.Lyrics, "belief"),
-							FileProperty(KnownFileProperties.Comment, "pad"),
-							FileProperty(KnownFileProperties.Composer, "hotel"),
-							FileProperty(KnownFileProperties.Custom, "curl"),
-							FileProperty(KnownFileProperties.Publisher, "capital"),
-							FileProperty(KnownFileProperties.TotalDiscs, "354"),
-							FileProperty(KnownFileProperties.Track, "703"),
-							FileProperty(KnownFileProperties.AlbumArtist, "calm"),
-							FileProperty(KnownFileProperties.Album, "distant"),
-							FileProperty(KnownFileProperties.Date, "1355"),
-						)
+	private val viewModel by lazy {
+		FileDetailsViewModel(
+			mockk {
+				every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
+			},
+			mockk {
+				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
+					sequenceOf(
+						FileProperty(KnownFileProperties.Rating, "68"),
+						FileProperty("awkward", "prevent"),
+						FileProperty("feast", "wind"),
+						FileProperty(KnownFileProperties.Name, "please"),
+						FileProperty(KnownFileProperties.Artist, "brown"),
+						FileProperty(KnownFileProperties.Genre, "subject"),
+						FileProperty(KnownFileProperties.Lyrics, "belief"),
+						FileProperty(KnownFileProperties.Comment, "pad"),
+						FileProperty(KnownFileProperties.Composer, "hotel"),
+						FileProperty(KnownFileProperties.Custom, "curl"),
+						FileProperty(KnownFileProperties.Publisher, "capital"),
+						FileProperty(KnownFileProperties.TotalDiscs, "354"),
+						FileProperty(KnownFileProperties.Track, "703"),
+						FileProperty(KnownFileProperties.AlbumArtist, "calm"),
+						FileProperty(KnownFileProperties.Album, "distant"),
+						FileProperty(KnownFileProperties.Date, "1355"),
 					)
-				},
-				mockk {
-					every { promiseFileUpdate(LibraryId(libraryId), ServiceFile(serviceFileId), KnownFileProperties.Track, any(), false) } answers {
-						persistedTrackNumber = arg(2)
-						Unit.toPromise()
-					}
-				},
-				mockk {
-					every { promiseFileBitmap() } returns BitmapFactory
-						.decodeByteArray(byteArrayOf(3, 4), 0, 2)
-						.toPromise()
-				},
-				mockk {
-					every { promiseFileBitmap(LibraryId(libraryId), any()) } returns BitmapFactory
-						.decodeByteArray(byteArrayOf(61, 127), 0, 2)
-						.toPromise()
-				},
-				mockk(),
-				RecordingApplicationMessageBus(),
-				PassThroughUrlKeyProvider(URL("http://damage")),
-			)
-		}
-
-		@JvmStatic
-		@BeforeClass
-		fun act() {
-			viewModel?.value?.apply {
-				loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
-				fileProperties.value.first { it.property == KnownFileProperties.Date }.apply {
-					highlight()
-					edit()
-					cancel()
-					highlight()
-					edit()
+				)
+			},
+			mockk {
+				every { promiseFileUpdate(LibraryId(libraryId), ServiceFile(serviceFileId), KnownFileProperties.Track, any(), false) } answers {
+					persistedTrackNumber = arg(2)
+					Unit.toPromise()
 				}
-			}
-		}
+			},
+			mockk {
+				every { promiseImageBytes() } returns byteArrayOf(3, 4).toPromise()
+			},
+			mockk {
+				every { promiseImageBytes(LibraryId(libraryId), any<ServiceFile>()) } returns byteArrayOf(61, 127).toPromise()
+			},
+			mockk(),
+			RecordingApplicationMessageBus(),
+			PassThroughUrlKeyProvider(URL("http://damage")),
+		)
+	}
 
-		@JvmStatic
-		@AfterClass
-		fun cleanup() {
-			viewModel = null
+	@BeforeAll
+	fun act() {
+		viewModel.apply {
+			loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
+			fileProperties.value.first { it.property == KnownFileProperties.Date }.apply {
+				highlight()
+				edit()
+				cancel()
+				highlight()
+				edit()
+			}
 		}
 	}
 
 	@Test
 	fun `then the property is highlighted`() {
-		assertThat(viewModel?.value?.highlightedProperty?.value).isEqualTo(viewModel?.value?.fileProperties?.value?.first { it.property == KnownFileProperties.Date })
+		assertThat(viewModel.highlightedProperty.value).isEqualTo(viewModel.fileProperties.value.first { it.property == KnownFileProperties.Date })
 	}
 }

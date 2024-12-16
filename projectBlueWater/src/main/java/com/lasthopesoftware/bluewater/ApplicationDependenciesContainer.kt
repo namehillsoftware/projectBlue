@@ -11,14 +11,23 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.disk.AndroidD
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.DiskFileAccessTimeUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.DiskFileCachePersistence
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.DiskFileCacheStreamSupplier
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
+import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
+import com.lasthopesoftware.bluewater.settings.repository.access.ApplicationSettingsRepository
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.ui.ScreenDimensions
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
+import com.lasthopesoftware.resources.strings.StringResources
 
 object ApplicationDependenciesContainer {
 
@@ -46,9 +55,29 @@ object ApplicationDependenciesContainer {
 	@UnstableApi
 	private class AttachedDependencies(val context: Context) : ApplicationDependencies {
 
+		private val libraryRepository by lazy { LibraryRepository(context) }
+
 		private val imageCachedFilesProvider by lazy { CachedFilesProvider(context, ImageCacheConfiguration) }
 
 		private val imageDiskCacheDirectory by lazy { AndroidDiskCacheDirectoryProvider(context, ImageCacheConfiguration) }
+
+		private val applicationSettingsRepository by lazy {
+			CachingApplicationSettingsRepository(
+				ApplicationSettingsRepository(context, sendApplicationMessages)
+			)
+		}
+
+		override val selectedLibraryIdProvider by lazy {
+			CachedSelectedLibraryIdProvider(SelectedLibraryIdProvider(applicationSettingsRepository))
+		}
+
+		override val libraryProvider: ILibraryProvider
+			get() = libraryRepository
+
+		override val libraryStorage: ILibraryStorage
+			get() = libraryRepository
+
+		override val storedItemAccess by lazy { StoredItemAccess(context) }
 
 		override val defaultImageProvider by lazy { DefaultImageProvider(context) }
 
@@ -90,5 +119,7 @@ object ApplicationDependenciesContainer {
 		}
 
 		override val screenDimensions by lazy { ScreenDimensions(context) }
+
+		override val stringResources by lazy { StringResources(context) }
 	}
 }

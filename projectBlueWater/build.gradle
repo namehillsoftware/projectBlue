@@ -173,7 +173,7 @@ def getGeneratedVersionCode() {
 
 dependencies {
 	def compose_version = '1.7.5'
-	def media3_version = '1.4.1'
+	def media3_version = '1.5.0'
 	def lifecycle_version = '2.8.7'
 	def junit5_version = '5.11.3'
 
@@ -192,13 +192,13 @@ dependencies {
 	implementation 'com.google.android.material:material:1.12.0'
 	implementation 'com.google.guava:guava:33.3.1-android'
 	implementation 'joda-time:joda-time:2.13.0'
-	implementation 'commons-io:commons-io:2.17.0'
+	implementation 'commons-io:commons-io:2.18.0'
 	implementation 'org.slf4j:slf4j-api:2.0.16'
 	implementation 'com.github.tony19:logback-android:3.0.0'
 	implementation 'com.namehillsoftware:handoff:0.28.0'
-	implementation 'io.reactivex.rxjava3:rxjava:3.1.9'
+	implementation 'io.reactivex.rxjava3:rxjava:3.1.10'
 	implementation 'com.namehillsoftware:lazy-j:0.11.0'
-	implementation 'org.jsoup:jsoup:1.18.1'
+	implementation 'org.jsoup:jsoup:1.18.2'
 	implementation "androidx.media3:media3-exoplayer:$media3_version"
 	implementation "androidx.media3:media3-datasource-okhttp:$media3_version"
 	implementation 'com.squareup.okio:okio:3.9.1'
@@ -217,7 +217,7 @@ dependencies {
 	testImplementation 'junit:junit:4.13.2'
 	testImplementation "org.junit.jupiter:junit-jupiter-api:$junit5_version"
 	testImplementation 'org.assertj:assertj-core:3.26.3'
-	testImplementation 'org.robolectric:robolectric:4.9'
+	testImplementation 'org.robolectric:robolectric:4.14.1'
 	testImplementation 'androidx.test.ext:junit-ktx:1.2.1'
 	testImplementation 'androidx.test:core:1.6.1'
 	testImplementation 'androidx.test:runner:1.6.2'

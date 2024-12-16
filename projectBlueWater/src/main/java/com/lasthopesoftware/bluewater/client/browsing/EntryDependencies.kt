@@ -5,33 +5,25 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.RemoveLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryViewModel
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
 import com.lasthopesoftware.bluewater.client.connection.trust.ProvideUserSslCertificates
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
-import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
-import com.lasthopesoftware.resources.strings.StringResources
 
 interface EntryDependencies : ApplicationDependencies {
 	val selectedLibraryViewModel: SelectedLibraryViewModel
+	val libraryRemoval: RemoveLibraries
 	val menuMessageBus: ViewModelMessageBus<ItemListMenuMessage>
-	val storedItemAccess: AccessStoredItems
 	val itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler
-	val stringResources: StringResources
 	val applicationNavigation: NavigateApplication
 	val storedFileAccess: StoredFileAccess
-	val libraryProvider: ILibraryProvider
-	val libraryStorage: ILibraryStorage
-	val libraryRemoval: RemoveLibraries
 	val navigationMessages: RegisterForTypedMessages<NavigationMessage>
 	val applicationSettingsRepository: HoldApplicationSettings
 	val nowPlayingState: GetNowPlayingState

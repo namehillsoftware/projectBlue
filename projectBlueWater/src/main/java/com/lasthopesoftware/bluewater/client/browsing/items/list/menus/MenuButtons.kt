@@ -29,6 +29,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewMod
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.LocalControlColor
 
 @Composable
 fun RowScope.LabelledSyncButton(
@@ -226,7 +227,8 @@ fun BoxScope.MoreFileOptionsMenu(fileListViewModel: FileListViewModel) {
 			contentDescription = stringResource(R.string.view_more_options),
 			modifier = Modifier
 				.padding(Dimensions.topRowOuterPadding)
-				.clickable { isExpanded = !isExpanded }
+				.clickable { isExpanded = !isExpanded },
+			tint = LocalControlColor.current,
 		)
 
 		DropdownMenu(
@@ -261,7 +263,8 @@ fun BoxScope.MoreItemsOnlyOptionsMenu(
 			contentDescription = stringResource(R.string.view_more_options),
 			modifier = Modifier
 				.padding(Dimensions.topRowOuterPadding)
-				.clickable { isExpanded = !isExpanded }
+				.clickable { isExpanded = !isExpanded },
+			tint = LocalControlColor.current,
 		)
 
 		DropdownMenu(

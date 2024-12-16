@@ -62,6 +62,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsMutableState
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.suspend
+import com.lasthopesoftware.resources.emptyByteArray
 import com.lasthopesoftware.resources.strings.GetStringResources
 import kotlinx.coroutines.launch
 import kotlin.math.pow
@@ -299,7 +300,7 @@ private fun LibrarySettingsList(
 
 					Button(
 						onClick = {
-							sslCertificateFingerprint.value = ByteArray(0)
+							sslCertificateFingerprint.value = emptyByteArray
 						},
 						modifier = Modifier
 							.weight(1f)

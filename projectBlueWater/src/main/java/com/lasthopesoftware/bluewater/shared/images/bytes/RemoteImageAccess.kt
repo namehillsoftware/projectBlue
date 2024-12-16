@@ -5,18 +5,17 @@ import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.resources.emptyByteArray
 import com.namehillsoftware.handoff.promises.Promise
 import java.io.FileNotFoundException
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 
-class RemoteImageAccess(private val connectionProvider: ProvideLibraryConnections) : GetRawImages {
+class RemoteImageAccess(private val connectionProvider: ProvideLibraryConnections) : GetImageBytes {
 	companion object {
 		private const val imageFormat = "jpg"
 
 		private val logger by lazyLogger<RemoteImageAccess>()
-
-		private val emptyByteArray by lazy { ByteArray(0) }
 	}
 
 	override fun promiseImageBytes(libraryId: LibraryId, serviceFile: ServiceFile): Promise<ByteArray> {

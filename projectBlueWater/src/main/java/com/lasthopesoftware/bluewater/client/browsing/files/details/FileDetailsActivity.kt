@@ -12,35 +12,22 @@ import androidx.core.view.WindowCompat
 import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
+import com.lasthopesoftware.bluewater.RetryingLibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableLibraryFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.LibraryIdProviderViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
-import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.ui.ProjectBlueComposableApplication
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
-import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.suspend
-import com.lasthopesoftware.resources.strings.StringResources
 import java.io.IOException
 
 @UnstableApi class FileDetailsActivity : ComponentActivity() {
@@ -52,65 +39,39 @@ import java.io.IOException
 		val libraryIdKey by lazy { magicPropertyBuilder.buildProperty("libraryId") }
 	}
 
-	private val imageProvider by lazy { CachedImageProvider.getInstance(this) }
-
-	private val defaultImageProvider by lazy { DefaultImageProvider(this) }
-
-	private val selectedLibraryIdProvider by buildViewModelLazily { LibraryIdProviderViewModel() }
-
-	private val libraryConnections by lazy { buildNewConnectionSessionManager() }
-
-	private val libraryRevisionProvider by lazy { LibraryRevisionProvider(libraryConnections) }
+	private val libraryConnectedDependencies by lazy {
+		RetryingLibraryConnectionRegistry(applicationDependencies)
+	}
 
 	private val filePropertiesProvider by lazy {
-		EditableLibraryFilePropertiesProvider(
-			FilePropertiesProvider(
-				GuaranteedLibraryConnectionProvider(libraryConnections),
-				libraryRevisionProvider,
-				FilePropertyCache
-			)
-		)
+		EditableLibraryFilePropertiesProvider(libraryConnectedDependencies.freshLibraryFileProperties)
 	}
-
-	private val filePropertyUpdates by lazy {
-		FilePropertyStorage(
-			libraryConnections,
-			ConnectionAuthenticationChecker(libraryConnections),
-			libraryRevisionProvider,
-			FilePropertyCache,
-			ApplicationMessageBus.getApplicationMessageBus(),
-		)
-	}
-
-	private val connectionPermissions by lazy { ConnectionAuthenticationChecker(libraryConnections) }
 
 	private val vm by buildViewModelLazily {
 		FileDetailsViewModel(
-			connectionPermissions,
+			libraryConnectedDependencies.connectionAuthenticationChecker,
 			filePropertiesProvider,
-			filePropertyUpdates,
-			defaultImageProvider,
-			imageProvider,
-			PlaybackServiceController(this),
-			ApplicationMessageBus.getApplicationMessageBus(),
-			UrlKeyProvider(libraryConnections),
-		)
-	}
-
-	private val connectionStatusViewModel by lazy {
-		val applicationNavigation = ActivityApplicationNavigation(this, applicationDependencies.intentBuilder)
-
-		ConnectionStatusViewModel(
-			StringResources(this),
-			DramaticConnectionInitializationController(
-				libraryConnections,
-				applicationNavigation,
-            ),
+			libraryConnectedDependencies.filePropertiesStorage,
+			applicationDependencies.defaultImageProvider,
+			libraryConnectedDependencies.imageBytesProvider,
+			applicationDependencies.playbackServiceController,
+			applicationDependencies.registerForApplicationMessages,
+			libraryConnectedDependencies.urlKeyProvider,
 		)
 	}
 
 	private val activityApplicationNavigation by lazy {
 		ActivityApplicationNavigation(this, applicationDependencies.intentBuilder)
+	}
+
+	private val connectionStatusViewModel by buildViewModelLazily {
+		ConnectionStatusViewModel(
+			applicationDependencies.stringResources,
+			DramaticConnectionInitializationController(
+				applicationDependencies.connectionSessions,
+				activityApplicationNavigation,
+            ),
+		)
 	}
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
@@ -124,8 +85,6 @@ import java.io.IOException
 		}
 
 		WindowCompat.setDecorFitsSystemWindows(window, false)
-
-		selectedLibraryIdProvider.selectLibraryId(libraryId)
 
 		setContent {
 			ProjectBlueComposableApplication {

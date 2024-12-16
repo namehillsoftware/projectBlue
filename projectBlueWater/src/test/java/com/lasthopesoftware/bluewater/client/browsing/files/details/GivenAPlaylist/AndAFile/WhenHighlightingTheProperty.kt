@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile
 
-import android.graphics.BitmapFactory
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
@@ -15,20 +13,17 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.AfterClass
-import org.junit.BeforeClass
-import org.junit.Test
-import org.junit.runner.RunWith
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.net.URL
 
 private const val libraryId = 443
 private const val serviceFileId = 485
 
-@RunWith(AndroidJUnit4::class)
 class WhenHighlightingTheProperty {
 	companion object {
 
-		private var viewModel: Lazy<FileDetailsViewModel>? = lazy {
+		private val viewModel by lazy {
 			FileDetailsViewModel(
 				mockk {
 					every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
@@ -57,14 +52,10 @@ class WhenHighlightingTheProperty {
 				},
 				mockk(),
 				mockk {
-					every { promiseFileBitmap() } returns BitmapFactory
-						.decodeByteArray(byteArrayOf(3, 4), 0, 2)
-						.toPromise()
+					every { promiseImageBytes() } returns byteArrayOf(3, 4).toPromise()
 				},
 				mockk {
-					every { promiseFileBitmap(LibraryId(libraryId), any()) } returns BitmapFactory
-						.decodeByteArray(byteArrayOf(61, 127), 0, 2)
-						.toPromise()
+					every { promiseImageBytes(LibraryId(libraryId), any<ServiceFile>()) } returns byteArrayOf(61, 127).toPromise()
 				},
 				mockk(),
 				RecordingApplicationMessageBus(),
@@ -73,30 +64,23 @@ class WhenHighlightingTheProperty {
 				},
 			)
 		}
+	}
 
-		@JvmStatic
-		@BeforeClass
-		fun act() {
-			viewModel?.value?.apply {
-				loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
-				fileProperties.value.first { it.property == KnownFileProperties.Publisher }.highlight()
-			}
-		}
-
-		@JvmStatic
-		@AfterClass
-		fun cleanup() {
-			viewModel = null
+	@BeforeAll
+	fun act() {
+		viewModel.apply {
+			loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
+			fileProperties.value.first { it.property == KnownFileProperties.Publisher }.highlight()
 		}
 	}
 
 	@Test
 	fun `then the highlighted property is correct`() {
-		assertThat(viewModel?.value?.highlightedProperty?.value?.property).isEqualTo(KnownFileProperties.Publisher)
+		assertThat(viewModel.highlightedProperty?.value?.property).isEqualTo(KnownFileProperties.Publisher)
 	}
 
 	@Test
 	fun `then the highlighted property value is correct`() {
-		assertThat(viewModel?.value?.highlightedProperty?.value?.committedValue?.value).isEqualTo("lipstick")
+		assertThat(viewModel.highlightedProperty?.value?.committedValue?.value).isEqualTo("lipstick")
 	}
 }

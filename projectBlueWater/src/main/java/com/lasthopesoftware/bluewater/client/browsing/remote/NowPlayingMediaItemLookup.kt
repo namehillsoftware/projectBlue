@@ -14,11 +14,16 @@ class NowPlayingMediaItemLookup(
 	override fun promiseNowPlayingItem(): Promise<MediaBrowserCompat.MediaItem?> =
 		selectedLibraryIdProvider
 			.promiseSelectedLibraryId()
-			.eventually {
-				it?.let(nowPlayingRepository::promiseNowPlaying).keepPromise()
-			}
-			.eventually { np ->
-				if (np == null || np.playlist.isEmpty() || np.playlistPosition < 0) Promise.empty<MediaBrowserCompat.MediaItem?>()
-				else mediaItemServiceFileLookup.promiseMediaItemWithImage(np.playlist[np.playlistPosition])
+			.eventually { maybeId ->
+				maybeId
+					?.let { libraryId ->
+						nowPlayingRepository
+							.promiseNowPlaying(libraryId)
+							.eventually { np ->
+								if (np == null || np.playlist.isEmpty() || np.playlistPosition < 0) Promise.empty<MediaBrowserCompat.MediaItem?>()
+								else mediaItemServiceFileLookup.promiseMediaItemWithImage(libraryId, np.playlist[np.playlistPosition])
+							}
+					}
+					.keepPromise()
 			}
 }

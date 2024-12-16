@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.GivenATypicalServiceFile.ThatIsPlaying
 
 import android.content.Context
-import android.graphics.Bitmap
 import androidx.core.app.NotificationCompat
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
@@ -31,8 +30,7 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 
 	companion object {
 		private val expectedBitmap by lazy {
-			val conf = Bitmap.Config.ARGB_8888 // see other conf types
-			Bitmap.createBitmap(1, 1, conf)
+			byteArrayOf(288.toByte(), 756.toByte(), 898.toByte(), 637.toByte())
 		}
 		private val spiedBuilder = spyk(
 			NotificationCompat.Builder(
@@ -70,7 +68,7 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 				)
 			),
 			mockk {
-				every { promiseFileBitmap(libraryId, any()) } returns Promise(expectedBitmap)
+				every { promiseImageBytes(libraryId, any<ServiceFile>()) } returns Promise(expectedBitmap)
 			}
 		)
 		builder = npBuilder.promiseLoadingNotification(libraryId, true).toExpiringFuture().get()

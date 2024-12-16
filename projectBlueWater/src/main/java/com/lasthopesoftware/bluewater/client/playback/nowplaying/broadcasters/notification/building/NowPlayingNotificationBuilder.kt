@@ -1,12 +1,11 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building
 
 import android.content.Context
-import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideLibraryImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -16,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Co
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingPlayingIntent
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingPreviousIntent
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
+import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -25,7 +25,7 @@ import com.namehillsoftware.handoff.promises.Promise
     private val mediaStyleNotificationSetup: SetupMediaStyleNotifications,
     private val urlKeyProvider: ProvideUrlKey,
     private val cachedFilePropertiesProvider: ProvideLibraryFileProperties,
-    private val imageProvider: ProvideLibraryImages,
+    private val imageProvider: GetImageBytes,
 ) : BuildNowPlayingNotificationContent, AutoCloseable {
 	private val notificationSync = Any()
 
@@ -46,7 +46,7 @@ import com.namehillsoftware.handoff.promises.Promise
 
 				val viewStructure = viewStructure ?: ViewStructure(urlKeyHolder).also { viewStructure = it }
 				viewStructure.promisedNowPlayingImage =
-					viewStructure.promisedNowPlayingImage ?: imageProvider.promiseFileBitmap(libraryId, serviceFile)
+					viewStructure.promisedNowPlayingImage ?: imageProvider.promiseImageBytes(libraryId, serviceFile)
 
 				cachedFilePropertiesProvider
 					.promiseFileProperties(libraryId, serviceFile)
@@ -62,7 +62,7 @@ import com.namehillsoftware.handoff.promises.Promise
 						if (viewStructure.urlKeyHolder != urlKeyHolder) builder.toPromise()
 						else viewStructure.promisedNowPlayingImage
 							?.then(
-								{ bitmap -> bitmap?.let{ builder?.setLargeIcon(it) } },
+								{ bitmap -> bitmap?.let{ builder?.setLargeIcon(BitmapFactory.decodeByteArray(it, 0, it.size)) } },
 								{ builder }
 							)
 							.keepPromise(builder)
@@ -116,7 +116,7 @@ import com.namehillsoftware.handoff.promises.Promise
 			)
 
 	private class ViewStructure(val urlKeyHolder: UrlKeyHolder<ServiceFile>) {
-		var promisedNowPlayingImage: Promise<Bitmap?>? = null
+		var promisedNowPlayingImage: Promise<ByteArray>? = null
 
 		fun release() {
 			promisedNowPlayingImage?.cancel()

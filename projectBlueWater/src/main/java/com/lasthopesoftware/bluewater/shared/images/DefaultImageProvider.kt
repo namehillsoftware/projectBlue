@@ -9,17 +9,19 @@ import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
+import java.io.ByteArrayOutputStream
 import kotlin.math.max
 
 class DefaultImageProvider(private val context: Context) : ProvideDefaultImage {
-	override fun promiseFileBitmap(): Promise<Bitmap> = promiseFillerBitmap(context)
+
+	override fun promiseImageBytes(): Promise<ByteArray> = promiseFillerBytes(context)
 
 	companion object {
-		private lateinit var promisedBitmap: Promise<Bitmap>
+		private lateinit var promisedBytes: Promise<ByteArray>
 
 		@Synchronized
-		private fun promiseFillerBitmap(context: Context) =
-			if (::promisedBitmap.isInitialized) promisedBitmap
+		private fun promiseFillerBytes(context: Context) =
+			if (::promisedBytes.isInitialized) promisedBytes
 			else QueuedPromise(MessageWriter {
 				val dm = context.resources.displayMetrics
 				val maxSize = max(dm.heightPixels, dm.widthPixels)
@@ -27,7 +29,13 @@ class DefaultImageProvider(private val context: Context) : ProvideDefaultImage {
 					?.toBitmap(maxSize, maxSize)
 					?: Bitmap.createBitmap(maxSize, maxSize, Bitmap.Config.ARGB_8888)
 
-				scaledBitmap.config?.let { config -> scaledBitmap.copy(config, false) } ?: scaledBitmap
-			}, ThreadPools.compute).also { promisedBitmap = it }
+				val bitmap = scaledBitmap.config?.let { config -> scaledBitmap.copy(config, false) } ?: scaledBitmap
+
+				val byteArraySize = bitmap.rowBytes * bitmap.height
+				ByteArrayOutputStream(byteArraySize).use {
+					bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+					it.toByteArray()
+				}
+			}, ThreadPools.compute).also { promisedBytes = it }
 	}
 }

@@ -9,8 +9,10 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.atomic.AtomicReference
 
-class CachedSelectedLibraryIdProvider(private val inner: ProvideSelectedLibraryId, private val selectedLibraryIdCache: HoldSelectedLibraryId)
-	: ProvideSelectedLibraryId
+class CachedSelectedLibraryIdProvider(
+	private val inner: ProvideSelectedLibraryId,
+	private val selectedLibraryIdCache: HoldSelectedLibraryId = SelectedLibraryIdCache
+) : ProvideSelectedLibraryId
 {
 	companion object {
 		fun Context.getCachedSelectedLibraryIdProvider() = CachedSelectedLibraryIdProvider(

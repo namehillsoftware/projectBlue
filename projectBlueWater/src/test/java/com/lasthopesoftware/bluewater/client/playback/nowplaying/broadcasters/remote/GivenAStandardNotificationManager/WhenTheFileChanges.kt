@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.GivenAStandardNotificationManager
 
-import android.graphics.BitmapFactory
 import android.media.MediaMetadata
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
@@ -42,9 +41,7 @@ class WhenTheFileChanges : AndroidContext() {
 				).toPromise()
 			},
 			mockk {
-				every { promiseFileBitmap(LibraryId(libraryId), ServiceFile(serviceFile)) } returns BitmapFactory
-					.decodeByteArray(byteArrayOf((912 % 128).toByte(), (368 % 128).toByte(), (395 % 128).toByte()), 0, 3)
-					.toPromise()
+				every { promiseImageBytes(LibraryId(libraryId), ServiceFile(serviceFile)) } returns byteArrayOf((912).toByte(), (368).toByte(), (395).toByte()).toPromise()
 			},
 			mediaSessionCompat,
 			messageBus,

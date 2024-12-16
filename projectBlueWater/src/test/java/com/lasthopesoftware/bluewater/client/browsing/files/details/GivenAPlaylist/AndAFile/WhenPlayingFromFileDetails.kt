@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile
 
-import android.graphics.BitmapFactory
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
@@ -15,70 +13,61 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.AfterClass
-import org.junit.BeforeClass
-import org.junit.Test
-import org.junit.runner.RunWith
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.net.URL
 
 private const val libraryId = 591
 private const val serviceFileId = 338
 
 // Needed for image bytes
-@RunWith(AndroidJUnit4::class)
 class WhenPlayingFromFileDetails {
-	companion object {
+	private lateinit var startedLibraryId: LibraryId
+	private lateinit var startedList: List<ServiceFile>
+	private var startedPosition = -1
 
-		private lateinit var startedLibraryId: LibraryId
-		private lateinit var startedList: List<ServiceFile>
-		private var startedPosition = -1
-
-		private var mut: Lazy<FileDetailsViewModel>? = lazy {
-			FileDetailsViewModel(
-				mockk {
-					every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
-				},
-				mockk {
-					every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
-						sequenceOf(
-							FileProperty(KnownFileProperties.Name, "toward"),
-							FileProperty(KnownFileProperties.Artist, "load"),
-							FileProperty(KnownFileProperties.Album, "square"),
-							FileProperty(KnownFileProperties.Rating, "4"),
-							FileProperty("razor", "through"),
-							FileProperty("smile", "since"),
-							FileProperty("harvest", "old"),
-						)
+	private val mut by lazy {
+		FileDetailsViewModel(
+			mockk {
+				every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
+			},
+			mockk {
+				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
+					sequenceOf(
+						FileProperty(KnownFileProperties.Name, "toward"),
+						FileProperty(KnownFileProperties.Artist, "load"),
+						FileProperty(KnownFileProperties.Album, "square"),
+						FileProperty(KnownFileProperties.Rating, "4"),
+						FileProperty("razor", "through"),
+						FileProperty("smile", "since"),
+						FileProperty("harvest", "old"),
 					)
-				},
-				mockk(),
-				mockk {
-					every { promiseFileBitmap() } returns BitmapFactory
-						.decodeByteArray(byteArrayOf(111, 112), 0, 2)
-						.toPromise()
-				},
-				mockk {
-					every { promiseFileBitmap(LibraryId(libraryId), any()) } returns BitmapFactory
-						.decodeByteArray(byteArrayOf(322.toByte(), 480.toByte()), 0, 2)
-						.toPromise()
-				},
-				mockk {
-					every { startPlaylist(LibraryId(libraryId), any<List<ServiceFile>>(), any()) } answers {
-						startedLibraryId = firstArg()
-						startedList = secondArg()
-						startedPosition = lastArg()
-					}
-				},
-				RecordingApplicationMessageBus(),
-				mockk {
-					every { promiseUrlKey(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
-				},
-			)
-		}
+				)
+			},
+			mockk(),
+			mockk {
+				every { promiseImageBytes() } returns byteArrayOf(111, 112).toPromise()
+			},
+			mockk {
+				every { promiseImageBytes(LibraryId(libraryId), any<ServiceFile>()) } returns byteArrayOf(322.toByte(), 480.toByte()).toPromise()
+			},
+			mockk {
+				every { startPlaylist(LibraryId(libraryId), any<List<ServiceFile>>(), any()) } answers {
+					startedLibraryId = firstArg()
+					startedList = secondArg()
+					startedPosition = lastArg()
+				}
+			},
+			RecordingApplicationMessageBus(),
+			mockk {
+				every { promiseUrlKey(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
+			},
+		)
+	}
 
-		@BeforeClass
-		@JvmStatic
-		fun act(): Unit = mut?.value?.run {
+	@BeforeAll
+	fun act() {
+		mut.apply {
 			loadFromList(
 				LibraryId(libraryId),
 				listOf(
@@ -95,12 +84,6 @@ class WhenPlayingFromFileDetails {
 			).toExpiringFuture().get()
 
 			play()
-		} ?: Unit
-
-		@AfterClass
-		@JvmStatic
-		fun cleanup() {
-			mut = null
 		}
 	}
 
@@ -130,22 +113,22 @@ class WhenPlayingFromFileDetails {
 
 	@Test
 	fun `then the artist is correct`() {
-		assertThat(mut?.value?.artist?.value).isEqualTo("load")
+		assertThat(mut.artist?.value).isEqualTo("load")
 	}
 
 	@Test
 	fun `then the rating is correct`() {
-		assertThat(mut?.value?.rating?.value).isEqualTo(4)
+		assertThat(mut.rating?.value).isEqualTo(4)
 	}
 
 	@Test
 	fun `then the file name is correct`() {
-		assertThat(mut?.value?.fileName?.value).isEqualTo("toward")
+		assertThat(mut.fileName?.value).isEqualTo("toward")
 	}
 
 	@Test
 	fun `then the file properties are correct`() {
-		assertThat(mut?.value?.fileProperties?.value?.map { Pair(it.property, it.committedValue.value) }).containsExactlyInAnyOrder(
+		assertThat(mut.fileProperties?.value?.map { Pair(it.property, it.committedValue.value) }).containsExactlyInAnyOrder(
 			Pair(KnownFileProperties.Name, "toward"),
 			Pair(KnownFileProperties.Artist, "load"),
 			Pair(KnownFileProperties.Album, "square"),

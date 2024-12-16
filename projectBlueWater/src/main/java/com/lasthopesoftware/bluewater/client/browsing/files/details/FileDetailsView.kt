@@ -1,6 +1,8 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details
 
 import android.app.Activity
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -45,9 +47,11 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rxjava3.subscribeAsState
@@ -93,9 +97,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
-import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
-import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.core.Single
+import com.lasthopesoftware.promises.extensions.suspend
 import kotlinx.coroutines.launch
 import kotlin.math.pow
 
@@ -153,58 +155,6 @@ private fun StaticFileMenu(viewModel: FileDetailsViewModel, mediaStylePalette: M
 }
 
 @Composable
-private fun CoverArtColumn(viewModel: FileDetailsViewModel, mediaStylePalette: MediaStylePalette) {
-	Column(
-		modifier = Modifier
-			.fillMaxHeight()
-			.width(250.dp)
-			.padding(
-				start = viewPadding,
-				end = viewPadding * 2,
-				bottom = viewPadding,
-				top = viewPadding,
-			)
-	) {
-		Box(
-			modifier = Modifier
-				.fillMaxWidth()
-				.weight(1.0f)
-				.align(Alignment.CenterHorizontally)
-		) {
-			val coverArtBitmaps by viewModel.coverArt.subscribeAsState()
-			val coverArtState by remember { derivedStateOf { coverArtBitmaps?.asImageBitmap() } }
-
-			coverArtState
-				?.let {
-					val artist by viewModel.artist.subscribeAsState()
-					val album by viewModel.album.subscribeAsState()
-
-					Image(
-						bitmap = it,
-						contentDescription = stringResource(
-							id = R.string.lbl_cover_art,
-							album,
-							artist
-						),
-						contentScale = ContentScale.FillWidth,
-						modifier = Modifier
-							.fillMaxWidth()
-							.clip(RoundedCornerShape(5.dp))
-							.align(Alignment.Center)
-							.border(
-								1.dp,
-								shape = RoundedCornerShape(5.dp),
-								color = mediaStylePalette.secondaryTextColor
-							),
-					)
-				}
-		}
-
-		StaticFileMenu(viewModel, mediaStylePalette)
-	}
-}
-
-@Composable
 fun FileRating(viewModel: FileDetailsViewModel, mediaStylePalette: MediaStylePalette, modifier: Modifier) {
 	val rating by viewModel.rating.subscribeAsState()
 
@@ -219,7 +169,7 @@ fun FileRating(viewModel: FileDetailsViewModel, mediaStylePalette: MediaStylePal
 @Composable
 fun rememberComputedColorPalette(
 	paletteProvider: MediaStylePaletteProvider,
-	viewModel: FileDetailsViewModel
+	coverArt: Bitmap?
 ): State<MediaStylePalette> {
 	val defaultMediaStylePalette = MediaStylePalette(
 		MaterialTheme.colors.onPrimary,
@@ -228,19 +178,15 @@ fun rememberComputedColorPalette(
 		MaterialTheme.colors.secondary
 	)
 
-	val coverArtColors = remember {
-		viewModel.coverArt
-			.flatMap { maybeArt ->
-				maybeArt.value
-					?.takeIf { it.width > 0 && it.height > 0 }
-					?.let(paletteProvider::promisePalette)
-					?.toMaybeObservable()
-					?.switchIfEmpty(Single.just(defaultMediaStylePalette))
-					?.toObservable()
-					?: Observable.just(defaultMediaStylePalette)
-			}
+	val coverArtColorsState = remember { mutableStateOf(defaultMediaStylePalette) }
+
+	LaunchedEffect(coverArt) {
+		coverArtColorsState.value =
+			if (coverArt != null) paletteProvider.promisePalette(coverArt).suspend()
+			else defaultMediaStylePalette
 	}
-	return coverArtColors.subscribeAsState(defaultMediaStylePalette)
+
+	return coverArtColorsState
 }
 
 @Composable
@@ -514,7 +460,13 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 	val activity = LocalContext.current as? Activity ?: return
 
 	val paletteProvider = MediaStylePaletteProvider(activity)
-	val coverArtColorState by rememberComputedColorPalette(paletteProvider = paletteProvider, viewModel = viewModel)
+	val coverArt by viewModel.coverArt.subscribeAsState()
+	val coverArtBitmap by remember {
+		derivedStateOf {
+			coverArt.takeIf { it.isNotEmpty() }?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
+		}
+	}
+	val coverArtColorState by rememberComputedColorPalette(paletteProvider = paletteProvider, coverArt = coverArtBitmap)
 
 	val systemUiController = rememberSystemUiController()
 	systemUiController.setStatusBarColor(coverArtColorState.actionBarColor)
@@ -590,8 +542,8 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 						.offset { IntOffset(x = 0, y = coverArtScrollOffset.roundToPx()) }
 						.fillMaxWidth()
 				) {
-					val coverArtBitmaps by viewModel.coverArt.subscribeAsState()
-					val coverArtState by remember { derivedStateOf { coverArtBitmaps?.asImageBitmap() } }
+					val coverArtState by remember { derivedStateOf { coverArtBitmap?.asImageBitmap() } }
+
 					coverArtState
 						?.let {
 							val album by viewModel.album.subscribeAsState()
@@ -735,7 +687,58 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 	@Composable
 	fun BoxWithConstraintsScope.fileDetailsTwoColumn() {
 		Row(modifier = Modifier.fillMaxSize()) {
-			CoverArtColumn(viewModel, coverArtColorState)
+			Column(
+				modifier = Modifier
+					.fillMaxHeight()
+					.width(250.dp)
+					.padding(
+						start = viewPadding,
+						end = viewPadding * 2,
+						bottom = viewPadding,
+						top = viewPadding,
+					)
+			) {
+				Box(
+					modifier = Modifier
+						.fillMaxWidth()
+						.weight(1.0f)
+						.align(Alignment.CenterHorizontally)
+				) {
+					val coverArtState by remember {
+						derivedStateOf {
+							coverArtBitmap
+								?.asImageBitmap()
+						}
+					}
+
+					coverArtState
+						?.let {
+							val artist by viewModel.artist.subscribeAsState()
+							val album by viewModel.album.subscribeAsState()
+
+							Image(
+								bitmap = it,
+								contentDescription = stringResource(
+									id = R.string.lbl_cover_art,
+									album,
+									artist
+								),
+								contentScale = ContentScale.FillWidth,
+								modifier = Modifier
+									.fillMaxWidth()
+									.clip(RoundedCornerShape(5.dp))
+									.align(Alignment.Center)
+									.border(
+										1.dp,
+										shape = RoundedCornerShape(5.dp),
+										color = coverArtColorState.secondaryTextColor
+									),
+							)
+						}
+				}
+
+				StaticFileMenu(viewModel, coverArtColorState)
+			}
 
 			val fileProperties by viewModel.fileProperties.subscribeAsState()
 			val lazyListState = rememberLazyListState()
@@ -779,7 +782,8 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 
 	Column(modifier = Modifier.fillMaxSize()) {
 		Spacer(
-			modifier = Modifier.windowInsetsTopHeight(WindowInsets.statusBars)
+			modifier = Modifier
+				.windowInsetsTopHeight(WindowInsets.statusBars)
 				.fillMaxWidth()
 				.background(coverArtColorState.actionBarColor)
 		)

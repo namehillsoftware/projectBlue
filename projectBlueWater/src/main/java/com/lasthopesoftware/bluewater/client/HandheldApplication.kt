@@ -27,9 +27,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.lasthopesoftware.bluewater.LibraryConnectedDependencies
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.ProjectBlueApplication
+import com.lasthopesoftware.bluewater.RateLimitedFilePropertiesDependencies
 import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ReusedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
@@ -71,6 +71,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.policies.retries.RateLimitingExecutionPolicy
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -339,7 +340,10 @@ fun HandheldApplication(
 	}
 
 	val libraryConnectionDependencies = remember(routedNavigationDependencies) {
-		LibraryConnectedDependencies(routedNavigationDependencies)
+		RateLimitedFilePropertiesDependencies(
+			routedNavigationDependencies,
+			RateLimitingExecutionPolicy(1),
+		)
 	}
 
 	val viewModelStoreOwner = LocalViewModelStoreOwner.current ?: return

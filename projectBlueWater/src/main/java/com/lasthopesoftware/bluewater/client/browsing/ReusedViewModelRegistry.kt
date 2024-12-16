@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileIte
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistsStorage
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionDependencies
-import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
@@ -31,9 +30,9 @@ class ReusedViewModelRegistry(
 		NowPlayingCoverArtViewModel(
 			registerForApplicationMessages,
 			nowPlayingState,
-			libraryConnectionProvider,
+			urlKeyProvider,
 			defaultImageProvider,
-			imageProvider,
+			imageBytesProvider,
 			pollForConnections,
 		)
 	}
@@ -64,7 +63,7 @@ class ReusedViewModelRegistry(
 			registerForApplicationMessages,
 			nowPlayingState,
 			freshLibraryFileProperties,
-			UrlKeyProvider(libraryConnectionProvider),
+			urlKeyProvider,
 			filePropertiesStorage,
 			connectionAuthenticationChecker,
 			playbackServiceController,
