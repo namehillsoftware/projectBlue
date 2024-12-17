@@ -15,12 +15,12 @@ open class ProgressingPromiseProxy<Progress, Resolution> protected constructor()
 		}
 	}
 
-	constructor(source: ProgressingPromise<Progress, Resolution>) : this() {
-		proxy(source)
-	}
-
 	init {
 		awaitCancellation(cancellationProxy)
+	}
+
+	constructor(source: ProgressingPromise<Progress, Resolution>) : this() {
+		proxy(source)
 	}
 
 	protected fun proxy(source: ProgressingPromise<Progress, Resolution>) {

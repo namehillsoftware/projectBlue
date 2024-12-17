@@ -20,46 +20,51 @@ class NotifyingLibraryConnectionProvider(
 	private val notificationsConfiguration: NotificationsConfiguration,
 	private val notifications: ControlNotifications,
 	private val stringResources: GetStringResources,
-) : ProvideLibraryConnections, (BuildingConnectionStatus) -> Unit, ImmediateAction {
+) : ProvideLibraryConnections {
 	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> =
-		object : ProgressingPromiseProxy<BuildingConnectionStatus, ProvideConnections?>() {
+		object : ProgressingPromiseProxy<BuildingConnectionStatus, ProvideConnections?>(inner.promiseLibraryConnection(libraryId)), (BuildingConnectionStatus) -> Unit, ImmediateAction {
+
+			private val sync = Any()
+
+			@Volatile
+			private var isFinished = false
+
 			init {
-				val promisedConnection = inner.promiseLibraryConnection(libraryId)
-				onEach(this@NotifyingLibraryConnectionProvider)
-				proxy(promisedConnection)
-				promisedConnection.must(this@NotifyingLibraryConnectionProvider)
+				must(this)
+				onEach(this)
+			}
+
+			override fun invoke(status: BuildingConnectionStatus) = synchronized(sync) {
+				if (isFinished) return
+
+				val notifyBuilder = notificationBuilders.getNotificationBuilder(notificationsConfiguration.notificationChannel)
+				notifyBuilder
+					.setOngoing(false)
+					.setContentTitle(stringResources.connectingToServerTitle)
+
+				when (status) {
+					BuildingConnectionStatus.GettingLibrary -> notifyBuilder.setContentText(stringResources.gettingLibrary)
+					BuildingConnectionStatus.SendingWakeSignal -> notifyBuilder.setContentText(stringResources.sendingWakeSignal)
+					BuildingConnectionStatus.BuildingConnection -> notifyBuilder.setContentText(stringResources.connectingToServerLibrary)
+					BuildingConnectionStatus.BuildingConnectionComplete -> notifyBuilder.setContentText(stringResources.connected)
+					BuildingConnectionStatus.GettingLibraryFailed, BuildingConnectionStatus.BuildingConnectionFailed -> return
+				}
+
+				notifications.notifyForeground(
+					buildFullNotification(notifyBuilder),
+					notificationsConfiguration.notificationId
+				)
+			}
+
+			override fun act() = synchronized(sync) {
+				isFinished = true
+				notifications.removeNotification(notificationsConfiguration.notificationId)
 			}
 		}
-
-	override fun invoke(status: BuildingConnectionStatus) {
-		val notifyBuilder = notificationBuilders.getNotificationBuilder(notificationsConfiguration.notificationChannel)
-		notifyBuilder
-			.setOngoing(false)
-			.setContentTitle(stringResources.connectingToServerTitle)
-
-		when (status) {
-			BuildingConnectionStatus.GettingLibrary -> notifyBuilder.setContentText(stringResources.gettingLibrary)
-			BuildingConnectionStatus.SendingWakeSignal -> notifyBuilder.setContentText(stringResources.sendingWakeSignal)
-			BuildingConnectionStatus.BuildingConnection -> notifyBuilder.setContentText(stringResources.connectingToServerLibrary)
-			BuildingConnectionStatus.BuildingConnectionComplete -> notifyBuilder.setContentText(stringResources.connected)
-			BuildingConnectionStatus.GettingLibraryFailed, BuildingConnectionStatus.BuildingConnectionFailed -> {
-				return
-			}
-		}
-
-		notifications.notifyForeground(
-			buildFullNotification(notifyBuilder),
-			notificationsConfiguration.notificationId
-		)
-	}
 
 	private fun buildFullNotification(notificationBuilder: NotificationCompat.Builder) =
 		notificationBuilder
 			.setSmallIcon(R.drawable.now_playing_status_icon_white)
 			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 			.build()
-
-	override fun act() {
-		notifications.removeNotification(notificationsConfiguration.notificationId)
-	}
 }
