@@ -10,7 +10,8 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFil
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.promises.extensions.ProgressedPromise
+import com.lasthopesoftware.promises.extensions.onEach
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -27,7 +28,7 @@ class WhenStartingPlayback {
 	@BeforeAll
 	fun before() {
 		val mockPlayingFile = mockk<PlayingFile> {
-			every { promisePlayedFile() } returns object : ProgressingPromise<Duration, PlayedFile>() {
+			every { promisePlayedFile() } returns object : ProgressedPromise<Duration, PlayedFile>() {
 				override val progress: Promise<Duration>
 					get() = Duration.ZERO.toPromise()
 
@@ -62,7 +63,7 @@ class WhenStartingPlayback {
 
 		val futurePositionedPlayingFiles = playlistPlayer
 			.promisePlayedPlaylist()
-			.updates { positionedPlayingFiles.add(it) }
+			.onEach(positionedPlayingFiles::add)
 			.toExpiringFuture()
 
 		playlistPlayer.resume()

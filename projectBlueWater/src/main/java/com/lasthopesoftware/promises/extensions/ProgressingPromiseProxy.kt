@@ -6,8 +6,14 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 open class ProgressingPromiseProxy<Progress, Resolution> protected constructor() : ProgressingPromise<Progress, Resolution>() {
 	private val cancellationProxy = CancellationProxy()
-	private val proxyResolution = ImmediateResponse<Resolution, Unit> { resolve(it) }
-	private val proxyRejection = ImmediateResponse<Throwable, Unit> { reject(it) }
+	private val resolutionProxy = ImmediateResponse<Resolution, Unit> { resolve(it) }
+	private val rejectionProxy = ImmediateResponse<Throwable, Unit> { reject(it) }
+	private val progressProxy = object : ImmediateResponse<ContinuablePromise<Progress>, Unit> {
+		override fun respond(resolution: ContinuablePromise<Progress>) {
+			reportProgress(resolution.current)
+			resolution.next.then(this)
+		}
+	}
 
 	constructor(source: ProgressingPromise<Progress, Resolution>) : this() {
 		proxy(source)
@@ -20,39 +26,30 @@ open class ProgressingPromiseProxy<Progress, Resolution> protected constructor()
 	protected fun proxy(source: ProgressingPromise<Progress, Resolution>) {
 		doCancel(source)
 
-		proxyUpdates(source)
+		proxyProgress(source)
 
-		source.then(proxyResolution, proxyRejection)
+		source.then(resolutionProxy, rejectionProxy)
 	}
 
 	protected fun proxy(source: Promise<Resolution>) {
 		doCancel(source)
 
-		source.then(proxyResolution, proxyRejection)
+		source.then(resolutionProxy, rejectionProxy)
 	}
 
 	protected fun proxySuccess(source: ProgressingPromise<Progress, Resolution>) {
-		source.then(proxyResolution)
+		source.then(resolutionProxy)
 	}
 
 	protected fun proxyRejection(source: ProgressingPromise<Progress, Resolution>) {
-		source.excuse(proxyRejection)
+		source.excuse(rejectionProxy)
 	}
 
 	protected fun doCancel(source: Promise<*>) {
 		cancellationProxy.doCancel(source)
 	}
 
-	protected fun proxyUpdates(source: ProgressingPromise<Progress, *>) {
-		source.progress.then(object : ImmediateResponse<Progress, Unit>, (Progress) -> Unit {
-			override fun respond(resolution: Progress) {
-				reportProgress(resolution)
-				source.updates(this)
-			}
-
-			override fun invoke(progress: Progress) {
-				reportProgress(progress)
-			}
-		})
+	protected fun proxyProgress(source: ProgressingPromise<Progress, *>) {
+		source.progress.then(progressProxy)
 	}
 }

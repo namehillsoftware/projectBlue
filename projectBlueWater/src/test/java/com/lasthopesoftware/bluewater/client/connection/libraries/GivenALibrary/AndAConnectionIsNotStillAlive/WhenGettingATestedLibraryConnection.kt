@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnecti
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.onEach
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
@@ -50,7 +51,7 @@ class WhenGettingATestedLibraryConnection {
 		val futureConnectionProvider =
 			mut
 				.promiseLibraryConnection(libraryId)
-				.updates(statuses::add)
+				.onEach(statuses::add)
 				.toExpiringFuture()
 
 		firstDeferredConnectionProvider.apply {
@@ -66,10 +67,7 @@ class WhenGettingATestedLibraryConnection {
 		val secondFutureConnectionProvider =
 			mut
 				.promiseTestedLibraryConnection(libraryId)
-				.apply {
-					progress.then { it -> statuses.add(it) }
-					updates(statuses::add)
-				}
+				.onEach(statuses::add)
 				.toExpiringFuture()
 
 		secondDeferredConnectionProvider.apply {

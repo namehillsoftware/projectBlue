@@ -42,22 +42,22 @@ class ConnectionSessionManager(
 				init {
 					promised
 						?.also {
+							it.then({ c ->
+								c?.let {
+									connectionTester.promiseIsConnectionPossible(it)
+										.then({ isPossible ->
+											if (isPossible) resolve(it)
+											else updateCachedConnection()
+										}, {
+											updateCachedConnection()
+										})
+								} ?: updateCachedConnection()
+							}, {
+								updateCachedConnection()
+							})
 							doCancel(it)
-							proxyUpdates(it)
+							proxyProgress(it)
 						}
-						?.then({ c ->
-							c?.let {
-								connectionTester.promiseIsConnectionPossible(it)
-									.then({ isPossible ->
-										if (isPossible) resolve(it)
-										else updateCachedConnection()
-									}, {
-										updateCachedConnection()
-									})
-							} ?: updateCachedConnection()
-						}, {
-							updateCachedConnection()
-						})
 						?: updateCachedConnection()
 				}
 
@@ -72,7 +72,7 @@ class ConnectionSessionManager(
 					promised
 						?.also {
 							doCancel(it)
-							proxyUpdates(it)
+							proxyProgress(it)
 							proxySuccess(it)
 						}
 						?.excuse { _ -> proxy(promiseUpdatedLibraryConnection(promised, l)) }

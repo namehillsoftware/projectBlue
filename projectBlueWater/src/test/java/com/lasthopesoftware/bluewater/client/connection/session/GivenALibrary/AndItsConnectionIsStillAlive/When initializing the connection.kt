@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.onEach
 import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
@@ -42,7 +43,7 @@ class `When initializing the connection` {
 		val (deferredPromise, controller) = mut
 		val isInitializedPromise = controller
 			.promiseLibraryConnection(LibraryId(libraryId))
-			.apply { updates(recordedUpdates::add) }
+			.onEach(recordedUpdates::add)
 
 		deferredPromise.sendProgressUpdates(
             BuildingConnectionStatus.BuildingConnection,

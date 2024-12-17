@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotifi
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
+import com.lasthopesoftware.promises.extensions.onEach
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 
@@ -24,8 +25,8 @@ class NotifyingLibraryConnectionProvider(
 		object : ProgressingPromiseProxy<BuildingConnectionStatus, ProvideConnections?>() {
 			init {
 				val promisedConnection = inner.promiseLibraryConnection(libraryId)
+				onEach(this@NotifyingLibraryConnectionProvider)
 				proxy(promisedConnection)
-				promisedConnection.updates(this@NotifyingLibraryConnectionProvider)
 				promisedConnection.must(this@NotifyingLibraryConnectionProvider)
 			}
 		}

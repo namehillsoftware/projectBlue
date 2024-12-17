@@ -26,6 +26,7 @@ import com.lasthopesoftware.bluewater.client.playback.playlist.ManagePlaylistPla
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.onEach
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.closables.PromisingCloseable
@@ -206,7 +207,7 @@ class PlaybackEngine(
 
 					startPlayback(preparedPlaybackQueue, filePosition)
 						.progress
-						.then { playingFile -> Pair(libraryId, playingFile.asPositionedFile()) }
+						.then { playingFile -> Pair(libraryId, playingFile.current.asPositionedFile()) }
 				}
 			}
 		}
@@ -378,7 +379,7 @@ class PlaybackEngine(
 
 		val promisedPlayback = newPlayer.promisePlayedPlaylist()
 
-		promisedPlayback.updates(
+		promisedPlayback.onEach(
 			{ p ->
 				isPlaying = true
 				withState {
