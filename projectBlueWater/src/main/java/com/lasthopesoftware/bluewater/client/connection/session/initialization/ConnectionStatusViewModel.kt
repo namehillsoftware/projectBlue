@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibrary
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
+import com.lasthopesoftware.promises.extensions.onEach
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
@@ -66,18 +67,14 @@ class ConnectionStatusViewModel(
 		mutableIsGettingConnection.value = testedLibraryId != libraryId
 		mutableConnectionStatus.value = stringResources.connecting
 
-		val promisedConnection = object : ProgressingPromiseProxy<BuildingConnectionStatus, ProvideConnections?>(), ImmediateResponse<ProvideConnections?, Unit>, ImmediateAction, (BuildingConnectionStatus) -> Unit {
+		val promisedConnection = object : ProgressingPromiseProxy<BuildingConnectionStatus, ProvideConnections?>(libraryConnectionProvider.promiseLibraryConnection(libraryId)),
+			ImmediateResponse<ProvideConnections?, Unit>,
+			ImmediateAction,
+			(BuildingConnectionStatus) -> Unit {
+
 			init {
-				val promisedConnection = libraryConnectionProvider.promiseLibraryConnection(libraryId)
-				proxy(promisedConnection)
-				promisedConnection.progress.then { p ->
-					if (initializingLibraryId == libraryId) {
-						if (p != null && (testedLibraryId != libraryId || p != BuildingConnectionComplete)) invoke(p)
-						promisedConnection.updates(this)
-					}
-				}
-				promisedConnection.must(this)
-				promisedConnection.then(this)
+				// ViewModel Side-effects
+				onEach(this).then(this).must(this)
 			}
 
 			override fun respond(connections: ProvideConnections?) {
@@ -97,8 +94,9 @@ class ConnectionStatusViewModel(
 			override fun invoke(status: BuildingConnectionStatus) {
 				if (initializingLibraryId != libraryId) return
 
-				if (status != BuildingConnectionComplete) {
-					testedLibraryId = null
+				when {
+					status != BuildingConnectionComplete -> testedLibraryId = null
+					testedLibraryId != null -> return
 				}
 
 				mutableConnectionStatus.value = when (status) {

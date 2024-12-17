@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlayb
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.onEach
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -55,7 +56,7 @@ class `When Halting Playback` {
 
 		val futurePositionedPlayingFiles = playlistPlayer
 			.promisePlayedPlaylist()
-			.updates { positionedPlayingFiles.add(it) }
+			.onEach(positionedPlayingFiles::add)
 			.toExpiringFuture()
 
 		try {

@@ -37,7 +37,7 @@ class DramaticConnectionInitializationController(
 						} else {
 							logger.debug("Connection for {} not active, creating.", libraryId)
 							val promisedConnection = manageConnectionSessions.promiseTestedLibraryConnection(libraryId)
-							proxyUpdates(promisedConnection)
+							proxyProgress(promisedConnection)
 							doCancel(promisedConnection)
 							promisedConnection
 								.inevitably {
