@@ -8,11 +8,12 @@ import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications
+import com.lasthopesoftware.promises.extensions.ContinuablePromise
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
-import com.lasthopesoftware.promises.extensions.onEach
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 class NotifyingLibraryConnectionProvider(
 	private val notificationBuilders: ProduceNotificationBuilders,
@@ -22,7 +23,9 @@ class NotifyingLibraryConnectionProvider(
 	private val stringResources: GetStringResources,
 ) : ProvideLibraryConnections {
 	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> =
-		object : ProgressingPromiseProxy<BuildingConnectionStatus, ProvideConnections?>(inner.promiseLibraryConnection(libraryId)), (BuildingConnectionStatus) -> Unit, ImmediateAction {
+		object : ProgressingPromiseProxy<BuildingConnectionStatus, ProvideConnections?>(inner.promiseLibraryConnection(libraryId)),
+			ImmediateResponse<ContinuablePromise<BuildingConnectionStatus>, Unit>,
+			ImmediateAction {
 
 			private val sync = Any()
 
@@ -31,29 +34,39 @@ class NotifyingLibraryConnectionProvider(
 
 			init {
 				must(this)
-				onEach(this)
+				progress.then(this)
 			}
 
-			override fun invoke(status: BuildingConnectionStatus) = synchronized(sync) {
+			override fun respond(continuable: ContinuablePromise<BuildingConnectionStatus>) {
 				if (isFinished) return
 
-				val notifyBuilder = notificationBuilders.getNotificationBuilder(notificationsConfiguration.notificationChannel)
-				notifyBuilder
-					.setOngoing(false)
-					.setContentTitle(stringResources.connectingToServerTitle)
+				synchronized(sync) {
+					if (isFinished) return
 
-				when (status) {
-					BuildingConnectionStatus.GettingLibrary -> notifyBuilder.setContentText(stringResources.gettingLibrary)
-					BuildingConnectionStatus.SendingWakeSignal -> notifyBuilder.setContentText(stringResources.sendingWakeSignal)
-					BuildingConnectionStatus.BuildingConnection -> notifyBuilder.setContentText(stringResources.connectingToServerLibrary)
-					BuildingConnectionStatus.BuildingConnectionComplete -> notifyBuilder.setContentText(stringResources.connected)
-					BuildingConnectionStatus.GettingLibraryFailed, BuildingConnectionStatus.BuildingConnectionFailed -> return
+					val notifyBuilder =
+						notificationBuilders.getNotificationBuilder(notificationsConfiguration.notificationChannel)
+					notifyBuilder
+						.setOngoing(false)
+						.setContentTitle(stringResources.connectingToServerTitle)
+
+					when (continuable.current) {
+						BuildingConnectionStatus.GettingLibrary -> notifyBuilder.setContentText(stringResources.gettingLibrary)
+						BuildingConnectionStatus.SendingWakeSignal -> notifyBuilder.setContentText(stringResources.sendingWakeSignal)
+						BuildingConnectionStatus.BuildingConnection -> notifyBuilder.setContentText(stringResources.connectingToServerLibrary)
+						BuildingConnectionStatus.BuildingConnectionComplete -> notifyBuilder.setContentText(
+							stringResources.connected
+						)
+
+						BuildingConnectionStatus.GettingLibraryFailed, BuildingConnectionStatus.BuildingConnectionFailed -> return
+					}
+
+					notifications.notifyForeground(
+						buildFullNotification(notifyBuilder),
+						notificationsConfiguration.notificationId
+					)
+
+					continuable.next?.then(this)
 				}
-
-				notifications.notifyForeground(
-					buildFullNotification(notifyBuilder),
-					notificationsConfiguration.notificationId
-				)
 			}
 
 			override fun act() = synchronized(sync) {

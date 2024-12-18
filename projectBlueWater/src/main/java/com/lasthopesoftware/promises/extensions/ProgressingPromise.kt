@@ -2,18 +2,18 @@ package com.lasthopesoftware.promises.extensions
 
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
-interface ContinuablePromise<Progress> {
-	val current: Progress
-	val next: Promise<ContinuablePromise<Progress>>
-}
-
 open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<ContinuablePromise<Progress>, Resolution> {
 	private val updateListeners = ConcurrentHashMap<(Progress) -> Unit, Unit>()
-	private val currentAndNext = AtomicReference(ReportablePromisedUpdate<Progress>().let { Pair(it, it) })
+	private val currentAndNext = AtomicReference<Pair<ReportablePromisedUpdate<Progress>, ReportablePromisedUpdate<Progress>?>>(
+		ReportablePromisedUpdate<Progress>().let {
+			Pair(it, it)
+		}
+	)
 
 	@Volatile
 	private var isResolved = false
@@ -35,46 +35,44 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Continua
 	protected fun reportProgress(progress: Progress) {
 		if (isResolved) return
 
-		currentAndNext.updateAndGet { (_, next) ->
-			Pair(next, next.pushForward(progress))
+		currentAndNext.updateAndGet { (current, next) ->
+			next?.let { Pair(it, it.pushForward(progress)) } ?: Pair(current, current)
 		}
 	}
 
-	private class ReportablePromisedUpdate<Progress> : Promise<ContinuablePromise<Progress>>() {
-		fun pushForward(progress: Progress) = ReportablePromisedUpdate<Progress>().also {
+	private inner class ReportablePromisedUpdate<Progress> : Promise<ContinuablePromise<Progress>>() {
+		private val next by lazy { ReportablePromisedUpdate<Progress>() }
+
+		fun pushForward(progress: Progress) = (if (!isResolved) next else null).also {
 			resolve(ResolvableContinuingProgress(progress, it))
 		}
 	}
 
-	private class ResolvableContinuingProgress<Progress>(
+	private inner class ResolvableContinuingProgress<Progress>(
 		override val current: Progress,
-		override val next: ReportablePromisedUpdate<Progress>,
-	) : Promise<ContinuablePromise<Progress>>(), ContinuablePromise<Progress>
+		override val next: ReportablePromisedUpdate<Progress>?,
+	) : ContinuablePromise<Progress>
 }
 
 fun <Progress, Resolution> ProgressedPromise<ContinuablePromise<Progress>, Resolution>.onEach(action: (Progress) -> Unit): ProgressedPromise<ContinuablePromise<Progress>, Resolution> {
-	val progressResponse = object : ImmediateResponse<ContinuablePromise<Progress>, Unit> {
+	val progressResponse = object : ImmediateAction, ImmediateResponse<ContinuablePromise<Progress>, Unit> {
+		@Volatile
+		private var isResolved = false
+
+		override fun act() {
+			isResolved = true
+		}
+
 		override fun respond(resolution: ContinuablePromise<Progress>) {
 			action(resolution.current)
-			resolution.next.then(this)
+
+			if (!isResolved)
+				resolution.next?.then(this)
 		}
 	}
-	progress.then(progressResponse)
-	return this
-}
 
-fun <Progress, Resolution> ProgressedPromise<ContinuablePromise<Progress>, Resolution>.updates(action: (Progress) -> Unit): ProgressedPromise<ContinuablePromise<Progress>, Resolution> {
-	var readyToReport = false
-
-	val progressResponse = object : ImmediateResponse<ContinuablePromise<Progress>, Unit> {
-		override fun respond(resolution: ContinuablePromise<Progress>) {
-			// Block immediate reports, only want to report updates
-			if (readyToReport)
-				action(resolution.current)
-			resolution.next.then(this)
-		}
-	}
+	must(progressResponse)
 	progress.then(progressResponse)
-	readyToReport = true
+
 	return this
 }
