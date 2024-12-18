@@ -11,7 +11,7 @@ open class ProgressingPromiseProxy<Progress, Resolution> protected constructor()
 	private val progressProxy = object : ImmediateResponse<ContinuablePromise<Progress>, Unit> {
 		override fun respond(resolution: ContinuablePromise<Progress>) {
 			reportProgress(resolution.current)
-			resolution.next.then(this)
+			resolution.next?.then(this)
 		}
 	}
 
