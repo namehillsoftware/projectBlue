@@ -1,5 +1,7 @@
 package com.lasthopesoftware.promises.extensions
 
+import com.lasthopesoftware.bluewater.shared.updateConditionally
+import com.lasthopesoftware.bluewater.shared.updateConditionallyWithNext
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
@@ -26,7 +28,13 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Continua
 	protected constructor()
 
 	init {
-		must { _ -> isResolved = true }
+		must { _ ->
+			isResolved = true
+			currentAndNext.updateConditionally(
+				{ (_, next) -> next != null },
+				{ (current, _) -> Pair(current, null) }
+			)
+		}
 	}
 
 	override val progress: Promise<ContinuablePromise<Progress>>
@@ -35,15 +43,16 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Continua
 	protected fun reportProgress(progress: Progress) {
 		if (isResolved) return
 
-		currentAndNext.updateAndGet { (current, next) ->
-			next?.let { Pair(it, it.pushForward(progress)) } ?: Pair(current, current)
-		}
+		currentAndNext.updateConditionallyWithNext(
+			{ prev, next -> prev != next },
+			{ pair -> pair.second?.let { Pair(it, it.pushForward(progress)) } ?: pair }
+		)
 	}
 
 	private inner class ReportablePromisedUpdate<Progress> : Promise<ContinuablePromise<Progress>>() {
 		private val next by lazy { ReportablePromisedUpdate<Progress>() }
 
-		fun pushForward(progress: Progress) = (if (!isResolved) next else null).also {
+		fun pushForward(progress: Progress) = (if (!isResolved) next else this).also {
 			resolve(ResolvableContinuingProgress(progress, it))
 		}
 	}
@@ -54,7 +63,7 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Continua
 	) : ContinuablePromise<Progress>
 }
 
-fun <Progress, Resolution> ProgressedPromise<ContinuablePromise<Progress>, Resolution>.onEach(action: (Progress) -> Unit): ProgressedPromise<ContinuablePromise<Progress>, Resolution> {
+inline fun <Progress, Resolution> ProgressedPromise<ContinuablePromise<Progress>, Resolution>.onEach(crossinline action: (Progress) -> Unit): ProgressedPromise<ContinuablePromise<Progress>, Resolution> {
 	val progressResponse = object : ImmediateAction, ImmediateResponse<ContinuablePromise<Progress>, Unit> {
 		@Volatile
 		private var isResolved = false
