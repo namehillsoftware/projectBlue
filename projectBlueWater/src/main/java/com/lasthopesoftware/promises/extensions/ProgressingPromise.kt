@@ -47,7 +47,7 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Continua
 			resolve(ContinuingResult(progress, it))
 		}
 
-		fun stop() = resolve(HaltedResult())
+		fun stop() = resolve(HaltedResult.halted())
 	}
 }
 
