@@ -8,10 +8,12 @@ open class ProgressingPromiseProxy<Progress, Resolution> protected constructor()
 	private val cancellationProxy = CancellationProxy()
 	private val resolutionProxy = ImmediateResponse<Resolution, Unit> { resolve(it) }
 	private val rejectionProxy = ImmediateResponse<Throwable, Unit> { reject(it) }
-	private val progressProxy = object : ImmediateResponse<ContinuablePromise<Progress>, Unit> {
-		override fun respond(resolution: ContinuablePromise<Progress>) {
-			reportProgress(resolution.current)
-			resolution.next?.then(this)
+	private val progressProxy = object : ImmediateResponse<ContinuableResult<Progress>, Unit> {
+		override fun respond(resolution: ContinuableResult<Progress>) {
+			if (resolution is ContinuingResult) {
+				reportProgress(resolution.current)
+				resolution.next.then(this)
+			}
 		}
 	}
 

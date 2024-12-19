@@ -8,7 +8,8 @@ import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications
-import com.lasthopesoftware.promises.extensions.ContinuablePromise
+import com.lasthopesoftware.promises.extensions.ContinuableResult
+import com.lasthopesoftware.promises.extensions.ContinuingResult
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
 import com.lasthopesoftware.resources.strings.GetStringResources
@@ -24,7 +25,7 @@ class NotifyingLibraryConnectionProvider(
 ) : ProvideLibraryConnections {
 	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> =
 		object : ProgressingPromiseProxy<BuildingConnectionStatus, ProvideConnections?>(inner.promiseLibraryConnection(libraryId)),
-			ImmediateResponse<ContinuablePromise<BuildingConnectionStatus>, Unit>,
+			ImmediateResponse<ContinuableResult<BuildingConnectionStatus>, Unit>,
 			ImmediateAction {
 
 			private val sync = Any()
@@ -37,7 +38,7 @@ class NotifyingLibraryConnectionProvider(
 				progress.then(this)
 			}
 
-			override fun respond(continuable: ContinuablePromise<BuildingConnectionStatus>) {
+			override fun respond(continuable: ContinuableResult<BuildingConnectionStatus>) {
 				if (isFinished) return
 
 				synchronized(sync) {
@@ -48,6 +49,8 @@ class NotifyingLibraryConnectionProvider(
 					notifyBuilder
 						.setOngoing(false)
 						.setContentTitle(stringResources.connectingToServerTitle)
+
+					if (continuable !is ContinuingResult) return
 
 					when (continuable.current) {
 						BuildingConnectionStatus.GettingLibrary -> notifyBuilder.setContentText(stringResources.gettingLibrary)
@@ -65,7 +68,7 @@ class NotifyingLibraryConnectionProvider(
 						notificationsConfiguration.notificationId
 					)
 
-					continuable.next?.then(this)
+					continuable.next.then(this)
 				}
 			}
 
