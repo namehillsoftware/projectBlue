@@ -35,11 +35,14 @@ class NotifyingLibraryConnectionProvider(
 
 			init {
 				must(this)
-				progress.then(this)
+				if (!isFinished) {
+					progress.then(this)
+				}
 			}
 
 			override fun respond(continuable: ContinuableResult<BuildingConnectionStatus>) {
 				if (isFinished) return
+				if (continuable !is ContinuingResult) return
 
 				synchronized(sync) {
 					if (isFinished) return
@@ -49,8 +52,6 @@ class NotifyingLibraryConnectionProvider(
 					notifyBuilder
 						.setOngoing(false)
 						.setContentTitle(stringResources.connectingToServerTitle)
-
-					if (continuable !is ContinuingResult) return
 
 					when (continuable.current) {
 						BuildingConnectionStatus.GettingLibrary -> notifyBuilder.setContentText(stringResources.gettingLibrary)
