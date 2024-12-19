@@ -1,7 +1,7 @@
 package com.lasthopesoftware.promises.extensions
 
+import com.lasthopesoftware.bluewater.shared.update
 import com.lasthopesoftware.bluewater.shared.updateConditionally
-import com.lasthopesoftware.bluewater.shared.updateConditionallyWithNext
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
@@ -37,10 +37,7 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Continua
 		get() = currentAndNext.get().first
 
 	protected fun reportProgress(progress: Progress) {
-		currentAndNext.updateConditionallyWithNext(
-			{ prev, next -> prev != next },
-			{ pair -> pair.second?.let { Pair(it, it.pushForward(progress)) } ?: pair }
-		)
+		currentAndNext.update { pair -> pair.second?.let { Pair(it, it.pushForward(progress)) } ?: pair }
 	}
 
 	private inner class ReportablePromisedUpdate<Progress> : Promise<ContinuableResult<Progress>>() {
