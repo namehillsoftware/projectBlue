@@ -15,6 +15,9 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.LocalControlColor
@@ -132,4 +135,32 @@ fun MenuIcon(
 
 		label?.invoke()
 	}
+}
+
+@Composable
+fun RowScope.LabelledRefreshButton(
+	onClick: () -> Unit,
+	modifier: Modifier = Modifier,
+) {
+	val refreshButtonLabel = stringResource(id = R.string.refresh)
+	ColumnMenuIcon(
+		onClick = onClick,
+		iconPainter = painterResource(id = R.drawable.refresh_36),
+		contentDescription = refreshButtonLabel,
+		label = refreshButtonLabel,
+		labelModifier = modifier,
+		labelMaxLines = 1,
+	)
+}
+
+@Composable
+fun RowScope.UnlabelledRefreshButton(
+	onClick: () -> Unit,
+) {
+	val refreshButtonLabel = stringResource(R.string.refresh)
+	ColumnMenuIcon(
+		onClick = onClick,
+		iconPainter = painterResource(id = R.drawable.refresh_36),
+		contentDescription = refreshButtonLabel,
+	)
 }

@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
@@ -25,54 +24,14 @@ import androidx.compose.ui.res.stringResource
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.list.UnlabelledSyncButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
-import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
+import com.lasthopesoftware.bluewater.shared.android.ui.components.LabelledRefreshButton
+import com.lasthopesoftware.bluewater.shared.android.ui.components.UnlabelledRefreshButton
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.LocalControlColor
-
-@Composable
-fun RowScope.LabelledSyncButton(
-	fileListViewModel: FileListViewModel,
-	modifier: Modifier = Modifier,
-) {
-	val isSynced by fileListViewModel.isSynced.collectAsState()
-	val syncButtonLabel =
-		if (!isSynced) stringResource(id = R.string.btn_sync_item)
-		else stringResource(id = R.string.files_synced)
-	ColumnMenuIcon(
-		onClick = { fileListViewModel.toggleSync() },
-		icon = {
-			SyncIcon(
-				isActive = isSynced,
-				modifier = Modifier.size(Dimensions.topMenuIconSize),
-				contentDescription = syncButtonLabel,
-			)
-		},
-		label = syncButtonLabel,
-		labelMaxLines = 1,
-		labelModifier = modifier,
-	)
-}
-
-@Composable
-fun RowScope.UnlabelledSyncButton(fileListViewModel: FileListViewModel) {
-	val isSynced by fileListViewModel.isSynced.collectAsState()
-	val syncButtonLabel =
-		if (!isSynced) stringResource(id = R.string.btn_sync_item)
-		else stringResource(id = R.string.files_synced)
-	ColumnMenuIcon(
-		onClick = { fileListViewModel.toggleSync() },
-		icon = {
-			SyncIcon(
-				isActive = isSynced,
-				modifier = Modifier.size(Dimensions.topMenuIconSize),
-				contentDescription = syncButtonLabel,
-			)
-		},
-	)
-}
 
 @Composable
 fun RowScope.LabelledActiveDownloadsButton(
@@ -185,17 +144,12 @@ fun RowScope.LabelledRefreshButton(
 	fileListViewModel: FileListViewModel,
 	modifier: Modifier = Modifier,
 ) {
-	val refreshButtonLabel = stringResource(id = R.string.refresh)
-	ColumnMenuIcon(
+	LabelledRefreshButton(
 		onClick = {
 			itemListViewModel.promiseRefresh()
 			fileListViewModel.promiseRefresh()
 		},
-		iconPainter = painterResource(id = R.drawable.refresh_36),
-		contentDescription = refreshButtonLabel,
-		label = refreshButtonLabel,
-		labelModifier = modifier,
-		labelMaxLines = 1,
+		modifier = modifier,
 	)
 }
 
@@ -204,15 +158,10 @@ fun RowScope.UnlabelledRefreshButton(
 	itemListViewModel: ItemListViewModel,
 	fileListViewModel: FileListViewModel,
 ) {
-	val refreshButtonLabel = stringResource(R.string.refresh)
-	ColumnMenuIcon(
-		onClick = {
-			itemListViewModel.promiseRefresh()
-			fileListViewModel.promiseRefresh()
-		},
-		iconPainter = painterResource(id = R.drawable.refresh_36),
-		contentDescription = refreshButtonLabel,
-	)
+	UnlabelledRefreshButton {
+		itemListViewModel.promiseRefresh()
+		fileListViewModel.promiseRefresh()
+	}
 }
 
 @Composable

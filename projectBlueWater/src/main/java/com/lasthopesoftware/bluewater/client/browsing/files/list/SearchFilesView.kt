@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -50,16 +51,14 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledPlayButton
-import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledShuffleButton
-import com.lasthopesoftware.bluewater.client.browsing.files.li.UnlabelledPlayButton
-import com.lasthopesoftware.bluewater.client.browsing.files.li.UnlabelledShuffleButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
+import com.lasthopesoftware.bluewater.shared.android.ui.components.LabelledRefreshButton
+import com.lasthopesoftware.bluewater.shared.android.ui.components.UnlabelledRefreshButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
@@ -77,10 +76,32 @@ import kotlin.math.pow
 private val searchFieldPadding = Dimensions.topRowOuterPadding
 private val textFieldHeight = TextFieldDefaults.MinHeight + TextFieldDefaults.FocusedBorderThickness * 2
 private val topBarHeight = textFieldHeight + searchFieldPadding
-private val minimumMenuWidth = (2 * 32).dp
+private val minimumMenuWidth = (3 * 32).dp
 
 private val expandedMenuVerticalPadding = searchFieldPadding * 2
 private val boxHeight = topBarHeight + Dimensions.menuHeight + expandedMenuVerticalPadding
+
+@Composable
+fun RowScope.LabelledRefreshButton(
+	searchFilesViewModel: SearchFilesViewModel,
+	modifier: Modifier = Modifier,
+) {
+	LabelledRefreshButton(
+		onClick = {
+			searchFilesViewModel.promiseRefresh()
+		},
+		modifier = modifier,
+	)
+}
+
+@Composable
+fun RowScope.UnlabelledRefreshButton(
+	searchFilesViewModel: SearchFilesViewModel,
+) {
+	UnlabelledRefreshButton {
+		searchFilesViewModel.promiseRefresh()
+	}
+}
 
 @Composable
 fun RenderTrackTitleItem(
@@ -213,7 +234,7 @@ fun SearchFilesView(
 								Box(
 									modifier = Modifier
 										.padding(Dimensions.viewPaddingUnit)
-										.height(48.dp)
+										.height(Dimensions.viewPaddingUnit * 12)
 								) {
 									ProvideTextStyle(MaterialTheme.typography.h5) {
 										Text(
@@ -304,6 +325,11 @@ fun SearchFilesView(
 									serviceFilesListState = searchFilesViewModel,
 									modifier = textModifier,
 								)
+
+								LabelledRefreshButton(
+									searchFilesViewModel,
+									modifier = textModifier,
+								)
 							} else {
 								UnlabelledPlayButton(
 									libraryState = searchFilesViewModel,
@@ -316,6 +342,8 @@ fun SearchFilesView(
 									playbackServiceController = playbackServiceController,
 									serviceFilesListState = searchFilesViewModel,
 								)
+
+								UnlabelledRefreshButton(searchFilesViewModel)
 							}
 						}
 					}

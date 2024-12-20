@@ -24,9 +24,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import com.lasthopesoftware.bluewater.NavigateApplication
-import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledPlayButton
-import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledShuffleButton
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.list.LabelledPlayButton
+import com.lasthopesoftware.bluewater.client.browsing.files.list.LabelledShuffleButton
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledActiveDownloadsButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledRefreshButton
