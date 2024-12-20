@@ -29,9 +29,10 @@ import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledShuffleBu
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledActiveDownloadsButton
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSearchButton
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSettingsButton
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSyncButton
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.MoreFileOptionsMenu
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.MoreItemsOnlyOptionsMenu
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
@@ -128,6 +129,9 @@ fun TvItemListView(
 						.align(Alignment.TopStart)
 						.padding(Dimensions.topRowOuterPadding)
 				)
+
+				if (files.any()) MoreFileOptionsMenu(fileListViewModel)
+				else MoreItemsOnlyOptionsMenu(itemListViewModel, applicationNavigation)
 			}
 
 			Box(modifier = Modifier.height(expandedTitleHeight)) {
@@ -165,14 +169,15 @@ fun TvItemListView(
 							serviceFilesListState = fileListViewModel,
 						)
 
-						LabelledSyncButton(
-							fileListViewModel = fileListViewModel,
-						)
-
 						LabelledShuffleButton(
 							libraryState = itemListViewModel,
 							playbackServiceController = playbackServiceController,
 							serviceFilesListState = fileListViewModel,
+						)
+
+						LabelledRefreshButton(
+							itemListViewModel = itemListViewModel,
+							fileListViewModel = fileListViewModel,
 						)
 					} else {
 						LabelledActiveDownloadsButton(
@@ -185,9 +190,9 @@ fun TvItemListView(
 							applicationNavigation = applicationNavigation,
 						)
 
-						LabelledSettingsButton(
+						LabelledRefreshButton(
 							itemListViewModel = itemListViewModel,
-							applicationNavigation = applicationNavigation,
+							fileListViewModel = fileListViewModel,
 						)
 					}
 				}

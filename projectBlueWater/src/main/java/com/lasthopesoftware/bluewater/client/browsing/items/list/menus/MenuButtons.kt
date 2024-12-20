@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list.menus
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.RowScope
@@ -19,6 +18,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -28,6 +28,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewMod
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
+import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.LocalControlColor
 
@@ -215,6 +216,7 @@ fun RowScope.UnlabelledRefreshButton(
 }
 
 @Composable
+@OptIn(ExperimentalComposeUiApi::class)
 fun BoxScope.MoreFileOptionsMenu(fileListViewModel: FileListViewModel) {
 	Box(modifier = Modifier
 		.fillMaxSize()
@@ -227,7 +229,7 @@ fun BoxScope.MoreFileOptionsMenu(fileListViewModel: FileListViewModel) {
 			contentDescription = stringResource(R.string.view_more_options),
 			modifier = Modifier
 				.padding(Dimensions.topRowOuterPadding)
-				.clickable { isExpanded = !isExpanded },
+				.navigable(onClick = { isExpanded = !isExpanded }),
 			tint = LocalControlColor.current,
 		)
 
@@ -248,6 +250,7 @@ fun BoxScope.MoreFileOptionsMenu(fileListViewModel: FileListViewModel) {
 }
 
 @Composable
+@OptIn(ExperimentalComposeUiApi::class)
 fun BoxScope.MoreItemsOnlyOptionsMenu(
 	itemListViewModel: ItemListViewModel,
 	applicationNavigation: NavigateApplication,
@@ -263,7 +266,7 @@ fun BoxScope.MoreItemsOnlyOptionsMenu(
 			contentDescription = stringResource(R.string.view_more_options),
 			modifier = Modifier
 				.padding(Dimensions.topRowOuterPadding)
-				.clickable { isExpanded = !isExpanded },
+				.navigable(onClick = { isExpanded = !isExpanded }),
 			tint = LocalControlColor.current,
 		)
 
