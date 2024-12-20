@@ -1,15 +1,18 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.li
+package com.lasthopesoftware.bluewater.client.browsing.files.list
 
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.files.list.LoadedLibraryState
-import com.lasthopesoftware.bluewater.client.browsing.files.list.ServiceFilesListState
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 
 @Composable
 fun RowScope.LabelledShuffleButton(
@@ -89,5 +92,47 @@ fun RowScope.UnlabelledPlayButton(
 		iconPainter = painterResource(id = R.drawable.av_play),
 		contentDescription = playButtonLabel,
 		label = null,
+	)
+}
+
+@Composable
+fun RowScope.LabelledSyncButton(
+	fileListViewModel: FileListViewModel,
+	modifier: Modifier = Modifier,
+) {
+	val isSynced by fileListViewModel.isSynced.collectAsState()
+	val syncButtonLabel =
+		if (!isSynced) stringResource(id = R.string.btn_sync_item)
+		else stringResource(id = R.string.files_synced)
+	ColumnMenuIcon(
+		onClick = { fileListViewModel.toggleSync() },
+		icon = {
+			SyncIcon(
+				isActive = isSynced,
+				modifier = Modifier.size(Dimensions.topMenuIconSize),
+				contentDescription = syncButtonLabel,
+			)
+		},
+		label = syncButtonLabel,
+		labelMaxLines = 1,
+		labelModifier = modifier,
+	)
+}
+
+@Composable
+fun RowScope.UnlabelledSyncButton(fileListViewModel: FileListViewModel) {
+	val isSynced by fileListViewModel.isSynced.collectAsState()
+	val syncButtonLabel =
+		if (!isSynced) stringResource(id = R.string.btn_sync_item)
+		else stringResource(id = R.string.files_synced)
+	ColumnMenuIcon(
+		onClick = { fileListViewModel.toggleSync() },
+		icon = {
+			SyncIcon(
+				isActive = isSynced,
+				modifier = Modifier.size(Dimensions.topMenuIconSize),
+				contentDescription = syncButtonLabel,
+			)
+		},
 	)
 }

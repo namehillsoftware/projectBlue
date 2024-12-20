@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.GivenAQuery
+package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAQuery
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters

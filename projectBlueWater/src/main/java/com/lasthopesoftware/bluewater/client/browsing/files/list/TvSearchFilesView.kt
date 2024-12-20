@@ -39,8 +39,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledPlayButton
-import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledShuffleButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
@@ -175,6 +173,8 @@ fun TvSearchFilesView(
 							playbackServiceController = playbackServiceController,
 							serviceFilesListState = searchFilesViewModel
 						)
+
+						LabelledRefreshButton(searchFilesViewModel)
 					}
 
 					LazyColumn {

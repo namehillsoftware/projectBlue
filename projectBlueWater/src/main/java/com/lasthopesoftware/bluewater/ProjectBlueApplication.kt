@@ -20,12 +20,6 @@ import ch.qos.logback.core.rolling.RollingFileAppender
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy
 import ch.qos.logback.core.util.StatusPrinter
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
@@ -42,10 +36,8 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.compilation.DebugFlag
-import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -57,24 +49,8 @@ open class ProjectBlueApplication : Application() {
 		private var isWorkManagerInitialized = false
 	}
 
-	private val libraryConnections by lazy { ConnectionSessionManager.get(this) }
-
-	private val libraryRevisionProvider by lazy { LibraryRevisionProvider(libraryConnections) }
-
-	private val freshLibraryFileProperties by lazy {
-		FilePropertiesProvider(
-			GuaranteedLibraryConnectionProvider(libraryConnections),
-			libraryRevisionProvider,
-			FilePropertyCache,
-		)
-	}
-
-	private val cachedLibraryFileProperties by lazy {
-		CachedFilePropertiesProvider(
-			libraryConnections,
-			FilePropertyCache,
-			freshLibraryFileProperties,
-		)
+	private val libraryConnectionDependencies by lazy {
+		LibraryConnectionRegistry(applicationDependencies)
 	}
 
 	private val notificationManager by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
@@ -91,7 +67,7 @@ open class ProjectBlueApplication : Application() {
 	private val storagePermissionsRequestNotificationBuilder by lazy {
 		StoragePermissionsRequestNotificationBuilder(
 			this,
-			StringResources(this),
+			applicationDependencies.stringResources,
 			applicationDependencies.intentBuilder,
 			syncChannelProperties
 		)
@@ -101,7 +77,7 @@ open class ProjectBlueApplication : Application() {
 		StorageReadPermissionsRequestNotificationBuilder(storagePermissionsRequestNotificationBuilder)
 	}
 
-	private val applicationMessageBus by lazy { getApplicationMessageBus() }
+	private val applicationMessageBus by lazy { applicationDependencies.registerForApplicationMessages }
 
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 
@@ -147,12 +123,12 @@ open class ProjectBlueApplication : Application() {
 					.buildReadPermissionsRequestNotification(readPermissionsNeeded.libraryId.id))
 		}
 
-		applicationMessageBus.registerReceiver(ConnectionSessionSettingsChangeReceiver(libraryConnections))
+		applicationMessageBus.registerReceiver(ConnectionSessionSettingsChangeReceiver(applicationDependencies.connectionSessions))
 
 		applicationMessageBus.registerReceiver(
 			PlaybackFileStartedScrobbleDroidProxy(
 			this,
-				cachedLibraryFileProperties,
+				libraryConnectionDependencies.libraryFilePropertiesProvider,
 				ScrobbleIntentProvider,
 			)
 		)

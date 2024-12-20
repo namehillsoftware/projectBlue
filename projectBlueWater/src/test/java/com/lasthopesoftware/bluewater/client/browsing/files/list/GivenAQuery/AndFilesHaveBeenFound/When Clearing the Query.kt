@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.GivenAQuery.AndFilesHaveBeenFound
+package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAQuery.AndFilesHaveBeenFound
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
