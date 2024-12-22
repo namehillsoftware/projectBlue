@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.promises.extensions.ProgressedPromise
-import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
@@ -26,7 +25,7 @@ class WhenBroadcastingTheFileProgress {
 			}
 
 			override fun promisePlayedFile(): ProgressedPromise<Duration, PlayedFile> {
-				return object : ProgressingPromise<Duration, PlayedFile>() {
+				return object : ProgressedPromise<Duration, PlayedFile>() {
 					override val progress: Promise<Duration>
 						get() = Duration.ZERO.toPromise()
 				}

@@ -1,15 +1,18 @@
 package com.lasthopesoftware.promises.extensions
 
+import com.lasthopesoftware.bluewater.shared.update
+import com.lasthopesoftware.bluewater.shared.updateConditionally
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicBoolean
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import java.util.concurrent.atomic.AtomicReference
 
-open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress, Resolution> {
-	private val updateListeners = ConcurrentHashMap<(Progress) -> Unit, Unit>()
-	private val atomicProgress = AtomicReference<Progress>()
-	private val isResolved = AtomicBoolean()
+open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<ContinuableResult<Progress>, Resolution> {
+	private val currentAndNext = AtomicReference<Pair<ReportablePromisedUpdate<Progress>, ReportablePromisedUpdate<Progress>?>>(
+		ReportablePromisedUpdate<Progress>().let {
+			Pair(it, it)
+		}
+	)
 
 	constructor(resolution: Resolution?) : super(resolution)
 
@@ -18,23 +21,48 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress
 	constructor(messengerOperator: MessengerOperator<Resolution>?) : super(messengerOperator)
 	protected constructor()
 
-	override val progress: Promise<Progress>
-		get() = Promise(atomicProgress.get())
-
-	protected fun reportProgress(progress: Progress) {
-		if (isResolved.get()) return
-
-		atomicProgress.lazySet(progress)
-		for (action in updateListeners.keys) action(progress)
-	}
-
-	fun updates(action: (Progress) -> Unit) {
-		if (isResolved.get()) return
-
-		updateListeners[action] = Unit
+	init {
 		must { _ ->
-			isResolved.set(true)
-			updateListeners.remove(action)
+			currentAndNext.updateConditionally(
+				{ (_, next) -> next != null },
+				{ (current, next) ->
+					next?.stop()
+					Pair(current, null)
+				}
+			)
 		}
 	}
+
+	override val progress: Promise<ContinuableResult<Progress>>
+		get() = currentAndNext.get().first
+
+	protected fun reportProgress(progress: Progress) {
+		currentAndNext.update { pair -> pair.second?.let { Pair(it, it.pushForward(progress)) } ?: pair }
+	}
+
+	private inner class ReportablePromisedUpdate<Progress> : Promise<ContinuableResult<Progress>>() {
+		private val next by lazy { ReportablePromisedUpdate<Progress>() }
+
+		fun pushForward(progress: Progress) = next.also {
+			resolve(ContinuingResult(progress, it))
+		}
+
+		fun stop() = resolve(HaltedResult.halted())
+	}
 }
+
+inline fun <Progress, Resolution> ProgressedPromise<ContinuableResult<Progress>, Resolution>.onEach(crossinline action: (Progress) -> Unit): ProgressedPromise<ContinuableResult<Progress>, Resolution> {
+	val progressResponse = object : ImmediateResponse<ContinuableResult<Progress>, Unit> {
+		override fun respond(resolution: ContinuableResult<Progress>) {
+			if (resolution is ContinuingResult) {
+				action(resolution.current)
+				resolution.next.then(this)
+			}
+		}
+	}
+
+	progress.then(progressResponse)
+
+	return this
+}
+

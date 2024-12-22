@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.client.connection.waking.NoopServerAlarm
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.onEach
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
@@ -75,10 +76,7 @@ class WhenRetrievingTheLibraryConnectionTwice {
 		val futureConnectionProvider =
 			connectionSessionManager
 				.promiseLibraryConnection(LibraryId(libraryId))
-				.apply {
-					progress.then { it -> if (it != null) statuses.add(it) }
-					updates(statuses::add)
-				}
+				.onEach(statuses::add)
 				.toExpiringFuture()
 
 		deferredConnectionSettings.resolve()
@@ -88,10 +86,7 @@ class WhenRetrievingTheLibraryConnectionTwice {
 		val secondFutureConnectionProvider =
 			connectionSessionManager
 				.promiseLibraryConnection(LibraryId(libraryId))
-				.apply {
-					progress.then { it -> if (it != null) statuses.add(it) }
-					updates(statuses::add)
-				}
+				.onEach(statuses::add)
 				.toExpiringFuture()
 
 		secondConnectionProvider = secondFutureConnectionProvider.get()
@@ -118,7 +113,6 @@ class WhenRetrievingTheLibraryConnectionTwice {
 		assertThat(recordingApplicationMessageBus.recordedMessages).containsExactly(
 			LibraryConnectionChangedMessage(
 			LibraryId(libraryId)
-		)
-		)
+		))
 	}
 }

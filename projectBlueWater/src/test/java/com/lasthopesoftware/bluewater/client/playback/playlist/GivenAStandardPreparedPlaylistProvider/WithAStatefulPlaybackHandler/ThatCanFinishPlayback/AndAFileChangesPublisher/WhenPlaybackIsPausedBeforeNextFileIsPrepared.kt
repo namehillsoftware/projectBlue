@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPl
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
+import com.lasthopesoftware.promises.extensions.onEach
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -49,11 +50,10 @@ class WhenPlaybackIsPausedBeforeNextFileIsPrepared {
 
 		val playlistPlayer = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
 		playlistPlayer.resume()
-		val subscription = playlistPlayer.observe().subscribe { this.positionedPlayingFile = it }
+		playlistPlayer.promisePlayedPlaylist().onEach { this.positionedPlayingFile = it }
 		playbackHandler.resolve()
 		playlistPlayer.pause()
 		secondPositionedPlaybackHandlerContainer.resolve()
-		subscription.dispose()
 	}
 
 	@Test

@@ -9,7 +9,9 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer
-import com.lasthopesoftware.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.ProgressedPromise
+import com.lasthopesoftware.promises.extensions.onEach
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -21,12 +23,12 @@ import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 
 class WhenStartingPlayback {
-	private var positionedPlayingFiles: List<PositionedPlayingFile>? = null
+	private val positionedPlayingFiles = mutableListOf<PositionedPlayingFile>()
 
 	@BeforeAll
 	fun before() {
 		val mockPlayingFile = mockk<PlayingFile> {
-			every { promisePlayedFile() } returns object : ProgressingPromise<Duration, PlayedFile>() {
+			every { promisePlayedFile() } returns object : ProgressedPromise<Duration, PlayedFile>() {
 				override val progress: Promise<Duration>
 					get() = Duration.ZERO.toPromise()
 
@@ -59,15 +61,18 @@ class WhenStartingPlayback {
 
 		val playlistPlayer = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
 
-		val futurePositionedPlayingFiles = playlistPlayer.observe().toList().toFuture()
+		val futurePositionedPlayingFiles = playlistPlayer
+			.promisePlayedPlaylist()
+			.onEach(positionedPlayingFiles::add)
+			.toExpiringFuture()
 
 		playlistPlayer.resume()
 
-		positionedPlayingFiles = futurePositionedPlayingFiles.get(30, TimeUnit.SECONDS)
+		futurePositionedPlayingFiles.get(30, TimeUnit.SECONDS)
 	}
 
 	@Test
 	fun `then the playback count is correct`() {
-		assertThat(positionedPlayingFiles?.size).isEqualTo(5)
+		assertThat(positionedPlayingFiles.size).isEqualTo(5)
 	}
 }

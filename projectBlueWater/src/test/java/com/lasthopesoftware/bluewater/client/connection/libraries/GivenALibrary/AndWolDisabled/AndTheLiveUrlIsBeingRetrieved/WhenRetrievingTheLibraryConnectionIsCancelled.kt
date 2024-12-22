@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnect
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.onEach
 import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
@@ -70,10 +71,7 @@ class WhenRetrievingTheLibraryConnectionIsCancelled {
 	fun act() {
 		val futureConnectionProvider =
 			mut.promiseLibraryConnection(LibraryId(3))
-				.apply {
-					progress.then(statuses::add)
-					updates(statuses::add)
-				}
+				.onEach(statuses::add)
 				.toExpiringFuture()
 
 		deferredConnectionSettings.resolve()

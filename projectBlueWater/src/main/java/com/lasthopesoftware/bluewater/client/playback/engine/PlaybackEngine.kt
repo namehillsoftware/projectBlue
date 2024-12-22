@@ -24,14 +24,15 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.Maintai
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.playlist.ManagePlaylistPlayback
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.promises.extensions.ContinuingResult
+import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.keepPromise
-import com.lasthopesoftware.promises.extensions.promiseFirstResult
+import com.lasthopesoftware.promises.extensions.onEach
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.closables.PromisingCloseable
 import com.namehillsoftware.handoff.errors.RejectionDropper
 import com.namehillsoftware.handoff.promises.Promise
-import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
 import org.jetbrains.annotations.Contract
 import org.joda.time.Duration
@@ -206,8 +207,14 @@ class PlaybackEngine(
 						)
 
 					startPlayback(preparedPlaybackQueue, filePosition)
-						.promiseFirstResult()
-						.then { playingFile -> Pair(libraryId, playingFile.asPositionedFile()) }
+						.progress
+						.then { p ->
+							if (p is ContinuingResult) Pair(libraryId, p.current.asPositionedFile())
+							else {
+								val serviceFile = playlist[playlistPosition]
+								Pair(libraryId, PositionedFile(playlistPosition, serviceFile))
+							}
+						}
 				}
 			}
 		}
@@ -370,18 +377,16 @@ class PlaybackEngine(
 		fileProgress.progress.then { it -> startPlayback(preparedPlaybackQueue, it) }.unitResponse()
 	}
 
-	private fun startPlayback(preparedPlaybackQueue: PreparedPlayableFileQueue, filePosition: Duration): Observable<PositionedPlayingFile> {
-		playbackSubscription?.dispose()
-
+	private fun startPlayback(preparedPlaybackQueue: PreparedPlayableFileQueue, filePosition: Duration): ProgressingPromise<PositionedPlayingFile, Unit> {
 		val newPlayer = playbackBootstrapper.startPlayback(preparedPlaybackQueue, filePosition)
 		activePlayer = newPlayer
 
 		isPlaying = true
 		onPlaybackStarted?.onPlaybackStarted()
 
-		val observable = newPlayer.observe()
+		val promisedPlayback = newPlayer.promisePlayedPlaylist()
 
-		playbackSubscription = observable.subscribe(
+		promisedPlayback.onEach(
 			{ p ->
 				isPlaying = true
 				withState {
@@ -389,8 +394,17 @@ class PlaybackEngine(
 					fileProgress = ProgressingFile(p)
 					saveState().then { np -> np?.run { onPlayingFileChanged?.onPlayingFileChanged(libraryId, p) } }
 				}
-			},
-			{ e ->
+			})
+			.then { _ ->
+				isPlaying = false
+				activePlayer = null
+				changePosition(0, Duration.ZERO)
+					.then { (libraryId, positionedFile) ->
+						onPlaylistReset?.onPlaylistReset(libraryId, positionedFile)
+						onPlaybackCompleted?.onPlaybackCompleted()
+					}
+			}
+			.excuse { e ->
 				when (e) {
 					is PreparationException -> {
 						withState {
@@ -410,17 +424,9 @@ class PlaybackEngine(
 				activePlayer = null
 
 				onPlaylistError?.onError(e)
-			},
-			{
-				isPlaying = false
-				activePlayer = null
-				changePosition(0, Duration.ZERO)
-					.then { (libraryId, positionedFile) ->
-						onPlaylistReset?.onPlaylistReset(libraryId, positionedFile)
-						onPlaybackCompleted?.onPlaybackCompleted()
-					}
-			})
-		return observable
+			}
+
+		return promisedPlayback
 	}
 
 	private fun updatePreparedFileQueueUsingState() {

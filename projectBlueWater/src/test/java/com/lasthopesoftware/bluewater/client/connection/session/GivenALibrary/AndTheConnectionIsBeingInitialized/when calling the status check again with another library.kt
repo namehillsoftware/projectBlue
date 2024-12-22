@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
+import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
 import com.lasthopesoftware.bluewater.shared.observables.toCloseable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -21,26 +22,25 @@ private const val libraryId = 267
 
 class `when calling the status check again with another library` {
 	private val mut by lazy {
-
-		ConnectionStatusViewModel(
-			FakeStringResources(
-				connected = "x7lcvspHV",
-				connecting = "5MmZ6OPl",
-				connectingToServerLibrary = "2bsRkyrQO",
-			),
-			mockk {
-				every { promiseLibraryConnection(LibraryId(480)) } answers {
-					val deferredProgressingPromise = DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
-					deferredProgressingPromise.sendProgressUpdate(BuildingConnectionStatus.BuildingConnection)
-					deferredProgressingPromise
-				}
-				every { promiseLibraryConnection(LibraryId(libraryId)) } answers {
-					DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>().apply {
-						sendProgressUpdate(BuildingConnectionStatus.GettingLibrary)
-						sendResolution(mockk())
+		val resolvingConnection = DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
+		Pair(
+			resolvingConnection,
+			ConnectionStatusViewModel(
+				FakeStringResources(
+					connected = "x7lcvspHV",
+					connecting = "5MmZ6OPl",
+					gettingLibrary = "vIQXMhBV5t5",
+					connectingToServerLibrary = "2bsRkyrQO",
+				),
+				mockk {
+					every { promiseLibraryConnection(LibraryId(480)) } answers {
+						val deferredProgressingPromise = DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
+						deferredProgressingPromise.sendProgressUpdate(BuildingConnectionStatus.BuildingConnection)
+						deferredProgressingPromise
 					}
-				}
-			},
+					every { promiseLibraryConnection(LibraryId(libraryId)) } returns resolvingConnection
+				},
+			)
 		)
 	}
 
@@ -56,11 +56,10 @@ class `when calling the status check again with another library` {
 
 	@BeforeAll
 	fun act() {
-		val viewModel = mut
+		val (resolvingConnection, viewModel) = mut
 
-		viewModel.connectionStatus.subscribe { status -> connectionStatuses.add(status.value) }.toCloseable().use {
-			viewModel.isGettingConnection.subscribe { isConnecting -> isConnectingHistory.add(isConnecting.value) }
-				.toCloseable().use {
+		viewModel.connectionStatus.mapNotNull().subscribe(connectionStatuses::add).toCloseable().use {
+			viewModel.isGettingConnection.mapNotNull().subscribe(isConnectingHistory::add).toCloseable().use {
 				firstPromisedLibraryConnection = viewModel.promiseLibraryConnection(LibraryId(480))
 				secondPromisedLibraryConnection = viewModel.promiseLibraryConnection(LibraryId(libraryId))
 
@@ -70,6 +69,11 @@ class `when calling the status check again with another library` {
 					cancellationException = ee.cause as? CancellationException
 				}
 
+				with (resolvingConnection) {
+					sendProgressUpdate(BuildingConnectionStatus.GettingLibrary)
+					sendResolution(mockk())
+				}
+
 				secondLibraryConnection = secondPromisedLibraryConnection?.toExpiringFuture()?.get()
 			}
 		}
@@ -77,7 +81,7 @@ class `when calling the status check again with another library` {
 
 	@Test
 	fun `then the connecting statuses are correct`() {
-		assertThat(connectionStatuses).containsExactly("", "5MmZ6OPl", "2bsRkyrQO", "5MmZ6OPl", "", "x7lcvspHV")
+		assertThat(connectionStatuses).containsExactly("", "5MmZ6OPl", "2bsRkyrQO", "5MmZ6OPl", "vIQXMhBV5t5", "x7lcvspHV")
 	}
 
 	@Test

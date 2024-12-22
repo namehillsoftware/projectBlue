@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlayb
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.onEach
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -44,7 +45,7 @@ class `When Halting Playback` {
 		PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
 	}
 
-	private var positionedPlayingFiles = emptyList<PositionedPlayingFile>()
+	private val positionedPlayingFiles = mutableListOf<PositionedPlayingFile>()
 	private var resumeException: IOException? = null
 	private var haltException: IOException? = null
 	private var observationException: IOException? = null
@@ -53,7 +54,10 @@ class `When Halting Playback` {
 	fun before() {
 		val playlistPlayer = mut
 
-		val futurePositionedPlayingFiles = playlistPlayer.observe().toList().toFuture()
+		val futurePositionedPlayingFiles = playlistPlayer
+			.promisePlayedPlaylist()
+			.onEach(positionedPlayingFiles::add)
+			.toExpiringFuture()
 
 		try {
 			playlistPlayer.resume().toExpiringFuture().get()
@@ -68,7 +72,7 @@ class `When Halting Playback` {
 		}
 
 		try {
-			positionedPlayingFiles = futurePositionedPlayingFiles.get(30, TimeUnit.SECONDS)
+			futurePositionedPlayingFiles.get(30, TimeUnit.SECONDS)
 		} catch (ee: ExecutionException) {
 			observationException = ee.cause as? IOException
 		}
