@@ -1,5 +1,7 @@
 package com.lasthopesoftware.promises.extensions
 
+import com.lasthopesoftware.promises.ContinuableResult
+import com.lasthopesoftware.promises.ContinuingResult
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse

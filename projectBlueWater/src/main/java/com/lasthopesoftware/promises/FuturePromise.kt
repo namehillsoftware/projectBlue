@@ -15,7 +15,6 @@ fun <Resolution> Future<Resolution>.getSafely(): Resolution? = get(3, TimeUnit.S
 
 private class FuturePromise<Resolution>(promise: Promise<Resolution>) : Future<Resolution?> {
 	private val cancellationProxy = CancellationProxy()
-	private val promise: Promise<Unit>
 	private val countDownLatch = CountDownLatch(1)
 
 	private var resolution: Resolution? = null
@@ -24,12 +23,12 @@ private class FuturePromise<Resolution>(promise: Promise<Resolution>) : Future<R
 
 	init {
 		cancellationProxy.doCancel(promise)
-		this.promise = promise
-			.then({ r: Resolution ->
+		promise
+			.then({ r ->
 				resolution = r
 				isCompleted = true
 				countDownLatch.countDown()
-			}, { e: Throwable? ->
+			}, { e ->
 				rejection = e
 				isCompleted = true
 				countDownLatch.countDown()

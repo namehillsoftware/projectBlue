@@ -15,8 +15,8 @@ import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionSe
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
 import com.lasthopesoftware.policies.retries.CloseableRetryOnRejectionLazyPromise
-import com.lasthopesoftware.policies.retries.RateLimitingExecutionPolicy
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.getSafely
 import com.lasthopesoftware.promises.toFuture

@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostRetryHandler
 import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionUnavailableException
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.policies.retries.RecursivePromiseRetryHandler
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.DateTime
@@ -23,7 +24,7 @@ class `When handling it with the ConnectionLostRetryHandler` {
 	fun act() {
 		val now = DateTime.now()
 		try {
-			ConnectionLostRetryHandler.retryOnException<Unit> {
+			ConnectionLostRetryHandler(RecursivePromiseRetryHandler).retryOnException<Unit> {
 				++attempts
 				Promise(ConnectionUnavailableException(LibraryId(686)))
 			}.toExpiringFuture().get()

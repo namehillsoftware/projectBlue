@@ -16,7 +16,6 @@ class PromisingRateLimiter<T>(private val rate: Int): RateLimitPromises<T>, Imme
 	override fun limit(factory: () -> Promise<T>): Promise<T> =
 		object : Promise.Proxy<T>() {
 			init {
-				// Use resolve/rejection handler over `must` so that errors don't propagate as unhandled
 				queuedPromises.offer { factory().also(::proxy) }
 				doNext()
 			}
@@ -26,12 +25,11 @@ class PromisingRateLimiter<T>(private val rate: Int): RateLimitPromises<T>, Imme
 		while (true) {
 			// Essentially getAndAccumulate from more recent versions of the JDK
 			var prev: Int
-			var next: Int
 			do {
 				// Drain the queue or max out number of open promises
 				if (queuedPromises.isEmpty()) return
 				prev = availablePromises.get()
-				next = max(prev - 1, 0)
+				val next = max(prev - 1, 0)
 			} while (!availablePromises.compareAndSet(prev, next))
 
 			if (prev == 0) return
@@ -48,11 +46,9 @@ class PromisingRateLimiter<T>(private val rate: Int): RateLimitPromises<T>, Imme
 	}
 
 	private fun makePromiseAvailable() {
-		var prev: Int
-		var next: Int
 		do {
-			prev = availablePromises.get()
-			next = min(prev + 1, rate)
+			val prev = availablePromises.get()
+			val next = min(prev + 1, rate)
 		} while (!availablePromises.compareAndSet(prev, next))
 	}
 }

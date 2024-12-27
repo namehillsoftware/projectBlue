@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.retries.GivenAPromiseRe
 
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostRetryHandler
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.policies.retries.RecursivePromiseRetryHandler
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -14,7 +15,7 @@ class `When handling it with the ConnectionLostRetryHandler` {
 
 	@BeforeAll
 	fun act() {
-		result = ConnectionLostRetryHandler.retryOnException {
+		result = ConnectionLostRetryHandler(RecursivePromiseRetryHandler).retryOnException {
 			++attempts
 			Promise("FQZPx0H")
 		}.toExpiringFuture().get()
