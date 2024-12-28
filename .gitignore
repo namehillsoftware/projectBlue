@@ -14,3 +14,4 @@
 *.aab
 _artifacts
 .env
+.kotlin
