@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.retries.GivenAPromiseRe
 
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostRetryHandler
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.policies.retries.RecursivePromiseRetryHandler
+import com.lasthopesoftware.policies.retries.ExecutedPromiseRetryHandler
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.DateTime
@@ -22,7 +22,7 @@ class `When handling it with the ConnectionLostRetryHandler` {
 	fun act() {
 		val now = DateTime.now()
 		try {
-			result = ConnectionLostRetryHandler(RecursivePromiseRetryHandler).retryOnException {
+			result = ConnectionLostRetryHandler(ExecutedPromiseRetryHandler).retryOnException {
 				++attempts
 				if (attempts < 3) Promise(UnknownHostException("who?")) else Promise("rtJcqvk")
 			}.toExpiringFuture().get()

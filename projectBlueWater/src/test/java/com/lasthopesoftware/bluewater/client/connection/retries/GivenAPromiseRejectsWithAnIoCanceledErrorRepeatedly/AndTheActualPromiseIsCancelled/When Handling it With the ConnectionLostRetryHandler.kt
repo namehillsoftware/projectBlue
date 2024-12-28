@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.retries.GivenAPromiseRe
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostRetryHandler
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.policies.retries.RecursivePromiseRetryHandler
+import com.lasthopesoftware.policies.retries.ExecutedPromiseRetryHandler
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -20,7 +20,7 @@ class `When handling it with the ConnectionLostRetryHandler` {
 		try {
 			val deferredPromise = DeferredPromise(Unit)
 
-			val retryingPromise = ConnectionLostRetryHandler(RecursivePromiseRetryHandler).retryOnException<Unit> {
+			val retryingPromise = ConnectionLostRetryHandler(ExecutedPromiseRetryHandler).retryOnException<Unit> {
 				++attempts
 				deferredPromise
 					.then { _, cs ->

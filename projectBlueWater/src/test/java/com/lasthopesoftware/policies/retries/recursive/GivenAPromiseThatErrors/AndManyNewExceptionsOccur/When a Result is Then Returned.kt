@@ -1,4 +1,4 @@
-package com.lasthopesoftware.policies.retries.GivenAPromiseThatErrors.AndManyNewExceptionsOccur
+package com.lasthopesoftware.policies.retries.recursive.GivenAPromiseThatErrors.AndManyNewExceptionsOccur
 
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.policies.retries.RecursivePromiseRetryHandler

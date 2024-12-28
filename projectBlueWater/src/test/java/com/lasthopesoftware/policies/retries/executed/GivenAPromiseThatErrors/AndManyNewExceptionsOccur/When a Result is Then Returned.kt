@@ -1,7 +1,7 @@
-package com.lasthopesoftware.policies.retries.GivenAPromiseThatErrors
+package com.lasthopesoftware.policies.retries.executed.GivenAPromiseThatErrors.AndManyNewExceptionsOccur
 
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.policies.retries.RecursivePromiseRetryHandler
+import com.lasthopesoftware.policies.retries.ExecutedPromiseRetryHandler
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
@@ -14,13 +14,15 @@ class `When a Result is Then Returned` {
 
 	@BeforeAll
 	fun act() {
-		result = RecursivePromiseRetryHandler.retryOnException { e ->
-			if (e == null) Promise(Exception("hello")) else "bean".toPromise()
+		var attempt = 0
+		result = ExecutedPromiseRetryHandler.retryOnException {
+			if (++attempt == 5) "daughter".toPromise()
+			else Promise(Exception("hello"))
 		}.toExpiringFuture().get()
 	}
 
 	@Test
 	fun `then the result is correct`() {
-		assertThat(result).isEqualTo("bean")
+		assertThat(result).isEqualTo("daughter")
 	}
 }
