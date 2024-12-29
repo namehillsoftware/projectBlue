@@ -112,7 +112,7 @@ import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToast
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
-import com.lasthopesoftware.policies.retries.RateLimitingExecutionPolicy
+import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise

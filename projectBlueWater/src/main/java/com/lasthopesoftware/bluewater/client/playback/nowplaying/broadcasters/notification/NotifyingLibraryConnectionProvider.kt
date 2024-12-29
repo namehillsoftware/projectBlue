@@ -8,8 +8,8 @@ import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications
-import com.lasthopesoftware.promises.extensions.ContinuableResult
-import com.lasthopesoftware.promises.extensions.ContinuingResult
+import com.lasthopesoftware.promises.ContinuableResult
+import com.lasthopesoftware.promises.ContinuingResult
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
 import com.lasthopesoftware.resources.strings.GetStringResources

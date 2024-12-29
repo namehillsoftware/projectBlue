@@ -1,50 +1,48 @@
-package com.lasthopesoftware.bluewater.client.connection.retries.GivenAPromiseRejectsWithAnIoCanceledErrorRepeatedly.AndTheActualPromiseIsCancelled
+package com.lasthopesoftware.bluewater.client.connection.retries.GivenAPromiseRejectsWithASocketException.AndTheRetryHandlerIsCancelledBeforeNextAttempt
 
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostRetryHandler
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.policies.retries.RecursivePromiseRetryHandler
+import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.io.IOException
+import java.net.SocketException
 import java.util.concurrent.ExecutionException
 
 class `When handling it with the ConnectionLostRetryHandler` {
 
 	private var attempts = 0
-	private var exception: IOException? = null
+	private var exception: SocketException? = null
 
 	@BeforeAll
 	fun act() {
 		try {
 			val deferredPromise = DeferredPromise(Unit)
 
-			val retryingPromise = ConnectionLostRetryHandler(RecursivePromiseRetryHandler).retryOnException<Unit> {
+			val retryingPromise = ConnectionLostRetryHandler(RecursivePromiseRetryHandler).retryOnException {
 				++attempts
-				deferredPromise
-					.then { _, cs ->
-						if (cs.isCancelled) throw IOException("canceled")
-					}
+				if (attempts == 2) deferredPromise.resolve()
+
+				Promise<Unit>(SocketException())
 			}
 
-			retryingPromise.cancel()
-
-			deferredPromise.resolve()
+			deferredPromise.then { _ -> retryingPromise.cancel() }
 
 			retryingPromise.toExpiringFuture().get()
 		} catch (ee: ExecutionException) {
-			exception = ee.cause as? IOException
+			exception = ee.cause as? SocketException
 		}
 	}
 
 	@Test
 	fun `then the error is caught`() {
-		assertThat(exception?.message).isEqualTo("canceled")
+		assertThat(exception).isNotNull()
 	}
 
 	@Test
 	fun `then the correct number of attempts are made`() {
-		assertThat(attempts).isEqualTo(1)
+		assertThat(attempts).isEqualTo(2)
 	}
 }

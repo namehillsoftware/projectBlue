@@ -1,7 +1,6 @@
-package com.lasthopesoftware.policies.retries
+package com.lasthopesoftware.policies.ratelimiting
 
 import com.lasthopesoftware.policies.ApplyExecutionPolicies
-import com.lasthopesoftware.policies.ratelimiting.PromisingRateLimiter
 import com.namehillsoftware.handoff.promises.Promise
 
 class RateLimitingExecutionPolicy(private val rate: Int) : ApplyExecutionPolicies {

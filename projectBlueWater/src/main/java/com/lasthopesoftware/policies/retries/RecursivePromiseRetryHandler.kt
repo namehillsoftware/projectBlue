@@ -18,12 +18,16 @@ object RecursivePromiseRetryHandler : RetryPromises {
 			start()
 		}
 
-		override fun next(): Promise<T> = promiseFactory(error)
-			.also(::doCancel)
-			.eventually(promisedForward(), this)
+		override fun next(): Promise<T> = if (!isCancelled) {
+			promiseFactory(error)
+				.also(::doCancel)
+				.eventually(promisedForward(), this)
+		} else {
+			Promise(error ?: RetriesCancelledException())
+		}
 
-		override fun promiseResponse(rejection: Throwable): Promise<T> =
-			if (error === rejection || isCancelled) Promise(rejection)
+		override fun promiseResponse(rejection: Throwable?): Promise<T> =
+			if (error === rejection || isCancelled) Promise(rejection ?: RetriesCancelledException())
 			else {
 				error = rejection
 				next()

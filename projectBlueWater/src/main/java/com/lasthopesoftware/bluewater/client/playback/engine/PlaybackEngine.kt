@@ -24,7 +24,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.Maintai
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.playlist.ManagePlaylistPlayback
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.promises.extensions.ContinuingResult
+import com.lasthopesoftware.promises.ContinuingResult
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.onEach

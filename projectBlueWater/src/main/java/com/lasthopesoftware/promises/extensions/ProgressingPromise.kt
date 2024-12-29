@@ -2,6 +2,9 @@ package com.lasthopesoftware.promises.extensions
 
 import com.lasthopesoftware.bluewater.shared.update
 import com.lasthopesoftware.bluewater.shared.updateConditionally
+import com.lasthopesoftware.promises.ContinuableResult
+import com.lasthopesoftware.promises.ContinuingResult
+import com.lasthopesoftware.promises.HaltedResult
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse

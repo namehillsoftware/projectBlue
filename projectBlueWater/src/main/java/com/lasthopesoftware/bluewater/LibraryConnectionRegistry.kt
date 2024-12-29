@@ -32,7 +32,8 @@ import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectio
 import com.lasthopesoftware.bluewater.shared.images.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.shared.images.bytes.cache.DiskCacheImageAccess
 import com.lasthopesoftware.bluewater.shared.images.bytes.cache.ImageCacheKeyLookup
-import com.lasthopesoftware.policies.retries.RateLimitingExecutionPolicy
+import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
+import com.lasthopesoftware.policies.retries.RecursivePromiseRetryHandler
 import com.lasthopesoftware.policies.retries.RetryExecutionPolicy
 
 open class LibraryConnectionRegistry(
@@ -132,7 +133,7 @@ open class LibraryConnectionRegistry(
 open class RetryingLibraryConnectionRegistry(
 	application: ApplicationDependencies,
 ) : LibraryConnectionRegistry(application) {
-	private val connectionLostRetryPolicy by lazy { RetryExecutionPolicy(ConnectionLostRetryHandler) }
+	private val connectionLostRetryPolicy by lazy { RetryExecutionPolicy(ConnectionLostRetryHandler(RecursivePromiseRetryHandler)) }
 
 	override val freshLibraryFileProperties by lazy {
 		DelegatingFilePropertiesProvider(
@@ -157,8 +158,8 @@ open class RetryingLibraryConnectionRegistry(
 }
 
 open class RateLimitedFilePropertiesDependencies(
-	application: ApplicationDependencies,
-	private val filePropertiesRatePolicy: RateLimitingExecutionPolicy,
+    application: ApplicationDependencies,
+    private val filePropertiesRatePolicy: RateLimitingExecutionPolicy,
 ) : RetryingLibraryConnectionRegistry(application) {
 	override val freshLibraryFileProperties by lazy {
 		DelegatingFilePropertiesProvider(

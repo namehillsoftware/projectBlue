@@ -1,4 +1,4 @@
-package com.lasthopesoftware.promises.extensions
+package com.lasthopesoftware.promises
 
 import com.namehillsoftware.handoff.promises.Promise
 

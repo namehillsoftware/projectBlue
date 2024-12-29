@@ -1,42 +1,65 @@
 package com.lasthopesoftware.bluewater.client.connection
 
 import com.lasthopesoftware.exceptions.isOkHttpCanceled
-import com.lasthopesoftware.policies.retries.RecursivePromiseRetryHandler
 import com.lasthopesoftware.policies.retries.RetryPromises
 import com.lasthopesoftware.promises.PromiseDelay
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import org.joda.time.Duration
 import java.io.IOException
 
-object ConnectionLostRetryHandler : RetryPromises {
-
-	private val initialTimeToWait = Duration.standardSeconds(5)
+class ConnectionLostRetryHandler(private val innerHandler: RetryPromises) : RetryPromises {
 
 	override fun <T> retryOnException(promiseFactory: (Throwable?) -> Promise<T>): Promise<T> {
-		var attempts = 0
-		var timeToWait = initialTimeToWait
-		return RecursivePromiseRetryHandler.retryOnException { error ->
+		return innerHandler.retryOnException(ConnectionLostRetryMachine(promiseFactory))
+	}
+
+	private class ConnectionLostRetryMachine<T>(private val promiseFactory: (Throwable?) -> Promise<T>) : (Throwable?) -> Promise<T> {
+
+		companion object {
+			private val initialTimeToWait = Duration.standardSeconds(5)
+
+			private fun isErrorRetryable(error: Throwable?): Boolean =
+				error is IOException && (
+					ConnectionLostExceptionFilter.isConnectionLostException(error) || error.isOkHttpCanceled())
+		}
+
+		@Volatile
+		private var attempts = 0
+
+		@Volatile
+		private var timeToWait = initialTimeToWait
+
+		override fun invoke(error: Throwable?): Promise<T> {
 			attempts++
 
-			when {
+			return when {
 				attempts == 1 -> promiseFactory(error)
 				attempts <= 3 && isErrorRetryable(error) -> {
 					val originalTimeToWait = timeToWait
 					timeToWait = timeToWait.multipliedBy(2)
-					Promise.Proxy { cp ->
-						if (cp.isCancelled) Promise(error)
-						else PromiseDelay
-							.delay<Any?>(originalTimeToWait)
-							.also(cp::doCancel)
-							.eventually { promiseFactory(error) }
-					}
+					ProxiedRetry(originalTimeToWait, error, promiseFactory)
 				}
 				else -> Promise(error)
 			}
 		}
 	}
 
-	private fun isErrorRetryable(error: Throwable?): Boolean =
-		error is IOException && (
-			ConnectionLostExceptionFilter.isConnectionLostException(error) || error.isOkHttpCanceled())
+	private class ProxiedRetry<T>(
+		timeToWait: Duration,
+		private val error: Throwable?,
+		private val promiseFactory: (Throwable?) -> Promise<T>
+	) : Promise.Proxy<T>(), PromisedResponse<Any?, T> {
+		init {
+			if (isCancelled) reject(error)
+			else proxy(
+				PromiseDelay
+					.delay<Any?>(timeToWait)
+					.also(::doCancel)
+					.eventually(this)
+			)
+		}
+
+		override fun promiseResponse(resolution: Any?): Promise<T> = promiseFactory(error)
+	}
 }
