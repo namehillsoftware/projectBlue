@@ -604,7 +604,7 @@ import java.util.concurrent.TimeoutException
 					ExoPlayerPlayableFilePreparationSourceProvider(
 						this,
 						ph,
-						Handler(mainLooper),
+						handlerExecutor,
 						MediaSourceProvider(
 							this,
 							DiskFileCacheSourceFactory(

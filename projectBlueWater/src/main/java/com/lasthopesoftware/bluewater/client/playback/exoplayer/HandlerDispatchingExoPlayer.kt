@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.exoplayer
 
-import android.os.Handler
 import android.os.Looper
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackParameters
@@ -19,11 +18,9 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 
-class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, handler: Handler)
+class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private val executor: HandlerExecutor)
 	: PromisingExoPlayer
 {
-	private val executor = HandlerExecutor(handler)
-
 	override fun addListener(listener: Player.Listener): Promise<PromisingExoPlayer> =
 		loopIn {
 			innerPlayer.addListener(listener)

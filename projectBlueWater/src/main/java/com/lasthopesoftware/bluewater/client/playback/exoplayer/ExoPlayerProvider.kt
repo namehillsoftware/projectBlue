@@ -7,12 +7,13 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.LoadControl
 import androidx.media3.exoplayer.RenderersFactory
+import com.lasthopesoftware.resources.executors.HandlerExecutor
 
 @OptIn(UnstableApi::class) class ExoPlayerProvider(
 	private val context: Context,
 	private val renderersFactory: RenderersFactory,
 	private val loadControl: LoadControl,
-	private val playerInteractionsHandler: Handler,
+	private val playerInteractionsExecutor: HandlerExecutor,
 	private val playbackHandler: Handler,
 ) :
 	ProvideExoPlayers
@@ -21,9 +22,9 @@ import androidx.media3.exoplayer.RenderersFactory
 	override fun getExoPlayer(): PromisingExoPlayer {
 		val exoPlayerBuilder = ExoPlayer.Builder(context, renderersFactory)
 			.setLoadControl(loadControl)
-			.setLooper(playerInteractionsHandler.looper)
+			.setLooper(playerInteractionsExecutor.handler.looper)
 			.setPlaybackLooper(playbackHandler.looper)
 
-		return HandlerDispatchingExoPlayer(exoPlayerBuilder.build(), playerInteractionsHandler)
+		return HandlerDispatchingExoPlayer(exoPlayerBuilder.build(), playerInteractionsExecutor)
 	}
 }

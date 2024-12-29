@@ -10,12 +10,13 @@ import com.lasthopesoftware.bluewater.client.playback.exoplayer.ExoPlayerProvide
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayerProvider
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.SpawnMediaSources
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.rendering.AudioRenderersFactory
+import com.lasthopesoftware.resources.executors.HandlerExecutor
 import org.joda.time.Minutes
 
 @UnstableApi class ExoPlayerPlayableFilePreparationSourceProvider(
 	private val context: Context,
 	private val playbackHandler: Handler,
-	private val interactionsHandler: Handler,
+	private val interactionsHandler: HandlerExecutor,
 	private val mediaSourceProvider: SpawnMediaSources,
 	private val bestMatchUriProvider: BestMatchUriProvider
 ) : IPlayableFilePreparationSourceProvider {

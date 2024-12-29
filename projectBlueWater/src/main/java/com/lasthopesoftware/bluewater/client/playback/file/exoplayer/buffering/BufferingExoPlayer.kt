@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering
 
-import android.os.Handler
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.source.LoadEventInfo
@@ -21,7 +20,7 @@ import java.io.IOException
 
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 class BufferingExoPlayer(
-	private val handler: Handler,
+	private val handlerExecutor: HandlerExecutor,
 	private val mediaSource: MediaSource,
 	private val exoPlayer: PromisingExoPlayer
 ) : Promise<BufferingPlaybackFile>(),
@@ -38,7 +37,7 @@ class BufferingExoPlayer(
 	}
 
 	fun promiseSubscribedExoPlayer(): Promise<BufferingExoPlayer> = whenAll(
-		QueuedPromise(this, HandlerExecutor(handler)),
+		QueuedPromise(this, handlerExecutor),
 		exoPlayer.addListener(this).unitResponse()
 	).then(this)
 
@@ -64,7 +63,7 @@ class BufferingExoPlayer(
 	}
 
 	override fun prepareMessage(cancellationSignal: CancellationSignal) {
-		mediaSource.addEventListener(handler, this)
+		mediaSource.addEventListener(handlerExecutor.handler, this)
 		exoPlayer.addListener(this)
 	}
 
@@ -73,7 +72,7 @@ class BufferingExoPlayer(
 	}
 
 	private fun removeListeners() {
-		handler.post(this)
+		handlerExecutor.execute(this)
 		exoPlayer.removeListener(this)
 	}
 
