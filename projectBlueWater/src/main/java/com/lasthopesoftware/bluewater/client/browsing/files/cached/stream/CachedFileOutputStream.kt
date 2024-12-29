@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.Ca
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import okio.BufferedSource
 import okio.sink
@@ -29,7 +28,7 @@ class CachedFileOutputStream(
         offset: Int,
         length: Int
     ): Promise<CacheOutputStream> {
-        return QueuedPromise(MessageWriter {
+        return QueuedPromise({
 			if (!isClosed)
             	lazyFileOutputStream.value.write(buffer, offset, length)
             this
@@ -37,7 +36,7 @@ class CachedFileOutputStream(
     }
 
     override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheOutputStream> {
-        return QueuedPromise(MessageWriter {
+        return QueuedPromise({
 			if (!isClosed)
             	bufferedSource.readAll(lazyFileOutputStream.value.sink())
             this
@@ -45,7 +44,7 @@ class CachedFileOutputStream(
     }
 
     override fun flush(): Promise<CacheOutputStream> {
-        return QueuedPromise(MessageWriter {
+        return QueuedPromise({
             if (!isClosed && lazyFileOutputStream.isInitialized()) lazyFileOutputStream.value.flush()
             this
         }, ThreadPools.io)

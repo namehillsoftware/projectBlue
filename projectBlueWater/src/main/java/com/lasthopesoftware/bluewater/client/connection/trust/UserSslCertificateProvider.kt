@@ -7,7 +7,6 @@ import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.uri.SelectDocumentUris
 import com.lasthopesoftware.resources.uri.toUri
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import java.net.URI
@@ -37,7 +36,7 @@ class UserSslCertificateProvider(
 		documentUri
 			?.toUri()
 			?.let { uri ->
-				QueuedPromise(MessageWriter {
+				QueuedPromise({
 					contentResolver
 						.openInputStream(uri)
 						?.use { stream ->

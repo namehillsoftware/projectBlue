@@ -129,16 +129,17 @@ import com.lasthopesoftware.bluewater.shared.resilience.TimedCountdownLatch
 import com.lasthopesoftware.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.promises.PromiseDelay.Companion.delay
-import com.lasthopesoftware.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.promises.getSafely
 import com.lasthopesoftware.promises.toFuture
 import com.lasthopesoftware.resources.closables.PromisingCloseableManager
+import com.lasthopesoftware.resources.executors.HandlerExecutor
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator
 import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
@@ -387,6 +388,8 @@ import java.util.concurrent.TimeoutException
 			)
 		}
 	}
+
+	private val handlerExecutor by lazy { HandlerExecutor(Handler(mainLooper)) }
 
 	private val playbackThread by promisingServiceCloseables.manage(RetryOnRejectionLazyPromise {
 		HandlerThreadCreator
@@ -766,9 +769,15 @@ import java.util.concurrent.TimeoutException
 					restorePlaybackServices(libraryId)
 						.eventually { it.playlistFiles.addFile(serviceFile) }
 						.then { _ -> applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId)) }
-						.eventually(LoopedInPromise.response({
-							Toast.makeText(this, getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show()
-						}, this))
+						.eventually {
+							QueuedPromise({
+								Toast.makeText(
+									this,
+									getText(R.string.lbl_song_added_to_now_playing),
+									Toast.LENGTH_SHORT
+								).show()
+							}, handlerExecutor)
+						}
 				}
 				is PlaybackEngineAction.RemoveFileAtPosition -> {
 					val (libraryId, filePosition) = playbackEngineAction

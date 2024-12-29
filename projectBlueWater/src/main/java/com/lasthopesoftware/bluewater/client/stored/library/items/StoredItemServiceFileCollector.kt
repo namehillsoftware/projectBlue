@@ -15,7 +15,6 @@ import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import java.io.FileNotFoundException
@@ -47,7 +46,7 @@ class StoredItemServiceFileCollector(
 			promisedServiceFileLists
 				.eventually { serviceFiles ->
 					QueuedPromise(
-						MessageWriter{ serviceFiles.asSequence().flatten().asIterable() },
+						{ serviceFiles.asSequence().flatten().asIterable() },
 						ThreadPools.compute
 					)
 				}

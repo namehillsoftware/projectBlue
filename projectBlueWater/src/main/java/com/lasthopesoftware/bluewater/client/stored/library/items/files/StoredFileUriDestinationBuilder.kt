@@ -11,7 +11,6 @@ import com.lasthopesoftware.resources.uri.toUri
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
 import com.lasthopesoftware.storage.write.permissions.DecideIfFileWriteIsPossible
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
@@ -27,7 +26,7 @@ class StoredFileUriDestinationBuilder(
 	override fun promiseOutputStream(storedFile: StoredFile): Promise<OutputStream?> {
 		val storedFileUri = URI(storedFile.uri ?: return Promise.empty())
 
-		return QueuedPromise(MessageWriter {
+		return QueuedPromise({
 			when (storedFileUri.scheme) {
 				IoCommon.fileUriScheme -> {
 					val file = fileSupplier.getFile(storedFileUri)

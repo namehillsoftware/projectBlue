@@ -27,7 +27,6 @@ import androidx.core.graphics.ColorUtils
 import androidx.palette.graphics.Palette
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import kotlin.math.abs
 import kotlin.math.sqrt
@@ -41,7 +40,7 @@ class MediaStylePaletteProvider(private val context: Context) {
 		Palette.Filter { _, hsl -> isNotWhiteOrBlack(hsl) }
 
 	private fun promisePalette(drawable: Drawable): Promise<MediaStylePalette> =
-		QueuedPromise(MessageWriter { getMediaPalette(drawable) }, ThreadPools.compute)
+		QueuedPromise({ getMediaPalette(drawable) }, ThreadPools.compute)
 
 	fun promisePalette(bitmap: Bitmap): Promise<MediaStylePalette> {
 		val drawable = BitmapDrawable(context.resources, bitmap)

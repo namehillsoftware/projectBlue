@@ -20,7 +20,6 @@ import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.uri.MediaCollections
 import com.lasthopesoftware.resources.uri.resourceExists
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import org.apache.commons.io.FilenameUtils
@@ -72,7 +71,7 @@ class DataFileUriProvider(
 				if (postExtension.isEmpty()) "%$baseFileName%." else "%$postExtension%.")
 
 		return QueuedPromise(
-			MessageWriter {
+			{
 				val maybeCursor = contentResolver.query(
 					MediaCollections.ExternalAudio,
 					mediaQueryProjection,
@@ -86,7 +85,8 @@ class DataFileUriProvider(
 					?.takeIf(contentResolver::resourceExists)?.also {
 						logger.info(MEDIA_FILE_FOUND_LOG_MESSAGE, it)
 					}
-			}, ThreadPools.io
+			},
+			ThreadPools.io
 		)
 	}
 
@@ -103,7 +103,7 @@ class MetadataMediaFileUriProvider(
 
 	override fun promiseResponse(fileProperties: Map<String, String>): Promise<Uri?> {
 		return QueuedPromise(
-			MessageWriter {
+			{
 				val selectionArgs = arrayOf(
 					fileProperties[KnownFileProperties.Artist] ?: "",
 					fileProperties[KnownFileProperties.AlbumArtist] ?: "",
@@ -124,7 +124,8 @@ class MetadataMediaFileUriProvider(
 					?.takeIf(contentResolver::resourceExists)?.also {
 						logger.info(MEDIA_FILE_FOUND_LOG_MESSAGE, it)
 					}
-			}, ThreadPools.io
+			},
+			ThreadPools.io
 		)
 	}
 

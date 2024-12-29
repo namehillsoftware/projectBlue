@@ -2,16 +2,14 @@ package com.lasthopesoftware.resources.io
 
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
-import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import java.io.InputStream
 import java.io.OutputStream
 import kotlin.coroutines.cancellation.CancellationException
 
 class PromisingOutputStreamWrapper(private val outputStream: OutputStream) : PromisingOutputStream<PromisingOutputStreamWrapper> {
 	override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int) = QueuedPromise(
-		MessageWriter {
+		{
 			outputStream.write(buffer, offset, length)
 			this
 		},
@@ -19,7 +17,7 @@ class PromisingOutputStreamWrapper(private val outputStream: OutputStream) : Pro
 	)
 
 	override fun flush(): Promise<PromisingOutputStreamWrapper> = QueuedPromise(
-		MessageWriter {
+		{
 			outputStream.flush()
 			this
 		},
@@ -31,7 +29,7 @@ class PromisingOutputStreamWrapper(private val outputStream: OutputStream) : Pro
 	}
 
 	fun promiseCopyFrom(inputStream: InputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE) = QueuedPromise(
-		CancellableMessageWriter { ct ->
+		{ ct ->
 			val buffer = ByteArray(bufferSize)
 
 			if (ct.isCancelled) throw CancellationException("promiseCopyFrom was cancelled.")

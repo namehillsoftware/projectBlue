@@ -10,10 +10,11 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideGuarant
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.exceptions.isOkHttpCanceled
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
+import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import okhttp3.Response
@@ -65,7 +66,7 @@ class FilePropertiesProvider(
 	) :
 		Promise<Map<String, String>>(),
 		PromisedResponse<Response, Unit>,
-		MessageWriter<Unit>,
+		CancellableMessageWriter<Unit>,
 		ImmediateResponse<Throwable, Unit>
 	{
 		private val cancellationProxy = CancellationProxy()
@@ -98,7 +99,7 @@ class FilePropertiesProvider(
 			return QueuedPromise(this, ThreadPools.compute)
 		}
 
-		override fun prepareMessage() {
+		override fun prepareMessage(cancellationSignal: CancellationSignal) {
 			if (cancellationProxy.isCancelled) {
 				response.close()
 				reject(FilePropertiesCancellationException(libraryId, serviceFile))

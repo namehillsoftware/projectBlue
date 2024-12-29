@@ -10,10 +10,12 @@ import androidx.media3.exoplayer.source.MediaSourceEventListener
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.BufferingPlaybackFile
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.promises.extensions.LoopedInPromise.Companion.loopIn
 import com.lasthopesoftware.promises.extensions.unitResponse
+import com.lasthopesoftware.resources.executors.HandlerExecutor
+import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise
+import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import java.io.IOException
 
@@ -22,15 +24,21 @@ class BufferingExoPlayer(
 	private val handler: Handler,
 	private val mediaSource: MediaSource,
 	private val exoPlayer: PromisingExoPlayer
-) : Promise<BufferingPlaybackFile>(), BufferingPlaybackFile,
-	MediaSourceEventListener, Player.Listener, MessageWriter<Unit>, Runnable, ImmediateResponse<Collection<Unit>, BufferingExoPlayer> {
+) : Promise<BufferingPlaybackFile>(),
+	BufferingPlaybackFile,
+	MediaSourceEventListener,
+	Player.Listener,
+	CancellableMessageWriter<Unit>,
+	Runnable,
+	ImmediateResponse<Collection<Unit>, BufferingExoPlayer>
+{
 
 	companion object {
 		private val logger by lazyLogger<BufferingExoPlayer>()
 	}
 
 	fun promiseSubscribedExoPlayer(): Promise<BufferingExoPlayer> = whenAll(
-		handler.loopIn(this),
+		QueuedPromise(this, HandlerExecutor(handler)),
 		exoPlayer.addListener(this).unitResponse()
 	).then(this)
 
@@ -55,7 +63,7 @@ class BufferingExoPlayer(
 		removeListeners()
 	}
 
-	override fun prepareMessage() {
+	override fun prepareMessage(cancellationSignal: CancellationSignal) {
 		mediaSource.addEventListener(handler, this)
 		exoPlayer.addListener(this)
 	}
