@@ -3,12 +3,11 @@ package com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 
 object FileStringListUtilities {
 	fun promiseParsedFileStringList(fileList: String): Promise<Collection<ServiceFile>> = QueuedPromise(
-		MessageWriter { parseFileStringList(fileList) },
+		{ parseFileStringList(fileList) },
 		ThreadPools.compute
 	)
 
@@ -26,7 +25,7 @@ object FileStringListUtilities {
 	}
 
 	fun promiseSerializedFileStringList(serviceFiles: Collection<ServiceFile>): Promise<String> = QueuedPromise(
-		MessageWriter { serializeFileStringList(serviceFiles) },
+		{ serializeFileStringList(serviceFiles) },
 		ThreadPools.compute
 	)
 

@@ -9,9 +9,7 @@ import com.lasthopesoftware.resources.uri.toURI
 import com.lasthopesoftware.resources.uri.toUri
 import com.lasthopesoftware.storage.directories.GetPublicDirectories
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
-import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import java.io.File
 import java.net.URI
 
@@ -24,13 +22,13 @@ class ExternalContentRepository(
 		externalContent
 			.toContentValues()
 			.let { newContent ->
-				if (Build.VERSION.SDK_INT >= 29) QueuedPromise(CancellableMessageWriter { ct ->
+				if (Build.VERSION.SDK_INT >= 29) QueuedPromise({ ct ->
 					if (!ct.isCancelled)
 						contentResolver.insert(externalContent.collection, newContent)?.toURI()
 					else
 						null
 				}, ThreadPools.io) else publicDirectoryLookup.promisePublicDrives().eventually { drives ->
-					QueuedPromise(CancellableMessageWriter { ct ->
+					QueuedPromise({ ct ->
 						drives
 							.firstOrNull { d -> d.exists() }
 							?.path
@@ -54,7 +52,7 @@ class ExternalContentRepository(
 				}
 			}
 
-	override fun markContentAsNotPending(uri: URI): Promise<Unit> = QueuedPromise(MessageWriter{
+	override fun markContentAsNotPending(uri: URI): Promise<Unit> = QueuedPromise({
 		contentResolver.update(
 			uri.toUri(),
 			ContentValues().apply {
@@ -67,7 +65,7 @@ class ExternalContentRepository(
 		Unit
 	}, ThreadPools.io)
 
-	override fun removeContent(uri: URI): Promise<Boolean> = QueuedPromise(MessageWriter{
+	override fun removeContent(uri: URI): Promise<Boolean> = QueuedPromise({
 		val deletedRecords = contentResolver.delete(uri.toUri(), null, null)
 		deletedRecords > 0
 	}, ThreadPools.io)

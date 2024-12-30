@@ -7,7 +7,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.Fi
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 
 @UnstableApi class PlaybackServiceController(private val context: Context) : ControlPlaybackService {
@@ -38,7 +37,7 @@ import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 	}
 
 	override fun shuffleAndStartPlaylist(libraryId: LibraryId, serviceFiles: List<ServiceFile>) {
-		QueuedPromise(MessageWriter {
+		QueuedPromise({
 			startPlaylist(libraryId, serviceFiles.shuffled())
 		}, ThreadPools.compute)
 	}

@@ -109,7 +109,7 @@ android {
             returnDefaultValues = true
 			all {
 				maxHeapSize = "2048m"
-				maxParallelForks = Math.max((int) (Runtime.runtime.availableProcessors() / 2 + 1), 1)
+				maxParallelForks = 3
 			}
 		}
 	}
@@ -190,7 +190,7 @@ dependencies {
 	implementation 'commons-io:commons-io:2.18.0'
 	implementation 'org.slf4j:slf4j-api:2.0.16'
 	implementation 'com.github.tony19:logback-android:3.0.0'
-	implementation 'com.namehillsoftware:handoff:0.28.2'
+	implementation 'com.namehillsoftware:handoff:0.29.0'
 	implementation 'io.reactivex.rxjava3:rxjava:3.1.10'
 	implementation 'com.namehillsoftware:lazy-j:0.11.0'
 	implementation 'org.jsoup:jsoup:1.18.3'

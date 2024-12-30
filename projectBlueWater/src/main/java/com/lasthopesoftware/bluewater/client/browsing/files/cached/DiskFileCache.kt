@@ -16,7 +16,6 @@ import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import java.io.File
@@ -116,7 +115,7 @@ class DiskFileCache(
 	}
 
 	private fun promiseDeletedFile(cachedFile: CachedFile, file: File): Promise<Long> {
-		return QueuedPromise(MessageWriter { file.delete() || !file.exists() }, ThreadPools.io)
+		return QueuedPromise({ file.delete() || !file.exists() }, ThreadPools.io)
 			.eventually { isDeleted ->
 				if (isDeleted) deleteCachedFile(cachedFile.id)
 				else {
