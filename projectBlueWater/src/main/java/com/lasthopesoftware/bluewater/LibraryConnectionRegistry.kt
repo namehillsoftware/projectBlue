@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater
 
 import com.lasthopesoftware.bluewater.client.browsing.files.access.CachedItemFileProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.DelegatingItemFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ItemFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
@@ -17,12 +16,10 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFr
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.access.DelegatingItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemPlayback
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.ConnectionLostRetryHandler
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionDependencies
@@ -33,8 +30,6 @@ import com.lasthopesoftware.bluewater.shared.images.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.shared.images.bytes.cache.DiskCacheImageAccess
 import com.lasthopesoftware.bluewater.shared.images.bytes.cache.ImageCacheKeyLookup
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
-import com.lasthopesoftware.policies.retries.RecursivePromiseRetryHandler
-import com.lasthopesoftware.policies.retries.RetryExecutionPolicy
 
 open class LibraryConnectionRegistry(
 	application: ApplicationDependencies
@@ -107,14 +102,16 @@ open class LibraryConnectionRegistry(
 		)
 	}
 
+	override val itemStringListProvider by lazy {
+		ItemStringListProvider(
+			FileListParameters,
+			libraryFileStringListProvider,
+		)
+	}
+
 	override val itemFileProvider: ProvideItemFiles by lazy {
 		CachedItemFileProvider(
-			ItemFileProvider(
-				ItemStringListProvider(
-					FileListParameters,
-					libraryFileStringListProvider,
-				)
-			),
+			ItemFileProvider(itemStringListProvider),
 			revisionProvider
 		)
 	}
@@ -130,37 +127,10 @@ open class LibraryConnectionRegistry(
 	}
 }
 
-open class RetryingLibraryConnectionRegistry(
-	application: ApplicationDependencies,
-) : LibraryConnectionRegistry(application) {
-	private val connectionLostRetryPolicy by lazy { RetryExecutionPolicy(ConnectionLostRetryHandler(RecursivePromiseRetryHandler)) }
-
-	override val freshLibraryFileProperties by lazy {
-		DelegatingFilePropertiesProvider(
-			super.freshLibraryFileProperties,
-			connectionLostRetryPolicy,
-		)
-	}
-
-	override val itemProvider by lazy {
-		DelegatingItemProvider(
-			super.itemProvider,
-			connectionLostRetryPolicy
-		)
-	}
-
-	override val itemFileProvider by lazy {
-		DelegatingItemFileProvider(
-			super.itemFileProvider,
-			connectionLostRetryPolicy,
-		)
-	}
-}
-
 open class RateLimitedFilePropertiesDependencies(
     application: ApplicationDependencies,
     private val filePropertiesRatePolicy: RateLimitingExecutionPolicy,
-) : RetryingLibraryConnectionRegistry(application) {
+) : LibraryConnectionRegistry(application) {
 	override val freshLibraryFileProperties by lazy {
 		DelegatingFilePropertiesProvider(
 			super.freshLibraryFileProperties,

@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.libraries
 
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
+import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ProvideFileStringListForItem
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFreshLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
@@ -27,4 +28,5 @@ interface LibraryConnectionDependencies {
 	val libraryFilePropertiesProvider: CachedFilePropertiesProvider
 	val freshLibraryFileProperties: ProvideFreshLibraryFileProperties
 	val connectionAuthenticationChecker: ConnectionAuthenticationChecker
+    val itemStringListProvider: ProvideFileStringListForItem
 }

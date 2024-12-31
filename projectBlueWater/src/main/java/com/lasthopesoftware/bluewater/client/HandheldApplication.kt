@@ -56,6 +56,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.RoutedNavigatio
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SelectedLibraryReRouter
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionDependencies
+import com.lasthopesoftware.bluewater.client.connection.libraries.RetryingConnectionApplicationDependencies
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
@@ -320,13 +321,15 @@ fun HandheldApplication(
 	}
 
 	val connectionStatusViewModel = viewModel {
-		ConnectionStatusViewModel(
-			entryDependencies.stringResources,
-			DramaticConnectionInitializationController(
-				entryDependencies.connectionSessions,
-				destinationRoutingNavigation,
-			),
-		)
+		with (RetryingConnectionApplicationDependencies(entryDependencies)) {
+			ConnectionStatusViewModel(
+				stringResources,
+				DramaticConnectionInitializationController(
+					connectionSessions,
+					destinationRoutingNavigation,
+				),
+			)
+		}
 	}
 
 	val routedNavigationDependencies = remember(destinationRoutingNavigation, connectionStatusViewModel, navController) {
@@ -424,19 +427,21 @@ fun HandheldApplication(
 					}
 				}
 				is ApplicationSettingsScreen -> {
-					Box(
-						modifier = Modifier
-							.fillMaxSize()
-							.padding(systemBarsPadding)
-					) {
-						ApplicationSettingsView(
-							applicationSettingsViewModel = routedNavigationDependencies.applicationSettingsViewModel,
-							applicationNavigation = routedNavigationDependencies.applicationNavigation,
-							playbackService = routedNavigationDependencies.playbackServiceController,
-						)
-					}
+					routedNavigationDependencies.apply {
+						Box(
+							modifier = Modifier
+								.fillMaxSize()
+								.padding(systemBarsPadding)
+						) {
+							ApplicationSettingsView(
+								applicationSettingsViewModel = applicationSettingsViewModel,
+								applicationNavigation = applicationNavigation,
+								playbackService = playbackServiceController,
+							)
+						}
 
-					routedNavigationDependencies.applicationSettingsViewModel.loadSettings()
+						applicationSettingsViewModel.loadSettings()
+					}
 				}
 				is NewConnectionSettingsScreen -> {
 					LocalViewModelStoreOwner.current

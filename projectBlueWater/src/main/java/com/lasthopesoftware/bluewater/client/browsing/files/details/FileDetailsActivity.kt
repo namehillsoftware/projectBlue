@@ -12,13 +12,14 @@ import androidx.core.view.WindowCompat
 import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
-import com.lasthopesoftware.bluewater.RetryingLibraryConnectionRegistry
+import com.lasthopesoftware.bluewater.LibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
+import com.lasthopesoftware.bluewater.client.connection.libraries.RetryingConnectionApplicationDependencies
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
@@ -39,8 +40,10 @@ import java.io.IOException
 		val libraryIdKey by lazy { magicPropertyBuilder.buildProperty("libraryId") }
 	}
 
+	private val localApplicationDependencies by lazy { RetryingConnectionApplicationDependencies(applicationDependencies) }
+
 	private val libraryConnectedDependencies by lazy {
-		RetryingLibraryConnectionRegistry(applicationDependencies)
+		LibraryConnectionRegistry(localApplicationDependencies)
 	}
 
 	private val filePropertiesProvider by lazy {
@@ -52,23 +55,23 @@ import java.io.IOException
 			libraryConnectedDependencies.connectionAuthenticationChecker,
 			filePropertiesProvider,
 			libraryConnectedDependencies.filePropertiesStorage,
-			applicationDependencies.defaultImageProvider,
+			localApplicationDependencies.defaultImageProvider,
 			libraryConnectedDependencies.imageBytesProvider,
-			applicationDependencies.playbackServiceController,
-			applicationDependencies.registerForApplicationMessages,
+			localApplicationDependencies.playbackServiceController,
+			localApplicationDependencies.registerForApplicationMessages,
 			libraryConnectedDependencies.urlKeyProvider,
 		)
 	}
 
 	private val activityApplicationNavigation by lazy {
-		ActivityApplicationNavigation(this, applicationDependencies.intentBuilder)
+		ActivityApplicationNavigation(this, localApplicationDependencies.intentBuilder)
 	}
 
 	private val connectionStatusViewModel by buildViewModelLazily {
 		ConnectionStatusViewModel(
-			applicationDependencies.stringResources,
+			localApplicationDependencies.stringResources,
 			DramaticConnectionInitializationController(
-				applicationDependencies.connectionSessions,
+				localApplicationDependencies.connectionSessions,
 				activityApplicationNavigation,
             ),
 		)

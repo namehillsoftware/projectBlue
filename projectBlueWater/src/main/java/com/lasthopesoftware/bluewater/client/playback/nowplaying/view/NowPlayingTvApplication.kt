@@ -87,6 +87,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScree
 import com.lasthopesoftware.bluewater.client.browsing.navigation.RoutedNavigationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SelectedLibraryReRouter
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
+import com.lasthopesoftware.bluewater.client.connection.libraries.RetryingConnectionApplicationDependencies
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
@@ -694,13 +695,15 @@ fun NowPlayingTvApplication(
 	}
 
 	val connectionStatusViewModel = viewModel {
-		ConnectionStatusViewModel(
-			entryDependencies.stringResources,
-			DramaticConnectionInitializationController(
-				entryDependencies.connectionSessions,
-				destinationRoutingNavigation,
-			),
-		)
+		with (RetryingConnectionApplicationDependencies(entryDependencies)) {
+			ConnectionStatusViewModel(
+				stringResources,
+				DramaticConnectionInitializationController(
+					connectionSessions,
+					destinationRoutingNavigation,
+				),
+			)
+		}
 	}
 
 	val routedNavigationDependencies = remember {
