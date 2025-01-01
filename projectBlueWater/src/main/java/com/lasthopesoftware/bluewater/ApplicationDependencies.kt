@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.ManageConnection
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
+import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.android.ui.ProvideScreenDimensions
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
@@ -34,5 +35,6 @@ interface ApplicationDependencies {
 	val screenDimensions: ProvideScreenDimensions
 	val selectedLibraryIdProvider: ProvideSelectedLibraryId
 	val stringResources: GetStringResources
+	val applicationSettings: HoldApplicationSettings
 }
 

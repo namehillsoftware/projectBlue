@@ -79,14 +79,14 @@ object ApplicationDependenciesContainer {
 
 		private val imageDiskCacheDirectory by lazy { AndroidDiskCacheDirectoryProvider(context, ImageCacheConfiguration) }
 
-		private val applicationSettingsRepository by lazy {
+		override val applicationSettings by lazy {
 			CachingApplicationSettingsRepository(
 				ApplicationSettingsRepository(context, sendApplicationMessages)
 			)
 		}
 
 		override val selectedLibraryIdProvider by lazy {
-			CachedSelectedLibraryIdProvider(SelectedLibraryIdProvider(applicationSettingsRepository))
+			CachedSelectedLibraryIdProvider(SelectedLibraryIdProvider(applicationSettings))
 		}
 
 		override val libraryProvider: ILibraryProvider

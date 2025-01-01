@@ -46,7 +46,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.F
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.BestMatchUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.RemoteFileUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
@@ -101,7 +100,6 @@ import com.lasthopesoftware.bluewater.client.servers.version.LibraryServerVersio
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.CompatibleMediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.uri.StoredFileUriProvider
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSettings
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
@@ -333,10 +331,7 @@ import java.util.concurrent.TimeoutException
 	private val binder by lazy { GenericBinder(this) }
 	private val notificationManager by lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
 	private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
-	private val applicationSettings by lazy { getApplicationSettingsRepository() }
-	private val libraryRepository by lazy { playbackServiceDependencies.libraryProvider }
 	private val playlistVolumeManager by lazy { PlaylistVolumeManager(1.0f) }
-	private val volumeLevelSettings by lazy { VolumeLevelSettings(applicationSettings) }
 
 	private val channelConfiguration by lazy { SharedChannelProperties(this) }
 
@@ -370,7 +365,7 @@ import java.util.concurrent.TimeoutException
 		promisedMediaSession.then { mediaSession ->
 			MediaStyleNotificationSetup(
 				this,
-				NotificationBuilderProducer(this),
+				playbackServiceDependencies.notificationBuilderProducer,
 				playbackNotificationsConfiguration,
 				mediaSession,
 				playbackServiceDependencies.intentBuilder,
@@ -378,7 +373,7 @@ import java.util.concurrent.TimeoutException
 		}
 	}
 
-	private val handlerExecutor by lazy { HandlerExecutor(Handler(mainLooper)) }
+	private val mainLoopHandlerExecutor by lazy { HandlerExecutor(Handler(mainLooper)) }
 
 	private val playbackThread by promisingServiceCloseables.manage(RetryOnRejectionLazyPromise {
 		HandlerThreadCreator
@@ -392,7 +387,7 @@ import java.util.concurrent.TimeoutException
 	private val playbackStartingNotificationBuilder by lazy {
 		PlaybackStartingNotificationBuilder(
 			this,
-			NotificationBuilderProducer(this),
+			playbackServiceDependencies.notificationBuilderProducer,
 			playbackNotificationsConfiguration,
 			playbackServiceDependencies.intentBuilder,
 		)
@@ -418,7 +413,8 @@ import java.util.concurrent.TimeoutException
 	private val pollConnectionServiceProxy by lazy { PollConnectionServiceProxy(this) }
 	private val connectionRegainedListener by lazy { ImmediateResponse<ProvideConnections, Unit> { resetPlaylistManager() } }
 
-	private val onPollingCancelledListener by lazy { ImmediateResponse<Throwable?, Unit> { e ->
+	private val onPollingCancelledListener by lazy {
+		ImmediateResponse<Throwable?, Unit> { e ->
 			if (e is CancellationException) {
 				unregisterListeners()
 				stopSelf(startId)
@@ -427,52 +423,52 @@ import java.util.concurrent.TimeoutException
 	}
 
 	private val nowPlayingRepository by lazy {
-		NowPlayingRepository(
-			getCachedSelectedLibraryIdProvider(),
-			libraryRepository,
-			playbackServiceDependencies.libraryStorage,
-			InMemoryNowPlayingState,
-		)
-	}
-
-	private val revisionProvider by lazy { libraryConnectionDependencies.revisionProvider }
-
-	private val freshLibraryFileProperties by lazy {
-		libraryConnectionDependencies.freshLibraryFileProperties
+		with (playbackServiceDependencies) {
+			NowPlayingRepository(
+				selectedLibraryIdProvider,
+				libraryProvider,
+				libraryStorage,
+				InMemoryNowPlayingState,
+			)
+		}
 	}
 
 	private val libraryFilePropertiesProvider by lazy {
 		libraryConnectionDependencies.libraryFilePropertiesProvider
 	}
 
-	private	val imageProvider by lazy { libraryConnectionDependencies.imageBytesProvider }
+	private val maxFileVolumeProvider by lazy {
+		MaxFileVolumeProvider(
+			VolumeLevelSettings(playbackServiceDependencies.applicationSettings),
+			libraryFilePropertiesProvider
+		)
+	}
 
-	private val urlKeyProvider by lazy { libraryConnectionDependencies.urlKeyProvider }
-
-	private	val promisedMediaNotificationSetup by promisingServiceCloseables.manage(
-        RetryOnRejectionLazyPromise {
+	private	val promisedMediaNotificationSetup by promisingServiceCloseables.manage(RetryOnRejectionLazyPromise {
 		mediaStyleNotificationSetup.then { mediaStyleNotificationSetup ->
-			val notificationBuilder = promisingServiceCloseables.manage(
+			with (libraryConnectionDependencies) {
+				val notificationBuilder = promisingServiceCloseables.manage(
 					NowPlayingNotificationBuilder(
-					this,
-					mediaStyleNotificationSetup,
-					urlKeyProvider,
-					libraryFilePropertiesProvider,
-					imageProvider
+						this@PlaybackService,
+						mediaStyleNotificationSetup,
+						urlKeyProvider,
+						libraryFilePropertiesProvider,
+						imageBytesProvider
+					)
 				)
-			)
 
-			promisingServiceCloseables.manage(
-				PlaybackNotificationBroadcaster(
-					nowPlayingRepository,
-					applicationMessageBus,
-					urlKeyProvider,
-					notificationController,
-					playbackNotificationsConfiguration,
-					notificationBuilder,
-					playbackStartingNotificationBuilder,
+				promisingServiceCloseables.manage(
+					PlaybackNotificationBroadcaster(
+						nowPlayingRepository,
+						applicationMessageBus,
+						urlKeyProvider,
+						notificationController,
+						playbackNotificationsConfiguration,
+						notificationBuilder,
+						playbackStartingNotificationBuilder,
+					)
 				)
-			)
+			}
 		}
 	})
 
@@ -503,7 +499,7 @@ import java.util.concurrent.TimeoutException
 		val audioCache = DiskFileCache(this, audioDiskCacheDirectoryProvider, AudioCacheConfiguration, audioCacheStreamSupplier, audioCacheFilesProvider, diskFileAccessTimeUpdater)
 		val storedFileAccess = StoredFileAccess(this)
 		BestMatchUriProvider(
-			libraryRepository,
+			playbackServiceDependencies.libraryProvider,
 			StoredFileUriProvider(
 				storedFileAccess,
 				arbitratorForOs,
@@ -521,60 +517,68 @@ import java.util.concurrent.TimeoutException
 	private val updatePlayStatsOnPlaybackCompletedReceiver = lazy {
 		promisingServiceCloseables.manage(
 			UpdatePlayStatsOnPlaybackCompletedReceiver(
-				LibraryPlaystatsUpdateSelector(
-					LibraryServerVersionProvider(libraryConnectionProvider),
-					PlayedFilePlayStatsUpdater(libraryConnectionProvider),
-					FilePropertiesPlayStatsUpdater(
-						freshLibraryFileProperties,
-						FilePropertyStorage(
-							libraryConnectionProvider,
-							ConnectionAuthenticationChecker(libraryConnectionProvider),
-							revisionProvider,
-							FilePropertyCache,
-							applicationMessageBus
+				libraryConnectionDependencies.run {
+					LibraryPlaystatsUpdateSelector(
+						LibraryServerVersionProvider(libraryConnectionProvider),
+						PlayedFilePlayStatsUpdater(libraryConnectionProvider),
+						FilePropertiesPlayStatsUpdater(
+							freshLibraryFileProperties,
+							FilePropertyStorage(
+								libraryConnectionProvider,
+								ConnectionAuthenticationChecker(libraryConnectionProvider),
+								revisionProvider,
+								FilePropertyCache,
+								applicationMessageBus
+							),
 						),
-					),
-				),
+					)
+				},
 				this,
 			)
 		)
 	}
 
+	private val mediaSourceProvider by lazy {
+		MediaSourceProvider(
+			this,
+			DiskFileCacheSourceFactory(
+				HttpDataSourceFactoryProvider(
+					this,
+					guaranteedLibraryConnectionProvider,
+					OkHttpFactory
+				),
+				audioCacheStreamSupplier
+			),
+			guaranteedLibraryConnectionProvider,
+		)
+	}
+
 	private val playlistPlaybackBootstrapper by lazy { promisingServiceCloseables.manage(PlaylistPlaybackBootstrapper(playlistVolumeManager)) }
 
-	private val promisedPlaybackServices = RetryOnRejectionLazyPromise {
-		// Call the value to initialize the lazy promise
-		val hotPromisedMediaNotificationSetup = promisedMediaNotificationSetup
-
-		val httpDataSourceFactory = HttpDataSourceFactoryProvider(
-			this,
-			guaranteedLibraryConnectionProvider,
-			OkHttpFactory
-		)
-
-		val promisingPlaybackEngineCloseables = promisingServiceCloseables.createNestedManager()
-
-		val promisedEngine = playbackThread
+	private val promisedPreparationSourceProvider by RetryOnRejectionLazyPromise {
+		playbackThread
 			.then { h -> Handler(h.looper) }
 			.then { ph ->
 				MaxFileVolumePreparationProvider(
 					ExoPlayerPlayableFilePreparationSourceProvider(
 						this,
 						ph,
-						handlerExecutor,
-						MediaSourceProvider(
-							this,
-							DiskFileCacheSourceFactory(
-								httpDataSourceFactory,
-								audioCacheStreamSupplier
-							),
-							guaranteedLibraryConnectionProvider,
-						),
+						mainLoopHandlerExecutor,
+						mediaSourceProvider,
 						bestMatchUriProvider
 					),
-					MaxFileVolumeProvider(volumeLevelSettings, libraryFilePropertiesProvider)
+					maxFileVolumeProvider
 				)
 			}
+	}
+
+	private val promisedPlaybackServices = RetryOnRejectionLazyPromise {
+		// Call the value to initialize the lazy promise
+		val hotPromisedMediaNotificationSetup = promisedMediaNotificationSetup
+
+		val promisingPlaybackEngineCloseables = promisingServiceCloseables.createNestedManager()
+
+		val promisedEngine = promisedPreparationSourceProvider
 			.then { preparationSourceProvider ->
 				promisingPlaybackEngineCloseables.manage(
 					PreparedPlaybackQueueResourceManagement(preparationSourceProvider, preparationSourceProvider)
@@ -733,7 +737,7 @@ import java.util.concurrent.TimeoutException
 									getText(R.string.lbl_song_added_to_now_playing),
 									Toast.LENGTH_SHORT
 								).show()
-							}, handlerExecutor)
+							}, mainLoopHandlerExecutor)
 						}
 				}
 				is PlaybackEngineAction.RemoveFileAtPosition -> {
@@ -1116,9 +1120,11 @@ import java.util.concurrent.TimeoutException
 			)
 		}
 
+		val notificationBuilderProducer by lazy { NotificationBuilderProducer(playbackService) }
+
 		override val libraryConnectionProvider by lazy {
 			NotifyingLibraryConnectionProvider(
-				NotificationBuilderProducer(playbackService),
+				notificationBuilderProducer,
 				inner.connectionSessions,
 				connectionNotificationsConfiguration,
 				playbackService.notificationController,
