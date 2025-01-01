@@ -35,6 +35,11 @@ fun <T> Promise<T>.toState(initialValue: T): State<T> = produceState(initialValu
 	value = suspend()
 }
 
+@Composable
+fun <T> Promise<T>.toState(initialValue: T, key1: Any?): State<T> = produceState(initialValue, key1) {
+	value = suspend()
+}
+
 suspend fun <T> Promise<T>.suspend(): T = suspendCancellableCoroutine { d ->
 	d.invokeOnCancellation { cancel() }
 

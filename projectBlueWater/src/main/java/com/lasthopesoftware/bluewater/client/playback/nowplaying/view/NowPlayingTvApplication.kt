@@ -64,7 +64,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.ProjectBlueApplication
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.RateLimitedFilePropertiesDependencies
 import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ReusedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
@@ -72,6 +71,7 @@ import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSettingsScreen
@@ -87,7 +87,9 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScree
 import com.lasthopesoftware.bluewater.client.browsing.navigation.RoutedNavigationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SelectedLibraryReRouter
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
-import com.lasthopesoftware.bluewater.client.connection.libraries.RetryingConnectionApplicationDependencies
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
+import com.lasthopesoftware.bluewater.client.connection.libraries.RateLimitedFilePropertiesDependencies
+import com.lasthopesoftware.bluewater.client.connection.libraries.RetryingLibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
@@ -116,6 +118,7 @@ import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toState
 import com.namehillsoftware.handoff.promises.Promise
 import dev.olshevski.navigation.reimagined.NavController
 import dev.olshevski.navigation.reimagined.NavHost
@@ -129,7 +132,15 @@ private val logger by lazyLogger<ProjectBlueApplication>()
 @ExperimentalFoundationApi
 @Composable
 fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedViewModelDependencies) {
+	val isLibraryConnectionHealthy by browserViewDependencies
+		.connectionStatusViewModel
+		.initializeConnection(libraryId)
+		.toState(false, libraryId)
+
+	if (!isLibraryConnectionHealthy) return
+
 	val context = LocalContext.current
+
 	LaunchedEffect(key1 = libraryId) {
 		with (browserViewDependencies) {
 			try {
@@ -695,7 +706,7 @@ fun NowPlayingTvApplication(
 	}
 
 	val connectionStatusViewModel = viewModel {
-		with (RetryingConnectionApplicationDependencies(entryDependencies)) {
+		with (entryDependencies) {
 			ConnectionStatusViewModel(
 				stringResources,
 				DramaticConnectionInitializationController(
@@ -719,10 +730,14 @@ fun NowPlayingTvApplication(
 		)
 	}
 
-	val libraryConnectedDependencies = remember {
+	val libraryConnectionDependencies = remember {
 		RateLimitedFilePropertiesDependencies(
 			routedNavigationDependencies,
 			RateLimitingExecutionPolicy(1),
+			RetryingLibraryConnectionRegistry(
+				routedNavigationDependencies,
+				LibraryConnectionRegistry(routedNavigationDependencies),
+			),
 		)
 	}
 
@@ -730,7 +745,8 @@ fun NowPlayingTvApplication(
 	val reusedViewModelDependencies = remember {
 		ReusedViewModelRegistry(
 			routedNavigationDependencies,
-			libraryConnectedDependencies,
+			libraryConnectionDependencies,
+			LibraryFilePropertiesDependentsRegistry(routedNavigationDependencies, libraryConnectionDependencies),
 			viewModelStoreOwner
 		)
 	}
@@ -797,8 +813,7 @@ fun NowPlayingTvApplication(
 				}
 				is ApplicationSettingsScreen -> {
 					Box(
-						modifier = Modifier
-							.fillMaxSize()
+						modifier = Modifier.fillMaxSize()
 					) {
 						TvApplicationSettingsView(
 							applicationSettingsViewModel = routedNavigationDependencies.applicationSettingsViewModel,

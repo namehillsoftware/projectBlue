@@ -22,7 +22,6 @@ import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.ExoPlaybackException
 import com.lasthopesoftware.bluewater.ApplicationDependencies
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
-import com.lasthopesoftware.bluewater.LibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.intents.getIntent
 import com.lasthopesoftware.bluewater.android.intents.makePendingIntentImmutable
@@ -37,6 +36,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.disk.AndroidD
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.DiskFileAccessTimeUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.DiskFileCachePersistence
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.DiskFileCacheStreamSupplier
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlayStatsOnPlaybackCompletedReceiver
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.factory.LibraryPlaystatsUpdateSelector
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
@@ -50,6 +50,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
@@ -399,7 +400,9 @@ import java.util.concurrent.TimeoutException
 
 	private val libraryConnectionDependencies by lazy { LibraryConnectionRegistry(playbackServiceDependencies) }
 
-	private val guaranteedLibraryConnectionProvider by lazy { playbackServiceDependencies.guaranteedLibraryConnectionProvider }
+	private val libraryFilePropertiesDependents by lazy {
+		LibraryFilePropertiesDependentsRegistry(playbackServiceDependencies, libraryConnectionDependencies)
+	}
 
 	private val diskFileAccessTimeUpdater by lazy { DiskFileAccessTimeUpdater(this) }
 	private val audioDiskCacheDirectoryProvider by lazy { AndroidDiskCacheDirectoryProvider(this, AudioCacheConfiguration) }
@@ -453,7 +456,7 @@ import java.util.concurrent.TimeoutException
 						mediaStyleNotificationSetup,
 						urlKeyProvider,
 						libraryFilePropertiesProvider,
-						imageBytesProvider
+						libraryFilePropertiesDependents.imageBytesProvider
 					)
 				)
 
@@ -544,12 +547,12 @@ import java.util.concurrent.TimeoutException
 			DiskFileCacheSourceFactory(
 				HttpDataSourceFactoryProvider(
 					this,
-					guaranteedLibraryConnectionProvider,
+					playbackServiceDependencies.guaranteedLibraryConnectionProvider,
 					OkHttpFactory
 				),
 				audioCacheStreamSupplier
 			),
-			guaranteedLibraryConnectionProvider,
+			playbackServiceDependencies.guaranteedLibraryConnectionProvider,
 		)
 	}
 
@@ -558,11 +561,11 @@ import java.util.concurrent.TimeoutException
 	private val promisedPreparationSourceProvider by RetryOnRejectionLazyPromise {
 		playbackThread
 			.then { h -> Handler(h.looper) }
-			.then { ph ->
+			.then { playbackHandler ->
 				MaxFileVolumePreparationProvider(
 					ExoPlayerPlayableFilePreparationSourceProvider(
 						this,
-						ph,
+						playbackHandler,
 						mainLoopHandlerExecutor,
 						mediaSourceProvider,
 						bestMatchUriProvider

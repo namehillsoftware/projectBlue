@@ -5,7 +5,8 @@ import android.content.Intent
 import android.support.v4.media.session.MediaSessionCompat
 import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
-import com.lasthopesoftware.bluewater.LibraryConnectionRegistry
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.InMemoryNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
@@ -19,6 +20,10 @@ import java.util.concurrent.TimeUnit
 
 	private val lazyMediaSession = lazy {
 		val libraryConnectionDependencies = LibraryConnectionRegistry(applicationDependencies)
+		val libraryFilePropertiesDependents = LibraryFilePropertiesDependentsRegistry(
+			applicationDependencies,
+			libraryConnectionDependencies
+		)
 
 		val newMediaSession = MediaSessionCompat(this, MediaSessionConstants.mediaSessionTag)
 
@@ -39,7 +44,7 @@ import java.util.concurrent.TimeUnit
 					InMemoryNowPlayingState,
 				),
 				libraryConnectionDependencies.libraryFilePropertiesProvider,
-				libraryConnectionDependencies.imageBytesProvider,
+				libraryFilePropertiesDependents.imageBytesProvider,
 				MediaSessionController(newMediaSession),
 				registerForApplicationMessages,
 			)
