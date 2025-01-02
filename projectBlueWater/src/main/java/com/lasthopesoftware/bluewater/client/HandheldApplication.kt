@@ -16,7 +16,6 @@ import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -44,7 +43,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSett
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
-import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationRoutingNavigation
+import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationGraphNavigation
 import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.HiddenSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryDestination
@@ -77,7 +76,6 @@ import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
-import com.lasthopesoftware.promises.extensions.toState
 import com.namehillsoftware.handoff.promises.Promise
 import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.rememberNavController
@@ -173,16 +171,8 @@ private fun BrowserLibraryDestination.Navigate(
 	scaffoldState: BottomSheetScaffoldState,
 ) {
 	with(browserViewDependencies) {
-		val selectedLibraryId by selectedLibraryViewModel.selectedLibraryId.collectAsState()
+		val selectedLibraryId by selectedLibraryViewModel.selectedLibraryId.subscribeAsState()
 		val isSelectedLibrary by remember { derivedStateOf { selectedLibraryId == libraryId } }
-
-		if (isSelectedLibrary) {
-			val isLibraryConnectionHealthy by connectionStatusViewModel
-				.initializeConnection(libraryId)
-				.toState(false, libraryId)
-
-			if (!isLibraryConnectionHealthy) return
-		}
 
 		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 		BottomSheetScaffold(
@@ -317,9 +307,9 @@ fun HandheldApplication(
 	val coroutineScope = rememberCoroutineScope()
 
 	val bottomSheetState = scaffoldState.bottomSheetState
-	val destinationRoutingNavigation = remember(navController, coroutineScope, bottomSheetState) {
+	val destinationGraphNavigation = remember(navController, coroutineScope, bottomSheetState) {
 		BottomSheetHidingNavigation(
-			DestinationRoutingNavigation(
+			DestinationGraphNavigation(
 				entryDependencies.applicationNavigation,
 				navController,
 				coroutineScope,
@@ -337,16 +327,15 @@ fun HandheldApplication(
 				stringResources,
 				DramaticConnectionInitializationController(
 					connectionSessions,
-					destinationRoutingNavigation,
 				),
 			)
 		}
 	}
 
-	val routedNavigationDependencies = remember(destinationRoutingNavigation, connectionStatusViewModel, navController) {
+	val routedNavigationDependencies = remember(destinationGraphNavigation, connectionStatusViewModel, navController) {
 		RoutedNavigationDependencies(
 			entryDependencies,
-			destinationRoutingNavigation,
+			destinationGraphNavigation,
 			connectionStatusViewModel,
 			navController,
 			initialDestination

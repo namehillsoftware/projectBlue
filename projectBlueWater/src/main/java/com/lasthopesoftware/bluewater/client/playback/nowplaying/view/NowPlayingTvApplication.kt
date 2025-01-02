@@ -78,7 +78,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSett
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
-import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationRoutingNavigation
+import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationGraphNavigation
 import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.HiddenSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryDestination
@@ -118,7 +118,6 @@ import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
-import com.lasthopesoftware.promises.extensions.toState
 import com.namehillsoftware.handoff.promises.Promise
 import dev.olshevski.navigation.reimagined.NavController
 import dev.olshevski.navigation.reimagined.NavHost
@@ -132,13 +131,6 @@ private val logger by lazyLogger<ProjectBlueApplication>()
 @ExperimentalFoundationApi
 @Composable
 fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedViewModelDependencies) {
-	val isLibraryConnectionHealthy by browserViewDependencies
-		.connectionStatusViewModel
-		.initializeConnection(libraryId)
-		.toState(false, libraryId)
-
-	if (!isLibraryConnectionHealthy) return
-
 	val context = LocalContext.current
 
 	LaunchedEffect(key1 = libraryId) {
@@ -694,9 +686,9 @@ fun NowPlayingTvApplication(
 
 	val coroutineScope = rememberCoroutineScope()
 
-	val destinationRoutingNavigation = remember {
+	val destinationGraphNavigation = remember {
 		SkipNowPlayingNavigation(
-			DestinationRoutingNavigation(
+			DestinationGraphNavigation(
 				entryDependencies.applicationNavigation,
 				navController,
 				coroutineScope,
@@ -711,7 +703,6 @@ fun NowPlayingTvApplication(
 				stringResources,
 				DramaticConnectionInitializationController(
 					connectionSessions,
-					destinationRoutingNavigation,
 				),
 			)
 		}
@@ -721,7 +712,7 @@ fun NowPlayingTvApplication(
 		NowPlayingDependencies(
 			RoutedNavigationDependencies(
 				entryDependencies,
-				destinationRoutingNavigation,
+				destinationGraphNavigation,
 				connectionStatusViewModel,
 				navController,
 				initialDestination

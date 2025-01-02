@@ -76,7 +76,6 @@ import java.io.IOException
 			localApplicationDependencies.stringResources,
 			DramaticConnectionInitializationController(
 				localApplicationDependencies.connectionSessions,
-				activityApplicationNavigation,
             ),
 		)
 	}

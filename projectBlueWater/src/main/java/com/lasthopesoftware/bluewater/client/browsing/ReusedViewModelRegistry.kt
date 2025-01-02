@@ -99,7 +99,6 @@ class ReusedViewModelRegistry(
 			stringResources,
 			DramaticConnectionInitializationController(
 				connectionSessions,
-				applicationNavigation,
 			),
 		)
 	}

@@ -3,20 +3,19 @@ package com.lasthopesoftware.bluewater.client.browsing.library.access.session
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
+import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.namehillsoftware.handoff.promises.Promise
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 class SelectedLibraryViewModel(
 	private val selectedLibraryIdProvider: ProvideSelectedLibraryId,
 	private val libraryBrowserSelection: SelectBrowserLibrary,
-) : ViewModel() {
+) : ViewModel(), TrackSelectedLibrary {
 
-	private val mutableSelectedLibraryId = MutableStateFlow<LibraryId?>(null)
+	private val mutableSelectedLibraryId = MutableInteractionState<LibraryId?>(null)
 
-	val selectedLibraryId = mutableSelectedLibraryId.asStateFlow()
+	override val selectedLibraryId = mutableSelectedLibraryId.asInteractionState()
 
-	fun loadSelectedLibraryId(): Promise<LibraryId?> =
+	override fun loadSelectedLibraryId(): Promise<LibraryId?> =
 		selectedLibraryIdProvider
 			.promiseSelectedLibraryId()
 			.then { it ->
@@ -24,7 +23,7 @@ class SelectedLibraryViewModel(
 				it
 			}
 
-	fun selectLibrary(libraryId: LibraryId): Promise<LibraryId> =
+	override fun selectLibrary(libraryId: LibraryId): Promise<LibraryId> =
 		libraryBrowserSelection
 			.selectBrowserLibrary(libraryId)
 			.then { it ->

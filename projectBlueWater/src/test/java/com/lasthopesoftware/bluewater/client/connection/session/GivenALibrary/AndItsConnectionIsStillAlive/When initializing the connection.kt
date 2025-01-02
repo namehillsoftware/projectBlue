@@ -30,7 +30,6 @@ class `When initializing the connection` {
                     every { promiseIsConnectionActive(LibraryId(libraryId)) } returns true.toPromise()
                     every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
                 },
-				mockk(),
             )
 		)
 	}

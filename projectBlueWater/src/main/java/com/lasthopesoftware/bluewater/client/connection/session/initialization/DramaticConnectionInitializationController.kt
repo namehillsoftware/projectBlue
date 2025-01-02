@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.connection.session.initialization
 
-import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
@@ -10,8 +9,8 @@ import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.PromiseDelay
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
-import com.lasthopesoftware.promises.extensions.toPromise
 import org.joda.time.Duration
+import kotlin.coroutines.cancellation.CancellationException
 
 private val dramaticPause by lazy { Duration.standardSeconds(2).plus(Duration.millis(500)) }
 private val logger by lazyLogger<DramaticConnectionInitializationController>()
@@ -22,7 +21,6 @@ there will be no dramatic pause.
  */
 class DramaticConnectionInitializationController(
 	private val manageConnectionSessions: ManageConnectionSessions,
-	private val applicationNavigation: NavigateApplication,
 ) : ProvideLibraryConnections {
 
 	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> =
@@ -47,21 +45,19 @@ class DramaticConnectionInitializationController(
 								}
 						}
 					}
-					.eventually(
+					.then(
 						{ c ->
-							if (c == null) {
+							if (c == null)
 								manageConnectionSessions.removeConnection(libraryId)
-								applicationNavigation
-									.viewApplicationSettings()
-									.also(::doCancel)
-									.then({ _ -> null }, { null })
-							} else {
-								c.toPromise()
-							}
+
+							c
 						},
 						{  e ->
 							logger.error("An error occurred getting the connection for library ID ${libraryId.id}.", e)
-							applicationNavigation.viewApplicationSettings().then({ _ -> null }, { null })
+
+							if (e !is CancellationException) manageConnectionSessions.removeConnection(libraryId)
+
+							null
 						}
 					)
 					.then(::resolve, ::reject)
