@@ -1,15 +1,10 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.access
 
-import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRevisions
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.policies.caching.CachePromiseFunctions
 import com.lasthopesoftware.policies.caching.LruPromiseCache
 import com.namehillsoftware.handoff.promises.Promise
@@ -21,23 +16,7 @@ class CachedItemFileProvider(
 ) : ProvideItemFiles {
 
 	companion object {
-
 		private val companionCache = LruPromiseCache<Pair<Triple<LibraryId, ItemId?, FileListParameters.Options>, Int>, List<ServiceFile>>(10)
-
-		fun getInstance(context: Context): CachedItemFileProvider {
-			val libraryConnectionProvider = context.buildNewConnectionSessionManager()
-
-			return CachedItemFileProvider(
-				ItemFileProvider(
-					ItemStringListProvider(
-						FileListParameters,
-						LibraryFileStringListProvider(libraryConnectionProvider),
-					)
-				),
-				LibraryRevisionProvider(libraryConnectionProvider),
-				companionCache
-			)
-		}
 	}
 
 	override fun promiseFiles(libraryId: LibraryId, itemId: ItemId?, options: FileListParameters.Options): Promise<List<ServiceFile>> =

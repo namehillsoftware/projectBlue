@@ -4,17 +4,28 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryViewModel
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.TrackSelectedLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 
 class LibrarySelectionNavigation(
 	private val inner: NavigateApplication,
-	private val selectedLibraryViewModel: SelectedLibraryViewModel,
+	private val selectedLibraryViewModel: TrackSelectedLibrary,
+	private val connectionStatus: TrackConnectionStatus,
 ) : NavigateApplication by inner {
 	override fun viewLibrary(libraryId: LibraryId): Promise<Unit> =
-		selectConnection(libraryId) { inner.viewLibrary(libraryId) }
+		selectConnection(libraryId) { id ->
+			Promise.Proxy { cp ->
+				connectionStatus
+					.initializeConnection(id)
+					.also(cp::doCancel)
+					.eventually {
+						if (it) inner.viewLibrary(id)
+						else inner.viewApplicationSettings()
+					}
+			}
+		}
 
 	override fun viewItem(libraryId: LibraryId, item: IItem): Promise<Unit> =
 		selectConnection(libraryId) { inner.viewItem(libraryId, item) }

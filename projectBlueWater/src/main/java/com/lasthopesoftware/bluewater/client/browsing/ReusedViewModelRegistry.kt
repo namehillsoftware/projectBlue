@@ -3,8 +3,9 @@ package com.lasthopesoftware.bluewater.client.browsing
 import androidx.lifecycle.ViewModelStoreOwner
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependents
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistsStorage
-import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionDependencies
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionDependents
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
@@ -18,13 +19,15 @@ import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBu
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 
 class ReusedViewModelRegistry(
-	entryDependencies: EntryDependencies,
-	libraryConnectionDependencies: LibraryConnectionDependencies,
-	viewModelStoreOwner: ViewModelStoreOwner
+    entryDependencies: EntryDependencies,
+    libraryConnectionDependents: LibraryConnectionDependents,
+	libraryFilePropertiesDependents: LibraryFilePropertiesDependents,
+    viewModelStoreOwner: ViewModelStoreOwner
 ) :
 	ReusedViewModelDependencies,
 	EntryDependencies by entryDependencies,
-	LibraryConnectionDependencies by libraryConnectionDependencies
+	LibraryConnectionDependents by libraryConnectionDependents,
+	LibraryFilePropertiesDependents by libraryFilePropertiesDependents
 {
 	override val nowPlayingCoverArtViewModel by viewModelStoreOwner.buildViewModelLazily {
 		NowPlayingCoverArtViewModel(
@@ -96,7 +99,6 @@ class ReusedViewModelRegistry(
 			stringResources,
 			DramaticConnectionInitializationController(
 				connectionSessions,
-				applicationNavigation,
 			),
 		)
 	}

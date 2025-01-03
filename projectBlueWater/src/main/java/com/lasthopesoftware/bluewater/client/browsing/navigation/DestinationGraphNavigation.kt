@@ -20,7 +20,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class DestinationRoutingNavigation(
+class DestinationGraphNavigation(
     private val inner: NavigateApplication,
     private val navController: NavController<Destination>,
     private val coroutineScope: CoroutineScope,

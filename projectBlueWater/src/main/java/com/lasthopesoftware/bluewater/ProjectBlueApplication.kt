@@ -20,6 +20,7 @@ import ch.qos.logback.core.rolling.RollingFileAppender
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy
 import ch.qos.logback.core.util.StatusPrinter
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup

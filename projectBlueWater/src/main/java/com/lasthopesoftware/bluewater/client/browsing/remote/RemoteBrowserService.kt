@@ -5,9 +5,11 @@ import android.support.v4.media.MediaBrowserCompat
 import androidx.media.MediaBrowserServiceCompat
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.RateLimitedFilePropertiesDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
+import com.lasthopesoftware.bluewater.client.connection.libraries.RateLimitedFilePropertiesDependencies
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.InMemoryNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
@@ -54,14 +56,19 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 	private val libraryConnectionDependencies by lazy {
 		RateLimitedFilePropertiesDependencies(
 			applicationDependencies,
-			RateLimitingExecutionPolicy(max(Runtime.getRuntime().availableProcessors() - 1, 1))
+			RateLimitingExecutionPolicy(max(Runtime.getRuntime().availableProcessors() - 1, 1)),
+			LibraryConnectionRegistry(applicationDependencies),
 		)
+	}
+
+	private val libraryFilePropertiesDependents by lazy {
+		LibraryFilePropertiesDependentsRegistry(applicationDependencies, libraryConnectionDependencies)
 	}
 
 	private val mediaItemServiceFileLookup by lazy {
 		MediaItemServiceFileLookup(
 			libraryConnectionDependencies.libraryFilePropertiesProvider,
-			libraryConnectionDependencies.imageBytesProvider,
+			libraryFilePropertiesDependents.imageBytesProvider,
 		)
 	}
 

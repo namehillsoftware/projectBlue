@@ -35,7 +35,6 @@ class `When initializing the connection twice` {
 						ProgressingPromise(FakeConnectionProvider())
 					)
                 },
-                mockk(),
             )
 		)
 	}

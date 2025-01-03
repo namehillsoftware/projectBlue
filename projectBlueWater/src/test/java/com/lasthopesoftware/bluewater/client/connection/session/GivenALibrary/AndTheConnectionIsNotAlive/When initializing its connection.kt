@@ -29,12 +29,6 @@ class `when initializing its connection` {
 					every { promiseIsConnectionActive(LibraryId(libraryId)) } returns false.toPromise()
 					every { promiseTestedLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
                 },
-				mockk {
-					every { viewApplicationSettings() } answers {
-						isSettingsLaunched = true
-						Unit.toPromise()
-					}
-				},
             )
 		)
 	}

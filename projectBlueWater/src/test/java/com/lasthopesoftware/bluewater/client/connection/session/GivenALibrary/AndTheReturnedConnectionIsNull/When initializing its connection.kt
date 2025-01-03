@@ -24,19 +24,13 @@ class `when initializing its connection` {
 		Pair(
 			deferredProgressingPromise,
 			DramaticConnectionInitializationController(
-				mockk {
-					every { removeConnection(LibraryId(libraryId)) } answers {
-						isConnectionRemoved = true
-					}
-					every { promiseIsConnectionActive(LibraryId(libraryId)) } returns true.toPromise()
-					every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
-				},
-				mockk {
-					every { viewApplicationSettings() } answers {
-						isSettingsLaunched = true
-						Unit.toPromise()
-					}
-				},
+                mockk {
+                    every { removeConnection(LibraryId(libraryId)) } answers {
+                        isConnectionRemoved = true
+                    }
+                    every { promiseIsConnectionActive(LibraryId(libraryId)) } returns true.toPromise()
+                    every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
+                },
             )
 		)
 	}
@@ -44,7 +38,6 @@ class `when initializing its connection` {
 	private var isConnectionRemoved = false
 	private val recordedUpdates = mutableListOf<BuildingConnectionStatus>()
 	private var initializedConnection: ProvideConnections? = null
-	private var isSettingsLaunched = false
 
 	@BeforeAll
 	fun act() {
@@ -73,11 +66,6 @@ class `when initializing its connection` {
 	@Test
 	fun `then the connection is not initialized`() {
 		assertThat(initializedConnection).isNull()
-	}
-
-	@Test
-	fun `then the settings are launched`() {
-		assertThat(isSettingsLaunched).isTrue
 	}
 
 	@Test

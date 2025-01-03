@@ -16,7 +16,6 @@ import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -29,13 +28,13 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.ProjectBlueApplication
-import com.lasthopesoftware.bluewater.RateLimitedFilePropertiesDependencies
 import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ReusedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -44,7 +43,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSett
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
-import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationRoutingNavigation
+import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationGraphNavigation
 import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.HiddenSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryDestination
@@ -55,7 +54,10 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScree
 import com.lasthopesoftware.bluewater.client.browsing.navigation.RoutedNavigationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SelectedLibraryReRouter
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
-import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionDependencies
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionDependents
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
+import com.lasthopesoftware.bluewater.client.connection.libraries.RateLimitedFilePropertiesDependencies
+import com.lasthopesoftware.bluewater.client.connection.libraries.RetryingLibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
@@ -165,11 +167,11 @@ private val bottomSheetElevation = 16.dp
 @Composable
 private fun BrowserLibraryDestination.Navigate(
 	browserViewDependencies: ScopedViewModelDependencies,
-	libraryConnectionDependencies: LibraryConnectionDependencies,
+	libraryConnectionDependencies: LibraryConnectionDependents,
 	scaffoldState: BottomSheetScaffoldState,
 ) {
 	with(browserViewDependencies) {
-		val selectedLibraryId by selectedLibraryViewModel.selectedLibraryId.collectAsState()
+		val selectedLibraryId by selectedLibraryViewModel.selectedLibraryId.subscribeAsState()
 		val isSelectedLibrary by remember { derivedStateOf { selectedLibraryId == libraryId } }
 
 		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
@@ -213,7 +215,7 @@ private fun BrowserLibraryDestination.Navigate(
 @OptIn(ExperimentalFoundationApi::class)
 fun LibraryDestination.Navigate(
 	browserViewDependencies: ScopedViewModelDependencies,
-	libraryConnectionDependencies: LibraryConnectionDependencies,
+	libraryConnectionDependencies: LibraryConnectionDependents,
 	scaffoldState: BottomSheetScaffoldState,
 ) {
 	with(browserViewDependencies) {
@@ -305,9 +307,9 @@ fun HandheldApplication(
 	val coroutineScope = rememberCoroutineScope()
 
 	val bottomSheetState = scaffoldState.bottomSheetState
-	val destinationRoutingNavigation = remember(navController, coroutineScope, bottomSheetState) {
+	val destinationGraphNavigation = remember(navController, coroutineScope, bottomSheetState) {
 		BottomSheetHidingNavigation(
-			DestinationRoutingNavigation(
+			DestinationGraphNavigation(
 				entryDependencies.applicationNavigation,
 				navController,
 				coroutineScope,
@@ -320,19 +322,20 @@ fun HandheldApplication(
 	}
 
 	val connectionStatusViewModel = viewModel {
-		ConnectionStatusViewModel(
-			entryDependencies.stringResources,
-			DramaticConnectionInitializationController(
-				entryDependencies.connectionSessions,
-				destinationRoutingNavigation,
-			),
-		)
+		with (entryDependencies) {
+			ConnectionStatusViewModel(
+				stringResources,
+				DramaticConnectionInitializationController(
+					connectionSessions,
+				),
+			)
+		}
 	}
 
-	val routedNavigationDependencies = remember(destinationRoutingNavigation, connectionStatusViewModel, navController) {
+	val routedNavigationDependencies = remember(destinationGraphNavigation, connectionStatusViewModel, navController) {
 		RoutedNavigationDependencies(
 			entryDependencies,
-			destinationRoutingNavigation,
+			destinationGraphNavigation,
 			connectionStatusViewModel,
 			navController,
 			initialDestination
@@ -343,6 +346,10 @@ fun HandheldApplication(
 		RateLimitedFilePropertiesDependencies(
 			routedNavigationDependencies,
 			RateLimitingExecutionPolicy(1),
+			RetryingLibraryConnectionRegistry(
+				routedNavigationDependencies,
+				LibraryConnectionRegistry(routedNavigationDependencies),
+			),
 		)
 	}
 
@@ -351,6 +358,7 @@ fun HandheldApplication(
 		ReusedViewModelRegistry(
 			routedNavigationDependencies,
 			libraryConnectionDependencies,
+			LibraryFilePropertiesDependentsRegistry(routedNavigationDependencies, libraryConnectionDependencies),
 			viewModelStoreOwner
 		)
 	}
@@ -424,19 +432,21 @@ fun HandheldApplication(
 					}
 				}
 				is ApplicationSettingsScreen -> {
-					Box(
-						modifier = Modifier
-							.fillMaxSize()
-							.padding(systemBarsPadding)
-					) {
-						ApplicationSettingsView(
-							applicationSettingsViewModel = routedNavigationDependencies.applicationSettingsViewModel,
-							applicationNavigation = routedNavigationDependencies.applicationNavigation,
-							playbackService = routedNavigationDependencies.playbackServiceController,
-						)
-					}
+					routedNavigationDependencies.apply {
+						Box(
+							modifier = Modifier
+								.fillMaxSize()
+								.padding(systemBarsPadding)
+						) {
+							ApplicationSettingsView(
+								applicationSettingsViewModel = applicationSettingsViewModel,
+								applicationNavigation = applicationNavigation,
+								playbackService = playbackServiceController,
+							)
+						}
 
-					routedNavigationDependencies.applicationSettingsViewModel.loadSettings()
+						applicationSettingsViewModel.loadSettings()
+					}
 				}
 				is NewConnectionSettingsScreen -> {
 					LocalViewModelStoreOwner.current

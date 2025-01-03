@@ -3,14 +3,15 @@ package com.lasthopesoftware.bluewater.client.browsing.navigation
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.LibrarySelectionNavigation
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import dev.olshevski.navigation.reimagined.NavController
 
 class RoutedNavigationDependencies(
 	inner: EntryDependencies,
-	graphNavigation: NavigateApplication,
-	override val libraryConnectionProvider: ProvideLibraryConnections,
+	innerNavigation: NavigateApplication,
+	connectionStatusViewModel: ConnectionStatusViewModel,
 	navController: NavController<Destination>,
 	initialDestination: Destination?
 ) : EntryDependencies by inner, AutoCloseable {
@@ -20,8 +21,9 @@ class RoutedNavigationDependencies(
 		closeableManager.manage(
             DestinationApplicationNavigation(
                 LibrarySelectionNavigation(
-					graphNavigation,
+					innerNavigation,
 					selectedLibraryViewModel,
+					connectionStatusViewModel,
                 ),
                 navController,
                 navigationMessages,
@@ -29,6 +31,8 @@ class RoutedNavigationDependencies(
             )
 		)
 	}
+
+	override val libraryConnectionProvider: ProvideLibraryConnections = connectionStatusViewModel
 
 	override fun close() {
 		closeableManager.close()

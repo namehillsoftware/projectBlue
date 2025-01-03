@@ -16,7 +16,21 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibrarySto
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.connection.PacketSender
+import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
+import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
+import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
+import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsValidation
+import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester
+import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
+import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
+import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
@@ -27,9 +41,13 @@ import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
+import com.lasthopesoftware.resources.network.ActiveNetworkFinder
+import com.lasthopesoftware.resources.strings.Base64Encoder
 import com.lasthopesoftware.resources.strings.StringResources
 
 object ApplicationDependenciesContainer {
+
+	private val connectionsRepository by lazy { PromisedConnectionsRepository() }
 
 	private val sync = Any()
 
@@ -61,14 +79,14 @@ object ApplicationDependenciesContainer {
 
 		private val imageDiskCacheDirectory by lazy { AndroidDiskCacheDirectoryProvider(context, ImageCacheConfiguration) }
 
-		private val applicationSettingsRepository by lazy {
+		override val applicationSettings by lazy {
 			CachingApplicationSettingsRepository(
 				ApplicationSettingsRepository(context, sendApplicationMessages)
 			)
 		}
 
 		override val selectedLibraryIdProvider by lazy {
-			CachedSelectedLibraryIdProvider(SelectedLibraryIdProvider(applicationSettingsRepository))
+			CachedSelectedLibraryIdProvider(SelectedLibraryIdProvider(applicationSettings))
 		}
 
 		override val libraryProvider: ILibraryProvider
@@ -87,12 +105,44 @@ object ApplicationDependenciesContainer {
 
 		override val syncScheduler by lazy { SyncScheduler(context) }
 
-		override val connectionSessions by lazy { context.buildNewConnectionSessionManager() }
+		override val connectionSessions by lazy {
+			val connectionSettingsLookup = ConnectionSettingsLookup(LibraryRepository(context))
+			val serverLookup = ServerLookup(
+				connectionSettingsLookup,
+				ServerInfoXmlRequest(LibraryRepository(context), OkHttpFactory),
+			)
 
-		override val libraryConnectionProvider by lazy { connectionSessions }
+			val activeNetwork = ActiveNetworkFinder(context)
+			ConnectionSessionManager(
+				ConnectionTester,
+				LibraryConnectionProvider(
+					ConnectionSettingsValidation,
+					connectionSettingsLookup,
+					ServerAlarm(serverLookup, activeNetwork, ServerWakeSignal(PacketSender())),
+					LiveUrlProvider(
+						activeNetwork,
+						UrlScanner(
+							Base64Encoder,
+							ConnectionTester,
+							serverLookup,
+							connectionSettingsLookup,
+							OkHttpFactory
+						)
+					),
+					OkHttpFactory,
+					AlarmConfiguration.standard
+				),
+				connectionsRepository,
+				sendApplicationMessages,
+			)
+		}
+
+		override val libraryConnectionProvider
+			get() = connectionSessions
 
 		override val sendApplicationMessages: SendApplicationMessages
 			get() = ApplicationMessageBus.getApplicationMessageBus()
+
 		override val registerForApplicationMessages: RegisterForApplicationMessages
 			get() = ApplicationMessageBus.getApplicationMessageBus()
 
