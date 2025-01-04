@@ -8,12 +8,12 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
+import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.intents.getIntent
 import com.lasthopesoftware.bluewater.android.intents.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
@@ -62,11 +62,9 @@ class PollConnectionService : LifecycleService() {
 
 	private val notificationController by lazyScoped { NotificationsController(this, notificationManager) }
 
-	private val libraryConnectionProvider by lazy { ConnectionSessionManager.get(this) }
-
 	private val libraryConnectionPoller by lazy {
 		LibraryConnectionPollingSessions(
-			LibraryConnectionPoller(libraryConnectionProvider),
+			LibraryConnectionPoller(applicationDependencies.connectionSessions),
 		)
 	}
 

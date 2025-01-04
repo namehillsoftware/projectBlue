@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.connection.session
 
-import android.content.Context
-import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
@@ -100,8 +98,4 @@ class ConnectionSessionManager(
 					}
 				)
 			}
-
-	companion object Instance {
-		fun get(context: Context): ManageConnectionSessions = context.applicationDependencies.connectionSessions
-	}
 }
