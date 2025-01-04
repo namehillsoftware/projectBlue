@@ -17,7 +17,8 @@ object Dimensions {
 	val expandedTitleHeight = 84.dp
 	val viewPaddingUnit = 4.dp
 	val topRowOuterPadding = viewPaddingUnit * 4
-	val rowPaddingValues = PaddingValues(viewPaddingUnit * 2)
+	val rowPadding = viewPaddingUnit * 2
+	val rowPaddingValues = PaddingValues(rowPadding)
 	val mediumWindowWidth = 600.dp
 	val twoColumnThreshold = mediumWindowWidth
 	val expandedMenuVerticalPadding = viewPaddingUnit * 3

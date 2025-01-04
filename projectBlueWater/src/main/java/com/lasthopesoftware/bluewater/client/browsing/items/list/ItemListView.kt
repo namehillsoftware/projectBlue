@@ -85,34 +85,33 @@ import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.appBarHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.expandedMenuVerticalPadding
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.expandedTitleHeight
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.menuHeight
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.rowPadding
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.rowScrollPadding
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-private val appBarHeight = Dimensions.appBarHeight
-private val iconSize = Dimensions.topMenuIconSize
-private val minimumMenuWidth = (iconSize + Dimensions.viewPaddingUnit * 2) * 3
-
-private val expandedIconSize = Dimensions.menuHeight
-private val boxHeight = expandedTitleHeight + appBarHeight + expandedIconSize + expandedMenuVerticalPadding * 2
+private val boxHeight = expandedTitleHeight + appBarHeight + menuHeight + expandedMenuVerticalPadding * 2
 
 @Composable
 fun ItemsCountHeader(itemsCount: Int) {
 	Box(
 		modifier = Modifier
-			.padding(Dimensions.viewPaddingUnit)
-			.height(Dimensions.menuHeight)
+			.padding(viewPaddingUnit)
+			.height(menuHeight)
 	) {
 		ProvideTextStyle(MaterialTheme.typography.h5) {
 			Text(
 				text = stringResource(R.string.item_count_label, itemsCount),
 				fontWeight = FontWeight.Bold,
 				modifier = Modifier
-					.padding(Dimensions.viewPaddingUnit)
+					.padding(viewPaddingUnit)
 					.align(Alignment.CenterStart)
 			)
 		}
@@ -123,15 +122,15 @@ fun ItemsCountHeader(itemsCount: Int) {
 fun FilesCountHeader(filesCount: Int) {
 	Box(
 		modifier = Modifier
-			.padding(Dimensions.viewPaddingUnit)
-			.height(Dimensions.menuHeight)
+			.padding(viewPaddingUnit)
+			.height(menuHeight)
 	) {
 		ProvideTextStyle(MaterialTheme.typography.h5) {
 			Text(
 				text = stringResource(R.string.file_count_label, filesCount),
 				fontWeight = FontWeight.Bold,
 				modifier = Modifier
-					.padding(Dimensions.viewPaddingUnit)
+					.padding(viewPaddingUnit)
 					.align(Alignment.CenterStart)
 			)
 		}
@@ -458,7 +457,7 @@ fun ItemListView(
 	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 		ControlSurface {
 
-			val collapsedHeight = appBarHeight + expandedIconSize + Dimensions.viewPaddingUnit * 2
+			val collapsedHeight = appBarHeight + menuHeight + rowPadding
 
 			val expandedHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 			val collapsedHeightPx = LocalDensity.current.run { collapsedHeight.toPx() }
@@ -515,8 +514,8 @@ fun ItemListView(
 								val startPadding by remember {
 									derivedStateOf {
 										linearInterpolation(
-											Dimensions.viewPaddingUnit,
-											Dimensions.viewPaddingUnit + 48.dp,
+											viewPaddingUnit,
+											viewPaddingUnit + 48.dp,
 											headerCollapseProgress
 										)
 									}
@@ -525,8 +524,8 @@ fun ItemListView(
 								val endPadding by remember {
 									derivedStateOf {
 										linearInterpolation(
-											Dimensions.viewPaddingUnit,
-											Dimensions.viewPaddingUnit + 48.dp,
+											viewPaddingUnit,
+											viewPaddingUnit + 48.dp,
 											acceleratedHeaderHidingProgress
 										)
 									}
@@ -562,25 +561,29 @@ fun ItemListView(
 								derivedStateOf {
 									linearInterpolation(
 										expandedTopRowPadding,
-										appBarHeight,
+										appBarHeight + rowPadding,
 										headerCollapseProgress
 									)
 								}
 							}
 
-							val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
 							Row(
 								modifier = Modifier
 									.padding(
 										top = topRowPadding,
-										bottom = expandedMenuVerticalPadding,
-										start = Dimensions.viewPaddingUnit * 2,
-										end = Dimensions.viewPaddingUnit * 2
+										bottom = rowPadding,
+										start = rowPadding,
+										end = rowPadding
 									)
 									.fillMaxWidth()
 									.align(Alignment.TopEnd),
 								horizontalArrangement = Arrangement.SpaceEvenly,
 							) {
+								val textModifier by remember {
+									derivedStateOf {
+										Modifier.alpha(acceleratedToolbarStateProgress)
+									}
+								}
 								if (files.any()) {
 									LabelledPlayButton(
 										libraryState = itemListViewModel,
@@ -643,8 +646,8 @@ fun ItemListView(
 									modifier = Modifier
 										.fillMaxWidth()
 										.padding(
-											start = Dimensions.viewPaddingUnit * 13,
-											end = Dimensions.viewPaddingUnit + minimumMenuWidth
+											start = viewPaddingUnit * 13,
+											end = viewPaddingUnit
 										),
 									isMarqueeEnabled = !lazyListState.isScrollInProgress
 								)
@@ -659,10 +662,10 @@ fun ItemListView(
 									menuPaddingValues = PaddingValues(
 										top = collapsedTopRowPadding,
 										bottom = expandedMenuVerticalPadding,
-										start = Dimensions.viewPaddingUnit * 2,
-										end = Dimensions.viewPaddingUnit * 2
+										start = viewPaddingUnit * 2,
+										end = viewPaddingUnit * 2
 									),
-									menuWidth = minimumMenuWidth,
+									menuWidth = maxWidth,
 								)
 							}
 						}
