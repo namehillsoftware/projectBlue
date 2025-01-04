@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
@@ -87,9 +88,16 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberSystemUiController
 import com.lasthopesoftware.bluewater.shared.android.ui.indicateFocus
+import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.appBarHeight
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.expandedMenuVerticalPadding
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.menuHeight
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.rowPadding
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.topMenuIconSize
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.topRowOuterPadding
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.suspend
@@ -107,10 +115,10 @@ private fun StaticFileMenu(viewModel: FileDetailsViewModel, mediaStylePalette: M
 	Row(
 		modifier = Modifier
 			.padding(top = padding)
-			.height(Dimensions.menuHeight)
+			.height(menuHeight)
 	) {
 		val iconColor = mediaStylePalette.secondaryTextColor
-		val iconSize = Dimensions.topMenuIconSize
+		val iconSize = topMenuIconSize
 
 		val addFileToPlaybackLabel = stringResource(id = R.string.btn_add_file_to_playback)
 		val colorFilter = ColorFilter.tint(iconColor)
@@ -185,7 +193,13 @@ fun rememberComputedColorPalette(
 }
 
 @Composable
-fun FilePropertyHeader(viewModel: FileDetailsViewModel, palette: MediaStylePalette, modifier: Modifier = Modifier, isMarqueeEnabled: Boolean, titleFontSize: TextUnit = 24.sp) {
+fun FilePropertyHeader(
+	viewModel: FileDetailsViewModel,
+	palette: MediaStylePalette,
+	modifier: Modifier = Modifier,
+	isMarqueeEnabled: Boolean,
+	titleFontSize: TextUnit = 24.sp
+) {
 	val fileName by viewModel.fileName.subscribeAsState(NullBox(stringResource(id = R.string.lbl_loading)))
 
 	Column(modifier = modifier) {
@@ -218,7 +232,11 @@ fun FilePropertyHeader(viewModel: FileDetailsViewModel, palette: MediaStylePalet
 }
 
 @Composable
-fun FilePropertyRow(viewModel: FileDetailsViewModel, property: FileDetailsViewModel.FilePropertyViewModel, palette: MediaStylePalette) {
+fun FilePropertyRow(
+	viewModel: FileDetailsViewModel,
+	property: FileDetailsViewModel.FilePropertyViewModel,
+	palette: MediaStylePalette
+) {
 	val itemPadding = 2.dp
 
 	val interactionSource = remember { MutableInteractionSource() }
@@ -272,6 +290,7 @@ fun FilePropertyRow(viewModel: FileDetailsViewModel, property: FileDetailsViewMo
 					)
 				}
 			}
+
 			else -> {
 				Text(
 					text = propertyValue,
@@ -360,6 +379,7 @@ private fun FileDetailsEditor(
 									} else null
 								)
 							}
+
 							fileProperty.editableType == FilePropertyType.LongFormText -> {
 								TextField(
 									value = propertyValue,
@@ -373,6 +393,7 @@ private fun FileDetailsEditor(
 										.focusRequester(fieldFocusRequester)
 								)
 							}
+
 							else -> {
 								TextField(
 									value = propertyValue,
@@ -388,7 +409,7 @@ private fun FileDetailsEditor(
 							DisposableEffect(key1 = Unit) {
 								fieldFocusRequester.requestFocus()
 
-								onDispose {  }
+								onDispose { }
 							}
 						}
 					}
@@ -429,6 +450,7 @@ private fun FileDetailsEditor(
 										.align(Alignment.CenterVertically),
 								)
 							}
+
 							fileProperty.isEditable -> {
 								Image(
 									painter = painterResource(id = R.drawable.pencil),
@@ -453,7 +475,11 @@ private fun FileDetailsEditor(
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
-fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: NavigateApplication, bitmapProducer: ProduceBitmaps) {
+fun FileDetailsView(
+	viewModel: FileDetailsViewModel,
+	navigateApplication: NavigateApplication,
+	bitmapProducer: ProduceBitmaps
+) {
 	val activity = LocalActivity.current ?: return
 
 	val paletteProvider = MediaStylePaletteProvider(activity)
@@ -478,7 +504,6 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 		val fileProperties by viewModel.fileProperties.subscribeAsState()
 
 		val coverArtContainerHeight = 300.dp
-		val appBarHeight = Dimensions.appBarHeight
 		val coverArtBottomPadding = viewPadding + 8.dp
 		val expandedTitlePadding = coverArtContainerHeight + coverArtBottomPadding
 		val titleFontSize = MaterialTheme.typography.h5.fontSize
@@ -486,13 +511,12 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 		val guessedRowSpacing = Dimensions.viewPaddingUnit
 		val titleHeight =
 			LocalDensity.current.run { titleFontSize.toDp() + subTitleFontSize.toDp() } + guessedRowSpacing * 3
-		val expandedIconSize = Dimensions.menuHeight
-		val expandedMenuVerticalPadding = Dimensions.viewPaddingUnit * 3
 		val boxHeight =
-			expandedTitlePadding + titleHeight + expandedIconSize + expandedMenuVerticalPadding * 2
+			expandedTitlePadding + titleHeight + menuHeight + expandedMenuVerticalPadding * 2
 		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
+		val collapsedHeight = appBarHeight + menuHeight + rowPadding
 		val heightScaler =
-			memorableScrollConnectedScaler(max = boxHeightPx, min = LocalDensity.current.run { appBarHeight.toPx() })
+			memorableScrollConnectedScaler(max = boxHeightPx, min = LocalDensity.current.run { collapsedHeight.toPx() })
 
 		if (!isLoading) {
 			Box(
@@ -541,8 +565,8 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 							.requiredHeight(coverArtContainerHeight)
 							.padding(
 								top = coverArtTopPadding,
-								start = viewPadding + 40.dp,
-								end = viewPadding + 40.dp,
+								start = viewPadding * 11,
+								end = viewPadding * 11,
 							)
 							.offset { IntOffset(x = 0, y = coverArtScrollOffset.roundToPx()) }
 							.fillMaxWidth()
@@ -576,14 +600,11 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 
 					val headerExpandProgress by remember { derivedStateOf { 1 - headerCollapseProgress } }
 					val topTitlePadding by remember { derivedStateOf { expandedTitlePadding * headerExpandProgress } }
-					BoxWithConstraints(
+					Box(
 						modifier = Modifier
-							.height(boxHeight)
 							.padding(top = topTitlePadding)
 							.fillMaxWidth()
 					) {
-						val minimumMenuWidth = (3 * 32).dp
-
 						val acceleratedToolbarStateProgress by remember {
 							derivedStateOf {
 								headerExpandProgress.pow(3).coerceIn(0f, 1f)
@@ -593,31 +614,43 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 						val acceleratedHeaderHidingProgress by remember { derivedStateOf { 1 - acceleratedToolbarStateProgress } }
 
 						val startPadding by remember { derivedStateOf { viewPadding + 48.dp * headerCollapseProgress } }
-						val endPadding by remember { derivedStateOf { viewPadding + minimumMenuWidth * acceleratedHeaderHidingProgress } }
 						FilePropertyHeader(
 							viewModel,
 							coverArtColorState,
-							modifier = Modifier.padding(start = startPadding, end = endPadding),
+							modifier = Modifier.padding(start = startPadding, end = viewPadding),
 							titleFontSize = titleFontSize,
 							isMarqueeEnabled = !lazyListState.isScrollInProgress
 						)
 
-						val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderHidingProgress) } }
 						val expandedTopRowPadding = titleHeight + expandedMenuVerticalPadding
-						val topRowPadding by remember { derivedStateOf { expandedTopRowPadding - (expandedTopRowPadding - 14.dp) * headerCollapseProgress } }
+						val topRowPadding by remember {
+							derivedStateOf {
+								linearInterpolation(
+									expandedTopRowPadding,
+									appBarHeight + rowPadding,
+									headerCollapseProgress
+								)
+							}
+						}
+
 						Row(
 							modifier = Modifier
-								.padding(top = topRowPadding, start = 8.dp, end = 8.dp)
-								.width(menuWidth)
-								.align(Alignment.TopEnd)
+								.padding(top = topRowPadding, start = rowPadding, end = rowPadding, bottom = rowPadding)
+								.fillMaxWidth()
+								.align(Alignment.TopEnd),
+							horizontalArrangement = Arrangement.SpaceEvenly,
 						) {
-							val iconSize = Dimensions.topMenuIconSize
 							val chevronRotation by remember { derivedStateOf { 180 * headerCollapseProgress } }
 							val isCollapsed by remember { derivedStateOf { headerCollapseProgress > .98f } }
 
 							val chevronLabel =
 								stringResource(id = if (isCollapsed) R.string.expand else R.string.collapse)
 							val scope = rememberCoroutineScope()
+
+							val labelModifier by remember {
+								derivedStateOf { Modifier.alpha(acceleratedToolbarStateProgress) }
+							}
+
 							ColumnMenuIcon(
 								onClick = {
 									scope.launch {
@@ -636,13 +669,13 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 										colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
 										contentDescription = chevronLabel,
 										modifier = Modifier
-											.size(iconSize)
+											.size(topMenuIconSize)
 											.rotate(chevronRotation),
 									)
 								},
 								label = if (acceleratedHeaderHidingProgress < 1) chevronLabel else null,
 								labelColor = coverArtColorState.secondaryTextColor,
-								labelModifier = Modifier.alpha(acceleratedToolbarStateProgress),
+								labelModifier = labelModifier,
 								labelMaxLines = 1,
 							)
 
@@ -654,12 +687,12 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 										painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
 										colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
 										contentDescription = addFileToPlaybackLabel,
-										modifier = Modifier.size(iconSize),
+										modifier = Modifier.size(topMenuIconSize),
 									)
 								},
 								label = if (acceleratedHeaderHidingProgress < 1) addFileToPlaybackLabel else null,
 								labelColor = coverArtColorState.secondaryTextColor,
-								labelModifier = Modifier.alpha(acceleratedToolbarStateProgress),
+								labelModifier = labelModifier,
 								labelMaxLines = 1,
 							)
 
@@ -671,12 +704,12 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 										painter = painterResource(id = R.drawable.av_play_white),
 										colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
 										contentDescription = playLabel,
-										modifier = Modifier.size(iconSize),
+										modifier = Modifier.size(topMenuIconSize),
 									)
 								},
 								label = if (acceleratedHeaderHidingProgress < 1) playLabel else null,
 								labelColor = coverArtColorState.secondaryTextColor,
-								labelModifier = Modifier.alpha(acceleratedToolbarStateProgress),
+								labelModifier = labelModifier,
 								labelMaxLines = 1,
 							)
 						}
@@ -693,7 +726,7 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 		BackButton(
 			onBack = navigateApplication::backOut,
 			modifier = Modifier
-				.padding(Dimensions.topRowOuterPadding)
+				.padding(topRowOuterPadding)
 				.align(Alignment.TopStart)
 		)
 	}
