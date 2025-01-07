@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.ProvideScreenDimensions
 import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.lasthopesoftware.resources.use
 import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
@@ -29,6 +30,14 @@ class ScaledImageProvider(
 
 	companion object {
 		private fun Int.scaleInteger(scaleRatio: Double): Int = (this.toDouble() * scaleRatio).roundToInt()
+
+		private val compressFormat =
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+				Bitmap.CompressFormat.WEBP_LOSSLESS
+			} else {
+				@Suppress("DEPRECATION")
+				Bitmap.CompressFormat.WEBP
+			}
 
 		private fun cancellationException() = CancellationException("Cancelled while scaling bitmap")
 	}
@@ -62,34 +71,33 @@ class ScaledImageProvider(
 		override fun prepareMessage(signal: CancellationSignal): ByteArray {
 			if (signal.isCancelled) throw cancellationException()
 
-			return BitmapFactory.decodeByteArray(inputBytes, 0, inputBytes.size)
-				?.takeIf { b -> b.width > maximumScreenDimension && b.height > maximumScreenDimension }
-				?.let { image ->
-					val minimumImageDimension = min(image.width, image.height).toDouble()
-					val minimumShrink = maximumScreenDimension / minimumImageDimension
+			return BitmapFactory
+				.decodeByteArray(inputBytes, 0, inputBytes.size)
+				?.use { unscaledImage ->
+					unscaledImage
+						.takeIf { b -> b.width > maximumScreenDimension && b.height > maximumScreenDimension }
+						?.let { image ->
+							val minimumImageDimension = min(image.width, image.height).toDouble()
+							val minimumShrink = maximumScreenDimension / minimumImageDimension
 
-					val compressFormat = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-						Bitmap.CompressFormat.WEBP_LOSSLESS
-					} else {
-						@Suppress("DEPRECATION")
-						Bitmap.CompressFormat.WEBP
-					}
+							if (signal.isCancelled) throw cancellationException()
 
-					if (signal.isCancelled) throw cancellationException()
+							image
+								.scale(
+									image.width.scaleInteger(minimumShrink),
+									image.height.scaleInteger(minimumShrink),
+									true
+								)
+								.use { scaledBitmap ->
+									if (signal.isCancelled) throw cancellationException()
 
-					val scaledBitmap = image.scale(
-						image.width.scaleInteger(minimumShrink),
-						image.height.scaleInteger(minimumShrink),
-						true
-					)
-
-					if (signal.isCancelled) throw cancellationException()
-
-					val byteArraySize = scaledBitmap.rowBytes * scaledBitmap.height
-					ByteArrayOutputStream(byteArraySize).use {
-						scaledBitmap.compress(compressFormat, 100, it)
-						it.toByteArray()
-					}
+									val byteArraySize = scaledBitmap.rowBytes * scaledBitmap.height
+									ByteArrayOutputStream(byteArraySize).use {
+										scaledBitmap.compress(compressFormat, 100, it)
+										it.toByteArray()
+									}
+								}
+						}
 				}
 				?: inputBytes
 		}
