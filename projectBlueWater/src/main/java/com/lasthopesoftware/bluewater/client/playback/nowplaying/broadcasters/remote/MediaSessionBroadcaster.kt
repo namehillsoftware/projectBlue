@@ -4,6 +4,7 @@ import android.graphics.BitmapFactory
 import android.media.MediaMetadata
 import android.media.session.PlaybackState
 import android.support.v4.media.MediaMetadataCompat
+import android.support.v4.media.RatingCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
@@ -126,6 +127,8 @@ class MediaSessionBroadcaster(
 		if (remoteClientBitmap.isEmpty()) return
 		val metadataBuilder = MediaMetadataCompat.Builder(mediaMetadata)
 		metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, null)
+		metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ART, null)
+		metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON, null)
 		mediaSession.setMetadata(metadataBuilder.build().also { mediaMetadata = it })
 		remoteClientBitmap = emptyByteArray
 	}
@@ -153,10 +156,20 @@ class MediaSessionBroadcaster(
 					metadataBuilder.putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, trackNumber)
 				}
 
-				promisedBitmap.then { bitmap ->
-					if (remoteClientBitmap !== bitmap) {
-						metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, BitmapFactory.decodeByteArray(bitmap, 0, bitmap.size))
-						remoteClientBitmap = bitmap
+				fileProperties[KnownFileProperties.Rating]?.toFloatOrNull()?.also {
+					metadataBuilder.putRating(
+						MediaMetadataCompat.METADATA_KEY_USER_RATING,
+						RatingCompat.newStarRating(RatingCompat.RATING_5_STARS, it.coerceIn(0f, 5f))
+					)
+				}
+
+				promisedBitmap.then { bytes ->
+					if (remoteClientBitmap !== bytes) {
+						val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+						metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, bitmap)
+						metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ART, bitmap)
+						metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON, bitmap)
+						remoteClientBitmap = bytes
 					}
 					mediaSession.setMetadata(metadataBuilder.build().also { mediaMetadata = it })
 				}
