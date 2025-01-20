@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.re
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.ControlMediaSession
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
+import com.lasthopesoftware.resources.bitmaps.ImmediateBitmapProducer
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Test
@@ -22,6 +23,7 @@ class WhenPlaybackStarts : AndroidContext() {
 			mockk(),
 			mockk(),
 			mockk(),
+			ImmediateBitmapProducer,
 			mediaSessionCompat,
 			recordingApplicationMessageBus,
 		)

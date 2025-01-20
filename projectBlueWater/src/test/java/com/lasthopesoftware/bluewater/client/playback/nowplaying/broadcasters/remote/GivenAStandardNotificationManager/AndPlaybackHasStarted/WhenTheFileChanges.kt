@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messa
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.ControlMediaSession
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
+import com.lasthopesoftware.resources.bitmaps.ImmediateBitmapProducer
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -45,6 +46,7 @@ class WhenTheFileChanges : AndroidContext() {
 			mockk {
 				every { promiseImageBytes(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns byteArrayOf((912).toByte(), (368).toByte(), (395).toByte()).toPromise()
 			},
+			ImmediateBitmapProducer,
 			mediaSessionCompat,
 			recordingApplicationMessageBus
 		)

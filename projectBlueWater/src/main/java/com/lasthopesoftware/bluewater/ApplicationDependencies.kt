@@ -16,9 +16,11 @@ import com.lasthopesoftware.bluewater.shared.android.ui.ProvideScreenDimensions
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
+import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
 import com.lasthopesoftware.resources.strings.GetStringResources
 
 interface ApplicationDependencies {
+	val bitmapProducer: ProduceBitmaps
 	val libraryProvider: ILibraryProvider
 	val libraryStorage: ILibraryStorage
 	val storedItemAccess: AccessStoredItems

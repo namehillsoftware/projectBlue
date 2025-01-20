@@ -265,7 +265,8 @@ fun LibraryDestination.Navigate(
 					applicationNavigation = applicationNavigation,
 					itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 					connectionWatcherViewModel = connectionWatcherViewModel,
-					viewModelMessageBus = nowPlayingViewModelMessageBus
+					viewModelMessageBus = nowPlayingViewModelMessageBus,
+					bitmapProducer = bitmapProducer,
 				)
 
 				val context = LocalContext.current

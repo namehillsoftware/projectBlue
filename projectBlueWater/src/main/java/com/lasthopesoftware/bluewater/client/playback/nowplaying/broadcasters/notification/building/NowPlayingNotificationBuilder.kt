@@ -1,9 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building
 
 import android.content.Context
-import android.graphics.BitmapFactory
+import android.graphics.Bitmap
 import androidx.core.app.NotificationCompat
-import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
@@ -18,14 +17,16 @@ import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
 import com.namehillsoftware.handoff.promises.Promise
 
-@UnstableApi class NowPlayingNotificationBuilder(
+class NowPlayingNotificationBuilder(
     private val context: Context,
     private val mediaStyleNotificationSetup: SetupMediaStyleNotifications,
     private val urlKeyProvider: ProvideUrlKey,
     private val cachedFilePropertiesProvider: ProvideLibraryFileProperties,
     private val imageProvider: GetImageBytes,
+	private val bitmapProducer: ProduceBitmaps,
 ) : BuildNowPlayingNotificationContent, AutoCloseable {
 	private val notificationSync = Any()
 
@@ -46,7 +47,7 @@ import com.namehillsoftware.handoff.promises.Promise
 
 				val viewStructure = viewStructure ?: ViewStructure(urlKeyHolder).also { viewStructure = it }
 				viewStructure.promisedNowPlayingImage =
-					viewStructure.promisedNowPlayingImage ?: imageProvider.promiseImageBytes(libraryId, serviceFile)
+					viewStructure.promisedNowPlayingImage ?: imageProvider.promiseImageBytes(libraryId, serviceFile).eventually(bitmapProducer::promiseBitmap)
 
 				cachedFilePropertiesProvider
 					.promiseFileProperties(libraryId, serviceFile)
@@ -62,7 +63,7 @@ import com.namehillsoftware.handoff.promises.Promise
 						if (viewStructure.urlKeyHolder != urlKeyHolder) builder.toPromise()
 						else viewStructure.promisedNowPlayingImage
 							?.then(
-								{ bitmap -> bitmap?.let{ builder?.setLargeIcon(BitmapFactory.decodeByteArray(it, 0, it.size)) } },
+								{ bitmap -> bitmap?.let{ builder.setLargeIcon(it) } },
 								{ builder }
 							)
 							.keepPromise(builder)
@@ -116,7 +117,7 @@ import com.namehillsoftware.handoff.promises.Promise
 			)
 
 	private class ViewStructure(val urlKeyHolder: UrlKeyHolder<ServiceFile>) {
-		var promisedNowPlayingImage: Promise<ByteArray>? = null
+		var promisedNowPlayingImage: Promise<Bitmap?>? = null
 
 		fun release() {
 			promisedNowPlayingImage?.cancel()

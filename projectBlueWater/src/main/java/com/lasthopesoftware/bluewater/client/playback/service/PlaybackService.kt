@@ -456,7 +456,8 @@ import java.util.concurrent.TimeoutException
 						mediaStyleNotificationSetup,
 						urlKeyProvider,
 						libraryFilePropertiesProvider,
-						libraryFilePropertiesDependents.imageBytesProvider
+						libraryFilePropertiesDependents.imageBytesProvider,
+						playbackServiceDependencies.bitmapProducer,
 					)
 				)
 

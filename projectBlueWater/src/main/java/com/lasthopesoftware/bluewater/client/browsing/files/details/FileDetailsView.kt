@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details
 
 import android.app.Activity
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -97,7 +96,10 @@ import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.suspend
+import com.lasthopesoftware.promises.extensions.toState
+import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
 import kotlinx.coroutines.launch
 import kotlin.math.pow
 
@@ -456,16 +458,17 @@ private fun FileDetailsEditor(
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
-fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: NavigateApplication) {
+fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: NavigateApplication, bitmapProducer: ProduceBitmaps) {
 	val activity = LocalContext.current as? Activity ?: return
 
 	val paletteProvider = MediaStylePaletteProvider(activity)
 	val coverArt by viewModel.coverArt.subscribeAsState()
-	val coverArtBitmap by remember {
-		derivedStateOf {
-			coverArt.takeIf { it.isNotEmpty() }?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
-		}
-	}
+	val coverArtBitmap by coverArt
+		.takeIf { it.isNotEmpty() }
+		?.let(bitmapProducer::promiseBitmap)
+		.keepPromise()
+		.toState(null, coverArt)
+
 	val coverArtColorState by rememberComputedColorPalette(paletteProvider = paletteProvider, coverArt = coverArtBitmap)
 
 	val systemUiController = rememberSystemUiController()

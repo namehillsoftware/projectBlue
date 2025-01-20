@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.remote.MediaItemServiceFileLookup
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.bitmaps.ImmediateBitmapProducer
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -36,7 +37,8 @@ class `When Looking Up The Media Item` : AndroidContext() {
 			fileProperties,
 			mockk {
 				every { promiseImageBytes(libraryId, ServiceFile(14)) } returns byteArrayOf(1, 2).toPromise()
-			}
+			},
+			ImmediateBitmapProducer,
 		)
 	}
 

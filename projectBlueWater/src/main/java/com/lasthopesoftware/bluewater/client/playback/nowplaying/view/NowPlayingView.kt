@@ -64,6 +64,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
@@ -102,10 +103,12 @@ import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
-import com.lasthopesoftware.bluewater.shared.android.ui.toImageBitmap
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.toState
+import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
 import kotlinx.coroutines.launch
 
 val controlRowHeight = 72.dp
@@ -115,24 +118,26 @@ class ScreenDimensionsScope(val screenHeight: Dp, val screenWidth: Dp, innerBoxS
 	: BoxWithConstraintsScope by innerBoxScope
 
 @Composable
-fun NowPlayingCoverArtView(nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel) {
+fun NowPlayingCoverArtView(
+	nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel,
+	bitmapProducer: ProduceBitmaps
+) {
 	Box(
 		modifier = Modifier.fillMaxSize()
 	) {
 		val isLoadingImage by nowPlayingCoverArtViewModel.isNowPlayingImageLoading.subscribeAsState()
 
 		val coverArt by nowPlayingCoverArtViewModel.nowPlayingImage.subscribeAsState()
-		val coverArtBitmap by remember {
-			derivedStateOf {
-				coverArt
-					.takeIf { it.isNotEmpty() }
-					?.toImageBitmap()
-			}
-		}
+		val coverArtBitmap by coverArt
+			.takeIf { it.isNotEmpty() }
+			?.let(bitmapProducer::promiseBitmap)
+			.keepPromise()
+			.toState(null, coverArt)
+
 		coverArtBitmap
 			?.let {
 				Image(
-					bitmap = it,
+					bitmap = it.asImageBitmap(),
 					contentDescription = stringResource(id = R.string.img_now_playing),
 					contentScale = ContentScale.Crop,
 					alignment = Alignment.Center,
@@ -920,7 +925,8 @@ fun NowPlayingView(
 	applicationNavigation: NavigateApplication,
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	connectionWatcherViewModel: ConnectionWatcherViewModel,
-	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>
+	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
+	bitmapProducer: ProduceBitmaps,
 ) {
 	val isScreenOn by screenOnState.isScreenOn.collectAsState()
 	KeepScreenOn(isScreenOn)
@@ -930,7 +936,10 @@ fun NowPlayingView(
 		contentColor = Color.White,
 		controlColor = Color.White,
 	) {
-		NowPlayingCoverArtView(nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel)
+		NowPlayingCoverArtView(
+			nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
+			bitmapProducer = bitmapProducer
+		)
 
 		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 

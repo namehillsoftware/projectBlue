@@ -69,6 +69,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		MediaItemServiceFileLookup(
 			libraryConnectionDependencies.libraryFilePropertiesProvider,
 			libraryFilePropertiesDependents.imageBytesProvider,
+			applicationDependencies.bitmapProducer,
 		)
 	}
 
