@@ -6,9 +6,9 @@ import com.lasthopesoftware.bluewater.android.intents.BuildIntents
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.HandlerExecutor
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 
 class ActivityApplicationNavigation(
@@ -40,5 +40,5 @@ class ActivityApplicationNavigation(
 
 	override fun navigateUp() = loopInOperation { componentActivity.finish(); true }
 
-	private fun <T> loopInOperation(operation: CancellableMessageWriter<T>) = QueuedPromise(operation, executor)
+	private fun <T> loopInOperation(operation: CancellableMessageWriter<T>) = executor.preparePromise(operation)
 }

@@ -10,11 +10,11 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.shared.android.ui.ProvideScreenDimensions
 import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.use
 import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import java.io.ByteArrayOutputStream
@@ -64,7 +64,7 @@ class ScaledImageProvider(
 	override fun promiseResponse(bytes: ByteArray): Promise<ByteArray> =
 		bytes
 			.takeIf { it.isNotEmpty() }
-			?.let { b -> QueuedPromise(ScaledBitmapMessageWriter(b), ThreadPools.compute) }
+			?.let { b -> ThreadPools.compute.preparePromise(ScaledBitmapMessageWriter(b)) }
 			.keepPromise(bytes)
 
 	private inner class ScaledBitmapMessageWriter(private val inputBytes: ByteArray): CancellableMessageWriter<ByteArray> {

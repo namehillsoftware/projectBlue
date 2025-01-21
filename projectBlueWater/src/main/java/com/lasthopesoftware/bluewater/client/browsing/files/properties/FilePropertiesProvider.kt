@@ -9,11 +9,11 @@ import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideGuaranteedLibraryConnections
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.exceptions.isOkHttpCanceled
+import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
@@ -96,7 +96,7 @@ class FilePropertiesProvider(
 
 		override fun promiseResponse(resolution: Response): Promise<Unit> {
 			response = resolution
-			return QueuedPromise(this, ThreadPools.compute)
+			return ThreadPools.compute.preparePromise(this)
 		}
 
 		override fun prepareMessage(cancellationSignal: CancellationSignal) {

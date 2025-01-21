@@ -7,6 +7,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
 import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.CompletableObserver
@@ -29,6 +30,8 @@ infix fun <Resolution, Response> Promise<Resolution>.then(response: ImmediateRes
 
 infix fun <Resolution, Response> Promise<Resolution>.excuse(response: ImmediateResponse<Throwable, Response>): Promise<Response> =
 	this.excuse(response)
+
+fun <Resolution> Executor.preparePromise(messageWriter: CancellableMessageWriter<Resolution>) = QueuedPromise(messageWriter, this)
 
 @Composable
 fun <T> Promise<T>.toState(initialValue: T): State<T> = produceState(initialValue) {

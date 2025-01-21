@@ -4,12 +4,12 @@ import android.content.ContentResolver
 import android.content.ContentValues
 import android.os.Build
 import android.provider.MediaStore
+import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.uri.toURI
 import com.lasthopesoftware.resources.uri.toUri
 import com.lasthopesoftware.storage.directories.GetPublicDirectories
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import java.io.File
 import java.net.URI
 
@@ -22,13 +22,13 @@ class ExternalContentRepository(
 		externalContent
 			.toContentValues()
 			.let { newContent ->
-				if (Build.VERSION.SDK_INT >= 29) QueuedPromise({ ct ->
+				if (Build.VERSION.SDK_INT >= 29) ThreadPools.io.preparePromise { ct ->
 					if (!ct.isCancelled)
 						contentResolver.insert(externalContent.collection, newContent)?.toURI()
 					else
 						null
-				}, ThreadPools.io) else publicDirectoryLookup.promisePublicDrives().eventually { drives ->
-					QueuedPromise({ ct ->
+				} else publicDirectoryLookup.promisePublicDrives().eventually { drives ->
+					ThreadPools.io.preparePromise { ct ->
 						drives
 							.firstOrNull { d -> d.exists() }
 							?.path
@@ -48,11 +48,11 @@ class ExternalContentRepository(
 									file.toURI()
 								}
 							}
-					}, ThreadPools.io)
+					}
 				}
 			}
 
-	override fun markContentAsNotPending(uri: URI): Promise<Unit> = QueuedPromise({
+	override fun markContentAsNotPending(uri: URI): Promise<Unit> = ThreadPools.io.preparePromise {
 		contentResolver.update(
 			uri.toUri(),
 			ContentValues().apply {
@@ -63,10 +63,10 @@ class ExternalContentRepository(
 		)
 
 		Unit
-	}, ThreadPools.io)
+	}
 
-	override fun removeContent(uri: URI): Promise<Boolean> = QueuedPromise({
+	override fun removeContent(uri: URI): Promise<Boolean> = ThreadPools.io.preparePromise {
 		val deletedRecords = contentResolver.delete(uri.toUri(), null, null)
 		deletedRecords > 0
-	}, ThreadPools.io)
+	}
 }

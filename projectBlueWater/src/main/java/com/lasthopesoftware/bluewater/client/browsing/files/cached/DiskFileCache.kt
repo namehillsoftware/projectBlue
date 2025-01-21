@@ -13,10 +13,10 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import java.io.File
 import java.io.IOException
@@ -115,7 +115,7 @@ class DiskFileCache(
 	}
 
 	private fun promiseDeletedFile(cachedFile: CachedFile, file: File): Promise<Long> {
-		return QueuedPromise({ file.delete() || !file.exists() }, ThreadPools.io)
+		return ThreadPools.io.preparePromise { file.delete() || !file.exists() }
 			.eventually { isDeleted ->
 				if (isDeleted) deleteCachedFile(cachedFile.id)
 				else {

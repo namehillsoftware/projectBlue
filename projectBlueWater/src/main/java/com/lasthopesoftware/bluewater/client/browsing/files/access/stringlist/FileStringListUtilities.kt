@@ -1,15 +1,13 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 
 object FileStringListUtilities {
-	fun promiseParsedFileStringList(fileList: String): Promise<Collection<ServiceFile>> = QueuedPromise(
-		{ parseFileStringList(fileList) },
-		ThreadPools.compute
-	)
+	fun promiseParsedFileStringList(fileList: String): Promise<Collection<ServiceFile>> =
+		ThreadPools.compute.preparePromise { parseFileStringList(fileList) }
 
 	private fun parseFileStringList(fileList: String): Collection<ServiceFile> {
 		val headerInfo = fileList.split(";", limit = 3)
@@ -24,10 +22,8 @@ object FileStringListUtilities {
 			.toCollection(ArrayList(listSize))
 	}
 
-	fun promiseSerializedFileStringList(serviceFiles: Collection<ServiceFile>): Promise<String> = QueuedPromise(
-		{ serializeFileStringList(serviceFiles) },
-		ThreadPools.compute
-	)
+	fun promiseSerializedFileStringList(serviceFiles: Collection<ServiceFile>): Promise<String> =
+		ThreadPools.compute.preparePromise { serializeFileStringList(serviceFiles) }
 
 	private fun serializeFileStringList(serviceFiles: Collection<ServiceFile>): String {
 		val fileSize = serviceFiles.size

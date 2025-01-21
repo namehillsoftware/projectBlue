@@ -16,11 +16,11 @@ import com.lasthopesoftware.bluewater.client.browsing.files.uri.ProvideFileUrisF
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.android.permissions.CheckOsPermissions
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.uri.MediaCollections
 import com.lasthopesoftware.resources.uri.resourceExists
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import org.apache.commons.io.FilenameUtils
 import java.io.IOException
@@ -70,24 +70,21 @@ class DataFileUriProvider(
 				"%${fileProperties.localExternalRelativeFileDirectory}",
 				if (postExtension.isEmpty()) "%$baseFileName%." else "%$postExtension%.")
 
-		return QueuedPromise(
-			{
-				val maybeCursor = contentResolver.query(
-					MediaCollections.ExternalAudio,
-					mediaQueryProjection,
-					DISPLAY_NAME_MEDIA_COLLECTION_FILTER,
-					arrayOf(fileNamePattern),
-					null
-				)
+		return ThreadPools.io.preparePromise {
+			val maybeCursor = contentResolver.query(
+				MediaCollections.ExternalAudio,
+				mediaQueryProjection,
+				DISPLAY_NAME_MEDIA_COLLECTION_FILTER,
+				arrayOf(fileNamePattern),
+				null
+			)
 
-				maybeCursor
-					?.takeFirstAudioFile()
-					?.takeIf(contentResolver::resourceExists)?.also {
-						logger.info(MEDIA_FILE_FOUND_LOG_MESSAGE, it)
-					}
-			},
-			ThreadPools.io
-		)
+			maybeCursor
+				?.takeFirstAudioFile()
+				?.takeIf(contentResolver::resourceExists)?.also {
+					logger.info(MEDIA_FILE_FOUND_LOG_MESSAGE, it)
+				}
+		}
 	}
 
 	companion object {
@@ -101,32 +98,27 @@ class MetadataMediaFileUriProvider(
 	private val contentResolver: ContentResolver,
 ) : PermissionsCheckingMediaFileUriProvider(filePropertiesProvider, externalStorageReadPermissionsArbitrator), PromisedResponse<Map<String, String>, Uri?> {
 
-	override fun promiseResponse(fileProperties: Map<String, String>): Promise<Uri?> {
-		return QueuedPromise(
-			{
-				val selectionArgs = arrayOf(
-					fileProperties[KnownFileProperties.Artist] ?: "",
-					fileProperties[KnownFileProperties.AlbumArtist] ?: "",
-					fileProperties[KnownFileProperties.Name] ?: "",
-					fileProperties[KnownFileProperties.Album] ?: ""
-				)
-
-				val maybeCursor = contentResolver.query(
-					MediaCollections.ExternalAudio,
-					mediaQueryProjection,
-					META_DATA_FILTER,
-					selectionArgs,
-					null
-				)
-
-				maybeCursor
-					?.takeFirstAudioFile()
-					?.takeIf(contentResolver::resourceExists)?.also {
-						logger.info(MEDIA_FILE_FOUND_LOG_MESSAGE, it)
-					}
-			},
-			ThreadPools.io
+	override fun promiseResponse(fileProperties: Map<String, String>): Promise<Uri?> = ThreadPools.io.preparePromise {
+		val selectionArgs = arrayOf(
+			fileProperties[KnownFileProperties.Artist] ?: "",
+			fileProperties[KnownFileProperties.AlbumArtist] ?: "",
+			fileProperties[KnownFileProperties.Name] ?: "",
+			fileProperties[KnownFileProperties.Album] ?: ""
 		)
+
+		val maybeCursor = contentResolver.query(
+			MediaCollections.ExternalAudio,
+			mediaQueryProjection,
+			META_DATA_FILTER,
+			selectionArgs,
+			null
+		)
+
+		maybeCursor
+			?.takeFirstAudioFile()
+			?.takeIf(contentResolver::resourceExists)?.also {
+				logger.info(MEDIA_FILE_FOUND_LOG_MESSAGE, it)
+			}
 	}
 
 	companion object {

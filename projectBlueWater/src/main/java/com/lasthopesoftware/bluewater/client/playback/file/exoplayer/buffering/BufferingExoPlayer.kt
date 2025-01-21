@@ -9,11 +9,11 @@ import androidx.media3.exoplayer.source.MediaSourceEventListener
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.BufferingPlaybackFile
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.executors.HandlerExecutor
 import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import java.io.IOException
@@ -37,7 +37,7 @@ class BufferingExoPlayer(
 	}
 
 	fun promiseSubscribedExoPlayer(): Promise<BufferingExoPlayer> = whenAll(
-		QueuedPromise(this, handlerExecutor),
+		handlerExecutor.preparePromise(this),
 		exoPlayer.addListener(this).unitResponse()
 	).then(this)
 

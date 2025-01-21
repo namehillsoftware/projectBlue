@@ -2,8 +2,8 @@ package com.lasthopesoftware.resources.executors
 
 import com.google.common.util.concurrent.MoreExecutors
 import com.lasthopesoftware.bluewater.repository.Entity
+import com.lasthopesoftware.promises.extensions.preparePromise
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import java.util.concurrent.Executor
 import java.util.concurrent.ForkJoinPool
@@ -37,5 +37,5 @@ object ThreadPools {
 	}
 
 	inline fun <T, reified Table : Entity> promiseTableMessage(messageWriter: CancellableMessageWriter<T>): Promise<T> =
-		QueuedPromise(messageWriter, databaseTableExecutor(Table::class.java))
+		databaseTableExecutor(Table::class.java).preparePromise(messageWriter)
 }

@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.client.browsing.files.cached.stream
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.IDiskFileCachePersistence
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import okio.BufferedSource
 import okio.sink
 import java.io.File
@@ -28,26 +28,26 @@ class CachedFileOutputStream(
         offset: Int,
         length: Int
     ): Promise<CacheOutputStream> {
-        return QueuedPromise({
+        return ThreadPools.io.preparePromise {
 			if (!isClosed)
             	lazyFileOutputStream.value.write(buffer, offset, length)
             this
-        }, ThreadPools.io)
+        }
     }
 
     override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheOutputStream> {
-        return QueuedPromise({
+        return ThreadPools.io.preparePromise {
 			if (!isClosed)
             	bufferedSource.readAll(lazyFileOutputStream.value.sink())
             this
-        }, ThreadPools.io)
+        }
     }
 
     override fun flush(): Promise<CacheOutputStream> {
-        return QueuedPromise({
+        return ThreadPools.io.preparePromise {
             if (!isClosed && lazyFileOutputStream.isInitialized()) lazyFileOutputStream.value.flush()
             this
-        }, ThreadPools.io)
+        }
     }
 
     override fun commitToCache(): Promise<CachedFile?> =

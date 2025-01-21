@@ -123,6 +123,7 @@ import com.lasthopesoftware.bluewater.shared.resilience.TimedCountdownLatch
 import com.lasthopesoftware.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.promises.PromiseDelay.Companion.delay
+import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.promises.getSafely
@@ -132,7 +133,6 @@ import com.lasthopesoftware.resources.executors.HandlerExecutor
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
@@ -735,13 +735,13 @@ import java.util.concurrent.TimeoutException
 						.eventually { it.playlistFiles.addFile(serviceFile) }
 						.then { _ -> applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId)) }
 						.eventually {
-							QueuedPromise({
+							mainLoopHandlerExecutor.preparePromise {
 								Toast.makeText(
 									this,
 									getText(R.string.lbl_song_added_to_now_playing),
 									Toast.LENGTH_SHORT
 								).show()
-							}, mainLoopHandlerExecutor)
+							}
 						}
 				}
 				is PlaybackEngineAction.RemoveFileAtPosition -> {
