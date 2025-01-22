@@ -372,6 +372,8 @@ private fun FileDetailsEditor(
 									value = propertyValue,
 									enabled = isEditing,
 									singleLine = false,
+									minLines = 100,
+									maxLines = 100,
 									onValueChange = fileProperty::updateValue,
 									modifier = Modifier
 										.verticalScroll(rememberScrollState())
