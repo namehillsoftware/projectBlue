@@ -18,7 +18,7 @@ jobs:
       env:
         ANDROID_KEY_STORE_PASSWORD: "${{ secrets.ANDROID_KEY_STORE_PASSWORD }}"
         ANDROID_STORE_PASSWORD: "${{ secrets.ANDROID_STORE_PASSWORD }}"
-      run: sh build-release.sh
+      run: sh build-github-release.sh
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
