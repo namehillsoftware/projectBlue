@@ -100,7 +100,7 @@ import java.io.IOException
 				when {
 					isGettingConnection -> ConnectionUpdatesView(connectionViewModel = connectionStatusViewModel)
 					isConnectionLost -> ConnectionLostView(onCancel = { finish() }, onRetry = { isConnectionLost = false })
-					else -> FileDetailsView(vm, activityApplicationNavigation)
+					else -> FileDetailsView(vm, activityApplicationNavigation, localApplicationDependencies.bitmapProducer)
 				}
 
 				if (!isConnectionLost) {

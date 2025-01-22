@@ -2,12 +2,12 @@ package com.lasthopesoftware.bluewater.client.connection.trust
 
 import android.content.ContentResolver
 import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.emptyByteArray
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.uri.SelectDocumentUris
 import com.lasthopesoftware.resources.uri.toUri
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import java.net.URI
 import java.security.cert.CertificateFactory
@@ -36,7 +36,7 @@ class UserSslCertificateProvider(
 		documentUri
 			?.toUri()
 			?.let { uri ->
-				QueuedPromise({
+				ThreadPools.io.preparePromise {
 					contentResolver
 						.openInputStream(uri)
 						?.use { stream ->
@@ -44,7 +44,7 @@ class UserSslCertificateProvider(
 						}
 						?.let(::getThumbPrint)
 						?: emptyByteArray
-				}, ThreadPools.io)
+				}
 			}
 			.keepPromise(emptyByteArray)
 }

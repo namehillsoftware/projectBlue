@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messa
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.ControlMediaSession
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
+import com.lasthopesoftware.resources.bitmaps.ImmediateBitmapProducer
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -53,6 +54,7 @@ class WhenTheFileChanges : AndroidContext() {
 			mockk {
 				every { promiseImageBytes(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns byteArrayOf((912).toByte(), (368).toByte(), (395).toByte()).toPromise()
 			},
+			ImmediateBitmapProducer,
 			mediaSessionCompat,
 			messageBus,
 		)
@@ -85,7 +87,10 @@ class WhenTheFileChanges : AndroidContext() {
 					m.getString(MediaMetadata.METADATA_KEY_ALBUM) == "vessel" &&
 					m.getLong(MediaMetadata.METADATA_KEY_DURATION) == 259267L * 1000 &&
 					m.getLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER) == 919L &&
-					m.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART) != null
+					m.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART) != null &&
+					m.getBitmap(MediaMetadata.METADATA_KEY_ART) != null &&
+					m.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON) != null &&
+					m.getRating(MediaMetadata.METADATA_KEY_USER_RATING).starRating == 5f
 			})
 		}
 	}
@@ -99,7 +104,10 @@ class WhenTheFileChanges : AndroidContext() {
 					m.getString(MediaMetadata.METADATA_KEY_ALBUM) == "student" &&
 					m.getLong(MediaMetadata.METADATA_KEY_DURATION) == 594909L * 1000 &&
 					m.getLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER) == 337L &&
-					m.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART) != null
+					m.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART) != null &&
+					m.getBitmap(MediaMetadata.METADATA_KEY_ART) != null &&
+					m.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON) != null &&
+					m.getRating(MediaMetadata.METADATA_KEY_USER_RATING).starRating == 5f
 			})
 		}
 	}

@@ -5,11 +5,10 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.HaveExternalContent
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.sync.CollectServiceFilesForSync
+import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.uri.IoCommon
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
-import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import java.io.File
 import java.net.URI
@@ -40,7 +39,7 @@ class StoredFilesPruner(
 		private val serviceIdsToKeep by lazy { serviceFilesToKeep.map { obj -> obj.key }.toSet() }
 
 		override fun promiseResponse(allStoredFiles: Collection<StoredFile>): Promise<Unit> =
-			QueuedPromise(CancellableMessageWriter { ct ->
+			ThreadPools.io.preparePromise { ct ->
 				for (storedFile in allStoredFiles) {
 					if (ct.isCancelled) break
 
@@ -90,6 +89,6 @@ class StoredFilesPruner(
 						directoryToDelete = directoryToDelete.parentFile
 					}
 				}
-			}, ThreadPools.io)
+			}
 	}
 }

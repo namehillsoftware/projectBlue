@@ -45,6 +45,7 @@ import java.util.concurrent.TimeUnit
 				),
 				libraryConnectionDependencies.libraryFilePropertiesProvider,
 				libraryFilePropertiesDependents.imageBytesProvider,
+				applicationDependencies.bitmapProducer,
 				MediaSessionController(newMediaSession),
 				registerForApplicationMessages,
 			)

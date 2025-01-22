@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files
 import android.content.ContentResolver
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.SupplyFiles
 import com.lasthopesoftware.resources.uri.IoCommon
@@ -11,7 +12,6 @@ import com.lasthopesoftware.resources.uri.toUri
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
 import com.lasthopesoftware.storage.write.permissions.DecideIfFileWriteIsPossible
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.OutputStream
@@ -26,7 +26,7 @@ class StoredFileUriDestinationBuilder(
 	override fun promiseOutputStream(storedFile: StoredFile): Promise<OutputStream?> {
 		val storedFileUri = URI(storedFile.uri ?: return Promise.empty())
 
-		return QueuedPromise({
+		return ThreadPools.io.preparePromise {
 			when (storedFileUri.scheme) {
 				IoCommon.fileUriScheme -> {
 					val file = fileSupplier.getFile(storedFileUri)
@@ -56,6 +56,6 @@ class StoredFileUriDestinationBuilder(
 
 				else -> null
 			}
-		}, ThreadPools.io)
+		}
 	}
 }

@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.remote.MediaItemServiceFileLookup
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.bitmaps.ImmediateBitmapProducer
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -38,7 +39,8 @@ class `When Looking Up The Media Item` {
 				fileProperties,
 				mockk {
 					every { promiseImageBytes(LibraryId(libraryId), ServiceFile(703)) } returns byteArrayOf(3, 4).toPromise()
-				}
+				},
+				ImmediateBitmapProducer,
 			)
 			mediaItemServiceFileLookup.promiseMediaItem(LibraryId(libraryId), ServiceFile(703))
 				.toExpiringFuture()

@@ -6,13 +6,13 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.propagation.ProvideProxyablePromise
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -43,7 +43,7 @@ class DiskCacheImageAccess(
 						.also(cancellationProxy::doCancel)
 						.eventually { imageFile ->
 							imageFile
-								?.let { f -> QueuedPromise(ImageDiskCacheReader(f), ThreadPools.io).also(cancellationProxy::doCancel) }
+								?.let { f -> ThreadPools.io.preparePromise(ImageDiskCacheReader(f)).also(cancellationProxy::doCancel) }
 								.keepPromise()
 						}
 						.eventually { bytes ->

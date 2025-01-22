@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibr
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.resources.bitmaps.ImmediateBitmapProducer
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -67,7 +68,8 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 			),
 			mockk {
 				every { promiseImageBytes(libraryId, any<ServiceFile>()) } returns Promise(expectedBitmap)
-			}
+			},
+			ImmediateBitmapProducer,
 		)
 		builder = npBuilder.promiseLoadingNotification(libraryId, false).toExpiringFuture().get()
 	}

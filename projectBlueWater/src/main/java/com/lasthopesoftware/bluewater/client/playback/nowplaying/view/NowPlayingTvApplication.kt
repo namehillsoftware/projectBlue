@@ -284,7 +284,10 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedVi
 				contentColor = Color.White,
 				controlColor = Color.White,
 			) {
-				NowPlayingCoverArtView(nowPlayingCoverArtViewModel = browserViewDependencies.nowPlayingCoverArtViewModel)
+				NowPlayingCoverArtView(
+					nowPlayingCoverArtViewModel = browserViewDependencies.nowPlayingCoverArtViewModel,
+					bitmapProducer = browserViewDependencies.bitmapProducer,
+				)
 
 				Box(
 					modifier = Modifier
@@ -497,7 +500,7 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedViewModel
 
 		is FileDetailsScreen -> {
 			val fileDetailsViewModel = browserViewDependencies.fileDetailsViewModel
-			FileDetailsView(fileDetailsViewModel, browserViewDependencies.applicationNavigation)
+			FileDetailsView(fileDetailsViewModel, browserViewDependencies.applicationNavigation, browserViewDependencies.bitmapProducer)
 
 			fileDetailsViewModel.loadFromList(libraryId, playlist, position)
 		}

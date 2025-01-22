@@ -13,9 +13,9 @@ import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ShuffleOrder
 import androidx.media3.exoplayer.trackselection.TrackSelector
+import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.HandlerExecutor
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 
 class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private val executor: HandlerExecutor)
@@ -468,5 +468,5 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 		loopIn { innerPlayer.pauseAtEndOfMediaItems }
 
 	private fun <Response> loopIn(messageWriter: CancellableMessageWriter<Response>): Promise<Response> =
-		QueuedPromise(messageWriter, executor)
+		executor.preparePromise(messageWriter)
 }

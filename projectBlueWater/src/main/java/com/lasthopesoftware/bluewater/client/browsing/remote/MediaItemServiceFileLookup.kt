@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.remote
 
-import android.graphics.BitmapFactory
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
@@ -9,11 +8,13 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
+import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
 import com.namehillsoftware.handoff.promises.Promise
 
 class MediaItemServiceFileLookup(
 	private val filePropertiesProvider: ProvideLibraryFileProperties,
-	private val imageProvider: GetImageBytes
+	private val imageProvider: GetImageBytes,
+	private val bitmapProducer: ProduceBitmaps,
 ) : GetMediaItemsFromServiceFiles {
 
 	override fun promiseMediaItem(libraryId: LibraryId, serviceFile: ServiceFile): Promise<MediaBrowserCompat.MediaItem> {
@@ -27,11 +28,13 @@ class MediaItemServiceFileLookup(
 	}
 
 	override fun promiseMediaItemWithImage(libraryId: LibraryId, serviceFile: ServiceFile): Promise<MediaBrowserCompat.MediaItem> {
-		val promisedImage = imageProvider.promiseImageBytes(libraryId, serviceFile)
+		val promisedImage = imageProvider.promiseImageBytes(libraryId, serviceFile).eventually(bitmapProducer::promiseBitmap)
 		return promiseMediaMetadataWithFileProperties(libraryId, serviceFile)
 			.eventually { mediaMetadataBuilder ->
-				promisedImage.then { image ->
-					mediaMetadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, BitmapFactory.decodeByteArray(image, 0, image.size))
+				promisedImage.then { bitmap ->
+					mediaMetadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, bitmap)
+					mediaMetadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON, bitmap)
+					mediaMetadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ART, bitmap)
 
 					MediaBrowserCompat.MediaItem(
 						mediaMetadataBuilder.build().description,

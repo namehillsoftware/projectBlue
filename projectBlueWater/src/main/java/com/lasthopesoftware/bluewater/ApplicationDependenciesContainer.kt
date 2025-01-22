@@ -41,6 +41,8 @@ import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
+import com.lasthopesoftware.resources.bitmaps.DefaultAwareCachingBitmapProducer
+import com.lasthopesoftware.resources.bitmaps.QueuedBitmapProducer
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder
 import com.lasthopesoftware.resources.strings.Base64Encoder
 import com.lasthopesoftware.resources.strings.StringResources
@@ -78,6 +80,8 @@ object ApplicationDependenciesContainer {
 		private val imageCachedFilesProvider by lazy { CachedFilesProvider(context, ImageCacheConfiguration) }
 
 		private val imageDiskCacheDirectory by lazy { AndroidDiskCacheDirectoryProvider(context, ImageCacheConfiguration) }
+
+		override val bitmapProducer by lazy { DefaultAwareCachingBitmapProducer(QueuedBitmapProducer, defaultImageProvider) }
 
 		override val applicationSettings by lazy {
 			CachingApplicationSettingsRepository(

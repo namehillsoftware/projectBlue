@@ -5,9 +5,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.shared.StandardResponse
 import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 
@@ -49,7 +49,8 @@ class PlaylistsStorage(private val libraryConnections: ProvideLibraryConnections
 						.then { it -> it?.items?.get("PlaylistID") }
 						.eventually {
 							it?.let { playlistId ->
-								QueuedPromise({ playlist.map { sf -> sf.key }.joinToString(",") }, ThreadPools.compute)
+								ThreadPools.compute
+									.preparePromise { playlist.map { sf -> sf.key }.joinToString(",") }
 									.eventually { keys ->
 										promiseResponse(
 											"Playlist/AddFiles",

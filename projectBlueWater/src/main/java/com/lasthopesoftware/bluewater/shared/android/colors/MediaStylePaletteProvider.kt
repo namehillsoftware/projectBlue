@@ -25,9 +25,9 @@ import androidx.annotation.ColorInt
 import androidx.annotation.FloatRange
 import androidx.core.graphics.ColorUtils
 import androidx.palette.graphics.Palette
+import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import kotlin.math.abs
 import kotlin.math.sqrt
 import androidx.compose.ui.graphics.Color as ComposeColor
@@ -40,7 +40,7 @@ class MediaStylePaletteProvider(private val context: Context) {
 		Palette.Filter { _, hsl -> isNotWhiteOrBlack(hsl) }
 
 	private fun promisePalette(drawable: Drawable): Promise<MediaStylePalette> =
-		QueuedPromise({ getMediaPalette(drawable) }, ThreadPools.compute)
+		ThreadPools.compute.preparePromise { getMediaPalette(drawable) }
 
 	fun promisePalette(bitmap: Bitmap): Promise<MediaStylePalette> {
 		val drawable = BitmapDrawable(context.resources, bitmap)

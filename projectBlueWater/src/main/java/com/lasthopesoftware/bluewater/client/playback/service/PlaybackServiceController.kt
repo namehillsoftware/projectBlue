@@ -5,9 +5,9 @@ import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 
 @UnstableApi class PlaybackServiceController(private val context: Context) : ControlPlaybackService {
 	override fun initialize(libraryId: LibraryId) = PlaybackService.initialize(context, libraryId)
@@ -37,9 +37,7 @@ import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 	}
 
 	override fun shuffleAndStartPlaylist(libraryId: LibraryId, serviceFiles: List<ServiceFile>) {
-		QueuedPromise({
-			startPlaylist(libraryId, serviceFiles.shuffled())
-		}, ThreadPools.compute)
+		ThreadPools.compute.preparePromise { startPlaylist(libraryId, serviceFiles.shuffled()) }
 	}
 
 	override fun addToPlaylist(libraryId: LibraryId, serviceFile: ServiceFile) {

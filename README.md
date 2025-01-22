@@ -52,7 +52,7 @@ Run the tests via the IDE.
 Android Studio can perform the build. To run a CI build like it is run in Github, run the following command:
 
 ```shell script
-./build-bundle.sh
+./build-release.sh
 ```
 
 ## Deployment
