@@ -52,8 +52,11 @@ Run the tests via the IDE.
 Android Studio can perform the build. To run a CI build like it is run in Github, run the following command:
 
 ```shell script
-./build-release.sh
+./build-github-pr.sh
 ```
+
+This will leave artifacts that are owned by the root user. To run a build that leaves artifacts
+owned by the current user, run either `./build-release.sh` or `./build-apk.sh`.
 
 ## Deployment
 
