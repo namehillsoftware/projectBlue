@@ -20,9 +20,16 @@ object ConnectionTester : TestConnections {
 			val cancellationProxy = CancellationProxy()
 			awaitCancellation(cancellationProxy)
 
-			connectionProvider.promiseResponse("Alive")
+			connectionProvider
+				.promiseResponse("Alive")
 				.also(cancellationProxy::doCancel)
-				.then({ it, cp -> resolve(testResponse(it, cp)) }, { _, _ -> resolve(false) })
+				.then(
+					{ it, cp -> resolve(testResponse(it, cp)) },
+					{ e, _ ->
+						logger.error("Error checking connection at URL {}.", connectionProvider.urlProvider.baseUrl, e)
+						resolve(false)
+					}
+				)
 				.also(cancellationProxy::doCancel)
 		}
 	}
