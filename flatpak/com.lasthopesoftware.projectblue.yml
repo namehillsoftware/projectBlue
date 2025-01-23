@@ -1,0 +1,45 @@
+app-id: com.lasthopesoftware.projectblue
+runtime: org.gnome.Platform
+runtime-version: '47'
+sdk: org.gnome.Platform
+base: io.gitlab.android_translation_layer.BaseApp
+base-version: stable
+command: projectblue.sh
+finish-args:
+  - --share=network
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  - --socket=pulseaudio
+add-extensions:
+  org.freedesktop.Platform.ffmpeg-full:
+    version: '24.08'
+    directory: lib/ffmpeg
+    add-ld-path: .
+    no-autodownload: false
+    autodelete: false
+cleanup-commands:
+  - mkdir -p ${FLATPAK_DEST}/lib/ffmpeg
+modules:
+  - name: projectblue
+    buildsystem: simple
+    build-commands:
+      - install -D project-blue-5.4.1-SNAPSHOT-release.apk /app/share/project-blue.apk
+      - install -D projectblue.sh /app/bin/projectblue.sh
+#      - install -D net.newpipe.NewPipe.desktop /app/share/applications/net.newpipe.NewPipe.desktop
+      - install -D project-blue-logo.svg /app/share/icons/hicolor/scalable/apps/com.lasthopesoftware.projectblue.svg
+#      - install -D net.newpipe.NewPipe.metainfo.xml /app/share/metainfo/net.newpipe.NewPipe.metainfo.xml
+    sources:
+      - type: file
+        path: ../_artifacts/outputs/apk/release/project-blue-5.4.1-SNAPSHOT-release.apk
+#        sha256: d196fe395a9e487271b737d4de3696cb683284f3bcff5baaffbb71bba1aa53c8
+      - type: file
+        path: ../design/project-blue-logo.svg
+#        sha256: dcbdc537ef9937225df96f97a571a5deb2e5dde021c687530b7ee165c5c67cb7
+      - type: file
+        path: projectblue.sh
+#      - type: file
+#        path: net.newpipe.NewPipe.desktop
+#      - type: file
+#        path: net.newpipe.NewPipe.metainfo.xml
