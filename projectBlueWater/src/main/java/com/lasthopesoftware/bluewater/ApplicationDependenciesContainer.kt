@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater
 import android.content.Context
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
+import androidx.startup.AppInitializer
 import com.lasthopesoftware.bluewater.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.DiskFileCache
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.access.CachedFilesProvider
@@ -33,10 +34,10 @@ import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
-import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.repository.access.ApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.ui.ScreenDimensions
+import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
@@ -107,7 +108,11 @@ object ApplicationDependenciesContainer {
 
 		override val intentBuilder by lazy { IntentBuilder(context) }
 
-		override val syncScheduler by lazy { SyncScheduler(context) }
+		override val syncScheduler by lazy {
+			AppInitializer
+				.getInstance(context)
+				.initializeComponent(cls<SyncSchedulerInitializer>())
+		}
 
 		override val connectionSessions by lazy {
 			val connectionSettingsLookup = ConnectionSettingsLookup(LibraryRepository(context))

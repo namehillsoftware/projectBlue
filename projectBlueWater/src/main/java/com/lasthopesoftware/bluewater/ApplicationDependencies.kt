@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibrary
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
-import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
+import com.lasthopesoftware.bluewater.client.stored.sync.ScheduleSyncs
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.android.ui.ProvideScreenDimensions
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
@@ -29,7 +29,7 @@ interface ApplicationDependencies {
 	val sendApplicationMessages: SendApplicationMessages
 	val registerForApplicationMessages: RegisterForApplicationMessages
 	val intentBuilder: BuildIntents
-	val syncScheduler: SyncScheduler
+	val syncScheduler: ScheduleSyncs
 	val defaultImageProvider: ProvideDefaultImage
 	val diskFileAccessTimeUpdater: UpdateDiskFileAccessTime
 	val playbackServiceController: ControlPlaybackService
