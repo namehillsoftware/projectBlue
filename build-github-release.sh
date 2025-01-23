@@ -10,4 +10,4 @@ docker compose build && docker compose run --rm -v "$(pwd)":/src -w /src gradle 
   :projectBlueWater:testReleaseUnitTest \
   :projectBlueWater:assembleRelease
 
-cp **/*-release.apk _artifacts
+cp projectBlueWater/build/**/*-release.apk _artifacts
