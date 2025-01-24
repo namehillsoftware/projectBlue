@@ -99,7 +99,7 @@ fun NavigableApplication(content: @Composable () -> Unit) {
 		content)
 }
 
-private val selectionKeys = arrayOf(Key.DirectionCenter, Key.Enter)
+private val selectionKeys = setOf(Key.DirectionCenter, Key.Enter)
 
 // Courtesy of https://github.com/thesauri/dpad-compose/blob/main/app/src/main/java/dev/berggren/DpadFocusable.kt
 @OptIn(ExperimentalFoundationApi::class)
@@ -136,16 +136,18 @@ fun Modifier.navigable(
 		}
 	}
 
+	val modifier = this.combinedClickable(
+		interactionSource = boxInteractionSource,
+		indication = indication,
+		onLongClick = onLongClick,
+		onLongClickLabel = onLongClickLabel,
+		onClickLabel = onClickLabel,
+		onClick = onClick,
+		enabled = enabled,
+	)
+
 	if (inputMode.inputMode == InputMode.Touch) {
-		this.combinedClickable(
-			interactionSource = boxInteractionSource,
-			indication = indication,
-			onLongClick = onLongClick,
-			onLongClickLabel = onLongClickLabel,
-			onClickLabel = onClickLabel,
-			onClick = onClick,
-			enabled = enabled,
-		)
+		modifier
 	} else {
 		val longPressState = LocalLongPressLatch.current
 
@@ -173,7 +175,7 @@ fun Modifier.navigable(
 
 		var boxSize by remember { mutableStateOf(IntSize(0, 0)) }
 
-		this
+		modifier
 			.bringIntoViewRequester(bringIntoViewRequester)
 			.onSizeChanged { boxSize = it }
 			.onFocusChanged { focusState ->
