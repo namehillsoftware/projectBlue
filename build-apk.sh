@@ -3,9 +3,8 @@
 rm -rf _artifacts
 
 docker compose build && docker compose run --rm -v "$(pwd)":/src -w /src -u "$(id -u)":"$(id -g)" gradle \
-  :projectBlueWater:test \
-  :projectBlueWater:assembleRelease \
-  :projectBlueWater:assembleDebug
+  :projectBlueWater:testReleaseUnitTest \
+  :projectBlueWater:assemble
 
 EXIT_CODE=${PIPESTATUS[0]}
 
