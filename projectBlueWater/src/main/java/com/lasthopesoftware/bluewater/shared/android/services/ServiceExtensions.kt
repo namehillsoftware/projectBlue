@@ -8,21 +8,45 @@ import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
 import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.namehillsoftware.handoff.cancellation.CancellationToken
 import com.namehillsoftware.handoff.promises.Promise
+import org.slf4j.Logger
 import kotlin.coroutines.cancellation.CancellationException
 
-inline fun <reified TService : Service> Context.promiseBoundService(extras: Bundle? = null): Promise<ConnectedServiceBinding<TService>> =
-	object : Promise<ConnectedServiceBinding<TService>>(), ServiceConnection, Runnable {
+interface BoundService<TService : Service> : AutoCloseable {
+	val service: TService
+}
 
-		private val lock = Any()
+class ConnectedServiceBinding<TService : Service>(
+	private val owningContext: Context,
+	private val serviceConnection: ServiceConnection,
+	override val service: TService
+) : BoundService<TService> {
+	companion object {
+		private val logger: Logger by lazyLogger<BoundService<*>>()
+	}
+
+	override fun close() {
+		try {
+			owningContext.unbindService(serviceConnection)
+		} catch (e: Exception) {
+			logger.error("There was an error unbinding service ${service.javaClass.canonicalName}", e)
+		}
+	}
+}
+
+inline fun <reified TService : Service> Context.promiseBoundService(extras: Bundle? = null): Promise<BoundService<TService>> =
+	object : Promise<BoundService<TService>>(), ServiceConnection {
+
 		private val serviceClass = cls<TService>()
 
-		@Volatile
-		private var isCancelled = false
-		@Volatile
-		private var isBound = false
+		// Only look for a cancellation signal - once the service is bound, it needs to be closed.
+		private val cancellationToken = CancellationToken()
 
 		init {
+			awaitCancellation(cancellationToken)
+
 			try {
 				val intent = Intent(this@promiseBoundService, serviceClass).apply {
 					replaceExtras(extras)
@@ -34,22 +58,25 @@ inline fun <reified TService : Service> Context.promiseBoundService(extras: Bund
 			}
 		}
 
-		override fun onServiceConnected(name: ComponentName?, service: IBinder) = synchronized(lock) {
-			if (isCancelled) {
-				unbindService(this)
-				reject(CancellationException("Service Binding cancelled"))
-			}
+		override fun onServiceConnected(name: ComponentName?, service: IBinder) {
+			try {
+				if (cancellationToken.isCancelled) {
+					unbindService(this)
+					reject(CancellationException("Service Binding cancelled"))
+					return
+				}
 
-			val boundService = (service as? GenericBinder<*>)?.service as? TService
-			if (boundService != null) {
-				isBound = true
+				val boundService = (service as? GenericBinder<*>)?.service as? TService
+				if (boundService == null) {
+					unbindService(this)
+					reject(InvalidBindingException(serviceClass))
+					return
+				}
 
 				resolve(ConnectedServiceBinding(this@promiseBoundService, this, boundService))
-				return
+			} catch (e: Throwable) {
+				reject(e)
 			}
-
-			unbindService(this)
-			reject(InvalidBindingException(serviceClass))
 		}
 
 		override fun onServiceDisconnected(name: ComponentName?) {}
@@ -60,11 +87,5 @@ inline fun <reified TService : Service> Context.promiseBoundService(extras: Bund
 
 		override fun onNullBinding(name: ComponentName?) {
 			reject(UnexpectedNullBindingException(serviceClass))
-		}
-
-		override fun run() = synchronized(lock) {
-			isCancelled = true
-			if (isBound)
-				unbindService(this)
 		}
 	}

@@ -19,7 +19,6 @@ package com.lasthopesoftware.bluewater.client.connection.trust
 import java.security.NoSuchAlgorithmException
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
-import java.util.Arrays
 import javax.net.ssl.X509TrustManager
 
 class SelfSignedTrustManager(
@@ -39,7 +38,7 @@ class SelfSignedTrustManager(
         // They match? All is good. They don't, throw an exception.
         try {
             // Assume self-signed root is okay
-            if (Arrays.equals(certificateFingerprint, getThumbPrint(chain[0]))) return
+            if (certificateFingerprint.contentEquals(getThumbPrint(chain[0]))) return
         } catch (e: NoSuchAlgorithmException) {
             throw CertificateException(
                 "Unable to check self-signed certificate, unknown algorithm. ",

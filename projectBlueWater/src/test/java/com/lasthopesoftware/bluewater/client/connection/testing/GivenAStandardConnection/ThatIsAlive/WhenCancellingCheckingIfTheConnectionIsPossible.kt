@@ -41,6 +41,9 @@ class WhenCancellingCheckingIfTheConnectionIsPossible {
 		}
 		val connectionProvider = mockk<ProvideConnections>()
 		every { connectionProvider.promiseResponse("Alive") } returns deferredResponse
+		every { connectionProvider.urlProvider } returns mockk {
+			every { baseUrl } returns URL("http://flaffy")
+		}
 
 		val promisedTest = ConnectionTester.promiseIsConnectionPossible(connectionProvider)
 		promisedTest.cancel()

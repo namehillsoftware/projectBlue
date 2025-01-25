@@ -7,8 +7,6 @@ import android.content.Context
 import android.os.Environment
 import android.os.StrictMode
 import android.os.StrictMode.VmPolicy
-import androidx.work.Configuration
-import androidx.work.WorkManager
 import ch.qos.logback.classic.AsyncAppender
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
@@ -34,7 +32,6 @@ import com.lasthopesoftware.bluewater.client.stored.sync.notifications.SyncChann
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncItemStateChangedListener
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsUpdated
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.exceptions.UncaughtExceptionHandlerLogger
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
@@ -47,7 +44,6 @@ open class ProjectBlueApplication : Application() {
 
 	companion object {
 		private val logger by lazyLogger<ProjectBlueApplication>()
-		private var isWorkManagerInitialized = false
 	}
 
 	private val libraryConnectionDependencies by lazy {
@@ -80,7 +76,7 @@ open class ProjectBlueApplication : Application() {
 
 	private val applicationMessageBus by lazy { applicationDependencies.registerForApplicationMessages }
 
-	private val applicationSettings by lazy { getApplicationSettingsRepository() }
+	private val applicationSettings by lazy { applicationDependencies.applicationSettings }
 
 	private val syncScheduler by lazy { applicationDependencies.syncScheduler }
 
@@ -103,15 +99,6 @@ open class ProjectBlueApplication : Application() {
 			.then(::reinitializeLoggingIfNecessary)
 
 		registerAppBroadcastReceivers()
-
-		if (!isWorkManagerInitialized) {
-			WorkManager.initialize(this, Configuration.Builder().build())
-			isWorkManagerInitialized = true
-		}
-
-		syncScheduler
-			.promiseIsScheduled()
-			.then { isScheduled -> if (!isScheduled) syncScheduler.scheduleSync() }
 
 		LiveNowPlayingLookup.initializeInstance(this)
 	}
