@@ -126,6 +126,10 @@
                 android:name="com.lasthopesoftware.bluewater.SyncSchedulerInitializer"
                 android:value="androidx.startup" />
 
+            <meta-data
+                android:name="com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookupInitializer"
+                android:value="androidx.startup" />
+
         </provider>
     </application>
 

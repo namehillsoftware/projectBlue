@@ -9,7 +9,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.RemoveLibra
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryViewModel
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
 import com.lasthopesoftware.bluewater.client.connection.trust.ProvideUserSslCertificates
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
@@ -26,7 +25,6 @@ interface EntryDependencies : ApplicationDependencies {
 	val storedFileAccess: StoredFileAccess
 	val navigationMessages: RegisterForTypedMessages<NavigationMessage>
 	val applicationSettingsRepository: HoldApplicationSettings
-	val nowPlayingState: GetNowPlayingState
 	val reusableChildItemViewModelProvider: ReusableChildItemViewModelProvider
 	val applicationSettingsViewModel: ApplicationSettingsViewModel
 	val hiddenSettingsViewModel: HiddenSettingsViewModel

@@ -16,7 +16,6 @@ import com.lasthopesoftware.bluewater.client.connection.settings.changes.Observa
 import com.lasthopesoftware.bluewater.client.connection.trust.UserSslCertificateProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
@@ -67,8 +66,6 @@ class ActivityDependencies(
 	override val menuMessageBus by activity.buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
 	override val itemListMenuBackPressedHandler by lazy { ItemListMenuBackPressedHandler(menuMessageBus).also(viewModelScope::manage) }
-
-	override val nowPlayingState by lazy { LiveNowPlayingLookup.getInstance() }
 
 	override val storedItemAccess by lazy {
 		StateChangeBroadcastingStoredItemAccess(applicationDependencies.storedItemAccess, messageBus)

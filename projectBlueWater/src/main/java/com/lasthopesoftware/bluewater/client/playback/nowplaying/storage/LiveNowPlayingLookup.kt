@@ -1,58 +1,23 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.storage
 
-import android.app.Application
-import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageRegistrations
-import com.lasthopesoftware.bluewater.shared.messages.application.HaveApplicationMessageRegistrations
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.updateIfDifferent
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.atomic.AtomicReference
 
-class LiveNowPlayingLookup private constructor(
+class LiveNowPlayingLookup(
 	selectedLibraryIdentifierProvider: ProvideSelectedLibraryId,
 	private val inner: GetNowPlayingState,
-	registrations: HaveApplicationMessageRegistrations,
+	registrations: RegisterForApplicationMessages,
 ) : GetNowPlayingState {
-
-	companion object {
-		// This needs to be a singleton to ensure the track progress is as up-to-date as possible
-		private lateinit var instance: LiveNowPlayingLookup
-
-		@Synchronized
-		fun initializeInstance(application: Application): LiveNowPlayingLookup {
-			if (::instance.isInitialized) return instance
-
-			val libraryRepository = LibraryRepository(application)
-			instance = LiveNowPlayingLookup(
-				SelectedLibraryIdProvider(application.getApplicationSettingsRepository()),
-				NowPlayingRepository(
-					application.getCachedSelectedLibraryIdProvider(),
-					libraryRepository,
-					libraryRepository,
-					InMemoryNowPlayingState,
-				),
-				ApplicationMessageRegistrations,
-			)
-
-			return instance
-		}
-
-		fun getInstance(): LiveNowPlayingLookup =
-			if (::instance.isInitialized) instance
-			else throw IllegalStateException("Instance should be initialized in application root")
-	}
-
 	private val activeLibraryId = AtomicReference<LibraryId?>(null)
 	private val activePositionedFile = AtomicReference<PositionedFile?>(null)
 

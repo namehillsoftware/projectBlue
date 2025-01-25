@@ -21,7 +21,6 @@ import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicati
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobbleDroidProxy
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobbleDroidProxy
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.ScrobbleIntentProvider
@@ -99,8 +98,6 @@ open class ProjectBlueApplication : Application() {
 			.then(::reinitializeLoggingIfNecessary)
 
 		registerAppBroadcastReceivers()
-
-		LiveNowPlayingLookup.initializeInstance(this)
 	}
 
 	private fun registerAppBroadcastReceivers() {
