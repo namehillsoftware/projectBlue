@@ -1,20 +1,18 @@
-package com.lasthopesoftware.bluewater
+package com.lasthopesoftware.bluewater.client.stored.sync
 
 import android.content.Context
 import androidx.startup.Initializer
 import androidx.work.WorkManager
 import androidx.work.WorkManagerInitializer
-import com.lasthopesoftware.bluewater.client.stored.sync.ScheduleSyncs
-import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
+import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.client.stored.sync.constraints.SyncWorkerConstraints
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.cls
 
 class SyncSchedulerInitializer : Initializer<ScheduleSyncs> {
 	override fun create(context: Context): ScheduleSyncs {
 		val syncScheduler = SyncScheduler(
 			WorkManager.getInstance(context),
-			SyncWorkerConstraints(context.getApplicationSettingsRepository())
+			SyncWorkerConstraints(context.applicationDependencies.applicationSettings)
 		)
 
 		syncScheduler
@@ -24,7 +22,5 @@ class SyncSchedulerInitializer : Initializer<ScheduleSyncs> {
 		return syncScheduler
 	}
 
-	override fun dependencies(): MutableList<Class<out Initializer<*>>> {
-		return mutableListOf(cls<WorkManagerInitializer>())
-	}
+	override fun dependencies(): List<Class<out Initializer<*>>> = listOf(cls<WorkManagerInitializer>())
 }

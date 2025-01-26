@@ -8,7 +8,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
-import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.ActivityDependencies
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
@@ -35,7 +34,7 @@ private val leanbackModeProperty by lazy { magicPropertyBuilder.buildProperty("i
 
 val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destination") }
 
-@UnstableApi class EntryActivity :
+class EntryActivity :
 	AppCompatActivity(),
 	ActivityCompat.OnRequestPermissionsResultCallback,
 	ManagePermissions,

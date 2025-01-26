@@ -17,9 +17,9 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.Ca
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 
@@ -29,6 +29,23 @@ class DiskFileCachePersistence(
 	private val cachedFilesProvider: ProvideCachedFiles,
 	private val diskFileAccessTimeUpdater: UpdateDiskFileAccessTime
 ) : IDiskFileCachePersistence {
+
+	companion object {
+		private val logger by lazyLogger<DiskFileCachePersistence>()
+		private val cachedFileSqlInsert by lazy {
+			fromTable(tableName)
+				.addColumn(CACHE_NAME)
+				.addColumn(FILE_NAME)
+				.addColumn(FILE_SIZE)
+				.addColumn(LIBRARY_ID)
+				.addColumn(UNIQUE_KEY)
+				.addColumn(CREATED_TIME)
+				.addColumn(LAST_ACCESSED_TIME)
+				.withReplacement()
+				.build()
+		}
+	}
+
 	override fun putIntoDatabase(libraryId: LibraryId, uniqueKey: String, file: File): Promise<CachedFile?> {
 		val canonicalFilePath = try {
 			file.canonicalPath
@@ -99,21 +116,5 @@ class DiskFileCachePersistence(
 			}
 		}
 		cachedFile
-	}
-
-	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(DiskFileCachePersistence::class.java) }
-		private val cachedFileSqlInsert by lazy {
-			fromTable(tableName)
-				.addColumn(CACHE_NAME)
-				.addColumn(FILE_NAME)
-				.addColumn(FILE_SIZE)
-				.addColumn(LIBRARY_ID)
-				.addColumn(UNIQUE_KEY)
-				.addColumn(CREATED_TIME)
-				.addColumn(LAST_ACCESSED_TIME)
-				.withReplacement()
-				.build()
-		}
 	}
 }

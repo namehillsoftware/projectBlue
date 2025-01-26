@@ -3,9 +3,14 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.rendering
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DecoderCounters
 import androidx.media3.exoplayer.audio.AudioRendererEventListener
-import org.slf4j.LoggerFactory
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 
 @UnstableApi class AudioRenderingEventListener : AudioRendererEventListener {
+
+	companion object {
+		private val logger by lazyLogger<AudioRenderingEventListener>()
+	}
+
     override fun onAudioEnabled(counters: DecoderCounters) {
         if (!logger.isDebugEnabled) return
         logger.debug("Audio decoder counters updated")
@@ -27,11 +32,5 @@ import org.slf4j.LoggerFactory
     override fun onAudioDisabled(counters: DecoderCounters) {
         if (!logger.isDebugEnabled) return
         logger.debug("Audio disabled.")
-    }
-
-    companion object {
-        private val logger = LoggerFactory.getLogger(
-            AudioRenderingEventListener::class.java
-        )
     }
 }

@@ -1,10 +1,15 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation
 
 import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayableFileVolume
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.namehillsoftware.handoff.promises.Promise
-import org.slf4j.LoggerFactory
 
 class MaxFileVolumeManager(private val playableFileVolume: ManagePlayableFileVolume) : ManagePlayableFileVolume {
+
+	companion object {
+		private val logger by lazyLogger<ManagePlayableFileVolume>()
+	}
+
 	private var unadjustedVolume = 1f
 	private var maxFileVolume = 1f
 	override fun setVolume(volume: Float): Promise<Float> {
@@ -21,9 +26,5 @@ class MaxFileVolumeManager(private val playableFileVolume: ManagePlayableFileVol
 		logger.debug("Max file volume set to $maxFileVolume")
 		this.maxFileVolume = maxFileVolume
 		setVolume(unadjustedVolume)
-	}
-
-	companion object {
-		private val logger = LoggerFactory.getLogger(MaxFileVolumeManager::class.java)
 	}
 }
