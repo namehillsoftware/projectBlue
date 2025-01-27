@@ -9,13 +9,13 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exce
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException
 import com.lasthopesoftware.bluewater.client.stored.library.sync.CheckForSync
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.lasthopesoftware.bluewater.shared.observables.stream
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.exceptions.CompositeException
-import org.slf4j.LoggerFactory
 
 class StoredFileSynchronization(
 	private val libraryProvider: ILibraryProvider,
@@ -26,7 +26,7 @@ class StoredFileSynchronization(
 ) : SynchronizeStoredFiles {
 
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(StoredFileSynchronization::class.java) }
+		private val logger by lazyLogger<StoredFileSynchronization>()
 	}
 
 	override fun streamFileSynchronization(): Completable {

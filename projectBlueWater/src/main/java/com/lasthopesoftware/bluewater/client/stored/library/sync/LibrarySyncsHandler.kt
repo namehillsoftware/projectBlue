@@ -6,11 +6,11 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Proc
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.observables.stream
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.rxjava3.core.Observable
-import org.slf4j.LoggerFactory
 
 class LibrarySyncsHandler(
 	private val serviceFilesToSyncCollector: CollectServiceFilesForSync,
@@ -22,7 +22,7 @@ class LibrarySyncsHandler(
 
 	companion object {
 		private const val IGNORED_ARGUMENT_ERROR = "MIME type application/octet-stream cannot be inserted into content://media/external/audio/media; expected MIME type under audio/*"
-		private val logger by lazy { LoggerFactory.getLogger(LibrarySyncsHandler::class.java) }
+		private val logger by lazyLogger<LibrarySyncsHandler>()
 	}
 
 	override fun observeLibrarySync(libraryId: LibraryId): Observable<StoredFileJobStatus> =

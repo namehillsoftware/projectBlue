@@ -4,12 +4,17 @@ import android.content.Context
 import android.database.SQLException
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
-import org.slf4j.LoggerFactory
 import java.util.Date
 
 class DiskFileAccessTimeUpdater(private val context: Context) : UpdateDiskFileAccessTime {
+
+	companion object {
+		private val logger by lazyLogger<DiskFileAccessTimeUpdater>()
+	}
+
 	override fun promiseFileAccessedUpdate(cachedFile: CachedFile): Promise<CachedFile> = promiseTableMessage<CachedFile, CachedFile> {
 		doFileAccessedUpdate(cachedFile.id)
 		cachedFile
@@ -33,9 +38,5 @@ class DiskFileAccessTimeUpdater(private val context: Context) : UpdateDiskFileAc
 				throw sqlException
 			}
 		}
-	}
-
-	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(DiskFileAccessTimeUpdater::class.java) }
 	}
 }

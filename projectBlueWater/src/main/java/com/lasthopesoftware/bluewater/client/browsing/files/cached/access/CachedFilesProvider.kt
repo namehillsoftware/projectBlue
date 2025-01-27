@@ -2,15 +2,14 @@ package com.lasthopesoftware.bluewater.client.browsing.files.cached.access
 
 import android.content.Context
 import android.database.SQLException
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.DiskFileCache
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.configuration.DiskFileCacheConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
-import org.slf4j.LoggerFactory
 
 class CachedFilesProvider(
     private val context: Context,
@@ -18,7 +17,7 @@ class CachedFilesProvider(
 ) : ProvideCachedFiles {
 
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(DiskFileCache::class.java) }
+		private val logger by lazyLogger<CachedFilesProvider>()
 		private const val cachedFileFilter =
 			" WHERE " + CachedFile.LIBRARY_ID + " = @" + CachedFile.LIBRARY_ID +
 				" AND " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME +

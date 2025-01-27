@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater
 
 import androidx.activity.ComponentActivity
-import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.client.ActivitySuppliedDependencies
 import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModelProvider
@@ -16,7 +15,6 @@ import com.lasthopesoftware.bluewater.client.connection.settings.changes.Observa
 import com.lasthopesoftware.bluewater.client.connection.trust.UserSslCertificateProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
@@ -31,7 +29,6 @@ import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessa
 import com.lasthopesoftware.resources.closables.ViewModelCloseableManager
 import com.lasthopesoftware.resources.uri.DocumentUriSelector
 
-@UnstableApi
 class ActivityDependencies(
 	activity: ComponentActivity,
 	activitySuppliedDependencies: ActivitySuppliedDependencies,
@@ -67,8 +64,6 @@ class ActivityDependencies(
 	override val menuMessageBus by activity.buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
 	override val itemListMenuBackPressedHandler by lazy { ItemListMenuBackPressedHandler(menuMessageBus).also(viewModelScope::manage) }
-
-	override val nowPlayingState by lazy { LiveNowPlayingLookup.getInstance() }
 
 	override val storedItemAccess by lazy {
 		StateChangeBroadcastingStoredItemAccess(applicationDependencies.storedItemAccess, messageBus)

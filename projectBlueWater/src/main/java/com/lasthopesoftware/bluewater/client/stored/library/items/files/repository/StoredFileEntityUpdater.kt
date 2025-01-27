@@ -6,18 +6,18 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.annotation.Keep
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
 import com.lasthopesoftware.bluewater.repository.fetch
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.resources.uri.MediaCollections
 import com.namehillsoftware.querydroid.SqLiteAssistants
 import com.namehillsoftware.querydroid.SqLiteCommand
-import org.slf4j.LoggerFactory
 import java.io.File
 
 object StoredFileEntityUpdater : IEntityUpdater {
+	private val logger by lazyLogger<StoredFileEntityUpdater>()
+
     override fun onUpdate(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 13) recreateTableSchema(db)
     }
-
-	private val logger = LoggerFactory.getLogger(StoredFileEntityUpdater::class.java)
 
 	private const val checkIfStoredFilesExists =
 		"SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='${StoredFileEntityInformation.tableName}'"
