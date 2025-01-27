@@ -31,7 +31,7 @@ infix fun <Resolution, Response> Promise<Resolution>.then(response: ImmediateRes
 infix fun <Resolution, Response> Promise<Resolution>.excuse(response: ImmediateResponse<Throwable, Response>): Promise<Response> =
 	this.excuse(response)
 
-fun <Resolution> Executor.preparePromise(messageWriter: CancellableMessageWriter<Resolution>) = QueuedPromise(messageWriter, this)
+fun <Resolution> Executor.preparePromise(messageWriter: CancellableMessageWriter<Resolution>) = QueuedCancellablePromise(messageWriter, this)
 
 @Composable
 fun <T> Promise<T>.toState(initialValue: T): State<T> = produceState(initialValue) {
