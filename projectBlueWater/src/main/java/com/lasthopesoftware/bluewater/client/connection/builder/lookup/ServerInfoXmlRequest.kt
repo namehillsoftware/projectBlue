@@ -22,6 +22,7 @@ class ServerInfoXmlRequest(private val libraryProvider: ILibraryProvider, privat
 				}
 				?.let { request -> HttpPromisedResponse(clientFactory.getJriverCentralClient().newCall(request)).also(cp::doCancel) }
 				?.promiseStringBody()
+				?.also(cp::doCancel)
 				?.promiseXmlDocument()
 				.keepPromise()
 		}

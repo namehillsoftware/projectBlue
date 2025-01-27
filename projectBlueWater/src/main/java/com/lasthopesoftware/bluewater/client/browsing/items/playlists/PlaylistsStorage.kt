@@ -16,25 +16,30 @@ class PlaylistsStorage(private val libraryConnections: ProvideLibraryConnections
 		libraryConnections
 			.promiseLibraryConnection(libraryId)
 			.eventually { connectionProvider ->
-				connectionProvider
-					?.promiseResponse("Playlists/List", "IncludeMediaTypes=1")
-					?.promiseStringBody()
-					?.promiseXmlDocument()
-					?.then { xml ->
-						xml
-							.getElementsByTag("Item")
-							.mapNotNull { itemXml ->
-								itemXml
-									.takeIf {
-										it.getElementsByTag("Field")
-											.any { el -> el.attr("Name") == "MediaTypes" && el.ownText() == "Audio" }
-									}
-									?.getElementsByTag("Field")
-									?.firstOrNull { el -> el.attr("Name") == "Path" }
-									?.ownText()
-							}
-					}
-					.keepPromise(emptyList())
+				Promise.Proxy { cp ->
+					connectionProvider
+						?.promiseResponse("Playlists/List", "IncludeMediaTypes=1")
+						?.also(cp::doCancel)
+						?.promiseStringBody()
+						?.also(cp::doCancel)
+						?.promiseXmlDocument()
+						?.also(cp::doCancel)
+						?.then { xml ->
+							xml
+								.getElementsByTag("Item")
+								.mapNotNull { itemXml ->
+									itemXml
+										.takeIf {
+											it.getElementsByTag("Field")
+												.any { el -> el.attr("Name") == "MediaTypes" && el.ownText() == "Audio" }
+										}
+										?.getElementsByTag("Field")
+										?.firstOrNull { el -> el.attr("Name") == "Path" }
+										?.ownText()
+								}
+						}
+						.keepPromise(emptyList())
+				}
 			}
 
 	override fun promiseStoredPlaylist(libraryId: LibraryId, playlistPath: String, playlist: List<ServiceFile>): Promise<*> =

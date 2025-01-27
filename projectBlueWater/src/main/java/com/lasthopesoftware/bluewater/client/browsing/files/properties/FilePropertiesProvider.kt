@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideGuarant
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.exceptions.isOkHttpCanceled
 import com.lasthopesoftware.promises.extensions.preparePromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
@@ -70,7 +71,7 @@ class FilePropertiesProvider(
 		ImmediateResponse<Throwable, Unit>
 	{
 		private val cancellationProxy = CancellationProxy()
-		private lateinit var response: Response
+		private lateinit var responseString: String
 
 		private val urlKeyHolder
 			get() = connectionProvider.urlProvider.baseUrl.let { UrlKeyHolder(it, serviceFile) }
@@ -94,28 +95,41 @@ class FilePropertiesProvider(
 			}
 		}
 
-		override fun promiseResponse(resolution: Response): Promise<Unit> {
-			response = resolution
+		override fun promiseResponse(response: Response): Promise<Unit> {
+			responseString = response.body.use {
+				if (cancellationProxy.isCancelled) {
+					reject(FilePropertiesCancellationException(libraryId, serviceFile))
+					return Unit.toPromise()
+				}
+
+				it.string()
+			}
+
 			return ThreadPools.compute.preparePromise(this)
 		}
 
 		override fun prepareMessage(cancellationSignal: CancellationSignal) {
-			if (cancellationProxy.isCancelled) {
-				response.close()
+			if (cancellationSignal.isCancelled) {
 				reject(FilePropertiesCancellationException(libraryId, serviceFile))
 				return
 			}
 
 			resolve(
-				response.body
-					.use { body -> body.string() }
+				responseString
 					.let(Jsoup::parse)
 					.let { xml ->
 						xml
 							.getElementsByTag("item")
 							.firstOrNull()
 							?.children()
-							?.associateTo(HashMap()) { el ->Pair(el.attr("Name"), el.wholeOwnText()) }
+							?.associateTo(HashMap()) { el ->
+								if (cancellationSignal.isCancelled) {
+									reject(FilePropertiesCancellationException(libraryId, serviceFile))
+									return
+								}
+
+								Pair(el.attr("Name"), el.wholeOwnText())
+							}
 							?: emptyMap()
 					}
 					.also { properties ->

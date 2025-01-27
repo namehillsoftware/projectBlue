@@ -22,21 +22,33 @@ class ItemProvider(private val connectionProvider: ProvideGuaranteedLibraryConne
 	ProvideFreshItems,
 	PromisedResponse<Document, List<Item>>
 {
-    override fun promiseItems(libraryId: LibraryId, itemId: ItemId?): Promise<List<Item>> =
+    override fun promiseItems(libraryId: LibraryId, itemId: ItemId?): Promise<List<Item>> = Promise.Proxy { cp ->
 		connectionProvider
 			.promiseLibraryConnection(libraryId)
+			.also(cp::doCancel)
 			.eventually { connectionProvider ->
 				connectionProvider
 					?.run {
 						itemId
-							?.run { promiseResponse(browseLibraryParameter, "ID=$id", "Version=2", "ErrorOnMissing=1") }
+							?.run {
+								promiseResponse(
+									browseLibraryParameter,
+									"ID=$id",
+									"Version=2",
+									"ErrorOnMissing=1"
+								)
+							}
 							?: promiseResponse(browseLibraryParameter, "Version=2", "ErrorOnMissing=1")
 					}
+					?.also(cp::doCancel)
 					?.promiseStringBody()
+					?.also(cp::doCancel)
 					?.promiseXmlDocument()
+					?.also(cp::doCancel)
 					?.eventually(this)
 					.keepPromise(emptyList())
-			}
+				}
+	}
 
 	override fun promiseResponse(document: Document): Promise<List<Item>> = ThreadPools.compute.preparePromise { cs ->
 		val body = document.getElementsByTag("Response").firstOrNull()

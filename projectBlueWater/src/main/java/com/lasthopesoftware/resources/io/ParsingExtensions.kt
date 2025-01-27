@@ -19,11 +19,7 @@ private fun xmlParsingCancelledException() = CancellationException("XML parsing 
 
 fun Promise<Response>.promiseStringBody(): Promise<String> = then(StringBodyResponse)
 fun Promise<String>.promiseXmlDocument(): Promise<Document> = eventually(ParsedXmlDocumentResponse)
-fun Promise<String>.promiseHtmlDocument(): Promise<Document> = eventually(ParsedHtmlDocumentResponse)
-fun Promise<Response>.promiseStandardResponse(): Promise<StandardResponse> =
-	promiseStringBody()
-		.promiseXmlDocument()
-		.eventually(ParsedStandardDocumentResponse)
+fun Promise<Response>.promiseStandardResponse(): Promise<StandardResponse> = ParsedStandardResponse(this)
 
 object StringBodyResponse : ImmediateCancellableResponse<Response, String> {
 	override fun respond(response: Response, cancellationSignal: CancellationSignal): String = response.use {
@@ -40,11 +36,17 @@ object ParsedXmlDocumentResponse : PromisedResponse<String, Document> {
 	}
 }
 
-object ParsedHtmlDocumentResponse : PromisedResponse<String, Document> {
-	override fun promiseResponse(xmlString: String): Promise<Document> = ThreadPools.compute.preparePromise { cs ->
-		if (cs.isCancelled) throw xmlParsingCancelledException()
-
-		Jsoup.parse(xmlString)
+class ParsedStandardResponse(sourcePromise: Promise<Response>) : Promise.Proxy<StandardResponse>() {
+	init {
+		proxy(
+			sourcePromise
+				.also(::doCancel)
+				.promiseStringBody()
+				.also(::doCancel)
+				.promiseXmlDocument()
+				.also(::doCancel)
+				.eventually(ParsedStandardDocumentResponse)
+		)
 	}
 }
 
