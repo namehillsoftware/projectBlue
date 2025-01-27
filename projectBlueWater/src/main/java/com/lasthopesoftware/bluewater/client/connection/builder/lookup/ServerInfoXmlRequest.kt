@@ -5,11 +5,11 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.HttpPromisedResponse
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
 import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.resources.io.promiseStringBody
+import com.lasthopesoftware.resources.io.promiseXmlDocument
 import com.namehillsoftware.handoff.promises.Promise
 import okhttp3.Request
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
-import org.jsoup.parser.Parser
 
 class ServerInfoXmlRequest(private val libraryProvider: ILibraryProvider, private val clientFactory: ProvideOkHttpClients) : RequestServerInfoXml {
 	override fun promiseServerInfoXml(libraryId: LibraryId): Promise<Document?> = Promise.Proxy { cp ->
@@ -21,7 +21,8 @@ class ServerInfoXmlRequest(private val libraryProvider: ILibraryProvider, privat
 						.build()
 				}
 				?.let { request -> HttpPromisedResponse(clientFactory.getJriverCentralClient().newCall(request)).also(cp::doCancel) }
-				?.then { r -> r.body.use { b -> Jsoup.parse(b.string(), Parser.xmlParser()) } }
+				?.promiseStringBody()
+				?.promiseXmlDocument()
 				.keepPromise()
 		}
 	}

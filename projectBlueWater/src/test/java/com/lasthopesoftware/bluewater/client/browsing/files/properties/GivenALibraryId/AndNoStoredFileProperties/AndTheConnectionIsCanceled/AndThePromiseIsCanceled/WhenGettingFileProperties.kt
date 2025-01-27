@@ -4,11 +4,11 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisionConnectionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
@@ -34,7 +34,9 @@ class WhenGettingFileProperties {
             FakeLibraryConnectionProvider(mapOf(Pair(LibraryId(libraryId), fakeFileConnectionProvider)))
         FilePropertiesProvider(
 			GuaranteedLibraryConnectionProvider(fakeLibraryConnectionProvider),
-            LibraryRevisionProvider(fakeLibraryConnectionProvider),
+            mockk {
+				every { promiseRevision(LibraryId(libraryId)) } returns 0.toPromise()
+			},
             mockk(relaxed = true)
         )
     }

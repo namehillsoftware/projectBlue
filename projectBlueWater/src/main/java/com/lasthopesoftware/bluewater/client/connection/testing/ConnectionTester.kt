@@ -1,12 +1,15 @@
 package com.lasthopesoftware.bluewater.client.connection.testing
 
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
-import com.lasthopesoftware.bluewater.shared.StandardResponse
+import com.lasthopesoftware.bluewater.shared.NonStandardResponseException
+import com.lasthopesoftware.bluewater.shared.StandardResponse.Companion.toStandardResponse
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import okhttp3.Response
+import org.jsoup.Jsoup
+import org.jsoup.parser.Parser
 import java.io.IOException
 
 object ConnectionTester : TestConnections {
@@ -39,11 +42,15 @@ object ConnectionTester : TestConnections {
 			if (cancellationSignal.isCancelled) return false
 
 			try {
-				return body.byteStream().use(StandardResponse::fromInputStream)?.isStatus ?: false
+				return body.string().let { Jsoup.parse(it, Parser.xmlParser()) }.toStandardResponse().isStatusOk
+			} catch (e: NonStandardResponseException) {
+				logger.warn("Non standard response received.", e)
 			} catch (e: IOException) {
 				logger.error("Error closing connection, device failure?", e)
 			} catch (e: IllegalArgumentException) {
 				logger.warn("Illegal argument passed in", e)
+			} catch (t: Throwable) {
+				logger.error("Unexpected error parsing response.", t)
 			}
 		}
 		return false

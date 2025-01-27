@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.revisions
 
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
-import com.lasthopesoftware.bluewater.shared.StandardResponse
 import com.lasthopesoftware.policies.caching.TimedExpirationPromiseCache
+import com.lasthopesoftware.resources.io.promiseStandardResponse
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 
@@ -19,10 +19,9 @@ internal object RevisionStorage {
 		return expiringRevisionCache.getOrAdd(urlProvider.baseUrl.toString()) {
 				connectionProvider
 					.promiseResponse("Library/GetRevision")
-					.then { response ->
-						response.body
-							.use { body -> body.byteStream().use(StandardResponse::fromInputStream) }
-							?.let { standardRequest -> standardRequest.items["Sync"] }
+					.promiseStandardResponse()
+					.then { standardRequest ->
+						standardRequest.items["Sync"]
 							?.takeIf { revisionValue -> revisionValue.isNotEmpty() }!!
 							.toInt()
 					}
