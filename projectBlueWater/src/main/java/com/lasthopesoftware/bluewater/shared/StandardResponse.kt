@@ -1,32 +1,33 @@
 package com.lasthopesoftware.bluewater.shared
 
-import java.io.InputStream
-import javax.xml.parsers.SAXParserFactory
+import org.jsoup.nodes.Document
+import java.io.IOException
 
-class StandardResponse internal constructor(status: String?) {
+class StandardResponse internal constructor(
+	status: String?,
+	val items: LinkedHashMap<String, String>
+) {
     /**
      * @return the status
      */
-    val isStatus: Boolean
-    val items = HashMap<String?, String?>()
+    val isStatusOk: Boolean = status != null && status.equals("OK", ignoreCase = true)
 
-    init {
-        isStatus = status != null && status.equals("OK", ignoreCase = true)
-    }
+	companion object {
+		private const val responseTagName = "response"
+		private const val statusAttrName = "status"
+		private const val nameAttrName = "name"
 
-    companion object {
-		private val logger by lazyLogger<StandardResponse>()
-
-        fun fromInputStream(`is`: InputStream?): StandardResponse? {
-            try {
-                val sp = SAXParserFactory.newInstance().newSAXParser()
-                val jrResponseHandler = StandardResponseHandler()
-                sp.parse(`is`, jrResponseHandler)
-                return jrResponseHandler.response
-            } catch (e: Exception) {
-                logger.error("An error occurred parsing the input stream", e)
-            }
-            return null
-        }
-    }
+		fun Document.toStandardResponse(): StandardResponse {
+			val responseTag = getElementsByTag(responseTagName).singleOrNull() ?: throw NonStandardResponseException()
+			val items = responseTag
+				.getElementsByTag("item")
+				.associate { el -> Pair(el.attr(nameAttrName), el.wholeOwnText()) }
+			return StandardResponse(
+				responseTag.attr(statusAttrName),
+				items as? LinkedHashMap<String, String> ?: LinkedHashMap(items)
+			)
+		}
+	}
 }
+
+class NonStandardResponseException : IOException("Not a standard response.")
