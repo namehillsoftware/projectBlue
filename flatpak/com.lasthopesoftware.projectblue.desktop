@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Project Blue
+Exec=projectblue.sh
+Comment=JRiver Media Center Streaming Client
+X-Purism-FormFactor=Workstation;Mobile;
+Icon=com.lasthopesoftware.projectblue
+Categories=Audio;
