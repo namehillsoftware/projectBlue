@@ -6,7 +6,9 @@ rm -rf _artifacts
 BUILD_USER=$(stat -c "%u" "$(pwd)")
 BUILD_GROUP=$(stat -c "%g" "$(pwd)")
 
-docker compose build && docker compose run --rm -v "$(pwd)":/src -w /src -u "$BUILD_USER":"$BUILD_GROUP" gradle \
+docker compose build && docker compose run --rm \
+  -v "$(pwd)":/src -w /src \
+  -u "$BUILD_USER":"$BUILD_GROUP" gradle \
   :projectBlueWater:testReleaseUnitTest \
   :projectBlueWater:assembleRelease \
   :projectBlueWater:bundleRelease
