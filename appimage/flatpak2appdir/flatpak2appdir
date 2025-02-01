@@ -1,0 +1,219 @@
+#!/bin/bash
+
+# Source: https://github.com/sudo-give-me-coffee/flatpak2appdir/tree/master
+
+unset LANG
+HERE="$(dirname "$(readlink -f "${0}")")"
+
+function deploy(){
+  FILES=("$(timeout "${TIMER}" flatpak run --filesystem="${HERE}" --command="${HERE}/strace-file" \
+                                  --allow=devel "${app}" \
+                                  --appimage-extract-and-run -e -s "${1}" \
+                                  | sort | uniq | grep -v ^/app/ )")
+
+  echo "Copying used files from runtime by '${1}'..."
+  for file in ${FILES[@]}; do
+    flatpak run --filesystem="$(pwd)" --command=cp \
+                --allow=devel "${app}" -n --parents "${file}" . 2>&1 | \
+                grep -Ev "not specified|cannot stat|not a directory" # We don't need care about directory and missing files
+  done
+}
+
+function help(){
+  echo "usage: flatpak2appdir [--executable=] [APPID]"
+  echo
+  echo "Description:"
+  echo "  Transform a Flatpak application into an AppImage by"
+  echo "  tracking accessed files by executables"
+  echo
+  echo "Options:"
+  echo "  --executable=cmd  Scan for dependencies of 'cmd'"
+  echo "  --autostop=time   Define how long executables will be traced"
+  echo "  --disable-theme   Disables theme integration"
+  echo "  --help            Show this help"
+  echo
+  echo "Notes:"
+  echo "  ¹ --executable= Can be used multiple times"
+  echo "  ² The default value for --autostop= is 25,"
+  echo "    the time is given in seconds"
+  echo "  ³ This tool has no intention of discouraging the"
+  echo "    use of flatpaks"
+  echo
+  exit 0
+}
+
+for arg in "${@}"; do
+  echo "${arg}" | grep -q ^"--executable=" && {
+    shift
+    additional_exes+=("$(echo "${arg}" | cut -c 14-)")
+  }
+  echo "${arg}" | grep -q ^"--autostop=" && {
+    shift
+    TIMER="$(echo "${arg}" | cut -c 12-)"
+    export TIMER
+  }
+  echo "${arg}" | grep -qE ^"-h|--help"$ && {
+    help
+    exit 0
+  }
+  echo "${arg}" | grep -q ^"--disable-theme"$ && {
+    shift
+    export THEME="export GTK_THEME=$(mktemp -u)"
+  }
+done
+
+[ "${1}" = "" ] && {
+  echo "flatpak2appdir: must have at least PROG [ARGS]" 1>&2
+  echo "Try 'flatpak2appdir -h' for more information." 1>&2
+  exit 1
+}
+
+[ "${TIMER}" = "" ] && export TIMER=25
+
+app=${1}
+
+echo "Starting application..."
+
+command=$(flatpak run --filesystem="$(pwd)" \
+                      --command=cat "${app}" /app/manifest.json | \
+                      grep ^'  "command"' | cut -d\" -f4)
+
+mkdir -p "${app}.AppDir"
+cd       "${app}.AppDir" || exit
+                      
+additional_exes+=("${command}")
+
+for executable in "${additional_exes[@]}"; do
+  deploy "${executable}"
+done
+
+echo "Copying /app files..."
+flatpak run --filesystem="$(pwd)" --command=cp --allow=devel "${app}" -r --parents "/app/" . 
+
+# We need bundle gdk-pixbuf loaders
+PIBXBUX_LOADER_PATH="usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/2.10.0"
+[ -f "usr/lib/x86_64-linux-gnu/libgdk_pixbuf-2.0.so.0" ] && {
+  flatpak run --filesystem="$(pwd)" \
+              --command=cp \
+              --allow=devel "${app}" -r --parents "/${PIBXBUX_LOADER_PATH}"/* . 
+}
+ 
+# We need make sure that python will find some essential files
+[ -d "usr/lib/python3.7/" ] && {
+  CPYTHON_ESSENTIAL_FILES+=("/usr/lib/python3.7/__pycache__/struct.cpython-37.pyc")
+  CPYTHON_ESSENTIAL_FILES+=("/usr/lib/python3.7/__pycache__/copy.cpython-37.pyc")
+  CPYTHON_ESSENTIAL_FILES+=("/usr/lib/python3.7/struct.py")
+  CPYTHON_ESSENTIAL_FILES+=("/usr/lib/python3.7/lib-dynload/_struct.cpython-37m-x86_64-linux-gnu.so")
+  CPYTHON_ESSENTIAL_FILES+=("/usr/lib/python3.7/copy.py")
+  CPYTHON_ESSENTIAL_FILES+=("/usr/lib/python3.7/fnmatch.py")
+  for file in "${CPYTHON_ESSENTIAL_FILES[@]}"; do
+    flatpak run --filesystem="$(pwd)" \
+                --command=cp \
+                --allow=devel "${app}" --parents "${file}" .
+  done
+}
+
+[ -d "usr/lib/python3.7/encodings" ] && {
+  flatpak run --filesystem="$(pwd)" \
+              --command=cp \
+              --allow=devel "${app}" -r --parents "/usr/lib/python3.7/encodings" . 
+}
+
+# If we bundle libfontconfig, we need to bundle config files too
+[ -f "usr/lib/x86_64-linux-gnu/libfontconfig.so.1" ] && {
+  flatpak run --filesystem="$(pwd)" \
+              --command=cp \
+              --allow=devel "${app}" -r --parents "/etc/fonts" .
+}
+
+# Fixes black borders around elementary OS apps outside Pantheon Shell
+[ -f "app/share/themes/elementary/gtk-3.0/gtk.css" ] && {
+  theme_string+=(".titlebar { border-radius: 0;}")
+  theme_string+=("decoration {border-radius:0;box-shadow:none;margin:0;border:1px solid @theme_bg_color;}")
+  echo -e "\n${theme_string[*]}\n" >> app/share/themes/elementary/gtk-3.0/gtk.css
+  echo -e "\n${theme_string[*]}\n" >> app/share/themes/elementary/gtk-3.0/gtk-dark.css
+}
+
+[ -f "usr/lib/python3.7/encodings" ] && {
+  flatpak run --filesystem="$(pwd)" \
+              --command=cp \
+              --allow=devel "${app}" -r --parents "/usr/lib/python3.7/encodings"/* . 
+}
+
+# Bundle glib-2.0 schemas
+flatpak run --filesystem="$(pwd)" \
+            --command=cp \
+            --allow=devel "${app}" --parents "/usr/share/glib-2.0/schemas/gschemas.compiled" . 
+
+cp -rf usr/lib/ .
+
+# Get App descriptor
+cp -rf app/share/appdata usr
+
+rm -rf usr/share/locale
+rm -rf usr/share/fonts
+rm -rf usr/cache
+
+cat > AppRun <<\EOF
+  #!/usr/bin/env bash
+
+  export HERE="$(dirname "$(readlink -f "${0}")")"
+
+  function onExit(){
+    echo "Finishing..."
+    killall "${HERE}/unionfs"
+    sleep 1
+    rm -rf "${HERE}.SYS_ROOT"
+  }
+
+  trap "onExit" EXIT
+
+  export PATH="/app/bin:${HERE}:${PATH}"
+  export LD_LIBRARY_PATH="/app/lib:${LD_LIBRARY_PATH}"
+  export LD_LIBRARY_PATH="/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
+  export XDG_CONFIG_DIRS="/app/etc/xdg:${XDG_CONFIG_DIRS}"
+  export XDG_DATA_DIRS="/app/share:${XDG_DATA_DIRS}"
+  export GI_TYPELIB_PATH=$HERE/app/lib/girepository-1.0
+  
+  unset GTK_MODULES
+  export GCONV_PATH="$HERE/usr/lib/x86_64-linux-gnu/gconv"
+  §theme§
+  
+  echo "Creating mount point..."
+  mkdir -p "${HERE}.SYS_ROOT"
+  
+  echo "Starting proot..."
+  "${HERE}/unionfs" -o cow "${HERE}"=RO:/=RW "${HERE}.SYS_ROOT"
+  "${HERE}/proot" -R "${HERE}.SYS_ROOT" §command§ ${@}
+  
+EOF
+                                              
+sed -i "s|^.\{2\}||g;s|§command§|${command}|g;s|§theme§|${THEME}|g" AppRun
+
+
+cp "${HERE}/unionfs" .
+cp "${HERE}/proot" .
+
+chmod +x AppRun proot unionfs
+
+flatpak run --filesystem="$(pwd)" --command=cp \
+            --allow=devel "${app}" "/app/share/icons/hicolor/scalable/apps/${app}.svg" .
+            
+flatpak run --filesystem="$(pwd)" --command=cp \
+            --allow=devel "${app}" "/app/share/applications/${app}.desktop" .
+
+cp -r ./app/share/icons ./usr/share
+            
+# Let's patch desktop file to  make it compatible with FreeDesktop standard
+
+sed -i -e "s|DBusActivatable|X-DBusActivatable|g;s|Keywords|X-Keywords|g" "${app}.desktop"
+
+echo "Finished!"
+
+echo "Creating AppImage..."
+cd ..
+
+export VERSION=$(echo -n $(flatpak info "${app}" | grep Version: | cut -d\: -f2))
+"${HERE}/appimagetool" --appimage-extract-and-run --no-appstream "${app}".AppDir
+
+
