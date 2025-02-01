@@ -1,0 +1,32 @@
+language: minimal
+dist: xenial
+
+env:
+  global:
+    - DISPLAY=:99
+    - ARCH=x86_64
+  jobs:
+    - ID=org.gnome.gedit
+    - ID=com.github.babluboy.bookworm
+    - ID=com.github.calo001.fondo
+    - ID=com.github.maoschanz.drawing
+    - ID=com.github.themix_project.Oomox
+
+before_install:
+  - sudo add-apt-repository ppa:alexlarsson/flatpak -y
+  - sudo apt-get update -q
+  - sudo apt-get -y install flatpak xvfb x11-xserver-utils imagemagick
+  - wget -c https://github.com/$(wget -q https://github.com/probonopd/go-appimage/releases -O - | grep "appimagetool-.*-x86_64.AppImage" | head -n 1 | cut -d '"' -f 2)
+
+script:
+  - Xvfb :99 -screen 0 800x600x24 >/dev/null 2>&1 &
+  - chmod +x *
+  - bash -ex ./build-appimage.sh $ID
+
+after_script:
+  - killall Xvfb
+  
+branches:
+  except:
+    - # Do not build tags that we create when we upload to GitHub Releases
+    - /^(?i:continuous)/
