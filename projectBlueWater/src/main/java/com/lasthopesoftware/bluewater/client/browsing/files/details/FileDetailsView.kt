@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details
 
-import android.app.Activity
 import android.graphics.Bitmap
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -66,7 +66,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -461,7 +460,7 @@ private fun FileDetailsEditor(
 @Composable
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: NavigateApplication, bitmapProducer: ProduceBitmaps) {
-	val activity = LocalContext.current as? Activity ?: return
+	val activity = LocalActivity.current ?: return
 
 	val paletteProvider = MediaStylePaletteProvider(activity)
 	val coverArt by viewModel.coverArt.subscribeAsState()
@@ -478,8 +477,10 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 
 	FileDetailsEditor(viewModel = viewModel, navigateApplication = navigateApplication, palette = coverArtColorState)
 
+	val isLoading by viewModel.isLoading.subscribeAsState()
+
 	@Composable
-	fun fileDetailsSingleColumn() {
+	fun BoxWithConstraintsScope.fileDetailsSingleColumn() {
 		val fileProperties by viewModel.fileProperties.subscribeAsState()
 
 		val coverArtContainerHeight = 300.dp
@@ -499,276 +500,297 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 		val heightScaler =
 			memorableScrollConnectedScaler(max = boxHeightPx, min = LocalDensity.current.run { appBarHeight.toPx() })
 
-		Box(
-			modifier = Modifier
-				.fillMaxSize()
-				.nestedScroll(heightScaler)
-		) {
-			val lazyListState = rememberLazyListState()
-
-			LazyColumn(modifier = Modifier.fillMaxSize(), state = lazyListState) {
-				item {
-					Spacer(modifier = Modifier
-						.requiredHeight(boxHeight - appBarHeight)
-						.fillMaxWidth())
-				}
-
-				stickyHeader {
-					Spacer(modifier = Modifier
-						.requiredHeight(appBarHeight)
-						.fillMaxWidth())
-				}
-
-				items(fileProperties) {
-					FilePropertyRow(viewModel, it, coverArtColorState)
-				}
-			}
-
-			val heightValue by heightScaler.getValueState()
+		if (!isLoading) {
 			Box(
 				modifier = Modifier
-					.fillMaxWidth()
-					.align(Alignment.TopStart)
-					.background(coverArtColorState.backgroundColor)
-					.height(LocalDensity.current.run { heightValue.toDp() })
+					.fillMaxSize()
+					.nestedScroll(heightScaler)
 			) {
-				val coverArtTopPadding = viewPadding + appBarHeight
+				val lazyListState = rememberLazyListState()
 
-				val headerCollapseProgress by heightScaler.getProgressState()
-				val coverArtScrollOffset by remember { derivedStateOf { -coverArtContainerHeight * headerCollapseProgress } }
-				Box(
-					modifier = Modifier
-						.requiredHeight(coverArtContainerHeight)
-						.padding(
-							top = coverArtTopPadding,
-							start = viewPadding + 40.dp,
-							end = viewPadding + 40.dp,
+				LazyColumn(modifier = Modifier.fillMaxSize(), state = lazyListState) {
+					item {
+						Spacer(
+							modifier = Modifier
+								.requiredHeight(boxHeight - appBarHeight)
+								.fillMaxWidth()
 						)
-						.offset { IntOffset(x = 0, y = coverArtScrollOffset.roundToPx()) }
-						.fillMaxWidth()
-				) {
-					val coverArtState by remember { derivedStateOf { coverArtBitmap?.asImageBitmap() } }
-
-					coverArtState
-						?.let {
-							val album by viewModel.album.subscribeAsState()
-							val artist by viewModel.artist.subscribeAsState()
-							Image(
-								bitmap = it,
-								contentDescription = stringResource(
-									id = R.string.lbl_cover_art,
-									album,
-									artist
-								),
-								contentScale = ContentScale.FillHeight,
-								modifier = Modifier
-									.clip(RoundedCornerShape(5.dp))
-									.border(
-										1.dp,
-										shape = RoundedCornerShape(5.dp),
-										color = coverArtColorState.secondaryTextColor
-									)
-									.fillMaxHeight()
-									.align(Alignment.Center),
-							)
-						}
-				}
-
-				BackButton(
-					onBack = navigateApplication::backOut,
-					modifier = Modifier.padding(Dimensions.topRowOuterPadding)
-				)
-
-				val headerExpandProgress by remember { derivedStateOf { 1 - headerCollapseProgress } }
-				val topTitlePadding by remember { derivedStateOf { expandedTitlePadding * headerExpandProgress } }
-				BoxWithConstraints(
-					modifier = Modifier
-						.height(boxHeight)
-						.padding(top = topTitlePadding)
-						.fillMaxWidth()
-				) {
-					val minimumMenuWidth = (3 * 32).dp
-
-					val acceleratedToolbarStateProgress by remember {
-						derivedStateOf {
-							headerExpandProgress.pow(3).coerceIn(0f, 1f)
-						}
 					}
 
-					val acceleratedHeaderHidingProgress by remember { derivedStateOf { 1 - acceleratedToolbarStateProgress } }
+					stickyHeader {
+						Spacer(
+							modifier = Modifier
+								.requiredHeight(appBarHeight)
+								.fillMaxWidth()
+						)
+					}
 
-					val startPadding by remember { derivedStateOf { viewPadding + 48.dp * headerCollapseProgress } }
-					val endPadding by remember { derivedStateOf { viewPadding + minimumMenuWidth * acceleratedHeaderHidingProgress } }
-					FilePropertyHeader(
-						viewModel,
-						coverArtColorState,
-						modifier = Modifier.padding(start = startPadding, end = endPadding),
-						titleFontSize = titleFontSize,
-						isMarqueeEnabled = !lazyListState.isScrollInProgress
-					)
+					items(fileProperties) {
+						FilePropertyRow(viewModel, it, coverArtColorState)
+					}
+				}
 
-					val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderHidingProgress) } }
-					val expandedTopRowPadding = titleHeight + expandedMenuVerticalPadding
-					val topRowPadding by remember { derivedStateOf { expandedTopRowPadding - (expandedTopRowPadding - 14.dp) * headerCollapseProgress } }
-					Row(
+				val heightValue by heightScaler.getValueState()
+				Box(
+					modifier = Modifier
+						.fillMaxWidth()
+						.align(Alignment.TopStart)
+						.background(coverArtColorState.backgroundColor)
+						.height(LocalDensity.current.run { heightValue.toDp() })
+				) {
+					val coverArtTopPadding = viewPadding + appBarHeight
+
+					val headerCollapseProgress by heightScaler.getProgressState()
+					val coverArtScrollOffset by remember { derivedStateOf { -coverArtContainerHeight * headerCollapseProgress } }
+					Box(
 						modifier = Modifier
-							.padding(top = topRowPadding, start = 8.dp, end = 8.dp)
-							.width(menuWidth)
-							.align(Alignment.TopEnd)
+							.requiredHeight(coverArtContainerHeight)
+							.padding(
+								top = coverArtTopPadding,
+								start = viewPadding + 40.dp,
+								end = viewPadding + 40.dp,
+							)
+							.offset { IntOffset(x = 0, y = coverArtScrollOffset.roundToPx()) }
+							.fillMaxWidth()
 					) {
-						val iconSize = Dimensions.topMenuIconSize
-						val chevronRotation by remember { derivedStateOf { 180 * headerCollapseProgress } }
-						val isCollapsed by remember { derivedStateOf { headerCollapseProgress > .98f } }
+						val coverArtState by remember { derivedStateOf { coverArtBitmap?.asImageBitmap() } }
 
-						val chevronLabel = stringResource(id = if (isCollapsed) R.string.expand else R.string.collapse)
-						val scope = rememberCoroutineScope()
-						ColumnMenuIcon(
-							onClick = {
-								scope.launch {
-									if (isCollapsed) {
-										heightScaler.goToMax()
-										lazyListState.scrollToItem(0)
-									} else {
-										heightScaler.goToMin()
-										lazyListState.scrollToItem(1)
-									}
-								}
-							},
-							icon = {
+						coverArtState
+							?.let {
+								val album by viewModel.album.subscribeAsState()
+								val artist by viewModel.artist.subscribeAsState()
 								Image(
-									painter = painterResource(id = R.drawable.chevron_up_white_36dp),
-									colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-									contentDescription = chevronLabel,
+									bitmap = it,
+									contentDescription = stringResource(
+										id = R.string.lbl_cover_art,
+										album,
+										artist
+									),
+									contentScale = ContentScale.FillHeight,
 									modifier = Modifier
-										.size(iconSize)
-										.rotate(chevronRotation),
+										.clip(RoundedCornerShape(5.dp))
+										.border(
+											1.dp,
+											shape = RoundedCornerShape(5.dp),
+											color = coverArtColorState.secondaryTextColor
+										)
+										.fillMaxHeight()
+										.align(Alignment.Center),
 								)
-							},
-							label = if (acceleratedHeaderHidingProgress < 1) chevronLabel else null,
-							labelColor = coverArtColorState.secondaryTextColor,
-							labelModifier = Modifier.alpha(acceleratedToolbarStateProgress),
-							labelMaxLines = 1,
+							}
+					}
+
+					val headerExpandProgress by remember { derivedStateOf { 1 - headerCollapseProgress } }
+					val topTitlePadding by remember { derivedStateOf { expandedTitlePadding * headerExpandProgress } }
+					BoxWithConstraints(
+						modifier = Modifier
+							.height(boxHeight)
+							.padding(top = topTitlePadding)
+							.fillMaxWidth()
+					) {
+						val minimumMenuWidth = (3 * 32).dp
+
+						val acceleratedToolbarStateProgress by remember {
+							derivedStateOf {
+								headerExpandProgress.pow(3).coerceIn(0f, 1f)
+							}
+						}
+
+						val acceleratedHeaderHidingProgress by remember { derivedStateOf { 1 - acceleratedToolbarStateProgress } }
+
+						val startPadding by remember { derivedStateOf { viewPadding + 48.dp * headerCollapseProgress } }
+						val endPadding by remember { derivedStateOf { viewPadding + minimumMenuWidth * acceleratedHeaderHidingProgress } }
+						FilePropertyHeader(
+							viewModel,
+							coverArtColorState,
+							modifier = Modifier.padding(start = startPadding, end = endPadding),
+							titleFontSize = titleFontSize,
+							isMarqueeEnabled = !lazyListState.isScrollInProgress
 						)
 
-						val addFileToPlaybackLabel = stringResource(id = R.string.btn_add_file_to_playback)
-						ColumnMenuIcon(
-							onClick = { viewModel.addToNowPlaying() },
-							icon = {
-								Image(
-									painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
-									colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-									contentDescription = addFileToPlaybackLabel,
-									modifier = Modifier.size(iconSize),
-								)
-							},
-							label = if (acceleratedHeaderHidingProgress < 1) addFileToPlaybackLabel else null,
-							labelColor = coverArtColorState.secondaryTextColor,
-							labelModifier = Modifier.alpha(acceleratedToolbarStateProgress),
-							labelMaxLines = 1,
-						)
+						val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderHidingProgress) } }
+						val expandedTopRowPadding = titleHeight + expandedMenuVerticalPadding
+						val topRowPadding by remember { derivedStateOf { expandedTopRowPadding - (expandedTopRowPadding - 14.dp) * headerCollapseProgress } }
+						Row(
+							modifier = Modifier
+								.padding(top = topRowPadding, start = 8.dp, end = 8.dp)
+								.width(menuWidth)
+								.align(Alignment.TopEnd)
+						) {
+							val iconSize = Dimensions.topMenuIconSize
+							val chevronRotation by remember { derivedStateOf { 180 * headerCollapseProgress } }
+							val isCollapsed by remember { derivedStateOf { headerCollapseProgress > .98f } }
 
-						val playLabel = stringResource(id = R.string.btn_play)
-						ColumnMenuIcon(
-							onClick = { viewModel.play() },
-							icon = {
-								Image(
-									painter = painterResource(id = R.drawable.av_play_white),
-									colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-									contentDescription = playLabel,
-									modifier = Modifier.size(iconSize),
-								)
-							},
-							label = if (acceleratedHeaderHidingProgress < 1) playLabel else null,
-							labelColor = coverArtColorState.secondaryTextColor,
-							labelModifier = Modifier.alpha(acceleratedToolbarStateProgress),
-							labelMaxLines = 1,
-						)
+							val chevronLabel =
+								stringResource(id = if (isCollapsed) R.string.expand else R.string.collapse)
+							val scope = rememberCoroutineScope()
+							ColumnMenuIcon(
+								onClick = {
+									scope.launch {
+										if (isCollapsed) {
+											heightScaler.goToMax()
+											lazyListState.scrollToItem(0)
+										} else {
+											heightScaler.goToMin()
+											lazyListState.scrollToItem(1)
+										}
+									}
+								},
+								icon = {
+									Image(
+										painter = painterResource(id = R.drawable.chevron_up_white_36dp),
+										colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+										contentDescription = chevronLabel,
+										modifier = Modifier
+											.size(iconSize)
+											.rotate(chevronRotation),
+									)
+								},
+								label = if (acceleratedHeaderHidingProgress < 1) chevronLabel else null,
+								labelColor = coverArtColorState.secondaryTextColor,
+								labelModifier = Modifier.alpha(acceleratedToolbarStateProgress),
+								labelMaxLines = 1,
+							)
+
+							val addFileToPlaybackLabel = stringResource(id = R.string.btn_add_file_to_playback)
+							ColumnMenuIcon(
+								onClick = { viewModel.addToNowPlaying() },
+								icon = {
+									Image(
+										painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
+										colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+										contentDescription = addFileToPlaybackLabel,
+										modifier = Modifier.size(iconSize),
+									)
+								},
+								label = if (acceleratedHeaderHidingProgress < 1) addFileToPlaybackLabel else null,
+								labelColor = coverArtColorState.secondaryTextColor,
+								labelModifier = Modifier.alpha(acceleratedToolbarStateProgress),
+								labelMaxLines = 1,
+							)
+
+							val playLabel = stringResource(id = R.string.btn_play)
+							ColumnMenuIcon(
+								onClick = { viewModel.play() },
+								icon = {
+									Image(
+										painter = painterResource(id = R.drawable.av_play_white),
+										colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+										contentDescription = playLabel,
+										modifier = Modifier.size(iconSize),
+									)
+								},
+								label = if (acceleratedHeaderHidingProgress < 1) playLabel else null,
+								labelColor = coverArtColorState.secondaryTextColor,
+								labelModifier = Modifier.alpha(acceleratedToolbarStateProgress),
+								labelMaxLines = 1,
+							)
+						}
 					}
 				}
 			}
+		} else {
+			CircularProgressIndicator(
+				color = coverArtColorState.primaryTextColor,
+				modifier = Modifier.align(Alignment.Center)
+			)
 		}
+
+		BackButton(
+			onBack = navigateApplication::backOut,
+			modifier = Modifier
+				.padding(Dimensions.topRowOuterPadding)
+				.align(Alignment.TopStart)
+		)
 	}
 
 	@Composable
 	fun BoxWithConstraintsScope.fileDetailsTwoColumn() {
-		Row(modifier = Modifier.fillMaxSize()) {
-			Column(
-				modifier = Modifier
-					.fillMaxHeight()
-					.width(250.dp)
-					.padding(
-						start = viewPadding,
-						end = viewPadding * 2,
-						bottom = viewPadding,
-						top = viewPadding,
-					)
-			) {
-				Box(
+		if (!isLoading) {
+			Row(modifier = Modifier.fillMaxSize()) {
+				Column(
 					modifier = Modifier
-						.fillMaxWidth()
-						.weight(1.0f)
-						.align(Alignment.CenterHorizontally)
+						.fillMaxHeight()
+						.width(250.dp)
+						.padding(
+							start = viewPadding,
+							end = viewPadding * 2,
+							bottom = viewPadding,
+							top = viewPadding,
+						)
 				) {
-					val coverArtState by remember {
-						derivedStateOf {
-							coverArtBitmap
-								?.asImageBitmap()
+					Box(
+						modifier = Modifier
+							.fillMaxWidth()
+							.weight(1.0f)
+							.align(Alignment.CenterHorizontally)
+					) {
+						val coverArtState by remember {
+							derivedStateOf {
+								coverArtBitmap
+									?.asImageBitmap()
+							}
 						}
+
+						coverArtState
+							?.let {
+								val artist by viewModel.artist.subscribeAsState()
+								val album by viewModel.album.subscribeAsState()
+
+								Image(
+									bitmap = it,
+									contentDescription = stringResource(
+										id = R.string.lbl_cover_art,
+										album,
+										artist
+									),
+									contentScale = ContentScale.FillWidth,
+									modifier = Modifier
+										.fillMaxWidth()
+										.clip(RoundedCornerShape(5.dp))
+										.align(Alignment.Center)
+										.border(
+											1.dp,
+											shape = RoundedCornerShape(5.dp),
+											color = coverArtColorState.secondaryTextColor
+										),
+								)
+							}
 					}
 
-					coverArtState
-						?.let {
-							val artist by viewModel.artist.subscribeAsState()
-							val album by viewModel.album.subscribeAsState()
-
-							Image(
-								bitmap = it,
-								contentDescription = stringResource(
-									id = R.string.lbl_cover_art,
-									album,
-									artist
-								),
-								contentScale = ContentScale.FillWidth,
-								modifier = Modifier
-									.fillMaxWidth()
-									.clip(RoundedCornerShape(5.dp))
-									.align(Alignment.Center)
-									.border(
-										1.dp,
-										shape = RoundedCornerShape(5.dp),
-										color = coverArtColorState.secondaryTextColor
-									),
-							)
-						}
+					StaticFileMenu(viewModel, coverArtColorState)
 				}
 
-				StaticFileMenu(viewModel, coverArtColorState)
-			}
+				val fileProperties by viewModel.fileProperties.subscribeAsState()
+				val lazyListState = rememberLazyListState()
+				LazyColumn(modifier = Modifier.fillMaxWidth(), state = lazyListState) {
+					stickyHeader {
+						FilePropertyHeader(
+							viewModel,
+							coverArtColorState,
+							modifier = Modifier
+								.background(coverArtColorState.backgroundColor)
+								.padding(
+									start = viewPadding,
+									top = viewPadding,
+									bottom = viewPadding,
+									end = Dimensions.viewPaddingUnit * 10 + viewPadding
+								)
+								.fillMaxWidth(),
+							isMarqueeEnabled = !lazyListState.isScrollInProgress
+						)
+					}
 
-			val fileProperties by viewModel.fileProperties.subscribeAsState()
-			val lazyListState = rememberLazyListState()
-			LazyColumn(modifier = Modifier.fillMaxWidth(), state = lazyListState) {
-				stickyHeader {
-					FilePropertyHeader(
-						viewModel,
-						coverArtColorState,
-						modifier = Modifier
-							.background(coverArtColorState.backgroundColor)
-							.padding(
-								start = viewPadding,
-								top = viewPadding,
-								bottom = viewPadding,
-								end = Dimensions.viewPaddingUnit * 10 + viewPadding
-							)
-							.fillMaxWidth(),
-						isMarqueeEnabled = !lazyListState.isScrollInProgress
-					)
-				}
-
-				items(fileProperties) {
-					FilePropertyRow(viewModel, it, coverArtColorState)
+					items(fileProperties) {
+						FilePropertyRow(viewModel, it, coverArtColorState)
+					}
 				}
 			}
+		} else {
+			CircularProgressIndicator(
+				color = coverArtColorState.primaryTextColor,
+				modifier = Modifier.align(Alignment.Center)
+			)
 		}
 
 		Image(
@@ -781,9 +803,6 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 				.navigable(onClick = navigateApplication::backOut),
 		)
 	}
-
-	val isLoading by viewModel.isLoading.subscribeAsState()
-
 
 	Column(modifier = Modifier.fillMaxSize()) {
 		Spacer(
@@ -803,11 +822,6 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 				.consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.Vertical))
 			) {
 				when {
-					isLoading -> CircularProgressIndicator(
-						color = coverArtColorState.primaryTextColor,
-						modifier = Modifier.align(Alignment.Center)
-					)
-
 					maxWidth >= 450.dp -> fileDetailsTwoColumn()
 					else -> fileDetailsSingleColumn()
 				}
