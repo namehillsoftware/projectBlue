@@ -68,7 +68,6 @@ import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberSystemUiController
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
@@ -251,9 +250,6 @@ fun LibraryDestination.Navigate(
 			}
 
 			is NowPlayingScreen -> {
-				val systemUiController = rememberSystemUiController()
-				systemUiController.setSystemBarsColor(SharedColors.overlayDark)
-
 				NowPlayingView(
 					nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
 					nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,

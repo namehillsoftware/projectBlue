@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,6 +32,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.layout.windowInsetsEndWidth
+import androidx.compose.foundation.layout.windowInsetsStartWidth
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -72,7 +75,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -98,6 +100,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.DragDropItemScope
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.DragDropLazyColumn
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.rememberDragDropListState
+import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberSystemUiController
 import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
@@ -528,7 +531,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 
 	val isScreenControlsVisible by nowPlayingFilePropertiesViewModel.isScreenControlsVisible.subscribeAsState()
 
-	val filePropertiesHeight = maxHeight - expandedControlsHeight
+	val filePropertiesHeight by remember { derivedStateOf { maxHeight - expandedControlsHeight } }
 
 	val filePropertiesHeightPx by LocalDensity.current.run { remember { derivedStateOf { filePropertiesHeight.toPx() } } }
 
@@ -538,7 +541,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	var playlistDragValue by remember { mutableStateOf(SlideOutState.Closed) }
 
 	val playlistDrawerState = with (LocalDensity.current) {
-		remember {
+		remember(LocalDensity.current) {
 			AnchoredDraggableState(
 				initialValue = playlistDragValue,
 				anchors = DraggableAnchors {
@@ -959,6 +962,13 @@ fun NowPlayingView(
 	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
 	bitmapProducer: ProduceBitmaps,
 ) {
+	val systemUiController = rememberSystemUiController()
+	DisposableEffect(systemUiController) {
+		systemUiController.setSystemBarsColor(Color.Transparent)
+
+		onDispose {  }
+	}
+
 	val isScreenOn by screenOnState.isScreenOn.collectAsState()
 	KeepScreenOn(isScreenOn)
 
@@ -972,231 +982,254 @@ fun NowPlayingView(
 			bitmapProducer = bitmapProducer
 		)
 
-		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
-
-		// Nest boxes to get proper size constraints
 		BoxWithConstraints(
-			modifier = Modifier
-				.fillMaxSize()
-				.background(SharedColors.overlayDark)
-				.padding(systemBarsPadding),
-		) {
-			val screenScope by remember {
-				derivedStateOf {
-					with (this@BoxWithConstraints) {
-						ScreenDimensionsScope(
-							maxHeight + systemBarsPadding.calculateTopPadding() + systemBarsPadding.calculateBottomPadding(),
-							maxWidth  + systemBarsPadding.calculateLeftPadding(LayoutDirection.Ltr) + systemBarsPadding.calculateRightPadding(LayoutDirection.Ltr),
-							this
-						)
-					}
-				}
-			}
-
-			with (screenScope) {
-				if (screenWidth < Dimensions.twoColumnThreshold) {
-					NowPlayingNarrowView(
-						nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-						screenOnState = screenOnState,
-						playbackServiceController = playbackServiceController,
-						playlistViewModel = playlistViewModel,
-						childItemViewModelProvider = childItemViewModelProvider,
-						applicationNavigation = applicationNavigation,
-						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-						viewModelMessageBus = viewModelMessageBus,
-					)
-				} else {
-					NowPlayingWideView(
-						nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-						screenOnState = screenOnState,
-						playbackServiceController = playbackServiceController,
-						playlistViewModel = playlistViewModel,
-						childItemViewModelProvider = childItemViewModelProvider,
-						applicationNavigation = applicationNavigation,
-						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-						viewModelMessageBus = viewModelMessageBus,
-					)
-				}
-			}
-		}
-	}
-
-	val isSavingPlaylistActive by playlistViewModel.isSavingPlaylistActive.subscribeAsState()
-	if (isSavingPlaylistActive) {
-		Dialog(
-			onDismissRequest = { playlistViewModel.disableSavingPlaylist() },
-		) {
-			val selectedPlaylistPath by playlistViewModel.selectedPlaylistPath.subscribeAsState()
-
-			BackHandler(selectedPlaylistPath.isNotEmpty()) {
-				playlistViewModel.updateSelectedPlaylistPath("")
-			}
-
-			ControlSurface {
-				Column(
+			modifier = Modifier.fillMaxSize().background(SharedColors.overlayDark)
+		) screenBox@{
+			Column {
+				Spacer(
 					modifier = Modifier
-						.padding(Dimensions.viewPaddingUnit * 2)
+						.windowInsetsTopHeight(WindowInsets.systemBars)
 						.fillMaxWidth()
-						.fillMaxHeight(.8f),
-				) {
-					Row(
+						.background(SharedColors.overlayDark)
+				)
+
+				Row(modifier = Modifier.weight(1f)) {
+					Spacer(
 						modifier = Modifier
-							.fillMaxWidth()
-							.padding(bottom = Dimensions.viewPaddingUnit * 4)
-					) {
-						ProvideTextStyle(MaterialTheme.typography.h5) {
-							Text(
-								text = stringResource(id = R.string.save_playlist),
-								modifier = Modifier
-									.weight(1f)
-									.align(Alignment.CenterVertically),
-							)
-						}
-
-						Icon(
-							painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
-							contentDescription = stringResource(id = R.string.btn_cancel),
-							modifier = Modifier
-								.clickable { playlistViewModel.disableSavingPlaylist() }
-								.align(Alignment.CenterVertically),
-						)
-					}
-
-					TextField(
-						value = selectedPlaylistPath,
-						onValueChange = playlistViewModel::updateSelectedPlaylistPath,
-						modifier = Modifier.fillMaxWidth(),
-						placeholder = { Text(stringResource(R.string.new_or_existing_playlist_path)) },
-						singleLine = true,
+							.windowInsetsStartWidth(WindowInsets.systemBars)
+							.fillMaxHeight()
+							.background(SharedColors.overlayDark)
 					)
 
-					val filteredPlaylistPaths by playlistViewModel.filteredPlaylistPaths.subscribeAsState()
+					// Nest boxes to get proper size constraints
+					BoxWithConstraints(modifier = Modifier.weight(1f)) nestedBox@{
+						val screenScope = ScreenDimensionsScope(
+							screenHeight = this@screenBox.maxHeight,
+							screenWidth = this@screenBox.maxWidth,
+							innerBoxScope = this@nestedBox
+						)
 
-					Box(
-						modifier = Modifier
-							.fillMaxWidth()
-							.weight(1f)
-					) {
-						ProvideTextStyle(value = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Normal)) {
-							LazyColumn(
-								modifier = Modifier.fillMaxWidth()
-							) {
-								items(filteredPlaylistPaths) { playlistPath ->
-									Row(
-										modifier = Modifier
-											.height(Dimensions.standardRowHeight)
-											.fillMaxWidth()
-											.clickable {
-												playlistViewModel.updateSelectedPlaylistPath(
-													playlistPath
-												)
-											},
-										verticalAlignment = Alignment.CenterVertically,
-									) {
-										Text(text = playlistPath)
-									}
-								}
+						with(screenScope) {
+							if (screenWidth < Dimensions.twoColumnThreshold) {
+								NowPlayingNarrowView(
+									nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+									screenOnState = screenOnState,
+									playbackServiceController = playbackServiceController,
+									playlistViewModel = playlistViewModel,
+									childItemViewModelProvider = childItemViewModelProvider,
+									applicationNavigation = applicationNavigation,
+									itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+									viewModelMessageBus = viewModelMessageBus,
+								)
+							} else {
+								NowPlayingWideView(
+									nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+									screenOnState = screenOnState,
+									playbackServiceController = playbackServiceController,
+									playlistViewModel = playlistViewModel,
+									childItemViewModelProvider = childItemViewModelProvider,
+									applicationNavigation = applicationNavigation,
+									itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+									viewModelMessageBus = viewModelMessageBus,
+								)
 							}
 						}
 					}
 
-					val isPlaylistPathValid by playlistViewModel.isPlaylistPathValid.subscribeAsState()
+					Spacer(
+						modifier = Modifier
+							.windowInsetsEndWidth(WindowInsets.systemBars)
+							.fillMaxHeight()
+							.background(SharedColors.overlayDark)
+					)
+				}
 
-					if (isPlaylistPathValid) {
+				Spacer(
+					modifier = Modifier
+						.windowInsetsBottomHeight(WindowInsets.systemBars)
+						.fillMaxWidth()
+						.background(SharedColors.overlayDark)
+				)
+			}
+		}
+
+		val isSavingPlaylistActive by playlistViewModel.isSavingPlaylistActive.subscribeAsState()
+		if (isSavingPlaylistActive) {
+			Dialog(
+				onDismissRequest = { playlistViewModel.disableSavingPlaylist() },
+			) {
+				val selectedPlaylistPath by playlistViewModel.selectedPlaylistPath.subscribeAsState()
+
+				BackHandler(selectedPlaylistPath.isNotEmpty()) {
+					playlistViewModel.updateSelectedPlaylistPath("")
+				}
+
+				ControlSurface {
+					Column(
+						modifier = Modifier
+							.padding(Dimensions.viewPaddingUnit * 2)
+							.fillMaxWidth()
+							.fillMaxHeight(.8f),
+					) {
 						Row(
 							modifier = Modifier
 								.fillMaxWidth()
-								.padding(Dimensions.viewPaddingUnit)
+								.padding(bottom = Dimensions.viewPaddingUnit * 4)
 						) {
+							ProvideTextStyle(MaterialTheme.typography.h5) {
+								Text(
+									text = stringResource(id = R.string.save_playlist),
+									modifier = Modifier
+										.weight(1f)
+										.align(Alignment.CenterVertically),
+								)
+							}
+
 							Icon(
-								painter = painterResource(id = R.drawable.ic_save_white_36dp),
-								contentDescription = stringResource(id = R.string.save),
+								painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+								contentDescription = stringResource(id = R.string.btn_cancel),
 								modifier = Modifier
-									.fillMaxWidth()
-									.weight(1f)
-									.clickable { playlistViewModel.savePlaylist() }
+									.clickable { playlistViewModel.disableSavingPlaylist() }
 									.align(Alignment.CenterVertically),
 							)
+						}
+
+						TextField(
+							value = selectedPlaylistPath,
+							onValueChange = playlistViewModel::updateSelectedPlaylistPath,
+							modifier = Modifier.fillMaxWidth(),
+							placeholder = { Text(stringResource(R.string.new_or_existing_playlist_path)) },
+							singleLine = true,
+						)
+
+						val filteredPlaylistPaths by playlistViewModel.filteredPlaylistPaths.subscribeAsState()
+
+						Box(
+							modifier = Modifier
+								.fillMaxWidth()
+								.weight(1f)
+						) {
+							ProvideTextStyle(value = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Normal)) {
+								LazyColumn(
+									modifier = Modifier.fillMaxWidth()
+								) {
+									items(filteredPlaylistPaths) { playlistPath ->
+										Row(
+											modifier = Modifier
+												.height(Dimensions.standardRowHeight)
+												.fillMaxWidth()
+												.clickable {
+													playlistViewModel.updateSelectedPlaylistPath(
+														playlistPath
+													)
+												},
+											verticalAlignment = Alignment.CenterVertically,
+										) {
+											Text(text = playlistPath)
+										}
+									}
+								}
+							}
+						}
+
+						val isPlaylistPathValid by playlistViewModel.isPlaylistPathValid.subscribeAsState()
+
+						if (isPlaylistPathValid) {
+							Row(
+								modifier = Modifier
+									.fillMaxWidth()
+									.padding(Dimensions.viewPaddingUnit)
+							) {
+								Icon(
+									painter = painterResource(id = R.drawable.ic_save_white_36dp),
+									contentDescription = stringResource(id = R.string.save),
+									modifier = Modifier
+										.fillMaxWidth()
+										.weight(1f)
+										.clickable { playlistViewModel.savePlaylist() }
+										.align(Alignment.CenterVertically),
+								)
+							}
 						}
 					}
 				}
 			}
 		}
-	}
 
-	val isConnectionLost by connectionWatcherViewModel.isCheckingConnection.subscribeAsState()
-	if (isConnectionLost) {
-		AlertDialog(
-			onDismissRequest = { connectionWatcherViewModel.cancelLibraryConnectionPolling() },
-			title = { Text(text = stringResource(id = R.string.lbl_connection_lost_title)) },
-			text = {
-				Text(
-					text = stringResource(
-						id = R.string.lbl_attempting_to_reconnect,
-						stringResource(id = R.string.app_name)
+		val isConnectionLost by connectionWatcherViewModel.isCheckingConnection.subscribeAsState()
+		if (isConnectionLost) {
+			AlertDialog(
+				onDismissRequest = { connectionWatcherViewModel.cancelLibraryConnectionPolling() },
+				title = { Text(text = stringResource(id = R.string.lbl_connection_lost_title)) },
+				text = {
+					Text(
+						text = stringResource(
+							id = R.string.lbl_attempting_to_reconnect,
+							stringResource(id = R.string.app_name)
+						)
 					)
+				},
+				buttons = {
+					Row(
+						modifier = Modifier
+							.fillMaxWidth()
+							.padding(Dimensions.viewPaddingUnit),
+						horizontalArrangement = Arrangement.Center,
+					) {
+						Button(
+							onClick = {
+								connectionWatcherViewModel.cancelLibraryConnectionPolling()
+							},
+						) {
+							Text(text = stringResource(id = R.string.btn_cancel))
+						}
+					}
+				},
+				properties = DialogProperties(
+					dismissOnBackPress = true,
 				)
-			},
-			buttons = {
-				Row(
-					modifier = Modifier
-						.fillMaxWidth()
-						.padding(Dimensions.viewPaddingUnit),
-					horizontalArrangement = Arrangement.Center,
-				) {
-					Button(
-						onClick = {
-							connectionWatcherViewModel.cancelLibraryConnectionPolling()
-						},
-					) {
-						Text(text = stringResource(id = R.string.btn_cancel))
-					}
-				}
-			},
-			properties = DialogProperties(
-				dismissOnBackPress = true,
 			)
-		)
-	}
+		}
 
-	val isEmptyPlaylistRequested by playlistViewModel.isClearingPlaylistRequested.subscribeAsState()
-	if (isEmptyPlaylistRequested) {
-		AlertDialog(
-			onDismissRequest = { playlistViewModel.clearPlaylistIfGranted() },
-			title = { Text(text = stringResource(id = R.string.empty_playlist)) },
-			text = {
-				Text(
-					text = stringResource(R.string.empty_playlist_confirmation)
+		val isEmptyPlaylistRequested by playlistViewModel.isClearingPlaylistRequested.subscribeAsState()
+		if (isEmptyPlaylistRequested) {
+			AlertDialog(
+				onDismissRequest = { playlistViewModel.clearPlaylistIfGranted() },
+				title = { Text(text = stringResource(id = R.string.empty_playlist)) },
+				text = {
+					Text(
+						text = stringResource(R.string.empty_playlist_confirmation)
+					)
+				},
+				buttons = {
+					Row(
+						modifier = Modifier
+							.fillMaxWidth()
+							.padding(Dimensions.viewPaddingUnit),
+						horizontalArrangement = Arrangement.SpaceEvenly,
+					) {
+						Button(
+							onClick = {
+								playlistViewModel.clearPlaylistIfGranted()
+							},
+						) {
+							Text(text = stringResource(id = R.string.btn_cancel))
+						}
+
+						Button(
+							onClick = {
+								playlistViewModel.grantPlaylistClearing()
+								playlistViewModel.clearPlaylistIfGranted()
+							},
+						) {
+							Text(text = stringResource(id = R.string.yes))
+						}
+					}
+				},
+				properties = DialogProperties(
+					dismissOnBackPress = true,
 				)
-			},
-			buttons = {
-				Row(
-					modifier = Modifier
-						.fillMaxWidth()
-						.padding(Dimensions.viewPaddingUnit),
-					horizontalArrangement = Arrangement.SpaceEvenly,
-				) {
-					Button(
-						onClick = {
-							playlistViewModel.clearPlaylistIfGranted()
-						},
-					) {
-						Text(text = stringResource(id = R.string.btn_cancel))
-					}
-
-					Button(
-						onClick = {
-							playlistViewModel.grantPlaylistClearing()
-							playlistViewModel.clearPlaylistIfGranted()
-						},
-					) {
-						Text(text = stringResource(id = R.string.yes))
-					}
-				}
-			},
-			properties = DialogProperties(
-				dismissOnBackPress = true,
 			)
-		)
+		}
 	}
 }
