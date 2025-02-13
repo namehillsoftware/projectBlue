@@ -78,6 +78,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.coerceIn
+import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.window.Dialog
@@ -554,7 +555,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 ) {
 	val isScreenControlsVisible by nowPlayingScreenViewModel.isScreenControlsVisible.subscribeAsState()
 
-	val filePropertiesHeight = maxHeight - expandedControlsHeight
+	val filePropertiesHeight by remember { derivedStateOf { maxHeight - expandedControlsHeight } }
 
 	val filePropertiesHeightPx = LocalDensity.current.run { filePropertiesHeight.toPx() }
 
@@ -564,7 +565,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	var playlistDragValue by remember { mutableStateOf(SlideOutState.Closed) }
 
 	val playlistDrawerState = with (LocalDensity.current) {
-		remember {
+		remember(LocalDensity.current) {
 			AnchoredDraggableState(
 				initialValue = playlistDragValue,
 				anchors = DraggableAnchors {
@@ -1069,30 +1070,29 @@ fun NowPlayingView(
 							innerBoxScope = this@nestedBox
 						)
 
-						with(screenScope) {
-							if (screenWidth < Dimensions.twoColumnThreshold) {
-								NowPlayingNarrowView(
-									nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-									nowPlayingScreenViewModel = nowPlayingScreenViewModel,
-									playbackServiceController = playbackServiceController,
-									playlistViewModel = playlistViewModel,
-									childItemViewModelProvider = childItemViewModelProvider,
-									applicationNavigation = applicationNavigation,
-									itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-									viewModelMessageBus = viewModelMessageBus,
-									undoBackStack = undoBackStack,
-								)
-							} else {
-								NowPlayingWideView(
-									nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-									nowPlayingScreenViewModel = nowPlayingScreenViewModel,
-									playbackServiceController = playbackServiceController,
-									playlistViewModel = playlistViewModel,
-									childItemViewModelProvider = childItemViewModelProvider,
-									applicationNavigation = applicationNavigation,
-									itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-									viewModelMessageBus = viewModelMessageBus,
-									undoBackStack = undoBackStack
+					with(screenScope) {
+						if (screenWidth < Dimensions.twoColumnThreshold) {
+							NowPlayingNarrowView(
+								nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+								nowPlayingScreenViewModel = nowPlayingScreenViewModel,
+								playbackServiceController = playbackServiceController,
+								playlistViewModel = playlistViewModel,
+								childItemViewModelProvider = childItemViewModelProvider,
+								applicationNavigation = applicationNavigation,
+								itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+								viewModelMessageBus = viewModelMessageBus,undoBackStack = undoBackStack,
+							)
+						} else {
+							NowPlayingWideView(
+								nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+								nowPlayingScreenViewModel = nowPlayingScreenViewModel,
+								playbackServiceController = playbackServiceController,
+								playlistViewModel = playlistViewModel,
+								childItemViewModelProvider = childItemViewModelProvider,
+								applicationNavigation = applicationNavigation,
+								itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+								viewModelMessageBus = viewModelMessageBus,
+							undoBackStack = undoBackStack
 								)
 							}
 						}
@@ -1102,7 +1102,15 @@ fun NowPlayingView(
 						modifier = Modifier
 							.windowInsetsEndWidth(WindowInsets.systemBars)
 							.fillMaxHeight()
-							.background(SharedColors.overlayDark)
+						.background(SharedColors.overlayDark)
+					)
+				}
+
+				Spacer(
+					modifier = Modifier
+						.windowInsetsBottomHeight(WindowInsets.systemBars)
+						.fillMaxWidth()
+						.background(SharedColors.overlayDark)
 					)
 				}
 
