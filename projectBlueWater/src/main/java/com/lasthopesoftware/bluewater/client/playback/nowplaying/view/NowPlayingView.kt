@@ -376,24 +376,6 @@ fun NowPlayingPlaybackControls(
 	}
 }
 
-@Composable
-fun NowPlayingControls(
-	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
-	playbackServiceController: ControlPlaybackService,
-	modifier: Modifier = Modifier,
-) {
-	Column(modifier = modifier) {
-		NowPlayingRating(nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel)
-
-		Spacer(modifier = Modifier.height(ProgressIndicatorDefaults.StrokeWidth))
-
-		NowPlayingPlaybackControls(
-			nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-			playbackServiceController = playbackServiceController,
-		)
-	}
-}
-
 suspend fun LazyListState.scrollToFileIfNotScrolling(file: PositionedFile) {
 	if (!isScrollInProgress)
 		scrollToItem(file.playlistPosition)
@@ -794,13 +776,20 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 		}
 	}
 
-	val nowPlayingPaneWidth = this@NowPlayingWideView.screenWidth - LocalDensity.current.run { draggableState.requireOffset().toDp() }
 
 	Box(
 		modifier = Modifier
 			.fillMaxSize()
 			.anchoredDraggable(draggableState, true, Orientation.Horizontal),
 	) {
+		val nowPlayingPaneWidth by LocalDensity.current.run {
+			remember {
+				derivedStateOf { this@NowPlayingWideView.screenWidth - draggableState.requireOffset().toDp() }
+			}
+		}
+
+		val playlistOpenProgress by remember { derivedStateOf { draggableState.progress(SlideOutState.Closed, SlideOutState.Open) } }
+
 		Box(
 			modifier = Modifier
 				.fillMaxHeight()
@@ -832,83 +821,125 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 				}
 			}
 
-			if (isScreenControlsVisible) {
-				NowPlayingControls(
-					modifier = Modifier
-						.align(Alignment.BottomCenter)
-						.fillMaxWidth(),
-					nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-					playbackServiceController = playbackServiceController,
-				)
-			}
-
-			NowPlayingProgressIndicator(
-				nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+			Column(
 				modifier = Modifier
-					.fillMaxWidth()
 					.align(Alignment.BottomCenter)
-					.padding(bottom = controlRowHeight)
-			)
+					.fillMaxWidth()
+			) {
+				if (isScreenControlsVisible) {
+					Row(
+						verticalAlignment = Alignment.CenterVertically,
+						modifier = Modifier
+							.height(Dimensions.appBarHeight)
+							.fillMaxWidth(),
+						horizontalArrangement = Arrangement.SpaceAround
+					) {
+						BackButton(
+							onBack = applicationNavigation::backOut,
+							modifier = Modifier.padding(start = Dimensions.topRowOuterPadding)
+						)
+
+						NowPlayingRating(
+							nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+							modifier = Modifier.weight(1f)
+						)
+
+						val drawerChevronRotation by remember {
+							derivedStateOf { -90 + (180 * playlistOpenProgress).coerceIn(0f, 180f) }
+						}
+						val scope = rememberCoroutineScope()
+						Image(
+							painter = painterResource(R.drawable.chevron_up_white_36dp),
+							contentDescription = stringResource(R.string.btn_hide_files),
+							modifier = Modifier
+								.clickable(
+									onClick = {
+										scope.launch {
+											if (draggableState.currentValue == SlideOutState.Open) {
+												playlistViewModel.finishPlaylistEdit()
+												scope.launch {
+													draggableState.animateTo(SlideOutState.Closed)
+												}
+											} else {
+												draggableState.animateTo(SlideOutState.Open)
+											}
+										}
+									},
+									indication = null,
+									interactionSource = remember { MutableInteractionSource() })
+								.padding(end = Dimensions.topRowOuterPadding)
+								.rotate(drawerChevronRotation),
+						)
+					}
+				}
+
+				NowPlayingProgressIndicator(
+					nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+					modifier = Modifier
+						.fillMaxWidth()
+						.fillMaxWidth()
+						.padding(
+							top = Dimensions.viewPaddingUnit,
+							bottom = Dimensions.viewPaddingUnit
+						)
+				)
+
+				if (isScreenControlsVisible) {
+					NowPlayingPlaybackControls(
+						nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+						playbackServiceController = playbackServiceController,
+					)
+				} else {
+					Spacer(modifier = Modifier.height(controlRowHeight))
+				}
+			}
 		}
 
-		Column(
-			modifier = Modifier
-				.fillMaxHeight()
-				.width(playlistWidth)
-				.offset(x = nowPlayingPaneWidth)
-				.background(SharedColors.overlayDark),
-			horizontalAlignment = Alignment.CenterHorizontally,
-		) {
-			DisposableEffect(key1 = draggableState.currentValue) {
-				if (draggableState.currentValue == SlideOutState.Closed) {
-					playlistViewModel.enableSystemAutoScrolling()
-				} else {
-					playlistViewModel.disableSystemAutoScrolling()
-				}
-
-				onDispose {
-					playlistViewModel.disableSystemAutoScrolling()
-				}
-			}
-
-			val scope = rememberCoroutineScope()
-			PlaylistControls(
-				modifier = Modifier
-					.fillMaxWidth()
-					.height(Dimensions.appBarHeight),
-				playlistViewModel = playlistViewModel,
-				viewModelMessageBus = viewModelMessageBus,
-			) {
-				Image(
-					painter = painterResource(R.drawable.chevron_up_white_36dp),
-					alpha = playlistControlAlpha,
-					contentDescription = stringResource(R.string.btn_hide_files),
-					modifier = Modifier
-						.clickable(onClick = {
-							playlistViewModel.finishPlaylistEdit()
-							scope.launch {
-								draggableState.animateTo(SlideOutState.Closed)
-							}
-						})
-						.rotate(90f),
-				)
-			}
-
-			NowPlayingPlaylist(
-				childItemViewModelProvider,
-				nowPlayingFilePropertiesViewModel,
-				applicationNavigation,
-				playbackServiceController,
-				itemListMenuBackPressedHandler,
-				playlistViewModel,
-				viewModelMessageBus = viewModelMessageBus,
+		if (playlistOpenProgress > 0f) {
+			Column(
 				modifier = Modifier
 					.fillMaxHeight()
-					.onFocusChanged { f ->
-						if (f.hasFocus) playlistViewModel.lockOutAutoScroll()
-						else playlistViewModel.releaseAutoScroll()
-					},
-			)
+					.width(playlistWidth)
+					.offset(x = nowPlayingPaneWidth)
+					.background(SharedColors.overlayDark),
+				horizontalAlignment = Alignment.CenterHorizontally,
+			) {
+				DisposableEffect(key1 = draggableState.currentValue) {
+					if (draggableState.currentValue == SlideOutState.Closed) {
+						playlistViewModel.enableSystemAutoScrolling()
+					} else {
+						playlistViewModel.disableSystemAutoScrolling()
+					}
+
+					onDispose {
+						playlistViewModel.disableSystemAutoScrolling()
+					}
+				}
+
+				PlaylistControls(
+					modifier = Modifier
+						.fillMaxWidth()
+						.height(Dimensions.appBarHeight),
+					playlistViewModel = playlistViewModel,
+					viewModelMessageBus = viewModelMessageBus,
+				)
+
+				NowPlayingPlaylist(
+					childItemViewModelProvider,
+					nowPlayingFilePropertiesViewModel,
+					applicationNavigation,
+					playbackServiceController,
+					itemListMenuBackPressedHandler,
+					playlistViewModel,
+					viewModelMessageBus = viewModelMessageBus,
+					modifier = Modifier
+						.fillMaxHeight()
+						.onFocusChanged { f ->
+							if (f.hasFocus) playlistViewModel.lockOutAutoScroll()
+							else playlistViewModel.releaseAutoScroll()
+						},
+				)
+			}
 		}
 	}
 }
