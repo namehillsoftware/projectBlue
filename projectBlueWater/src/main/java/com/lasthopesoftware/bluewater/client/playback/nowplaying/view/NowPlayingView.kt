@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -68,8 +67,10 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -207,7 +208,6 @@ fun PlaylistControls(
 	modifier: Modifier = Modifier,
 	playlistViewModel: NowPlayingPlaylistViewModel,
 	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
-	hideButton: @Composable (RowScope.() -> Unit)? = null,
 ) {
 	Row(
 		modifier = modifier,
@@ -265,6 +265,7 @@ fun PlaylistControls(
 				alpha = playlistControlAlpha,
 			)
 		} else {
+			val hapticFeedback = LocalHapticFeedback.current
 			val isAutoScrollEnabled by playlistViewModel.isAutoScrolling.subscribeAsState()
 			Image(
 				painter = painterResource(id = R.drawable.baseline_playlist_play_36),
@@ -281,15 +282,12 @@ fun PlaylistControls(
 							playlistViewModel.disableUserAutoScrolling()
 						else
 							playlistViewModel.enableUserAutoScrolling()
+						hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
 					},
 					onLongClickLabel = stringResource(R.string.auto_scroll_to_now_playing_item)
 				),
 				alpha = if (isAutoScrollEnabled) 1f else .6f,
 			)
-		}
-
-		if (hideButton != null) {
-			hideButton()
 		}
 	}
 }
