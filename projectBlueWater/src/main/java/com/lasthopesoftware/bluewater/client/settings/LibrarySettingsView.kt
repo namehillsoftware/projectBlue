@@ -7,11 +7,18 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
@@ -33,6 +40,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -228,10 +237,10 @@ private fun LibrarySettingsList(
 	stringResources: GetStringResources,
 	userSslCertificates: ProvideUserSslCertificates,
 ) {
-	with (librarySettingsViewModel) {
+	with(librarySettingsViewModel) {
 		val isSettingsChanged by isSettingsChanged.subscribeAsState()
 
-		with (connectionSettingsViewModel) {
+		with(connectionSettingsViewModel) {
 			var accessCodeState by accessCode.subscribeAsMutableState()
 			SpacedOutRow {
 				StandardTextField(
@@ -473,10 +482,10 @@ private fun LibrarySettingsList(
 	stringResources: GetStringResources,
 	userSslCertificates: ProvideUserSslCertificates,
 ) {
-	with (librarySettingsViewModel) {
+	with(librarySettingsViewModel) {
 		val isSettingsChanged by isSettingsChanged.subscribeAsState()
 
-		with (connectionSettingsViewModel) {
+		with(connectionSettingsViewModel) {
 			var urlState by url.subscribeAsMutableState()
 			SpacedOutRow {
 				StandardTextField(
@@ -674,9 +683,10 @@ private fun LibrarySettingsList(
 				onClick = { saveLibrary() },
 				enabled = isSettingsChanged && !isSavingState,
 			) {
-				Text(text =
-					if (!isSettingsChanged) stringResource(id = R.string.saved)
-					else stringResource(id = R.string.save)
+				Text(
+					text =
+						if (!isSettingsChanged) stringResource(id = R.string.saved)
+						else stringResource(id = R.string.save)
 				)
 			}
 		}
@@ -686,10 +696,10 @@ private fun LibrarySettingsList(
 
 @Composable
 fun ServerTypeSelection(
-    librarySettingsViewModel: LibrarySettingsViewModel,
-    undoBackStack: UndoStack,
-    modifier: Modifier = Modifier,
-    onServerTypeSelectionFinished: () -> Unit = {},
+	librarySettingsViewModel: LibrarySettingsViewModel,
+	undoBackStack: UndoStack,
+	modifier: Modifier = Modifier,
+	onServerTypeSelectionFinished: () -> Unit = {},
 ) {
 	val backAction = { onServerTypeSelectionFinished(); true.toPromise() }
 	undoBackStack.addAction(backAction)
@@ -769,197 +779,226 @@ fun ServerTypeSelection(
 @OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun LibrarySettingsView(
-    librarySettingsViewModel: LibrarySettingsViewModel,
-    navigateApplication: NavigateApplication,
-    stringResources: GetStringResources,
-    userSslCertificates: ProvideUserSslCertificates,
-    undoBackStack: UndoStack,
+	librarySettingsViewModel: LibrarySettingsViewModel,
+	navigateApplication: NavigateApplication,
+	stringResources: GetStringResources,
+	userSslCertificates: ProvideUserSslCertificates,
+	undoBackStack: UndoStack,
 ) {
-	ControlSurface {
-		RemoveServerConfirmationDialog(
-			librarySettingsViewModel = librarySettingsViewModel,
-			navigateApplication = navigateApplication
+	Column(
+		modifier = Modifier.fillMaxSize()
+	) {
+		Spacer(
+			modifier = Modifier
+				.windowInsetsTopHeight(WindowInsets.systemBars)
+				.fillMaxWidth()
+				.background(MaterialTheme.colors.surface)
 		)
 
-		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
-		val collapsedHeightPx = LocalDensity.current.run { appBarHeight.toPx() }
-		val heightScaler = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
+		ControlSurface(modifier = Modifier.weight(1f)) {
+			RemoveServerConfirmationDialog(
+				librarySettingsViewModel = librarySettingsViewModel,
+				navigateApplication = navigateApplication
+			)
 
-		val isLoadingState by librarySettingsViewModel.isLoading.subscribeAsState()
-		var isSelectingServerType by remember { mutableStateOf(false) }
+			val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
+			val collapsedHeightPx = LocalDensity.current.run { appBarHeight.toPx() }
+			val heightScaler = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
 
-		BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-			val isHeaderTall by remember { derivedStateOf { (boxHeight + menuHeight) * 2 < maxHeight } }
+			val isLoadingState by librarySettingsViewModel.isLoading.subscribeAsState()
+			var isSelectingServerType by remember { mutableStateOf(false) }
+			BoxWithConstraints(
+				modifier = Modifier
+					.fillMaxSize()
+			) {
+				val isHeaderTall by remember { derivedStateOf { (boxHeight + menuHeight) * 2 < maxHeight } }
 
-			Column(modifier = Modifier.nestedScroll(heightScaler)) {
-				val scrollState = rememberScrollState()
+				Column(modifier = Modifier.nestedScroll(heightScaler)) {
+					val scrollState = rememberScrollState()
 
-				val scope = rememberCoroutineScope()
+					val scope = rememberCoroutineScope()
 
-				val headerCollapseProgress by heightScaler.getProgressState()
+					val headerCollapseProgress by heightScaler.getProgressState()
 
-				val isIconsVisible by LocalDensity.current.run {
-					remember {
-						derivedStateOf { scrollState.value < expandedIconSize.toPx() }
-					}
-				}
-				val connectFocusRequester = remember { FocusRequester() }
-
-				val inputMode = LocalInputModeManager.current
-				DisposableEffect(isIconsVisible, inputMode, heightScaler) {
-					if (isIconsVisible) {
-						onDispose { }
-					} else {
-						val scrollToTopAction = {
-							scope.async {
-								heightScaler.goToMax()
-								scrollState.scrollTo(0)
-								if (inputMode.inputMode == InputMode.Keyboard)
-									connectFocusRequester.requestFocus()
-								true
-							}.toPromise()
-						}
-
-						undoBackStack.addAction(scrollToTopAction)
-
-						onDispose {
-							undoBackStack.removeAction(scrollToTopAction)
+					val isIconsVisible by LocalDensity.current.run {
+						remember {
+							derivedStateOf { scrollState.value < expandedIconSize.toPx() }
 						}
 					}
-				}
+					val connectFocusRequester = remember { FocusRequester() }
 
-				if (isHeaderTall) {
-					val heightValue by heightScaler.getValueState()
-
-					Box(
-						modifier = Modifier
-							.height(LocalDensity.current.run { heightValue.toDp() })
-							.fillMaxWidth()
-							.background(MaterialTheme.colors.surface)
-					) {
-						ProvideTextStyle(MaterialTheme.typography.h5) {
-							val topPadding by remember {
-								derivedStateOf {
-									linearInterpolation(
-										Dimensions.appBarHeight,
-										14.dp,
-										headerCollapseProgress
-									)
-								}
+					val inputMode = LocalInputModeManager.current
+					DisposableEffect(isIconsVisible, inputMode, heightScaler) {
+						if (isIconsVisible) {
+							onDispose { }
+						} else {
+							val scrollToTopAction = {
+								scope.async {
+									heightScaler.goToMax()
+									scrollState.scrollTo(0)
+									if (inputMode.inputMode == InputMode.Keyboard)
+										connectFocusRequester.requestFocus()
+									true
+								}.toPromise()
 							}
 
-							val startPadding by rememberTitleStartPadding(heightScaler.getProgressState())
-							val endPadding = viewPaddingUnit
-							MarqueeText(
-								text = stringResource(id = R.string.settings),
-								overflow = TextOverflow.Ellipsis,
-								gradientSides = setOf(GradientSide.End),
-								gradientEdgeColor = MaterialTheme.colors.surface,
-								modifier = Modifier
-									.fillMaxWidth()
-									.padding(start = startPadding, end = endPadding, top = topPadding),
-							)
-						}
+							undoBackStack.addAction(scrollToTopAction)
 
-						BackButton(
-							navigateApplication::navigateUp,
+							onDispose {
+								undoBackStack.removeAction(scrollToTopAction)
+							}
+						}
+					}
+
+					if (isHeaderTall) {
+						val heightValue by heightScaler.getValueState()
+
+
+
+
+						Box(
 							modifier = Modifier
-								.align(Alignment.TopStart)
-								.padding(topRowOuterPadding)
-						)
-					}
-				} else {
-					Row(
-						modifier = Modifier
-							.fillMaxWidth()
-							.background(MaterialTheme.colors.surface)
-							.height(appBarHeight),
-						verticalAlignment = Alignment.CenterVertically,
-					) {
-						BackButton(
-							navigateApplication::navigateUp,
-							modifier = Modifier.padding(horizontal = topRowOuterPadding)
-						)
+								.height(LocalDensity.current.run { heightValue.toDp() })
+								.fillMaxWidth()
+								.background(MaterialTheme.colors.surface)
+						) {
+							ProvideTextStyle(MaterialTheme.typography.h5) {
+								val topPadding by remember {
+									derivedStateOf {
+										linearInterpolation(
+											Dimensions.appBarHeight,
 
-						ProvideTextStyle(MaterialTheme.typography.h5) {
-							MarqueeText(
-								text = stringResource(id = R.string.settings),
-								overflow = TextOverflow.Ellipsis,
-								gradientSides = setOf(GradientSide.End),
-								gradientEdgeColor = MaterialTheme.colors.surface,
+											14.dp,
+											headerCollapseProgress
+										)
+									}
+								}
+
+								val startPadding by rememberTitleStartPadding(heightScaler.getProgressState())
+								val endPadding = viewPaddingUnit
+								MarqueeText(
+									text = stringResource(id = R.string.settings),
+
+									overflow = TextOverflow.Ellipsis,
+									gradientSides = setOf(GradientSide.End),
+									gradientEdgeColor = MaterialTheme.colors.surface,
+									modifier = Modifier
+										.fillMaxWidth()
+										.padding(
+											start = startPadding, end = endPadding,
+
+											top = topPadding
+										),
+								)
+							}
+
+							BackButton(
+								navigateApplication::navigateUp,
 								modifier = Modifier
-									.fillMaxWidth()
-									.padding(horizontal = viewPaddingUnit)
-									.weight(1f),
+									.align(Alignment.TopStart)
+									.padding(topRowOuterPadding)
 							)
 						}
-					}
-				}
-
-				Column(
-					modifier = Modifier.verticalScroll(scrollState),
-					horizontalAlignment = Alignment.CenterHorizontally,
-				) {
-					Row(
-						modifier = Modifier
-							.padding(Dimensions.rowPadding)
-							.fillMaxWidth(),
-					) {
-						LabelledChangeServerTypeButton(
-							stringResources = stringResources,
-							onClick = { isSelectingServerType = true },
-						)
-
-						LabelledRemoveServerButton(
-							librarySettingsViewModel = librarySettingsViewModel,
-							stringResources = stringResources,
-						)
-
-						LabelledSaveAndConnectButton(
-							librarySettingsViewModel = librarySettingsViewModel,
-							navigateApplication = navigateApplication,
-							stringResources = stringResources,
-							focusRequester = connectFocusRequester,
-						)
-					}
-
-					if (!isLoadingState) {
-						if (isSelectingServerType) {
-							ServerTypeSelection(
-								librarySettingsViewModel = librarySettingsViewModel,
-								undoBackStack = undoBackStack,
-								onServerTypeSelectionFinished = { isSelectingServerType = false },
-								modifier = Modifier.height(this@BoxWithConstraints.maxHeight - (expandedIconSize + boxHeight) * 2)
+					} else {
+						Row(
+							modifier = Modifier
+								.fillMaxWidth()
+								.background(MaterialTheme.colors.surface)
+								.height(appBarHeight),
+							verticalAlignment = Alignment.CenterVertically,
+						) {
+							BackButton(
+								navigateApplication::navigateUp,
+								modifier = Modifier.padding(horizontal = topRowOuterPadding)
 							)
-						} else {
-							val connectionSettingsViewModelState by librarySettingsViewModel.savedConnectionSettingsViewModel.subscribeAsState()
 
-							when (val connectionSettingsViewModel = connectionSettingsViewModelState) {
-								is LibrarySettingsViewModel.MediaCenterConnectionSettingsViewModel -> LibrarySettingsList(
-									librarySettingsViewModel = librarySettingsViewModel,
-									connectionSettingsViewModel = connectionSettingsViewModel,
-									stringResources = stringResources,
-									userSslCertificates = userSslCertificates,
+							ProvideTextStyle(MaterialTheme.typography.h5) {
+								MarqueeText(
+									text = stringResource(id = R.string.settings),
+									overflow = TextOverflow.Ellipsis,
+									gradientSides = setOf(GradientSide.End),
+									gradientEdgeColor = MaterialTheme.colors.surface,
+									modifier = Modifier
+										.fillMaxWidth()
+										.padding(horizontal = viewPaddingUnit)
+										.weight(1f),
 								)
+							}
+						}
+					}
 
-								is LibrarySettingsViewModel.SubsonicConnectionSettingsViewModel -> LibrarySettingsList(
-									librarySettingsViewModel = librarySettingsViewModel,
-									connectionSettingsViewModel = connectionSettingsViewModel,
-									stringResources = stringResources,
-									userSslCertificates = userSslCertificates,
-								)
+					Column(
+						modifier = Modifier.verticalScroll(scrollState),
+						horizontalAlignment = Alignment.CenterHorizontally,
+					) {
+						Row(
+							modifier = Modifier
+								.padding(Dimensions.rowPadding)
+								.fillMaxWidth(),
+						) {
+							LabelledChangeServerTypeButton(
+								stringResources = stringResources,
+								onClick = { isSelectingServerType = true },
+							)
 
-								null -> ServerTypeSelection(
+							LabelledRemoveServerButton(
+								librarySettingsViewModel = librarySettingsViewModel,
+								stringResources = stringResources,
+							)
+
+							LabelledSaveAndConnectButton(
+								librarySettingsViewModel = librarySettingsViewModel,
+								navigateApplication = navigateApplication,
+								stringResources = stringResources,
+								focusRequester = connectFocusRequester,
+							)
+						}
+
+						if (!isLoadingState) {
+							if (isSelectingServerType) {
+								ServerTypeSelection(
 									librarySettingsViewModel = librarySettingsViewModel,
 									undoBackStack = undoBackStack,
 									onServerTypeSelectionFinished = { isSelectingServerType = false },
 									modifier = Modifier.height(this@BoxWithConstraints.maxHeight - (expandedIconSize + boxHeight) * 2)
 								)
+							} else {
+								val connectionSettingsViewModelState by librarySettingsViewModel.savedConnectionSettingsViewModel.subscribeAsState()
+
+								when (val connectionSettingsViewModel = connectionSettingsViewModelState) {
+									is LibrarySettingsViewModel.MediaCenterConnectionSettingsViewModel -> LibrarySettingsList(
+										librarySettingsViewModel = librarySettingsViewModel,
+										connectionSettingsViewModel = connectionSettingsViewModel,
+										stringResources = stringResources,
+										userSslCertificates = userSslCertificates,
+									)
+
+									is LibrarySettingsViewModel.SubsonicConnectionSettingsViewModel -> LibrarySettingsList(
+										librarySettingsViewModel = librarySettingsViewModel,
+										connectionSettingsViewModel = connectionSettingsViewModel,
+										stringResources = stringResources,
+										userSslCertificates = userSslCertificates,
+									)
+
+									null -> ServerTypeSelection(
+										librarySettingsViewModel = librarySettingsViewModel,
+										undoBackStack = undoBackStack,
+										onServerTypeSelectionFinished = { isSelectingServerType = false },
+										modifier = Modifier.height(this@BoxWithConstraints.maxHeight - (expandedIconSize + boxHeight) * 2)
+									)
+								}
 							}
 						}
 					}
 				}
 			}
 		}
+
+		Spacer(
+			modifier = Modifier
+				.windowInsetsBottomHeight(WindowInsets.systemBars)
+				.fillMaxWidth()
+				.background(Color.Black)
+		)
 	}
 }

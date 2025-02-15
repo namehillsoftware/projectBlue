@@ -85,7 +85,6 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.shared.android.ui.components.UnlabelledRefreshButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
-import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberSystemUiController
 import com.lasthopesoftware.bluewater.shared.android.ui.indicateFocus
 import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
@@ -488,9 +487,6 @@ fun FileDetailsView(
 		.toState(null, coverArt)
 
 	val coverArtColorState by rememberComputedColorPalette(paletteProvider = paletteProvider, coverArt = coverArtBitmap)
-
-	val systemUiController = rememberSystemUiController()
-	systemUiController.setStatusBarColor(coverArtColorState.actionBarColor)
 
 	FileDetailsEditor(viewModel = viewModel, navigateApplication = navigateApplication, palette = coverArtColorState)
 

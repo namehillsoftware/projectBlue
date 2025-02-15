@@ -31,7 +31,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProgressIndicatorDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -105,7 +104,6 @@ import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.ui.SlideOutState
 import com.lasthopesoftware.bluewater.shared.android.ui.calculateProgress
-import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberSystemUiController
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
@@ -692,8 +690,6 @@ fun NowPlayingTvApplication(
 	permissionsDependencies: PermissionsDependencies,
 	initialDestination: Destination?
 ) {
-	val systemUiController = rememberSystemUiController()
-
 	val navController = rememberNavController(
 		if (initialDestination == null) listOf(ApplicationSettingsScreen, SelectedLibraryReRouter)
 		else listOf(ApplicationSettingsScreen)
@@ -766,9 +762,6 @@ fun NowPlayingTvApplication(
 
 	ControlSurface {
 		NavHost(navController) { destination ->
-			systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
-			systemUiController.setNavigationBarColor(Color.Black)
-
 			when (destination) {
 				is SelectedLibraryReRouter -> {
 					routedNavigationDependencies.apply {
