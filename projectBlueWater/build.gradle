@@ -167,7 +167,7 @@ def getGeneratedVersionCode() {
 }
 
 dependencies {
-	def compose_version = '1.7.6'
+	def compose_version = '1.7.8'
 	def media3_version = '1.5.1'
 	def lifecycle_version = '2.8.7'
 	def junit5_version = '5.11.4'
@@ -187,7 +187,7 @@ dependencies {
 	implementation "androidx.startup:startup-runtime:1.2.0"
 	implementation 'com.google.android.material:material:1.12.0'
 	implementation 'com.google.guava:guava:33.4.0-android'
-	implementation 'joda-time:joda-time:2.13.0'
+	implementation 'joda-time:joda-time:2.13.1'
 	implementation 'commons-io:commons-io:2.18.0'
 	implementation 'org.slf4j:slf4j-api:2.0.16'
 	implementation 'com.github.tony19:logback-android:3.0.0'
@@ -211,7 +211,7 @@ dependencies {
 	testImplementation 'commons-codec:commons-codec:1.17.1'
 	testImplementation 'junit:junit:4.13.2'
 	testImplementation "org.junit.jupiter:junit-jupiter-api:$junit5_version"
-	testImplementation 'org.assertj:assertj-core:3.27.0'
+	testImplementation 'org.assertj:assertj-core:3.27.3'
 	testImplementation 'org.robolectric:robolectric:4.14.1'
 	testImplementation 'androidx.test.ext:junit-ktx:1.2.1'
 	testImplementation 'androidx.test:core:1.6.1'
