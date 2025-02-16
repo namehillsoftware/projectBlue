@@ -78,11 +78,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.coerceIn
-import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.view.WindowCompat
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
@@ -111,6 +111,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.LocalControlColor
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
+import com.lasthopesoftware.bluewater.shared.android.view.findWindow
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
@@ -546,7 +547,7 @@ private val collapsedControlsHeight = ProgressIndicatorDefaults.StrokeWidth + Di
 private val expandedControlsHeight = controlRowHeight + collapsedControlsHeight
 
 @Composable
-@OptIn(ExperimentalFoundationApi::class, ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
 	nowPlayingScreenViewModel: NowPlayingScreenViewModel,
@@ -560,7 +561,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 ) {
 	val isScreenControlsVisible by nowPlayingScreenViewModel.isScreenControlsVisible.subscribeAsState()
 
-	val filePropertiesHeight by remember { derivedStateOf { maxHeight - expandedControlsHeight } }
+	val filePropertiesHeight = maxHeight - expandedControlsHeight
 
 	val filePropertiesHeightPx = LocalDensity.current.run { filePropertiesHeight.toPx() }
 
@@ -791,7 +792,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 				}
 
 				val playlistHeight by LocalDensity.current.run {
-					remember(LocalDensity.current, playlistDrawerState) {
+					remember(LocalDensity.current, playlistDrawerState, this@NowPlayingNarrowView.maxHeight) {
 						derivedStateOf {
 							this@NowPlayingNarrowView.maxHeight - playlistDrawerOffset - controlRowHeight - progressIndicatorPadding - ProgressIndicatorDefaults.StrokeWidth - Dimensions.appBarHeight
 						}
@@ -1059,6 +1060,11 @@ fun NowPlayingView(
 	val isScreenOn by nowPlayingScreenViewModel.isScreenOn.collectAsState()
 	KeepScreenOn(isScreenOn)
 
+	findWindow()?.also {
+		WindowCompat.getInsetsController(it, it.decorView)
+			.isAppearanceLightStatusBars = false
+	}
+
 	ControlSurface(
 		color = Color.Transparent,
 		contentColor = Color.White,
@@ -1141,13 +1147,6 @@ fun NowPlayingView(
 						.background(SharedColors.overlayDark)
 				)
 			}
-
-			Spacer(
-				modifier = Modifier
-					.windowInsetsBottomHeight(WindowInsets.systemBars)
-					.fillMaxWidth()
-					.background(SharedColors.overlayDark)
-			)
 		}
 	}
 
