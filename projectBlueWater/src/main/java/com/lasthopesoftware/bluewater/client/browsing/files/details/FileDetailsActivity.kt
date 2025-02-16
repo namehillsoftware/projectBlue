@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -96,6 +97,7 @@ import java.io.IOException
 		}
 
 		WindowCompat.setDecorFitsSystemWindows(window, false)
+		enableEdgeToEdge()
 
 		setContent {
 			ProjectBlueComposableApplication {
