@@ -1,13 +1,11 @@
-<vector
-    android:height="@dimen/playback_control_size"
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="@dimen/playback_control_size"
-    android:viewportHeight="24"
+    android:height="@dimen/playback_control_size"
     android:viewportWidth="24"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    android:viewportHeight="24">
+
     <path
         android:fillColor="@android:color/white"
-        android:pathData="m11,6v12l8.5,-6M2,18 L10.5,12 2,6Z"/>
-    <path
-        android:fillColor="@android:color/white"
-        android:pathData="m19.993,18.003h2V6.003h-2"/>
+        android:pathData="M6,18l8.5,-6L6,6v12zM16,6v12h2V6h-2z" />
+
 </vector>
