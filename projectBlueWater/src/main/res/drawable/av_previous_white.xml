@@ -3,10 +3,9 @@
     android:height="@dimen/playback_control_size"
     android:viewportWidth="24"
     android:viewportHeight="24">
-  <path
-      android:fillColor="@android:color/white"
-      android:pathData="m12.993,6l-0,12l-8.5,-6M21.993,18 L13.493,12 21.993,6Z"/>
-  <path
-      android:fillColor="@android:color/white"
-      android:pathData="m4,18.003l-2,0L2,6.003l2,0"/>
+
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M6,6h2v12L6,18zM9.5,12l8.5,6L18,6z" />
+
 </vector>
