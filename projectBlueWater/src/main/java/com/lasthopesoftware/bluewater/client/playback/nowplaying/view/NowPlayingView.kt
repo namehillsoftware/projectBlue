@@ -76,8 +76,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.coerceAtMost
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.lasthopesoftware.bluewater.NavigateApplication
@@ -117,6 +119,7 @@ import kotlinx.coroutines.launch
 
 val controlRowHeight = 72.dp
 const val playlistControlAlpha = .8f
+val minimumMenuWidth = Dimensions.listItemMenuIconSize * 3
 
 class ScreenDimensionsScope(val screenHeight: Dp, val screenWidth: Dp, innerBoxScope: BoxWithConstraintsScope)
 	: BoxWithConstraintsScope by innerBoxScope
@@ -529,17 +532,17 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 
 	val isScreenControlsVisible by nowPlayingFilePropertiesViewModel.isScreenControlsVisible.subscribeAsState()
 
-	val filePropertiesHeight by remember { derivedStateOf { maxHeight - expandedControlsHeight } }
+	val filePropertiesHeight = maxHeight - expandedControlsHeight
 
-	val filePropertiesHeightPx by LocalDensity.current.run { remember { derivedStateOf { filePropertiesHeight.toPx() } } }
+	val filePropertiesHeightPx = LocalDensity.current.run { filePropertiesHeight.toPx() }
 
 	val halfScreenHeight = filePropertiesHeight / 2
-	val halfScreenHeightPx by LocalDensity.current.run { remember { derivedStateOf { halfScreenHeight.toPx() } } }
+	val halfScreenHeightPx = LocalDensity.current.run { halfScreenHeight.toPx() }
 
 	var playlistDragValue by remember { mutableStateOf(SlideOutState.Closed) }
 
 	val playlistDrawerState = with (LocalDensity.current) {
-		remember(LocalDensity.current) {
+		remember {
 			AnchoredDraggableState(
 				initialValue = playlistDragValue,
 				anchors = DraggableAnchors {
@@ -559,7 +562,17 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 		}
 	}
 
-	val playlistEditingShownProgress by remember {
+	DisposableEffect(filePropertiesHeightPx, halfScreenHeightPx) {
+		playlistDrawerState.updateAnchors(DraggableAnchors {
+			SlideOutState.Closed at filePropertiesHeightPx
+			SlideOutState.PartiallyOpen at halfScreenHeightPx
+			SlideOutState.Open at 0f
+		})
+
+		onDispose {  }
+	}
+
+	val playlistEditingShownProgress by remember(playlistDrawerState) {
 		derivedStateOf { playlistDrawerState.progress(SlideOutState.PartiallyOpen, SlideOutState.Open) }
 	}
 
@@ -567,7 +580,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 		derivedStateOf { playlistEditingShownProgress > 0 }
 	}
 
-	val playlistOpenProgress by remember {
+	val playlistOpenProgress by remember(playlistDrawerState) {
 		derivedStateOf { playlistDrawerState.progress(SlideOutState.Closed, SlideOutState.Open) }
 	}
 
@@ -585,14 +598,6 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 			itemListMenuBackPressedHandler.hideAllMenus() -> {}
 			isEditingPlaylist -> playlistViewModel.finishPlaylistEdit()
 			isPlaylistShown -> scope.launch { hidePlaylist() }
-		}
-	}
-
-	val playlistDrawerOffset by LocalDensity.current.run {
-		remember {
-			derivedStateOf {
-				playlistDrawerState.requireOffset().toDp()
-			}
 		}
 	}
 
@@ -629,7 +634,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 		}
 
 		Column(modifier = Modifier
-			.offset(y = playlistDrawerOffset)
+			.offset { IntOffset(x = 0, y = playlistDrawerState.requireOffset().fastRoundToInt()) }
 			.fillMaxWidth()
 		) {
 			Row(
@@ -639,15 +644,23 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 					.fillMaxWidth(),
 				horizontalArrangement = Arrangement.SpaceAround
 			) {
-				val isPlaybackScreenControlsVisible by remember {
-					derivedStateOf { !isPlaylistEditingShown && isScreenControlsVisible }
-				}
-
 				when {
-					isPlaybackScreenControlsVisible -> {
+					isPlaylistEditingShown -> {
+						PlaylistControls(
+							modifier = Modifier
+								.alpha(playlistEditingShownProgress)
+								.weight(1f),
+							playlistViewModel = playlistViewModel,
+							viewModelMessageBus = viewModelMessageBus,
+						)
+					}
+
+					isScreenControlsVisible -> {
 						BackButton(
 							onBack = applicationNavigation::backOut,
-							modifier = Modifier.padding(start = Dimensions.topRowOuterPadding).alpha(playlistControlAlpha)
+							modifier = Modifier
+								.padding(start = Dimensions.topRowOuterPadding)
+								.alpha(playlistControlAlpha)
 						)
 
 						NowPlayingRating(
@@ -655,18 +668,11 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 							modifier = Modifier.weight(1f)
 						)
 					}
-					isPlaylistEditingShown -> PlaylistControls(
-						modifier = Modifier
-							.alpha(playlistEditingShownProgress)
-							.weight(1f),
-						playlistViewModel = playlistViewModel,
-						viewModelMessageBus = viewModelMessageBus,
-					)
 				}
 
 				val isChevronShown by remember { derivedStateOf { isScreenControlsVisible || isPlaylistEditingShown } }
 				if (isChevronShown) {
-					val drawerChevronRotation by remember {
+					val drawerChevronRotation by remember(playlistDrawerState) {
 						derivedStateOf {
 							(180 * playlistDrawerState.progress(SlideOutState.Closed, SlideOutState.PartiallyOpen)).coerceIn(0f, 180f)
 						}
@@ -710,9 +716,19 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 			}
 
 			if (isPlaylistShown) {
-				val playlistHeight by remember {
-					derivedStateOf {
-						this@NowPlayingNarrowView.maxHeight - playlistDrawerOffset - controlRowHeight - progressIndicatorPadding - ProgressIndicatorDefaults.StrokeWidth - Dimensions.appBarHeight
+				val playlistDrawerOffset by LocalDensity.current.run {
+					remember(LocalDensity.current, playlistDrawerState) {
+						derivedStateOf {
+							playlistDrawerState.requireOffset().toDp()
+						}
+					}
+				}
+
+				val playlistHeight by LocalDensity.current.run {
+					remember(LocalDensity.current, playlistDrawerState) {
+						derivedStateOf {
+							this@NowPlayingNarrowView.maxHeight - playlistDrawerOffset - controlRowHeight - progressIndicatorPadding - ProgressIndicatorDefaults.StrokeWidth - Dimensions.appBarHeight
+						}
 					}
 				}
 
@@ -762,14 +778,15 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 		if (isEditingPlaylist) playlistViewModel.finishPlaylistEdit()
 	}
 
-	val playlistWidth = screenHeight.coerceAtMost(screenWidth / 2)
+	val playlistWidth = screenHeight.coerceIn(minimumMenuWidth, maxWidth / 2)
+	val playlistWidthPx = LocalDensity.current.run { playlistWidth.toPx() }
 	val draggableState = with (LocalDensity.current) {
 		remember {
 			AnchoredDraggableState(
 				initialValue = SlideOutState.Open,
 				anchors = DraggableAnchors {
 					SlideOutState.Closed at 0f
-					SlideOutState.Open at playlistWidth.toPx()
+					SlideOutState.Open at playlistWidthPx
 				},
 				positionalThreshold = { d -> d * .5f },
 				velocityThreshold = { 100.dp.toPx() },
@@ -779,19 +796,26 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 		}
 	}
 
+	DisposableEffect(playlistWidthPx) {
+		draggableState.updateAnchors(DraggableAnchors {
+			SlideOutState.Closed at 0f
+			SlideOutState.Open at playlistWidthPx
+		})
+
+		onDispose {  }
+	}
+
 
 	Box(
 		modifier = Modifier
 			.fillMaxSize()
 			.anchoredDraggable(draggableState, true, Orientation.Horizontal),
 	) {
-		val nowPlayingPaneWidth by LocalDensity.current.run {
-			remember {
-				derivedStateOf { this@NowPlayingWideView.screenWidth - draggableState.requireOffset().toDp() }
-			}
+		val nowPlayingPaneWidth = LocalDensity.current.run {
+			this@NowPlayingWideView.maxWidth - draggableState.requireOffset().toDp()
 		}
 
-		val playlistOpenProgress by remember { derivedStateOf { draggableState.progress(SlideOutState.Closed, SlideOutState.Open) } }
+		val playlistOpenProgress by remember(draggableState) { derivedStateOf { draggableState.progress(SlideOutState.Closed, SlideOutState.Open) } }
 
 		Box(
 			modifier = Modifier
@@ -880,7 +904,6 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 					nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
 					modifier = Modifier
 						.fillMaxWidth()
-						.fillMaxWidth()
 						.padding(
 							top = Dimensions.viewPaddingUnit,
 							bottom = Dimensions.viewPaddingUnit
@@ -899,7 +922,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 				modifier = Modifier
 					.fillMaxHeight()
 					.width(playlistWidth)
-					.offset(x = nowPlayingPaneWidth)
+					.offset { IntOffset(x = nowPlayingPaneWidth.roundToPx(), y = 0) }
 					.background(SharedColors.overlayDark),
 				horizontalAlignment = Alignment.CenterHorizontally,
 			) {
@@ -979,7 +1002,9 @@ fun NowPlayingView(
 		)
 
 		BoxWithConstraints(
-			modifier = Modifier.fillMaxSize().background(SharedColors.overlayDark)
+			modifier = Modifier
+				.fillMaxSize()
+				.background(SharedColors.overlayDark)
 		) screenBox@{
 			Column {
 				Spacer(
