@@ -637,15 +637,23 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 					.fillMaxWidth(),
 				horizontalArrangement = Arrangement.SpaceAround
 			) {
-				val isPlaybackScreenControlsVisible by remember {
-					derivedStateOf { !isPlaylistEditingShown && isScreenControlsVisible }
-				}
-
 				when {
-					isPlaybackScreenControlsVisible -> {
+					isPlaylistEditingShown -> {
+						PlaylistControls(
+							modifier = Modifier
+								.alpha(playlistEditingShownProgress)
+								.weight(1f),
+							playlistViewModel = playlistViewModel,
+							viewModelMessageBus = viewModelMessageBus,
+						)
+					}
+
+					isScreenControlsVisible -> {
 						BackButton(
 							onBack = applicationNavigation::backOut,
-							modifier = Modifier.padding(start = Dimensions.topRowOuterPadding).alpha(playlistControlAlpha)
+							modifier = Modifier
+								.padding(start = Dimensions.topRowOuterPadding)
+								.alpha(playlistControlAlpha)
 						)
 
 						NowPlayingRating(
@@ -653,13 +661,6 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 							modifier = Modifier.weight(1f)
 						)
 					}
-					isPlaylistEditingShown -> PlaylistControls(
-						modifier = Modifier
-							.alpha(playlistEditingShownProgress)
-							.weight(1f),
-						playlistViewModel = playlistViewModel,
-						viewModelMessageBus = viewModelMessageBus,
-					)
 				}
 
 				val isChevronShown by remember { derivedStateOf { isScreenControlsVisible || isPlaylistEditingShown } }
@@ -977,7 +978,9 @@ fun NowPlayingView(
 		)
 
 		BoxWithConstraints(
-			modifier = Modifier.fillMaxSize().background(SharedColors.overlayDark)
+			modifier = Modifier
+				.fillMaxSize()
+				.background(SharedColors.overlayDark)
 		) screenBox@{
 			Column {
 				Spacer(
