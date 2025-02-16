@@ -572,10 +572,6 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	val isSettledOnFirstPage by remember { derivedStateOf { playlistOpenProgress == 0f } }
 	val isPlaylistShown by remember { derivedStateOf { !isSettledOnFirstPage } }
 
-	val isPlaybackControlsShown by remember {
-		derivedStateOf { !isPlaylistEditingShown && (isScreenControlsVisible || isPlaylistShown) }
-	}
-
 	suspend fun hidePlaylist() {
 		playlistViewModel.finishPlaylistEdit()
 		playlistDrawerState.animateTo(SlideOutState.Closed)
@@ -641,11 +637,15 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 					.fillMaxWidth(),
 				horizontalArrangement = Arrangement.SpaceAround
 			) {
+				val isPlaybackScreenControlsVisible by remember {
+					derivedStateOf { !isPlaylistEditingShown && isScreenControlsVisible }
+				}
+
 				when {
-					isPlaybackControlsShown -> {
+					isPlaybackScreenControlsVisible -> {
 						BackButton(
 							onBack = applicationNavigation::backOut,
-							modifier = Modifier.padding(start = Dimensions.topRowOuterPadding)
+							modifier = Modifier.padding(start = Dimensions.topRowOuterPadding).alpha(playlistControlAlpha)
 						)
 
 						NowPlayingRating(
@@ -662,7 +662,8 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 					)
 				}
 
-				if (!isSettledOnFirstPage || isPlaybackControlsShown) {
+				val isChevronShown by remember { derivedStateOf { isScreenControlsVisible || isPlaylistEditingShown } }
+				if (isChevronShown) {
 					val drawerChevronRotation by remember {
 						derivedStateOf {
 							(180 * playlistDrawerState.progress(SlideOutState.Closed, SlideOutState.PartiallyOpen)).coerceIn(0f, 180f)
@@ -682,7 +683,8 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 								indication = null,
 								interactionSource = remember { MutableInteractionSource() })
 							.padding(end = Dimensions.topRowOuterPadding)
-							.rotate(drawerChevronRotation),
+							.rotate(drawerChevronRotation)
+							.alpha(playlistControlAlpha),
 					)
 				}
 			}
@@ -696,7 +698,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 			)
 
 			val controlRowHeight by remember { derivedStateOf { linearInterpolation(controlRowHeight, 0.dp, playlistEditingShownProgress) } }
-			if (isPlaybackControlsShown) {
+			if (!isPlaylistEditingShown) {
 				NowPlayingPlaybackControls(
 					nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
 					playbackServiceController = playbackServiceController,
@@ -883,14 +885,10 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 						)
 				)
 
-				if (isScreenControlsVisible) {
-					NowPlayingPlaybackControls(
-						nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-						playbackServiceController = playbackServiceController,
-					)
-				} else {
-					Spacer(modifier = Modifier.height(controlRowHeight))
-				}
+				NowPlayingPlaybackControls(
+					nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+					playbackServiceController = playbackServiceController,
+				)
 			}
 		}
 
