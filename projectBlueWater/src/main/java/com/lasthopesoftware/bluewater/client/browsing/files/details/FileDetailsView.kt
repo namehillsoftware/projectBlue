@@ -15,19 +15,21 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -62,6 +64,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -828,33 +831,44 @@ fun FileDetailsView(
 		}
 	}
 
-	Column(modifier = Modifier.fillMaxSize()) {
-		Spacer(
+	Box(modifier = Modifier
+		.fillMaxSize()
+		.background(coverArtColorState.actionBarColor)
+	) {
+		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
+		val layoutDirection = LocalLayoutDirection.current
+		Column(
 			modifier = Modifier
-				.windowInsetsTopHeight(WindowInsets.statusBars)
-				.fillMaxWidth()
-				.background(coverArtColorState.actionBarColor)
-		)
-
-		ControlSurface(
-			color = coverArtColorState.backgroundColor,
-			contentColor = coverArtColorState.primaryTextColor,
-			controlColor = coverArtColorState.secondaryTextColor,
-			modifier = Modifier.weight(1f)
+				.padding(
+					start = systemBarsPadding.calculateStartPadding(layoutDirection),
+					end = systemBarsPadding.calculateEndPadding(layoutDirection),
+					bottom = systemBarsPadding.calculateBottomPadding(),
+				)
+				.fillMaxSize()
 		) {
-			BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-				when {
-					maxWidth >= 450.dp -> fileDetailsTwoColumn()
-					else -> fileDetailsSingleColumn()
+			Spacer(
+				modifier = Modifier
+					.windowInsetsTopHeight(WindowInsets.statusBars)
+					.fillMaxWidth()
+					.background(coverArtColorState.actionBarColor)
+			)
+
+			ControlSurface(
+				color = coverArtColorState.backgroundColor,
+				contentColor = coverArtColorState.primaryTextColor,
+				controlColor = coverArtColorState.secondaryTextColor,
+			modifier = Modifier.weight(1f)) {
+				BoxWithConstraints(
+					modifier = Modifier
+						.fillMaxSize()
+
+				) {
+					when {
+						maxWidth >= 450.dp -> fileDetailsTwoColumn()
+						else -> fileDetailsSingleColumn()
+					}
 				}
 			}
 		}
-
-		Spacer(
-			modifier = Modifier
-				.windowInsetsBottomHeight(WindowInsets.navigationBars)
-				.fillMaxWidth()
-				.background(coverArtColorState.actionBarColor)
-		)
 	}
 }

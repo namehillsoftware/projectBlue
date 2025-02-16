@@ -4,6 +4,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.ActivityCompat
@@ -79,6 +80,8 @@ class EntryActivity :
 		applicationPermissions.promiseApplicationPermissionsRequest()
 
 		WindowCompat.setDecorFitsSystemWindows(window, false)
+
+		enableEdgeToEdge()
 
 		setContent {
 			if (!isInLeanbackMode) {

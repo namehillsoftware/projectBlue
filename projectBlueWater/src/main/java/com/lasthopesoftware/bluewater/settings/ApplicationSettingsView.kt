@@ -16,13 +16,15 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -40,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -343,40 +346,47 @@ fun ApplicationSettingsView(
 	applicationNavigation: NavigateApplication,
 	playbackService: ControlPlaybackService,
 ) {
-	Column(
-		modifier = Modifier.fillMaxSize()
+	Box(modifier = Modifier
+		.fillMaxSize()
+		.background(Color.Black)
 	) {
-		Spacer(
-			modifier = Modifier
-				.windowInsetsTopHeight(WindowInsets.systemBars)
-				.fillMaxWidth()
-				.background(MaterialTheme.colors.surface)
-		)
 
-		ControlSurface(modifier = Modifier.weight(1f)) {
-			BoxWithConstraints(
+		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
+		val layoutDirection = LocalLayoutDirection.current
+		Column(
+			modifier = Modifier
+				.padding(
+					start = systemBarsPadding.calculateStartPadding(layoutDirection),
+					end = systemBarsPadding.calculateEndPadding(layoutDirection),
+					bottom = systemBarsPadding.calculateBottomPadding(),
+				)
+				.fillMaxSize()
+		) {
+			Spacer(
 				modifier = Modifier
-					.fillMaxSize()
-					.padding(Dimensions.viewPaddingUnit)
-			) {
-				if (maxWidth < maxHeight) ApplicationSettingsViewVertical(
-					applicationSettingsViewModel,
-					applicationNavigation,
-					playbackService
-				)
-				else ApplicationSettingsViewHorizontal(
-					applicationSettingsViewModel,
-					applicationNavigation,
-					playbackService
-				)
+					.windowInsetsTopHeight(WindowInsets.systemBars)
+					.fillMaxWidth()
+					.background(MaterialTheme.colors.surface)
+			)
+
+			ControlSurface(modifier = Modifier.weight(1f)) {
+				BoxWithConstraints(
+					modifier = Modifier
+						.fillMaxSize()
+						.padding(Dimensions.viewPaddingUnit)
+				) {
+					if (maxWidth < maxHeight) ApplicationSettingsViewVertical(
+						applicationSettingsViewModel,
+						applicationNavigation,
+						playbackService
+					)
+					else ApplicationSettingsViewHorizontal(
+						applicationSettingsViewModel,
+						applicationNavigation,
+						playbackService
+					)
+				}
 			}
 		}
-
-		Spacer(
-			modifier = Modifier
-				.windowInsetsBottomHeight(WindowInsets.systemBars)
-				.fillMaxWidth()
-				.background(Color.Black)
-		)
 	}
 }
