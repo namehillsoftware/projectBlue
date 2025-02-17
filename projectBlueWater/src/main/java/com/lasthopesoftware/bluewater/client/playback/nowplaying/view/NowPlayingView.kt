@@ -32,6 +32,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.layout.windowInsetsEndWidth
+import androidx.compose.foundation.layout.windowInsetsStartWidth
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -991,39 +993,55 @@ fun NowPlayingView(
 						.background(SharedColors.overlayDark)
 				)
 
-				// Nest boxes to get proper size constraints
-				BoxWithConstraints(modifier = Modifier.weight(1f)) nestedBox@{
-					val screenScope = ScreenDimensionsScope(
-						screenHeight = this@screenBox.maxHeight,
-						screenWidth = this@screenBox.maxWidth,
-						innerBoxScope = this@nestedBox
+				Row(modifier = Modifier.weight(1f)) {
+					Spacer(
+						modifier = Modifier
+							.windowInsetsStartWidth(WindowInsets.systemBars)
+							.fillMaxHeight()
+							.background(SharedColors.overlayDark)
 					)
 
-					with(screenScope) {
-						if (screenWidth < Dimensions.twoColumnThreshold) {
-							NowPlayingNarrowView(
-								nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-								screenOnState = screenOnState,
-								playbackServiceController = playbackServiceController,
-								playlistViewModel = playlistViewModel,
-								childItemViewModelProvider = childItemViewModelProvider,
-								applicationNavigation = applicationNavigation,
-								itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-								viewModelMessageBus = viewModelMessageBus,
-							)
-						} else {
-							NowPlayingWideView(
-								nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-								screenOnState = screenOnState,
-								playbackServiceController = playbackServiceController,
-								playlistViewModel = playlistViewModel,
-								childItemViewModelProvider = childItemViewModelProvider,
-								applicationNavigation = applicationNavigation,
-								itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-								viewModelMessageBus = viewModelMessageBus,
-							)
+					// Nest boxes to get proper size constraints
+					BoxWithConstraints(modifier = Modifier.weight(1f)) nestedBox@{
+						val screenScope = ScreenDimensionsScope(
+							screenHeight = this@screenBox.maxHeight,
+							screenWidth = this@screenBox.maxWidth,
+							innerBoxScope = this@nestedBox
+						)
+
+						with(screenScope) {
+							if (screenWidth < Dimensions.twoColumnThreshold) {
+								NowPlayingNarrowView(
+									nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+									screenOnState = screenOnState,
+									playbackServiceController = playbackServiceController,
+									playlistViewModel = playlistViewModel,
+									childItemViewModelProvider = childItemViewModelProvider,
+									applicationNavigation = applicationNavigation,
+									itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+									viewModelMessageBus = viewModelMessageBus,
+								)
+							} else {
+								NowPlayingWideView(
+									nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+									screenOnState = screenOnState,
+									playbackServiceController = playbackServiceController,
+									playlistViewModel = playlistViewModel,
+									childItemViewModelProvider = childItemViewModelProvider,
+									applicationNavigation = applicationNavigation,
+									itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+									viewModelMessageBus = viewModelMessageBus,
+								)
+							}
 						}
 					}
+
+					Spacer(
+						modifier = Modifier
+							.windowInsetsEndWidth(WindowInsets.systemBars)
+							.fillMaxHeight()
+							.background(SharedColors.overlayDark)
+					)
 				}
 
 				Spacer(
