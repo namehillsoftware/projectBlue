@@ -74,7 +74,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.coerceAtMost
+import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -115,6 +115,7 @@ import kotlinx.coroutines.launch
 
 val controlRowHeight = 72.dp
 const val playlistControlAlpha = .8f
+val minimumMenuWidth = Dimensions.listItemMenuIconSize * 3
 
 class ScreenDimensionsScope(val screenHeight: Dp, val screenWidth: Dp, innerBoxScope: BoxWithConstraintsScope)
 	: BoxWithConstraintsScope by innerBoxScope
@@ -761,7 +762,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 		if (isEditingPlaylist) playlistViewModel.finishPlaylistEdit()
 	}
 
-	val playlistWidth = screenHeight.coerceAtMost(screenWidth / 2)
+	val playlistWidth = screenHeight.coerceIn(minimumMenuWidth, screenWidth / 2)
 	val draggableState = with (LocalDensity.current) {
 		remember {
 			AnchoredDraggableState(
