@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -39,11 +40,12 @@ fun RatingBar(
 		Row(
 			modifier = Modifier
 				.fillMaxHeight()
+				.wrapContentWidth()
 				.align(Alignment.Center),
 			horizontalArrangement = Arrangement.spacedBy(1.dp),
 		) {
 			for (r in 1..5) {
-				var starModifier = Modifier.requiredSize(this@BoxWithConstraints.maxHeight)
+				var starModifier: Modifier = Modifier
 				if (onRatingSelected != null) {
 					starModifier = starModifier
 						.navigable(

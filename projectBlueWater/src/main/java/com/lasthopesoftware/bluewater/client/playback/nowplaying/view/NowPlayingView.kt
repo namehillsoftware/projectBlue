@@ -858,13 +858,11 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 						verticalAlignment = Alignment.CenterVertically,
 						modifier = Modifier
 							.height(Dimensions.appBarHeight)
+							.padding(start = Dimensions.topRowOuterPadding, end = Dimensions.topRowOuterPadding)
 							.fillMaxWidth(),
-						horizontalArrangement = Arrangement.SpaceAround
+						horizontalArrangement = Arrangement.SpaceBetween
 					) {
-						BackButton(
-							onBack = applicationNavigation::backOut,
-							modifier = Modifier.padding(start = Dimensions.topRowOuterPadding)
-						)
+						BackButton(onBack = applicationNavigation::backOut)
 
 						NowPlayingRating(
 							nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
@@ -893,8 +891,8 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 										}
 									},
 									indication = null,
-									interactionSource = remember { MutableInteractionSource() })
-								.padding(end = Dimensions.topRowOuterPadding)
+									interactionSource = remember { MutableInteractionSource() }
+								)
 								.rotate(drawerChevronRotation),
 						)
 					}
