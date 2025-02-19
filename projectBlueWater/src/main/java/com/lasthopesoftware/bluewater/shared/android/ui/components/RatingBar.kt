@@ -11,8 +11,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -40,57 +40,39 @@ fun RatingBar(
 		Row(
 			modifier = Modifier
 				.fillMaxHeight()
+				.wrapContentWidth()
 				.align(Alignment.Center),
-			horizontalArrangement = Arrangement.SpaceEvenly,
+			horizontalArrangement = Arrangement.spacedBy(1.dp),
 		) {
-			val padding = 1.dp
-
-			repeat(rating) { r ->
-				var starModifier = Modifier.padding(start = padding, end = padding).requiredSize(this@BoxWithConstraints.maxHeight)
-				if (onRatingSelected != null)
-					starModifier = starModifier
-						.navigable(
-							interactionSource = remember { MutableInteractionSource() },
-							indication = null,
-							onClick = { onRatingSelected(r + 1) }
-						)
-
-				Image(
-					painter = painterResource(id = R.drawable.ic_star_36),
-					colorFilter = ColorFilter.tint(color),
-					contentDescription = "Rating value",
-					contentScale = ContentScale.Fit,
-					modifier = starModifier,
-				)
-			}
-
-			repeat(5 - rating) { r ->
-				var starModifier = Modifier.padding(start = padding, end = padding)
+			for (r in 1..5) {
+				var starModifier: Modifier = Modifier
 				if (onRatingSelected != null) {
 					starModifier = starModifier
 						.navigable(
 							interactionSource = remember { MutableInteractionSource() },
 							indication = null,
-							onClick = { onRatingSelected(r + 1 + rating) }
+							onClick = { onRatingSelected(r) }
 						)
 				}
 
 				Box(modifier = starModifier) {
 					Image(
 						painter = painterResource(id = R.drawable.ic_star_36),
-						colorFilter = ColorFilter.tint(backgroundColor),
+						colorFilter = ColorFilter.tint(if (r > rating) backgroundColor else color),
 						contentDescription = "Rating value",
 						contentScale = ContentScale.Fit,
 						modifier = Modifier.requiredSize(this@BoxWithConstraints.maxHeight),
 					)
 
-					Image(
-						painter = painterResource(id = R.drawable.ic_star_border_36),
-						colorFilter = ColorFilter.tint(color),
-						contentDescription = "Rating value",
-						contentScale = ContentScale.Fit,
-						modifier = Modifier.requiredSize(this@BoxWithConstraints.maxHeight),
-					)
+					if (r > rating) {
+						Image(
+							painter = painterResource(id = R.drawable.ic_star_border_36),
+							colorFilter = ColorFilter.tint(color),
+							contentDescription = "Rating value",
+							contentScale = ContentScale.Fit,
+							modifier = Modifier.requiredSize(this@BoxWithConstraints.maxHeight),
+						)
+					}
 				}
 			}
 		}
