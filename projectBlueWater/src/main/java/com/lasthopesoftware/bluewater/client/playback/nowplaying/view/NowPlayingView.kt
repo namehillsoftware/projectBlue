@@ -778,7 +778,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 		if (isEditingPlaylist) playlistViewModel.finishPlaylistEdit()
 	}
 
-	val playlistWidth = screenHeight.coerceIn(minimumMenuWidth, screenWidth / 2)
+	val playlistWidth = screenHeight.coerceIn(minimumMenuWidth, maxWidth / 2)
 	val playlistWidthPx = LocalDensity.current.run { playlistWidth.toPx() }
 	val draggableState = with (LocalDensity.current) {
 		remember {
@@ -812,7 +812,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 			.anchoredDraggable(draggableState, true, Orientation.Horizontal),
 	) {
 		val nowPlayingPaneWidth = LocalDensity.current.run {
-			this@NowPlayingWideView.screenWidth - draggableState.requireOffset().toDp()
+			this@NowPlayingWideView.maxWidth - draggableState.requireOffset().toDp()
 		}
 
 		val playlistOpenProgress by remember(draggableState) { derivedStateOf { draggableState.progress(SlideOutState.Closed, SlideOutState.Open) } }
@@ -903,7 +903,6 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 				NowPlayingProgressIndicator(
 					nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
 					modifier = Modifier
-						.fillMaxWidth()
 						.fillMaxWidth()
 						.padding(
 							top = Dimensions.viewPaddingUnit,
