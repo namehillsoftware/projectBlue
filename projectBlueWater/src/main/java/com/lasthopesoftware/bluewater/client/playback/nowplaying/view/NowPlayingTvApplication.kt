@@ -283,6 +283,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedVi
 				contentColor = Color.White,
 				controlColor = Color.White,
 			) {
+
 				NowPlayingCoverArtView(
 					nowPlayingCoverArtViewModel = browserViewDependencies.nowPlayingCoverArtViewModel,
 					bitmapProducer = browserViewDependencies.bitmapProducer,
@@ -294,6 +295,14 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedVi
 						.background(SharedColors.overlayDark),
 				) {
 					with (browserViewDependencies) {
+						DisposableEffect(Unit) {
+							nowPlayingScreenViewModel.alwaysShowControls()
+
+							onDispose {
+								nowPlayingScreenViewModel.disableAlwaysShowingControls()
+							}
+						}
+
 						BackHandler(itemListMenuBackPressedHandler.hideAllMenus()) {}
 
 						val isPlaylistOpen by remember {
@@ -345,6 +354,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedVi
 
 									NowPlayingRating(
 										nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+										nowPlayingScreenViewModel = nowPlayingScreenViewModel,
 										modifier = Modifier.weight(1f)
 									)
 

@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatche
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingMessage
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
@@ -56,7 +55,8 @@ class ReusedViewModelRegistry(
 	override val nowPlayingScreenViewModel by viewModelStoreOwner.buildViewModelLazily {
 		NowPlayingScreenViewModel(
 			registerForApplicationMessages,
-			InMemoryNowPlayingDisplaySettings,
+			nowPlayingViewModelMessageBus,
+			nowPlayingDisplaySettings,
 			playbackServiceController,
 		)
 	}
@@ -72,6 +72,7 @@ class ReusedViewModelRegistry(
 			playbackServiceController,
 			pollForConnections,
 			stringResources,
+			nowPlayingViewModelMessageBus,
 		)
 	}
 

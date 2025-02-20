@@ -261,7 +261,7 @@ fun LibraryDestination.Navigate(
 				NowPlayingView(
 					nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
 					nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-					screenOnState = nowPlayingScreenViewModel,
+					nowPlayingScreenViewModel = nowPlayingScreenViewModel,
 					playbackServiceController = playbackServiceController,
 					playlistViewModel = nowPlayingPlaylistViewModel,
 					childItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,

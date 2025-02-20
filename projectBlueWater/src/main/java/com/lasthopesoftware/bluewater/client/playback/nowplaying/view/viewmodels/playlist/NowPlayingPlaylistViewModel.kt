@@ -45,6 +45,7 @@ class NowPlayingPlaylistViewModel(
 	private val mutableIsUserAutoScrolling = MutableInteractionState(false)
 	private val mutableIsClearingPlaylistRequested = MutableInteractionState(false)
 	private val mutableIsClearingPlaylistRequestGranted = MutableInteractionState(false)
+	private val mutableIsPlaylistShown = MutableInteractionState(false)
 
 	val isRepeating = isRepeatingState.asInteractionState()
 	val nowPlayingList = nowPlayingListState.asInteractionState()
@@ -62,6 +63,7 @@ class NowPlayingPlaylistViewModel(
 			) { system, user, latch -> latch.value && (system.value || user.value) },
 		false
 	)
+	val isPlaylistShown = mutableIsPlaylistShown.asInteractionState()
 	override val isEditingPlaylist = mutableEditingPlaylistState.asInteractionState()
 	override val isClearingPlaylistRequested = mutableIsClearingPlaylistRequested.asInteractionState()
 	override val isClearingPlaylistRequestGranted = mutableIsClearingPlaylistRequestGranted.asInteractionState()
@@ -85,6 +87,14 @@ class NowPlayingPlaylistViewModel(
 
 	fun disableSystemAutoScrolling() {
 		mutableIsSystemAutoScrolling.value = false
+	}
+
+	fun showPlaylist() {
+		mutableIsPlaylistShown.value = true
+	}
+
+	fun hidePlaylist() {
+		mutableIsPlaylistShown.value = false
 	}
 
 	override fun editPlaylist() {

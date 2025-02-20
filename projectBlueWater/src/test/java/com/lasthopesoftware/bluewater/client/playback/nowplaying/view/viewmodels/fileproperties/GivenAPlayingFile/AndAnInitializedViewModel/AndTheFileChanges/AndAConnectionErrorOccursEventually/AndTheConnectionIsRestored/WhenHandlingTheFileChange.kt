@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.shared.observables.toCloseable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
+import com.lasthopesoftware.resources.RecordingTypedMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -101,6 +102,7 @@ class WhenHandlingTheFileChange {
 				every { pollConnection(LibraryId(libraryId)) } returns Promise(Exception("fail"))
 			},
 			mockk(relaxed = true),
+			RecordingTypedMessageBus(),
         )
 
 		nowPlayingViewModel.initializeViewModel(LibraryId(libraryId)).toExpiringFuture().get()
@@ -118,7 +120,7 @@ class WhenHandlingTheFileChange {
                 ),
                 5,
                 605,
-                false
+                false,
             )
         )
 

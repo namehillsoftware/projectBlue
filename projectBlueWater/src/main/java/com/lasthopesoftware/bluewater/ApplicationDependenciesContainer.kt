@@ -33,6 +33,7 @@ import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguratio
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookupInitializer
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncSchedulerInitializer
@@ -188,5 +189,7 @@ object ApplicationDependenciesContainer {
 		override val screenDimensions by lazy { ScreenDimensions(context) }
 
 		override val stringResources by lazy { StringResources(context) }
+
+		override val nowPlayingDisplaySettings by lazy { InMemoryNowPlayingDisplaySettings() }
 	}
 }

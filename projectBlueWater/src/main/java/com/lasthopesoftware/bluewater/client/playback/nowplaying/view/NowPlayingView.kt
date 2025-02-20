@@ -108,6 +108,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.LocalControlColor
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
@@ -120,6 +121,7 @@ import kotlinx.coroutines.launch
 val controlRowHeight = 72.dp
 const val playlistControlAlpha = .8f
 val minimumMenuWidth = Dimensions.listItemMenuIconSize * 3
+const val disabledAlpha = .6f
 
 class ScreenDimensionsScope(val screenHeight: Dp, val screenWidth: Dp, innerBoxScope: BoxWithConstraintsScope)
 	: BoxWithConstraintsScope by innerBoxScope
@@ -289,14 +291,18 @@ fun PlaylistControls(
 					},
 					onLongClickLabel = stringResource(R.string.auto_scroll_to_now_playing_item)
 				),
-				alpha = if (isAutoScrollEnabled) 1f else .6f,
+				alpha = if (isAutoScrollEnabled) 1f else disabledAlpha,
 			)
 		}
 	}
 }
 
 @Composable
-fun NowPlayingRating(nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel, modifier: Modifier = Modifier) {
+fun NowPlayingRating(
+	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
+	nowPlayingScreenViewModel: NowPlayingScreenViewModel,
+	modifier: Modifier = Modifier
+) {
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -306,11 +312,18 @@ fun NowPlayingRating(nowPlayingFilePropertiesViewModel: NowPlayingFileProperties
 	) {
 		val rating by nowPlayingFilePropertiesViewModel.songRating.subscribeAsState()
 		val ratingInt by remember { derivedStateOf { rating.toInt() } }
-		val isRatingEnabled by nowPlayingFilePropertiesViewModel.isSongRatingEnabled.subscribeAsState()
+		val isSongRatingEnabled by nowPlayingFilePropertiesViewModel.isSongRatingEnabled.subscribeAsState()
+		val isScreenControlsVisible by nowPlayingScreenViewModel.isScreenControlsVisible.subscribeAsState()
+		val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.subscribeAsState()
+		val isRatingEnabled by remember { derivedStateOf { isSongRatingEnabled && isScreenControlsVisible && !isReadOnly } }
+
+		var ratingColor = LocalControlColor.current
+		if (!isRatingEnabled)
+			ratingColor = ratingColor.copy(alpha = disabledAlpha)
 		RatingBar(
 			rating = ratingInt,
-			color = Color.White,
-			backgroundColor = Color.White.copy(alpha = .1f),
+			color = ratingColor,
+			backgroundColor = LocalControlColor.current.copy(alpha = .1f),
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(Dimensions.menuHeight),
@@ -321,7 +334,6 @@ fun NowPlayingRating(nowPlayingFilePropertiesViewModel: NowPlayingFileProperties
 			} else null
 		)
 
-		val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.subscribeAsState()
 		if (isReadOnly) {
 			ProvideTextStyle(value = MaterialTheme.typography.caption) {
 				Text(
@@ -520,7 +532,7 @@ private val expandedControlsHeight = controlRowHeight + collapsedControlsHeight
 @OptIn(ExperimentalFoundationApi::class)
 fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
-	screenOnState: NowPlayingScreenViewModel,
+	nowPlayingScreenViewModel: NowPlayingScreenViewModel,
 	playbackServiceController: ControlPlaybackService,
 	playlistViewModel: NowPlayingPlaylistViewModel,
 	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
@@ -530,7 +542,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 ) {
 	val isEditingPlaylist by playlistViewModel.isEditingPlaylist.subscribeAsState()
 
-	val isScreenControlsVisible by nowPlayingFilePropertiesViewModel.isScreenControlsVisible.subscribeAsState()
+	val isScreenControlsVisible by nowPlayingScreenViewModel.isScreenControlsVisible.subscribeAsState()
 
 	val filePropertiesHeight = maxHeight - expandedControlsHeight
 
@@ -585,7 +597,14 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	}
 
 	val isSettledOnFirstPage by remember { derivedStateOf { playlistOpenProgress == 0f } }
-	val isPlaylistShown by remember { derivedStateOf { !isSettledOnFirstPage } }
+
+	DisposableEffect(isSettledOnFirstPage) {
+		if (isSettledOnFirstPage) playlistViewModel.hidePlaylist()
+		else playlistViewModel.showPlaylist()
+
+		onDispose {  }
+	}
+	val isPlaylistShown by playlistViewModel.isPlaylistShown.subscribeAsState()
 
 	suspend fun hidePlaylist() {
 		playlistViewModel.finishPlaylistEdit()
@@ -608,7 +627,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 			.clickable(
 				interactionSource = remember { MutableInteractionSource() },
 				indication = null,
-				onClick = { nowPlayingFilePropertiesViewModel.showNowPlayingControls() }
+				onClick = { nowPlayingScreenViewModel.showControls() }
 			),
 	) {
 		if (!isPlaylistEditingShown) {
@@ -620,14 +639,14 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 				NowPlayingHeadline(modifier = Modifier.weight(1f), nowPlayingFilePropertiesViewModel)
 
 				if (isScreenControlsVisible) {
-					val isScreenOnEnabled by screenOnState.isScreenOnEnabled.collectAsState()
+					val isScreenOnEnabled by nowPlayingScreenViewModel.isScreenOnEnabled.collectAsState()
 					Image(
 						painter = painterResource(if (isScreenOnEnabled) R.drawable.ic_screen_on_white_36dp else R.drawable.ic_screen_off_white_36dp),
 						alpha = .8f,
 						contentDescription = stringResource(if (isScreenOnEnabled) R.string.screen_is_on else R.string.screen_is_off),
 						modifier = Modifier
 							.padding(Dimensions.viewPaddingUnit)
-							.clickable(onClick = screenOnState::toggleScreenOn),
+							.clickable(onClick = nowPlayingScreenViewModel::toggleScreenOn),
 					)
 				}
 			}
@@ -644,6 +663,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 					.fillMaxWidth(),
 				horizontalArrangement = Arrangement.SpaceAround
 			) {
+				val isTopControlsShown by remember { derivedStateOf { isScreenControlsVisible || isPlaylistShown } }
 				when {
 					isPlaylistEditingShown -> {
 						PlaylistControls(
@@ -655,7 +675,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 						)
 					}
 
-					isScreenControlsVisible -> {
+					isTopControlsShown -> {
 						BackButton(
 							onBack = applicationNavigation::backOut,
 							modifier = Modifier
@@ -665,13 +685,13 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 
 						NowPlayingRating(
 							nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+							nowPlayingScreenViewModel = nowPlayingScreenViewModel,
 							modifier = Modifier.weight(1f)
 						)
 					}
 				}
 
-				val isChevronShown by remember { derivedStateOf { isScreenControlsVisible || isPlaylistEditingShown } }
-				if (isChevronShown) {
+				if (isTopControlsShown) {
 					val drawerChevronRotation by remember(playlistDrawerState) {
 						derivedStateOf {
 							(180 * playlistDrawerState.progress(SlideOutState.Closed, SlideOutState.PartiallyOpen)).coerceIn(0f, 180f)
@@ -766,7 +786,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 private fun ScreenDimensionsScope.NowPlayingWideView(
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
 	playbackServiceController: ControlPlaybackService,
-	screenOnState: NowPlayingScreenViewModel,
+	nowPlayingScreenViewModel: NowPlayingScreenViewModel,
 	playlistViewModel: NowPlayingPlaylistViewModel,
 	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
 	applicationNavigation: NavigateApplication,
@@ -824,10 +844,10 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 				.clickable(
 					interactionSource = remember { MutableInteractionSource() },
 					indication = null,
-					onClick = { nowPlayingFilePropertiesViewModel.showNowPlayingControls() }
+					onClick = { nowPlayingScreenViewModel.showControls() }
 				)
 		) {
-			val isScreenControlsVisible by nowPlayingFilePropertiesViewModel.isScreenControlsVisible.subscribeAsState()
+			val isScreenControlsVisible by nowPlayingScreenViewModel.isScreenControlsVisible.subscribeAsState()
 			Row(
 				modifier = Modifier.fillMaxWidth(),
 				horizontalArrangement = Arrangement.SpaceBetween,
@@ -836,14 +856,14 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 				NowPlayingHeadline(modifier = Modifier.weight(1f), nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel)
 
 				if (isScreenControlsVisible) {
-					val isScreenOnEnabled by screenOnState.isScreenOnEnabled.collectAsState()
+					val isScreenOnEnabled by nowPlayingScreenViewModel.isScreenOnEnabled.collectAsState()
 					Image(
 						painter = painterResource(if (isScreenOnEnabled) R.drawable.ic_screen_on_white_36dp else R.drawable.ic_screen_off_white_36dp),
 						alpha = .8f,
 						contentDescription = stringResource(if (isScreenOnEnabled) R.string.screen_is_on else R.string.screen_is_off),
 						modifier = Modifier
 							.padding(Dimensions.viewPaddingUnit)
-							.clickable(onClick = screenOnState::toggleScreenOn),
+							.clickable(onClick = nowPlayingScreenViewModel::toggleScreenOn),
 					)
 				}
 			}
@@ -866,7 +886,8 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 
 						NowPlayingRating(
 							nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-							modifier = Modifier.weight(1f)
+							nowPlayingScreenViewModel = nowPlayingScreenViewModel,
+							modifier = Modifier.weight(1f),
 						)
 
 						val drawerChevronRotation by remember {
@@ -969,7 +990,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 fun NowPlayingView(
 	nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel,
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
-	screenOnState: NowPlayingScreenViewModel,
+	nowPlayingScreenViewModel: NowPlayingScreenViewModel,
 	playbackServiceController: ControlPlaybackService,
 	playlistViewModel: NowPlayingPlaylistViewModel,
 	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
@@ -986,7 +1007,7 @@ fun NowPlayingView(
 		onDispose {  }
 	}
 
-	val isScreenOn by screenOnState.isScreenOn.collectAsState()
+	val isScreenOn by nowPlayingScreenViewModel.isScreenOn.collectAsState()
 	KeepScreenOn(isScreenOn)
 
 	ControlSurface(
@@ -1032,7 +1053,7 @@ fun NowPlayingView(
 							if (screenWidth < Dimensions.twoColumnThreshold) {
 								NowPlayingNarrowView(
 									nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-									screenOnState = screenOnState,
+									nowPlayingScreenViewModel = nowPlayingScreenViewModel,
 									playbackServiceController = playbackServiceController,
 									playlistViewModel = playlistViewModel,
 									childItemViewModelProvider = childItemViewModelProvider,
@@ -1043,7 +1064,7 @@ fun NowPlayingView(
 							} else {
 								NowPlayingWideView(
 									nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-									screenOnState = screenOnState,
+									nowPlayingScreenViewModel = nowPlayingScreenViewModel,
 									playbackServiceController = playbackServiceController,
 									playlistViewModel = playlistViewModel,
 									childItemViewModelProvider = childItemViewModelProvider,
