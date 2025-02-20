@@ -72,7 +72,7 @@ class NowPlayingFilePropertiesViewModel(
 	private val onTrackChangedSubscription = applicationMessages.registerReceiver { m: LibraryPlaybackMessage.TrackChanged ->
 		if (m.libraryId == activeLibraryId.value) {
 			updateViewFromRepository(m.libraryId)
-			showNowPlayingControls()
+			showControls()
 		}
 	}
 
@@ -164,7 +164,7 @@ class NowPlayingFilePropertiesViewModel(
 	}
 
 	@Synchronized
-	fun showNowPlayingControls() {
+	fun showControls() {
 		controlsShownPromise.cancel()
 
 		isScreenControlsVisibleState.value = true
@@ -296,7 +296,7 @@ class NowPlayingFilePropertiesViewModel(
 							}
 						}
 					}
-					.then { _ -> showNowPlayingControls() }
+					.then { _ -> showControls() }
 			}
 	}
 

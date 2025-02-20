@@ -108,6 +108,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.LocalControlColor
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
@@ -296,7 +297,10 @@ fun PlaylistControls(
 }
 
 @Composable
-fun NowPlayingRating(nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel, modifier: Modifier = Modifier) {
+fun NowPlayingRating(
+	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
+	modifier: Modifier = Modifier
+) {
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -306,11 +310,18 @@ fun NowPlayingRating(nowPlayingFilePropertiesViewModel: NowPlayingFileProperties
 	) {
 		val rating by nowPlayingFilePropertiesViewModel.songRating.subscribeAsState()
 		val ratingInt by remember { derivedStateOf { rating.toInt() } }
-		val isRatingEnabled by nowPlayingFilePropertiesViewModel.isSongRatingEnabled.subscribeAsState()
+		val isSongRatingEnabled by nowPlayingFilePropertiesViewModel.isSongRatingEnabled.subscribeAsState()
+		val isScreenControlsVisible by nowPlayingFilePropertiesViewModel.isScreenControlsVisible.subscribeAsState()
+		val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.subscribeAsState()
+		val isRatingEnabled by remember { derivedStateOf { isSongRatingEnabled && isScreenControlsVisible && !isReadOnly } }
+
+		var ratingColor = LocalControlColor.current
+		if (!isRatingEnabled)
+			ratingColor = ratingColor.copy(alpha = playlistControlAlpha)
 		RatingBar(
 			rating = ratingInt,
-			color = Color.White,
-			backgroundColor = Color.White.copy(alpha = .1f),
+			color = ratingColor,
+			backgroundColor = LocalControlColor.current.copy(alpha = .1f),
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(Dimensions.menuHeight),
@@ -321,7 +332,6 @@ fun NowPlayingRating(nowPlayingFilePropertiesViewModel: NowPlayingFileProperties
 			} else null
 		)
 
-		val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.subscribeAsState()
 		if (isReadOnly) {
 			ProvideTextStyle(value = MaterialTheme.typography.caption) {
 				Text(
@@ -585,7 +595,14 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	}
 
 	val isSettledOnFirstPage by remember { derivedStateOf { playlistOpenProgress == 0f } }
-	val isPlaylistShown by remember { derivedStateOf { !isSettledOnFirstPage } }
+
+	DisposableEffect(isSettledOnFirstPage) {
+		if (isSettledOnFirstPage) playlistViewModel.hidePlaylist()
+		else playlistViewModel.showPlaylist()
+
+		onDispose {  }
+	}
+	val isPlaylistShown by playlistViewModel.isPlaylistShown.subscribeAsState()
 
 	suspend fun hidePlaylist() {
 		playlistViewModel.finishPlaylistEdit()
@@ -608,7 +625,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 			.clickable(
 				interactionSource = remember { MutableInteractionSource() },
 				indication = null,
-				onClick = { nowPlayingFilePropertiesViewModel.showNowPlayingControls() }
+				onClick = { nowPlayingFilePropertiesViewModel.showControls() }
 			),
 	) {
 		if (!isPlaylistEditingShown) {
@@ -644,6 +661,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 					.fillMaxWidth(),
 				horizontalArrangement = Arrangement.SpaceAround
 			) {
+				val isTopControlsShown by remember { derivedStateOf { isScreenControlsVisible || isPlaylistShown } }
 				when {
 					isPlaylistEditingShown -> {
 						PlaylistControls(
@@ -655,7 +673,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 						)
 					}
 
-					isScreenControlsVisible -> {
+					isTopControlsShown -> {
 						BackButton(
 							onBack = applicationNavigation::backOut,
 							modifier = Modifier
@@ -670,8 +688,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 					}
 				}
 
-				val isChevronShown by remember { derivedStateOf { isScreenControlsVisible || isPlaylistEditingShown } }
-				if (isChevronShown) {
+				if (isTopControlsShown) {
 					val drawerChevronRotation by remember(playlistDrawerState) {
 						derivedStateOf {
 							(180 * playlistDrawerState.progress(SlideOutState.Closed, SlideOutState.PartiallyOpen)).coerceIn(0f, 180f)
@@ -824,7 +841,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 				.clickable(
 					interactionSource = remember { MutableInteractionSource() },
 					indication = null,
-					onClick = { nowPlayingFilePropertiesViewModel.showNowPlayingControls() }
+					onClick = { nowPlayingFilePropertiesViewModel.showControls() }
 				)
 		) {
 			val isScreenControlsVisible by nowPlayingFilePropertiesViewModel.isScreenControlsVisible.subscribeAsState()
