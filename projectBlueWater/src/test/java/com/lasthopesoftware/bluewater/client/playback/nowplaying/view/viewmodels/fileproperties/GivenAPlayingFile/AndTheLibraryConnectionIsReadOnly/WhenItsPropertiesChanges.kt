@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
+import com.lasthopesoftware.resources.RecordingTypedMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -86,6 +87,7 @@ class WhenItsPropertiesChanges {
             },
 			mockk(),
 			mockk(relaxed = true),
+			RecordingTypedMessageBus(),
 		)
 
 		Pair(messageBus, nowPlayingViewModel)

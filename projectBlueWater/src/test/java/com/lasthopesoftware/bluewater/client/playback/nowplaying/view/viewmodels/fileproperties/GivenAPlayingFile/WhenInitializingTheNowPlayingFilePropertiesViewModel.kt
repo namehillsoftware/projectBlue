@@ -6,12 +6,14 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.PromiseDelay
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingTypedMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -19,9 +21,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Timeout
 import java.net.URL
-import java.util.concurrent.TimeUnit
 
 private const val libraryId = 718
 private const val serviceFileId = 355
@@ -30,7 +30,7 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 
 	private var filePropertiesReturnedTime = 0L
 
-	private val nowPlayingViewModel by lazy {
+	private val mut by lazy {
 		val nowPlayingRepository = mockk<MaintainNowPlayingState> {
 			every { promiseNowPlaying(LibraryId(libraryId)) } returns Promise(
 				NowPlaying(
@@ -67,6 +67,8 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 			every { promiseIsMarkedForPlay(LibraryId(libraryId)) } returns true.toPromise()
 		}
 
+		val nowPlayingMessageBus = RecordingTypedMessageBus<NowPlayingMessage>()
+
 		val nowPlayingViewModel = NowPlayingFilePropertiesViewModel(
             mockk(relaxed = true, relaxUnitFun = true),
             nowPlayingRepository,
@@ -82,25 +84,24 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
             playbackService,
 			mockk(),
 			mockk(relaxed = true),
+			nowPlayingMessageBus,
 		)
 
-		nowPlayingViewModel
+		Pair(nowPlayingMessageBus, nowPlayingViewModel)
 	}
 
 	@BeforeAll
 	fun act() {
-		nowPlayingViewModel.initializeViewModel(LibraryId(libraryId)).toExpiringFuture().get()
+		mut.second.initializeViewModel(LibraryId(libraryId)).toExpiringFuture().get()
 	}
 
 	@Test
 	fun `then the file position is correct`() {
-		assertThat(nowPlayingViewModel.filePosition.value).isEqualTo(439774)
+		assertThat(mut.second.filePosition.value).isEqualTo(439774)
 	}
 
 	@Test
-	@Timeout(10, unit = TimeUnit.SECONDS)
-	fun `then the controls are shown at least five seconds after the properties load`() {
-		nowPlayingViewModel.isScreenControlsVisible.skipWhile { !it.value }.takeWhile { it.value }.blockingSubscribe()
-		assertThat(System.currentTimeMillis() - filePropertiesReturnedTime).isGreaterThan(5_000)
+	fun `then the file properties loaded message is sent`() {
+		assertThat(mut.first.recordedMessages).containsExactly(NowPlayingMessage.FilePropertiesLoaded)
 	}
 }

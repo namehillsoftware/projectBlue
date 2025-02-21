@@ -65,10 +65,10 @@ import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
+import com.lasthopesoftware.bluewater.shared.android.ui.components.SystemUiController
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberSystemUiController
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
@@ -213,6 +213,7 @@ private fun BrowserLibraryDestination.Navigate(
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
 fun LibraryDestination.Navigate(
+	systemUiController: SystemUiController,
 	browserViewDependencies: ScopedViewModelDependencies,
 	libraryConnectionDependencies: LibraryConnectionDependents,
 	scaffoldState: BottomSheetScaffoldState,
@@ -220,6 +221,9 @@ fun LibraryDestination.Navigate(
 	with(browserViewDependencies) {
 		when (this@Navigate) {
 			is BrowserLibraryDestination -> {
+				systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
+				systemUiController.setNavigationBarColor(Color.Black)
+
 				Navigate(
 					browserViewDependencies = browserViewDependencies,
 					libraryConnectionDependencies = libraryConnectionDependencies,
@@ -230,6 +234,9 @@ fun LibraryDestination.Navigate(
 			is FileDetailsScreen -> {}
 
 			is ConnectionSettingsScreen -> {
+				systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
+				systemUiController.setNavigationBarColor(Color.Black)
+
 				val viewModel = librarySettingsViewModel
 
 				val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
@@ -251,13 +258,10 @@ fun LibraryDestination.Navigate(
 			}
 
 			is NowPlayingScreen -> {
-				val systemUiController = rememberSystemUiController()
-				systemUiController.setSystemBarsColor(SharedColors.overlayDark)
-
 				NowPlayingView(
 					nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
 					nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-					screenOnState = nowPlayingScreenViewModel,
+					nowPlayingScreenViewModel = nowPlayingScreenViewModel,
 					playbackServiceController = playbackServiceController,
 					playlistViewModel = nowPlayingPlaylistViewModel,
 					childItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
@@ -375,9 +379,6 @@ fun HandheldApplication(
 
 	ControlSurface {
 		NavHost(navController) { destination ->
-			systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
-			systemUiController.setNavigationBarColor(Color.Black)
-
 			when (destination) {
 				is SelectedLibraryReRouter -> {
 					routedNavigationDependencies.apply {
@@ -399,6 +400,9 @@ fun HandheldApplication(
 					}
 				}
 				is ActiveLibraryDownloadsScreen -> {
+					systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
+					systemUiController.setNavigationBarColor(Color.Black)
+
 					routedNavigationDependencies.apply {
 						LaunchedEffect(key1 = Unit) {
 							try {
@@ -421,6 +425,7 @@ fun HandheldApplication(
 				is LibraryDestination -> {
 					LocalViewModelStoreOwner.current?.also {
 						destination.Navigate(
+							systemUiController,
 							ScopedViewModelRegistry(
 								reusedViewModelDependencies,
 								permissionsDependencies,
@@ -432,6 +437,9 @@ fun HandheldApplication(
 					}
 				}
 				is ApplicationSettingsScreen -> {
+					systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
+					systemUiController.setNavigationBarColor(Color.Black)
+
 					routedNavigationDependencies.apply {
 						Box(
 							modifier = Modifier
@@ -449,6 +457,9 @@ fun HandheldApplication(
 					}
 				}
 				is NewConnectionSettingsScreen -> {
+					systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
+					systemUiController.setNavigationBarColor(Color.Black)
+
 					LocalViewModelStoreOwner.current
 						?.let {
 							ScopedViewModelRegistry(
@@ -473,6 +484,9 @@ fun HandheldApplication(
 						}
 				}
 				is HiddenSettingsScreen -> {
+					systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
+					systemUiController.setNavigationBarColor(Color.Black)
+
 					HiddenSettingsView(routedNavigationDependencies.hiddenSettingsViewModel)
 
 					routedNavigationDependencies.hiddenSettingsViewModel.loadApplicationSettings()

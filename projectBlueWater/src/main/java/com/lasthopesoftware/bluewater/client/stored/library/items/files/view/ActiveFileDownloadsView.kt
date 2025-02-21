@@ -188,7 +188,7 @@ fun ActiveFileDownloadsView(
 						.background(MaterialTheme.colors.surface)
 						.padding(top = topPadding)
 				) {
-					val minimumMenuWidth = (3 * 32).dp
+					val minimumMenuWidth = Dimensions.listItemMenuIconSize
 					val headerExpandingProgress by remember { derivedStateOf { 1 - headerCollapsingProgress } }
 					val acceleratedProgress by remember {
 						derivedStateOf(structuralEqualityPolicy()) {

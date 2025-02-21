@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Pro
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.StoreNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.client.stored.sync.ScheduleSyncs
@@ -40,5 +41,6 @@ interface ApplicationDependencies {
 	val stringResources: GetStringResources
 	val applicationSettings: HoldApplicationSettings
 	val nowPlayingState: GetNowPlayingState
+	val nowPlayingDisplaySettings: StoreNowPlayingDisplaySettings
 }
 

@@ -4,4 +4,5 @@ import com.lasthopesoftware.bluewater.shared.messages.TypedMessage
 
 interface NowPlayingMessage : TypedMessage {
 	object ScrollToNowPlaying : NowPlayingMessage
+	object FilePropertiesLoaded : NowPlayingMessage
 }

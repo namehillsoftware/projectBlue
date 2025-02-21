@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryCo
 import com.lasthopesoftware.bluewater.client.connection.session.LibraryConnectionChangedMessage
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingMessage
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
@@ -23,22 +24,18 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messa
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.promiseReceivedMessage
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
-import com.lasthopesoftware.promises.PromiseDelay
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
-import org.joda.time.Duration
 import kotlin.math.roundToInt
-
-private val logger by lazyLogger<NowPlayingFilePropertiesViewModel>()
-private val screenControlVisibilityTime by lazy { Duration.standardSeconds(5) }
 
 class NowPlayingFilePropertiesViewModel(
 	private val applicationMessages: RegisterForApplicationMessages,
@@ -50,8 +47,12 @@ class NowPlayingFilePropertiesViewModel(
 	private val playbackService: ControlPlaybackService,
 	private val pollConnections: PollForLibraryConnections,
 	private val stringResources: GetStringResources,
+	private val sendNowPlayingMessages: SendTypedMessages<NowPlayingMessage>
 ) : ViewModel()
 {
+	companion object {
+		private val logger by lazyLogger<NowPlayingFilePropertiesViewModel>()
+	}
 
 	@Volatile
 	private var activeSongRatingUpdates = 0
@@ -72,7 +73,6 @@ class NowPlayingFilePropertiesViewModel(
 	private val onTrackChangedSubscription = applicationMessages.registerReceiver { m: LibraryPlaybackMessage.TrackChanged ->
 		if (m.libraryId == activeLibraryId.value) {
 			updateViewFromRepository(m.libraryId)
-			showNowPlayingControls()
 		}
 	}
 
@@ -98,7 +98,6 @@ class NowPlayingFilePropertiesViewModel(
 	private val songRatingState = MutableInteractionState(0F)
 	private val isSongRatingEnabledState = MutableInteractionState(false)
 	private val nowPlayingFileState = MutableInteractionState<PositionedFile?>(null)
-	private val isScreenControlsVisibleState = MutableInteractionState(false)
 	private val unexpectedErrorState = MutableInteractionState<Throwable?>(null)
 	private val activeLibraryIdState = MutableInteractionState<LibraryId?>(null)
 
@@ -111,7 +110,6 @@ class NowPlayingFilePropertiesViewModel(
 	val songRating = songRatingState.asInteractionState()
 	val isSongRatingEnabled = isSongRatingEnabledState.asInteractionState()
 	val nowPlayingFile = nowPlayingFileState.asInteractionState()
-	val isScreenControlsVisible = isScreenControlsVisibleState.asInteractionState()
 	val unexpectedError = unexpectedErrorState.asInteractionState()
 	val activeLibraryId = activeLibraryIdState.asInteractionState()
 
@@ -161,27 +159,6 @@ class NowPlayingFilePropertiesViewModel(
 				false)
 			.must { _ -> activeSongRatingUpdates = activeSongRatingUpdates.dec().coerceAtLeast(0) }
 			.excuse(::handleIoException)
-	}
-
-	@Synchronized
-	fun showNowPlayingControls() {
-		controlsShownPromise.cancel()
-
-		isScreenControlsVisibleState.value = true
-		controlsShownPromise = Promise.Proxy { cp ->
-			PromiseDelay
-				.delay<Any?>(screenControlVisibilityTime)
-				.also(cp::doCancel)
-				.then(
-					{ _, cs ->
-						if (!cs.isCancelled)
-							isScreenControlsVisibleState.value = false
-					},
-					{ _, _ ->
-						// ignored - handle to avoid excessive logging
-					}
-				)
-		}
 	}
 
 	private fun updateViewFromRepository(libraryId: LibraryId): Promise<Unit> {
@@ -296,7 +273,9 @@ class NowPlayingFilePropertiesViewModel(
 							}
 						}
 					}
-					.then { _ -> showNowPlayingControls() }
+					.then { _ ->
+						sendNowPlayingMessages.sendMessage(NowPlayingMessage.FilePropertiesLoaded)
+					}
 			}
 	}
 
