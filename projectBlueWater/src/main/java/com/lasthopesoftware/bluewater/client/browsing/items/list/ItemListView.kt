@@ -666,7 +666,10 @@ fun ItemListView(
 							.background(MaterialTheme.colors.surface)
 							.height(collapsedHeight)
 					) {
-						BackButton(applicationNavigation::navigateUp, modifier = Modifier.align(Alignment.TopStart))
+						BackButton(
+							applicationNavigation::navigateUp,
+							modifier = Modifier.align(Alignment.TopStart).padding(Dimensions.topRowOuterPadding)
+						)
 
 						val topPadding = appBarHeight - 42.dp
 						BoxWithConstraints(modifier = Modifier.padding(top = topPadding)) nestedBoxScope@{
