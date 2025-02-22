@@ -1,10 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list.menus
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
@@ -30,7 +27,6 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIco
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.UnlabelledRefreshButton
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.LocalControlColor
 
 @Composable
@@ -166,19 +162,16 @@ fun RowScope.UnlabelledRefreshButton(
 
 @Composable
 @OptIn(ExperimentalComposeUiApi::class)
-fun BoxScope.MoreFileOptionsMenu(fileListViewModel: FileListViewModel) {
+fun MoreFileOptionsMenu(fileListViewModel: FileListViewModel, modifier: Modifier = Modifier) {
 	Box(modifier = Modifier
-		.fillMaxSize()
 		.wrapContentSize(Alignment.TopEnd)
-		.align(Alignment.TopEnd)
+		.then(modifier)
 	) {
 		var isExpanded by remember { mutableStateOf(false) }
 		Icon(
 			painter = painterResource(R.drawable.more_vertical_24),
 			contentDescription = stringResource(R.string.view_more_options),
-			modifier = Modifier
-				.padding(Dimensions.topRowOuterPadding)
-				.navigable(onClick = { isExpanded = !isExpanded }),
+			modifier = Modifier.navigable(onClick = { isExpanded = !isExpanded }),
 			tint = LocalControlColor.current,
 		)
 
@@ -200,21 +193,20 @@ fun BoxScope.MoreFileOptionsMenu(fileListViewModel: FileListViewModel) {
 
 @Composable
 @OptIn(ExperimentalComposeUiApi::class)
-fun BoxScope.MoreItemsOnlyOptionsMenu(
+fun MoreItemsOnlyOptionsMenu(
 	itemListViewModel: ItemListViewModel,
 	applicationNavigation: NavigateApplication,
+	modifier: Modifier = Modifier
 ) {
 	Box(modifier = Modifier
-		.fillMaxSize()
 		.wrapContentSize(Alignment.TopEnd)
-		.align(Alignment.TopEnd)
+		.then(modifier)
 	) {
 		var isExpanded by remember { mutableStateOf(false) }
 		Icon(
 			painter = painterResource(R.drawable.more_vertical_24),
 			contentDescription = stringResource(R.string.view_more_options),
 			modifier = Modifier
-				.padding(Dimensions.topRowOuterPadding)
 				.navigable(onClick = { isExpanded = !isExpanded }),
 			tint = LocalControlColor.current,
 		)
