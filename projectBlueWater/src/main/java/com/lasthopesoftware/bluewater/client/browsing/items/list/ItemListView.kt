@@ -5,14 +5,10 @@ import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -42,7 +38,6 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -88,14 +83,14 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.expandedMenuVerticalPadding
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.expandedTitleHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.rowScrollPadding
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.topMenuIconSize
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
 private val appBarHeight = Dimensions.appBarHeight
-private val iconSize = Dimensions.topMenuIconSize
-private val minimumMenuWidth = (iconSize + Dimensions.viewPaddingUnit * 2) * 3
+private val minimumMenuWidth = (topMenuIconSize + Dimensions.viewPaddingUnit * 2) * 3
 
 private val expandedIconSize = Dimensions.menuHeight
 private val boxHeight = expandedTitleHeight + appBarHeight + expandedIconSize + expandedMenuVerticalPadding * 2
@@ -139,25 +134,14 @@ fun FilesCountHeader(filesCount: Int) {
 }
 
 @Composable
-private fun BoxScope.CollapsedItemListMenu(
+private fun CollapsedItemListMenu(
 	itemListViewModel: ItemListViewModel,
 	fileListViewModel: FileListViewModel,
 	applicationNavigation: NavigateApplication,
 	playbackServiceController: ControlPlaybackService,
-	menuPaddingValues: PaddingValues,
-	menuWidth: Dp
+	modifier: Modifier = Modifier
 ) {
-	Row(
-		modifier = Modifier
-			.padding(
-				top = menuPaddingValues.calculateTopPadding(),
-				bottom = menuPaddingValues.calculateBottomPadding(),
-				start = menuPaddingValues.calculateStartPadding(LocalLayoutDirection.current),
-				end = menuPaddingValues.calculateEndPadding(LocalLayoutDirection.current),
-			)
-			.width(menuWidth)
-			.align(Alignment.TopEnd)
-	) {
+	Row(modifier = modifier) {
 		val files by fileListViewModel.files.subscribeAsState()
 		if (files.any()) {
 			UnlabelledPlayButton(
@@ -458,6 +442,8 @@ fun ItemListView(
 	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 		ControlSurface {
 
+			val isItemsLoading by itemListViewModel.isLoading.subscribeAsState()
+
 			val collapsedHeight = appBarHeight
 
 			val expandedHeightPx = LocalDensity.current.run { boxHeight.toPx() }
@@ -472,7 +458,6 @@ fun ItemListView(
 					.nestedScroll(heightScaler)
 			) {
 				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-					val isItemsLoading by itemListViewModel.isLoading.subscribeAsState()
 					val isLoaded = !isItemsLoading && !isFilesLoading
 
 					if (isLoaded) LoadedItemListView(actualExpandedHeight)
@@ -495,12 +480,38 @@ fun ItemListView(
 								.padding(Dimensions.topRowOuterPadding)
 						)
 
-						if (files.any()) MoreFileOptionsMenu(fileListViewModel)
-						else MoreItemsOnlyOptionsMenu(itemListViewModel, applicationNavigation)
+						val moreMenuModifier = Modifier
+							.align(Alignment.TopEnd)
+							.padding(
+								vertical = Dimensions.topRowOuterPadding,
+								horizontal = Dimensions.viewPaddingUnit
+							)
+
+						if (files.any()) MoreFileOptionsMenu(
+							fileListViewModel,
+							moreMenuModifier
+						) else MoreItemsOnlyOptionsMenu(
+							itemListViewModel,
+							applicationNavigation,
+							moreMenuModifier
+						)
 
 						val headerCollapseProgress by heightScaler.getProgressState()
 						val topPadding by remember { derivedStateOf { linearInterpolation(appBarHeight, 14.dp, headerCollapseProgress) } }
-						BoxWithConstraints(modifier = Modifier.padding(top = topPadding)) nestedBoxScope@{
+						val endPadding by remember {
+							derivedStateOf {
+								linearInterpolation(
+									Dimensions.viewPaddingUnit * 2,
+									topMenuIconSize + Dimensions.viewPaddingUnit,
+									headerCollapseProgress
+								)
+							}
+						}
+						BoxWithConstraints(
+							modifier = Modifier
+								.align(Alignment.TopCenter)
+								.padding(top = topPadding, end = endPadding),
+						) nestedBoxScope@{
 							val acceleratedToolbarStateProgress by remember {
 								derivedStateOf {
 									(1 - headerCollapseProgress).pow(3).coerceIn(0f, 1f)
@@ -516,17 +527,17 @@ fun ItemListView(
 									derivedStateOf {
 										linearInterpolation(
 											Dimensions.viewPaddingUnit,
-											Dimensions.viewPaddingUnit + 48.dp,
+											Dimensions.topMenuIconSizeWithPadding,
 											headerCollapseProgress
 										)
 									}
 								}
 
-								val endPadding by remember {
+								val textEndPadding by remember {
 									derivedStateOf {
 										linearInterpolation(
 											Dimensions.viewPaddingUnit,
-											Dimensions.viewPaddingUnit + minimumMenuWidth + 48.dp,
+											Dimensions.viewPaddingUnit + minimumMenuWidth,
 											acceleratedHeaderHidingProgress
 										)
 									}
@@ -539,7 +550,7 @@ fun ItemListView(
 										overflow = TextOverflow.Ellipsis,
 										modifier = Modifier
 											.fillMaxWidth()
-											.padding(start = startPadding, end = endPadding),
+											.padding(start = startPadding, end = textEndPadding),
 									)
 								} else {
 									MarqueeText(
@@ -549,7 +560,7 @@ fun ItemListView(
 										gradientEdgeColor = MaterialTheme.colors.surface,
 										modifier = Modifier
 											.fillMaxWidth()
-											.padding(start = startPadding, end = endPadding),
+											.padding(start = startPadding, end = textEndPadding),
 										isMarqueeEnabled = !lazyListState.isScrollInProgress
 									)
 								}
@@ -578,16 +589,6 @@ fun ItemListView(
 								}
 							}
 
-							val menuEndPadding by remember {
-								derivedStateOf {
-									linearInterpolation(
-										Dimensions.viewPaddingUnit * 2,
-										48.dp,
-										headerCollapseProgress
-									)
-								}
-							}
-
 							if (acceleratedHeaderHidingProgress < 1) {
 								val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
 								Row(
@@ -595,8 +596,7 @@ fun ItemListView(
 										.padding(
 											top = topRowPadding,
 											bottom = expandedMenuVerticalPadding,
-											start = Dimensions.viewPaddingUnit * 2,
-											end = menuEndPadding
+											start = Dimensions.viewPaddingUnit * 2
 										)
 										.width(menuWidth)
 										.align(Alignment.TopEnd),
@@ -648,13 +648,14 @@ fun ItemListView(
 									fileListViewModel = fileListViewModel,
 									applicationNavigation = applicationNavigation,
 									playbackServiceController = playbackServiceController,
-									menuPaddingValues = PaddingValues(
-										top = topRowPadding,
-										bottom = expandedMenuVerticalPadding,
-										start = Dimensions.viewPaddingUnit * 2,
-										end = menuEndPadding
-									),
-									menuWidth = menuWidth,
+									modifier = Modifier
+										.padding(
+											top = topRowPadding,
+											bottom = expandedMenuVerticalPadding,
+											start = Dimensions.viewPaddingUnit * 2
+										)
+										.width(menuWidth)
+										.align(Alignment.TopEnd),
 								)
 							}
 						}
@@ -664,29 +665,47 @@ fun ItemListView(
 						modifier = Modifier
 							.fillMaxWidth()
 							.background(MaterialTheme.colors.surface)
-							.height(collapsedHeight)
+							.height(collapsedHeight),
+						contentAlignment = Alignment.CenterStart,
 					) {
-						BackButton(applicationNavigation::navigateUp, modifier = Modifier.align(Alignment.TopStart))
+						BackButton(
+							applicationNavigation::navigateUp,
+							modifier = Modifier.padding(horizontal = Dimensions.topRowOuterPadding)
+						)
 
-						val topPadding = appBarHeight - 42.dp
-						BoxWithConstraints(modifier = Modifier.padding(top = topPadding)) nestedBoxScope@{
-							ProvideTextStyle(MaterialTheme.typography.h5) {
-								MarqueeText(
-									text = itemValue,
-									overflow = TextOverflow.Ellipsis,
-									gradientSides = setOf(GradientSide.End),
-									gradientEdgeColor = MaterialTheme.colors.surface,
-									modifier = Modifier
-										.fillMaxWidth()
-										.padding(
-											start = Dimensions.viewPaddingUnit * 13,
-											end = Dimensions.viewPaddingUnit + minimumMenuWidth
-										),
-									isMarqueeEnabled = !lazyListState.isScrollInProgress
-								)
-							}
+						ProvideTextStyle(MaterialTheme.typography.h5) {
+							MarqueeText(
+								text = itemValue,
+								overflow = TextOverflow.Ellipsis,
+								gradientSides = setOf(GradientSide.End),
+								gradientEdgeColor = MaterialTheme.colors.surface,
+								modifier = Modifier
+									.fillMaxWidth()
+									.padding(
+										start = Dimensions.topMenuIconSizeWithPadding,
+										end = Dimensions.viewPaddingUnit + minimumMenuWidth
+									),
+								isMarqueeEnabled = !lazyListState.isScrollInProgress
+							)
+						}
 
-							if (isFilesLoading) return@nestedBoxScope
+						if (!isFilesLoading && !isItemsLoading) {
+							if (files.any()) MoreFileOptionsMenu(
+								fileListViewModel,
+								Modifier
+									.align(Alignment.CenterEnd)
+									.padding(
+										horizontal = Dimensions.viewPaddingUnit
+									)
+							) else MoreItemsOnlyOptionsMenu(
+								itemListViewModel,
+								applicationNavigation,
+								Modifier
+									.align(Alignment.CenterEnd)
+									.padding(
+										horizontal = Dimensions.viewPaddingUnit
+									)
+							)
 
 							val menuWidth = minimumMenuWidth
 
@@ -695,13 +714,13 @@ fun ItemListView(
 								fileListViewModel = fileListViewModel,
 								applicationNavigation = applicationNavigation,
 								playbackServiceController = playbackServiceController,
-								menuPaddingValues = PaddingValues(
-									top = collapsedTopRowPadding,
-									bottom = expandedMenuVerticalPadding,
-									start = Dimensions.viewPaddingUnit * 2,
-									end = Dimensions.viewPaddingUnit * 2
-								),
-								menuWidth = menuWidth,
+								modifier = Modifier
+									.padding(
+										start = Dimensions.viewPaddingUnit * 2,
+										end = topMenuIconSize + Dimensions.viewPaddingUnit
+									)
+									.width(menuWidth)
+									.align(Alignment.CenterEnd),
 							)
 						}
 					}
