@@ -58,6 +58,14 @@ Android Studio can perform the build. To run a CI build like it is run in Github
 This will leave artifacts that are owned by the root user. To run a build that leaves artifacts
 owned by the current user, run either `./build-release.sh` or `./build-apk.sh`.
 
+### Building Flatpak
+
+1. Change to flatpak dir
+2. Change the build number of the apk in the flatpak YML file.
+3. Execute `flatpak-builder --force-clean --user --install-deps-from=flathub --repo=repo --install builddir com.lasthopesoftware.projectblue.yml`.
+
+To run the finished flatpak, run ` flatpak run com.lasthopesoftware.projectblue`.
+
 ## Deployment
 
 Once changes are merged, a build will be deployed and published by the project blue maintainer.
