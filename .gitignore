@@ -19,3 +19,4 @@ _artifacts
 /flatpak/builddir/
 /flatpak/repo/
 /appimage/flatpak2appdir/com.lasthopesoftware.projectblue.AppDir/
+/.flatpak-builder/
