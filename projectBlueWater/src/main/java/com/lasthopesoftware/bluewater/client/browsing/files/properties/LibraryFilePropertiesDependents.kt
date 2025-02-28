@@ -34,13 +34,8 @@ class LibraryFilePropertiesDependentsRegistry(
 			application.imageDiskFileCache
 		)
 
-		val scaledDiskImageProvider = ScaledImageProvider(
-			diskImageProvider,
-			application.screenDimensions,
-		)
-
 		CachedImageProvider(
-			scaledDiskImageProvider,
+			diskImageProvider,
 			imageCacheKeyLookup
 		)
 	}
