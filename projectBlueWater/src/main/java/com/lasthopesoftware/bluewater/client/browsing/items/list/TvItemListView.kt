@@ -130,8 +130,15 @@ fun TvItemListView(
 						.padding(Dimensions.topRowOuterPadding)
 				)
 
-				if (files.any()) MoreFileOptionsMenu(fileListViewModel)
-				else MoreItemsOnlyOptionsMenu(itemListViewModel, applicationNavigation)
+				val moreMenuModifier = Modifier
+					.align(Alignment.TopEnd)
+					.padding(
+						vertical = Dimensions.topRowOuterPadding,
+						horizontal = Dimensions.viewPaddingUnit
+					)
+
+				if (files.any()) MoreFileOptionsMenu(fileListViewModel, moreMenuModifier)
+				else MoreItemsOnlyOptionsMenu(itemListViewModel, applicationNavigation, moreMenuModifier)
 			}
 
 			Box(modifier = Modifier.height(expandedTitleHeight)) {
