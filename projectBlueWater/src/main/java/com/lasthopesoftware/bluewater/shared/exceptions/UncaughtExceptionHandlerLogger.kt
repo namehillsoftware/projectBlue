@@ -19,9 +19,7 @@ object UncaughtExceptionHandlerLogger : Thread.UncaughtExceptionHandler, Unhandl
 	}
 
 	override fun uncaughtException(thread: Thread, ex: Throwable) {
-		if (reportException(ex)) {
-			logger.error("Uncaught Exception", ex)
-		}
+		uncaughtException(ex)
 	}
 
 	override fun newUnhandledRejection(rejection: Throwable) {
@@ -30,6 +28,15 @@ object UncaughtExceptionHandlerLogger : Thread.UncaughtExceptionHandler, Unhandl
 				logger.warn("An asynchronous exception has not yet been handled", rejection)
 			}
 		}
+	}
+
+	fun uncaughtException(ex: Throwable): Boolean {
+		val isReportable = reportException(ex)
+		if (isReportable) {
+			logger.error("Uncaught Exception", ex)
+		}
+
+		return isReportable
 	}
 
 	private fun reportException(ex: Throwable): Boolean = when (ex) {

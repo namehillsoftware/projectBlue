@@ -69,6 +69,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.SystemUiContr
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberSystemUiController
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.shared.exceptions.UncaughtExceptionHandlerLogger
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
@@ -192,14 +193,19 @@ private fun BrowserLibraryDestination.Navigate(
 					)
 
 					val context = LocalContext.current
-					LaunchedEffect(key1 = libraryId) {
+					LaunchedEffect(key1 = libraryId, key2 = context) {
 						try {
 							nowPlayingFilePropertiesViewModel.initializeViewModel(libraryId).suspend()
 						} catch (e: Throwable) {
-							if (ConnectionLostExceptionFilter.isConnectionLostException(e))
-								libraryConnectionDependencies.pollForConnections.pollConnection(libraryId)
-							else
-								UnexpectedExceptionToaster.announce(context, e)
+							when {
+								ConnectionLostExceptionFilter.isConnectionLostException(e) -> {
+									libraryConnectionDependencies.pollForConnections.pollConnection(libraryId)
+								}
+
+								UncaughtExceptionHandlerLogger.uncaughtException(e) -> {
+									UnexpectedExceptionToaster.announce(context, e)
+								}
+							}
 						}
 					}
 				}
@@ -273,7 +279,7 @@ fun LibraryDestination.Navigate(
 				)
 
 				val context = LocalContext.current
-				LaunchedEffect(key1 = libraryId) {
+				LaunchedEffect(key1 = libraryId, key2 = context) {
 					try {
 						if (connectionWatcherViewModel.watchLibraryConnection(libraryId).suspend()) {
 							Promise.whenAll(
@@ -284,10 +290,15 @@ fun LibraryDestination.Navigate(
 							).suspend()
 						}
 					} catch (e: Throwable) {
-						if (ConnectionLostExceptionFilter.isConnectionLostException(e))
-							libraryConnectionDependencies.pollForConnections.pollConnection(libraryId)
-						else
-							UnexpectedExceptionToaster.announce(context, e)
+						when {
+							ConnectionLostExceptionFilter.isConnectionLostException(e) -> {
+								libraryConnectionDependencies.pollForConnections.pollConnection(libraryId)
+							}
+
+							UncaughtExceptionHandlerLogger.uncaughtException(e) -> {
+								UnexpectedExceptionToaster.announce(context, e)
+							}
+						}
 					}
 				}
 			}
