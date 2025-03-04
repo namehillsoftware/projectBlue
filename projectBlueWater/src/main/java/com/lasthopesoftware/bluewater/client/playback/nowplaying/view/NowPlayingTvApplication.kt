@@ -110,6 +110,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
+import com.lasthopesoftware.bluewater.shared.exceptions.UncaughtExceptionHandlerLogger
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
@@ -132,7 +133,7 @@ private val logger by lazy { LoggerFactory.getLogger("NowPlayingTvApplication") 
 fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedViewModelDependencies) {
 	val context = LocalContext.current
 
-	LaunchedEffect(key1 = libraryId) {
+	LaunchedEffect(key1 = libraryId, key2 = context) {
 		with (browserViewDependencies) {
 			try {
 				val isConnectionActive = connectionWatcherViewModel.watchLibraryConnection(libraryId).suspend()
@@ -146,10 +147,15 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedVi
 					).suspend()
 				}
 			} catch (e: Throwable) {
-				if (ConnectionLostExceptionFilter.isConnectionLostException(e))
-					pollForConnections.pollConnection(libraryId)
-				else
-					UnexpectedExceptionToaster.announce(context, e)
+				when {
+					ConnectionLostExceptionFilter.isConnectionLostException(e) -> {
+						pollForConnections.pollConnection(libraryId)
+					}
+
+					UncaughtExceptionHandlerLogger.uncaughtException(e) -> {
+						UnexpectedExceptionToaster.announce(context, e)
+					}
+				}
 			}
 		}
 	}

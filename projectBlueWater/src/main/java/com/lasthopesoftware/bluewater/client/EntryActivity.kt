@@ -105,9 +105,10 @@ class EntryActivity :
 	override fun onNewIntent(intent: Intent) {
 		super.onNewIntent(intent)
 
-		this.intent = intent
-
-		getDestination(intent)?.also { browserViewDependencies.navigationMessages.sendMessage(NavigationMessage(it)) }
+		// To preserve state within the Compose application, do not store the new intent.
+		val destination = getDestination(intent)
+		if (destination != null)
+			browserViewDependencies.navigationMessages.sendMessage(NavigationMessage(destination))
 	}
 
 	override fun requestPermissions(permissions: List<String>): Promise<Map<String, Boolean>> {
