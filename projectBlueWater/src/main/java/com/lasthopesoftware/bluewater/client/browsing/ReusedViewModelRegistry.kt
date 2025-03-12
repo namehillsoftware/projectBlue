@@ -44,7 +44,7 @@ class ReusedViewModelRegistry(
 			registerForApplicationMessages,
 			nowPlayingState,
 			playbackServiceController,
-			PlaylistsStorage(libraryConnectionProvider),
+			PlaylistsStorage(libraryAccess),
 		)
 	}
 

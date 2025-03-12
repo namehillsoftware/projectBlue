@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.builder.live.GivenANetw
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders
 import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
+import com.lasthopesoftware.bluewater.client.connection.url.ProvideUrls
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -17,7 +17,7 @@ class WhenGettingTheLiveUrl {
 	private val urlProvider by lazy {
 		val urlProviderBuilder = mockk<BuildUrlProviders>()
 		every { urlProviderBuilder.promiseBuiltUrlProvider(LibraryId(23)) } answers {
-			val urlProvider = mockk<IUrlProvider>()
+			val urlProvider = mockk<ProvideUrls>()
 			every { urlProvider.baseUrl } returns URL("http://test-url")
 			Promise(urlProvider)
 		}

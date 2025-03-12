@@ -9,7 +9,7 @@ class MediaServerUrlProvider(
 	override val authCode: String?,
 	baseUrl: URL,
 	override val certificateFingerprint: ByteArray
-) : IUrlProvider {
+) : ProvideUrls {
 
 	constructor(authCode: String?, ipAddress: String?, port: Int)
 		: this(authCode, URL(IoCommon.httpUriScheme, ipAddress, port, ""), ByteArray(0))

@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Giv
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
+import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
@@ -13,6 +13,7 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.spyk
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -30,7 +31,7 @@ class WhenProcessingTheJob {
 
 	@BeforeAll
 	fun before() {
-		val fakeConnectionProvider = FakeConnectionProvider()
+		val fakeConnectionProvider = spyk<FakeJRiverConnectionProvider>()
 		fakeConnectionProvider.mapResponse({
 			FakeConnectionResponseTuple(
 				200,

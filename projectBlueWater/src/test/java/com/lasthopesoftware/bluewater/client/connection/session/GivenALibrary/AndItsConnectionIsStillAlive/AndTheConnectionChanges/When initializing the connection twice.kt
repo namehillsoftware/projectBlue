@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
@@ -32,7 +32,7 @@ class `When initializing the connection twice` {
                     every { promiseIsConnectionActive(LibraryId(libraryId)) } returns true.toPromise()
                     every { promiseLibraryConnection(LibraryId(libraryId)) } returnsMany listOf(
 						deferredProgressingPromise,
-						ProgressingPromise(FakeConnectionProvider())
+						ProgressingPromise(FakeJRiverConnectionProvider())
 					)
                 },
             )
@@ -55,7 +55,7 @@ class `When initializing the connection twice` {
             BuildingConnectionStatus.GettingLibrary,
             BuildingConnectionStatus.SendingWakeSignal,
 		)
-		deferredPromise.sendResolution(FakeConnectionProvider())
+		deferredPromise.sendResolution(FakeJRiverConnectionProvider())
 
 		firstConnection = isInitializedPromise
 			.toExpiringFuture()

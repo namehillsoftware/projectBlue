@@ -12,17 +12,18 @@ import androidx.work.WorkerParameters
 import com.google.common.util.concurrent.ListenableFuture
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFileUriQueryParamsProvider
+import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccessProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.library.access.DelegatingLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.RevisionStorage
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.stored.library.items.DelegatingStoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredFilesCounter
@@ -91,14 +92,16 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 
 	private val libraryProvider by lazy { DelegatingLibraryProvider(LibraryRepository(context), cachingPolicyFactory) }
 
+	private val libraryAccess by lazy { RemoteLibraryAccessProvider(libraryConnections) }
+
 	private val fileProperties by lazy {
 		val filePropertyCache = FilePropertyCache
 		CachedFilePropertiesProvider(
-			libraryConnections,
+			UrlKeyProvider(libraryConnections),
 			filePropertyCache,
 			FilePropertiesProvider(
 				GuaranteedLibraryConnectionProvider(libraryConnections),
-				LibraryRevisionProvider(libraryConnections),
+				LibraryRevisionProvider(libraryAccess, libraryConnections, RevisionStorage),
 				filePropertyCache
 			)
 		)
@@ -107,7 +110,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 	private val serviceFilesCollector by lazy {
 		val serviceFilesCollector = StoredItemServiceFileCollector(
 			StoredItemAccess(context),
-			LibraryFileProvider(LibraryFileStringListProvider(libraryConnections)),
+			LibraryFileProvider(libraryAccess),
 			FileListParameters
         )
 
@@ -158,7 +161,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			storedFileUpdater,
 			StoredFileJobProcessor(
 				StoredFileUriDestinationBuilder(OsFileSupplier, FileWritePossibleTester, context.contentResolver),
-				StoredFileDownloader(ServiceFileUriQueryParamsProvider, libraryConnections),
+				StoredFileDownloader(RemoteLibraryAccessProvider(libraryConnections)),
 				storedFileUpdater,
 			)
 		)

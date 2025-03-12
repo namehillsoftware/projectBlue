@@ -14,7 +14,7 @@ import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.extractor.mp3.Mp3Extractor
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideGuaranteedLibraryConnections
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
+import com.lasthopesoftware.bluewater.client.connection.url.ProvideUrls
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.DiskFileCacheSourceFactory
 import com.lasthopesoftware.policies.caching.PermanentPromiseFunctionCache
 import com.lasthopesoftware.resources.uri.IoCommon
@@ -41,7 +41,7 @@ import com.namehillsoftware.handoff.promises.Promise
 	// ExoPlayer doesn't give us a good way to bundle a library ID in with a DataSpec request for the cache, so we will
 	// instead create a cache factory per library ID, and cache the cache factories. This will end up being a finite amount
 	// of factories (likely just 1), so I'm not overly concerned about resource usage.
-	private val remoteExtractorCustomCacheFactories = PermanentPromiseFunctionCache<IUrlProvider, MediaSource.Factory>()
+	private val remoteExtractorCustomCacheFactories = PermanentPromiseFunctionCache<ProvideUrls, MediaSource.Factory>()
 
 	override fun promiseNewMediaSource(libraryId: LibraryId, uri: Uri): Promise<MediaSource> =
 		getFactory(libraryId, uri).then { it -> it.createMediaSource(MediaItem.Builder().setUri(uri).build()) }

@@ -5,9 +5,9 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFileP
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
+import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
@@ -23,7 +23,7 @@ private const val serviceFileId = 946
 
 class WhenUpdatingFileProperties {
 	private val services by lazy {
-        val fakeFileConnectionProvider = FakeConnectionProvider()
+        val fakeFileConnectionProvider = FakeJRiverConnectionProvider()
         val fakeLibraryConnectionProvider =
             FakeLibraryConnectionProvider(mapOf(Pair(LibraryId(libraryId), fakeFileConnectionProvider)))
 		val filePropertiesContainer = FakeFilePropertiesContainerRepository().apply {
@@ -36,7 +36,8 @@ class WhenUpdatingFileProperties {
 		val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 
 		val filePropertiesStorage = FilePropertyStorage(
-			fakeLibraryConnectionProvider,
+			mockk(),
+			mockk(),
 			mockk {
 				every { promiseIsReadOnly(LibraryId(libraryId)) } returns true.toPromise()
 			},
@@ -49,7 +50,8 @@ class WhenUpdatingFileProperties {
 
 		Pair(
 			Triple(fakeFileConnectionProvider, filePropertiesContainer, recordingApplicationMessageBus),
-			filePropertiesStorage)
+			filePropertiesStorage
+		)
     }
 
 	@BeforeAll

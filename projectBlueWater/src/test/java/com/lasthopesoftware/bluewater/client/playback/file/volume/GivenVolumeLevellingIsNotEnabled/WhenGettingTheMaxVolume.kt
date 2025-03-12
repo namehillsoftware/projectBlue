@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume.GivenVolumeLevellingIsNotEnabled
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings
@@ -14,15 +13,9 @@ import org.junit.jupiter.api.Test
 
 class WhenGettingTheMaxVolume {
 	private val returnedVolume by lazy {
-		val cachedFilePropertiesProvider = CachedFilePropertiesProvider(
-			mockk(),
-			mockk(),
-			mockk()
-		)
 		val volumeLevelSettings = mockk<IVolumeLevelSettings>()
 		every { volumeLevelSettings.isVolumeLevellingEnabled } returns Promise(false)
-		val maxFileVolumeProvider =
-			MaxFileVolumeProvider(volumeLevelSettings, cachedFilePropertiesProvider)
+		val maxFileVolumeProvider = MaxFileVolumeProvider(volumeLevelSettings, mockk())
 
 		maxFileVolumeProvider
 			.promiseMaxFileVolume(LibraryId(244), ServiceFile(1))

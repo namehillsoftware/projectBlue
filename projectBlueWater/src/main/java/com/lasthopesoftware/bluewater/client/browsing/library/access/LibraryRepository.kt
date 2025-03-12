@@ -47,6 +47,7 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 			val libraryInt = libraryId.id
 			if (libraryInt < 0) return null
 			if (cancellationSignal.isCancelled) throw CancellationException("Cancelled while getting library")
+
 			return RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginNonExclusiveTransaction().use {
 					repositoryAccessHelper

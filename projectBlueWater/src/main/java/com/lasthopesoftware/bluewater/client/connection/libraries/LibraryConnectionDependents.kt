@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.libraries
 
 import com.lasthopesoftware.bluewater.ApplicationDependencies
+import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccessProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.CachedItemFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.DelegatingItemFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ItemFileProvider
@@ -23,6 +24,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemPlayback
 import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.RevisionStorage
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostRetryHandler
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPoller
@@ -45,10 +47,11 @@ interface LibraryConnectionDependents {
 	val freshLibraryFileProperties: ProvideFreshLibraryFileProperties
 	val connectionAuthenticationChecker: ConnectionAuthenticationChecker
     val itemStringListProvider: ProvideFileStringListForItem
+	val libraryAccess: RemoteLibraryAccessProvider
 }
 
 class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryConnectionDependents {
-	private val libraryFileStringListProvider by lazy { LibraryFileStringListProvider(application.libraryConnectionProvider) }
+	private val libraryFileStringListProvider by lazy { LibraryFileStringListProvider(libraryAccess) }
 
 	private val itemListProvider by lazy {
 		ItemStringListProvider(FileListParameters, libraryFileStringListProvider)
@@ -56,7 +59,9 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 
 	private val guaranteedLibraryConnectionProvider by lazy { GuaranteedLibraryConnectionProvider(application.libraryConnectionProvider) }
 
-	override val connectionAuthenticationChecker by lazy { ConnectionAuthenticationChecker(application.libraryConnectionProvider) }
+	override val libraryAccess by lazy { RemoteLibraryAccessProvider(application.libraryConnectionProvider) }
+
+	override val connectionAuthenticationChecker by lazy { ConnectionAuthenticationChecker(libraryAccess) }
 
 	override val freshLibraryFileProperties: ProvideFreshLibraryFileProperties by lazy {
 		FilePropertiesProvider(guaranteedLibraryConnectionProvider, revisionProvider, FilePropertyCache)
@@ -64,7 +69,7 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 
 	override val libraryFilePropertiesProvider by lazy {
 		CachedFilePropertiesProvider(
-			application.libraryConnectionProvider,
+			urlKeyProvider,
 			FilePropertyCache,
 			freshLibraryFileProperties,
 		)
@@ -72,11 +77,18 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 
 	override val urlKeyProvider by lazy { UrlKeyProvider(application.libraryConnectionProvider) }
 
-	override val revisionProvider by lazy { LibraryRevisionProvider(application.libraryConnectionProvider) }
+	override val revisionProvider by lazy {
+		LibraryRevisionProvider(
+			libraryAccess,
+			application.libraryConnectionProvider,
+			RevisionStorage
+		)
+	}
 
 	override val filePropertiesStorage by lazy {
 		FilePropertyStorage(
-			application.libraryConnectionProvider,
+			libraryAccess,
+			urlKeyProvider,
 			connectionAuthenticationChecker,
 			revisionProvider,
 			FilePropertyCache,
@@ -105,9 +117,7 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 		)
 	}
 
-	override val libraryFilesProvider by lazy {
-		LibraryFileProvider(libraryFileStringListProvider)
-	}
+	override val libraryFilesProvider by lazy { LibraryFileProvider(libraryAccess) }
 
 	override val playbackLibraryItems by lazy { ItemPlayback(itemListProvider, application.playbackServiceController) }
 
@@ -147,7 +157,7 @@ class RetryingLibraryConnectionRegistry(
 
 	override val libraryFilePropertiesProvider by lazy {
 		CachedFilePropertiesProvider(
-			application.libraryConnectionProvider,
+			urlKeyProvider,
 			FilePropertyCache,
 			freshLibraryFileProperties,
 		)
@@ -168,7 +178,7 @@ class RateLimitedFilePropertiesDependencies(
 
 	override val libraryFilePropertiesProvider by lazy {
 		CachedFilePropertiesProvider(
-			application.libraryConnectionProvider,
+			urlKeyProvider,
 			FilePropertyCache,
 			freshLibraryFileProperties,
 		)

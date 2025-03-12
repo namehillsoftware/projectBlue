@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePrope
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
@@ -42,7 +42,7 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 	}
 
 	override fun before() {
-		val connectionProvider = FakeConnectionProvider()
+		val connectionProvider = spyk<FakeJRiverConnectionProvider>()
 		connectionProvider.setupFile(
 			ServiceFile(3),
 			object : HashMap<String, String>() {

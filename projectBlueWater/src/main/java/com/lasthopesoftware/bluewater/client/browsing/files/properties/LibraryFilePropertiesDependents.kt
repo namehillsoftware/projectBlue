@@ -24,7 +24,7 @@ class LibraryFilePropertiesDependentsRegistry(
 
 	override val imageBytesProvider by lazy {
 		val scaledSourceImageProvider = ScaledImageProvider(
-			RemoteImageAccess(application.libraryConnectionProvider),
+			RemoteImageAccess(libraryConnectionDependents.libraryAccess),
 			application.screenDimensions,
 		)
 

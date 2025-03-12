@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.properties.reposito
 
 import com.google.common.cache.CacheBuilder
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
+import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 
 object FilePropertyCache : IFilePropertiesContainerRepository {
 	private const val maxSize = 500L

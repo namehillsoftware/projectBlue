@@ -5,40 +5,26 @@ import com.lasthopesoftware.bluewater.client.connection.builder.PassThroughBase6
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
+import com.lasthopesoftware.bluewater.client.connection.url.ProvideUrls
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.spyk
+import okhttp3.Callback
 import org.apache.commons.codec.binary.Hex
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.util.concurrent.ExecutionException
+import java.io.IOException
+import java.net.URL
 import java.util.concurrent.TimeUnit
-import kotlin.coroutines.cancellation.CancellationException
 
 class WhenCancellingTheUrlScan {
 
-	private val cancellationException by lazy {
-		val connectionTester = mockk<TestConnections>()
-		every { connectionTester.promiseIsConnectionPossible(any()) } returns false.toPromise()
-		every {
-			connectionTester.promiseIsConnectionPossible(match { a ->
-				listOf(
-					"https://1.2.3.4:452/MCWS/v1/",
-					"http://1.2.3.4:143/MCWS/v1/"
-				).contains(a.urlProvider.baseUrl.toString())
-			})
-		} returns Promise { m ->
-			m.awaitCancellation {
-				m.sendRejection(CancellationException("Maybe later!"))
-			}
-		}
-
+	private val promisedUrl by lazy {
 		val serverLookup = mockk<LookupServers>()
 		every { serverLookup.promiseServerInformation(LibraryId(35)) } returns Promise(
 			ServerInfo(
@@ -56,26 +42,47 @@ class WhenCancellingTheUrlScan {
 
 		val urlScanner = UrlScanner(
 			PassThroughBase64Encoder,
-			connectionTester,
 			serverLookup,
 			connectionSettingsLookup,
-			OkHttpFactory
+			mockk {
+				every {
+					getOkHttpClient(match { a ->
+						listOf(
+							"https://1.2.3.4:452/MCWS/v1/",
+							"http://1.2.3.4:143/MCWS/v1/"
+						).contains(a.baseUrl.toString())
+					})
+				} answers {
+					val urlProvider = firstArg<ProvideUrls>()
+					spyk {
+						every { newCall(match { r -> r.url.toUrl() == URL(urlProvider.baseUrl, "Alive") }) } answers {
+							mockk(relaxed = true, relaxUnitFun = true) {
+								val call = this
+								every { enqueue(any()) } answers {
+									val callback = firstArg<Callback>()
+									every { cancel() } answers {
+										callback.onFailure(
+											call,
+											IOException("Maybe later!")
+										)
+									}
+								}
+							}
+						}
+					}
+				}
+			}
 		)
 
 		val urlScan = urlScanner.promiseBuiltUrlProvider(LibraryId(35))
 
 		urlScan.cancel()
 
-		try {
-			urlScan.toExpiringFuture()[5, TimeUnit.SECONDS]
-			null
-		} catch (ee: ExecutionException) {
-			ee.cause as? CancellationException
-		}
+		urlScan.toExpiringFuture()[5, TimeUnit.SECONDS]
 	}
 
 	@Test
-	fun `then the cancellation exception is returned`() {
-		assertThat(cancellationException?.message).isEqualTo("Maybe later!")
+	fun `then a null URL is returned`() {
+		assertThat(promisedUrl).isNull()
 	}
 }

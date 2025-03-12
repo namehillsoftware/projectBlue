@@ -28,7 +28,6 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsValidation
-import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester
 import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
@@ -132,8 +131,7 @@ object ApplicationDependenciesContainer {
 
 			val activeNetwork = ActiveNetworkFinder(context)
 			ConnectionSessionManager(
-				ConnectionTester,
-				LibraryConnectionProvider(
+                LibraryConnectionProvider(
 					ConnectionSettingsValidation,
 					connectionSettingsLookup,
 					ServerAlarm(serverLookup, activeNetwork, ServerWakeSignal(PacketSender())),
@@ -141,7 +139,6 @@ object ApplicationDependenciesContainer {
 						activeNetwork,
 						UrlScanner(
 							Base64Encoder,
-							ConnectionTester,
 							serverLookup,
 							connectionSettingsLookup,
 							OkHttpFactory

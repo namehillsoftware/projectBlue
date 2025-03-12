@@ -1,30 +1,38 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.image.GivenAServiceFile
 
+import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
-import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.shared.images.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class WhenGettingTheImageBytes {
 	private val imageBytes by lazy {
-		val fakeConnectionProvider = FakeConnectionProvider()
-		fakeConnectionProvider.mapResponse(
-			{ FakeConnectionResponseTuple(200, byteArrayOf(39, 127, 8)) },
-			"File/GetImage",
-			"File=31",
-			"Type=Full",
-			"Pad=1",
-			"Format=jpg",
-			"FillTransparency=ffffff"
-		)
+//		val fakeConnectionProvider = FakeConnectionProvider()
+//		fakeConnectionProvider.mapResponse(
+//			{ FakeConnectionResponseTuple(200, byteArrayOf(39, 127, 8)) },
+//			"File/GetImage",
+//			"File=31",
+//			"Type=Full",
+//			"Pad=1",
+//			"Format=jpg",
+//			"FillTransparency=ffffff"
+//		)
 
 		val memoryCachedImageAccess = RemoteImageAccess(
-			FakeLibraryConnectionProvider(mapOf(Pair(LibraryId(21), fakeConnectionProvider))))
+			mockk {
+				every { promiseLibraryAccess(LibraryId(21)) } returns Promise(
+					mockk<RemoteLibraryAccess> {
+						every { promiseImageBytes(ServiceFile(31)) } returns byteArrayOf(39, 127, 8).toPromise()
+					}
+				)
+			})
 
 		memoryCachedImageAccess.promiseImageBytes(LibraryId(21), ServiceFile(31)).toExpiringFuture().get()
 	}

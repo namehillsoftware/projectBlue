@@ -1,36 +1,22 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist
 
+import com.lasthopesoftware.bluewater.client.access.ProvideRemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.response.ImmediateResponse
-import okhttp3.Response
 
-class LibraryFileStringListProvider(private val libraryConnections: ProvideLibraryConnections) :
-	ProvideFileStringListsForParameters,
-	ImmediateResponse<Response?, String>
+class LibraryFileStringListProvider(private val libraryAccess: ProvideRemoteLibraryAccess) :
+	ProvideFileStringListsForParameters
 {
 
-	override fun promiseFileStringList(libraryId: LibraryId, option: FileListParameters.Options, vararg params: String): Promise<String> {
-		return libraryConnections
-			.promiseLibraryConnection(libraryId)
-			.eventually { connection ->
+	override fun promiseFileStringList(libraryId: LibraryId, option: FileListParameters.Options, vararg params: String): Promise<String> =
+		libraryAccess
+			.promiseLibraryAccess(libraryId)
+			.cancelBackEventually { connection ->
 				connection
-					?.promiseResponse(
-						*FileListParameters.Helpers.processParams(
-							option,
-							*params
-						)
-					)
-					.keepPromise()
+					?.promiseFileStringList(option, *params)
+					.keepPromise("")
 			}
-			.then(this)
-	}
-
-	override fun respond(response: Response?): String =
-		response?.body?.use { body ->
-			body.string()
-		} ?: ""
 }

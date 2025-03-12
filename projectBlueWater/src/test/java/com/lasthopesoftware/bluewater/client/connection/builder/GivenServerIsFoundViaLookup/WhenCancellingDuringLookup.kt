@@ -45,7 +45,6 @@ class WhenCancellingDuringLookup {
 
 		val urlScanner = UrlScanner(
 			PassThroughBase64Encoder,
-			connectionTester,
 			serverLookup,
 			connectionSettingsLookup,
 			OkHttpFactory

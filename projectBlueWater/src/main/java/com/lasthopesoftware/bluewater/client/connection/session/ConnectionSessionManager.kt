@@ -2,11 +2,12 @@ package com.lasthopesoftware.bluewater.client.connection.session
 
 import android.content.Context
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
+import com.lasthopesoftware.bluewater.client.access.ProvideRemoteLibraryAccess
+import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
-import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
@@ -14,11 +15,10 @@ import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class ConnectionSessionManager(
-	private val connectionTester: TestConnections,
 	private val libraryConnections: ProvideLibraryConnections,
 	private val holdConnections: HoldPromisedConnections,
 	private val sendApplicationMessages: SendApplicationMessages,
-) : ManageConnectionSessions {
+) : ManageConnectionSessions, ProvideRemoteLibraryAccess {
 
 	override fun promiseTestedLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> =
 		holdConnections.setAndGetPromisedConnection(libraryId) { l, promised ->
@@ -27,15 +27,14 @@ class ConnectionSessionManager(
 					promised
 						?.also {
 							it.then({ c ->
-								c?.let {
-									connectionTester.promiseIsConnectionPossible(it)
-										.then({ isPossible ->
-											if (isPossible) resolve(it)
-											else updateCachedConnection()
-										}, {
-											updateCachedConnection()
-										})
-								} ?: updateCachedConnection()
+								c?.promiseIsConnectionPossible()
+									?.then({ isPossible ->
+										if (isPossible) resolve(c)
+										else updateCachedConnection()
+									}, {
+										updateCachedConnection()
+									})
+									?: updateCachedConnection()
 							}, {
 								updateCachedConnection()
 							})
@@ -64,6 +63,10 @@ class ConnectionSessionManager(
 				}
 			}
 		}
+
+	override fun promiseLibraryAccess(libraryId: LibraryId): Promise<RemoteLibraryAccess?> {
+		TODO("Not yet implemented")
+	}
 
 	override fun removeConnection(libraryId: LibraryId) {
 		holdConnections.removeConnection(libraryId)?.cancel()

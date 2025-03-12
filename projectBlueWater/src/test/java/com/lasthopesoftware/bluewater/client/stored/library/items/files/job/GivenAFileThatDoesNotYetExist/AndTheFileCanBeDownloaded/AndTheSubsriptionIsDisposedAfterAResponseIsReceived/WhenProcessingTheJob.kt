@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Giv
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
+import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
@@ -30,7 +30,7 @@ class WhenProcessingTheJob {
 
 	@BeforeAll
     fun before() {
-        val fakeConnectionProvider = FakeConnectionProvider()
+        val fakeConnectionProvider = FakeJRiverConnectionProvider()
         fakeConnectionProvider.mapResponse({
             FakeConnectionResponseTuple(
                 200,

@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.connection.builder.PassThroughBase6
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
@@ -14,6 +13,13 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.spyk
+import okhttp3.Callback
+import okhttp3.Protocol
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.internal.http.RealResponseBody
+import okio.Buffer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -47,10 +53,46 @@ class WhenScanningForUrls {
 
 		val urlScanner = UrlScanner(
 			PassThroughBase64Encoder,
-			connectionTester,
 			serverLookup,
 			connectionSettingsLookup,
-			OkHttpFactory
+			mockk {
+				every {
+					getOkHttpClient(match { a ->
+						"http://1.2.3.4:143/MCWS/v1/" == a.baseUrl.toString() && a.authCode == null
+					})
+				} returns spyk {
+					every { newCall(match { r -> r.url.toString() == "http://1.2.3.4:143/MCWS/v1/Alive" }) } answers {
+						val request = firstArg<Request>()
+						mockk(relaxed = true, relaxUnitFun = true) {
+							val call = this
+							every { enqueue(any()) } answers {
+								val callback = firstArg<Callback>()
+								val buffer = Buffer()
+								buffer.write("""<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<Response Status="OK">
+<Item Name="Master">1192</Item>
+<Item Name="Sync">1192</Item>
+<Item Name="LibraryStartup">1501430846</Item>
+</Response>
+""".toByteArray())
+								callback.onResponse(
+									call,
+									Response
+										.Builder()
+										.request(request)
+										.protocol(Protocol.HTTP_1_1)
+										.message("Ok")
+										.code(200)
+										.body(
+											RealResponseBody(null, buffer.size, buffer)
+										)
+										.build()
+								)
+							}
+						}
+					}
+				}
+			}
 		)
 
 		urlScanner.promiseBuiltUrlProvider(LibraryId(62)).toExpiringFuture().get()

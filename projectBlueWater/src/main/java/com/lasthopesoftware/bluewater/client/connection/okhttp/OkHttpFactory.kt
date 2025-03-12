@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.okhttp
 
 import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
+import com.lasthopesoftware.bluewater.client.connection.url.ProvideUrls
 import com.lasthopesoftware.resources.executors.ThreadPools
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
@@ -24,7 +24,7 @@ import javax.net.ssl.X509TrustManager
 object OkHttpFactory : ProvideOkHttpClients {
 	private val buildConnectionTime = Duration.standardSeconds(10)
 
-    override fun getOkHttpClient(urlProvider: IUrlProvider): OkHttpClient =
+    override fun getOkHttpClient(urlProvider: ProvideUrls): OkHttpClient =
         commonClient
 			.newBuilder()
             .addNetworkInterceptor { chain ->
@@ -62,7 +62,7 @@ object OkHttpFactory : ProvideOkHttpClients {
 			.build()
 	}
 
-	private fun getSslSocketFactory(urlProvider: IUrlProvider): SSLSocketFactory {
+	private fun getSslSocketFactory(urlProvider: ProvideUrls): SSLSocketFactory {
 		val sslContext = try {
 			SSLContext.getInstance("TLS")
 		} catch (e: NoSuchAlgorithmException) {
@@ -78,7 +78,7 @@ object OkHttpFactory : ProvideOkHttpClients {
 		return sslContext.socketFactory
 	}
 
-	private fun getTrustManager(urlProvider: IUrlProvider): X509TrustManager {
+	private fun getTrustManager(urlProvider: ProvideUrls): X509TrustManager {
 		val trustManagerFactory = try {
 			TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
 		} catch (e: NoSuchAlgorithmException) {
@@ -103,7 +103,7 @@ object OkHttpFactory : ProvideOkHttpClients {
 			?: trustManager
 	}
 
-	private fun getHostnameVerifier(urlProvider: IUrlProvider): HostnameVerifier {
+	private fun getHostnameVerifier(urlProvider: ProvideUrls): HostnameVerifier {
 		val defaultHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier()
 		return urlProvider.certificateFingerprint
 			?.takeIf { it.isNotEmpty() }

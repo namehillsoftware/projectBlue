@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.AndItsConnectionIsStillAlive.AndTheConnectionIsLost
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionLostNotification
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
@@ -25,11 +25,11 @@ class `When watching the connection` {
 			messageBus,
 			FakeLibraryConnectionProvider(
 				mapOf(
-					Pair(LibraryId(libraryId), FakeConnectionProvider())
+					Pair(LibraryId(libraryId), FakeJRiverConnectionProvider())
 				)
 			),
 			mockk {
-				every { pollConnection(LibraryId(libraryId)) } returns FakeConnectionProvider().toPromise()
+				every { pollConnection(LibraryId(libraryId)) } returns FakeJRiverConnectionProvider().toPromise()
 			}
 		))
 	}

@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
@@ -28,7 +28,7 @@ class `when ensuring a different connection is working` {
 			ConnectionStatusViewModel(
 				FakeStringResources(),
 				mockk {
-					every { promiseLibraryConnection(LibraryId(originalLibraryId)) } returns ProgressingPromise(FakeConnectionProvider())
+					every { promiseLibraryConnection(LibraryId(originalLibraryId)) } returns ProgressingPromise(FakeJRiverConnectionProvider())
 					every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
 				}
 			)

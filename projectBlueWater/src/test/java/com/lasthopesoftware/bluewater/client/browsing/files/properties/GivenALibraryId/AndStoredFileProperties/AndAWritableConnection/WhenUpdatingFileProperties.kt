@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.GivenALibraryId.AndStoredFileProperties.AndAWritableConnection
 
+import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainerRepository
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.OpenFilePropertiesContainer
@@ -7,14 +8,15 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.repositor
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
+import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
+import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -28,9 +30,10 @@ private const val revision = 416
 
 class WhenUpdatingFileProperties {
 	private val deferredRevisionPromise = DeferredPromise(revision)
+	private val properties = mutableMapOf<String, String>()
 
 	private val services by lazy {
-        val fakeFileConnectionProvider = FakeConnectionProvider()
+        val fakeFileConnectionProvider = FakeJRiverConnectionProvider()
         val fakeLibraryConnectionProvider =
             FakeLibraryConnectionProvider(mapOf(Pair(LibraryId(libraryId), fakeFileConnectionProvider)))
 		var isFilePropertiesContainerUpdated = false
@@ -54,7 +57,21 @@ class WhenUpdatingFileProperties {
 		}
 
         val filePropertiesStorage = FilePropertyStorage(
-			fakeLibraryConnectionProvider,
+			mockk {
+				every { promiseLibraryAccess(LibraryId(libraryId)) } returns Promise(
+					mockk<RemoteLibraryAccess> {
+						every { promiseFilePropertyUpdate(ServiceFile(serviceFileId), any(), any(), false) } answers {
+							properties[secondArg()] = thirdArg()
+							Unit.toPromise()
+						}
+					}
+				)
+			},
+			mockk {
+				every { promiseUrlKey(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
+					UrlKeyHolder(URL("http://test:80/MCWS/v1/"), ServiceFile(serviceFileId))
+				)
+			},
 			mockk {
 				every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
 			},
@@ -99,28 +116,18 @@ class WhenUpdatingFileProperties {
 			services
 				.first
 				.second
-				.getFilePropertiesContainer(UrlKeyHolder(URL("http://test:80/MCWS/v1/"), ServiceFile(
+				.getFilePropertiesContainer(
+					UrlKeyHolder(URL("http://test:80/MCWS/v1/"), ServiceFile(
                     serviceFileId
-                )))
+                ))
+				)
 				?.properties!!["package"])
 			.isEqualTo("model")
     }
 
 	@Test
 	fun `then the properties are updated remotely`() {
-		assertThat(
-			services
-				.first
-				.first
-				.recordedRequests
-				.single())
-			.containsExactly(
-				"File/SetInfo",
-				"File=$serviceFileId",
-				"Field=package",
-				"Value=model",
-				"formatted=0"
-			)
+		assertThat(properties.map { e -> Pair(e.key, e.value) }).containsExactly(Pair("package", "model"))
 	}
 
 	@Test

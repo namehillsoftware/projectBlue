@@ -3,16 +3,20 @@ package com.lasthopesoftware.resources.io
 import com.lasthopesoftware.bluewater.shared.StandardResponse
 import com.lasthopesoftware.bluewater.shared.StandardResponse.Companion.toStandardResponse
 import com.lasthopesoftware.promises.extensions.preparePromise
+import com.lasthopesoftware.resources.emptyByteArray
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateCancellableResponse
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import okhttp3.Response
 import okio.use
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.parser.Parser
+import java.io.ByteArrayInputStream
+import java.io.InputStream
 import kotlin.coroutines.cancellation.CancellationException
 
 private fun xmlParsingCancelledException() = CancellationException("XML parsing was cancelled.")
@@ -20,6 +24,7 @@ private fun xmlParsingCancelledException() = CancellationException("XML parsing 
 fun Promise<Response>.promiseStringBody(): Promise<String> = then(StringBodyResponse)
 fun Promise<String>.promiseXmlDocument(): Promise<Document> = eventually(ParsedXmlDocumentResponse)
 fun Promise<Response>.promiseStandardResponse(): Promise<StandardResponse> = ParsedStandardResponse(this)
+fun Promise<Response>.promiseStreamedResponse(): Promise<InputStream> = then(StreamedResponse())
 
 object StringBodyResponse : ImmediateCancellableResponse<Response, String> {
 	override fun respond(response: Response, cancellationSignal: CancellationSignal): String = response.use {
@@ -56,4 +61,37 @@ object ParsedStandardDocumentResponse : PromisedResponse<Document, StandardRespo
 
 		document.toStandardResponse()
 	}
+}
+
+private class StreamedResponse : ImmediateResponse<Response?, InputStream>, InputStream() {
+	companion object {
+		private val emptyByteArrayInputStream by lazy { ByteArrayInputStream(emptyByteArray) }
+	}
+
+	private var savedResponse: Response? = null
+	private lateinit var byteStream: InputStream
+
+	override fun respond(response: Response?): InputStream {
+		savedResponse = response
+
+		byteStream = response
+			?.takeIf { it.code != 404 }
+			?.run { body.byteStream() }
+			?: emptyByteArrayInputStream
+
+		return this
+	}
+
+	override fun read(): Int = byteStream.read()
+
+	override fun read(b: ByteArray, off: Int, len: Int): Int = byteStream.read(b, off, len)
+
+	override fun available(): Int = byteStream.available()
+
+	override fun close() {
+		byteStream.close()
+		savedResponse?.close()
+	}
+
+	override fun toString(): String = byteStream.toString()
 }

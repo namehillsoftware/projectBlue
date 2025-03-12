@@ -21,8 +21,7 @@ class WhenScanningForUrls {
 
 		val urlScanner = UrlScanner(
 			mockk(),
-			mockk(),
-			mockk(),
+            mockk(),
 			connectionSettingsLookup,
 			mockk()
 		)

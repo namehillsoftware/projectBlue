@@ -41,14 +41,11 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.factory.LibraryPlaystatsUpdateSelector
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.BestMatchUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.RemoteFileUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
-import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
@@ -523,17 +520,11 @@ import java.util.concurrent.TimeoutException
 			UpdatePlayStatsOnPlaybackCompletedReceiver(
 				libraryConnectionDependencies.run {
 					LibraryPlaystatsUpdateSelector(
-						LibraryServerVersionProvider(libraryConnectionProvider),
-						PlayedFilePlayStatsUpdater(libraryConnectionProvider),
+						LibraryServerVersionProvider(libraryAccess),
+						PlayedFilePlayStatsUpdater(libraryAccess),
 						FilePropertiesPlayStatsUpdater(
 							freshLibraryFileProperties,
-							FilePropertyStorage(
-								libraryConnectionProvider,
-								ConnectionAuthenticationChecker(libraryConnectionProvider),
-								revisionProvider,
-								FilePropertyCache,
-								applicationMessageBus
-							),
+							filePropertiesStorage,
 						),
 					)
 				},
