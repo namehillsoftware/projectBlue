@@ -10,16 +10,10 @@ import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSetti
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.PassThroughHttpResponse
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.spyk
-import okhttp3.Callback
-import okhttp3.Protocol
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.internal.http.RealResponseBody
-import okio.Buffer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -47,38 +41,19 @@ class WhenScanningForUrls {
 			connectionSettingsLookup,
 			mockk {
 				every {
-					getOkHttpClient(match { a -> "https://1.2.3.4:452/MCWS/v1/" == a.baseUrl.toString() })
+					getServerClient(match { a -> "https://1.2.3.4:452/MCWS/v1/" == a.baseUrl.toString() })
 				} answers {
 					val urlProvider = firstArg<ServerConnection>()
-					spyk {
-						every { newCall(match { r -> r.url.toUrl() == URL(urlProvider.baseUrl, "Alive") }) } answers {
-							val request = firstArg<Request>()
-							mockk(relaxed = true, relaxUnitFun = true) {
-								val call = this
-								every { enqueue(any()) } answers {
-									val callback = firstArg<Callback>()
-									val buffer = Buffer()
-									buffer.write(
-										"""<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
-										<Response Status="OK"></Response>
-										""".toByteArray()
-									)
-									callback.onResponse(
-										call,
-										Response
-											.Builder()
-											.request(request)
-											.protocol(Protocol.HTTP_1_1)
-											.message("Ok")
-											.code(200)
-											.body(
-												RealResponseBody(null, buffer.size, buffer)
-											)
-											.build()
-									)
-								}
-							}
-						}
+					mockk {
+						every { promiseResponse(URL(urlProvider.baseUrl, "Alive")) } returns Promise(
+							PassThroughHttpResponse(
+								200,
+								"Ok",
+								"""<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+									<Response Status="OK"></Response>
+										""".toByteArray().inputStream()
+							)
+						)
 					}
 				}
 			}

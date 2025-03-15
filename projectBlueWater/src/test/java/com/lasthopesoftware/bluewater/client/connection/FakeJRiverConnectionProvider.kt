@@ -3,15 +3,11 @@ package com.lasthopesoftware.bluewater.client.connection
 import com.lasthopesoftware.bluewater.client.access.JRiverLibraryAccess
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.connection.url.JRiverUrlBuilder
+import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.PassThroughHttpResponse
 import com.namehillsoftware.handoff.promises.Promise
-import okhttp3.Protocol
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.internal.http.RealResponseBody
-import okio.Buffer
 import java.io.IOException
 import java.net.URL
 
@@ -68,7 +64,7 @@ open class FakeJRiverConnectionProvider : ProvideConnections {
 		mappedResponses[paramsSet] = response
 	}
 
-	override fun promiseResponse(path: String, vararg params: String): Promise<Response> {
+	override fun promiseResponse(path: String, vararg params: String): Promise<HttpResponse> {
 		val requestParams = arrayOf(path, *params)
 		requests.add(requestParams)
 
@@ -81,36 +77,30 @@ open class FakeJRiverConnectionProvider : ProvideConnections {
 		}
 	}
 
-	private fun getResponse(vararg params: String): Response {
-		val builder = Request.Builder()
-		builder.url(JRiverUrlBuilder.getUrl(serverConnection.baseUrl, params.first(), *params.drop(1).toTypedArray()))
-		val buffer = Buffer()
-		val responseBuilder = Response.Builder()
-		responseBuilder
-			.request(builder.build())
-			.protocol(Protocol.HTTP_1_1)
-			.message("Not Found")
-			.body(RealResponseBody(null, 0, buffer.write("Not found".toByteArray())))
-			.code(404)
+	private fun getResponse(vararg params: String): HttpResponse {
 		var mappedResponse = mappedResponses[setOf(*params)]
 		if (mappedResponse == null) {
 			val optionalResponse = mappedResponses.keys
 				.find { set -> set.all { sp -> params.any { p -> p.matches(Regex(sp)) } } }
 			if (optionalResponse != null) mappedResponse = mappedResponses[optionalResponse]
 		}
-		if (mappedResponse == null) return responseBuilder.build()
+		if (mappedResponse == null) return PassThroughHttpResponse(
+			code = 404,
+			message = "Not Found",
+			"Not found".toByteArray().inputStream()
+		)
 		try {
-			buffer.clear()
 			val result = mappedResponse(params)
-			buffer.write(result.response)
-			responseBuilder.code(result.code)
-			responseBuilder.body(RealResponseBody(null, result.response.size.toLong(), buffer))
+			return PassThroughHttpResponse(
+				code = result.code,
+				message = "Ok",
+				body = result.response.inputStream()
+			)
 		} catch (io: IOException) {
 			throw io
 		} catch (error: Throwable) {
 			throw RuntimeException(error)
 		}
-		return responseBuilder.build()
 	}
 
 	override val serverConnection: ServerConnection

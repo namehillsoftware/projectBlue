@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.JRiverConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
-import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
+import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.promises.extensions.keepPromise
@@ -16,7 +16,7 @@ class UrlScanner(
 	private val base64: EncodeToBase64,
 	private val serverLookup: LookupServers,
 	private val connectionSettingsLookup: LookupConnectionSettings,
-	private val okHttpClients: ProvideOkHttpClients
+	private val httpClients: ProvideHttpPromiseClients
 ) : BuildUrlProviders {
 
 	override fun promiseBuiltUrlProvider(libraryId: LibraryId): Promise<ServerConnection?> =
@@ -42,7 +42,7 @@ class UrlScanner(
 					fun testUrls(): Promise<ServerConnection?> {
 						if (cp.isCancelled) return Promise.empty()
 						val serverConnection = serverConnections.poll() ?: return Promise.empty()
-						return JRiverConnectionProvider(serverConnection, okHttpClients)
+						return JRiverConnectionProvider(serverConnection, httpClients)
 							.promiseIsConnectionPossible()
 							.also(cp::doCancel)
 							.eventually { result -> if (result) Promise(serverConnection) else testUrls() }

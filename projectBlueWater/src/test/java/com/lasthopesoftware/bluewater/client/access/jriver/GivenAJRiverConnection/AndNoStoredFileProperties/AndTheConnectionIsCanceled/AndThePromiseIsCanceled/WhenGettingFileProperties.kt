@@ -3,11 +3,11 @@ package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnecti
 import com.lasthopesoftware.bluewater.client.access.JRiverLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.every
 import io.mockk.mockk
-import okhttp3.Response
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -18,7 +18,7 @@ import java.util.concurrent.ExecutionException
 private const val serviceFileId = 155
 
 class WhenGettingFileProperties {
-	private val deferredReject = DeferredPromise<Response>(IOException("Canceled"))
+	private val deferredReject = DeferredPromise<HttpResponse>(IOException("Canceled"))
 
 	private val filePropertiesProvider by lazy {
         val fakeFileConnectionProvider = mockk<ProvideConnections> {

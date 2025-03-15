@@ -4,10 +4,10 @@ import com.lasthopesoftware.bluewater.client.access.JRiverLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.emptyByteArray
 import com.namehillsoftware.handoff.promises.Promise
-import okhttp3.Response
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -17,7 +17,7 @@ class WhenSendingPlayedToServer {
 	private var isFilePlayedCalled = false
 	private val updater by lazy {
 		val connectionProvider = object : FakeJRiverConnectionProvider() {
-			override fun promiseResponse(path: String, vararg params: String): Promise<Response> {
+			override fun promiseResponse(path: String, vararg params: String): Promise<HttpResponse> {
 				isFilePlayedCalled = path == "File/Played" && params.contentEquals(arrayOf("File=15", "FileType=Key"))
 				return super.promiseResponse(path, *params)
 			}

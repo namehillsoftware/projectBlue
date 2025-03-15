@@ -5,28 +5,17 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.PassThroughHttpResponse
+import com.lasthopesoftware.resources.emptyByteArray
 import io.mockk.every
 import io.mockk.mockk
-import okhttp3.Protocol
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.ResponseBody.Companion.toResponseBody
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class `When Downloading the File` {
 	private val inputStream by lazy {
-		val builder = Request.Builder()
-		builder.url("http://stuff/")
-		val responseBuilder = Response.Builder()
-		responseBuilder
-			.request(builder.build())
-			.protocol(Protocol.HTTP_1_1)
-			.code(202)
-			.message("Not Found")
-			.body("".toResponseBody())
 		val fakeConnectionProvider = mockk<ProvideConnections> {
-			every { promiseResponse(any(), *anyVararg()) } returns responseBuilder.build().toPromise()
+			every { promiseResponse(any(), *anyVararg()) } returns PassThroughHttpResponse(202, "Not found", emptyByteArray.inputStream()).toPromise()
 		}
 
 		val downloader = JRiverLibraryAccess(fakeConnectionProvider)

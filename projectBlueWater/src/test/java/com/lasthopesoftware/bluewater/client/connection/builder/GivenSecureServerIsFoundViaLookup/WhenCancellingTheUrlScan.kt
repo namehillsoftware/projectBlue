@@ -13,14 +13,12 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.spyk
-import okhttp3.Callback
 import org.apache.commons.codec.binary.Hex
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.io.IOException
 import java.net.URL
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.cancellation.CancellationException
 
 class WhenCancellingTheUrlScan {
 
@@ -46,7 +44,7 @@ class WhenCancellingTheUrlScan {
 			connectionSettingsLookup,
 			mockk {
 				every {
-					getOkHttpClient(match { a ->
+					getServerClient(match { a ->
 						listOf(
 							"https://1.2.3.4:452/MCWS/v1/",
 							"http://1.2.3.4:143/MCWS/v1/"
@@ -54,21 +52,10 @@ class WhenCancellingTheUrlScan {
 					})
 				} answers {
 					val urlProvider = firstArg<ServerConnection>()
-					spyk {
-						every { newCall(match { r -> r.url.toUrl() == URL(urlProvider.baseUrl, "Alive") }) } answers {
-							mockk(relaxed = true, relaxUnitFun = true) {
-								val call = this
-								every { enqueue(any()) } answers {
-									val callback = firstArg<Callback>()
-									every { cancel() } answers {
-										callback.onFailure(
-											call,
-											IOException("Maybe later!")
-										)
-									}
-								}
-							}
-						}
+					mockk {
+						every { promiseResponse(URL(urlProvider.baseUrl, "Alive")) } returns Promise(
+							CancellationException("Maybe later!")
+						)
 					}
 				}
 			}

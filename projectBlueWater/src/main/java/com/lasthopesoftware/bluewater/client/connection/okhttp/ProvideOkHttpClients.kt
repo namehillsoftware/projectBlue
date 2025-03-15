@@ -5,6 +5,4 @@ import okhttp3.OkHttpClient
 
 interface ProvideOkHttpClients {
     fun getOkHttpClient(serverConnection: ServerConnection): OkHttpClient
-
-    fun getServerDiscoveryClient(): OkHttpClient
 }

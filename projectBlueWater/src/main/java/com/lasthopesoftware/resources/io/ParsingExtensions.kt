@@ -1,5 +1,7 @@
 package com.lasthopesoftware.resources.io
 
+import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
+import com.lasthopesoftware.bluewater.client.connection.requests.bodyString
 import com.lasthopesoftware.bluewater.shared.StandardResponse
 import com.lasthopesoftware.bluewater.shared.StandardResponse.Companion.toStandardResponse
 import com.lasthopesoftware.promises.extensions.preparePromise
@@ -21,15 +23,22 @@ import kotlin.coroutines.cancellation.CancellationException
 
 private fun xmlParsingCancelledException() = CancellationException("XML parsing was cancelled.")
 
-fun Promise<Response>.promiseStringBody(): Promise<String> = then(StringBodyResponse)
+fun Promise<HttpResponse>.promiseStringBody(): Promise<String> = then(HttpStringBodyResponse)
 fun Promise<String>.promiseXmlDocument(): Promise<Document> = eventually(ParsedXmlDocumentResponse)
-fun Promise<Response>.promiseStandardResponse(): Promise<StandardResponse> = ParsedStandardResponse(this)
-fun Promise<Response>.promiseStreamedResponse(): Promise<InputStream> = then(StreamedResponse())
+fun Promise<HttpResponse>.promiseStandardResponse(): Promise<StandardResponse> = HttpParsedStandardResponse(this)
+fun Promise<HttpResponse>.promiseStreamedResponse(): Promise<InputStream> = then(HttpStreamedResponse())
 
 object StringBodyResponse : ImmediateCancellableResponse<Response, String> {
 	override fun respond(response: Response, cancellationSignal: CancellationSignal): String = response.use {
 		if (cancellationSignal.isCancelled) throw CancellationException("Reading body into string cancelled.")
 		it.body.string()
+	}
+}
+
+object HttpStringBodyResponse : ImmediateCancellableResponse<HttpResponse, String> {
+	override fun respond(response: HttpResponse, cancellationSignal: CancellationSignal): String = response.use {
+		if (cancellationSignal.isCancelled) throw CancellationException("Reading body into string cancelled.")
+		it.bodyString
 	}
 }
 
@@ -41,7 +50,7 @@ object ParsedXmlDocumentResponse : PromisedResponse<String, Document> {
 	}
 }
 
-class ParsedStandardResponse(sourcePromise: Promise<Response>) : Promise.Proxy<StandardResponse>() {
+class HttpParsedStandardResponse(sourcePromise: Promise<HttpResponse>) : Promise.Proxy<StandardResponse>() {
 	init {
 		proxy(
 			sourcePromise
@@ -63,20 +72,20 @@ object ParsedStandardDocumentResponse : PromisedResponse<Document, StandardRespo
 	}
 }
 
-private class StreamedResponse : ImmediateResponse<Response?, InputStream>, InputStream() {
+private class HttpStreamedResponse : ImmediateResponse<HttpResponse?, InputStream>, InputStream() {
 	companion object {
 		private val emptyByteArrayInputStream by lazy { ByteArrayInputStream(emptyByteArray) }
 	}
 
-	private var savedResponse: Response? = null
+	private var savedResponse: HttpResponse? = null
 	private lateinit var byteStream: InputStream
 
-	override fun respond(response: Response?): InputStream {
+	override fun respond(response: HttpResponse?): InputStream {
 		savedResponse = response
 
 		byteStream = response
 			?.takeIf { it.code != 404 }
-			?.run { body.byteStream() }
+			?.run { body }
 			?: emptyByteArrayInputStream
 
 		return this

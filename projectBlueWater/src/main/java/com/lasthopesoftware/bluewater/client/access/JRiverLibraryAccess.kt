@@ -8,6 +8,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
+import com.lasthopesoftware.bluewater.client.connection.requests.bodyString
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
 import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.lazyLogger
@@ -28,7 +30,6 @@ import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
-import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import java.io.IOException
@@ -147,7 +148,7 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 				response?.use {
 					if (cp.isCancelled) throw CancellationException("Cancelled while retrieving image")
 					else when (response.code) {
-						200 -> response.body.use { it.bytes() }
+						200 -> response.body.use { it.readBytes() }
 						else -> emptyByteArray
 					}
 				} ?: emptyByteArray
@@ -168,7 +169,7 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 				response.use {
 					if (cp.isCancelled) throw CancellationException("Cancelled while retrieving image")
 					else when (response.code) {
-						200 -> response.body.use { it.bytes() }
+						200 -> response.body.use { it.readBytes() }
 						else -> emptyByteArray
 					}
 				}
@@ -249,7 +250,7 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 		private val serviceFile: ServiceFile
 	) :
 		Promise<Map<String, String>>(),
-		PromisedResponse<Response, Unit>,
+		PromisedResponse<HttpResponse, Unit>,
 		CancellableMessageWriter<Unit>,
 		ImmediateResponse<Throwable, Unit>
 	{
@@ -267,14 +268,14 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 			cancellationProxy.doCancel(filePropertiesResponse)
 		}
 
-		override fun promiseResponse(response: Response): Promise<Unit> {
-			responseString = response.body.use {
+		override fun promiseResponse(response: HttpResponse): Promise<Unit> {
+			responseString = response.use {
 				if (cancellationProxy.isCancelled) {
 					reject(FilePropertiesCancellationException(serviceFile))
 					return Unit.toPromise()
 				}
 
-				it.string()
+				it.bodyString
 			}
 
 			return ThreadPools.compute.preparePromise(this)

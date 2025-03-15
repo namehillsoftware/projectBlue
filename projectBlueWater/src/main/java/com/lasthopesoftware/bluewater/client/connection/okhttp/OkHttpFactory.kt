@@ -1,12 +1,27 @@
 package com.lasthopesoftware.bluewater.client.connection.okhttp
 
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.requests.HttpPromiseClient
+import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
+import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
 import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager
+import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.namehillsoftware.handoff.cancellation.CancellationResponse
+import com.namehillsoftware.handoff.promises.Promise
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.internal.closeQuietly
 import org.joda.time.Duration
+import java.io.IOException
+import java.io.InputStream
+import java.net.URL
 import java.security.KeyManagementException
 import java.security.KeyStore
 import java.security.KeyStoreException
@@ -20,8 +35,13 @@ import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 
-object OkHttpFactory : ProvideOkHttpClients {
+object OkHttpFactory : ProvideHttpPromiseClients, ProvideOkHttpClients {
 	private val buildConnectionTime = Duration.standardSeconds(10)
+
+	override fun getServerClient(serverConnection: ServerConnection): HttpPromiseClient =
+		OkHttpPromiseClient(getOkHttpClient(serverConnection))
+
+	override fun getClient(): HttpPromiseClient = OkHttpPromiseClient(getOkHttpClient())
 
 	override fun getOkHttpClient(serverConnection: ServerConnection): OkHttpClient =
 		commonClient
@@ -39,7 +59,7 @@ object OkHttpFactory : ProvideOkHttpClients {
 			.hostnameVerifier(getHostnameVerifier(serverConnection))
 			.build()
 
-	override fun getServerDiscoveryClient(): OkHttpClient =
+	private fun getOkHttpClient(): OkHttpClient =
 		commonClient
 			.newBuilder()
 			.connectTimeout(buildConnectionTime.millis, TimeUnit.MILLISECONDS)
@@ -112,5 +132,49 @@ object OkHttpFactory : ProvideOkHttpClients {
 				}
 			}
 			?: defaultHostnameVerifier
+	}
+
+	private class OkHttpResponse(private val response: Response) : HttpResponse {
+		override val code: Int
+			get() = response.code
+		override val message: String
+			get() = response.message
+		override val body: InputStream
+			get() = response.body.byteStream()
+
+		override fun close() = response.closeQuietly()
+	}
+
+	private class HttpResponsePromise(private val call: Call) : Promise<HttpResponse>(), Callback, CancellationResponse {
+
+		companion object {
+			private val logger by lazyLogger<HttpResponsePromise>()
+		}
+
+		init {
+			awaitCancellation(this)
+			call.enqueue(this)
+		}
+
+		override fun onFailure(call: Call, e: IOException) = reject(e)
+
+		override fun onResponse(call: Call, response: Response) {
+			if (DebugFlag.isDebugCompilation && !response.isSuccessful && logger.isDebugEnabled) {
+				logger.debug("Response returned error code {}.", response.code)
+			}
+
+			resolve(OkHttpResponse(response))
+		}
+
+		override fun cancellationRequested() = call.cancel()
+	}
+
+	private class OkHttpPromiseClient(private val okHttpClient: OkHttpClient) : HttpPromiseClient {
+		override fun promiseResponse(url: URL): Promise<HttpResponse> =
+			try {
+				HttpResponsePromise(okHttpClient.newCall(Request.Builder().url(url).build()))
+			} catch (e: Throwable) {
+				Promise(e)
+			}
 	}
 }
