@@ -3,13 +3,13 @@ package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
-import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl
+import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.url.ProvideUrls
 import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -22,6 +22,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.net.URL
 
 class WhenRetrievingTheLibraryServerConnectionIsCancelled {
 
@@ -37,8 +38,8 @@ class WhenRetrievingTheLibraryServerConnectionIsCancelled {
 			lookupConnection.lookupConnectionSettings(LibraryId(3))
 		} returns deferredConnectionSettings
 
-		val liveUrlProvider = mockk<ProvideLiveUrl>()
-		every { liveUrlProvider.promiseLiveUrl(LibraryId(3)) } returns Promise(mockk<ProvideUrls>())
+		val liveUrlProvider = mockk<ProvideLiveServerConnection>()
+		every { liveUrlProvider.promiseLiveServerConnection(LibraryId(3)) } returns Promise(ServerConnection(URL("http://test")))
 
 		val libraryConnectionProvider = LibraryConnectionProvider(
 			validateConnectionSettings,

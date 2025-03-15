@@ -1,11 +1,11 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.GivenSecureServerIsFoundViaLookup.AndTheUserHasProvidedACertificate
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import com.lasthopesoftware.bluewater.client.connection.builder.PassThroughBase64Encoder
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.url.ProvideUrls
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -57,7 +57,7 @@ class WhenScanningForUrls {
 						).contains(a.baseUrl.toString())
 					})
 				} answers {
-					val urlProvider = firstArg<ProvideUrls>()
+					val urlProvider = firstArg<ServerConnection>()
 					spyk {
 						every { newCall(match { r -> r.url.toUrl() == URL(urlProvider.baseUrl, "Alive") }) } answers {
 							val request = firstArg<Request>()
@@ -97,7 +97,7 @@ class WhenScanningForUrls {
 
 	@Test
 	fun `then the base url is correct`() {
-		assertThat(urlProvider?.baseUrl.toString()).isEqualTo("https://681.241.214.352:617/MCWS/v1/")
+		assertThat(urlProvider?.baseUrl.toString()).isEqualTo("https://681.241.214.352:617")
 	}
 
 	@Test

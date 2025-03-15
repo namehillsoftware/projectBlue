@@ -20,7 +20,7 @@ class ServerInfoXmlRequest(private val libraryProvider: ILibraryProvider, privat
 						.url("https://webplay.jriver.com/libraryserver/lookup?id=$accessCode")
 						.build()
 				}
-				?.let { request -> HttpPromisedResponse(clientFactory.getJriverCentralClient().newCall(request)).also(cp::doCancel) }
+				?.let { request -> HttpPromisedResponse(clientFactory.getServerDiscoveryClient().newCall(request)).also(cp::doCancel) }
 				?.promiseStringBody()
 				?.also(cp::doCancel)
 				?.promiseXmlDocument()

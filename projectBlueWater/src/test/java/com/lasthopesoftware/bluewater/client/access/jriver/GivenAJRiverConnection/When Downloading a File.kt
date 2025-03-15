@@ -25,7 +25,7 @@ class `When Downloading a File` {
 				200,
 				responseBytes
 			)
-		})
+		}, "File/GetFile")
 
 		val downloader = JRiverLibraryAccess(fakeConnectionProvider)
 		downloader.promiseFile(ServiceFile(4)).toExpiringFuture().get()

@@ -27,7 +27,6 @@ import com.lasthopesoftware.bluewater.android.intents.getIntent
 import com.lasthopesoftware.bluewater.android.intents.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFileUriQueryParamsProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.DiskFileCache
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.access.CachedFilesProvider
@@ -496,7 +495,7 @@ import java.util.concurrent.TimeoutException
 	}
 
 	private val bestMatchUriProvider by lazy {
-		val remoteFileUriProvider = RemoteFileUriProvider(libraryConnectionProvider, ServiceFileUriQueryParamsProvider)
+		val remoteFileUriProvider = RemoteFileUriProvider(libraryConnectionProvider)
 		val audioCache = DiskFileCache(this, audioDiskCacheDirectoryProvider, AudioCacheConfiguration, audioCacheStreamSupplier, audioCacheFilesProvider, diskFileAccessTimeUpdater)
 		val storedFileAccess = StoredFileAccess(this)
 		BestMatchUriProvider(

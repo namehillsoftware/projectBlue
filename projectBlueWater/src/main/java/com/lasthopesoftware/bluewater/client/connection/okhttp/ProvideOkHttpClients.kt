@@ -1,10 +1,10 @@
 package com.lasthopesoftware.bluewater.client.connection.okhttp
 
-import com.lasthopesoftware.bluewater.client.connection.url.ProvideUrls
+import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import okhttp3.OkHttpClient
 
 interface ProvideOkHttpClients {
-    fun getOkHttpClient(urlProvider: ProvideUrls): OkHttpClient
+    fun getOkHttpClient(serverConnection: ServerConnection): OkHttpClient
 
-    fun getJriverCentralClient(): OkHttpClient
+    fun getServerDiscoveryClient(): OkHttpClient
 }

@@ -17,7 +17,6 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.spyk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -82,13 +81,13 @@ class WhenProcessingTheQueue {
 	@BeforeAll
 	@SdkSuppress(minSdkVersion = Build.VERSION_CODES.N)
 	fun before() {
-		val fakeConnectionProvider = spyk<FakeJRiverConnectionProvider>()
+		val fakeConnectionProvider = FakeJRiverConnectionProvider()
 		fakeConnectionProvider.mapResponse({
 			FakeConnectionResponseTuple(
 				200,
 				ByteArray(0)
 			)
-		})
+		}, "")
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
 				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()

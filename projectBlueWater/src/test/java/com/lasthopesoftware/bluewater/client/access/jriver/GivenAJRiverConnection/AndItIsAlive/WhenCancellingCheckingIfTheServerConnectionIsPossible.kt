@@ -2,8 +2,7 @@ package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnecti
 
 import com.lasthopesoftware.bluewater.client.connection.JRiverConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
-import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider
-import com.lasthopesoftware.bluewater.client.connection.url.ProvideUrls
+import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.every
@@ -45,21 +44,20 @@ class WhenCancellingCheckingIfTheServerConnectionIsPossible {
 		}
 		val connectionProvider = mockk<ProvideConnections>()
 		every { connectionProvider.promiseResponse("Alive") } returns deferredResponse
-		every { connectionProvider.urlProvider } returns mockk {
-			every { baseUrl } returns URL("http://flaffy")
-		}
+		every { connectionProvider.serverConnection } returns ServerConnection(URL("http://flaffy"))
 
+		val serverConnection = ServerConnection("auth", "test", 80)
 		val promisedTest = JRiverConnectionProvider(
-			MediaServerUrlProvider("auth", "test", 80),
+			serverConnection,
 			mockk {
 				every {
 					getOkHttpClient(match { a ->
 						"http://test/MCWS/v1/" == a.baseUrl.toString()
 					})
 				} answers {
-					val urlProvider = firstArg<ProvideUrls>()
+					val sc = firstArg<ServerConnection>()
 					spyk {
-						every { newCall(match { r -> r.url.toUrl() == URL(urlProvider.baseUrl, "Alive") }) } answers {
+						every { newCall(match { r -> r.url.toUrl() == URL(sc.baseUrl, "Alive") }) } answers {
 							val request = firstArg<Request>()
 							mockk(relaxed = true, relaxUnitFun = true) {
 								val call = this

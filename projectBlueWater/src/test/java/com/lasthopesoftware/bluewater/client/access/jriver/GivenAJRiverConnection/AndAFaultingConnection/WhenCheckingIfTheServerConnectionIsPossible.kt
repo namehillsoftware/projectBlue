@@ -1,8 +1,7 @@
 package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnection.AndAFaultingConnection
 
 import com.lasthopesoftware.bluewater.client.connection.JRiverConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider
-import com.lasthopesoftware.bluewater.client.connection.url.ProvideUrls
+import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.every
 import io.mockk.mockk
@@ -16,15 +15,16 @@ import java.net.URL
 class WhenCheckingIfTheServerConnectionIsPossible {
 
 	private val result by lazy {
+		val serverConnection = ServerConnection("auth", "test", 80)
 		JRiverConnectionProvider(
-			MediaServerUrlProvider("auth", "test", 80),
+			serverConnection,
 			mockk {
 				every {
 					getOkHttpClient(match { a ->
 						"http://test:80/MCWS/v1/" == a.baseUrl.toString()
 					})
 				} answers {
-					val urlProvider = firstArg<ProvideUrls>()
+					val urlProvider = firstArg<ServerConnection>()
 					spyk {
 						every { newCall(match { r -> r.url.toUrl() == URL(urlProvider.baseUrl, "Alive") }) } answers {
 							mockk(relaxed = true, relaxUnitFun = true) {

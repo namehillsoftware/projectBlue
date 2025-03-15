@@ -3,7 +3,8 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
-import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl
+import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
@@ -12,7 +13,6 @@ import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnecti
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.url.ProvideUrls
 import com.lasthopesoftware.bluewater.client.connection.waking.NoopServerAlarm
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -24,12 +24,13 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.net.URL
 
 private const val libraryId = 405
 
 class WhenRetrievingTheLibraryServerConnectionTwice {
 
-	private val firstUrlProvider = mockk<ProvideUrls>()
+	private val serverConnection = ServerConnection(URL("http://test"))
 
 	private val mut by lazy {
 		val validateConnectionSettings = mockk<ValidateConnectionSettings>()
@@ -42,8 +43,8 @@ class WhenRetrievingTheLibraryServerConnectionTwice {
 			lookupConnection.lookupConnectionSettings(LibraryId(libraryId))
 		} returns deferredConnectionSettings
 
-		val liveUrlProvider = mockk<ProvideLiveUrl>()
-		every { liveUrlProvider.promiseLiveUrl(LibraryId(libraryId)) } returns firstUrlProvider.toPromise()
+		val liveUrlProvider = mockk<ProvideLiveServerConnection>()
+		every { liveUrlProvider.promiseLiveServerConnection(LibraryId(libraryId)) } returns serverConnection.toPromise()
 
 		val libraryConnectionProvider = LibraryConnectionProvider(
 			validateConnectionSettings,

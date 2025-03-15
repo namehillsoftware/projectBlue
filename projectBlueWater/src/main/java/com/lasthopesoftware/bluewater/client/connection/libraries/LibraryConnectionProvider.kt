@@ -4,11 +4,11 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.JRiverConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
-import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl
+import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.url.ProvideUrls
 import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.client.connection.waking.WakeLibraryServer
 import com.lasthopesoftware.promises.PromiseDelay
@@ -22,7 +22,7 @@ class LibraryConnectionProvider(
 	private val validateConnectionSettings: ValidateConnectionSettings,
 	private val lookupConnectionSettings: LookupConnectionSettings,
 	private val wakeAlarm: WakeLibraryServer,
-	private val liveUrlProvider: ProvideLiveUrl,
+	private val liveUrlProvider: ProvideLiveServerConnection,
 	private val okHttpFactory: OkHttpFactory,
 	private val alarmConfiguration: AlarmConfiguration,
 ) : ProvideLibraryConnections {
@@ -73,7 +73,7 @@ class LibraryConnectionProvider(
 					})
 			}
 
-			private fun wakeAndBuildConnection(): Promise<ProvideUrls?> {
+			private fun wakeAndBuildConnection(): Promise<ServerConnection?> {
 				if (cancellationProxy.isCancelled) return empty()
 
 				return buildConnection()
@@ -88,7 +88,7 @@ class LibraryConnectionProvider(
 					})
 			}
 
-			private fun attemptToWake(): Promise<ProvideUrls?> {
+			private fun attemptToWake(): Promise<ServerConnection?> {
 				if (cancellationProxy.isCancelled) return empty()
 
 				++wakeAttempts
@@ -107,12 +107,12 @@ class LibraryConnectionProvider(
 					}
 			}
 
-			private fun buildConnection(): Promise<ProvideUrls?> {
+			private fun buildConnection(): Promise<ServerConnection?> {
 				if (cancellationProxy.isCancelled) return empty()
 
 				reportProgress(BuildingConnectionStatus.BuildingConnection)
 
-				return liveUrlProvider.promiseLiveUrl(libraryId).also(cancellationProxy::doCancel)
+				return liveUrlProvider.promiseLiveServerConnection(libraryId).also(cancellationProxy::doCancel)
 			}
 		}
 }

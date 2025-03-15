@@ -7,7 +7,6 @@ import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupSer
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -21,18 +20,6 @@ import java.util.concurrent.TimeUnit
 
 class WhenCancellingDuringLookup {
 	private val cancellationException by lazy {
-		val connectionTester = mockk<TestConnections>()
-		every { connectionTester.promiseIsConnectionPossible(any()) } returns false.toPromise()
-		every {
-			connectionTester.promiseIsConnectionPossible(match { a ->
-				"http://1.2.3.4:143/MCWS/v1/" == a.urlProvider.baseUrl.toString()
-			})
-		} returns Promise { m ->
-			m.awaitCancellation {
-				m.sendRejection(CancellationException("I'm not supposed to be cancelled"))
-			}
-		}
-
 		val serverLookup = mockk<LookupServers>()
 		every { serverLookup.promiseServerInformation(LibraryId(55)) } returns Promise { m ->
 			m.awaitCancellation {

@@ -18,6 +18,9 @@ object FileListParameters : IFileListParameterProvider {
     override fun getFileListParameters(playlistId: PlaylistId): Array<String> =
 		arrayOf("Playlist/Files", "Playlist=" + playlistId.id)
 
+	override fun getFileListParameters(query: String) =
+		arrayOf("Files/Search", "Query=[Media Type]=[Audio] $query")
+
     enum class Options {
         None, Shuffled
     }

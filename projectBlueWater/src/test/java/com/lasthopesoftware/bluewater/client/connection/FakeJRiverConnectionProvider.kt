@@ -3,8 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection
 import com.lasthopesoftware.bluewater.client.access.JRiverLibraryAccess
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider
-import com.lasthopesoftware.bluewater.client.connection.url.ProvideUrls
+import com.lasthopesoftware.bluewater.client.connection.url.JRiverUrlBuilder
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -14,6 +13,7 @@ import okhttp3.Response
 import okhttp3.internal.http.RealResponseBody
 import okio.Buffer
 import java.io.IOException
+import java.net.URL
 
 open class FakeJRiverConnectionProvider : ProvideConnections {
 	private val requests = ArrayList<Array<out String>>()
@@ -63,16 +63,17 @@ open class FakeJRiverConnectionProvider : ProvideConnections {
 		)
 	}
 
-	fun mapResponse(response: (Array<out String>) -> FakeConnectionResponseTuple, vararg params: String) {
-		val paramsSet = setOf(*params)
+	fun mapResponse(response: (Array<out String>) -> FakeConnectionResponseTuple, path: String, vararg params: String) {
+		val paramsSet = setOf(path, *params)
 		mappedResponses[paramsSet] = response
 	}
 
-	override fun promiseResponse(vararg params: String): Promise<Response> {
-		requests.add(params)
+	override fun promiseResponse(path: String, vararg params: String): Promise<Response> {
+		val requestParams = arrayOf(path, *params)
+		requests.add(requestParams)
 
 		return try {
-			Promise(getResponse(*params))
+			Promise(getResponse(*requestParams))
 		} catch (e: IOException) {
 			Promise(e)
 		} catch (e: RuntimeException) {
@@ -82,7 +83,7 @@ open class FakeJRiverConnectionProvider : ProvideConnections {
 
 	private fun getResponse(vararg params: String): Response {
 		val builder = Request.Builder()
-		builder.url(urlProvider.getUrl(*params))
+		builder.url(JRiverUrlBuilder.getUrl(serverConnection.baseUrl, params.first(), *params.drop(1).toTypedArray()))
 		val buffer = Buffer()
 		val responseBuilder = Response.Builder()
 		responseBuilder
@@ -112,12 +113,16 @@ open class FakeJRiverConnectionProvider : ProvideConnections {
 		return responseBuilder.build()
 	}
 
-	override val urlProvider: ProvideUrls
-		get() = MediaServerUrlProvider("auth", "test", 80)
+	override val serverConnection: ServerConnection
+		get() = ServerConnection("auth", "test", 80)
 
-	override fun <T> getConnectionKey(key: T): UrlKeyHolder<T> = UrlKeyHolder(urlProvider.baseUrl, key)
+	override fun <T> getConnectionKey(key: T): UrlKeyHolder<T> = UrlKeyHolder(serverConnection.baseUrl, key)
 
 	override fun getDataAccess(): RemoteLibraryAccess = JRiverLibraryAccess(this)
+
+	override fun getFileUrl(serviceFile: ServiceFile): URL {
+		TODO("Not yet implemented")
+	}
 
 	override fun promiseIsConnectionPossible(): Promise<Boolean> = true.toPromise()
 }

@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAQuery.An
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.observables.toCloseable
@@ -26,7 +25,7 @@ class `When Clearing the Query` {
 			libraryFileProvider,
 		)
 
-		every { libraryFileProvider.promiseFiles(LibraryId(libraryId), FileListParameters.Options.None, "Files/Search", "Query=[Media Type]=[Audio] $query") } answers {
+		every { libraryFileProvider.promiseAudioFiles(LibraryId(libraryId), query) } answers {
 			isLoadingBeforeQueriesMade = vm.isLoading.value
 			LibraryId(libraryId).toPromise()
 

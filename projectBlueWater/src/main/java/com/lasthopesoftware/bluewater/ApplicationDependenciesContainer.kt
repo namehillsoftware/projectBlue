@@ -19,7 +19,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Cac
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.connection.PacketSender
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
-import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider
+import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveServerConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
@@ -135,7 +135,7 @@ object ApplicationDependenciesContainer {
 					ConnectionSettingsValidation,
 					connectionSettingsLookup,
 					ServerAlarm(serverLookup, activeNetwork, ServerWakeSignal(PacketSender())),
-					LiveUrlProvider(
+					LiveServerConnectionProvider(
 						activeNetwork,
 						UrlScanner(
 							Base64Encoder,

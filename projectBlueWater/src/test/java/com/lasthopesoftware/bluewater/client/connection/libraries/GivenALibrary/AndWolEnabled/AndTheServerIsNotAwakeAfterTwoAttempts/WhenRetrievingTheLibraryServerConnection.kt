@@ -39,7 +39,7 @@ class WhenRetrievingTheLibraryServerConnection {
 				Unit.toPromise()
 			},
 			mockk {
-				every { promiseLiveUrl(LibraryId(3)) } answers {
+				every { promiseLiveServerConnection(LibraryId(3)) } answers {
 					++connectionAttempts
 					null.toPromise()
 				}
@@ -80,7 +80,7 @@ class WhenRetrievingTheLibraryServerConnection {
 
 	@Test
 	fun `then the connection is correct`() {
-		assertThat(connectionProvider?.urlProvider).isNull()
+		assertThat(connectionProvider?.serverConnection).isNull()
 	}
 
 	@Test

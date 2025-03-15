@@ -26,7 +26,7 @@ class `When Downloading the File` {
 			.message("Not Found")
 			.body("".toResponseBody())
 		val fakeConnectionProvider = mockk<ProvideConnections> {
-			every { promiseResponse(*anyVararg()) } returns responseBuilder.build().toPromise()
+			every { promiseResponse(any(), *anyVararg()) } returns responseBuilder.build().toPromise()
 		}
 
 		val downloader = JRiverLibraryAccess(fakeConnectionProvider)

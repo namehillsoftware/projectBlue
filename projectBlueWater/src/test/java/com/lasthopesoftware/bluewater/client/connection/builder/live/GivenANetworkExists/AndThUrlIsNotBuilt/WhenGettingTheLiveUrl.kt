@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.builder.live.GivenANetw
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders
-import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider
+import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveServerConnectionProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -16,13 +16,13 @@ class WhenGettingTheLiveUrl {
 		val builder = mockk<BuildUrlProviders>()
 		every { builder.promiseBuiltUrlProvider(any()) } returns Promise.empty()
 
-		val liveUrlProvider = LiveUrlProvider(
+		val liveUrlProvider = LiveServerConnectionProvider(
 			mockk {
 				every { isNetworkActive } returns true
 			},
 			builder
 		)
-		liveUrlProvider.promiseLiveUrl(LibraryId(54)).toExpiringFuture().get()
+		liveUrlProvider.promiseLiveServerConnection(LibraryId(54)).toExpiringFuture().get()
 	}
 
 	@Test

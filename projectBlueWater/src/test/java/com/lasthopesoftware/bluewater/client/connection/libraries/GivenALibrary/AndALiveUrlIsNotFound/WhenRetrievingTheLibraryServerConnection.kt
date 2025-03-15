@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
-import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl
+import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
@@ -35,8 +35,8 @@ class WhenRetrievingTheLibraryServerConnection {
 			lookupConnection.lookupConnectionSettings(LibraryId(2))
 		} returns deferredConnectionSettings
 
-		val liveUrlProvider = mockk<ProvideLiveUrl>()
-		every { liveUrlProvider.promiseLiveUrl(LibraryId(2)) } returns Promise.empty()
+		val liveUrlProvider = mockk<ProvideLiveServerConnection>()
+		every { liveUrlProvider.promiseLiveServerConnection(LibraryId(2)) } returns Promise.empty()
 
 		val libraryConnectionProvider = LibraryConnectionProvider(
 			validateConnectionSettings,

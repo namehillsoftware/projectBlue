@@ -4,8 +4,6 @@ import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.SearchFileParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.remote.GetMediaItemsFromServiceFiles
@@ -61,11 +59,11 @@ class `When Getting Items` {
 				)
 			}
 
-			val provideFiles = mockk<ProvideLibraryFiles>()
-			val parameters = SearchFileParameterProvider.getFileListParameters("king")
-			every { provideFiles.promiseFiles(LibraryId(873), FileListParameters.Options.None, *parameters) } returns Promise(
-				serviceFileIds.map(::ServiceFile)
-			)
+			val provideFiles = mockk<ProvideLibraryFiles> {
+				every { promiseAudioFiles(LibraryId(873), "king") } returns Promise(
+					serviceFileIds.map(::ServiceFile)
+				)
+			}
 
 			val mediaItemsBrowser = MediaItemsBrowser(
                 selectedLibraryId,

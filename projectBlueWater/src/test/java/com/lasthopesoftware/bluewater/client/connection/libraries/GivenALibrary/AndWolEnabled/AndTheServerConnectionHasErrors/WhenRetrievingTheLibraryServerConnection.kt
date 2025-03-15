@@ -41,7 +41,7 @@ class WhenRetrievingTheLibraryServerConnection {
 				Unit.toPromise()
 			},
 			mockk {
-				every { promiseLiveUrl(LibraryId(3)) } answers {
+				every { promiseLiveServerConnection(LibraryId(3)) } answers {
 					++connectionAttempts
 					Promise(Exception("Let me SLEEP!"))
 				}

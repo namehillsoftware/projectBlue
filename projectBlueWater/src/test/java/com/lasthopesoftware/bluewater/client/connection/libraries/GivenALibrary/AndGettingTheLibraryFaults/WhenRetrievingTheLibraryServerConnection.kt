@@ -3,13 +3,13 @@ package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
-import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl
+import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.url.ProvideUrls
 import com.lasthopesoftware.bluewater.client.connection.waking.NoopServerAlarm
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -21,12 +21,13 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.IOException
+import java.net.URL
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 
 class WhenRetrievingTheLibraryServerConnection {
 
-	private val urlProvider = mockk<ProvideUrls>()
+	private val serverConnection = ServerConnection(URL("http://test"))
 	private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
 	private var connectionProvider: ProvideConnections? = null
 	private var exception: IOException? = null
@@ -43,8 +44,8 @@ class WhenRetrievingTheLibraryServerConnection {
 			lookupConnection.lookupConnectionSettings(LibraryId(2))
 		} returns deferredConnectionSettings
 
-		val liveUrlProvider = mockk<ProvideLiveUrl>()
-		every { liveUrlProvider.promiseLiveUrl(LibraryId(2)) } returns Promise(urlProvider)
+		val liveUrlProvider = mockk<ProvideLiveServerConnection>()
+		every { liveUrlProvider.promiseLiveServerConnection(LibraryId(2)) } returns Promise(serverConnection)
 
 		val libraryConnectionProvider = LibraryConnectionProvider(
 			validateConnectionSettings,

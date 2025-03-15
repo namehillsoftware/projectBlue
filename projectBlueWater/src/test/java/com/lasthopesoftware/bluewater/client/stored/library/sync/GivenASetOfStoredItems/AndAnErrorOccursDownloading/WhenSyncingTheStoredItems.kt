@@ -38,11 +38,7 @@ class WhenSyncingTheStoredItems {
 		val fileListParameters = FileListParameters
 		val mockFileProvider = mockk<ProvideLibraryFiles>()
 		every {
-			mockFileProvider.promiseFiles(
-				LibraryId(42),
-				FileListParameters.Options.None,
-				*fileListParameters.getFileListParameters(ItemId(14))
-			)
+			mockFileProvider.promiseFiles(LibraryId(42), ItemId(14))
 		} returns Promise(
 			listOf(
 				ServiceFile(1),

@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.stored.library.items
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.IFileListParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
@@ -59,15 +58,13 @@ class StoredItemServiceFileCollector(
 	}
 
 	private fun promiseServiceFiles(libraryId: LibraryId, item: ItemId, cancellationProxy: CancellationProxy): Promise<Collection<ServiceFile>> {
-		val parameters = fileListParameters.getFileListParameters(item)
-		val serviceFilesPromise = fileProvider.promiseFiles(libraryId, FileListParameters.Options.None, *parameters)
+		val serviceFilesPromise = fileProvider.promiseFiles(libraryId, item)
 		cancellationProxy.doCancel(serviceFilesPromise)
 		return serviceFilesPromise.then(forward(), ExceptionHandler(libraryId, item, storedItemAccess))
 	}
 
 	private fun promiseServiceFiles(libraryId: LibraryId, playlist: PlaylistId, cancellationProxy: CancellationProxy): Promise<Collection<ServiceFile>> {
-		val parameters = fileListParameters.getFileListParameters(playlist)
-		val serviceFilesPromise = fileProvider.promiseFiles(libraryId, FileListParameters.Options.None, *parameters)
+		val serviceFilesPromise = fileProvider.promiseFiles(libraryId, playlist)
 		cancellationProxy.doCancel(serviceFilesPromise)
 		return serviceFilesPromise.then(forward(), ExceptionHandler(libraryId, playlist, storedItemAccess))
 	}

@@ -10,7 +10,7 @@ class UrlKeyProvider(private val provideLibraryConnections: ProvideLibraryConnec
 		provideLibraryConnections
 			.promiseLibraryConnection(libraryId)
 			.cancelBackThen { connection, _ ->
-				connection?.urlProvider?.baseUrl?.let { UrlKeyHolder(it, key) }
+				connection?.serverConnection?.baseUrl?.let { UrlKeyHolder(it, key) }
 			}
 
 	override fun <Key> promiseGuaranteedUrlKey(libraryId: LibraryId, key: Key): Promise<UrlKeyHolder<Key>> =

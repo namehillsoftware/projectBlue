@@ -15,7 +15,7 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.util.*
+import java.util.Random
 import java.util.concurrent.TimeUnit
 
 class WhenCollectingTheAssociatedServiceFiles {
@@ -42,11 +42,11 @@ class WhenCollectingTheAssociatedServiceFiles {
 		)
 		val fileListParameters = FileListParameters
 		val fileProvider = mockk<ProvideLibraryFiles>().apply {
-			every { promiseFiles(any(), any()) } returns emptyList<ServiceFile>().toPromise()
-			every { promiseFiles(LibraryId(5), FileListParameters.Options.None, *fileListParameters.getFileListParameters(ItemId(1))) } returns firstItemExpectedFiles.toPromise()
-			every { promiseFiles(LibraryId(5), FileListParameters.Options.None, *fileListParameters.getFileListParameters(ItemId(2))) } returns secondItemExpectedFiles.toPromise()
-			every { promiseFiles(LibraryId(5), FileListParameters.Options.None, *fileListParameters.getFileListParameters(ItemId(3))) } returns thirdItemExpectedFiles.toPromise()
-			every { promiseFiles(LibraryId(5), FileListParameters.Options.None, *fileListParameters.getFileListParameters(PlaylistId(5))) } returns fourthItemExpectedFiles.toPromise()
+			every { promiseFiles(any(), any<ItemId>()) } returns emptyList<ServiceFile>().toPromise()
+			every { promiseFiles(LibraryId(5), ItemId(1)) } returns firstItemExpectedFiles.toPromise()
+			every { promiseFiles(LibraryId(5), ItemId(2)) } returns secondItemExpectedFiles.toPromise()
+			every { promiseFiles(LibraryId(5), ItemId(3)) } returns thirdItemExpectedFiles.toPromise()
+			every { promiseFiles(LibraryId(5), PlaylistId(5)) } returns fourthItemExpectedFiles.toPromise()
 		}
 
 		StoredItemServiceFileCollector(storedItemAccess, fileProvider, fileListParameters)

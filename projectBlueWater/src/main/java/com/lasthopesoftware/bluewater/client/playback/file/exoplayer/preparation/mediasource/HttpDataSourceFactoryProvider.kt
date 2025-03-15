@@ -23,7 +23,7 @@ class HttpDataSourceFactoryProvider(
 			.promiseLibraryConnection(libraryId)
 			.then { it ->
 				OkHttpDataSource.Factory(
-					okHttpClients.getOkHttpClient(it.urlProvider)
+					okHttpClients.getOkHttpClient(it.serverConnection)
 						.newBuilder()
 						.readTimeout(45, TimeUnit.SECONDS)
 						.retryOnConnectionFailure(false)

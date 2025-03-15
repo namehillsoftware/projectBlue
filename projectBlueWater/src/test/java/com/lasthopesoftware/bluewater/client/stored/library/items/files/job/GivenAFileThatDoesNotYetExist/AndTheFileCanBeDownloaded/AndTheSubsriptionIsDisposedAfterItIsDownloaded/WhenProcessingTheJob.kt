@@ -39,7 +39,7 @@ class WhenProcessingTheJob {
 				200,
 				ByteArray(0)
 			)
-		})
+		}, "")
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
 				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()

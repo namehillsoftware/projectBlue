@@ -4,8 +4,6 @@ import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.SearchFileParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
@@ -48,9 +46,8 @@ class SearchFilesViewModel(
 		mutableIsLoading.value = true
 		return loadedLibraryId
 			?.let { l ->
-				val parameters = SearchFileParameterProvider.getFileListParameters(lockedInQuery)
 				libraryFiles
-					.promiseFiles(l, FileListParameters.Options.None, *parameters)
+					.promiseAudioFiles(l, lockedInQuery)
 					.then { f -> mutableFiles.value = f }
 			}
 			.keepPromise(Unit)

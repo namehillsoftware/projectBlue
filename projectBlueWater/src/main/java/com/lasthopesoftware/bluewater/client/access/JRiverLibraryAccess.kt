@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.FileResponses
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
-import com.lasthopesoftware.bluewater.client.connection.JRiverConnectionProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
 import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
@@ -35,133 +35,17 @@ import java.io.IOException
 import java.io.InputStream
 import java.util.concurrent.CancellationException
 
-private val logger by lazyLogger<JRiverConnectionProvider>()
-private const val browseLibraryParameter = "Browse/Children"
-private const val imageFormat = "jpg"
-
-private class FilePropertiesPromise(
-	connectionProvider: ProvideConnections,
-	private val serviceFile: ServiceFile
-) :
-	Promise<Map<String, String>>(),
-	PromisedResponse<Response, Unit>,
-	CancellableMessageWriter<Unit>,
-	ImmediateResponse<Throwable, Unit>
-{
-	private val cancellationProxy = CancellationProxy()
-	private lateinit var responseString: String
-
-	init {
-		awaitCancellation(cancellationProxy)
-		val filePropertiesResponse = connectionProvider.promiseResponse("File/GetInfo", "File=" + serviceFile.key)
-		val promisedProperties = filePropertiesResponse.eventually(this)
-
-		// Handle cancellation errors directly in stack so that they don't become unhandled
-		promisedProperties.excuse(this)
-
-		cancellationProxy.doCancel(filePropertiesResponse)
-	}
-
-	override fun promiseResponse(response: Response): Promise<Unit> {
-		responseString = response.body.use {
-			if (cancellationProxy.isCancelled) {
-				reject(FilePropertiesCancellationException(serviceFile))
-				return Unit.toPromise()
-			}
-
-			it.string()
-		}
-
-		return ThreadPools.compute.preparePromise(this)
-	}
-
-	override fun prepareMessage(cancellationSignal: CancellationSignal) {
-		if (cancellationSignal.isCancelled) {
-			reject(FilePropertiesCancellationException(serviceFile))
-			return
-		}
-
-		resolve(
-			responseString
-				.let(Jsoup::parse)
-				.let { xml ->
-					xml
-						.getElementsByTag("item")
-						.firstOrNull()
-						?.children()
-						?.associateTo(HashMap()) { el ->
-							if (cancellationSignal.isCancelled) {
-								reject(FilePropertiesCancellationException(serviceFile))
-								return
-							}
-
-							Pair(el.attr("Name"), el.wholeOwnText())
-						}
-						?: emptyMap()
-				}
-		)
-	}
-
-	override fun respond(rejection: Throwable) {
-		if (cancellationProxy.isCancelled && rejection is IOException && rejection.isOkHttpCanceled()) {
-			reject(FilePropertiesCancellationException(serviceFile))
-		} else {
-			reject(rejection)
-		}
-	}
-
-	private class FilePropertiesCancellationException(serviceFile: ServiceFile)
-		: CancellationException("Getting file properties cancelled for $serviceFile.")
-}
-
-private class ItemFilePromise(
-	connectionProvider: ProvideConnections,
-	itemId: ItemId?,
-) : Promise.Proxy<List<Item>>(), PromisedResponse<Document, List<Item>> {
-	init {
-		proxy(
-			connectionProvider
-				.run {
-					itemId
-						?.run {
-							promiseResponse(
-								browseLibraryParameter,
-								"ID=$id",
-								"Version=2",
-								"ErrorOnMissing=1"
-							)
-						}
-						?: promiseResponse("Version=2", "ErrorOnMissing=1")
-				}
-				.also(::doCancel)
-				.promiseStringBody()
-				.also(::doCancel)
-				.promiseXmlDocument()
-				.also(::doCancel)
-				.eventually(this)
-		)
-	}
-
-	override fun promiseResponse(document: Document): Promise<List<Item>> = ThreadPools.compute.preparePromise { cs ->
-		val body = document.getElementsByTag("Response").firstOrNull()
-			?: throw IOException("Response tag not found")
-
-		val status = body.attr("Status")
-		if (status.equals("Failure", ignoreCase = true))
-			throw IOException("Server returned 'Failure'.")
-
-		body
-			.getElementsByTag("Item")
-			.map { el ->
-				if (cs.isCancelled) throw itemParsingCancelledException()
-				Item(el.wholeOwnText().toInt(), el.attr("Name"))
-			}
-	}
-
-	private fun itemParsingCancelledException() = CancellationException("Item parsing was cancelled.")
-}
-
 class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : RemoteLibraryAccess {
+
+	companion object {
+		private const val browseFilesPath = "Browse/Files"
+		private const val playlistFilesPath = "Playlist/Files"
+		private const val searchFilesPath = "Files/Search"
+		private const val browseLibraryParameter = "Browse/Children"
+		private const val imageFormat = "jpg"
+
+		private val logger by lazyLogger<JRiverLibraryAccess>()
+	}
 
 	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<Map<String, String>> =
 		FilePropertiesPromise(connectionProvider, serviceFile)
@@ -244,7 +128,8 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 
 	override fun promiseFile(serviceFile: ServiceFile): Promise<InputStream> =
 		Promise.Proxy { cp ->
-			connectionProvider.promiseResponse(*ServiceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile))
+			connectionProvider
+				.promiseResponse("File/GetFile", *ServiceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile))
 				.also(cp::doCancel)
 				.promiseStreamedResponse()
 		}
@@ -292,6 +177,7 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 	override fun promiseFileStringList(option: FileListParameters.Options, vararg params: String): Promise<String> =
 		Promise.Proxy { cp ->
 			connectionProvider.promiseResponse(
+				"",
 				*FileListParameters.Helpers.processParams(
 					option,
 					*params
@@ -308,6 +194,18 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 				.then(FileResponses)
 		}
 
+	override fun promiseFiles(): Promise<List<ServiceFile>> =
+		promiseFilesAtPath(FileListParameters.Options.None, browseFilesPath, "Version=2")
+
+	override fun promiseFiles(query: String): Promise<List<ServiceFile>> =
+		promiseFilesAtPath(FileListParameters.Options.None, searchFilesPath, "Query=$query")
+
+	override fun promiseFiles(itemId: ItemId): Promise<List<ServiceFile>> =
+		promiseFilesAtPath(FileListParameters.Options.None, browseFilesPath, "ID=${itemId.id}", "Version=2")
+
+	override fun promiseFiles(playlistId: PlaylistId): Promise<List<ServiceFile>> =
+		promiseFilesAtPath(FileListParameters.Options.None, playlistFilesPath, "Playlist=${playlistId.id}")
+
 	override fun promisePlaystatsUpdate(serviceFile: ServiceFile): Promise<*> =
 		connectionProvider
 			.promiseResponse("File/Played", "File=" + serviceFile.key, "FileType=Key")
@@ -319,7 +217,7 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 				}
 			}
 
-	override fun promiseRevision() = Promise.Proxy { cp ->
+	override fun promiseRevision(): Promise<Int?> = Promise.Proxy { cp ->
 		connectionProvider
 			.promiseResponse("Library/GetRevision")
 			.also(cp::doCancel)
@@ -327,8 +225,150 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 			.also(cp::doCancel)
 			.then { standardRequest ->
 				standardRequest.items["Sync"]
-					?.takeIf { revisionValue -> revisionValue.isNotEmpty() }!!
-					.toInt()
+					?.takeIf { revisionValue -> revisionValue.isNotEmpty() }
+					?.toInt()
 			}
+	}
+
+	private fun promiseFileStringList(option: FileListParameters.Options, path: String, vararg params: String): Promise<String> =
+		Promise.Proxy { cp ->
+			connectionProvider.promiseResponse(
+				path,
+				*FileListParameters.Helpers.processParams(
+					option,
+					*params
+				)
+			).also(cp::doCancel).promiseStringBody()
+		}
+
+	private fun promiseFilesAtPath(option: FileListParameters.Options, path: String, vararg params: String): Promise<List<ServiceFile>> =
+		Promise.Proxy { cp ->
+			promiseFileStringList(option=option, path=path, *params)
+				.also(cp::doCancel)
+				.eventually(FileResponses)
+				.also(cp::doCancel)
+				.then(FileResponses)
+		}
+
+	private class FilePropertiesPromise(
+		connectionProvider: ProvideConnections,
+		private val serviceFile: ServiceFile
+	) :
+		Promise<Map<String, String>>(),
+		PromisedResponse<Response, Unit>,
+		CancellableMessageWriter<Unit>,
+		ImmediateResponse<Throwable, Unit>
+	{
+		private val cancellationProxy = CancellationProxy()
+		private lateinit var responseString: String
+
+		init {
+			awaitCancellation(cancellationProxy)
+			val filePropertiesResponse = connectionProvider.promiseResponse("File/GetInfo", "File=" + serviceFile.key)
+			val promisedProperties = filePropertiesResponse.eventually(this)
+
+			// Handle cancellation errors directly in stack so that they don't become unhandled
+			promisedProperties.excuse(this)
+
+			cancellationProxy.doCancel(filePropertiesResponse)
+		}
+
+		override fun promiseResponse(response: Response): Promise<Unit> {
+			responseString = response.body.use {
+				if (cancellationProxy.isCancelled) {
+					reject(FilePropertiesCancellationException(serviceFile))
+					return Unit.toPromise()
+				}
+
+				it.string()
+			}
+
+			return ThreadPools.compute.preparePromise(this)
+		}
+
+		override fun prepareMessage(cancellationSignal: CancellationSignal) {
+			if (cancellationSignal.isCancelled) {
+				reject(FilePropertiesCancellationException(serviceFile))
+				return
+			}
+
+			resolve(
+				responseString
+					.let(Jsoup::parse)
+					.let { xml ->
+						xml
+							.getElementsByTag("item")
+							.firstOrNull()
+							?.children()
+							?.associateTo(HashMap()) { el ->
+								if (cancellationSignal.isCancelled) {
+									reject(FilePropertiesCancellationException(serviceFile))
+									return
+								}
+
+								Pair(el.attr("Name"), el.wholeOwnText())
+							}
+							?: emptyMap()
+					}
+			)
+		}
+
+		override fun respond(rejection: Throwable) {
+			if (cancellationProxy.isCancelled && rejection is IOException && rejection.isOkHttpCanceled()) {
+				reject(FilePropertiesCancellationException(serviceFile))
+			} else {
+				reject(rejection)
+			}
+		}
+
+		private class FilePropertiesCancellationException(serviceFile: ServiceFile)
+			: CancellationException("Getting file properties cancelled for $serviceFile.")
+	}
+
+	private class ItemFilePromise(
+		connectionProvider: ProvideConnections,
+		itemId: ItemId?,
+	) : Promise.Proxy<List<Item>>(), PromisedResponse<Document, List<Item>> {
+		init {
+			proxy(
+				connectionProvider
+					.run {
+						itemId
+							?.run {
+								promiseResponse(
+									browseLibraryParameter,
+									"ID=$id",
+									"Version=2",
+									"ErrorOnMissing=1"
+								)
+							}
+							?: promiseResponse(browseLibraryParameter, "Version=2", "ErrorOnMissing=1")
+					}
+					.also(::doCancel)
+					.promiseStringBody()
+					.also(::doCancel)
+					.promiseXmlDocument()
+					.also(::doCancel)
+					.eventually(this)
+			)
+		}
+
+		override fun promiseResponse(document: Document): Promise<List<Item>> = ThreadPools.compute.preparePromise { cs ->
+			val body = document.getElementsByTag("Response").firstOrNull()
+				?: throw IOException("Response tag not found")
+
+			val status = body.attr("Status")
+			if (status.equals("Failure", ignoreCase = true))
+				throw IOException("Server returned 'Failure'.")
+
+			body
+				.getElementsByTag("Item")
+				.map { el ->
+					if (cs.isCancelled) throw itemParsingCancelledException()
+					Item(el.wholeOwnText().toInt(), el.attr("Name"))
+				}
+		}
+
+		private fun itemParsingCancelledException() = CancellationException("Item parsing was cancelled.")
 	}
 }

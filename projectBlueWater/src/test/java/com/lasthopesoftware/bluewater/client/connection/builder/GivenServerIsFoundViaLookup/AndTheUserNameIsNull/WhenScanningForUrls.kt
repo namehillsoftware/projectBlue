@@ -7,7 +7,6 @@ import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupSer
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -26,14 +25,6 @@ import org.junit.jupiter.api.Test
 class WhenScanningForUrls {
 
 	private val urlProvider by lazy {
-		val connectionTester = mockk<TestConnections>()
-		every { connectionTester.promiseIsConnectionPossible(any()) } returns false.toPromise()
-		every {
-			connectionTester.promiseIsConnectionPossible(match { a ->
-				"http://1.2.3.4:143/MCWS/v1/" == a.urlProvider.baseUrl.toString() && a.urlProvider.authCode == null
-			})
-		} returns true.toPromise()
-
 		val serverLookup = mockk<LookupServers>()
 		every { serverLookup.promiseServerInformation(LibraryId(62)) } returns Promise(
 			ServerInfo(
@@ -105,6 +96,6 @@ class WhenScanningForUrls {
 
 	@Test
 	fun `then the base url is correct`() {
-		assertThat(urlProvider?.baseUrl.toString()).isEqualTo("http://1.2.3.4:143/MCWS/v1/")
+		assertThat(urlProvider?.baseUrl.toString()).isEqualTo("http://1.2.3.4:143")
 	}
 }

@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.connection.okhttp
 
+import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager
-import com.lasthopesoftware.bluewater.client.connection.url.ProvideUrls
 import com.lasthopesoftware.resources.executors.ThreadPools
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
@@ -11,7 +11,6 @@ import java.security.KeyManagementException
 import java.security.KeyStore
 import java.security.KeyStoreException
 import java.security.NoSuchAlgorithmException
-import java.util.Arrays
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
@@ -24,23 +23,23 @@ import javax.net.ssl.X509TrustManager
 object OkHttpFactory : ProvideOkHttpClients {
 	private val buildConnectionTime = Duration.standardSeconds(10)
 
-    override fun getOkHttpClient(urlProvider: ProvideUrls): OkHttpClient =
-        commonClient
+	override fun getOkHttpClient(serverConnection: ServerConnection): OkHttpClient =
+		commonClient
 			.newBuilder()
-            .addNetworkInterceptor { chain ->
-                val requestBuilder = chain.request().newBuilder()
-                val authCode = urlProvider.authCode
-                if (!authCode.isNullOrEmpty()) requestBuilder.header(
-                    "Authorization",
-                    "basic ${urlProvider.authCode}"
-                )
-                chain.proceed(requestBuilder.build())
-            }
-            .sslSocketFactory(getSslSocketFactory(urlProvider), getTrustManager(urlProvider))
-            .hostnameVerifier(getHostnameVerifier(urlProvider))
-            .build()
+			.addNetworkInterceptor { chain ->
+				val requestBuilder = chain.request().newBuilder()
+				val authCode = serverConnection.authCode
+				if (!authCode.isNullOrEmpty()) requestBuilder.header(
+					"Authorization",
+					"basic $authCode"
+				)
+				chain.proceed(requestBuilder.build())
+			}
+			.sslSocketFactory(getSslSocketFactory(serverConnection), getTrustManager(serverConnection))
+			.hostnameVerifier(getHostnameVerifier(serverConnection))
+			.build()
 
-	override fun getJriverCentralClient(): OkHttpClient =
+	override fun getServerDiscoveryClient(): OkHttpClient =
 		commonClient
 			.newBuilder()
 			.connectTimeout(buildConnectionTime.millis, TimeUnit.MILLISECONDS)
@@ -62,7 +61,7 @@ object OkHttpFactory : ProvideOkHttpClients {
 			.build()
 	}
 
-	private fun getSslSocketFactory(urlProvider: ProvideUrls): SSLSocketFactory {
+	private fun getSslSocketFactory(serverConnection: ServerConnection): SSLSocketFactory {
 		val sslContext = try {
 			SSLContext.getInstance("TLS")
 		} catch (e: NoSuchAlgorithmException) {
@@ -70,7 +69,7 @@ object OkHttpFactory : ProvideOkHttpClients {
 		}
 
 		try {
-			sslContext.init(null, arrayOf<TrustManager>(getTrustManager(urlProvider)), null)
+			sslContext.init(null, arrayOf<TrustManager>(getTrustManager(serverConnection)), null)
 		} catch (e: KeyManagementException) {
 			throw RuntimeException(e)
 		}
@@ -78,7 +77,7 @@ object OkHttpFactory : ProvideOkHttpClients {
 		return sslContext.socketFactory
 	}
 
-	private fun getTrustManager(urlProvider: ProvideUrls): X509TrustManager {
+	private fun getTrustManager(serverConnection: ServerConnection): X509TrustManager {
 		val trustManagerFactory = try {
 			TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
 		} catch (e: NoSuchAlgorithmException) {
@@ -93,22 +92,22 @@ object OkHttpFactory : ProvideOkHttpClients {
 
 		val trustManagers = trustManagerFactory.trustManagers
 		check(!(trustManagers.size != 1 || trustManagers[0] !is X509TrustManager)) {
-			("Unexpected default trust managers:" + Arrays.toString(trustManagers))
+			("Unexpected default trust managers:" + trustManagers.contentToString())
 		}
 
 		val trustManager = trustManagers[0] as X509TrustManager
-		return urlProvider.certificateFingerprint
-			?.takeIf { it.isNotEmpty() }
+		return serverConnection.certificateFingerprint
+			.takeIf { it.isNotEmpty() }
 			?.let { fingerprint -> SelfSignedTrustManager(fingerprint, trustManager) }
 			?: trustManager
 	}
 
-	private fun getHostnameVerifier(urlProvider: ProvideUrls): HostnameVerifier {
+	private fun getHostnameVerifier(serverConnection: ServerConnection): HostnameVerifier {
 		val defaultHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier()
-		return urlProvider.certificateFingerprint
-			?.takeIf { it.isNotEmpty() }
+		return serverConnection.certificateFingerprint
+			.takeIf { it.isNotEmpty() }
 			?.let {
-				urlProvider.baseUrl.host?.let { host ->
+				serverConnection.baseUrl.host?.let { host ->
 					AdditionalHostnameVerifier(host, defaultHostnameVerifier)
 				}
 			}

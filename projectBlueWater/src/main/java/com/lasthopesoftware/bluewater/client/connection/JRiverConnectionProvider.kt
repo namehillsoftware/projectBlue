@@ -1,9 +1,11 @@
 package com.lasthopesoftware.bluewater.client.connection
 
+import android.os.Build
 import com.lasthopesoftware.bluewater.client.access.JRiverLibraryAccess
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
-import com.lasthopesoftware.bluewater.client.connection.url.ProvideUrls
+import com.lasthopesoftware.bluewater.client.connection.url.JRiverUrlBuilder
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.NonStandardResponseException
 import com.lasthopesoftware.bluewater.shared.StandardResponse.Companion.toStandardResponse
@@ -19,29 +21,44 @@ import org.jsoup.parser.Parser
 import java.io.IOException
 import java.net.URL
 
-class JRiverConnectionProvider(override val urlProvider: ProvideUrls, private val okHttpClients: ProvideOkHttpClients) : ProvideConnections {
+class JRiverConnectionProvider(serverConnection: ServerConnection, private val okHttpClients: ProvideOkHttpClients) : ProvideConnections {
 	companion object {
 		private val logger by lazyLogger<JRiverConnectionProvider>()
 	}
 
-	private val lazyOkHttpClient by lazy { okHttpClients.getOkHttpClient(urlProvider) }
+	private val lazyOkHttpClient by lazy { okHttpClients.getOkHttpClient(this.serverConnection) }
 	private val dataAccess by lazy { JRiverLibraryAccess(this) }
 
-	override fun promiseResponse(vararg params: String): Promise<Response> =
+	override val serverConnection by lazy {
+		serverConnection.copy(baseUrl = URL(serverConnection.baseUrl, "/MCWS/v1/"))
+	}
+
+	override fun promiseResponse(path: String, vararg params: String): Promise<Response> =
 		try {
-			HttpPromisedResponse(callServer(*params))
+			HttpPromisedResponse(callServer(path, *params))
 		} catch (e: Throwable) {
 			Promise(e)
 		}
 
-	override fun <T> getConnectionKey(key: T): UrlKeyHolder<T> = UrlKeyHolder(urlProvider.baseUrl, key)
+	override fun <T> getConnectionKey(key: T): UrlKeyHolder<T> = UrlKeyHolder(serverConnection.baseUrl, key)
 
 	override fun getDataAccess(): RemoteLibraryAccess = dataAccess
 
+	override fun getFileUrl(serviceFile: ServiceFile): URL =
+		JRiverUrlBuilder.getUrl(
+			serverConnection.baseUrl,
+			"File/GetFile",
+			"File=${serviceFile.key}",
+			"Quality=Medium",
+			"Conversion=Android",
+			"Playback=0",
+			"AndroidVersion=${Build.VERSION.RELEASE}"
+		)
+
 	override fun promiseIsConnectionPossible(): Promise<Boolean> = ConnectionPossiblePromise(this)
 
-	private fun callServer(vararg params: String): Call {
-		val url = URL(urlProvider.getUrl(*params))
+	private fun callServer(path: String, vararg params: String): Call {
+		val url = JRiverUrlBuilder.getUrl(serverConnection.baseUrl, path, *params)
 		val request = Request.Builder().url(url).build()
 		return lazyOkHttpClient.newCall(request)
 	}
@@ -57,7 +74,7 @@ class JRiverConnectionProvider(override val urlProvider: ProvideUrls, private va
 				.then(
 					{ it, cp -> resolve(testResponse(it, cp)) },
 					{ e, _ ->
-						logger.error("Error checking connection at URL {}.", connectionProvider.urlProvider.baseUrl, e)
+						logger.error("Error checking connection at URL {}.", connectionProvider.serverConnection.baseUrl, e)
 						resolve(false)
 					}
 				)

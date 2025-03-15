@@ -8,14 +8,14 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.util.*
+import java.util.Random
 import java.util.concurrent.TimeUnit
 
 class WhenCollectingTheAssociatedServiceFiles {
@@ -35,27 +35,15 @@ class WhenCollectingTheAssociatedServiceFiles {
         val fileListParameters = FileListParameters
         val fileProvider = mockk<ProvideLibraryFiles> {
 			every {
-				promiseFiles(
-					LibraryId(15),
-					FileListParameters.Options.None,
-					*fileListParameters.getFileListParameters(ItemId(1))
-				)
+				promiseFiles(LibraryId(15), ItemId(1))
 			} answers { Promise(firstItemExpectedFiles) }
 
 			every {
-				promiseFiles(
-					LibraryId(15),
-					FileListParameters.Options.None,
-					*fileListParameters.getFileListParameters(ItemId(2))
-				)
+				promiseFiles(LibraryId(15), ItemId(2))
 			} answers { Promise(secondItemExpectedFiles) }
 
 			every {
-				promiseFiles(
-					LibraryId(15),
-					FileListParameters.Options.None,
-					*fileListParameters.getFileListParameters(ItemId(3))
-				)
+				promiseFiles(LibraryId(15), ItemId(3))
 			} answers { Promise(thirdItemExpectedFiles) }
 		}
 
@@ -65,10 +53,7 @@ class WhenCollectingTheAssociatedServiceFiles {
             fileListParameters
         )
 
-        ExpiringFuturePromise(
-            serviceFileCollector
-                .promiseServiceFilesToSync(LibraryId(15))
-        )[1, TimeUnit.SECONDS]
+		serviceFileCollector .promiseServiceFilesToSync(LibraryId(15)).toExpiringFuture()[1, TimeUnit.SECONDS]
     }
 
     @Test

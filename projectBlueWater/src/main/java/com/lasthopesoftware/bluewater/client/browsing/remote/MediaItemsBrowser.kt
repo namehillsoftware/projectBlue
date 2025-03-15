@@ -5,11 +5,11 @@ import android.support.v4.media.MediaDescriptionCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.SearchFileParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
+import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -85,14 +85,13 @@ class MediaItemsBrowser(
 		}
 
 	override fun promiseItems(query: String): Promise<Collection<MediaBrowserCompat.MediaItem>> {
-		val parameters = SearchFileParameterProvider.getFileListParameters(query)
 		return selectedLibraryIdProvider.promiseSelectedLibraryId()
 			.eventually { maybeId ->
 				maybeId
 					?.let { libraryId ->
 						fileProvider
-							.promiseFiles(libraryId, FileListParameters.Options.None, *parameters)
-							.eventually { files ->
+							.promiseAudioFiles(libraryId, query)
+							.cancelBackEventually { files ->
 								Promise.whenAll(files.map { mediaItemServiceFileLookup.promiseMediaItem(libraryId, it) })
 							}
 					}
