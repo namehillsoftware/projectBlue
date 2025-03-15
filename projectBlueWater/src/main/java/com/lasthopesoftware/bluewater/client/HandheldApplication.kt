@@ -359,11 +359,9 @@ fun HandheldApplication(
 
 	val libraryConnectionDependencies = remember(routedNavigationDependencies) {
 		RateLimitedFilePropertiesDependencies(
-			routedNavigationDependencies,
 			RateLimitingExecutionPolicy(1),
 			RetryingLibraryConnectionRegistry(
-				routedNavigationDependencies,
-				LibraryConnectionRegistry(routedNavigationDependencies),
+                LibraryConnectionRegistry(routedNavigationDependencies),
 			),
 		)
 	}

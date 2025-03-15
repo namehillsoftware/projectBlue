@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.access
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
@@ -30,8 +29,8 @@ interface RemoteLibraryAccess {
 	fun promiseFiles(query: String): Promise<List<ServiceFile>>
 	fun promiseFiles(itemId: ItemId): Promise<List<ServiceFile>>
 	fun promiseFiles(playlistId: PlaylistId): Promise<List<ServiceFile>>
-	fun promiseFileStringList(option: FileListParameters.Options, vararg params: String): Promise<String>
-	fun promiseFiles(option: FileListParameters.Options, vararg params: String): Promise<List<ServiceFile>>
+	fun promiseFileStringList(itemId: ItemId? = null): Promise<String>
+	fun promiseShuffledFileStringList(itemId: ItemId? = null): Promise<String>
 	fun promiseImageBytes(serviceFile: ServiceFile): Promise<ByteArray>
 	fun promiseImageBytes(itemId: ItemId): Promise<ByteArray>
 }

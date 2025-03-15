@@ -44,8 +44,7 @@ class WhenCollectingTheAssociatedServiceFiles {
 
 		val serviceFileCollector = StoredItemServiceFileCollector(
 			storedItemAccess,
-			fileProvider,
-			fileListParameters
+			fileProvider
 		)
 
 		serviceFileCollector

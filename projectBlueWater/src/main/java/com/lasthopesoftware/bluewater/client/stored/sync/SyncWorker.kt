@@ -14,7 +14,6 @@ import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicati
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccessProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
@@ -110,9 +109,8 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 	private val serviceFilesCollector by lazy {
 		val serviceFilesCollector = StoredItemServiceFileCollector(
 			StoredItemAccess(context),
-			LibraryFileProvider(libraryAccess),
-			FileListParameters
-        )
+			LibraryFileProvider(libraryAccess)
+		)
 
 		DelegatingStoredItemServiceFileCollector(serviceFilesCollector, cachingPolicyFactory)
 	}

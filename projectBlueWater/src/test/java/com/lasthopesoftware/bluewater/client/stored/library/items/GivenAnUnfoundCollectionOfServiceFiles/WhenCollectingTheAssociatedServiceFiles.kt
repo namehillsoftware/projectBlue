@@ -55,8 +55,7 @@ class WhenCollectingTheAssociatedServiceFiles {
 
 		StoredItemServiceFileCollector(
 			storedItemAccess,
-			fileProvider,
-			fileListParameters
+			fileProvider
 		)
 	}
 

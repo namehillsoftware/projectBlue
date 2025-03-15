@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.stored.library.items
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.IFileListParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
@@ -21,8 +20,7 @@ import java.util.concurrent.CancellationException
 
 class StoredItemServiceFileCollector(
 	private val storedItemAccess: AccessStoredItems,
-	private val fileProvider: ProvideLibraryFiles,
-	private val fileListParameters: IFileListParameterProvider
+	private val fileProvider: ProvideLibraryFiles
 ) : CollectServiceFilesForSync {
 
 	companion object {

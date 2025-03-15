@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenACancella
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeDeferredStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
@@ -40,12 +40,7 @@ class WhenSyncingTheStoredItems {
 		}
 		val mockFileProvider = mockk<ProvideLibraryFiles>()
 		every {
-			mockFileProvider.promiseFiles(
-				LibraryId(13),
-				FileListParameters.Options.None,
-				"Playlist/Files",
-				"Playlist=14"
-			)
+			mockFileProvider.promiseFiles(LibraryId(13), PlaylistId(14))
 		} returns
 			Promise(
 				listOf(
@@ -63,10 +58,9 @@ class WhenSyncingTheStoredItems {
 			}
 		val librarySyncHandler = LibrarySyncsHandler(
 			StoredItemServiceFileCollector(
-				deferredStoredItemAccess,
-				mockFileProvider,
-				FileListParameters
-			),
+                deferredStoredItemAccess,
+                mockFileProvider
+            ),
 			pruneStoredFiles,
 			object : UpdateStoredFiles {
 				override fun markStoredFileAsDownloaded(storedFile: StoredFile): Promise<StoredFile> = storedFile.toPromise()

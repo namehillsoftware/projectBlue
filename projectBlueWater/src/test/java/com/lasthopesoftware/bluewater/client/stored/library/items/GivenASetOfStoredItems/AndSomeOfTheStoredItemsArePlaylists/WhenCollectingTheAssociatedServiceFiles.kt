@@ -49,7 +49,7 @@ class WhenCollectingTheAssociatedServiceFiles {
 			every { promiseFiles(LibraryId(5), PlaylistId(5)) } returns fourthItemExpectedFiles.toPromise()
 		}
 
-		StoredItemServiceFileCollector(storedItemAccess, fileProvider, fileListParameters)
+		StoredItemServiceFileCollector(storedItemAccess, fileProvider)
 			.promiseServiceFilesToSync(LibraryId(5))
 			.toExpiringFuture()[1, TimeUnit.SECONDS]
 	}

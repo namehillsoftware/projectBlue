@@ -54,8 +54,7 @@ class WhenSyncingTheStoredItems {
 		val librarySyncHandler = LibrarySyncsHandler(
 			StoredItemServiceFileCollector(
 				storedItemAccessMock,
-				mockFileProvider,
-				fileListParameters
+				mockFileProvider
 			),
 			storedFilesPruner,
 			mockk {

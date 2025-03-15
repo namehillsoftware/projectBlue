@@ -174,37 +174,31 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 				}
 			}
 
-	override fun promiseFileStringList(option: FileListParameters.Options, vararg params: String): Promise<String> =
-		Promise.Proxy { cp ->
-			connectionProvider.promiseResponse(
-				"",
-				*FileListParameters.Helpers.processParams(
-					option,
-					*params
-				)
-			).also(cp::doCancel).promiseStringBody()
-		}
+	override fun promiseFileStringList(itemId: ItemId?): Promise<String> =
+		itemId
+			?.run {
+				promiseFileStringList(FileListParameters.Options.None, browseFilesPath, "ID=$id", "Version=2")
+			}
+			?: promiseFileStringList(FileListParameters.Options.None, browseFilesPath, "Version=2")
 
-	override fun promiseFiles(option: FileListParameters.Options, vararg params: String): Promise<List<ServiceFile>> =
-		Promise.Proxy { cp ->
-			promiseFileStringList(option, *params)
-				.also(cp::doCancel)
-				.eventually(FileResponses)
-				.also(cp::doCancel)
-				.then(FileResponses)
-		}
+	override fun promiseShuffledFileStringList(itemId: ItemId?): Promise<String> =
+		itemId
+			?.run {
+				promiseFileStringList(FileListParameters.Options.Shuffled, browseFilesPath, "ID=$id", "Version=2")
+			}
+			?: promiseFileStringList(FileListParameters.Options.Shuffled, browseFilesPath, "Version=2")
 
 	override fun promiseFiles(): Promise<List<ServiceFile>> =
-		promiseFilesAtPath(FileListParameters.Options.None, browseFilesPath, "Version=2")
+		promiseFilesAtPath(browseFilesPath, "Version=2")
 
 	override fun promiseFiles(query: String): Promise<List<ServiceFile>> =
-		promiseFilesAtPath(FileListParameters.Options.None, searchFilesPath, "Query=$query")
+		promiseFilesAtPath(searchFilesPath, "Query=$query")
 
 	override fun promiseFiles(itemId: ItemId): Promise<List<ServiceFile>> =
-		promiseFilesAtPath(FileListParameters.Options.None, browseFilesPath, "ID=${itemId.id}", "Version=2")
+		promiseFilesAtPath(browseFilesPath, "ID=${itemId.id}", "Version=2")
 
 	override fun promiseFiles(playlistId: PlaylistId): Promise<List<ServiceFile>> =
-		promiseFilesAtPath(FileListParameters.Options.None, playlistFilesPath, "Playlist=${playlistId.id}")
+		promiseFilesAtPath(playlistFilesPath, "Playlist=${playlistId.id}")
 
 	override fun promisePlaystatsUpdate(serviceFile: ServiceFile): Promise<*> =
 		connectionProvider
@@ -241,9 +235,9 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 			).also(cp::doCancel).promiseStringBody()
 		}
 
-	private fun promiseFilesAtPath(option: FileListParameters.Options, path: String, vararg params: String): Promise<List<ServiceFile>> =
+	private fun promiseFilesAtPath(path: String, vararg params: String): Promise<List<ServiceFile>> =
 		Promise.Proxy { cp ->
-			promiseFileStringList(option=option, path=path, *params)
+			promiseFileStringList(option=FileListParameters.Options.None, path=path, *params)
 				.also(cp::doCancel)
 				.eventually(FileResponses)
 				.also(cp::doCancel)

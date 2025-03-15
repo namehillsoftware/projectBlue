@@ -48,10 +48,9 @@ class WhenCollectingTheAssociatedServiceFiles {
 		}
 
         val serviceFileCollector = StoredItemServiceFileCollector(
-            storedItemAccess,
-            fileProvider,
-            fileListParameters
-        )
+			storedItemAccess,
+			fileProvider
+		)
 
 		serviceFileCollector .promiseServiceFilesToSync(LibraryId(15)).toExpiringFuture()[1, TimeUnit.SECONDS]
     }

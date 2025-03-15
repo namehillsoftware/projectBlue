@@ -45,8 +45,7 @@ class WhenSyncingTheStoredItems {
 							ServiceFile(10)
 						)
 					)
-				},
-				fileListParameters
+				}
 			),
 			mockk {
 				every { pruneStoredFiles(any()) } returns Unit.toPromise()
