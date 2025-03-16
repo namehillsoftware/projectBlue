@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.AndItsConnectionIsStillAlive.AndTheConnectionIsLost
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionLostNotification
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
@@ -13,7 +13,6 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.spyk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -25,13 +24,11 @@ private const val libraryId = 924
 class `When getting a tested connection` {
 
 	private val mut by lazy {
-		val goodConnectionProvider = spyk<FakeJRiverConnectionProvider>() {
-			every { promiseIsConnectionPossible() } returns false.toPromise()
-		}
-
 		val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
 		every { libraryConnectionProvider.promiseLibraryConnection(LibraryId(libraryId)) } returnsMany listOf(
-			ProgressingPromise(goodConnectionProvider),
+			ProgressingPromise(mockk<ProvideConnections> {
+				every { promiseIsConnectionPossible() } returns false.toPromise()
+			}),
 			ProgressingPromise(IOException("cure")),
 		)
 
