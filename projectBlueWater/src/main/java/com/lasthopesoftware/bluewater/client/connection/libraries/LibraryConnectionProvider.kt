@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.libraries
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.JRiverConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveServerConnection
@@ -61,7 +61,7 @@ class LibraryConnectionProvider(
 					.then({
 						if (it != null) {
 							reportProgress(BuildingConnectionStatus.BuildingConnectionComplete)
-							resolve(JRiverConnectionProvider(it, okHttpFactory))
+							resolve(JRiverLibraryConnection(it, okHttpFactory))
 						} else {
 							reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
 							resolve(null)

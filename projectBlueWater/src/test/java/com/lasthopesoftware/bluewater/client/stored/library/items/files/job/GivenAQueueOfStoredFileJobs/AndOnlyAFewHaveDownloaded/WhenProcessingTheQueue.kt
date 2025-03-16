@@ -4,8 +4,6 @@ import android.os.Build
 import androidx.test.filters.SdkSuppress
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
-import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.MarkedFilesStoredFilesUpdater
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
@@ -81,13 +79,6 @@ class WhenProcessingTheQueue {
 	@BeforeAll
 	@SdkSuppress(minSdkVersion = Build.VERSION_CODES.N)
 	fun before() {
-		val fakeConnectionProvider = FakeJRiverConnectionProvider()
-		fakeConnectionProvider.mapResponse({
-			FakeConnectionResponseTuple(
-				200,
-				ByteArray(0)
-			)
-		}, "")
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
 				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()

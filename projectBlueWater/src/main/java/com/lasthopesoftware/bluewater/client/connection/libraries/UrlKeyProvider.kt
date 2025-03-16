@@ -9,10 +9,9 @@ class UrlKeyProvider(private val provideLibraryConnections: ProvideLibraryConnec
 	override fun <Key> promiseUrlKey(libraryId: LibraryId, key: Key): Promise<UrlKeyHolder<Key>?> =
 		provideLibraryConnections
 			.promiseLibraryConnection(libraryId)
-			.cancelBackThen { connection, _ ->
-				connection?.serverConnection?.baseUrl?.let { UrlKeyHolder(it, key) }
-			}
+			.cancelBackThen { connection, _ -> connection?.getConnectionKey(key) }
 
 	override fun <Key> promiseGuaranteedUrlKey(libraryId: LibraryId, key: Key): Promise<UrlKeyHolder<Key>> =
-		promiseUrlKey(libraryId, key).cancelBackThen { it, _ -> it ?: throw UrlKeyNotReturnedException(libraryId, key) }
+		promiseUrlKey(libraryId, key)
+			.cancelBackThen { it, _ -> it ?: throw UrlKeyNotReturnedException(libraryId, key) }
 }

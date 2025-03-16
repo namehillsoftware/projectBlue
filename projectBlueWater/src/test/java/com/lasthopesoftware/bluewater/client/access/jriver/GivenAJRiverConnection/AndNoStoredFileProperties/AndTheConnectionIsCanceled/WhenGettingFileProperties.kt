@@ -1,8 +1,12 @@
 package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnection.AndNoStoredFileProperties.AndTheConnectionIsCanceled
 
-import com.lasthopesoftware.bluewater.client.access.JRiverLibraryAccess
+import com.lasthopesoftware.TestMcwsUrl
+import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
+import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.url.JRiverUrlBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -17,11 +21,12 @@ private const val serviceFileId = 31
 
 class WhenGettingFileProperties {
 	private val filePropertiesProvider by lazy {
-		val fakeFileConnectionProvider = mockk<ProvideConnections> {
-			every { promiseResponse("File/GetInfo", "File=$serviceFileId") } returns Promise(IOException("Canceled"))
-		}
-
-        JRiverLibraryAccess(fakeFileConnectionProvider)
+        JRiverLibraryConnection(
+			ServerConnection(TestUrl),
+			FakeHttpConnectionProvider(mockk {
+				every { promiseResponse(JRiverUrlBuilder.getUrl(TestMcwsUrl, "File/GetInfo", "File=$serviceFileId")) } returns Promise(IOException("Canceled"))
+			})
+		)
     }
 
 	private var ioException: IOException? = null

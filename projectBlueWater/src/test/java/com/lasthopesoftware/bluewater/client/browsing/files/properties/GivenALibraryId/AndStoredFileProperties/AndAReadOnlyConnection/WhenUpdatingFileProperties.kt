@@ -5,8 +5,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFileP
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -23,10 +21,7 @@ private const val serviceFileId = 946
 
 class WhenUpdatingFileProperties {
 	private val services by lazy {
-        val fakeFileConnectionProvider = FakeJRiverConnectionProvider()
-        val fakeLibraryConnectionProvider =
-            FakeLibraryConnectionProvider(mapOf(Pair(LibraryId(libraryId), fakeFileConnectionProvider)))
-		val filePropertiesContainer = FakeFilePropertiesContainerRepository().apply {
+        val filePropertiesContainer = FakeFilePropertiesContainerRepository().apply {
 			putFilePropertiesContainer(
 				UrlKeyHolder(URL("http://test:80/MCWS/v1/"), ServiceFile(serviceFileId)),
 				FilePropertiesContainer(565, mapOf(Pair("politics", "postpone")))
@@ -48,15 +43,12 @@ class WhenUpdatingFileProperties {
 			recordingApplicationMessageBus,
 		)
 
-		Pair(
-			Triple(fakeFileConnectionProvider, filePropertiesContainer, recordingApplicationMessageBus),
-			filePropertiesStorage
-		)
+		Triple(filePropertiesContainer, recordingApplicationMessageBus, filePropertiesStorage)
     }
 
 	@BeforeAll
 	fun act() {
-		val (_, storage) = services
+		val (_, _, storage) = services
 		storage
 			.promiseFileUpdate(
 				LibraryId(libraryId),
@@ -74,7 +66,6 @@ class WhenUpdatingFileProperties {
         assertThat(
 			services
 				.first
-				.second
 				.getFilePropertiesContainer(UrlKeyHolder(URL("http://test:80/MCWS/v1/"), ServiceFile(serviceFileId)))
 				?.properties)
 			.containsExactlyEntriesOf(
@@ -85,21 +76,10 @@ class WhenUpdatingFileProperties {
     }
 
 	@Test
-	fun `then the properties are NOT updated remotely`() {
-		assertThat(
-			services
-				.first
-				.first
-				.recordedRequests)
-			.isEmpty()
-	}
-
-	@Test
 	fun `then a file property update message is NOT sent`() {
 		assertThat(
 			services
-				.first
-				.third
+				.second
 				.recordedMessages)
 			.isEmpty()
 	}

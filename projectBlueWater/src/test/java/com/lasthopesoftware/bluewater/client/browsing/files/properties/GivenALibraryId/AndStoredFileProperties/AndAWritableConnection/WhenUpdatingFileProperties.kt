@@ -8,8 +8,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.repositor
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
@@ -33,9 +31,6 @@ class WhenUpdatingFileProperties {
 	private val properties = mutableMapOf<String, String>()
 
 	private val services by lazy {
-        val fakeFileConnectionProvider = FakeJRiverConnectionProvider()
-        val fakeLibraryConnectionProvider =
-            FakeLibraryConnectionProvider(mapOf(Pair(LibraryId(libraryId), fakeFileConnectionProvider)))
 		var isFilePropertiesContainerUpdated = false
 		val filePropertiesContainer = FakeFilePropertiesContainerRepository().apply {
 			putFilePropertiesContainer(
@@ -82,16 +77,14 @@ class WhenUpdatingFileProperties {
 			recordingApplicationMessageBus
 		)
 
-		Pair(
-			Triple(fakeFileConnectionProvider, filePropertiesContainer, recordingApplicationMessageBus),
-			filePropertiesStorage)
+		Triple(filePropertiesContainer, recordingApplicationMessageBus, filePropertiesStorage)
     }
 
 	private var isFilePropertiesContainerUpdatedFirst = false
 
 	@BeforeAll
 	fun act() {
-		val (_, storage) = services
+		val (_, _, storage) = services
 		storage
 			.promiseFileUpdate(
 				LibraryId(libraryId),
@@ -115,7 +108,6 @@ class WhenUpdatingFileProperties {
         assertThat(
 			services
 				.first
-				.second
 				.getFilePropertiesContainer(
 					UrlKeyHolder(URL("http://test:80/MCWS/v1/"), ServiceFile(
                     serviceFileId
@@ -134,8 +126,7 @@ class WhenUpdatingFileProperties {
 	fun `then a file property update message is sent`() {
 		assertThat(
 			services
-				.first
-				.third
+				.second
 				.recordedMessages
 				.single())
 			.isEqualTo(

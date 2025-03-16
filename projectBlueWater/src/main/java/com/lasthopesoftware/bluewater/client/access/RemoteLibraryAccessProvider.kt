@@ -9,5 +9,5 @@ class RemoteLibraryAccessProvider(private val provideLibraryConnections: Provide
 	ProvideRemoteLibraryAccess
 {
 	override fun promiseLibraryAccess(libraryId: LibraryId): Promise<RemoteLibraryAccess?> =
-		provideLibraryConnections.promiseLibraryConnection(libraryId).cancelBackThen { c, _ -> c?.getDataAccess() }
+		provideLibraryConnections.promiseLibraryConnection(libraryId).cancelBackThen { c, _ -> c }
 }

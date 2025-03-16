@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnection.AndAFaultingConnection
 
-import com.lasthopesoftware.bluewater.client.connection.JRiverConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
@@ -15,7 +15,7 @@ class WhenCheckingIfTheServerConnectionIsPossible {
 
 	private val result by lazy {
 		val serverConnection = ServerConnection("auth", "test", 80)
-		JRiverConnectionProvider(
+		JRiverLibraryConnection(
 			serverConnection,
 			mockk {
 				every {

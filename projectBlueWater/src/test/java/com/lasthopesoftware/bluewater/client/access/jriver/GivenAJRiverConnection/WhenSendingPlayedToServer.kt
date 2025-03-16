@@ -1,13 +1,16 @@
 package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnection
 
-import com.lasthopesoftware.bluewater.client.access.JRiverLibraryAccess
+import com.lasthopesoftware.TestMcwsUrl
+import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
-import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
+import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
+import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
+import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.url.JRiverUrlBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.resources.PassThroughHttpResponse
 import com.lasthopesoftware.resources.emptyByteArray
-import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -16,20 +19,21 @@ class WhenSendingPlayedToServer {
 
 	private var isFilePlayedCalled = false
 	private val updater by lazy {
-		val connectionProvider = object : FakeJRiverConnectionProvider() {
-			override fun promiseResponse(path: String, vararg params: String): Promise<HttpResponse> {
-				isFilePlayedCalled = path == "File/Played" && params.contentEquals(arrayOf("File=15", "FileType=Key"))
-				return super.promiseResponse(path, *params)
-			}
-		}
-		connectionProvider.mapResponse(
-			{ FakeConnectionResponseTuple(200, emptyByteArray) },
-			"File/Played",
-			"File=15",
-			"FileType=Key"
+        JRiverLibraryConnection(
+			ServerConnection(TestUrl),
+			FakeHttpConnectionProvider(
+				FakeHttpConnection().apply {
+					mapResponse(JRiverUrlBuilder.getUrl(TestMcwsUrl, "File/Played", "File=15", "FileType=Key")) {
+						isFilePlayedCalled = true
+						PassThroughHttpResponse(
+							200,
+							"OK",
+							emptyByteArray.inputStream()
+						)
+					}
+				}
+			)
 		)
-
-        JRiverLibraryAccess(connectionProvider)
 	}
 
 	@BeforeAll

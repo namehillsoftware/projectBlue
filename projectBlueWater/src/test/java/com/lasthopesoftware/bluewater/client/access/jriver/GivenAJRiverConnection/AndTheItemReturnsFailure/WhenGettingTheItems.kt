@@ -1,10 +1,15 @@
 package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnection.AndTheItemReturnsFailure
 
-import com.lasthopesoftware.bluewater.client.access.JRiverLibraryAccess
+import com.lasthopesoftware.TestMcwsUrl
+import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
-import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
+import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
+import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.url.JRiverUrlBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.resources.PassThroughHttpResponse
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -18,22 +23,21 @@ class WhenGettingTheItems {
 	}
 
 	private val mut by lazy {
-		val fakeConnectionProvider = FakeJRiverConnectionProvider()
-		fakeConnectionProvider.mapResponse(
-			{
-                FakeConnectionResponseTuple(
-                    200,
-                    """<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
-<Response Status="Failure"/>""".encodeToByteArray()
-                )
-			},
-			"Browse/Children",
-			"ID=$itemId",
-			"Version=2",
-			"ErrorOnMissing=1"
-		)
+		val httpConnection = FakeHttpConnection().apply {
+			mapResponse(JRiverUrlBuilder.getUrl(TestMcwsUrl, "Browse/Children", "ID=$itemId", "Version=2", "ErrorOnMissing=1")) {
+				PassThroughHttpResponse(
+					200,
+					"OK",
+					"""<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<Response Status="Failure"/>""".encodeToByteArray().inputStream()
+				)
+			}
+		}
 
-        JRiverLibraryAccess(fakeConnectionProvider)
+		JRiverLibraryConnection(
+			ServerConnection(TestUrl),
+			FakeHttpConnectionProvider(httpConnection),
+		)
 	}
 
 	private var exception: IOException? = null

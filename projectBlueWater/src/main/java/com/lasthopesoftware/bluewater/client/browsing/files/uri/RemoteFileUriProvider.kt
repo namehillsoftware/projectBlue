@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.uri
 
 import android.net.Uri
+import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
@@ -14,7 +15,9 @@ class RemoteFileUriProvider(private val libraryConnections: ProvideLibraryConnec
 	}
 
     override fun promiseUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Uri?> {
-        logger.debug("Returning URL from server.")
+		if (BuildConfig.DEBUG) {
+			logger.debug("Returning URL from server.")
+		}
 
         return libraryConnections
 			.promiseLibraryConnection(libraryId)

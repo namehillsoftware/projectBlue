@@ -2,13 +2,11 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.LibraryConnectionChangedMessage
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
-import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.onEach
@@ -26,9 +24,6 @@ class WhenGettingATestedLibraryServerConnection {
 	private val libraryId = LibraryId(722)
 
 	private val mut by lazy {
-		val connectionsTester = mockk<TestConnections>()
-		every { connectionsTester.promiseIsConnectionPossible(any()) } returns true.toPromise()
-
 		val firstDeferredConnectionProvider =
 			DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
 		val secondDeferredConnectionProvider =
@@ -70,7 +65,7 @@ class WhenGettingATestedLibraryServerConnection {
 				BuildingConnectionStatus.BuildingConnectionComplete
 			)
 
-			sendResolution(FakeJRiverConnectionProvider())
+			sendResolution(liveConnection())
 		}
 
 		connectionProvider = futureConnectionProvider[30, TimeUnit.SECONDS]
@@ -88,7 +83,7 @@ class WhenGettingATestedLibraryServerConnection {
 				BuildingConnectionStatus.BuildingConnectionComplete
 			)
 
-			sendResolution(FakeJRiverConnectionProvider())
+			sendResolution(liveConnection())
 		}
 
 		secondConnectionProvider = secondFutureConnectionProvider.get()
@@ -114,5 +109,9 @@ class WhenGettingATestedLibraryServerConnection {
 		assertThat(recordingApplicationMessageBus.recordedMessages).containsExactly(
 			LibraryConnectionChangedMessage(libraryId)
 		)
+	}
+
+	private fun liveConnection() = mockk<ProvideConnections> {
+		every { promiseIsConnectionPossible() } returns true.toPromise()
 	}
 }

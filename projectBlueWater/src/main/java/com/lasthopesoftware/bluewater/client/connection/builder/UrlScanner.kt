@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.builder
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.JRiverConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
@@ -42,7 +42,7 @@ class UrlScanner(
 					fun testUrls(): Promise<ServerConnection?> {
 						if (cp.isCancelled) return Promise.empty()
 						val serverConnection = serverConnections.poll() ?: return Promise.empty()
-						return JRiverConnectionProvider(serverConnection, httpClients)
+						return JRiverLibraryConnection(serverConnection, httpClients)
 							.promiseIsConnectionPossible()
 							.also(cp::doCancel)
 							.eventually { result -> if (result) Promise(serverConnection) else testUrls() }

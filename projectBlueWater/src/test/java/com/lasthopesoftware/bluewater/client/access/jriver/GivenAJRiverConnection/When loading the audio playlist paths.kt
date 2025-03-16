@@ -1,21 +1,26 @@
 package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnection
 
-import com.lasthopesoftware.bluewater.client.access.JRiverLibraryAccess
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
-import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
+import com.lasthopesoftware.TestMcwsUrl
+import com.lasthopesoftware.TestUrl
+import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
+import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
+import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.url.JRiverUrlBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import org.assertj.core.api.Assertions
+import com.lasthopesoftware.resources.PassThroughHttpResponse
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 class `When loading the audio playlist paths` {
 	private val mut by lazy {
-		val fakeConnectionProvider = FakeJRiverConnectionProvider().apply {
-			mapResponse(
-				{
-                    FakeConnectionResponseTuple(
-                        200, (
-                                """<Response Status="OK">
+		val httpConnection = FakeHttpConnection().apply {
+			mapResponse(JRiverUrlBuilder.getUrl(TestMcwsUrl, "Playlists/List", "IncludeMediaTypes=1")) {
+				PassThroughHttpResponse(
+					200,
+					"OK",
+					"""<Response Status="OK">
 <Item>
 <Field Name="ID">400003735</Field>
 <Field Name="Name">Audible</Field>
@@ -55,15 +60,15 @@ class `When loading the audio playlist paths` {
 <Field Name="Type">Playlist</Field>
 <Field Name="MediaTypes">Audio</Field>
 </Item>
-</Response>""").toByteArray()
-                    )
-				},
-				"Playlists/List",
-				"IncludeMediaTypes=1"
-			)
+</Response>""".encodeToByteArray().inputStream()
+				)
+			}
 		}
 
-        JRiverLibraryAccess(fakeConnectionProvider)
+		JRiverLibraryConnection(
+			ServerConnection(TestUrl),
+			FakeHttpConnectionProvider(httpConnection),
+		)
 	}
 
 	private var audioPlaylist: List<String>? = null
@@ -75,7 +80,7 @@ class `When loading the audio playlist paths` {
 
 	@Test
 	fun `then the audio playlist is correct`() {
-		Assertions.assertThat(audioPlaylist).containsExactly(
+		assertThat(audioPlaylist).containsExactly(
 			"Workout",
 			"Nested\\4A"
 		)

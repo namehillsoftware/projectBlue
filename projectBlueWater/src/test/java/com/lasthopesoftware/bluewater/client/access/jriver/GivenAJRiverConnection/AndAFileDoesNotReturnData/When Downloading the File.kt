@@ -1,24 +1,39 @@
 package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnection.AndAFileDoesNotReturnData
 
-import com.lasthopesoftware.bluewater.client.access.JRiverLibraryAccess
+import android.os.Build
+import com.lasthopesoftware.TestMcwsUrl
+import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
+import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
+import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.url.JRiverUrlBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.PassThroughHttpResponse
 import com.lasthopesoftware.resources.emptyByteArray
-import io.mockk.every
-import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class `When Downloading the File` {
 	private val inputStream by lazy {
-		val fakeConnectionProvider = mockk<ProvideConnections> {
-			every { promiseResponse(any(), *anyVararg()) } returns PassThroughHttpResponse(202, "Not found", emptyByteArray.inputStream()).toPromise()
-		}
-
-		val downloader = JRiverLibraryAccess(fakeConnectionProvider)
+		val downloader = JRiverLibraryConnection(
+			ServerConnection(TestUrl),
+			FakeHttpConnectionProvider(FakeHttpConnection().apply {
+				mapResponse(
+					JRiverUrlBuilder.getUrl(
+						TestMcwsUrl,
+						"File/GetFile",
+						"File=4",
+						"Quality=Medium",
+						"Conversion=Android",
+						"Playback=0",
+						"AndroidVersion=${Build.VERSION.RELEASE}")
+				) {
+					PassThroughHttpResponse(202, "Not found", emptyByteArray.inputStream())
+				}
+			})
+		)
 		downloader.promiseFile(ServiceFile(4)).toExpiringFuture().get()
 	}
 

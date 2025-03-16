@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.GivenAHaltedPlaybackEngine
 
-import com.lasthopesoftware.EmptyUrl
+import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
@@ -50,7 +50,7 @@ class WhenSettingEngineToComplete {
 
 		val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()
 		every {
-			filePropertiesContainerRepository.getFilePropertiesContainer(UrlKeyHolder(EmptyUrl.url, ServiceFile(4)))
+			filePropertiesContainerRepository.getFilePropertiesContainer(UrlKeyHolder(TestUrl, ServiceFile(4)))
 		} returns FilePropertiesContainer(1, mapOf(Pair(KnownFileProperties.Duration, "100")))
 
 		val repository =

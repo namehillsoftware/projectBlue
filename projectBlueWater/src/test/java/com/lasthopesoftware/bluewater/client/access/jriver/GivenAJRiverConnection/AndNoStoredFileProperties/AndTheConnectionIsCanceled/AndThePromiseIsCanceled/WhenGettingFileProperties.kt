@@ -1,9 +1,13 @@
 package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnection.AndNoStoredFileProperties.AndTheConnectionIsCanceled.AndThePromiseIsCanceled
 
-import com.lasthopesoftware.bluewater.client.access.JRiverLibraryAccess
+import com.lasthopesoftware.TestMcwsUrl
+import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
+import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
+import com.lasthopesoftware.bluewater.client.connection.url.JRiverUrlBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.every
@@ -21,10 +25,14 @@ class WhenGettingFileProperties {
 	private val deferredReject = DeferredPromise<HttpResponse>(IOException("Canceled"))
 
 	private val filePropertiesProvider by lazy {
-        val fakeFileConnectionProvider = mockk<ProvideConnections> {
-			every { promiseResponse("File/GetInfo", "File=$serviceFileId") } returns deferredReject
-		}
-		JRiverLibraryAccess(fakeFileConnectionProvider)
+		JRiverLibraryConnection(
+			ServerConnection(TestUrl),
+			FakeHttpConnectionProvider(
+				mockk {
+					every { promiseResponse(JRiverUrlBuilder.getUrl(TestMcwsUrl, "File/GetInfo", "File=$serviceFileId")) } returns deferredReject
+				}
+			)
+		)
     }
 
 	private var cancellationException: CancellationException? = null

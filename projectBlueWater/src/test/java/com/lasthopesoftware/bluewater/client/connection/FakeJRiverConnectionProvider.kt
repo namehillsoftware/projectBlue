@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.connection
 
-import com.lasthopesoftware.bluewater.client.access.JRiverLibraryAccess
-import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
@@ -11,7 +9,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import java.io.IOException
 import java.net.URL
 
-open class FakeJRiverConnectionProvider : ProvideConnections {
+abstract class FakeJRiverConnectionProvider : ProvideConnections {
 	private val requests = ArrayList<Array<out String>>()
 
 	private val mappedResponses = HashMap<Set<String>, (Array<out String>) -> FakeConnectionResponseTuple>()
@@ -107,8 +105,6 @@ open class FakeJRiverConnectionProvider : ProvideConnections {
 		get() = ServerConnection("auth", "test", 80)
 
 	override fun <T> getConnectionKey(key: T): UrlKeyHolder<T> = UrlKeyHolder(serverConnection.baseUrl, key)
-
-	override fun getDataAccess(): RemoteLibraryAccess = JRiverLibraryAccess(this)
 
 	override fun getFileUrl(serviceFile: ServiceFile): URL {
 		TODO("Not yet implemented")

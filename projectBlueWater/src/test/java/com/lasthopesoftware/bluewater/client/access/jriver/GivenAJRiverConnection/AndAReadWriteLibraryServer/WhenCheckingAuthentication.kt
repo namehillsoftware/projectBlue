@@ -1,28 +1,39 @@
 package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnection.AndAReadWriteLibraryServer
 
-import com.lasthopesoftware.bluewater.client.access.JRiverLibraryAccess
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
-import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
+import com.lasthopesoftware.TestMcwsUrl
+import com.lasthopesoftware.TestUrl
+import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
+import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
+import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.url.JRiverUrlBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.resources.PassThroughHttpResponse
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class WhenCheckingAuthentication {
 
 	private val isReadOnly by lazy {
-		val fakeConnectionProvider = FakeJRiverConnectionProvider()
-		fakeConnectionProvider.mapResponse({
-			FakeConnectionResponseTuple(
-				200, (
-					"""<Response Status="OK">
+		val httpConnection = FakeHttpConnection().apply {
+			mapResponse(JRiverUrlBuilder.getUrl(TestMcwsUrl, "Authenticate")) {
+				PassThroughHttpResponse(
+					200,
+					"OK",
+					(
+						"""<Response Status="OK">
 <Item Name="Token">B9yXQtTL</Item>
 <Item Name="ReadOnly">0</Item>
 <Item Name="PreLicensed">0</Item>
-</Response>""").toByteArray()
-			)
-		}, "Authenticate")
+</Response>""").toByteArray().inputStream()
+				)
+			}
+		}
 
-		val access = JRiverLibraryAccess(fakeConnectionProvider)
+		val access = JRiverLibraryConnection(
+			ServerConnection(TestUrl),
+			FakeHttpConnectionProvider(httpConnection),
+		)
 		access.promiseIsReadOnly().toExpiringFuture().get()
 	}
 

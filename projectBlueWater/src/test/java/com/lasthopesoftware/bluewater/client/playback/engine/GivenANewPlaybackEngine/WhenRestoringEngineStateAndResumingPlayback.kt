@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.GivenANewPlaybackEngine
 
-import com.lasthopesoftware.EmptyUrl
+import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
@@ -53,7 +53,7 @@ class WhenRestoringEngineStateAndResumingPlayback {
 		every {
 			filePropertiesContainerRepository.getFilePropertiesContainer(
 				UrlKeyHolder(
-					EmptyUrl.url,
+					TestUrl,
 					ServiceFile(4)
 				)
 			)

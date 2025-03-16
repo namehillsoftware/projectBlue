@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnection.AndItIsAlive
 
-import com.lasthopesoftware.bluewater.client.connection.JRiverConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
@@ -33,7 +33,7 @@ class WhenCancellingCheckingIfTheServerConnectionIsPossible {
 		}
 
 		val serverConnection = ServerConnection("auth", "test", 80)
-		val promisedTest = JRiverConnectionProvider(
+		val promisedTest = JRiverLibraryConnection(
 			serverConnection,
 			mockk {
 				every {

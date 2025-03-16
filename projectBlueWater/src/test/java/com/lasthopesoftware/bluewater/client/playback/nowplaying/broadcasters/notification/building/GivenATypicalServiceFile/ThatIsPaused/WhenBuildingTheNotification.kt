@@ -5,13 +5,12 @@ import android.graphics.Bitmap
 import androidx.core.app.NotificationCompat
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
+import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
+import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -40,18 +39,16 @@ class WhenBuildingTheNotification : AndroidContext() {
 	}
 
 	override fun before() {
-		val connectionProvider = FakeJRiverConnectionProvider()
 		val libraryId = LibraryId(803)
-		val libraryConnectionProvider = FakeLibraryConnectionProvider(mapOf(
-			Pair(libraryId, connectionProvider)
-		))
 
 		val npBuilder = NowPlayingNotificationBuilder(
 			ApplicationProvider.getApplicationContext(),
 			mockk {
 				every { getMediaStyleNotification(libraryId) } returns spiedBuilder
 			},
-			UrlKeyProvider(libraryConnectionProvider),
+			mockk {
+				every { promiseUrlKey(libraryId, ServiceFile(3)) } returns UrlKeyHolder(TestUrl, ServiceFile(3)).toPromise()
+			},
 			mockk {
 				every { promiseFileProperties(libraryId, ServiceFile(3)) } returns mapOf(
 					Pair(KnownFileProperties.Artist, "test-artist"),

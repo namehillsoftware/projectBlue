@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.connection.polling.GivenALibraryId
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPoller
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -26,7 +25,7 @@ class `When polling the connection` {
                 val connectionResponses = MutableList(nullIterations) {
                     ProgressingPromise<BuildingConnectionStatus, ProvideConnections?>(Exception("whoops"))
                 }
-                connectionResponses.add(ProgressingPromise(FakeJRiverConnectionProvider()))
+                connectionResponses.add(ProgressingPromise(mockk<ProvideConnections>()))
                 every { promiseTestedLibraryConnection(LibraryId(libraryId)) } returnsMany connectionResponses
             }
         )

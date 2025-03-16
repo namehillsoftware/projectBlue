@@ -21,11 +21,11 @@ import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
 import com.namehillsoftware.handoff.promises.Promise
 
 class NowPlayingNotificationBuilder(
-    private val context: Context,
-    private val mediaStyleNotificationSetup: SetupMediaStyleNotifications,
-    private val urlKeyProvider: ProvideUrlKey,
-    private val cachedFilePropertiesProvider: ProvideLibraryFileProperties,
-    private val imageProvider: GetImageBytes,
+	private val context: Context,
+	private val mediaStyleNotificationSetup: SetupMediaStyleNotifications,
+	private val urlKeyProvider: ProvideUrlKey,
+	private val filePropertiesProvider: ProvideLibraryFileProperties,
+	private val imageProvider: GetImageBytes,
 	private val bitmapProducer: ProduceBitmaps,
 ) : BuildNowPlayingNotificationContent, AutoCloseable {
 	private val notificationSync = Any()
@@ -49,7 +49,7 @@ class NowPlayingNotificationBuilder(
 				viewStructure.promisedNowPlayingImage =
 					viewStructure.promisedNowPlayingImage ?: imageProvider.promiseImageBytes(libraryId, serviceFile).eventually(bitmapProducer::promiseBitmap)
 
-				cachedFilePropertiesProvider
+				filePropertiesProvider
 					.promiseFileProperties(libraryId, serviceFile)
 					.then { fileProperties ->
 						val artist = fileProperties[KnownFileProperties.Artist]

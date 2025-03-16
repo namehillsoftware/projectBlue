@@ -1,11 +1,17 @@
 package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnection.AndItReturnsARandomErrorCode
 
-import com.lasthopesoftware.bluewater.client.access.JRiverLibraryAccess
+import com.lasthopesoftware.TestMcwsUrl
+import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
-import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
+import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
+import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.url.JRiverUrlBuilder
 import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.resources.PassThroughHttpResponse
+import com.lasthopesoftware.resources.emptyByteArray
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -19,14 +25,20 @@ class WhenSendingPlayedToServer {
 	}
 
 	private val updater by lazy {
-		val connectionProvider = FakeJRiverConnectionProvider()
-		connectionProvider.mapResponse({
-			FakeConnectionResponseTuple(
-				expectedResponseCode, ByteArray(0)
-			)
-		}, "File/Played", "File=15", "FileType=Key")
+		val httpConnection = FakeHttpConnection().apply {
+			mapResponse(JRiverUrlBuilder.getUrl(TestMcwsUrl, "File/Played", "File=15", "FileType=Key")) {
+				PassThroughHttpResponse(
+					expectedResponseCode,
+					"NOK",
+					emptyByteArray.inputStream()
+				)
+			}
+		}
 
-        JRiverLibraryAccess(connectionProvider)
+		JRiverLibraryConnection(
+			ServerConnection(TestUrl),
+			FakeHttpConnectionProvider(httpConnection),
+		)
 	}
 	private var httpResponseException: HttpResponseException? = null
 

@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeJRiverConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
@@ -39,10 +38,9 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 	}
 
 	override fun before() {
-		val connectionProvider = FakeJRiverConnectionProvider()
 		val libraryId = LibraryId(13)
 		val libraryConnectionProvider = FakeLibraryConnectionProvider(mapOf(
-			Pair(libraryId, connectionProvider)
+			Pair(libraryId, mockk())
 		))
 		val npBuilder = NowPlayingNotificationBuilder(
 			ApplicationProvider.getApplicationContext(),

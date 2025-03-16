@@ -1,16 +1,20 @@
-package com.lasthopesoftware.bluewater.client.access
+package com.lasthopesoftware.bluewater.client.connection
 
+import android.os.Build
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFileUriQueryParamsProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.FileResponses
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
+import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
 import com.lasthopesoftware.bluewater.client.connection.requests.bodyString
+import com.lasthopesoftware.bluewater.client.connection.url.JRiverUrlBuilder
+import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
+import com.lasthopesoftware.bluewater.shared.NonStandardResponseException
+import com.lasthopesoftware.bluewater.shared.StandardResponse.Companion.toStandardResponse
 import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.exceptions.isOkHttpCanceled
@@ -32,37 +36,58 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import org.jsoup.parser.Parser
 import java.io.IOException
 import java.io.InputStream
+import java.net.URL
 import java.util.concurrent.CancellationException
 
-class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : RemoteLibraryAccess {
-
+class JRiverLibraryConnection(serverConnection: ServerConnection, private val httpPromiseClients: ProvideHttpPromiseClients) : ProvideConnections {
 	companion object {
+		private val logger by lazyLogger<JRiverLibraryConnection>()
 		private const val browseFilesPath = "Browse/Files"
 		private const val playlistFilesPath = "Playlist/Files"
 		private const val searchFilesPath = "Files/Search"
 		private const val browseLibraryParameter = "Browse/Children"
 		private const val imageFormat = "jpg"
-
-		private val logger by lazyLogger<JRiverLibraryAccess>()
 	}
 
+	private val lazyHttpClient by lazy { httpPromiseClients.getServerClient(this.serverConnection) }
+
+	override val serverConnection by lazy {
+		serverConnection.copy(baseUrl = URL(serverConnection.baseUrl, "/MCWS/v1/"))
+	}
+
+	override fun <T> getConnectionKey(key: T): UrlKeyHolder<T> = UrlKeyHolder(serverConnection.baseUrl, key)
+
+	override fun getFileUrl(serviceFile: ServiceFile): URL =
+		JRiverUrlBuilder.getUrl(
+			serverConnection.baseUrl,
+			"File/GetFile",
+			"File=${serviceFile.key}",
+			"Quality=Medium",
+			"Conversion=Android",
+			"Playback=0",
+			"AndroidVersion=${Build.VERSION.RELEASE}"
+		)
+
+	override fun promiseIsConnectionPossible(): Promise<Boolean> = ConnectionPossiblePromise()
+
 	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<Map<String, String>> =
-		FilePropertiesPromise(connectionProvider, serviceFile)
+		FilePropertiesPromise(serviceFile)
 
 	override fun promiseFilePropertyUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> =
-		connectionProvider.promiseResponse("File/SetInfo", "File=${serviceFile.key}", "Field=$property", "Value=$value", "formatted=" + if (isFormatted) "1" else "0")
+		promiseResponse("File/SetInfo", "File=${serviceFile.key}", "Field=$property", "Value=$value", "formatted=" + if (isFormatted) "1" else "0")
 			.then { response ->
 				response.use {
 					logger.info("api/v1/File/SetInfo responded with a response code of {}.", it.code)
 				}
 			}
 
-	override fun promiseItems(itemId: ItemId?): Promise<List<Item>> = ItemFilePromise(connectionProvider, itemId)
+	override fun promiseItems(itemId: ItemId?): Promise<List<Item>> = ItemFilePromise(itemId)
 
 	override fun promiseAudioPlaylistPaths(): Promise<List<String>> = Promise.Proxy { cp ->
-		connectionProvider.promiseResponse("Playlists/List", "IncludeMediaTypes=1")
+		promiseResponse("Playlists/List", "IncludeMediaTypes=1")
 			.also(cp::doCancel)
 			.promiseStringBody()
 			.also(cp::doCancel)
@@ -85,7 +110,7 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 	}
 
 	override fun promiseStoredPlaylist(playlistPath: String, playlist: List<ServiceFile>): Promise<*> =
-		connectionProvider.promiseResponse("Playlists/Add", "Type=Playlist", "Path=$playlistPath", "CreateMode=Overwrite")
+		promiseResponse("Playlists/Add", "Type=Playlist", "Path=$playlistPath", "CreateMode=Overwrite")
 			.promiseStandardResponse()
 			.then { it -> it.items["PlaylistID"] }
 			.eventually {
@@ -93,7 +118,7 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 					ThreadPools.compute
 						.preparePromise { playlist.map { sf -> sf.key }.joinToString(",") }
 						.eventually { keys ->
-							connectionProvider.promiseResponse(
+							promiseResponse(
 								"Playlist/AddFiles",
 								"PlaylistType=ID",
 								"Playlist=$playlistId",
@@ -104,14 +129,13 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 			}
 
 	override fun promiseIsReadOnly(): Promise<Boolean> =
-		connectionProvider.promiseResponse("Authenticate")
+		promiseResponse("Authenticate")
 			.promiseStandardResponse()
 			.then { sr ->
 				sr.items["ReadOnly"]?.toInt()?.let { ro -> ro != 0 } ?: false
 			}
 
-	override fun promiseServerVersion(): Promise<SemanticVersion?> = connectionProvider
-		.promiseResponse("Alive")
+	override fun promiseServerVersion(): Promise<SemanticVersion?> = promiseResponse("Alive")
 		.promiseStandardResponse()
 		.then { standardRequest ->
 			standardRequest.items["ProgramVersion"]
@@ -129,15 +153,12 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 
 	override fun promiseFile(serviceFile: ServiceFile): Promise<InputStream> =
 		Promise.Proxy { cp ->
-			connectionProvider
-				.promiseResponse("File/GetFile", *ServiceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile))
-				.also(cp::doCancel)
-				.promiseStreamedResponse()
+			lazyHttpClient.promiseResponse(getFileUrl(serviceFile)).also(cp::doCancel).promiseStreamedResponse()
 		}
 
 	override fun promiseImageBytes(serviceFile: ServiceFile): Promise<ByteArray> =
 		Promise.Proxy { cp ->
-			connectionProvider.promiseResponse(
+			promiseResponse(
 				"File/GetImage",
 				"File=${serviceFile.key}",
 				"Type=Full",
@@ -156,24 +177,24 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 		}
 
 	override fun promiseImageBytes(itemId: ItemId): Promise<ByteArray> =
-			connectionProvider.promiseResponse(
-				"Browse/Image",
-				"ID=${itemId.id}",
-				"Type=Full",
-				"Pad=1",
-				"Format=$imageFormat",
-				"FillTransparency=ffffff",
-				"UseStackedImages=0",
-				"Version=2",
-			).cancelBackThen { response, cp ->
-				response.use {
-					if (cp.isCancelled) throw CancellationException("Cancelled while retrieving image")
-					else when (response.code) {
-						200 -> response.body.use { it.readBytes() }
-						else -> emptyByteArray
-					}
+		promiseResponse(
+			"Browse/Image",
+			"ID=${itemId.id}",
+			"Type=Full",
+			"Pad=1",
+			"Format=$imageFormat",
+			"FillTransparency=ffffff",
+			"UseStackedImages=0",
+			"Version=2",
+		).cancelBackThen { response, cp ->
+			response.use {
+				if (cp.isCancelled) throw CancellationException("Cancelled while retrieving image")
+				else when (response.code) {
+					200 -> response.body.use { it.readBytes() }
+					else -> emptyByteArray
 				}
 			}
+		}
 
 	override fun promiseFileStringList(itemId: ItemId?): Promise<String> =
 		itemId
@@ -202,8 +223,7 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 		promiseFilesAtPath(playlistFilesPath, "Playlist=${playlistId.id}")
 
 	override fun promisePlaystatsUpdate(serviceFile: ServiceFile): Promise<*> =
-		connectionProvider
-			.promiseResponse("File/Played", "File=" + serviceFile.key, "FileType=Key")
+		promiseResponse("File/Played", "File=" + serviceFile.key, "FileType=Key")
 			.cancelBackThen { response, _ ->
 				response.use {
 					val responseCode = it.code
@@ -213,8 +233,7 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 			}
 
 	override fun promiseRevision(): Promise<Int?> = Promise.Proxy { cp ->
-		connectionProvider
-			.promiseResponse("Library/GetRevision")
+		promiseResponse("Library/GetRevision")
 			.also(cp::doCancel)
 			.promiseStandardResponse()
 			.also(cp::doCancel)
@@ -227,7 +246,7 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 
 	private fun promiseFileStringList(option: FileListParameters.Options, path: String, vararg params: String): Promise<String> =
 		Promise.Proxy { cp ->
-			connectionProvider.promiseResponse(
+			promiseResponse(
 				path,
 				*FileListParameters.Helpers.processParams(
 					option,
@@ -238,17 +257,22 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 
 	private fun promiseFilesAtPath(path: String, vararg params: String): Promise<List<ServiceFile>> =
 		Promise.Proxy { cp ->
-			promiseFileStringList(option=FileListParameters.Options.None, path=path, *params)
+			promiseFileStringList(option= FileListParameters.Options.None, path=path, *params)
 				.also(cp::doCancel)
 				.eventually(FileResponses)
 				.also(cp::doCancel)
 				.then(FileResponses)
 		}
 
-	private class FilePropertiesPromise(
-		connectionProvider: ProvideConnections,
-		private val serviceFile: ServiceFile
-	) :
+	private fun promiseResponse(path: String, vararg params: String): Promise<HttpResponse> =
+		callServer(path, *params)
+
+	private fun callServer(path: String, vararg params: String): Promise<HttpResponse> {
+		val url = JRiverUrlBuilder.getUrl(serverConnection.baseUrl, path, *params)
+		return lazyHttpClient.promiseResponse(url)
+	}
+
+	private inner class FilePropertiesPromise(private val serviceFile: ServiceFile) :
 		Promise<Map<String, String>>(),
 		PromisedResponse<HttpResponse, Unit>,
 		CancellableMessageWriter<Unit>,
@@ -259,7 +283,7 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 
 		init {
 			awaitCancellation(cancellationProxy)
-			val filePropertiesResponse = connectionProvider.promiseResponse("File/GetInfo", "File=" + serviceFile.key)
+			val filePropertiesResponse = promiseResponse("File/GetInfo", "File=" + serviceFile.key)
 			val promisedProperties = filePropertiesResponse.eventually(this)
 
 			// Handle cancellation errors directly in stack so that they don't become unhandled
@@ -271,7 +295,7 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 		override fun promiseResponse(response: HttpResponse): Promise<Unit> {
 			responseString = response.use {
 				if (cancellationProxy.isCancelled) {
-					reject(FilePropertiesCancellationException(serviceFile))
+					reject(filePropertiesCancellationException(serviceFile))
 					return Unit.toPromise()
 				}
 
@@ -283,7 +307,7 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 
 		override fun prepareMessage(cancellationSignal: CancellationSignal) {
 			if (cancellationSignal.isCancelled) {
-				reject(FilePropertiesCancellationException(serviceFile))
+				reject(filePropertiesCancellationException(serviceFile))
 				return
 			}
 
@@ -297,7 +321,7 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 							?.children()
 							?.associateTo(HashMap()) { el ->
 								if (cancellationSignal.isCancelled) {
-									reject(FilePropertiesCancellationException(serviceFile))
+									reject(filePropertiesCancellationException(serviceFile))
 									return
 								}
 
@@ -310,35 +334,33 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 
 		override fun respond(rejection: Throwable) {
 			if (cancellationProxy.isCancelled && rejection is IOException && rejection.isOkHttpCanceled()) {
-				reject(FilePropertiesCancellationException(serviceFile))
+				reject(filePropertiesCancellationException(serviceFile))
 			} else {
 				reject(rejection)
 			}
 		}
 
-		private class FilePropertiesCancellationException(serviceFile: ServiceFile)
-			: CancellationException("Getting file properties cancelled for $serviceFile.")
+		private fun filePropertiesCancellationException(serviceFile: ServiceFile) =
+			CancellationException("Getting file properties cancelled for $serviceFile.")
 	}
 
-	private class ItemFilePromise(
-		connectionProvider: ProvideConnections,
+	private inner class ItemFilePromise(
 		itemId: ItemId?,
 	) : Promise.Proxy<List<Item>>(), PromisedResponse<Document, List<Item>> {
 		init {
+			val promisedResponse = itemId
+				?.run {
+					promiseResponse(
+						browseLibraryParameter,
+						"ID=$id",
+						"Version=2",
+						"ErrorOnMissing=1"
+					)
+				}
+				?: promiseResponse(browseLibraryParameter, "Version=2", "ErrorOnMissing=1")
+
 			proxy(
-				connectionProvider
-					.run {
-						itemId
-							?.run {
-								promiseResponse(
-									browseLibraryParameter,
-									"ID=$id",
-									"Version=2",
-									"ErrorOnMissing=1"
-								)
-							}
-							?: promiseResponse(browseLibraryParameter, "Version=2", "ErrorOnMissing=1")
-					}
+				promisedResponse
 					.also(::doCancel)
 					.promiseStringBody()
 					.also(::doCancel)
@@ -365,5 +387,42 @@ class JRiverLibraryAccess(private val connectionProvider: ProvideConnections) : 
 		}
 
 		private fun itemParsingCancelledException() = CancellationException("Item parsing was cancelled.")
+	}
+
+	private inner class ConnectionPossiblePromise : Promise<Boolean>() {
+		init {
+			val cancellationProxy = CancellationProxy()
+			awaitCancellation(cancellationProxy)
+
+			promiseResponse("Alive")
+				.also(cancellationProxy::doCancel)
+				.then(
+					{ it, cp -> resolve(testResponse(it, cp)) },
+					{ e, _ ->
+						logger.error("Error checking connection at URL {}.", serverConnection.baseUrl, e)
+						resolve(false)
+					}
+				)
+				.also(cancellationProxy::doCancel)
+		}
+
+		private fun testResponse(response: HttpResponse, cancellationSignal: CancellationSignal): Boolean {
+			response.use { r ->
+				if (cancellationSignal.isCancelled) return false
+
+				try {
+					return r.bodyString.let { Jsoup.parse(it, Parser.xmlParser()) }.toStandardResponse().isStatusOk
+				} catch (e: NonStandardResponseException) {
+					logger.warn("Non standard response received.", e)
+				} catch (e: IOException) {
+					logger.error("Error closing connection, device failure?", e)
+				} catch (e: IllegalArgumentException) {
+					logger.warn("Illegal argument passed in", e)
+				} catch (t: Throwable) {
+					logger.error("Unexpected error parsing response.", t)
+				}
+			}
+			return false
+		}
 	}
 }

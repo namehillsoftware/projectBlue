@@ -18,7 +18,7 @@ class GuaranteedLibraryConnectionProvider(
 			}
 
 	override fun promiseLibraryAccess(libraryId: LibraryId): Promise<RemoteLibraryAccess> =
-		promiseLibraryConnection(libraryId).cancelBackThen { c, _ -> c.getDataAccess() }
+		promiseLibraryConnection(libraryId).cancelBackThen { c, _ -> c }
 
 	override fun <T> promiseKey(libraryId: LibraryId, key: T): Promise<UrlKeyHolder<T>> =
 		promiseLibraryConnection(libraryId).cancelBackThen { c, _ -> c.getConnectionKey(key) }
