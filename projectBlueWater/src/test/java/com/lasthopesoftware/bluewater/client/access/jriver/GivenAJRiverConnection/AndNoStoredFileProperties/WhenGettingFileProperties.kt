@@ -4,11 +4,11 @@ import com.lasthopesoftware.TestMcwsUrl
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
+import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.url.JRiverUrlBuilder
+import com.lasthopesoftware.bluewater.client.connection.url.MediaCenterUrlBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -17,7 +17,7 @@ class WhenGettingFileProperties {
 	private val fileProperties by lazy {
 		val httpConnection = FakeHttpConnection().apply {
 			setupFile(
-				JRiverUrlBuilder.getUrl(TestMcwsUrl, "File/GetInfo", "File=15"),
+				MediaCenterUrlBuilder.buildUrl(TestMcwsUrl, "File/GetInfo", "File=15"),
 				ServiceFile(15),
 				mapOf(
 					Pair(KnownFileProperties.Key, "45"),
@@ -94,7 +94,7 @@ Some more valid text... la di da..."""),
 			)
 		}
 
-		val connection = JRiverLibraryConnection(
+		val connection = MediaCenterConnection(
 			ServerConnection(TestUrl),
 			FakeHttpConnectionProvider(httpConnection),
 		)

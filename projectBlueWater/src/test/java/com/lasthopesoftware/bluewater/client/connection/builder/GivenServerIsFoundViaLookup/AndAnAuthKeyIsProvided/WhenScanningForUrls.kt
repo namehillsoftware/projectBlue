@@ -44,12 +44,12 @@ class WhenScanningForUrls {
 			mockk {
 				every {
 					getServerClient(match { a ->
-						listOf("http://1.2.3.4:143/MCWS/v1/").contains(a.baseUrl.toString()) && a.authCode == "gooey"
+						listOf("http://1.2.3.4:143").contains(a.baseUrl.toString()) && a.authCode == "gooey"
 					})
 				} answers {
 					val urlProvider = firstArg<ServerConnection>()
 					mockk {
-						every { promiseResponse(URL(urlProvider.baseUrl, "Alive")) } returns Promise(
+						every { promiseResponse(URL(urlProvider.baseUrl, "MCWS/v1/Alive")) } returns Promise(
 							PassThroughHttpResponse(
 								200,
 								"Ok",

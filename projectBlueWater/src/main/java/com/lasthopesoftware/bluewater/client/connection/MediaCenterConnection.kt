@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
 import com.lasthopesoftware.bluewater.client.connection.requests.bodyString
-import com.lasthopesoftware.bluewater.client.connection.url.JRiverUrlBuilder
+import com.lasthopesoftware.bluewater.client.connection.url.MediaCenterUrlBuilder
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
 import com.lasthopesoftware.bluewater.shared.NonStandardResponseException
@@ -42,9 +42,9 @@ import java.io.InputStream
 import java.net.URL
 import java.util.concurrent.CancellationException
 
-class JRiverLibraryConnection(serverConnection: ServerConnection, private val httpPromiseClients: ProvideHttpPromiseClients) : ProvideConnections {
+class MediaCenterConnection(override val serverConnection: ServerConnection, private val httpPromiseClients: ProvideHttpPromiseClients) : ProvideConnections {
 	companion object {
-		private val logger by lazyLogger<JRiverLibraryConnection>()
+		private val logger by lazyLogger<MediaCenterConnection>()
 		private const val browseFilesPath = "Browse/Files"
 		private const val playlistFilesPath = "Playlist/Files"
 		private const val searchFilesPath = "Files/Search"
@@ -52,16 +52,12 @@ class JRiverLibraryConnection(serverConnection: ServerConnection, private val ht
 		private const val imageFormat = "jpg"
 	}
 
-	private val lazyHttpClient by lazy { httpPromiseClients.getServerClient(this.serverConnection) }
-
-	override val serverConnection by lazy {
-		serverConnection.copy(baseUrl = URL(serverConnection.baseUrl, "/MCWS/v1/"))
-	}
+	private val lazyHttpClient by lazy { httpPromiseClients.getServerClient(serverConnection) }
 
 	override fun <T> getConnectionKey(key: T): UrlKeyHolder<T> = UrlKeyHolder(serverConnection.baseUrl, key)
 
 	override fun getFileUrl(serviceFile: ServiceFile): URL =
-		JRiverUrlBuilder.getUrl(
+		MediaCenterUrlBuilder.buildUrl(
 			serverConnection.baseUrl,
 			"File/GetFile",
 			"File=${serviceFile.key}",
@@ -244,6 +240,15 @@ class JRiverLibraryConnection(serverConnection: ServerConnection, private val ht
 			}
 	}
 
+	private fun promiseFilesAtPath(path: String, vararg params: String): Promise<List<ServiceFile>> =
+		Promise.Proxy { cp ->
+			promiseFileStringList(FileListParameters.Options.None, path, *params)
+				.also(cp::doCancel)
+				.eventually(FileResponses)
+				.also(cp::doCancel)
+				.then(FileResponses)
+		}
+
 	private fun promiseFileStringList(option: FileListParameters.Options, path: String, vararg params: String): Promise<String> =
 		Promise.Proxy { cp ->
 			promiseResponse(
@@ -255,20 +260,11 @@ class JRiverLibraryConnection(serverConnection: ServerConnection, private val ht
 			).also(cp::doCancel).promiseStringBody()
 		}
 
-	private fun promiseFilesAtPath(path: String, vararg params: String): Promise<List<ServiceFile>> =
-		Promise.Proxy { cp ->
-			promiseFileStringList(option= FileListParameters.Options.None, path=path, *params)
-				.also(cp::doCancel)
-				.eventually(FileResponses)
-				.also(cp::doCancel)
-				.then(FileResponses)
-		}
-
 	private fun promiseResponse(path: String, vararg params: String): Promise<HttpResponse> =
 		callServer(path, *params)
 
 	private fun callServer(path: String, vararg params: String): Promise<HttpResponse> {
-		val url = JRiverUrlBuilder.getUrl(serverConnection.baseUrl, path, *params)
+		val url = MediaCenterUrlBuilder.buildUrl(serverConnection.baseUrl, path, *params)
 		return lazyHttpClient.promiseResponse(url)
 	}
 

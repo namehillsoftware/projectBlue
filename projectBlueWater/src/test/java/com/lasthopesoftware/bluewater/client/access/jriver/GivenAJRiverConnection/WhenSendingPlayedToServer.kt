@@ -3,11 +3,11 @@ package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnecti
 import com.lasthopesoftware.TestMcwsUrl
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
+import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.url.JRiverUrlBuilder
+import com.lasthopesoftware.bluewater.client.connection.url.MediaCenterUrlBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
 import com.lasthopesoftware.resources.emptyByteArray
@@ -19,11 +19,11 @@ class WhenSendingPlayedToServer {
 
 	private var isFilePlayedCalled = false
 	private val updater by lazy {
-        JRiverLibraryConnection(
+        MediaCenterConnection(
 			ServerConnection(TestUrl),
 			FakeHttpConnectionProvider(
 				FakeHttpConnection().apply {
-					mapResponse(JRiverUrlBuilder.getUrl(TestMcwsUrl, "File/Played", "File=15", "FileType=Key")) {
+					mapResponse(MediaCenterUrlBuilder.buildUrl(TestMcwsUrl, "File/Played", "File=15", "FileType=Key")) {
 						isFilePlayedCalled = true
 						PassThroughHttpResponse(
 							200,

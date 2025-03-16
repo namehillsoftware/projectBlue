@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnection.AndItIsNotAlive
 
-import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
+import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
@@ -15,17 +15,15 @@ class WhenCheckingIfTheServerConnectionIsPossible {
 
 	private val result by lazy {
 		val serverConnection = ServerConnection("auth", "test", 80)
-		JRiverLibraryConnection(
+		MediaCenterConnection(
 			serverConnection,
 			mockk {
 				every {
-					getServerClient(match { a ->
-						"http://test:80/MCWS/v1/" == a.baseUrl.toString()
-					})
+					getServerClient(serverConnection)
 				} answers {
 					val urlProvider = firstArg<ServerConnection>()
 					mockk {
-						every { promiseResponse(URL(urlProvider.baseUrl, "Alive")) } returns Promise(
+						every { promiseResponse(URL(urlProvider.baseUrl, "MCWS/v1/Alive")) } returns Promise(
 							PassThroughHttpResponse(
 								200,
 								"K",

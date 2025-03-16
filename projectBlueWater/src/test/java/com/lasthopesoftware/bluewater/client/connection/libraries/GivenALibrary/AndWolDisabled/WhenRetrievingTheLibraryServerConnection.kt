@@ -74,7 +74,7 @@ class WhenRetrievingTheLibraryServerConnection {
 
 	@Test
 	fun `then the connection is correct`() {
-		assertThat(connectionProvider?.serverConnection).isEqualTo(serverConnection.copy(baseUrl = URL(serverConnection.baseUrl, "/MCWS/v1/")))
+		assertThat(connectionProvider?.serverConnection).isEqualTo(serverConnection)
 	}
 
 	@Test

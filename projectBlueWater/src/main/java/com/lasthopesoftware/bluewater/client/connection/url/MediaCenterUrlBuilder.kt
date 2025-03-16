@@ -4,18 +4,20 @@ import java.io.UnsupportedEncodingException
 import java.net.URL
 import java.net.URLEncoder
 
-object JRiverUrlBuilder {
-	fun getUrl(baseUrl: URL, path: String, vararg params: String): URL {
+object MediaCenterUrlBuilder {
+	fun buildUrl(baseUrl: URL, path: String, vararg params: String): URL {
+		val apiUrl = URL(baseUrl, "/MCWS/v1/")
+
 		// Add action
-		val urlWithPath = URL(baseUrl, path)
+		val urlWithPath = URL(apiUrl, path)
 
 		if (params.isEmpty()) return urlWithPath
 
 		val urlBuilder = StringBuilder(urlWithPath.toString())
 
 		// add arguments
-		for (i in 1 until params.size) {
-			urlBuilder.append(if (i == 1) '?' else '&')
+		for (i in params.indices) {
+			urlBuilder.append(if (i == 0) '?' else '&')
 			val param = params[i]
 			val equalityIndex = param.indexOf('=')
 			if (equalityIndex < 0) {

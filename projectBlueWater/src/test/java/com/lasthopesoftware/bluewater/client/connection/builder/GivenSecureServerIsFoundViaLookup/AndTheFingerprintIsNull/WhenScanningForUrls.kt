@@ -41,11 +41,11 @@ class WhenScanningForUrls {
 			connectionSettingsLookup,
 			mockk {
 				every {
-					getServerClient(match { a -> "https://1.2.3.4:452/MCWS/v1/" == a.baseUrl.toString() })
+					getServerClient(match { a -> "https://1.2.3.4:452" == a.baseUrl.toString() })
 				} answers {
 					val urlProvider = firstArg<ServerConnection>()
 					mockk {
-						every { promiseResponse(URL(urlProvider.baseUrl, "Alive")) } returns Promise(
+						every { promiseResponse(URL(urlProvider.baseUrl, "MCWS/v1/Alive")) } returns Promise(
 							PassThroughHttpResponse(
 								200,
 								"Ok",

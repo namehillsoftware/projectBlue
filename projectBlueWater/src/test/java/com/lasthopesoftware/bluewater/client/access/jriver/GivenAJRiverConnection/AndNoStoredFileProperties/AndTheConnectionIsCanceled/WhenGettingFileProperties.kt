@@ -3,10 +3,10 @@ package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnecti
 import com.lasthopesoftware.TestMcwsUrl
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
+import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.url.JRiverUrlBuilder
+import com.lasthopesoftware.bluewater.client.connection.url.MediaCenterUrlBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -21,10 +21,10 @@ private const val serviceFileId = 31
 
 class WhenGettingFileProperties {
 	private val filePropertiesProvider by lazy {
-        JRiverLibraryConnection(
+        MediaCenterConnection(
 			ServerConnection(TestUrl),
 			FakeHttpConnectionProvider(mockk {
-				every { promiseResponse(JRiverUrlBuilder.getUrl(TestMcwsUrl, "File/GetInfo", "File=$serviceFileId")) } returns Promise(IOException("Canceled"))
+				every { promiseResponse(MediaCenterUrlBuilder.buildUrl(TestMcwsUrl, "File/GetInfo", "File=$serviceFileId")) } returns Promise(IOException("Canceled"))
 			})
 		)
     }

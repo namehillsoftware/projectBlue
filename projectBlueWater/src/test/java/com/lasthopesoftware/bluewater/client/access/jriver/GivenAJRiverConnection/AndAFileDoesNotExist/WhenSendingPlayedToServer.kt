@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnecti
 
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
+import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
 import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
@@ -17,7 +17,7 @@ import java.util.concurrent.ExecutionException
 class WhenSendingPlayedToServer {
 
 	private val updater by lazy {
-        JRiverLibraryConnection(
+        MediaCenterConnection(
 			ServerConnection(TestUrl),
 			mockk {
 				every { getServerClient(any()) } returns FakeHttpConnection()

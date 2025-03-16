@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnection.AndItIsAlive
 
-import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
+import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
@@ -33,17 +33,15 @@ class WhenCancellingCheckingIfTheServerConnectionIsPossible {
 		}
 
 		val serverConnection = ServerConnection("auth", "test", 80)
-		val promisedTest = JRiverLibraryConnection(
+		val promisedTest = MediaCenterConnection(
 			serverConnection,
 			mockk {
 				every {
-					getServerClient(match { a ->
-						"http://test:80/MCWS/v1/" == a.baseUrl.toString()
-					})
+					getServerClient(serverConnection)
 				} answers {
 					val sc = firstArg<ServerConnection>()
 					mockk {
-						every { promiseResponse(URL(sc.baseUrl, "Alive")) } returns deferredResponse
+						every { promiseResponse(URL(sc.baseUrl, "MCWS/v1/Alive")) } returns deferredResponse
 					}
 				}
 			}

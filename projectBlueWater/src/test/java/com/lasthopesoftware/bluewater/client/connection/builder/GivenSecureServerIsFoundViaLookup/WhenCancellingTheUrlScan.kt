@@ -46,14 +46,14 @@ class WhenCancellingTheUrlScan {
 				every {
 					getServerClient(match { a ->
 						listOf(
-							"https://1.2.3.4:452/MCWS/v1/",
-							"http://1.2.3.4:143/MCWS/v1/"
+							"https://1.2.3.4:452",
+							"http://1.2.3.4:143"
 						).contains(a.baseUrl.toString())
 					})
 				} answers {
 					val urlProvider = firstArg<ServerConnection>()
 					mockk {
-						every { promiseResponse(URL(urlProvider.baseUrl, "Alive")) } returns Promise(
+						every { promiseResponse(URL(urlProvider.baseUrl, "MCWS/v1/Alive")) } returns Promise(
 							CancellationException("Maybe later!")
 						)
 					}

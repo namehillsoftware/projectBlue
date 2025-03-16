@@ -3,10 +3,10 @@ package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnecti
 import com.lasthopesoftware.TestMcwsUrl
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
+import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
-import com.lasthopesoftware.bluewater.client.connection.url.JRiverUrlBuilder
+import com.lasthopesoftware.bluewater.client.connection.url.MediaCenterUrlBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
 import io.mockk.every
@@ -19,7 +19,7 @@ class `When saving a new playlist` {
 
 	private val mut by lazy {
 		val httpConnection = FakeHttpConnection().apply {
-			mapResponse(JRiverUrlBuilder.getUrl(TestMcwsUrl, "Playlists/Add", "Type=Playlist", "Path=My Fancy Album", "CreateMode=Overwrite")) {
+			mapResponse(MediaCenterUrlBuilder.buildUrl(TestMcwsUrl, "Playlists/Add", "Type=Playlist", "Path=My Fancy Album", "CreateMode=Overwrite")) {
 				PassThroughHttpResponse(
 					200,
 					"OK",
@@ -29,7 +29,7 @@ class `When saving a new playlist` {
 				)
 			}
 
-			mapResponse(JRiverUrlBuilder.getUrl(TestMcwsUrl, "Playlist/AddFiles", "PlaylistType=ID", "&Playlist=554772758", "Keys=954,172,366")) {
+			mapResponse(MediaCenterUrlBuilder.buildUrl(TestMcwsUrl, "Playlist/AddFiles", "PlaylistType=ID", "&Playlist=554772758", "Keys=954,172,366")) {
 				PassThroughHttpResponse(
 					200,
 					"OK",
@@ -38,7 +38,7 @@ class `When saving a new playlist` {
 			}
 		}
 
-		JRiverLibraryConnection(
+		MediaCenterConnection(
 			ServerConnection(TestUrl),
 			mockk {
 				every { getServerClient(any()) } returns httpConnection
@@ -47,7 +47,7 @@ class `When saving a new playlist` {
 
 		Pair(
 			httpConnection,
-			JRiverLibraryConnection(
+			MediaCenterConnection(
 				ServerConnection(TestUrl),
 				mockk {
 					every { getServerClient(any()) } returns httpConnection
@@ -74,8 +74,8 @@ class `When saving a new playlist` {
 	@Test
 	fun `then the playlist is created correctly`() {
 		assertThat(mut.first.recordedRequests).containsExactly(
-			JRiverUrlBuilder.getUrl(TestMcwsUrl, "Playlists/Add", "Type=Playlist", "Path=My Fancy Album", "CreateMode=Overwrite"),
-			JRiverUrlBuilder.getUrl(TestMcwsUrl, "Playlist/AddFiles", "PlaylistType=ID", "Playlist=554772758", "Keys=954,172,366")
+			MediaCenterUrlBuilder.buildUrl(TestMcwsUrl, "Playlists/Add", "Type=Playlist", "Path=My Fancy Album", "CreateMode=Overwrite"),
+			MediaCenterUrlBuilder.buildUrl(TestMcwsUrl, "Playlist/AddFiles", "PlaylistType=ID", "Playlist=554772758", "Keys=954,172,366")
 		)
 	}
 }

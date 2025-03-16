@@ -62,19 +62,6 @@ abstract class FakeJRiverConnectionProvider : ProvideConnections {
 		mappedResponses[paramsSet] = response
 	}
 
-	override fun promiseResponse(path: String, vararg params: String): Promise<HttpResponse> {
-		val requestParams = arrayOf(path, *params)
-		requests.add(requestParams)
-
-		return try {
-			Promise(getResponse(*requestParams))
-		} catch (e: IOException) {
-			Promise(e)
-		} catch (e: RuntimeException) {
-			Promise(e.cause)
-		}
-	}
-
 	private fun getResponse(vararg params: String): HttpResponse {
 		var mappedResponse = mappedResponses[setOf(*params)]
 		if (mappedResponse == null) {

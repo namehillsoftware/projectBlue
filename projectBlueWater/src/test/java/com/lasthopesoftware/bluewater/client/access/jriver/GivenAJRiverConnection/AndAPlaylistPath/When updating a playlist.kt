@@ -3,11 +3,11 @@ package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnecti
 import com.lasthopesoftware.TestMcwsUrl
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
+import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.url.JRiverUrlBuilder
+import com.lasthopesoftware.bluewater.client.connection.url.MediaCenterUrlBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
 import org.assertj.core.api.Assertions.assertThat
@@ -18,7 +18,7 @@ class `When updating a playlist` {
 
 	private val mut by lazy {
 		val httpConnection = FakeHttpConnection().apply {
-			mapResponse(JRiverUrlBuilder.getUrl(TestMcwsUrl, "Playlists/Add", "Type=Playlist", "Path=bold\\voyage", "CreateMode=Overwrite")) {
+			mapResponse(MediaCenterUrlBuilder.buildUrl(TestMcwsUrl, "Playlists/Add", "Type=Playlist", "Path=bold\\voyage", "CreateMode=Overwrite")) {
 				PassThroughHttpResponse(
 					200,
 					"OK",
@@ -28,7 +28,7 @@ class `When updating a playlist` {
 				)
 			}
 
-			mapResponse(JRiverUrlBuilder.getUrl(TestMcwsUrl, "Playlist/AddFiles", "PlaylistType=ID", "Playlist=38981873", "Keys=885,481,139,935")) {
+			mapResponse(MediaCenterUrlBuilder.buildUrl(TestMcwsUrl, "Playlist/AddFiles", "PlaylistType=ID", "Playlist=38981873", "Keys=885,481,139,935")) {
 				PassThroughHttpResponse(
 					200,
 					"OK",
@@ -39,7 +39,7 @@ class `When updating a playlist` {
 
 		Pair(
 			httpConnection,
-			JRiverLibraryConnection(
+			MediaCenterConnection(
 				ServerConnection(TestUrl),
 				FakeHttpConnectionProvider(httpConnection)
 			)
@@ -65,8 +65,8 @@ class `When updating a playlist` {
 	@Test
 	fun `then the playlist is created correctly`() {
 		assertThat(mut.first.recordedRequests).containsExactly(
-			JRiverUrlBuilder.getUrl(TestMcwsUrl, "Playlists/Add", "Type=Playlist", "Path=bold\\voyage", "CreateMode=Overwrite"),
-			JRiverUrlBuilder.getUrl(TestMcwsUrl, "Playlist/AddFiles", "PlaylistType=ID", "Playlist=38981873", "Keys=885,481,139,935"),
+			MediaCenterUrlBuilder.buildUrl(TestMcwsUrl, "Playlists/Add", "Type=Playlist", "Path=bold\\voyage", "CreateMode=Overwrite"),
+			MediaCenterUrlBuilder.buildUrl(TestMcwsUrl, "Playlist/AddFiles", "PlaylistType=ID", "Playlist=38981873", "Keys=885,481,139,935"),
 		)
 	}
 }

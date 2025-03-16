@@ -4,11 +4,11 @@ import android.os.Build
 import com.lasthopesoftware.TestMcwsUrl
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.connection.JRiverLibraryConnection
+import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.url.JRiverUrlBuilder
+import com.lasthopesoftware.bluewater.client.connection.url.MediaCenterUrlBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
 import com.lasthopesoftware.resources.emptyByteArray
@@ -17,11 +17,11 @@ import org.junit.jupiter.api.Test
 
 class `When Downloading the File` {
 	private val inputStream by lazy {
-		val downloader = JRiverLibraryConnection(
+		val downloader = MediaCenterConnection(
 			ServerConnection(TestUrl),
 			FakeHttpConnectionProvider(FakeHttpConnection().apply {
 				mapResponse(
-					JRiverUrlBuilder.getUrl(
+					MediaCenterUrlBuilder.buildUrl(
 						TestMcwsUrl,
 						"File/GetFile",
 						"File=4",

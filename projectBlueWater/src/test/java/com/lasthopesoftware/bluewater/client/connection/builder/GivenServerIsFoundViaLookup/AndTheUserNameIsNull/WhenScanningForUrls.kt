@@ -44,7 +44,7 @@ class WhenScanningForUrls {
 			mockk {
 				every {
 					getServerClient(match { a ->
-						"http://1.2.3.4:143/MCWS/v1/" == a.baseUrl.toString() && a.authCode == null
+						"http://1.2.3.4:143" == a.baseUrl.toString() && a.authCode == null
 					})
 				} returns mockk {
 					every { promiseResponse(URL("http://1.2.3.4:143/MCWS/v1/Alive")) } returns Promise(

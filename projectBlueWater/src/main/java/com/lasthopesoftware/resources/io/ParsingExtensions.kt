@@ -12,8 +12,6 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateCancellableResponse
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
-import okhttp3.Response
-import okio.use
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.parser.Parser
@@ -27,13 +25,6 @@ fun Promise<HttpResponse>.promiseStringBody(): Promise<String> = then(HttpString
 fun Promise<String>.promiseXmlDocument(): Promise<Document> = eventually(ParsedXmlDocumentResponse)
 fun Promise<HttpResponse>.promiseStandardResponse(): Promise<StandardResponse> = HttpParsedStandardResponse(this)
 fun Promise<HttpResponse>.promiseStreamedResponse(): Promise<InputStream> = then(HttpStreamedResponse())
-
-object StringBodyResponse : ImmediateCancellableResponse<Response, String> {
-	override fun respond(response: Response, cancellationSignal: CancellationSignal): String = response.use {
-		if (cancellationSignal.isCancelled) throw CancellationException("Reading body into string cancelled.")
-		it.body.string()
-	}
-}
 
 object HttpStringBodyResponse : ImmediateCancellableResponse<HttpResponse, String> {
 	override fun respond(response: HttpResponse, cancellationSignal: CancellationSignal): String = response.use {
