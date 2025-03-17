@@ -18,7 +18,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.connection.PacketSender
-import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
 import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveServerConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup
@@ -137,14 +136,11 @@ object ApplicationDependenciesContainer {
 					ServerAlarm(serverLookup, activeNetwork, ServerWakeSignal(PacketSender())),
 					LiveServerConnectionProvider(
 						activeNetwork,
-						UrlScanner(
-							Base64Encoder,
-							serverLookup,
-							connectionSettingsLookup,
-							OkHttpFactory
-						)
+						Base64Encoder,
+						serverLookup,
+						connectionSettingsLookup,
+						OkHttpFactory
 					),
-					OkHttpFactory,
 					AlarmConfiguration.standard
 				),
 				connectionsRepository,

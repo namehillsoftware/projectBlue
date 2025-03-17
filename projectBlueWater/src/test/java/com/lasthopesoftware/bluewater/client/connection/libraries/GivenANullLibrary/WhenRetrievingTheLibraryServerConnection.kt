@@ -2,11 +2,9 @@ package com.lasthopesoftware.bluewater.client.connection.libraries.GivenANullLib
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
-import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
@@ -20,7 +18,6 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.net.URL
 
 class WhenRetrievingTheLibraryServerConnection {
 
@@ -34,14 +31,13 @@ class WhenRetrievingTheLibraryServerConnection {
 		every { lookupConnection.lookupConnectionSettings(LibraryId(2)) } returns deferredConnectionSettings
 
 		val liveUrlProvider = mockk<ProvideLiveServerConnection>()
-		every { liveUrlProvider.promiseLiveServerConnection(LibraryId(2)) } returns ServerConnection(URL("http://test")).toPromise()
+		every { liveUrlProvider.promiseLiveServerConnection(LibraryId(2)) } returns mockk<LiveServerConnection>().toPromise()
 
 		val libraryConnectionProvider = LibraryConnectionProvider(
 			validateConnectionSettings,
 			lookupConnection,
 			NoopServerAlarm,
 			liveUrlProvider,
-			OkHttpFactory,
 			mockk(),
 		)
 
@@ -49,7 +45,7 @@ class WhenRetrievingTheLibraryServerConnection {
 	}
 
 	private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
-	private var connectionProvider: ProvideConnections? = null
+	private var connectionProvider: LiveServerConnection? = null
 
 	@BeforeAll
 	fun before() {

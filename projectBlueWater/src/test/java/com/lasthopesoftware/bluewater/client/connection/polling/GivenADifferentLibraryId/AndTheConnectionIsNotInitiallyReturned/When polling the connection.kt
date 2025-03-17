@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.polling.GivenADifferent
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPoller
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
@@ -22,14 +22,14 @@ class `When polling the connection` {
         LibraryConnectionPoller(
             mockk {
 				val nullIterations = log2(32.0).toInt()
-				val connectionResponses = MutableList(nullIterations) { ProgressingPromise<BuildingConnectionStatus, ProvideConnections?>(null as ProvideConnections?) }
-				connectionResponses.add(ProgressingPromise(mockk<ProvideConnections>()))
+				val connectionResponses = MutableList(nullIterations) { ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>(null as LiveServerConnection?) }
+				connectionResponses.add(ProgressingPromise(mockk<LiveServerConnection>()))
                 every { promiseTestedLibraryConnection(LibraryId(libraryId)) } returnsMany connectionResponses
             }
         )
 	}
 
-	private var connectionProvider: ProvideConnections? = null
+	private var connectionProvider: LiveServerConnection? = null
 
 	@BeforeAll
 	fun act() {

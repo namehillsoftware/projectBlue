@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
@@ -18,13 +18,13 @@ import org.junit.jupiter.api.Test
 
 class WhenRetrievingTheLibraryServerConnection {
 
-	private val expectedConnectionProvider = mockk<ProvideConnections>()
+	private val expectedConnectionProvider = mockk<LiveServerConnection>()
 
 	private val mut by lazy {
 		val validateConnectionSettings = mockk<ValidateConnectionSettings>()
 		every { validateConnectionSettings.isValid(any()) } returns true
 
-		val deferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
+		val deferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>()
 
 		val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
 		every { libraryConnectionProvider.promiseLibraryConnection(LibraryId(3)) } returns deferredConnectionProvider
@@ -38,7 +38,7 @@ class WhenRetrievingTheLibraryServerConnection {
 		Pair(deferredConnectionProvider, connectionSessionManager)
 	}
 
-	private var connectionProvider: ProvideConnections? = null
+	private var connectionProvider: LiveServerConnection? = null
 	private var isActiveBeforeGettingConnection = false
 	private var isActiveAfterGettingConnection = false
 

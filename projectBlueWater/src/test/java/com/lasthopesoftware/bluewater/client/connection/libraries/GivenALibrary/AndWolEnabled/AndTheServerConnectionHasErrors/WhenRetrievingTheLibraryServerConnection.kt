@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
@@ -30,24 +29,23 @@ class WhenRetrievingTheLibraryServerConnection {
 			DeferredPromise<ConnectionSettings?>(ConnectionSettings(accessCode = "aB5nf", isWakeOnLanEnabled = true))
 
 		val libraryConnectionProvider = LibraryConnectionProvider(
-			mockk {
-				every { isValid(any()) } returns true
-			},
-			mockk {
-				every { lookupConnectionSettings(LibraryId(3)) } returns deferredConnectionSettings
-			},
-			{
-				++wakeAttempts
-				Unit.toPromise()
-			},
-			mockk {
-				every { promiseLiveServerConnection(LibraryId(3)) } answers {
-					++connectionAttempts
-					Promise(Exception("Let me SLEEP!"))
-				}
-			},
-			OkHttpFactory,
-			AlarmConfiguration(5, Duration.millis(100)),
+            mockk {
+                every { isValid(any()) } returns true
+            },
+            mockk {
+                every { lookupConnectionSettings(LibraryId(3)) } returns deferredConnectionSettings
+            },
+            {
+                ++wakeAttempts
+                Unit.toPromise()
+            },
+            mockk {
+                every { promiseLiveServerConnection(LibraryId(3)) } answers {
+                    ++connectionAttempts
+                    Promise(Exception("Let me SLEEP!"))
+                }
+            },
+            AlarmConfiguration(5, Duration.millis(100)),
 		)
 
 		Pair(deferredConnectionSettings, libraryConnectionProvider)

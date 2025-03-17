@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.access.ProvideRemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
@@ -20,9 +20,9 @@ class ConnectionSessionManager(
 	private val sendApplicationMessages: SendApplicationMessages,
 ) : ManageConnectionSessions, ProvideRemoteLibraryAccess {
 
-	override fun promiseTestedLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> =
+	override fun promiseTestedLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?> =
 		holdConnections.setAndGetPromisedConnection(libraryId) { l, promised ->
-			object : ProgressingPromiseProxy<BuildingConnectionStatus, ProvideConnections?>() {
+			object : ProgressingPromiseProxy<BuildingConnectionStatus, LiveServerConnection?>() {
 				init {
 					promised
 						?.also {
@@ -48,9 +48,9 @@ class ConnectionSessionManager(
 			}
 		}
 
-	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> =
+	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?> =
 		holdConnections.getPromisedResolvedConnection(libraryId) ?: holdConnections.setAndGetPromisedConnection(libraryId) { l, promised ->
-			object : ProgressingPromiseProxy<BuildingConnectionStatus, ProvideConnections?>() {
+			object : ProgressingPromiseProxy<BuildingConnectionStatus, LiveServerConnection?>() {
 				init {
 					promised
 						?.also {
@@ -75,7 +75,7 @@ class ConnectionSessionManager(
 	override fun promiseIsConnectionActive(libraryId: LibraryId): Promise<Boolean> =
 		holdConnections.getPromisedResolvedConnection(libraryId)?.then { c -> c != null }.keepPromise(false)
 
-	private fun promiseUpdatedLibraryConnection(promised: ProgressingPromise<BuildingConnectionStatus, ProvideConnections?>?, libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> =
+	private fun promiseUpdatedLibraryConnection(promised: ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>?, libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?> =
 		libraryConnections
 			.promiseLibraryConnection(libraryId)
 			.apply {

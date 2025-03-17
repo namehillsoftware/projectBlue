@@ -2,9 +2,8 @@ package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
@@ -44,7 +43,6 @@ class WhenRetrievingTheLibraryServerConnection {
 					null.toPromise()
 				}
 			},
-			OkHttpFactory,
 			AlarmConfiguration(2, Duration.millis(500)),
 		)
 
@@ -52,7 +50,7 @@ class WhenRetrievingTheLibraryServerConnection {
 	}
 
 	private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
-	private var connectionProvider: ProvideConnections? = null
+	private var connectionProvider: LiveServerConnection? = null
 
 	@BeforeAll
 	fun before() {

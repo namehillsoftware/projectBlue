@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.library.revisions
 import com.lasthopesoftware.bluewater.client.access.ProvideRemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.promises.extensions.keepPromise
@@ -28,7 +28,7 @@ class LibraryRevisionProvider(
 	override fun promiseResponse(access: RemoteLibraryAccess?): Promise<Int> =
 		access?.promiseRevision().keepPromise(badRevision).then(NullIntFallbackResponse)
 
-	private inner class RevisionPromise(private val libraryId: LibraryId): Promise.Proxy<Int>(), PromisedResponse<ProvideConnections?, Int>, (URL) -> Promise<Int> {
+	private inner class RevisionPromise(private val libraryId: LibraryId): Promise.Proxy<Int>(), PromisedResponse<LiveServerConnection?, Int>, (URL) -> Promise<Int> {
 		init {
 			proxy(
 				libraryConnections
@@ -39,7 +39,7 @@ class LibraryRevisionProvider(
 			)
 		}
 
-		override fun promiseResponse(connection: ProvideConnections?): Promise<Int> =
+		override fun promiseResponse(connection: LiveServerConnection?): Promise<Int> =
 			connection
 				?.serverConnection
 				?.baseUrl

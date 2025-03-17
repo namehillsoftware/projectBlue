@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.LibraryConnectionChangedMessage
@@ -25,9 +25,9 @@ class WhenGettingATestedLibraryServerConnection {
 
 	private val mut by lazy {
 		val firstDeferredConnectionProvider =
-			DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
+			DeferredProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>()
 		val secondDeferredConnectionProvider =
-			DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
+			DeferredProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>()
 
 		val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
 		every {
@@ -45,8 +45,8 @@ class WhenGettingATestedLibraryServerConnection {
 
 	private val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 	private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
-	private var connectionProvider: ProvideConnections? = null
-	private var secondConnectionProvider: ProvideConnections? = null
+	private var connectionProvider: LiveServerConnection? = null
+	private var secondConnectionProvider: LiveServerConnection? = null
 
 	@BeforeAll
 	fun act() {
@@ -111,7 +111,7 @@ class WhenGettingATestedLibraryServerConnection {
 		)
 	}
 
-	private fun liveConnection() = mockk<ProvideConnections> {
+	private fun liveConnection() = mockk<LiveServerConnection> {
 		every { promiseIsConnectionPossible() } returns true.toPromise()
 	}
 }

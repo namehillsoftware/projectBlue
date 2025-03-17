@@ -2,11 +2,9 @@ package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
-import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
@@ -21,7 +19,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.net.URL
 import java.util.concurrent.TimeUnit
 
 class WhenRetrievingTheLibraryServerConnectionIsCancelled {
@@ -45,9 +42,9 @@ class WhenRetrievingTheLibraryServerConnectionIsCancelled {
 		} returns deferredConnectionSettings
 
 		val liveUrlProvider = mockk<ProvideLiveServerConnection>()
-		every { liveUrlProvider.promiseLiveServerConnection(LibraryId(3)) } returns Promise.empty() andThen Promise(ServerConnection(
-			URL("http://test")
-		))
+		every { liveUrlProvider.promiseLiveServerConnection(LibraryId(3)) } returns Promise.empty() andThen Promise(
+			mockk<LiveServerConnection>()
+		)
 
 		val libraryConnectionProvider = LibraryConnectionProvider(
 			validateConnectionSettings,
@@ -57,7 +54,6 @@ class WhenRetrievingTheLibraryServerConnectionIsCancelled {
 				deferredLibraryWake
 			},
 			liveUrlProvider,
-			OkHttpFactory,
 			AlarmConfiguration(1, Duration.ZERO),
 		)
 
@@ -65,7 +61,7 @@ class WhenRetrievingTheLibraryServerConnectionIsCancelled {
 	}
 
 	private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
-	private var connectionProvider: ProvideConnections? = null
+	private var connectionProvider: LiveServerConnection? = null
 	private var isLibraryServerWakeRequested = false
 	private var isLibraryServerWakeCancelled = false
 

@@ -2,11 +2,9 @@ package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
-import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
@@ -27,7 +25,7 @@ import java.util.concurrent.TimeoutException
 class WhenRetrievingTheLibraryServerConnection {
 	private val connectionSettings = ConnectionSettings(accessCode = "aB5nf")
 	private val deferredConnectionSettings = DeferredPromise<ConnectionSettings?>(connectionSettings)
-	private val deferredUrlPromise = DeferredPromise<ServerConnection?>(IOException())
+	private val deferredUrlPromise = DeferredPromise<LiveServerConnection?>(IOException())
 
 	private val mut by lazy {
 		val validateConnectionSettings = mockk<ValidateConnectionSettings>()
@@ -46,7 +44,6 @@ class WhenRetrievingTheLibraryServerConnection {
 			lookupConnection,
 			NoopServerAlarm,
 			liveUrlProvider,
-			OkHttpFactory,
 			mockk(),
 		)
 
@@ -54,7 +51,7 @@ class WhenRetrievingTheLibraryServerConnection {
 	}
 
 	private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
-	private var connectionProvider: ProvideConnections? = null
+	private var connectionProvider: LiveServerConnection? = null
 	private var exception: IOException? = null
 
 	@BeforeAll

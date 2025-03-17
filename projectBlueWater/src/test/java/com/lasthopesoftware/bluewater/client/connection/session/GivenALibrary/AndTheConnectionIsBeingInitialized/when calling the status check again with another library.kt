@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
 import com.lasthopesoftware.bluewater.shared.observables.toCloseable
@@ -22,7 +22,7 @@ private const val libraryId = 267
 
 class `when calling the status check again with another library` {
 	private val mut by lazy {
-		val resolvingConnection = DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
+		val resolvingConnection = DeferredProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>()
 		Pair(
 			resolvingConnection,
 			ConnectionStatusViewModel(
@@ -34,7 +34,7 @@ class `when calling the status check again with another library` {
 				),
 				mockk {
 					every { promiseLibraryConnection(LibraryId(480)) } answers {
-						val deferredProgressingPromise = DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
+						val deferredProgressingPromise = DeferredProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>()
 						deferredProgressingPromise.sendProgressUpdate(BuildingConnectionStatus.BuildingConnection)
 						deferredProgressingPromise
 					}
@@ -47,12 +47,12 @@ class `when calling the status check again with another library` {
 	private val connectionStatuses = mutableListOf<String>()
 	private val isConnectingHistory = mutableListOf<Boolean>()
 
-	private var firstPromisedLibraryConnection: ProgressingPromise<BuildingConnectionStatus, ProvideConnections?>? = null
-	private var secondPromisedLibraryConnection: ProgressingPromise<BuildingConnectionStatus, ProvideConnections?>? = null
+	private var firstPromisedLibraryConnection: ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>? = null
+	private var secondPromisedLibraryConnection: ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>? = null
 
 	private var cancellationException: CancellationException? = null
 
-	private var secondLibraryConnection: ProvideConnections? = null
+	private var secondLibraryConnection: LiveServerConnection? = null
 
 	@BeforeAll
 	fun act() {

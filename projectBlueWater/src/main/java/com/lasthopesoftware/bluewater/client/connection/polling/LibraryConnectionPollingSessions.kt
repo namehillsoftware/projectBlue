@@ -1,20 +1,20 @@
 package com.lasthopesoftware.bluewater.client.connection.polling
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.LiveServerConnection
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ConcurrentHashMap
 
 class LibraryConnectionPollingSessions(
 	private val inner: PollForLibraryConnections,
-	private val connectionPollerLookup: ConcurrentHashMap<LibraryId, Lazy<Promise<ProvideConnections>>> = sharedConnectionPollerLookup
+	private val connectionPollerLookup: ConcurrentHashMap<LibraryId, Lazy<Promise<LiveServerConnection>>> = sharedConnectionPollerLookup
 ) : PollForLibraryConnections {
 
 	companion object {
-		private val sharedConnectionPollerLookup = ConcurrentHashMap<LibraryId, Lazy<Promise<ProvideConnections>>>()
+		private val sharedConnectionPollerLookup = ConcurrentHashMap<LibraryId, Lazy<Promise<LiveServerConnection>>>()
 	}
 
-	override fun pollConnection(libraryId: LibraryId): Promise<ProvideConnections> =
+	override fun pollConnection(libraryId: LibraryId): Promise<LiveServerConnection> =
 		connectionPollerLookup
 			.getOrPut(libraryId) {
 				lazy {

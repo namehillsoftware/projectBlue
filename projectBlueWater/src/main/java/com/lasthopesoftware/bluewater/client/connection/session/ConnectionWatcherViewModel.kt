@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.session
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
@@ -18,7 +18,7 @@ class ConnectionWatcherViewModel(
 	private val pollLibraryConnections: PollForLibraryConnections,
 ) : ViewModel(), (ConnectionLostNotification) -> Unit {
 	@Volatile
-	private var promisedConnection = Promise.empty<ProvideConnections?>()
+	private var promisedConnection = Promise.empty<LiveServerConnection?>()
 
 	private var watchedLibraryId: LibraryId? = null
 

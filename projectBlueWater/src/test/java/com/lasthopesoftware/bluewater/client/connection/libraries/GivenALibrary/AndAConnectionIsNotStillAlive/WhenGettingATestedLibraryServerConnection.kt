@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
@@ -19,8 +19,8 @@ import org.junit.jupiter.api.Test
 
 class WhenGettingATestedLibraryServerConnection {
 
-	private val firstDeferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
-	private val secondDeferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
+	private val firstDeferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>()
+	private val secondDeferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>()
 
 	private val mut by lazy {
 		val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
@@ -36,11 +36,11 @@ class WhenGettingATestedLibraryServerConnection {
 	}
 
 	private val statuses = ArrayList<BuildingConnectionStatus>()
-	private val expectedConnectionProvider = mockk<ProvideConnections> {
+	private val expectedConnectionProvider = mockk<LiveServerConnection> {
 		every { promiseIsConnectionPossible() } returns false.toPromise()
 	}
-	private var connectionProvider: ProvideConnections? = null
-	private var secondConnectionProvider: ProvideConnections? = null
+	private var connectionProvider: LiveServerConnection? = null
+	private var secondConnectionProvider: LiveServerConnection? = null
 
 	@BeforeAll
 	fun act() {

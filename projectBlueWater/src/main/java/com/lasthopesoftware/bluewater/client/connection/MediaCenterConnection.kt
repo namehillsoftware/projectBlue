@@ -42,7 +42,7 @@ import java.io.InputStream
 import java.net.URL
 import java.util.concurrent.CancellationException
 
-class MediaCenterConnection(override val serverConnection: ServerConnection, private val httpPromiseClients: ProvideHttpPromiseClients) : ProvideConnections {
+class MediaCenterConnection(override val serverConnection: ServerConnection, private val httpPromiseClients: ProvideHttpPromiseClients) : LiveServerConnection {
 	companion object {
 		private val logger by lazyLogger<MediaCenterConnection>()
 		private const val browseFilesPath = "Browse/Files"

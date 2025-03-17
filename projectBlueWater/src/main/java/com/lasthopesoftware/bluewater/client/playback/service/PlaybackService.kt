@@ -44,7 +44,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.uri.BestMatchUriProv
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.RemoteFileUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
@@ -410,7 +410,7 @@ import java.util.concurrent.TimeoutException
 	private val errorLatch by lazy { TimedCountdownLatch(numberOfErrors, errorLatchResetDuration) }
 
 	private val pollConnectionServiceProxy by lazy { PollConnectionServiceProxy(this) }
-	private val connectionRegainedListener by lazy { ImmediateResponse<ProvideConnections, Unit> { resetPlaylistManager() } }
+	private val connectionRegainedListener by lazy { ImmediateResponse<LiveServerConnection, Unit> { resetPlaylistManager() } }
 
 	private val onPollingCancelledListener by lazy {
 		ImmediateResponse<Throwable?, Unit> { e ->

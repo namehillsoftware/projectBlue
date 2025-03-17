@@ -2,11 +2,9 @@ package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
-import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
@@ -21,7 +19,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.net.URL
 
 class WhenRetrievingTheLibraryServerConnection {
 
@@ -48,16 +45,15 @@ class WhenRetrievingTheLibraryServerConnection {
 				Unit.toPromise()
 			},
 			liveUrlProvider,
-			OkHttpFactory,
 			AlarmConfiguration(0, Duration.ZERO),
 		)
 
 		Pair(deferredConnectionSettings, libraryConnectionProvider)
 	}
 
-	private val serverConnection = ServerConnection(URL("http://test"))
+	private val serverConnection = mockk<LiveServerConnection>()
 	private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
-	private var connectionProvider: ProvideConnections? = null
+	private var connectionProvider: LiveServerConnection? = null
 	private var isLibraryServerWoken = false
 
 	@BeforeAll
@@ -81,7 +77,7 @@ class WhenRetrievingTheLibraryServerConnection {
 
 	@Test
 	fun `then the connection is correct`() {
-		assertThat(connectionProvider?.serverConnection).isEqualTo(serverConnection)
+		assertThat(connectionProvider).isEqualTo(serverConnection)
 	}
 
 	@Test

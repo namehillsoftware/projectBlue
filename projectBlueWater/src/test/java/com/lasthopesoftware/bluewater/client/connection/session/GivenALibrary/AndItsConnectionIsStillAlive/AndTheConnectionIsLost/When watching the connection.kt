@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionLostNotification
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
 import com.lasthopesoftware.bluewater.shared.observables.toCloseable
@@ -29,7 +29,7 @@ class `When watching the connection` {
 				)
 			),
 			mockk {
-				every { pollConnection(LibraryId(libraryId)) } returns mockk<ProvideConnections>().toPromise()
+				every { pollConnection(LibraryId(libraryId)) } returns mockk<LiveServerConnection>().toPromise()
 			}
 		))
 	}
