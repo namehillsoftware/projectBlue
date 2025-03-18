@@ -21,7 +21,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemPlayback
 import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CachedLibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRevisions
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostRetryHandler
@@ -70,7 +69,7 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 
 	override val urlKeyProvider by lazy { UrlKeyProvider(application.libraryConnectionProvider) }
 
-	override val revisionProvider by lazy { CachedLibraryRevisionProvider(LibraryRevisionProvider(libraryAccess)) }
+	override val revisionProvider by lazy { LibraryRevisionProvider(libraryAccess) }
 
 	override val filePropertiesStorage by lazy {
 		FilePropertyStorage(

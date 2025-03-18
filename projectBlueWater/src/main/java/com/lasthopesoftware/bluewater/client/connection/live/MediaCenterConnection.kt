@@ -22,6 +22,7 @@ import com.lasthopesoftware.bluewater.shared.StandardResponse.Companion.toStanda
 import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.exceptions.isOkHttpCanceled
+import com.lasthopesoftware.policies.caching.TimedExpirationPromiseCache
 import com.lasthopesoftware.promises.extensions.cancelBackThen
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.preparePromise
@@ -38,6 +39,7 @@ import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
+import org.joda.time.Duration
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.parser.Parser
@@ -60,7 +62,10 @@ class MediaCenterConnection(
 		private const val searchFilesPath = "Files/Search"
 		private const val browseLibraryParameter = "Browse/Children"
 		private const val imageFormat = "jpg"
+		private val checkedExpirationTime by lazy { Duration.standardSeconds(30) }
 	}
+
+	private val revisionCache by lazy { TimedExpirationPromiseCache<Unit, Int?>(checkedExpirationTime) }
 
 	private val httpClient by lazy { httpPromiseClients.getServerClient(serverConnection) }
 
@@ -251,16 +256,18 @@ class MediaCenterConnection(
 				}
 			}
 
-	override fun promiseRevision(): Promise<Int?> = Promise.Proxy { cp ->
-		promiseResponse("Library/GetRevision")
-			.also(cp::doCancel)
-			.promiseStandardResponse()
-			.also(cp::doCancel)
-			.then { standardRequest ->
-				standardRequest.items["Sync"]
-					?.takeIf { revisionValue -> revisionValue.isNotEmpty() }
-					?.toInt()
-			}
+	override fun promiseRevision(): Promise<Int?> =  revisionCache.getOrAdd(Unit) {
+		Promise.Proxy { cp ->
+			promiseResponse("Library/GetRevision")
+				.also(cp::doCancel)
+				.promiseStandardResponse()
+				.also(cp::doCancel)
+				.then { standardRequest ->
+					standardRequest.items["Sync"]
+						?.takeIf { revisionValue -> revisionValue.isNotEmpty() }
+						?.toInt()
+				}
+		}
 	}
 
 	private fun promiseFilesAtPath(path: String, vararg params: String): Promise<List<ServiceFile>> =
