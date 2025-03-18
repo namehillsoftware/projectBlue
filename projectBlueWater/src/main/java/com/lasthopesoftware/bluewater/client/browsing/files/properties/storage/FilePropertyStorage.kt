@@ -1,13 +1,14 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.storage
 
-import com.lasthopesoftware.bluewater.client.access.ProvideRemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.IFilePropertiesContainerRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRevisions
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
+import com.lasthopesoftware.bluewater.client.connection.live.eventuallyFromDataAccess
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.lasthopesoftware.promises.extensions.cancelBackEventually
@@ -18,7 +19,7 @@ import com.namehillsoftware.handoff.promises.Promise
 private val logger by lazyLogger<FilePropertyStorage>()
 
 class FilePropertyStorage(
-	private val remoteLibraryAccess: ProvideRemoteLibraryAccess,
+	private val libraryConnections: ProvideLibraryConnections,
 	private val urlKeyProvider: ProvideUrlKey,
 	private val checkIfConnectionIsReadOnly: CheckIfConnectionIsReadOnly,
 	private val checkRevisions: CheckRevisions,
@@ -29,9 +30,9 @@ class FilePropertyStorage(
 		checkIfConnectionIsReadOnly
 			.promiseIsReadOnly(libraryId)
 			.cancelBackEventually { isReadOnly ->
-				if (!isReadOnly) remoteLibraryAccess
-					.promiseLibraryAccess(libraryId)
-					.cancelBackEventually { access ->
+				if (!isReadOnly) libraryConnections
+					.promiseLibraryConnection(libraryId)
+					.eventuallyFromDataAccess { access ->
 						access
 							?.promiseFileUpdate(libraryId, serviceFile, property, value, isFormatted)
 							.keepPromise(Unit)

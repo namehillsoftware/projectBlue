@@ -8,10 +8,12 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.repositor
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
@@ -53,11 +55,20 @@ class WhenUpdatingFileProperties {
 
         val filePropertiesStorage = FilePropertyStorage(
 			mockk {
-				every { promiseLibraryAccess(LibraryId(libraryId)) } returns Promise(
-					mockk<RemoteLibraryAccess> {
-						every { promiseFilePropertyUpdate(ServiceFile(serviceFileId), any(), any(), false) } answers {
-							properties[secondArg()] = thirdArg()
-							Unit.toPromise()
+				every { promiseLibraryConnection(LibraryId(libraryId)) } returns ProgressingPromise(
+					mockk<LiveServerConnection> {
+						every { dataAccess } returns mockk<RemoteLibraryAccess> {
+							every {
+								promiseFilePropertyUpdate(
+									ServiceFile(serviceFileId),
+									any(),
+									any(),
+									false
+								)
+							} answers {
+								properties[secondArg()] = thirdArg()
+								Unit.toPromise()
+							}
 						}
 					}
 				)

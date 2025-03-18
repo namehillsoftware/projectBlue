@@ -3,10 +3,11 @@ package com.lasthopesoftware.bluewater.client.browsing.files.image.GivenAService
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.shared.images.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.toPromise
-import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -27,11 +28,11 @@ class WhenGettingTheImageBytes {
 
 		val memoryCachedImageAccess = RemoteImageAccess(
 			mockk {
-				every { promiseLibraryAccess(LibraryId(21)) } returns Promise(
-					mockk<RemoteLibraryAccess> {
+				every { promiseLibraryConnection(LibraryId(21)) } returns ProgressingPromise(mockk<LiveServerConnection> {
+					every { dataAccess } returns mockk<RemoteLibraryAccess> {
 						every { promiseImageBytes(ServiceFile(31)) } returns byteArrayOf(39, 127, 8).toPromise()
 					}
-				)
+				})
 			})
 
 		memoryCachedImageAccess.promiseImageBytes(LibraryId(21), ServiceFile(31)).toExpiringFuture().get()
