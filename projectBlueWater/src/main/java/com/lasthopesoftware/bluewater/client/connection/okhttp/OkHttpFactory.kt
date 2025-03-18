@@ -1,5 +1,9 @@
 package com.lasthopesoftware.bluewater.client.connection.okhttp
 
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpPromiseClient
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
@@ -35,8 +39,11 @@ import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 
-object OkHttpFactory : ProvideHttpPromiseClients, ProvideOkHttpClients {
-	private val buildConnectionTime = Duration.standardSeconds(10)
+class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, ProvideOkHttpClients {
+	companion object {
+		private val buildConnectionTime = Duration.standardSeconds(10)
+		private val dispatcher by lazy { Dispatcher(ThreadPools.io) }
+	}
 
 	override fun getServerClient(serverConnection: ServerConnection): HttpPromiseClient =
 		OkHttpPromiseClient(getOkHttpClient(serverConnection))
@@ -65,13 +72,15 @@ object OkHttpFactory : ProvideHttpPromiseClients, ProvideOkHttpClients {
 			.connectTimeout(buildConnectionTime.millis, TimeUnit.MILLISECONDS)
 			.build()
 
-	private val dispatcher by lazy { Dispatcher(ThreadPools.io) }
-
 	private val commonClient by lazy {
 		OkHttpClient.Builder()
 			.addNetworkInterceptor { chain ->
 				val requestBuilder =
-					chain.request().newBuilder().header("Connection", "close")
+					chain
+						.request()
+						.newBuilder()
+						.header("Connection", "close")
+						.header("User-Agent", getUserAgent())
 				chain.proceed(requestBuilder.build())
 			}
 			.cache(null)
@@ -176,5 +185,18 @@ object OkHttpFactory : ProvideHttpPromiseClients, ProvideOkHttpClients {
 			} catch (e: Throwable) {
 				Promise(e)
 			}
+	}
+
+	private fun getUserAgent(): String {
+		val versionName = try {
+			val packageName = context.packageName
+			val info = context.packageManager.getPackageInfo(packageName, 0)
+			info.versionName ?: "?"
+		} catch (e: PackageManager.NameNotFoundException) {
+			"?"
+		}
+
+		val applicationName = context.getString(R.string.app_name)
+		return ("$applicationName/$versionName (Linux;Android ${Build.VERSION.RELEASE})")
 	}
 }

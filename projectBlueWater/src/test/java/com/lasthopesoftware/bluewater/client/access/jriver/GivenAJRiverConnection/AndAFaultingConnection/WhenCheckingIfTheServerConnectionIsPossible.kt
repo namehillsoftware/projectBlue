@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnection.AndAFaultingConnection
 
-import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.live.MediaCenterConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -26,7 +26,8 @@ class WhenCheckingIfTheServerConnectionIsPossible {
 						every { promiseResponse(URL(urlProvider.baseUrl, "MCWS/v1/Alive")) } returns Promise(IOException())
 					}
 				}
-			}
+			},
+			mockk(),
 		).promiseIsConnectionPossible().toExpiringFuture().get()!!
 	}
 

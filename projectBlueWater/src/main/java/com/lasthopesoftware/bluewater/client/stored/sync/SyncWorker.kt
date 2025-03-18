@@ -19,8 +19,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePrope
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.library.access.DelegatingLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CachedLibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.RevisionStorage
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
@@ -79,7 +79,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 	private val storedFileAccess by lazy { StoredFileAccess(context) }
 	private val readPermissionArbitratorForOs by lazy { OsPermissionsChecker(context) }
 	private val libraryConnections by lazy { ConnectionSessionManager.get(context) }
-	private val cachingPolicyFactory by lazy { CachingPolicyFactory() }
+	private val cachingPolicyFactory by lazy { CachingPolicyFactory }
 
 	private val syncChecker by lazy {
 		SyncChecker(
@@ -100,7 +100,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			filePropertyCache,
 			FilePropertiesProvider(
 				GuaranteedLibraryConnectionProvider(libraryConnections),
-				LibraryRevisionProvider(libraryAccess, libraryConnections, RevisionStorage),
+				CachedLibraryRevisionProvider(LibraryRevisionProvider(libraryAccess)),
 				filePropertyCache
 			)
 		)

@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.shared.NullBox
 import com.lasthopesoftware.policies.ApplyExecutionPolicies
 import com.namehillsoftware.handoff.promises.Promise
 
-class CachingPolicyFactory : ApplyExecutionPolicies {
+object CachingPolicyFactory : ApplyExecutionPolicies {
 	override fun <Input : Any?, Output> applyPolicy(function: (Input) -> Promise<Output>): (Input) -> Promise<Output> {
 		val functionCache =
 			PermanentPromiseFunctionCache<NullBox<Input>, Output>()

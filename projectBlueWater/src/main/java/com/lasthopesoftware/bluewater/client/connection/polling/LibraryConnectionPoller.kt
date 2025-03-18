@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.polling
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.LiveServerConnection
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.promises.PromiseDelay
 import com.namehillsoftware.handoff.Messenger

@@ -28,13 +28,6 @@ import com.lasthopesoftware.bluewater.android.intents.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.DiskFileCache
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.access.CachedFilesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.configuration.AudioCacheConfiguration
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.disk.AndroidDiskCacheDirectoryProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.DiskFileAccessTimeUpdater
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.DiskFileCachePersistence
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.DiskFileCacheStreamSupplier
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlayStatsOnPlaybackCompletedReceiver
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.factory.LibraryPlaystatsUpdateSelector
@@ -44,13 +37,11 @@ import com.lasthopesoftware.bluewater.client.browsing.files.uri.BestMatchUriProv
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.RemoteFileUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
-import com.lasthopesoftware.bluewater.client.playback.caching.datasource.DiskFileCacheSourceFactory
 import com.lasthopesoftware.bluewater.client.playback.caching.uri.CachedAudioFileUriProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlaybackStateChanger
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackContinuity
@@ -74,8 +65,8 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlayableFilePreparationSourceProvider
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.HttpDataSourceFactoryProvider
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.MediaSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.RemoteDataSourceFactoryProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.QueueProviders
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparationProvider
@@ -400,8 +391,6 @@ import java.util.concurrent.TimeoutException
 		LibraryFilePropertiesDependentsRegistry(playbackServiceDependencies, libraryConnectionDependencies)
 	}
 
-	private val diskFileAccessTimeUpdater by lazy { DiskFileAccessTimeUpdater(this) }
-	private val audioDiskCacheDirectoryProvider by lazy { AndroidDiskCacheDirectoryProvider(this, AudioCacheConfiguration) }
 	private val lazyAudioBecomingNoisyReceiver = lazy { AudioBecomingNoisyReceiver() }
 	private val notificationController by lazy {
 		promisingServiceCloseables.manage(NotificationsController(this, notificationManager))
@@ -479,24 +468,8 @@ import java.util.concurrent.TimeoutException
 		)
 	}
 
-	private val audioCacheFilesProvider by lazy { CachedFilesProvider(this, AudioCacheConfiguration) }
-
-	private val audioCacheStreamSupplier by lazy {
-		DiskFileCacheStreamSupplier(
-			audioDiskCacheDirectoryProvider,
-			DiskFileCachePersistence(
-				this,
-				AudioCacheConfiguration,
-				audioCacheFilesProvider,
-				diskFileAccessTimeUpdater
-			),
-			audioCacheFilesProvider
-		)
-	}
-
 	private val bestMatchUriProvider by lazy {
 		val remoteFileUriProvider = RemoteFileUriProvider(libraryConnectionProvider)
-		val audioCache = DiskFileCache(this, audioDiskCacheDirectoryProvider, AudioCacheConfiguration, audioCacheStreamSupplier, audioCacheFilesProvider, diskFileAccessTimeUpdater)
 		val storedFileAccess = StoredFileAccess(this)
 		BestMatchUriProvider(
 			playbackServiceDependencies.libraryProvider,
@@ -504,7 +477,7 @@ import java.util.concurrent.TimeoutException
 				storedFileAccess,
 				arbitratorForOs,
 				contentResolver),
-			CachedAudioFileUriProvider(remoteFileUriProvider, audioCache),
+			CachedAudioFileUriProvider(remoteFileUriProvider, playbackServiceDependencies.audioFileCache),
 			CompatibleMediaFileUriProvider(
 				libraryFilePropertiesProvider,
 				arbitratorForOs,
@@ -535,15 +508,7 @@ import java.util.concurrent.TimeoutException
 	private val mediaSourceProvider by lazy {
 		MediaSourceProvider(
 			this,
-			DiskFileCacheSourceFactory(
-				HttpDataSourceFactoryProvider(
-					this,
-					playbackServiceDependencies.guaranteedLibraryConnectionProvider,
-					OkHttpFactory
-				),
-				audioCacheStreamSupplier
-			),
-			playbackServiceDependencies.guaranteedLibraryConnectionProvider,
+			RemoteDataSourceFactoryProvider(playbackServiceDependencies.guaranteedLibraryConnectionProvider),
 		)
 	}
 
@@ -1119,7 +1084,7 @@ import java.util.concurrent.TimeoutException
 		override val libraryConnectionProvider by lazy {
 			NotifyingLibraryConnectionProvider(
 				notificationBuilderProducer,
-				inner.connectionSessions,
+				inner.libraryConnectionProvider,
 				connectionNotificationsConfiguration,
 				playbackService.notificationController,
 				inner.stringResources,

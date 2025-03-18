@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnecti
 import com.lasthopesoftware.TestMcwsUrl
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.live.MediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
 import com.lasthopesoftware.bluewater.client.connection.url.MediaCenterUrlBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -38,20 +38,14 @@ class `When saving a new playlist` {
 			}
 		}
 
-		MediaCenterConnection(
-			ServerConnection(TestUrl),
-			mockk {
-				every { getServerClient(any()) } returns httpConnection
-			}
-		)
-
 		Pair(
 			httpConnection,
 			MediaCenterConnection(
 				ServerConnection(TestUrl),
 				mockk {
 					every { getServerClient(any()) } returns httpConnection
-				}
+				},
+				mockk(),
 			)
 		)
 	}

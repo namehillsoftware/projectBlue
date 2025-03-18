@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.session
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.LiveServerConnection
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.promises.ResolvedPromiseBox
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.namehillsoftware.handoff.promises.Promise

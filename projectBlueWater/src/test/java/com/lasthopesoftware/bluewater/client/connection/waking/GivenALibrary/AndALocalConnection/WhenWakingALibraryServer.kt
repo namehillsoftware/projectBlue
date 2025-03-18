@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.waking.GivenALibrary.AndALocalConnection
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo
+import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfo
 import com.lasthopesoftware.bluewater.client.connection.waking.MachineAddress
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture

@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.polling
 
 import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.LiveServerConnection
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.namehillsoftware.handoff.promises.Promise
 
 class PollConnectionServiceProxy(private val context: Context) : PollForLibraryConnections {

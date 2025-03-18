@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.waking
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
+import com.lasthopesoftware.bluewater.client.connection.lookup.LookupServers
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.network.LookupActiveNetwork
 import com.namehillsoftware.handoff.promises.Promise
@@ -9,9 +9,9 @@ import com.namehillsoftware.handoff.promises.Promise
 private const val broadcastAddress = "255.255.255.255"
 
 class ServerAlarm(
-	private val serverLookup: LookupServers,
-	private val activeNetwork: LookupActiveNetwork,
-	private val server: PokeServer
+    private val serverLookup: LookupServers,
+    private val activeNetwork: LookupActiveNetwork,
+    private val server: PokeServer
 ) : WakeLibraryServer {
 	override fun awakeLibraryServer(libraryId: LibraryId): Promise<Unit> = Promise.Proxy { cp ->
 		serverLookup.promiseServerInformation(libraryId)

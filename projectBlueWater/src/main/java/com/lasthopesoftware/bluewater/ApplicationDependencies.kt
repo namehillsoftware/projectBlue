@@ -42,5 +42,6 @@ interface ApplicationDependencies {
 	val applicationSettings: HoldApplicationSettings
 	val nowPlayingState: GetNowPlayingState
 	val nowPlayingDisplaySettings: StoreNowPlayingDisplaySettings
+	val audioFileCache: DiskFileCache
 }
 

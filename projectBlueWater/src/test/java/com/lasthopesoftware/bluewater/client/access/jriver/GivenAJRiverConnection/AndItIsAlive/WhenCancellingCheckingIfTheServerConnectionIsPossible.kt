@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnection.AndItIsAlive
 
-import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.live.MediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -44,7 +44,8 @@ class WhenCancellingCheckingIfTheServerConnectionIsPossible {
 						every { promiseResponse(URL(sc.baseUrl, "MCWS/v1/Alive")) } returns deferredResponse
 					}
 				}
-			}
+			},
+			mockk(),
 		).promiseIsConnectionPossible()
 		promisedTest.cancel()
 		deferredResponse.resolve()

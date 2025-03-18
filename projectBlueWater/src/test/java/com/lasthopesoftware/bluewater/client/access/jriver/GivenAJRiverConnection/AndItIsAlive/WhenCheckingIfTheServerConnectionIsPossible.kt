@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnection.AndItIsAlive
 
-import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.live.MediaCenterConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
 import com.namehillsoftware.handoff.promises.Promise
@@ -38,7 +38,8 @@ class WhenCheckingIfTheServerConnectionIsPossible {
 						)
 					}
 				}
-			}
+			},
+			mockk(),
 		).promiseIsConnectionPossible().toExpiringFuture().get()!!
 	}
 

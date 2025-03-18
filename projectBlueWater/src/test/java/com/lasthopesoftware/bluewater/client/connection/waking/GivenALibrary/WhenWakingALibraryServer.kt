@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.connection.waking.GivenALibrary
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo
+import com.lasthopesoftware.bluewater.client.connection.lookup.LookupServers
+import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfo
 import com.lasthopesoftware.bluewater.client.connection.waking.MachineAddress
 import com.lasthopesoftware.bluewater.client.connection.waking.PokeServer
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm

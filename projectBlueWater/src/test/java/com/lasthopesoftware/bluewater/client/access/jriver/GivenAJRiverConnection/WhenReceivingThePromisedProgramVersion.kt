@@ -2,14 +2,15 @@ package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnecti
 
 import com.lasthopesoftware.TestMcwsUrl
 import com.lasthopesoftware.TestUrl
-import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.live.MediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.url.MediaCenterUrlBuilder
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
@@ -41,6 +42,7 @@ class WhenReceivingThePromisedProgramVersion {
 		val connection = MediaCenterConnection(
 			ServerConnection(TestUrl),
 			FakeHttpConnectionProvider(httpConnection),
+			mockk(),
 		)
 
 		connection.promiseServerVersion().toExpiringFuture()[100, TimeUnit.MILLISECONDS]
