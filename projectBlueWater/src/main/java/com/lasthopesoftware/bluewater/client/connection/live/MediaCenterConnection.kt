@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.live
 
 import android.os.Build
 import androidx.media3.datasource.okhttp.OkHttpDataSource
+import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.FileResponses
@@ -102,7 +103,9 @@ class MediaCenterConnection(
 
 	override fun promiseFilePropertyUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> =
 		promiseResponse("File/SetInfo", "File=${serviceFile.key}", "Field=$property", "Value=$value", "formatted=" + if (isFormatted) "1" else "0")
-			.then { response ->
+			.cancelBackThen { response, cs ->
+				if (cs.isCancelled && BuildConfig.DEBUG) logger.debug("File property update cancelled.")
+
 				response.use {
 					logger.info("api/v1/File/SetInfo responded with a response code of {}.", it.code)
 				}
@@ -133,14 +136,17 @@ class MediaCenterConnection(
 			}
 	}
 
-	override fun promiseStoredPlaylist(playlistPath: String, playlist: List<ServiceFile>): Promise<*> =
+	override fun promiseStoredPlaylist(playlistPath: String, playlist: List<ServiceFile>): Promise<*> = Promise.Proxy { cp ->
 		promiseResponse("Playlists/Add", "Type=Playlist", "Path=$playlistPath", "CreateMode=Overwrite")
+			.also(cp::doCancel)
 			.promiseStandardResponse()
+			.also(cp::doCancel)
 			.then { it -> it.items["PlaylistID"] }
 			.eventually {
 				it?.let { playlistId ->
 					ThreadPools.compute
 						.preparePromise { playlist.map { sf -> sf.key }.joinToString(",") }
+						.also(cp::doCancel)
 						.eventually { keys ->
 							promiseResponse(
 								"Playlist/AddFiles",
@@ -151,29 +157,37 @@ class MediaCenterConnection(
 						}
 				}.keepPromise()
 			}
+	}
 
-	override fun promiseIsReadOnly(): Promise<Boolean> =
+	override fun promiseIsReadOnly(): Promise<Boolean> = Promise.Proxy { cp ->
 		promiseResponse("Authenticate")
+			.also(cp::doCancel)
 			.promiseStandardResponse()
+			.also(cp::doCancel)
 			.then { sr ->
 				sr.items["ReadOnly"]?.toInt()?.let { ro -> ro != 0 } ?: false
 			}
+	}
 
-	override fun promiseServerVersion(): Promise<SemanticVersion?> = promiseResponse("Alive")
-		.promiseStandardResponse()
-		.then { standardRequest ->
-			standardRequest.items["ProgramVersion"]
-				?.let { semVerString ->
-					val semVerParts = semVerString.split(".")
-					var major = 0
-					var minor = 0
-					var patch = 0
-					if (semVerParts.isNotEmpty()) major = semVerParts[0].toInt()
-					if (semVerParts.size > 1) minor = semVerParts[1].toInt()
-					if (semVerParts.size > 2) patch = semVerParts[2].toInt()
-					SemanticVersion(major, minor, patch)
-				}
-		}
+	override fun promiseServerVersion(): Promise<SemanticVersion?> = Promise.Proxy { cp ->
+		promiseResponse("Alive")
+			.also(cp::doCancel)
+			.promiseStandardResponse()
+			.also(cp::doCancel)
+			.then { standardRequest ->
+				standardRequest.items["ProgramVersion"]
+					?.let { semVerString ->
+						val semVerParts = semVerString.split(".")
+						var major = 0
+						var minor = 0
+						var patch = 0
+						if (semVerParts.isNotEmpty()) major = semVerParts[0].toInt()
+						if (semVerParts.size > 1) minor = semVerParts[1].toInt()
+						if (semVerParts.size > 2) patch = semVerParts[2].toInt()
+						SemanticVersion(major, minor, patch)
+					}
+			}
+	}
 
 	override fun promiseFile(serviceFile: ServiceFile): Promise<InputStream> =
 		Promise.Proxy { cp ->
@@ -290,10 +304,7 @@ class MediaCenterConnection(
 			).also(cp::doCancel).promiseStringBody()
 		}
 
-	private fun promiseResponse(path: String, vararg params: String): Promise<HttpResponse> =
-		callServer(path, *params)
-
-	private fun callServer(path: String, vararg params: String): Promise<HttpResponse> {
+	private fun promiseResponse(path: String, vararg params: String): Promise<HttpResponse> {
 		val url = MediaCenterUrlBuilder.buildUrl(serverConnection.baseUrl, path, *params)
 		return httpClient.promiseResponse(url)
 	}
