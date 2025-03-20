@@ -64,10 +64,6 @@ object ParsedStandardDocumentResponse : PromisedResponse<Document, StandardRespo
 }
 
 private class HttpStreamedResponse : ImmediateResponse<HttpResponse?, InputStream>, InputStream() {
-	companion object {
-		private val emptyByteArrayInputStream by lazy { ByteArrayInputStream(emptyByteArray) }
-	}
-
 	private var savedResponse: HttpResponse? = null
 	private lateinit var byteStream: InputStream
 
@@ -77,7 +73,7 @@ private class HttpStreamedResponse : ImmediateResponse<HttpResponse?, InputStrea
 		byteStream = response
 			?.takeIf { it.code != 404 }
 			?.run { body }
-			?: emptyByteArrayInputStream
+			?: ByteArrayInputStream(emptyByteArray)
 
 		return this
 	}
