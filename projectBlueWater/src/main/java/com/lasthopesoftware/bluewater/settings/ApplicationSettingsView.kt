@@ -47,6 +47,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.parsedConnectionSettings
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationInfoText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationLogo
@@ -177,7 +178,7 @@ private fun LazyListScope.settingsList(
 			verticalAlignment = Alignment.CenterVertically,
 		) {
 			Text(
-				text = library.accessCode ?: "",
+				text = library.libraryName ?: library.parsedConnectionSettings()?.accessCode ?: "",
 				modifier = Modifier
 					.weight(1f)
 					.padding(Dimensions.viewPaddingUnit),

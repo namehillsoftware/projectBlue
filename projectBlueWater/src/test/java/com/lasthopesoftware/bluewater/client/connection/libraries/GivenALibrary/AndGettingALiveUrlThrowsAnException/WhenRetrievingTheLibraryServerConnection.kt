@@ -5,8 +5,8 @@ import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.live.ProvideLiveServerConnection
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.waking.NoopServerAlarm
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
@@ -23,8 +23,8 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 class WhenRetrievingTheLibraryServerConnection {
-	private val connectionSettings = ConnectionSettings(accessCode = "aB5nf")
-	private val deferredConnectionSettings = DeferredPromise<ConnectionSettings?>(connectionSettings)
+	private val connectionSettings = MediaCenterConnectionSettings(accessCode = "aB5nf")
+	private val deferredConnectionSettings = DeferredPromise<MediaCenterConnectionSettings?>(connectionSettings)
 	private val deferredUrlPromise = DeferredPromise<LiveServerConnection?>(IOException())
 
 	private val mut by lazy {

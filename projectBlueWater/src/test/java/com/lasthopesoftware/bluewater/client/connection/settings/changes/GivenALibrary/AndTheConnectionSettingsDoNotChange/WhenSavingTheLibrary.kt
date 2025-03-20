@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.connection.settings.changes.GivenA
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -25,7 +25,7 @@ class WhenSavingTheLibrary {
 		val connectionSettingsLookup = mockk<LookupConnectionSettings>()
 		every {
 			connectionSettingsLookup.lookupConnectionSettings(LibraryId(13))
-		} returns ConnectionSettings("codeOne").toPromise() andThen ConnectionSettings("codeOne").toPromise()
+		} returns MediaCenterConnectionSettings("codeOne").toPromise() andThen MediaCenterConnectionSettings("codeOne").toPromise()
 
 		val connectionSettingsChangeDetectionLibraryStorage = ObservableConnectionSettingsLibraryStorage(
 			libraryStorage,

@@ -157,7 +157,7 @@ object ApplicationDependenciesContainer {
 			val connectionSettingsLookup = ConnectionSettingsLookup(LibraryRepository(context))
 			val serverLookup = ServerLookup(
 				connectionSettingsLookup,
-				ServerInfoXmlRequest(LibraryRepository(context), okHttpClients),
+				ServerInfoXmlRequest(connectionSettingsLookup, okHttpClients),
 			)
 
 			val activeNetwork = ActiveNetworkFinder(context)
@@ -220,5 +220,7 @@ object ApplicationDependenciesContainer {
 		override val stringResources by lazy { StringResources(context) }
 
 		override val nowPlayingDisplaySettings by lazy { InMemoryNowPlayingDisplaySettings() }
+
+		override val connectionSettingsLookup by lazy { ConnectionSettingsLookup(libraryProvider) }
 	}
 }

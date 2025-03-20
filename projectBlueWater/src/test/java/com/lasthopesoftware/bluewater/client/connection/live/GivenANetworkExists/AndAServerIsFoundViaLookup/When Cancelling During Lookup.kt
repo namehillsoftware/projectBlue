@@ -5,8 +5,8 @@ import com.lasthopesoftware.bluewater.client.connection.live.ConfiguredActiveNet
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.live.PassThroughBase64Encoder
 import com.lasthopesoftware.bluewater.client.connection.lookup.LookupServers
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -28,7 +28,7 @@ class `When Cancelling During Lookup` {
 		}
 
 		val connectionSettingsLookup = mockk<LookupConnectionSettings>()
-		every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(55)) } returns ConnectionSettings(accessCode = "gooPc").toPromise()
+		every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(55)) } returns MediaCenterConnectionSettings(accessCode = "gooPc").toPromise()
 
 		val connectionProvider = LiveServerConnectionProvider(
 			ConfiguredActiveNetwork(isNetworkActive = true),

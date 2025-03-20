@@ -14,11 +14,11 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.ExecutionException
 
-class WhenGettingServerConnectionSettings {
+class WhenGettingServerMediaCenterConnectionSettings {
 
 	private val mut by lazy {
 		val libraryProvider = mockk<ILibraryProvider>()
-		every { libraryProvider.promiseLibrary(LibraryId(10)) } returns Library().toPromise()
+		every { libraryProvider.promiseLibrary(LibraryId(10)) } returns Library(connectionSettings = "{}").toPromise()
 
 		val connectionSettingsLookup = ConnectionSettingsLookup(libraryProvider)
 

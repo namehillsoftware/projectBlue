@@ -7,8 +7,9 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePrope
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.localExternalRelativeFilePathAsMp3
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.parsedConnectionSettings
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.ExternalMusicContent
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.HaveExternalContent
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.MediaFileUriProvider
@@ -35,9 +36,9 @@ class StoredFileUrisLookup(
 				libraryProvider
 					.promiseLibrary(libraryId)
 					.eventually { l ->
-						when (l?.syncedFileLocation) {
-							Library.SyncedFileLocation.INTERNAL -> promiseLocalFileUri(libraryId, fileProperties)
-							Library.SyncedFileLocation.EXTERNAL -> promiseExternalUri(libraryId, serviceFile, fileProperties)
+						when (l?.parsedConnectionSettings()?.syncedFileLocation) {
+							SyncedFileLocation.INTERNAL -> promiseLocalFileUri(libraryId, fileProperties)
+							SyncedFileLocation.EXTERNAL -> promiseExternalUri(libraryId, serviceFile, fileProperties)
 							else -> Promise.empty()
 						}
 					}

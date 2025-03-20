@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -26,7 +26,7 @@ class WhenRetrievingTheLibraryServerConnection {
 
 	private val mut by lazy {
 		val deferredConnectionSettings =
-			DeferredPromise<ConnectionSettings?>(ConnectionSettings(accessCode = "aB5nf", isWakeOnLanEnabled = true))
+			DeferredPromise<MediaCenterConnectionSettings?>(MediaCenterConnectionSettings(accessCode = "aB5nf", isWakeOnLanEnabled = true))
 
 		val libraryConnectionProvider = LibraryConnectionProvider(
             mockk {

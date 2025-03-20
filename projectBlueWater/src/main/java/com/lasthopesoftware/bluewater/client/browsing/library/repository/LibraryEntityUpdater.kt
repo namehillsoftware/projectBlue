@@ -5,15 +5,17 @@ import android.util.Base64
 import androidx.annotation.Keep
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.createTableSql
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.isWakeOnLanEnabledColumn
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.macAddressColumn
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.sslCertificateFingerprintColumn
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.tableName
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
 import com.lasthopesoftware.bluewater.repository.fetch
+import com.lasthopesoftware.resources.emptyByteArray
+import com.lasthopesoftware.resources.strings.EncodeToBase64
 import com.namehillsoftware.querydroid.SqLiteAssistants
 import com.namehillsoftware.querydroid.SqLiteCommand
+import kotlinx.serialization.json.Json
 
-object LibraryEntityUpdater : IEntityUpdater {
+@OptIn(ExperimentalStdlibApi::class)
+class LibraryEntityUpdater(private val base64: EncodeToBase64) : IEntityUpdater {
 
 	override fun onUpdate(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
 		if (oldVersion < 5) {
@@ -59,6 +61,7 @@ object LibraryEntityUpdater : IEntityUpdater {
 				}
 			}
 		}
+
 		if (oldVersion < 8) {
 			db.execSQL("ALTER TABLE `$tableName` add column `$isWakeOnLanEnabledColumn` SMALLINT;")
 		}
@@ -77,14 +80,24 @@ object LibraryEntityUpdater : IEntityUpdater {
 
 			db.execSQL("DROP TABLE `$tableName`")
 			db.execSQL("ALTER TABLE `$tempTableName` RENAME TO `$tableName`")
+
+			return
 		}
 
-		if (oldVersion < 15) {
-			db.execSQL("ALTER TABLE `$tableName` ADD COLUMN `$sslCertificateFingerprintColumn` BLOB;")
-		}
+		if (oldVersion < 18) {
+			val tempTableName = tableName + "Temp"
+			db.execSQL("DROP TABLE IF EXISTS `$tempTableName`")
+			val createTempTableSql = createTableSql.replaceFirst("`$tableName`", "`$tempTableName`")
+			db.execSQL(createTempTableSql)
+			val oldLibraries = SqLiteCommand(db, "SELECT * FROM $tableName").fetch<Version17Library>()
+			for (oldLibrary in oldLibraries) {
+				val newLibrary = oldLibrary.toLibrary()
 
-		if (oldVersion < 17) {
-			db.execSQL("ALTER TABLE `$tableName` ADD COLUMN `$macAddressColumn` VARCHAR(20);")
+				SqLiteAssistants.insertValue(db, tempTableName, newLibrary)
+			}
+
+			db.execSQL("DROP TABLE `$tableName`")
+			db.execSQL("ALTER TABLE `$tempTableName` RENAME TO `$tableName`")
 		}
 	}
 
@@ -99,10 +112,8 @@ object LibraryEntityUpdater : IEntityUpdater {
 		var isRepeating: Boolean = false
 		var nowPlayingId: Int = 0
 		var nowPlayingProgress: Long = 0L
-		var selectedViewType: Library.ViewType? = null
-		var selectedView: Int = 0
 		var savedTracksString: String? = null
-		var syncedFileLocation: Version13SyncedFileLocation? = null
+		var syncedFileLocation: SyncedFileLocation? = null
 		var isUsingExistingFiles: Boolean = false
 		var isSyncLocalConnectionsOnly: Boolean = false
 		var isWakeOnLanEnabled: Boolean = false
@@ -111,30 +122,80 @@ object LibraryEntityUpdater : IEntityUpdater {
 			return Library(
 				id = id,
 				libraryName = libraryName,
-				accessCode = accessCode,
-				isLocalOnly = isLocalOnly,
 				isRepeating = isRepeating,
-				isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly,
                 isUsingExistingFiles = isUsingExistingFiles,
-				isWakeOnLanEnabled = isWakeOnLanEnabled,
 				nowPlayingId = nowPlayingId,
-				password = password,
 				nowPlayingProgress = nowPlayingProgress,
 				savedTracksString = savedTracksString,
-				selectedView = selectedView,
-				selectedViewType = selectedViewType,
-				userName = userName,
-				syncedFileLocation = when (syncedFileLocation) {
-					Version13SyncedFileLocation.CUSTOM, Version13SyncedFileLocation.EXTERNAL -> Library.SyncedFileLocation.EXTERNAL
-					Version13SyncedFileLocation.INTERNAL -> Library.SyncedFileLocation.INTERNAL
-					null -> null
-				}
+				serverType = Library.ServerType.MediaCenter,
+				connectionSettings = Json.encodeToString(
+					StoredMediaCenterConnectionSettings(
+						accessCode = accessCode ?: "",
+						userName = userName,
+						password = password,
+						isLocalOnly = isLocalOnly,
+						isWakeOnLanEnabled = isWakeOnLanEnabled,
+						isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly,
+						syncedFileLocation = when (syncedFileLocation) {
+							SyncedFileLocation.CUSTOM, SyncedFileLocation.EXTERNAL -> com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation.EXTERNAL
+							SyncedFileLocation.INTERNAL -> com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation.INTERNAL
+							null -> null
+						},
+					)
+				)
 			)
+		}
+
+		@Keep
+		enum class SyncedFileLocation {
+			EXTERNAL, INTERNAL, CUSTOM;
 		}
 	}
 
 	@Keep
-	enum class Version13SyncedFileLocation {
-		EXTERNAL, INTERNAL, CUSTOM;
+	inner class Version17Library(
+		var id: Int = -1,
+		var libraryName: String? = null,
+		var accessCode: String? = null,
+		var userName: String? = null,
+		var password: String? = null,
+		var isLocalOnly: Boolean = false,
+		var isRepeating: Boolean = false,
+		var nowPlayingId: Int = -1,
+		var nowPlayingProgress: Long = -1,
+		var savedTracksString: String? = null,
+		var syncedFileLocation: SyncedFileLocation? = null,
+		var isUsingExistingFiles: Boolean = false,
+		var isSyncLocalConnectionsOnly: Boolean = false,
+		var isWakeOnLanEnabled: Boolean = false,
+		var sslCertificateFingerprint: ByteArray = emptyByteArray,
+		var macAddress: String? = null,
+	) {
+
+		fun toLibrary(): Library {
+			return Library(
+				id = id,
+				libraryName = libraryName,
+				isRepeating = isRepeating,
+				nowPlayingId = nowPlayingId,
+				nowPlayingProgress = nowPlayingProgress,
+				savedTracksString = savedTracksString,
+				isUsingExistingFiles = isUsingExistingFiles,
+				serverType = Library.ServerType.MediaCenter,
+				connectionSettings = Json.encodeToString(
+					StoredMediaCenterConnectionSettings(
+						accessCode = accessCode ?: "",
+						userName = userName,
+						password = password,
+						isLocalOnly = isLocalOnly,
+						isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly,
+						isWakeOnLanEnabled = isWakeOnLanEnabled,
+						sslCertificateFingerprint = sslCertificateFingerprint.toHexString(),
+						macAddress = macAddress,
+						syncedFileLocation = syncedFileLocation,
+					)
+				)
+			)
+		}
 	}
 }

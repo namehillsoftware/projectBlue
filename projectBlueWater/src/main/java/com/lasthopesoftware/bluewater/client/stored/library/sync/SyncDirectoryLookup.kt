@@ -1,8 +1,9 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync
 
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.parsedConnectionSettings
 import com.lasthopesoftware.storage.GetFreeSpace
 import com.lasthopesoftware.storage.directories.GetPrivateDirectories
 import com.namehillsoftware.handoff.promises.Promise
@@ -27,7 +28,7 @@ class SyncDirectoryLookup(
 			.promiseLibrary(libraryId)
 			.eventually { library ->
 				library
-					?.takeIf { it.syncedFileLocation == SyncedFileLocation.INTERNAL }
+					?.takeIf { it.parsedConnectionSettings()?.syncedFileLocation == SyncedFileLocation.INTERNAL }
 					?.let {
 						val promisedPrivateDrive = privateDrives.promisePrivateDrives()
 						if (library.id < 0) promisedPrivateDrive

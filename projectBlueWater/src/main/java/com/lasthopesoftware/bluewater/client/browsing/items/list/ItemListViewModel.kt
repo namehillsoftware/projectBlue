@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.ActivityLaunching
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.parsedConnectionSettings
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
@@ -53,7 +54,7 @@ class ItemListViewModel(
 			else libraryProvider
 				.promiseLibrary(libraryId)
 				.then { l ->
-					mutableItemValue.value = l?.libraryName?.takeIf { it.isNotEmpty() } ?: l?.accessCode ?: ""
+					mutableItemValue.value = l?.libraryName?.takeIf { it.isNotEmpty() } ?: l?.parsedConnectionSettings()?.accessCode ?: ""
 				}
 
 		val promisedItemUpdate = itemProvider

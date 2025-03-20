@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.connection.lookup
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.emptyByteArray
 import com.namehillsoftware.handoff.promises.Promise
@@ -22,7 +22,7 @@ class ServerLookup(
 		private const val msgElement = "msg"
 		private const val macAddressElement = "macaddresslist"
 
-		private fun ConnectionSettings.parseServerInfo(): Pair<Boolean, ServerInfo> {
+		private fun MediaCenterConnectionSettings.parseServerInfo(): Pair<Boolean, ServerInfo> {
 			var url = accessCode
 			var isValidUrl = false
 
@@ -58,8 +58,7 @@ class ServerLookup(
 				httpsPort = port.takeIf { isHttps },
 				macAddresses = macAddress?.takeIf { it.isNotEmpty() }?.let(::setOf) ?: emptySet(),
 				certificateFingerprint = sslCertificateFingerprint
-			)
-            )
+			))
 		}
 
 		private fun isPositiveInteger(string: String): Boolean = string.toCharArray().all(Character::isDigit)
@@ -85,9 +84,7 @@ class ServerLookup(
 							if (xml == null || proxy.isCancelled) return@then null
 
 							val response = xml.firstElementChild() ?: return@then null
-							if (response.hasAttr(statusAttribute) && errorStatusValue == response.attr(
-                                    statusAttribute
-                                )) {
+							if (errorStatusValue == response.attr(statusAttribute)) {
 								val element = response.getElementsByTag(msgElement).firstOrNull()
 								if (element != null) throw ServerDiscoveryException(
 									libraryId,

@@ -8,8 +8,8 @@ import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectio
 import com.lasthopesoftware.bluewater.client.connection.live.PassThroughBase64Encoder
 import com.lasthopesoftware.bluewater.client.connection.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfo
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.PassThroughHttpResponse
@@ -35,7 +35,7 @@ class `When Getting The Live Connection` {
 		)
 
 		val connectionSettingsLookup = mockk<LookupConnectionSettings>()
-		every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(16)) } returns ConnectionSettings(accessCode = "gooPc", userName = "user", password = null).toPromise()
+		every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(16)) } returns MediaCenterConnectionSettings(accessCode = "gooPc", userName = "user", password = null).toPromise()
 
 		LiveServerConnectionProvider(
 			ConfiguredActiveNetwork(isNetworkActive = true),

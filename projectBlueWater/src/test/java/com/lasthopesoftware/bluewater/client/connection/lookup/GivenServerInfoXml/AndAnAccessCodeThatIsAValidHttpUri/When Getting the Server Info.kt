@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.lookup.GivenServerInfoX
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfo
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerLookup
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -21,7 +21,7 @@ class `When Getting the Server Info` {
 	private val services by lazy {
         ServerLookup(
             mockk {
-                every { lookupConnectionSettings(LibraryId(libraryId)) } returns ConnectionSettings(
+                every { lookupConnectionSettings(LibraryId(libraryId)) } returns MediaCenterConnectionSettings(
                     accessCode = "http://gyRxp8AOEkD:586"
                 ).toPromise()
             },
