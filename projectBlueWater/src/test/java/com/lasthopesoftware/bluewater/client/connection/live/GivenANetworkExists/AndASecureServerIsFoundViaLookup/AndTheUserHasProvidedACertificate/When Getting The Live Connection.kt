@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.connection.live.ConfiguredActiveNet
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.live.PassThroughBase64Encoder
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfo
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.PassThroughHttpResponse
@@ -39,7 +39,7 @@ class `When Getting The Live Connection` {
 				)
 			},
 			mockk {
-				every { lookupConnectionSettings(LibraryId(libraryId)) } returns ConnectionSettings(
+				every { lookupConnectionSettings(LibraryId(libraryId)) } returns MediaCenterConnectionSettings(
 					accessCode = "gooPc",
 					sslCertificateFingerprint = Hex.decodeHex("F951D0C4AC2778F5C36344D7F0CD6D61E4BFE01F")
 				).toPromise()

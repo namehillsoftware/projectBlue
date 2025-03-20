@@ -48,7 +48,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.connection.trust.ProvideUserSslCertificates
 import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
@@ -404,12 +404,12 @@ private fun LibrarySettingsList(
 				) {
 					LabeledSelection(
 						label = stringResource(id = R.string.rbPrivateToApp),
-						selected = syncedFileLocationState == Library.SyncedFileLocation.INTERNAL,
-						onSelected = { syncedFileLocationState = Library.SyncedFileLocation.INTERNAL },
+						selected = syncedFileLocationState == SyncedFileLocation.INTERNAL,
+						onSelected = { syncedFileLocationState = SyncedFileLocation.INTERNAL },
 						role = Role.RadioButton,
 					) {
 						RadioButton(
-							selected = syncedFileLocationState == Library.SyncedFileLocation.INTERNAL,
+							selected = syncedFileLocationState == SyncedFileLocation.INTERNAL,
 							onClick = null,
 						)
 					}
@@ -420,12 +420,12 @@ private fun LibrarySettingsList(
 				) {
 					LabeledSelection(
 						label = stringResource(id = R.string.rbPublicLocation),
-						selected = syncedFileLocationState == Library.SyncedFileLocation.EXTERNAL,
-						onSelected = { syncedFileLocationState = Library.SyncedFileLocation.EXTERNAL },
+						selected = syncedFileLocationState == SyncedFileLocation.EXTERNAL,
+						onSelected = { syncedFileLocationState = SyncedFileLocation.EXTERNAL },
 						role = Role.RadioButton,
 					) {
 						RadioButton(
-							selected = syncedFileLocationState == Library.SyncedFileLocation.EXTERNAL,
+							selected = syncedFileLocationState == SyncedFileLocation.EXTERNAL,
 							onClick = null,
 						)
 					}

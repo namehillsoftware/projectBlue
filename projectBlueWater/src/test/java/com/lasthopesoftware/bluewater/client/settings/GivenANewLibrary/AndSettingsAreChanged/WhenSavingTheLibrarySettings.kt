@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.settings.GivenANewLibrary.AndSetti
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -27,9 +28,9 @@ class WhenSavingTheLibrarySettings {
 		}
 
         LibrarySettingsViewModel(
-            libraryRepository,
-            libraryRepository,
-            mockk(),
+			libraryRepository,
+			libraryRepository,
+			mockk(),
 			mockk {
 				every { promiseIsLibraryPermissionsGranted(any()) } returns true.toPromise()
 			},
@@ -56,7 +57,7 @@ class WhenSavingTheLibrarySettings {
 			isSyncLocalConnectionsOnly.value = !isSyncLocalConnectionsOnly.value
 			isUsingExistingFiles.value = !isUsingExistingFiles.value
 			isWakeOnLanEnabled.value = !isWakeOnLanEnabled.value
-			syncedFileLocation.value = Library.SyncedFileLocation.INTERNAL
+			syncedFileLocation.value = SyncedFileLocation.INTERNAL
 
 			didSettingsChange = isSettingsChanged.value
 			isSaved = saveLibrary().toExpiringFuture().get() == true
@@ -132,7 +133,7 @@ class WhenSavingTheLibrarySettings {
     @Test
     fun `then synced file location is correct`() {
         assertThat(services.syncedFileLocation.value)
-            .isEqualTo(Library.SyncedFileLocation.INTERNAL)
+            .isEqualTo(SyncedFileLocation.INTERNAL)
     }
 
     @Test

@@ -2,9 +2,12 @@ package com.lasthopesoftware.bluewater.permissions.read.GivenLibraryRequestingSt
 
 import android.os.Build
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.StoredMediaCenterConnectionSettings
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -23,7 +26,11 @@ class WhenCheckingIfOsReadPermissionsAreRequiredForTheLibrary {
 
 		applicationReadPermissionsRequirementsProvider
 			.isReadPermissionsRequiredForLibrary(
-				Library(syncedFileLocation = Library.SyncedFileLocation.EXTERNAL)
+				Library(connectionSettings = Json.encodeToString(
+					StoredMediaCenterConnectionSettings(
+						syncedFileLocation = SyncedFileLocation.EXTERNAL,
+					)
+				))
 			)
 	}
 

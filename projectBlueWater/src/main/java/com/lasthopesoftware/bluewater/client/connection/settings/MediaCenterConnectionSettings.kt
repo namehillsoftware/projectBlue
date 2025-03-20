@@ -2,11 +2,12 @@ package com.lasthopesoftware.bluewater.client.connection.settings
 
 import com.lasthopesoftware.resources.emptyByteArray
 
-data class ConnectionSettings(
+data class MediaCenterConnectionSettings(
 	val accessCode: String,
 	val userName: String? = null,
 	val password: String? = null,
 	val isLocalOnly: Boolean = false,
+	val isSyncLocalConnectionsOnly: Boolean = false,
 	val isWakeOnLanEnabled: Boolean = false,
 	val sslCertificateFingerprint: ByteArray = emptyByteArray,
 	val macAddress: String? = null,
@@ -15,12 +16,13 @@ data class ConnectionSettings(
 		if (this === other) return true
 		if (javaClass != other?.javaClass) return false
 
-		other as ConnectionSettings
+		other as MediaCenterConnectionSettings
 
 		if (accessCode != other.accessCode) return false
 		if (userName != other.userName) return false
 		if (password != other.password) return false
 		if (isLocalOnly != other.isLocalOnly) return false
+		if (isSyncLocalConnectionsOnly != other.isSyncLocalConnectionsOnly) return false
 		if (isWakeOnLanEnabled != other.isWakeOnLanEnabled) return false
 		if (!sslCertificateFingerprint.contentEquals(other.sslCertificateFingerprint)) return false
 		if (macAddress != other.macAddress) return false
@@ -34,6 +36,7 @@ data class ConnectionSettings(
 		result = 31 * result + (password?.hashCode() ?: 0)
 		result = 31 * result + isLocalOnly.hashCode()
 		result = 31 * result + isWakeOnLanEnabled.hashCode()
+		result = 31 * result + isSyncLocalConnectionsOnly.hashCode()
 		result = 31 * result + sslCertificateFingerprint.contentHashCode()
 		result = 31 * result + (macAddress?.hashCode() ?: 0)
 		return result

@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.tableName
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
+import com.lasthopesoftware.bluewater.repository.fetch
 import com.lasthopesoftware.bluewater.repository.fetchFirst
 import com.lasthopesoftware.bluewater.repository.insert
 import com.lasthopesoftware.bluewater.repository.update
@@ -35,7 +36,7 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 				repositoryAccessHelper.beginNonExclusiveTransaction().use {
 					repositoryAccessHelper
 						.mapSql("SELECT * FROM $tableName")
-						.fetch(Library::class.java)
+						.fetch()
 				}
 			}
 		}

@@ -4,6 +4,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.StoredMediaCenterConnectionSettings
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.FakeStoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
@@ -12,6 +14,7 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.uri.IoCommon
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -28,7 +31,11 @@ class WhenMarkingTheStoredFileAsDownloaded {
 			Library(
 				isUsingExistingFiles = true,
 				id = libraryId,
-				syncedFileLocation = Library.SyncedFileLocation.INTERNAL
+				connectionSettings = Json.encodeToString(
+					StoredMediaCenterConnectionSettings(
+						syncedFileLocation = SyncedFileLocation.INTERNAL,
+					)
+				),
 			)
 		)
 

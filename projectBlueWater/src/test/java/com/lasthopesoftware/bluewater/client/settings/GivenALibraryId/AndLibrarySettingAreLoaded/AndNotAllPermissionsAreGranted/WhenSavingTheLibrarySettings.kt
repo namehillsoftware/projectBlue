@@ -3,11 +3,14 @@ package com.lasthopesoftware.bluewater.client.settings.GivenALibraryId.AndLibrar
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.StoredMediaCenterConnectionSettings
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -19,21 +22,25 @@ class WhenSavingTheLibrarySettings {
 		val libraryRepository = FakeLibraryRepository(
 			Library(
 				id = libraryId.id,
-				accessCode = "b2q",
-				isLocalOnly = false,
-				isSyncLocalConnectionsOnly = true,
-				isWakeOnLanEnabled = false,
-                password = "hmpyA",
-				syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
 				isUsingExistingFiles = true,
 				libraryName = "theater",
+				connectionSettings = Json.encodeToString(
+					StoredMediaCenterConnectionSettings(
+						accessCode = "b2q",
+						isLocalOnly = false,
+						isSyncLocalConnectionsOnly = true,
+						isWakeOnLanEnabled = false,
+						password = "hmpyA",
+						syncedFileLocation = SyncedFileLocation.EXTERNAL,
+					)
+				)
 			)
 		)
 
         LibrarySettingsViewModel(
-            libraryRepository,
-            libraryRepository,
-            mockk(),
+			libraryRepository,
+			libraryRepository,
+			mockk(),
 			mockk {
 				every { promiseIsLibraryPermissionsGranted(any()) } returns false.toPromise()
 			},
@@ -53,7 +60,7 @@ class WhenSavingTheLibrarySettings {
 			isSyncLocalConnectionsOnly.value = !isSyncLocalConnectionsOnly.value
 			isUsingExistingFiles.value = !isUsingExistingFiles.value
 			isWakeOnLanEnabled.value = !isWakeOnLanEnabled.value
-			syncedFileLocation.value = Library.SyncedFileLocation.INTERNAL
+			syncedFileLocation.value = SyncedFileLocation.INTERNAL
 			libraryName.value = "spit"
 			isSaved = saveLibrary().toExpiringFuture().get() == true
 		}
@@ -102,7 +109,7 @@ class WhenSavingTheLibrarySettings {
     @Test
     fun `then synced file location is correct`() {
         assertThat(services.syncedFileLocation.value)
-            .isEqualTo(Library.SyncedFileLocation.INTERNAL)
+            .isEqualTo(SyncedFileLocation.INTERNAL)
     }
 
     @Test

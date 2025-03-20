@@ -4,12 +4,15 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.StoredMediaCenterConnectionSettings
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.FakeStoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.serialization.json.Json
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -24,7 +27,11 @@ class WhenUpdatingTheFile {
 
 	private val sut by lazy {
 		val fakeLibraryRepository = FakeLibraryRepository(
-			Library(id = 14, syncedFileLocation = Library.SyncedFileLocation.INTERNAL)
+			Library(id = 14, connectionSettings = Json.encodeToString(
+				StoredMediaCenterConnectionSettings(
+					syncedFileLocation = SyncedFileLocation.INTERNAL,
+				)
+			))
 		)
 
 		StoredFileUpdater(

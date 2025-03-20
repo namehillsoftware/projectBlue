@@ -8,8 +8,8 @@ import com.lasthopesoftware.bluewater.client.connection.live.ProvideLiveServerCo
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.LibraryConnectionChangedMessage
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.waking.NoopServerAlarm
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
@@ -33,7 +33,7 @@ class WhenRetrievingTheLibraryServerConnectionTwice {
 		val validateConnectionSettings = mockk<ValidateConnectionSettings>()
 		every { validateConnectionSettings.isValid(any()) } returns true
 
-		val deferredConnectionSettings = DeferredPromise<ConnectionSettings?>(ConnectionSettings(accessCode = "aB5nf"))
+		val deferredConnectionSettings = DeferredPromise<MediaCenterConnectionSettings?>(MediaCenterConnectionSettings(accessCode = "aB5nf"))
 
 		val lookupConnection = mockk<LookupConnectionSettings>()
 		every {

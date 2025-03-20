@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibrarySto
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
+import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.StoreNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
@@ -43,5 +44,6 @@ interface ApplicationDependencies {
 	val nowPlayingState: GetNowPlayingState
 	val nowPlayingDisplaySettings: StoreNowPlayingDisplaySettings
 	val audioFileCache: DiskFileCache
+	val connectionSettingsLookup: LookupConnectionSettings
 }
 
