@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.shared.exceptions
 
+import com.lasthopesoftware.bluewater.BuildConfig
+import com.lasthopesoftware.exceptions.isOkHttpCanceled
 import com.lasthopesoftware.exceptions.isSocketClosedException
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.rejections.UnhandledRejectionsReceiver
@@ -41,17 +43,28 @@ object UncaughtExceptionHandlerLogger : Thread.UncaughtExceptionHandler, Unhandl
 
 	private fun reportException(ex: Throwable): Boolean = when (ex) {
 			is CancellationException -> {
-				logger.debug(UnhandledCancellationException, ex)
+				logDebug(UnhandledCancellationException, ex)
 				false
 			}
 			is IOException -> {
-				ex.takeIf { it.isSocketClosedException() }
-					?.let {
-						logger.debug(UnhandledSocketClosedException, it)
+				when {
+					ex.isSocketClosedException() -> {
+						logDebug(UnhandledSocketClosedException, ex)
 						false
 					}
-					?: true
+					ex.isOkHttpCanceled() -> {
+						logDebug(UnhandledCancellationException, ex)
+						false
+					}
+					else -> true
+				}
 			}
 			else -> true
 		}
+
+	private fun logDebug(message: String, ex: Throwable) {
+		if (BuildConfig.DEBUG) {
+			logger.debug(message, ex)
+		}
+	}
 }
