@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.intents.getIntent
 import com.lasthopesoftware.bluewater.android.intents.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
@@ -32,7 +32,7 @@ class PollConnectionService : LifecycleService() {
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<PollConnectionService>()) }
 
 		private val stopWaitingForConnectionAction by lazy { magicPropertyBuilder.buildProperty("stopWaitingForConnection") }
-		fun pollSessionConnection(context: Context, libraryId: LibraryId): Promise<ProvideConnections> = Promise.Proxy { cp ->
+		fun pollSessionConnection(context: Context, libraryId: LibraryId): Promise<LiveServerConnection> = Promise.Proxy { cp ->
 			context.promiseBoundService<PollConnectionService>()
 				.also(cp::doCancel)
 				.eventually {  s ->
@@ -84,7 +84,7 @@ class PollConnectionService : LifecycleService() {
 		return START_NOT_STICKY
 	}
 
-	private fun promiseTestedLibrary(libraryId: LibraryId): Promise<ProvideConnections> {
+	private fun promiseTestedLibrary(libraryId: LibraryId): Promise<LiveServerConnection> {
 		beginNotification()
 
 		return libraryConnectionPoller.pollConnection(libraryId)

@@ -1,11 +1,9 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.AndOnlyAFewHaveDownloaded
 
 import android.os.Build
-import androidx.annotation.RequiresApi
+import androidx.test.filters.SdkSuppress
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.MarkedFilesStoredFilesUpdater
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
@@ -78,16 +76,9 @@ class WhenProcessingTheQueue {
 	private val storedFilesUpdater = MarkedFilesStoredFilesUpdater()
 	private var storedFileStatuses: List<StoredFileJobStatus> = ArrayList()
 
-	@RequiresApi(api = Build.VERSION_CODES.N)
 	@BeforeAll
+	@SdkSuppress(minSdkVersion = Build.VERSION_CODES.N)
 	fun before() {
-		val fakeConnectionProvider = FakeConnectionProvider()
-		fakeConnectionProvider.mapResponse({
-			FakeConnectionResponseTuple(
-				200,
-				ByteArray(0)
-			)
-		})
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
 				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()

@@ -7,4 +7,5 @@ interface IFileListParameterProvider {
     fun getFileListParameters(): Array<String>
     fun getFileListParameters(itemId: ItemId): Array<String>
     fun getFileListParameters(playlistId: PlaylistId): Array<String>
+	fun getFileListParameters(query: String): Array<String>
 }

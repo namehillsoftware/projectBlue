@@ -1,12 +1,14 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.GivenAnItem
 
+import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ProvideFileStringListsForParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.namehillsoftware.handoff.promises.Promise
+import com.lasthopesoftware.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -15,12 +17,15 @@ import org.junit.jupiter.api.Test
 class WhenGettingTheStringList {
 
 	private val stringList by lazy {
-
-		val fileStringListProvider = mockk<ProvideFileStringListsForParameters>().apply {
-			every { promiseFileStringList(LibraryId(14), FileListParameters.Options.None, "Browse/Files", "ID=32", "Version=2") } returns Promise("BfCs02")
-		}
-
-		val itemStringListProvider = ItemStringListProvider(FileListParameters, fileStringListProvider)
+		val itemStringListProvider = ItemStringListProvider(
+			mockk {
+				every { promiseLibraryConnection(LibraryId(14)) } returns ProgressingPromise(mockk<LiveServerConnection> {
+					every { dataAccess } returns mockk<RemoteLibraryAccess> {
+						every { promiseFileStringList(ItemId(32)) } returns "BfCs02".toPromise()
+					}
+				})
+			}
+		)
 		itemStringListProvider.promiseFileStringList(LibraryId(14), ItemId(32), FileListParameters.Options.None)
 			.toExpiringFuture()
 			.get()

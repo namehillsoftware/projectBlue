@@ -1,36 +1,45 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.image.GivenAServiceFile
 
+import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
-import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.shared.images.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.promises.extensions.toPromise
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class WhenGettingOtherImageBytes {
 
 	private val imageBytes by lazy {
-		val fakeConnectionProvider = FakeConnectionProvider()
-		fakeConnectionProvider.mapResponse(
-			{
-				FakeConnectionResponseTuple(
-					200,
-					byteArrayOf(46, 78, 99, 42)
-				)
-			},
-			"File/GetImage",
-			"File=583",
-			"Type=Full",
-			"Pad=1",
-			"Format=jpg",
-			"FillTransparency=ffffff"
-		)
+//		val fakeConnectionProvider = FakeConnectionProvider()
+//		fakeConnectionProvider.mapResponse(
+//			{
+//				FakeConnectionResponseTuple(
+//					200,
+//					byteArrayOf(46, 78, 99, 42)
+//				)
+//			},
+//			"File/GetImage",
+//			"File=583",
+//			"Type=Full",
+//			"Pad=1",
+//			"Format=jpg",
+//			"FillTransparency=ffffff"
+//		)
 
 		val memoryCachedImageAccess = RemoteImageAccess(
-			FakeLibraryConnectionProvider(mapOf(Pair(LibraryId(11), fakeConnectionProvider))))
+			mockk {
+				every { promiseLibraryConnection(LibraryId(11)) } returns ProgressingPromise(mockk<LiveServerConnection> {
+					every { dataAccess } returns mockk<RemoteLibraryAccess> {
+						every { promiseImageBytes(ServiceFile(583)) } returns byteArrayOf(46, 78, 99, 42).toPromise()
+					}
+				})
+			})
 
 		memoryCachedImageAccess.promiseImageBytes(LibraryId(11), ServiceFile(583)).toExpiringFuture().get()
 	}

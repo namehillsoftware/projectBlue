@@ -6,9 +6,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
-import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.lasthopesoftware.bluewater.shared.lazyLogger
@@ -148,8 +148,8 @@ class NowPlayingCoverArtViewModel(
 		ConnectionLostExceptionFilter.isConnectionLostException(exception)
 
 	private class CachedPromises(
-		val urlKeyHolder: UrlKeyHolder<ServiceFile>,
-		val promisedImage: Promise<ByteArray>
+        val urlKeyHolder: UrlKeyHolder<ServiceFile>,
+        val promisedImage: Promise<ByteArray>
 	)
 		: AutoCloseable
 	{

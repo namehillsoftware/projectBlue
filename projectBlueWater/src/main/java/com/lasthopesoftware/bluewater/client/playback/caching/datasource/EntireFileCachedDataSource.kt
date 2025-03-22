@@ -5,7 +5,6 @@ import androidx.media3.common.C
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
-import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.TransferListener
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.SupplyCacheStreams
@@ -23,7 +22,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 @UnstableApi class EntireFileCachedDataSource(
 	private val libraryId: LibraryId,
-	private val innerDataSource: HttpDataSource,
+	private val innerDataSource: DataSource,
 	private val cacheStreamSupplier: SupplyCacheStreams
 ) : DataSource {
 
@@ -180,7 +179,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 	@UnstableApi class Factory(
 		private val libraryId: LibraryId,
-		private val httpDataSourceFactory: HttpDataSource.Factory,
+		private val httpDataSourceFactory: DataSource.Factory,
 		private val cacheStreamSupplier: SupplyCacheStreams
 	) : DataSource.Factory {
 

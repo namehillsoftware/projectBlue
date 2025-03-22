@@ -5,20 +5,15 @@ import android.graphics.Bitmap
 import androidx.core.app.NotificationCompat
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
+import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainerRepository
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
+import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.bitmaps.ImmediateBitmapProducer
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -44,34 +39,22 @@ class WhenBuildingTheNotification : AndroidContext() {
 	}
 
 	override fun before() {
-		val connectionProvider = FakeConnectionProvider()
-		connectionProvider.setupFile(
-			ServiceFile(3),
-			mapOf(
-				Pair(KnownFileProperties.Artist, "test-artist"),
-				Pair(KnownFileProperties.Name, "song")))
-		val containerRepository = FakeFilePropertiesContainerRepository()
-
 		val libraryId = LibraryId(77)
-		val libraryConnectionProvider = FakeLibraryConnectionProvider(mapOf(
-			Pair(libraryId, connectionProvider)
-		))
 
 		val npBuilder = NowPlayingNotificationBuilder(
 			ApplicationProvider.getApplicationContext(),
 			mockk {
 				every { getMediaStyleNotification(libraryId) } returns spiedBuilder
 			},
-			UrlKeyProvider(libraryConnectionProvider),
-			CachedFilePropertiesProvider(
-				libraryConnectionProvider,
-				containerRepository,
-				FilePropertiesProvider(
-					GuaranteedLibraryConnectionProvider(libraryConnectionProvider),
-					FakeRevisionProvider(1),
-					containerRepository
-				)
-			),
+			mockk {
+				every { promiseUrlKey(libraryId, ServiceFile(3)) } returns UrlKeyHolder(TestUrl, ServiceFile(3)).toPromise()
+			},
+			mockk {
+				every { promiseFileProperties(libraryId, any()) } returns mapOf(
+					Pair(KnownFileProperties.Artist, "test-artist"),
+					Pair(KnownFileProperties.Name, "song")
+				).toPromise()
+			},
 			mockk {
 				every { promiseImageBytes(libraryId, any<ServiceFile>()) } returns Promise(expectedBitmap)
 			},

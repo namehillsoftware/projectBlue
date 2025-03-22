@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.shared.observables.toCloseable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
@@ -19,11 +19,11 @@ private const val libraryId = 107
 class `when calling the status check again` {
 	private val mut by lazy {
 		val firstDeferredProgressingPromise =
-            DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
+            DeferredProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>()
 		firstDeferredProgressingPromise.sendProgressUpdate(BuildingConnectionStatus.BuildingConnectionComplete)
 
 		val secondDeferredProgressingPromise =
-			DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
+			DeferredProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>()
 		secondDeferredProgressingPromise.sendProgressUpdate(BuildingConnectionStatus.BuildingConnectionComplete)
 
 		Triple(
@@ -48,8 +48,8 @@ class `when calling the status check again` {
 	private val isConnectingHistory = mutableListOf<Boolean>()
 	private val connectionStatusHistory = mutableListOf<String>()
 
-	private var firstLibraryConnection: ProvideConnections? = null
-	private var secondLibraryConnection: ProvideConnections? = null
+	private var firstLibraryConnection: LiveServerConnection? = null
+	private var secondLibraryConnection: LiveServerConnection? = null
 
 	@BeforeAll
 	fun act() {

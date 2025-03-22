@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.properties
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.ContainVersionedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.IFilePropertiesContainerRepository
-import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
+import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 
 open class FakeFilePropertiesContainerRepository : IFilePropertiesContainerRepository {
 	private val storage = HashMap<UrlKeyHolder<ServiceFile>, ContainVersionedFileProperties>()

@@ -33,13 +33,7 @@ class WhenSyncingTheStoredItems {
 					)
 				},
 				mockk {
-					every {
-						promiseFiles(
-							LibraryId(52),
-							FileListParameters.Options.None,
-							*fileListParameters.getFileListParameters(PlaylistId(14))
-						)
-					} returns Promise(
+					every { promiseFiles(LibraryId(52), PlaylistId(14)) } returns Promise(
 						listOf(
 							ServiceFile(1),
 							ServiceFile(2),
@@ -48,8 +42,7 @@ class WhenSyncingTheStoredItems {
 							ServiceFile(10)
 						)
 					)
-				},
-				fileListParameters
+				}
 			),
 			mockk {
 				every { pruneStoredFiles(any()) } returns Promise(Exception("oh no!"))

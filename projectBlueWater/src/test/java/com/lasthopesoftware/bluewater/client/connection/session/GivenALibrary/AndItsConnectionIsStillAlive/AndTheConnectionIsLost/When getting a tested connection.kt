@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.AndItsConnectionIsStillAlive.AndTheConnectionIsLost
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionLostNotification
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.LibraryConnectionChangedMessage
@@ -24,18 +24,15 @@ private const val libraryId = 924
 class `When getting a tested connection` {
 
 	private val mut by lazy {
-		val goodConnectionProvider = FakeConnectionProvider()
-
 		val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
 		every { libraryConnectionProvider.promiseLibraryConnection(LibraryId(libraryId)) } returnsMany listOf(
-			ProgressingPromise(goodConnectionProvider),
+			ProgressingPromise(mockk<LiveServerConnection> {
+				every { promiseIsConnectionPossible() } returns false.toPromise()
+			}),
 			ProgressingPromise(IOException("cure")),
 		)
 
 		val connectionSessionManager = ConnectionSessionManager(
-			mockk {
-				every { promiseIsConnectionPossible(goodConnectionProvider) } returns false.toPromise()
-			},
 			libraryConnectionProvider,
 			PromisedConnectionsRepository(),
 			recordingApplicationMessageBus

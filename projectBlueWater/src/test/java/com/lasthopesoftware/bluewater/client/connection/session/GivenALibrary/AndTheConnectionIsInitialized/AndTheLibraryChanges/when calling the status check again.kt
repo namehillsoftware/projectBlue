@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.shared.observables.toCloseable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
@@ -21,10 +21,10 @@ private const val secondLibraryId = 423
 class `when calling the status check again` {
 	private val mut by lazy {
 		val firstDeferredProgressingPromise =
-            DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
+            DeferredProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>()
 
 		val secondDeferredProgressingPromise =
-            DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
+            DeferredProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>()
 
 		Triple(
 			firstDeferredProgressingPromise,
@@ -46,11 +46,11 @@ class `when calling the status check again` {
 	private val isConnectingHistory = mutableListOf<Boolean>()
 	private val connectionStatuses = mutableListOf<String>()
 
-	private var firstPromisedLibraryConnection: ProgressingPromise<BuildingConnectionStatus, ProvideConnections?>? = null
-	private var secondPromisedLibraryConnection: ProgressingPromise<BuildingConnectionStatus, ProvideConnections?>? = null
+	private var firstPromisedLibraryConnection: ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>? = null
+	private var secondPromisedLibraryConnection: ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>? = null
 
-	private var firstLibraryConnection: ProvideConnections? = null
-	private var secondLibraryConnection: ProvideConnections? = null
+	private var firstLibraryConnection: LiveServerConnection? = null
+	private var secondLibraryConnection: LiveServerConnection? = null
 
 	@BeforeAll
 	fun act() {

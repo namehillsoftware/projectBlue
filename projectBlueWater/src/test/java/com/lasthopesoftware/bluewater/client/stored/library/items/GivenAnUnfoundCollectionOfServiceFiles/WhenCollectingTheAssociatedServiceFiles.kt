@@ -42,33 +42,20 @@ class WhenCollectingTheAssociatedServiceFiles {
 		val fileListParameters = FileListParameters
 		val fileProvider = mockk<ProvideLibraryFiles>()
 		every {
-			fileProvider.promiseFiles(
-				LibraryId(4),
-				FileListParameters.Options.None,
-				*fileListParameters.getFileListParameters(ItemId(1))
-			)
+			fileProvider.promiseFiles(LibraryId(4), ItemId(1))
 		} returns firstItemExpectedFiles.toPromise()
 
 		every {
-			fileProvider.promiseFiles(
-				LibraryId(4),
-				FileListParameters.Options.None,
-				*fileListParameters.getFileListParameters(ItemId(2))
-			)
+			fileProvider.promiseFiles(LibraryId(4), ItemId(2))
 		} returns Promise(FileNotFoundException())
 
 		every {
-			fileProvider.promiseFiles(
-				LibraryId(4),
-				FileListParameters.Options.None,
-				*fileListParameters.getFileListParameters(ItemId(3))
-			)
+			fileProvider.promiseFiles(LibraryId(4), ItemId(3))
 		} returns thirdItemExpectedFiles.toPromise()
 
 		StoredItemServiceFileCollector(
 			storedItemAccess,
-			fileProvider,
-			fileListParameters
+			fileProvider
 		)
 	}
 

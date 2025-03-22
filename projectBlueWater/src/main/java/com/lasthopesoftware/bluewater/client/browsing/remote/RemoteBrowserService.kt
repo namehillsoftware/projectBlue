@@ -55,9 +55,8 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 	private val libraryConnectionDependencies by lazy {
 		RateLimitedFilePropertiesDependencies(
-			applicationDependencies,
-			RateLimitingExecutionPolicy(max(Runtime.getRuntime().availableProcessors() - 1, 1)),
-			LibraryConnectionRegistry(applicationDependencies),
+            RateLimitingExecutionPolicy(max(Runtime.getRuntime().availableProcessors() - 1, 1)),
+            LibraryConnectionRegistry(applicationDependencies),
 		)
 	}
 

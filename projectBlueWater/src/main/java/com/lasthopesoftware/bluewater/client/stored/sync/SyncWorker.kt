@@ -12,21 +12,10 @@ import androidx.work.WorkerParameters
 import com.google.common.util.concurrent.ListenableFuture
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFileUriQueryParamsProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.library.access.DelegatingLibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.client.stored.library.items.DelegatingStoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredFilesCounter
-import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileUriDestinationBuilder
@@ -75,44 +64,34 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		private const val notificationId = 23
 	}
 
+	private val applicationDependencies by lazy { context.applicationDependencies }
+	private val libraryConnections by lazy { applicationDependencies.libraryConnectionProvider }
+	private val libraryConnectionDependents by lazy { LibraryConnectionRegistry(applicationDependencies) }
 	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus() }
 	private val storedFileAccess by lazy { StoredFileAccess(context) }
 	private val readPermissionArbitratorForOs by lazy { OsPermissionsChecker(context) }
-	private val libraryConnections by lazy { ConnectionSessionManager.get(context) }
-	private val cachingPolicyFactory by lazy { CachingPolicyFactory() }
+	private val cachingPolicyFactory by lazy { CachingPolicyFactory }
+
+	private val serviceFilesCollector by lazy {
+		val serviceFilesCollector = StoredItemServiceFileCollector(
+			applicationDependencies.storedItemAccess,
+			libraryConnectionDependents.libraryFilesProvider
+		)
+
+		DelegatingStoredItemServiceFileCollector(serviceFilesCollector, cachingPolicyFactory)
+	}
+
+	private val libraryProvider by lazy { DelegatingLibraryProvider(applicationDependencies.libraryProvider, cachingPolicyFactory) }
 
 	private val syncChecker by lazy {
 		SyncChecker(
-			LibraryRepository(context),
+			libraryProvider,
 			serviceFilesCollector,
 			StoredFilesChecker(StoredFilesCounter(storedFileAccess))
 		)
 	}
 
-	private val libraryProvider by lazy { DelegatingLibraryProvider(LibraryRepository(context), cachingPolicyFactory) }
-
-	private val fileProperties by lazy {
-		val filePropertyCache = FilePropertyCache
-		CachedFilePropertiesProvider(
-			libraryConnections,
-			filePropertyCache,
-			FilePropertiesProvider(
-				GuaranteedLibraryConnectionProvider(libraryConnections),
-				LibraryRevisionProvider(libraryConnections),
-				filePropertyCache
-			)
-		)
-	}
-
-	private val serviceFilesCollector by lazy {
-		val serviceFilesCollector = StoredItemServiceFileCollector(
-			StoredItemAccess(context),
-			LibraryFileProvider(LibraryFileStringListProvider(libraryConnections)),
-			FileListParameters
-        )
-
-		DelegatingStoredItemServiceFileCollector(serviceFilesCollector, cachingPolicyFactory)
-	}
+	private val fileProperties by lazy { libraryConnectionDependents.libraryFilePropertiesProvider }
 
 	private val externalContentRepository by lazy {
 		ExternalContentRepository(
@@ -158,7 +137,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			storedFileUpdater,
 			StoredFileJobProcessor(
 				StoredFileUriDestinationBuilder(OsFileSupplier, FileWritePossibleTester, context.contentResolver),
-				StoredFileDownloader(ServiceFileUriQueryParamsProvider, libraryConnections),
+				StoredFileDownloader(libraryConnections),
 				storedFileUpdater,
 			)
 		)

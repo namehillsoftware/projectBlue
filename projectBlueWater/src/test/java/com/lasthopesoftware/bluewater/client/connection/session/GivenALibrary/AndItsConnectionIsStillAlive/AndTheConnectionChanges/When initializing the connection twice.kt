@@ -2,8 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -23,7 +22,7 @@ class `When initializing the connection twice` {
 
 	private val mut by lazy {
 		val deferredProgressingPromise =
-            DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
+            DeferredProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>()
 
 		Pair(
 			deferredProgressingPromise,
@@ -32,7 +31,7 @@ class `When initializing the connection twice` {
                     every { promiseIsConnectionActive(LibraryId(libraryId)) } returns true.toPromise()
                     every { promiseLibraryConnection(LibraryId(libraryId)) } returnsMany listOf(
 						deferredProgressingPromise,
-						ProgressingPromise(FakeConnectionProvider())
+						ProgressingPromise(mockk<LiveServerConnection>())
 					)
                 },
             )
@@ -40,8 +39,8 @@ class `When initializing the connection twice` {
 	}
 
 	private val recordedUpdates = mutableListOf<BuildingConnectionStatus>()
-	private var firstConnection: ProvideConnections? = null
-	private var secondConnection: ProvideConnections? = null
+	private var firstConnection: LiveServerConnection? = null
+	private var secondConnection: LiveServerConnection? = null
 
 	@BeforeAll
 	fun act() {
@@ -55,7 +54,7 @@ class `When initializing the connection twice` {
             BuildingConnectionStatus.GettingLibrary,
             BuildingConnectionStatus.SendingWakeSignal,
 		)
-		deferredPromise.sendResolution(FakeConnectionProvider())
+		deferredPromise.sendResolution(mockk())
 
 		firstConnection = isInitializedPromise
 			.toExpiringFuture()

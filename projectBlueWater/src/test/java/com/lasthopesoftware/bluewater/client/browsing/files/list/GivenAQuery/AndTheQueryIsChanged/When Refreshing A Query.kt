@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAQuery.AndTheQueryIsChanged
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -20,14 +19,7 @@ class `When Refreshing A Query` {
 	private val viewModel by lazy {
 		val vm = SearchFilesViewModel(
             mockk {
-                every {
-                    promiseFiles(
-                        LibraryId(libraryId),
-                        FileListParameters.Options.None,
-                        "Files/Search",
-                        "Query=[Media Type]=[Audio] qlJJKMs"
-                    )
-                } returnsMany listOf(
+                every { promiseAudioFiles(LibraryId(libraryId), "qlJJKMs") } returnsMany listOf(
                     Promise(
                         listOf(
                             ServiceFile(426),

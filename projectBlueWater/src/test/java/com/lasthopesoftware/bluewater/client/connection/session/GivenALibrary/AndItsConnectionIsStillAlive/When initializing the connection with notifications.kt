@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 import android.app.Notification
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotifyingLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
@@ -22,7 +22,7 @@ class `When initializing the connection with notifications` {
 	private val foregroundNotifications = ArrayList<Notification>()
 
 	private val mut by lazy {
-		val deferredProgressingPromise = DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
+		val deferredProgressingPromise = DeferredProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>()
 
 		Pair(
 			deferredProgressingPromise,
@@ -44,7 +44,7 @@ class `When initializing the connection with notifications` {
 		)
 	}
 
-	private var initializedConnection: ProvideConnections? = null
+	private var initializedConnection: LiveServerConnection? = null
 
 	@BeforeAll
 	fun act() {

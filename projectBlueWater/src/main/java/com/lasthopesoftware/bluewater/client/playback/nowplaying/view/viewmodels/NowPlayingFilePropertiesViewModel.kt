@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyNotReturnedException
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.session.LibraryConnectionChangedMessage
+import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingMessage
@@ -21,7 +22,6 @@ import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackSer
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
-import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
@@ -339,11 +339,11 @@ class NowPlayingFilePropertiesViewModel(
 	}
 
 	private class CachedPromises(
-		val key: UrlKeyHolder<ServiceFile>,
-		val libraryId: LibraryId,
-		val serviceFile: ServiceFile,
-		val promisedIsReadOnly: Promise<Boolean>,
-		val promisedProperties: Promise<Map<String, String>>,
+        val key: UrlKeyHolder<ServiceFile>,
+        val libraryId: LibraryId,
+        val serviceFile: ServiceFile,
+        val promisedIsReadOnly: Promise<Boolean>,
+        val promisedProperties: Promise<Map<String, String>>,
 	) : AutoCloseable
 	{
 		override fun close() {

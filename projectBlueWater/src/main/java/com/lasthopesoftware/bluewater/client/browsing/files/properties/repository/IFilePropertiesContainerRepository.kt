@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.repository
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
+import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 
 interface IFilePropertiesContainerRepository {
 	fun getFilePropertiesContainer(key: UrlKeyHolder<ServiceFile>): ContainVersionedFileProperties?

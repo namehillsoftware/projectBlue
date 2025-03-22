@@ -17,8 +17,7 @@ class LibrarySyncsHandler(
 	private val storedFilePruner: PruneStoredFiles,
 	private val storedFileUpdater: UpdateStoredFiles,
 	private val storedFileJobsProcessor: ProcessStoredFileJobs
-) : ControlLibrarySyncs
-{
+) : ControlLibrarySyncs {
 
 	companion object {
 		private const val IGNORED_ARGUMENT_ERROR = "MIME type application/octet-stream cannot be inserted into content://media/external/audio/media; expected MIME type under audio/*"

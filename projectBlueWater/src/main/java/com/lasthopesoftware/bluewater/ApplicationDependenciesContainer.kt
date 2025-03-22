@@ -7,6 +7,7 @@ import androidx.startup.AppInitializer
 import com.lasthopesoftware.bluewater.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.DiskFileCache
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.access.CachedFilesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.configuration.AudioCacheConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.configuration.ImageCacheConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.disk.AndroidDiskCacheDirectoryProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.DiskFileAccessTimeUpdater
@@ -18,20 +19,19 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.connection.PacketSender
-import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
-import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfoXmlRequest
+import com.lasthopesoftware.bluewater.client.connection.lookup.ServerLookup
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsValidation
-import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester
 import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
+import com.lasthopesoftware.bluewater.client.playback.caching.datasource.CachedDataSourceServerConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookupInitializer
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
@@ -85,6 +85,36 @@ object ApplicationDependenciesContainer {
 
 		private val imageDiskCacheDirectory by lazy { AndroidDiskCacheDirectoryProvider(context, ImageCacheConfiguration) }
 
+		private val okHttpClients by lazy { OkHttpFactory(context) }
+
+		private val audioDiskCacheDirectoryProvider by lazy { AndroidDiskCacheDirectoryProvider(context, AudioCacheConfiguration) }
+
+		private val audioCacheFilesProvider by lazy { CachedFilesProvider(context, AudioCacheConfiguration) }
+
+		private val audioCacheStreamSupplier by lazy {
+			DiskFileCacheStreamSupplier(
+				audioDiskCacheDirectoryProvider,
+				DiskFileCachePersistence(
+					context,
+					AudioCacheConfiguration,
+					audioCacheFilesProvider,
+					diskFileAccessTimeUpdater
+				),
+				audioCacheFilesProvider
+			)
+		}
+
+		override val audioFileCache by lazy {
+			DiskFileCache(
+				context,
+				audioDiskCacheDirectoryProvider,
+				AudioCacheConfiguration,
+				audioCacheStreamSupplier,
+				audioCacheFilesProvider,
+				diskFileAccessTimeUpdater
+			)
+		}
+
 		override val bitmapProducer by lazy { DefaultAwareCachingBitmapProducer(QueuedBitmapProducer, defaultImageProvider) }
 
 		override val applicationSettings by lazy {
@@ -127,27 +157,26 @@ object ApplicationDependenciesContainer {
 			val connectionSettingsLookup = ConnectionSettingsLookup(LibraryRepository(context))
 			val serverLookup = ServerLookup(
 				connectionSettingsLookup,
-				ServerInfoXmlRequest(LibraryRepository(context), OkHttpFactory),
+				ServerInfoXmlRequest(LibraryRepository(context), okHttpClients),
 			)
 
 			val activeNetwork = ActiveNetworkFinder(context)
 			ConnectionSessionManager(
-				ConnectionTester,
-				LibraryConnectionProvider(
+                LibraryConnectionProvider(
 					ConnectionSettingsValidation,
 					connectionSettingsLookup,
 					ServerAlarm(serverLookup, activeNetwork, ServerWakeSignal(PacketSender())),
-					LiveUrlProvider(
-						activeNetwork,
-						UrlScanner(
+					CachedDataSourceServerConnectionProvider(
+						LiveServerConnectionProvider(
+							activeNetwork,
 							Base64Encoder,
-							ConnectionTester,
 							serverLookup,
 							connectionSettingsLookup,
-							OkHttpFactory
-						)
+							okHttpClients,
+							okHttpClients
+						),
+						audioCacheStreamSupplier,
 					),
-					OkHttpFactory,
 					AlarmConfiguration.standard
 				),
 				connectionsRepository,

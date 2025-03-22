@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.GivenASetOfSt
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeDeferredStoredItemAccess
@@ -37,38 +36,25 @@ class WhenCollectingTheAssociatedServiceFiles {
 						StoredItem(1, 3, StoredItem.ItemType.ITEM)
 					)
 			}
-		val fileListParameters = FileListParameters
+
 		val fileProvider = mockk<ProvideLibraryFiles> {
 			every {
-				promiseFiles(
-					LibraryId(2),
-					FileListParameters.Options.None,
-					*fileListParameters.getFileListParameters(ItemId(1))
-				)
+				promiseFiles(LibraryId(2), ItemId(1))
 			} returns firstItemExpectedFiles.toPromise()
 
 			every {
-				promiseFiles(
-					LibraryId(2),
-					FileListParameters.Options.None,
-					*fileListParameters.getFileListParameters(ItemId(2))
-				)
+				promiseFiles(LibraryId(2), ItemId(2))
 			} returns secondItemExpectedFiles.toPromise()
 
 			every {
-				promiseFiles(
-					LibraryId(2),
-					FileListParameters.Options.None,
-					*fileListParameters.getFileListParameters(ItemId(3))
-				)
+				promiseFiles(LibraryId(2), ItemId(3))
 			} returns thirdItemExpectedFiles.toPromise()
 		}
 
 		val serviceFileCollector = StoredItemServiceFileCollector(
-			storedItemAccess,
-			fileProvider,
-			fileListParameters
-		)
+            storedItemAccess,
+            fileProvider
+        )
 
 		val serviceFilesPromise = serviceFileCollector.promiseServiceFilesToSync(LibraryId(2))
 		serviceFilesPromise.cancel()

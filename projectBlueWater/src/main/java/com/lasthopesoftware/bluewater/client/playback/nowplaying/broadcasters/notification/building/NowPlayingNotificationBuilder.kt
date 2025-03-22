@@ -9,11 +9,11 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
+import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingNextIntent
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingPauseIntent
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingPlayingIntent
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingPreviousIntent
-import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -21,11 +21,11 @@ import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
 import com.namehillsoftware.handoff.promises.Promise
 
 class NowPlayingNotificationBuilder(
-    private val context: Context,
-    private val mediaStyleNotificationSetup: SetupMediaStyleNotifications,
-    private val urlKeyProvider: ProvideUrlKey,
-    private val cachedFilePropertiesProvider: ProvideLibraryFileProperties,
-    private val imageProvider: GetImageBytes,
+	private val context: Context,
+	private val mediaStyleNotificationSetup: SetupMediaStyleNotifications,
+	private val urlKeyProvider: ProvideUrlKey,
+	private val filePropertiesProvider: ProvideLibraryFileProperties,
+	private val imageProvider: GetImageBytes,
 	private val bitmapProducer: ProduceBitmaps,
 ) : BuildNowPlayingNotificationContent, AutoCloseable {
 	private val notificationSync = Any()
@@ -49,7 +49,7 @@ class NowPlayingNotificationBuilder(
 				viewStructure.promisedNowPlayingImage =
 					viewStructure.promisedNowPlayingImage ?: imageProvider.promiseImageBytes(libraryId, serviceFile).eventually(bitmapProducer::promiseBitmap)
 
-				cachedFilePropertiesProvider
+				filePropertiesProvider
 					.promiseFileProperties(libraryId, serviceFile)
 					.then { fileProperties ->
 						val artist = fileProperties[KnownFileProperties.Artist]

@@ -741,11 +741,9 @@ fun NowPlayingTvApplication(
 
 	val libraryConnectionDependencies = remember {
 		RateLimitedFilePropertiesDependencies(
-			routedNavigationDependencies,
 			RateLimitingExecutionPolicy(1),
 			RetryingLibraryConnectionRegistry(
-				routedNavigationDependencies,
-				LibraryConnectionRegistry(routedNavigationDependencies),
+                LibraryConnectionRegistry(routedNavigationDependencies),
 			),
 		)
 	}

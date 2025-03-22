@@ -1,15 +1,17 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.storage
 
+import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.IFilePropertiesContainerRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRevisions
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
-import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
+import com.lasthopesoftware.bluewater.client.connection.live.eventuallyFromDataAccess
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
+import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -18,6 +20,7 @@ private val logger by lazyLogger<FilePropertyStorage>()
 
 class FilePropertyStorage(
 	private val libraryConnections: ProvideLibraryConnections,
+	private val urlKeyProvider: ProvideUrlKey,
 	private val checkIfConnectionIsReadOnly: CheckIfConnectionIsReadOnly,
 	private val checkRevisions: CheckRevisions,
 	private val filePropertiesContainerRepository: IFilePropertiesContainerRepository,
@@ -26,32 +29,33 @@ class FilePropertyStorage(
 	override fun promiseFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> =
 		checkIfConnectionIsReadOnly
 			.promiseIsReadOnly(libraryId)
-			.eventually { isReadOnly ->
+			.cancelBackEventually { isReadOnly ->
 				if (!isReadOnly) libraryConnections
 					.promiseLibraryConnection(libraryId)
-					.eventually { connectionProvider ->
-						connectionProvider
+					.eventuallyFromDataAccess { access ->
+						access
 							?.promiseFileUpdate(libraryId, serviceFile, property, value, isFormatted)
 							.keepPromise(Unit)
 					}
 				else Unit.toPromise()
 			}
 
-	private fun ProvideConnections.promiseFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> {
-		val promisedUpdate = promiseResponse("File/SetInfo", "File=${serviceFile.key}", "Field=$property", "Value=$value", "formatted=" + if (isFormatted) "1" else "0")
-			.then { response ->
-				response.use {
-					logger.info("api/v1/File/SetInfo responded with a response code of {}.", it.code)
-				}
-			}
+	private fun RemoteLibraryAccess.promiseFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> {
+		val promisedUpdate = promiseFilePropertyUpdate(serviceFile, property, value, isFormatted)
 
-		checkRevisions.promiseRevision(libraryId)
-			.then { revision ->
-				val urlKeyHolder = UrlKeyHolder(urlProvider.baseUrl, serviceFile)
-				filePropertiesContainerRepository.getFilePropertiesContainer(urlKeyHolder)
-					?.takeIf { it.revision == revision }
-					?.updateProperty(property, value)
-				sendApplicationMessages.sendMessage(FilePropertiesUpdatedMessage(urlKeyHolder))
+		urlKeyProvider
+			.promiseUrlKey(libraryId, serviceFile)
+			.eventually { maybeUrlKey ->
+				maybeUrlKey?.let { urlKey ->
+					checkRevisions
+						.promiseRevision(libraryId)
+						.then { revision ->
+							filePropertiesContainerRepository.getFilePropertiesContainer(urlKey)
+								?.takeIf { it.revision == revision }
+								?.updateProperty(property, value)
+							sendApplicationMessages.sendMessage(FilePropertiesUpdatedMessage(urlKey))
+						}
+				}.keepPromise()
 			}
 			.excuse { e ->
 				logger.warn(

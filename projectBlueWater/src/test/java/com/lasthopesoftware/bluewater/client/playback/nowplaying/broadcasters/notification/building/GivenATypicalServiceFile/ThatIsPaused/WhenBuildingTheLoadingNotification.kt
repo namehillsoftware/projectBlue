@@ -6,17 +6,11 @@ import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainerRepository
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.bitmaps.ImmediateBitmapProducer
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -42,30 +36,19 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 	}
 
 	override fun before() {
-		val connectionProvider = FakeConnectionProvider()
-		connectionProvider.setupFile(
-			ServiceFile(3),
-			object : HashMap<String, String>() {
-				init {
-					put(KnownFileProperties.Artist, "test-artist")
-					put(KnownFileProperties.Name, "song")
-				}
-			})
-		val containerRepository = FakeFilePropertiesContainerRepository()
-
 		val libraryId = LibraryId(605)
-		val fakeLibraryConnectionProvider = FakeLibraryConnectionProvider(mapOf(Pair(libraryId, connectionProvider)))
 		val npBuilder = NowPlayingNotificationBuilder(
 			ApplicationProvider.getApplicationContext(),
 			mockk {
 				every { getMediaStyleNotification(libraryId) } returns spiedBuilder
 			},
-			UrlKeyProvider(fakeLibraryConnectionProvider),
-            FilePropertiesProvider(
-				GuaranteedLibraryConnectionProvider(fakeLibraryConnectionProvider),
-				FakeRevisionProvider(1),
-				containerRepository,
-			),
+			mockk(),
+			mockk {
+				every { promiseFileProperties(libraryId, any()) } returns mapOf(
+					Pair(KnownFileProperties.Artist, "test-artist"),
+					Pair(KnownFileProperties.Name, "song")
+				).toPromise()
+			},
 			mockk {
 				every { promiseImageBytes(libraryId, any<ServiceFile>()) } returns Promise(expectedBitmap)
 			},

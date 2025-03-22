@@ -9,8 +9,8 @@ import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.GettingLibrary
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.GettingLibraryFailed
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.SendingWakeSignal
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
@@ -30,7 +30,7 @@ class ConnectionStatusViewModel(
 {
 
 	@Volatile
-	private var promisedConnectionCheck = ProgressingPromise<BuildingConnectionStatus, ProvideConnections?>(null as ProvideConnections?)
+	private var promisedConnectionCheck = ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>(null as LiveServerConnection?)
 
 	@Volatile
 	private var initializingLibraryId = LibraryId(-1)
@@ -53,7 +53,7 @@ class ConnectionStatusViewModel(
 	}
 
 	@Synchronized
-	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> {
+	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?> {
 		isCancelled = false
 
 		if (mutableIsGettingConnection.value && libraryId == initializingLibraryId) {
@@ -67,8 +67,8 @@ class ConnectionStatusViewModel(
 		mutableIsGettingConnection.value = testedLibraryId != libraryId
 		mutableConnectionStatus.value = stringResources.connecting
 
-		val promisedConnection = object : ProgressingPromiseProxy<BuildingConnectionStatus, ProvideConnections?>(libraryConnectionProvider.promiseLibraryConnection(libraryId)),
-			ImmediateResponse<ProvideConnections?, Unit>,
+		val promisedConnection = object : ProgressingPromiseProxy<BuildingConnectionStatus, LiveServerConnection?>(libraryConnectionProvider.promiseLibraryConnection(libraryId)),
+			ImmediateResponse<LiveServerConnection?, Unit>,
 			ImmediateAction,
 			(BuildingConnectionStatus) -> Unit {
 
@@ -77,7 +77,7 @@ class ConnectionStatusViewModel(
 				onEach(this).then(this).must(this)
 			}
 
-			override fun respond(connections: ProvideConnections?) {
+			override fun respond(connections: LiveServerConnection?) {
 				if (initializingLibraryId != libraryId) return
 
 				testedLibraryId = libraryId

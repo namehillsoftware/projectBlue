@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.connection.session.initialization
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.PromiseDelay
@@ -23,8 +23,8 @@ class DramaticConnectionInitializationController(
 	private val manageConnectionSessions: ManageConnectionSessions,
 ) : ProvideLibraryConnections {
 
-	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> =
-		object : ProgressingPromiseProxy<BuildingConnectionStatus, ProvideConnections?>() {
+	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?> =
+		object : ProgressingPromiseProxy<BuildingConnectionStatus, LiveServerConnection?>() {
 			init {
 				manageConnectionSessions
 					.promiseIsConnectionActive(libraryId)

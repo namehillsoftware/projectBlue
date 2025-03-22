@@ -1,8 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.polling.GivenALibraryId.AndTheConnectionIsWorking
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPoller
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
@@ -19,12 +18,12 @@ class `When polling the connection` {
 	private val mut by lazy {
 		LibraryConnectionPoller(
 			mockk {
-				every { promiseTestedLibraryConnection(LibraryId(libraryId)) } returns ProgressingPromise(FakeConnectionProvider())
+				every { promiseTestedLibraryConnection(LibraryId(libraryId)) } returns ProgressingPromise(mockk<LiveServerConnection>())
 			}
 		)
 	}
 
-	private var connectionProvider: ProvideConnections? = null
+	private var connectionProvider: LiveServerConnection? = null
 
 	@BeforeAll
 	fun act() {

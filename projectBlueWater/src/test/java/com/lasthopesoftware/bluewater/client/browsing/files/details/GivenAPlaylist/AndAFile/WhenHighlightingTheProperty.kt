@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsV
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
+import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
@@ -76,11 +76,11 @@ class WhenHighlightingTheProperty {
 
 	@Test
 	fun `then the highlighted property is correct`() {
-		assertThat(viewModel.highlightedProperty?.value?.property).isEqualTo(KnownFileProperties.Publisher)
+		assertThat(viewModel.highlightedProperty.value?.property).isEqualTo(KnownFileProperties.Publisher)
 	}
 
 	@Test
 	fun `then the highlighted property value is correct`() {
-		assertThat(viewModel.highlightedProperty?.value?.committedValue?.value).isEqualTo("lipstick")
+		assertThat(viewModel.highlightedProperty.value?.committedValue?.value).isEqualTo("lipstick")
 	}
 }

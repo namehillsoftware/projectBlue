@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAQuery
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -19,7 +18,7 @@ class `When Prepending A Filter` {
 	private val viewModel by lazy {
 		val vm = SearchFilesViewModel(
 			mockk {
-				every { promiseFiles(LibraryId(libraryId), FileListParameters.Options.None, "Files/Search", "Query=[Media Type]=[Audio] [FhFuGYramwv]=YVUf8Q83 T8Dtib8Rh") } returns
+				every { promiseAudioFiles(LibraryId(libraryId), "[FhFuGYramwv]=YVUf8Q83 T8Dtib8Rh") } returns
 					Promise(
 						listOf(
 							ServiceFile(438),

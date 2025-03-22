@@ -23,7 +23,7 @@ class ForwardedResponse<Resolution : Response, Response> private constructor() :
 		fun <Resolution : Response, Response> promisedForward(): ForwardedResponse<Resolution, Response> =
 			singlePassThrough as ForwardedResponse<Resolution, Response>
 
-		fun <Resolution: Response, Response> Promise<Resolution>.forward(): Promise<Response> =
-			this.then(Companion.forward())
+		fun <Resolution: Response, Response> Promise<Resolution>.thenForward(): Promise<Response> =
+			this.then(forward())
 	}
 }
