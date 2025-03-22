@@ -7,8 +7,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -19,7 +19,7 @@ class WhenGettingTheStringList {
 	private val stringList by lazy {
 		val itemStringListProvider = ItemStringListProvider(
 			mockk {
-				every { promiseLibraryConnection(LibraryId(14)) } returns ProgressingPromise(mockk<LiveServerConnection> {
+				every { promiseLibraryConnection(LibraryId(14)) } returns Promise(mockk<LiveServerConnection> {
 					every { dataAccess } returns mockk<RemoteLibraryAccess> {
 						every { promiseFileStringList(ItemId(32)) } returns "BfCs02".toPromise()
 					}

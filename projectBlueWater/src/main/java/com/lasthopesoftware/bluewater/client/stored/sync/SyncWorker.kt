@@ -13,7 +13,19 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.access.DelegatingLibraryProvider
+import com.lasthopesoftware.bluewater.client.connection.PacketSender
+import com.lasthopesoftware.bluewater.client.connection.libraries.DelegatingLibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfoXmlRequest
+import com.lasthopesoftware.bluewater.client.connection.lookup.ServerLookup
+import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsValidation
+import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
+import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
+import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
+import com.lasthopesoftware.bluewater.client.playback.caching.datasource.CachedDataSourceServerConnectionProvider
+import com.lasthopesoftware.bluewater.client.stored.library.SyncLibraryConnectionSettings
 import com.lasthopesoftware.bluewater.client.stored.library.items.DelegatingStoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredFilesCounter
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
@@ -49,6 +61,8 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.OsFileSupplier
+import com.lasthopesoftware.resources.network.ActiveNetworkFinder
+import com.lasthopesoftware.resources.strings.Base64Encoder
 import com.lasthopesoftware.storage.FreeSpaceLookup
 import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup
 import com.lasthopesoftware.storage.directories.PublicDirectoryLookup
@@ -65,12 +79,46 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 	}
 
 	private val applicationDependencies by lazy { context.applicationDependencies }
-	private val libraryConnections by lazy { applicationDependencies.libraryConnectionProvider }
+
+	private val cachingPolicyFactory by lazy { CachingPolicyFactory }
+
+	private val libraryConnections by lazy {
+		with (applicationDependencies) {
+			val connectionSettingsLookup = SyncLibraryConnectionSettings(connectionSettingsLookup)
+
+			val serverLookup = ServerLookup(
+				connectionSettingsLookup,
+				ServerInfoXmlRequest(connectionSettingsLookup, okHttpClients),
+			)
+
+			val activeNetwork = ActiveNetworkFinder(context)
+			DelegatingLibraryConnectionProvider(
+				LibraryConnectionProvider(
+					ConnectionSettingsValidation,
+					connectionSettingsLookup,
+					ServerAlarm(serverLookup, activeNetwork, ServerWakeSignal(PacketSender())),
+					CachedDataSourceServerConnectionProvider(
+						LiveServerConnectionProvider(
+							activeNetwork,
+							Base64Encoder,
+							serverLookup,
+							connectionSettingsLookup,
+							okHttpClients,
+							okHttpClients
+						),
+						audioCacheStreamSupplier,
+					),
+					AlarmConfiguration.standard
+				),
+				cachingPolicyFactory
+			)
+		}
+	}
+
 	private val libraryConnectionDependents by lazy { LibraryConnectionRegistry(applicationDependencies) }
 	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus() }
 	private val storedFileAccess by lazy { StoredFileAccess(context) }
 	private val readPermissionArbitratorForOs by lazy { OsPermissionsChecker(context) }
-	private val cachingPolicyFactory by lazy { CachingPolicyFactory }
 
 	private val serviceFilesCollector by lazy {
 		val serviceFilesCollector = StoredItemServiceFileCollector(
@@ -81,7 +129,12 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		DelegatingStoredItemServiceFileCollector(serviceFilesCollector, cachingPolicyFactory)
 	}
 
-	private val libraryProvider by lazy { DelegatingLibraryProvider(applicationDependencies.libraryProvider, cachingPolicyFactory) }
+	private val libraryProvider by lazy {
+		DelegatingLibraryProvider(
+			applicationDependencies.libraryProvider,
+			cachingPolicyFactory
+		)
+	}
 
 	private val syncChecker by lazy {
 		SyncChecker(

@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.initialization
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgressingLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.shared.lazyLogger
@@ -21,7 +21,7 @@ there will be no dramatic pause.
  */
 class DramaticConnectionInitializationController(
 	private val manageConnectionSessions: ManageConnectionSessions,
-) : ProvideLibraryConnections {
+) : ProvideProgressingLibraryConnections {
 
 	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?> =
 		object : ProgressingPromiseProxy<BuildingConnectionStatus, LiveServerConnection?>() {

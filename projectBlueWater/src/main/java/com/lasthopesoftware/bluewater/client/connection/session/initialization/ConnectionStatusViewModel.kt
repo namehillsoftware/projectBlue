@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.GettingLibrary
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.GettingLibraryFailed
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.SendingWakeSignal
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgressingLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
@@ -22,11 +22,11 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 class ConnectionStatusViewModel(
 	private val stringResources: GetStringResources,
-	private val libraryConnectionProvider: ProvideLibraryConnections
+	private val libraryConnectionProvider: ProvideProgressingLibraryConnections
 ) :
 	ViewModel(),
 	TrackConnectionStatus,
-	ProvideLibraryConnections
+	ProvideProgressingLibraryConnections
 {
 
 	@Volatile
