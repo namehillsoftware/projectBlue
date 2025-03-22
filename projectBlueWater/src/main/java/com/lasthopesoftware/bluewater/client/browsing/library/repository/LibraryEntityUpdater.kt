@@ -9,13 +9,12 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
 import com.lasthopesoftware.bluewater.repository.fetch
 import com.lasthopesoftware.resources.emptyByteArray
-import com.lasthopesoftware.resources.strings.EncodeToBase64
 import com.namehillsoftware.querydroid.SqLiteAssistants
 import com.namehillsoftware.querydroid.SqLiteCommand
 import kotlinx.serialization.json.Json
 
 @OptIn(ExperimentalStdlibApi::class)
-class LibraryEntityUpdater(private val base64: EncodeToBase64) : IEntityUpdater {
+object LibraryEntityUpdater : IEntityUpdater {
 
 	override fun onUpdate(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
 		if (oldVersion < 5) {
@@ -153,24 +152,23 @@ class LibraryEntityUpdater(private val base64: EncodeToBase64) : IEntityUpdater 
 	}
 
 	@Keep
-	inner class Version17Library(
-		var id: Int = -1,
-		var libraryName: String? = null,
-		var accessCode: String? = null,
-		var userName: String? = null,
-		var password: String? = null,
-		var isLocalOnly: Boolean = false,
-		var isRepeating: Boolean = false,
-		var nowPlayingId: Int = -1,
-		var nowPlayingProgress: Long = -1,
-		var savedTracksString: String? = null,
-		var syncedFileLocation: SyncedFileLocation? = null,
-		var isUsingExistingFiles: Boolean = false,
-		var isSyncLocalConnectionsOnly: Boolean = false,
-		var isWakeOnLanEnabled: Boolean = false,
-		var sslCertificateFingerprint: ByteArray = emptyByteArray,
-		var macAddress: String? = null,
-	) {
+	class Version17Library {
+		var id: Int = -1
+		var libraryName: String? = null
+		var accessCode: String? = null
+		var userName: String? = null
+		var password: String? = null
+		var isLocalOnly: Boolean = false
+		var isRepeating: Boolean = false
+		var nowPlayingId: Int = -1
+		var nowPlayingProgress: Long = -1
+		var savedTracksString: String? = null
+		var syncedFileLocation: SyncedFileLocation? = null
+		var isUsingExistingFiles: Boolean = false
+		var isSyncLocalConnectionsOnly: Boolean = false
+		var isWakeOnLanEnabled: Boolean = false
+		var sslCertificateFingerprint: ByteArray = emptyByteArray
+		var macAddress: String? = null
 
 		fun toLibrary(): Library {
 			return Library(

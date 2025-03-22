@@ -20,6 +20,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Cac
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.connection.PacketSender
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgressingLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfoXmlRequest
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerLookup
@@ -85,13 +86,13 @@ object ApplicationDependenciesContainer {
 
 		private val imageDiskCacheDirectory by lazy { AndroidDiskCacheDirectoryProvider(context, ImageCacheConfiguration) }
 
-		private val okHttpClients by lazy { OkHttpFactory(context) }
-
 		private val audioDiskCacheDirectoryProvider by lazy { AndroidDiskCacheDirectoryProvider(context, AudioCacheConfiguration) }
 
 		private val audioCacheFilesProvider by lazy { CachedFilesProvider(context, AudioCacheConfiguration) }
 
-		private val audioCacheStreamSupplier by lazy {
+		override val okHttpClients by lazy { OkHttpFactory(context) }
+
+		override val audioCacheStreamSupplier by lazy {
 			DiskFileCacheStreamSupplier(
 				audioDiskCacheDirectoryProvider,
 				DiskFileCachePersistence(
@@ -185,6 +186,9 @@ object ApplicationDependenciesContainer {
 		}
 
 		override val libraryConnectionProvider
+			get() = connectionSessions
+
+		override val progressingLibraryConnectionProvider: ProvideProgressingLibraryConnections
 			get() = connectionSessions
 
 		override val sendApplicationMessages: SendApplicationMessages

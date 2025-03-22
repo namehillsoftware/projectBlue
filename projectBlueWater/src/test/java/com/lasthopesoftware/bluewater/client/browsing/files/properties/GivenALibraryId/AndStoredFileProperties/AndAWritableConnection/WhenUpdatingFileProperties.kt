@@ -13,7 +13,6 @@ import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
@@ -55,7 +54,7 @@ class WhenUpdatingFileProperties {
 
         val filePropertiesStorage = FilePropertyStorage(
 			mockk {
-				every { promiseLibraryConnection(LibraryId(libraryId)) } returns ProgressingPromise(
+				every { promiseLibraryConnection(LibraryId(libraryId)) } returns Promise(
 					mockk<LiveServerConnection> {
 						every { dataAccess } returns mockk<RemoteLibraryAccess> {
 							every {

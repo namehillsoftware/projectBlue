@@ -3,10 +3,13 @@ package com.lasthopesoftware.bluewater
 import com.lasthopesoftware.bluewater.android.intents.BuildIntents
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.DiskFileCache
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.UpdateDiskFileAccessTime
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.DiskFileCacheStreamSupplier
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgressingLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
@@ -29,6 +32,7 @@ interface ApplicationDependencies {
 	val storedItemAccess: AccessStoredItems
 	val connectionSessions: ManageConnectionSessions
 	val libraryConnectionProvider: ProvideLibraryConnections
+	val progressingLibraryConnectionProvider: ProvideProgressingLibraryConnections
 	val sendApplicationMessages: SendApplicationMessages
 	val registerForApplicationMessages: RegisterForApplicationMessages
 	val intentBuilder: BuildIntents
@@ -45,5 +49,7 @@ interface ApplicationDependencies {
 	val nowPlayingDisplaySettings: StoreNowPlayingDisplaySettings
 	val audioFileCache: DiskFileCache
 	val connectionSettingsLookup: LookupConnectionSettings
+    val audioCacheStreamSupplier: DiskFileCacheStreamSupplier
+	val okHttpClients: OkHttpFactory
 }
 

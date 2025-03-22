@@ -21,7 +21,7 @@ class LibraryConnectionProvider(
 	private val wakeAlarm: WakeLibraryServer,
 	private val liveUrlProvider: ProvideLiveServerConnection,
 	private val alarmConfiguration: AlarmConfiguration,
-) : ProvideLibraryConnections {
+) : ProvideProgressingLibraryConnections {
 
 	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?> =
 		object : ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>() {
