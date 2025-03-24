@@ -172,9 +172,9 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			libraryProvider,
 			StoredFileUrisLookup(
 				fileProperties,
-				libraryProvider,
+				applicationDependencies.librarySettingsProvider,
 				SyncDirectoryLookup(
-					libraryProvider,
+					applicationDependencies.librarySettingsProvider,
                     PrivateDirectoryLookup(context),
 					FreeSpaceLookup
 				),

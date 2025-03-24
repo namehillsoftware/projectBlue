@@ -48,7 +48,7 @@ class EntryActivity :
 	override val applicationPermissions by lazy {
 		val osPermissionChecker = OsPermissionsChecker(applicationContext)
 		ApplicationPermissionsRequests(
-			browserViewDependencies.libraryProvider,
+			browserViewDependencies.librarySettingsProvider,
 			ApplicationReadPermissionsRequirementsProvider(osPermissionChecker),
 			this,
 			osPermissionChecker

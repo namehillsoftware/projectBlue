@@ -1,14 +1,15 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenAnInternalStoragePreference
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.storage.directories.FakePrivateDirectoryLookup
-import kotlinx.serialization.json.Json
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.jupiter.api.Test
 
@@ -20,20 +21,18 @@ class WhenLookingUpTheSyncDrive {
 		fakePrivateDirectoryLookup.addDirectory("", 3)
 		fakePrivateDirectoryLookup.addDirectory("/storage/0/my-private-sd-card", 10)
 		val syncDirectoryLookup = SyncDirectoryLookup(
-			FakeLibraryRepository(
-				Library(
-					id = 1,
-					connectionSettings = Json.encodeToString(
-						StoredMediaCenterConnectionSettings(
-							syncedFileLocation = SyncedFileLocation.INTERNAL,
-						)
-					),
-				)
-			),
+			mockk {
+				every { promiseLibrarySettings(LibraryId(1)) } returns LibrarySettings(
+					libraryId = LibraryId(1),
+					connectionSettings = StoredMediaCenterConnectionSettings(
+						syncedFileLocation = SyncedFileLocation.INTERNAL,
+					)
+				).toPromise()
+			},
             fakePrivateDirectoryLookup,
 			fakePrivateDirectoryLookup
 		)
-		ExpiringFuturePromise(syncDirectoryLookup.promiseSyncDirectory(LibraryId(1))).get()
+		syncDirectoryLookup.promiseSyncDirectory(LibraryId(1)).toExpiringFuture().get()
 	}
 
 	@Test

@@ -1,16 +1,14 @@
 package com.lasthopesoftware.bluewater.client.settings.GivenALibraryId.AndLibrarySettingAreLoaded
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -19,32 +17,35 @@ class WhenSavingTheLibrarySettings {
 
 	private val libraryId = LibraryId(56)
 
-	private val libraryRepository = FakeLibraryRepository(
-		Library(
-			id = libraryId.id,
-			isUsingExistingFiles = true,
-			serverType = Library.ServerType.MediaCenter,
-			connectionSettings = Json.encodeToString(
-				StoredMediaCenterConnectionSettings(
-					accessCode = "b2q",
-					isLocalOnly = false,
-					isSyncLocalConnectionsOnly = true,
-					isWakeOnLanEnabled = false,
-					password = "hmpyA",
-					macAddress = "S4YhepUHBcj",
-					syncedFileLocation = SyncedFileLocation.EXTERNAL,
-				)
-			)
-		)
-	)
+	private val savedLibrarySettings = mutableListOf<LibrarySettings>()
 
 	private val services by lazy {
         LibrarySettingsViewModel(
-			libraryRepository,
-			libraryRepository,
+			mockk {
+				every { promiseLibrarySettings(libraryId) } returns LibrarySettings(
+					libraryId = libraryId,
+					isUsingExistingFiles = true,
+					connectionSettings = StoredMediaCenterConnectionSettings(
+						accessCode = "b2q",
+						isLocalOnly = false,
+						isSyncLocalConnectionsOnly = true,
+						isWakeOnLanEnabled = false,
+						password = "hmpyA",
+						macAddress = "S4YhepUHBcj",
+						syncedFileLocation = SyncedFileLocation.EXTERNAL,
+					)
+				).toPromise()
+			},
+			mockk {
+				every { promiseSavedLibrarySettings(any()) } answers {
+					val settings = firstArg<LibrarySettings>()
+					savedLibrarySettings.add(settings)
+					settings.toPromise()
+				}
+			},
 			mockk(),
 			mockk {
-				every { promiseIsLibraryPermissionsGranted(any()) } returns true.toPromise()
+				every { promiseIsAllPermissionsGranted(any()) } returns true.toPromise()
 			},
 		)
     }
@@ -171,13 +172,12 @@ class WhenSavingTheLibrarySettings {
 	}
 
 	@Test
-	fun `then the saved library is correct`() {
-		assertThat(libraryRepository.libraries[56]).isEqualTo(Library(
-			id = libraryId.id,
-			libraryName = "left",
-			isUsingExistingFiles = false,
-			serverType = Library.ServerType.MediaCenter,
-			connectionSettings = Json.encodeToString(
+	fun `then the saved library settings are correct`() {
+		assertThat(savedLibrarySettings).containsExactly(
+			LibrarySettings(
+				libraryId = libraryId,
+				libraryName = "left",
+				isUsingExistingFiles = false,
 				StoredMediaCenterConnectionSettings(
 					accessCode = "V68Bp9rS",
 					isLocalOnly = true,
@@ -190,6 +190,6 @@ class WhenSavingTheLibrarySettings {
 					syncedFileLocation = SyncedFileLocation.EXTERNAL,
 				)
 			)
-		))
+		)
 	}
 }

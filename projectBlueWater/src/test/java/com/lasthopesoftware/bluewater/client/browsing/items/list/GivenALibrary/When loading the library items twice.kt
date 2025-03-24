@@ -2,17 +2,13 @@ package com.lasthopesoftware.bluewater.client.browsing.items.list.GivenALibrary
 
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
-import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -44,16 +40,7 @@ class `When loading the library items twice` {
 				},
 				RecordingApplicationMessageBus(),
 				mockk {
-					every { promiseLibrary(LibraryId(libraryId)) } returns Promise(
-						Library(
-							id = libraryId,
-							connectionSettings = Json.encodeToString(
-								StoredMediaCenterConnectionSettings(
-									accessCode = "Lh33",
-								)
-							),
-						)
-					)
+					every { promiseLibraryName(LibraryId(libraryId)) } returns "Lh33".toPromise()
 				},
 			)
 		)

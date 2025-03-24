@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.settings.GivenTypicalSettings.AndTheSettingsAreLoaded
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
@@ -41,13 +42,18 @@ class `When Changing isSyncOnPowerOnly` {
 				every { promiseSelectedPlaybackEngineType() } returns PlaybackEngineType.ExoPlayer.toPromise()
 			},
 			mockk {
-				every { allLibraries } returns Promise(
+				every { promiseAllLibrarySettings() } returns Promise(
 					listOf(
-						Library(id = 585),
-						Library(id = 893),
-						Library(id = 72),
+						LibrarySettings(libraryId = LibraryId(585)),
+						LibrarySettings(libraryId = LibraryId(893)),
+						LibrarySettings(libraryId = LibraryId(72)),
 					)
 				)
+			},
+			mockk {
+				every { promiseLibraryName(LibraryId(585)) } returns "R9yt8fKe".toPromise()
+				every { promiseLibraryName(LibraryId(893)) } returns "7aqNFmn".toPromise()
+				every { promiseLibraryName(LibraryId(72)) } returns "MHcdrd3nR".toPromise()
 			},
 			RecordingApplicationMessageBus(),
 			mockk {
@@ -102,9 +108,9 @@ class `When Changing isSyncOnPowerOnly` {
 	fun `then the libraries are correct`() {
 		assertThat(mutt.libraries.value).isEqualTo(
 			listOf(
-				Library(id = 585),
-				Library(id = 893),
-				Library(id = 72),
+				Pair(LibraryId(585), "R9yt8fKe"),
+				Pair(LibraryId(893), "7aqNFmn"),
+				Pair(LibraryId(72), "MHcdrd3nR"),
 			)
 		)
 	}

@@ -4,8 +4,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.StoredMediaCenterConnectionSettings
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.FakeStoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -13,7 +11,6 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.lazyj.Lazy
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.serialization.json.Json
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,13 +25,7 @@ class WhenUpdatingTheFile {
 		private val storedFile = Lazy {
 			val libraryId = LibraryId(705)
 
-			val fakeLibraryRepository = FakeLibraryRepository(
-				Library(id = libraryId.id, connectionSettings = Json.encodeToString(
-					StoredMediaCenterConnectionSettings(
-						syncedFileLocation = SyncedFileLocation.EXTERNAL,
-					)
-				))
-			)
+			val fakeLibraryRepository = FakeLibraryRepository(Library(id = libraryId.id))
 
 			val serviceFile = ServiceFile(596)
 

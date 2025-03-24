@@ -6,5 +6,5 @@ import com.namehillsoftware.handoff.promises.Promise
 
 interface ILibraryProvider {
 	fun promiseLibrary(libraryId: LibraryId): Promise<Library?>
-	val allLibraries: Promise<Collection<Library>>
+	fun promiseAllLibraries(): Promise<Collection<Library>>
 }

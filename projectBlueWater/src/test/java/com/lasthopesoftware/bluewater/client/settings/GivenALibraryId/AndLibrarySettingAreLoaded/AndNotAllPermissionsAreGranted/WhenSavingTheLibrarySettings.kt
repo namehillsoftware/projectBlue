@@ -1,16 +1,14 @@
 package com.lasthopesoftware.bluewater.client.settings.GivenALibraryId.AndLibrarySettingAreLoaded.AndNotAllPermissionsAreGranted
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -19,13 +17,13 @@ class WhenSavingTheLibrarySettings {
 
 	private val libraryId = LibraryId(56)
     private val services by lazy {
-		val libraryRepository = FakeLibraryRepository(
-			Library(
-				id = libraryId.id,
-				isUsingExistingFiles = true,
-				libraryName = "theater",
-				connectionSettings = Json.encodeToString(
-					StoredMediaCenterConnectionSettings(
+		LibrarySettingsViewModel(
+			mockk {
+				every { promiseLibrarySettings(libraryId) } returns LibrarySettings(
+					libraryId = libraryId,
+					isUsingExistingFiles = true,
+					libraryName = "theater",
+					connectionSettings = StoredMediaCenterConnectionSettings(
 						accessCode = "b2q",
 						isLocalOnly = false,
 						isSyncLocalConnectionsOnly = true,
@@ -33,16 +31,12 @@ class WhenSavingTheLibrarySettings {
 						password = "hmpyA",
 						syncedFileLocation = SyncedFileLocation.EXTERNAL,
 					)
-				)
-			)
-		)
-
-        LibrarySettingsViewModel(
-			libraryRepository,
-			libraryRepository,
+				).toPromise()
+			},
+			mockk(),
 			mockk(),
 			mockk {
-				every { promiseIsLibraryPermissionsGranted(any()) } returns false.toPromise()
+				every { promiseIsAllPermissionsGranted(any()) } returns false.toPromise()
 			},
 		)
     }

@@ -21,9 +21,9 @@ class ScopedViewModelRegistry(
 {
 	override val itemListViewModel by viewModelStoreOwner.buildViewModelLazily {
         ItemListViewModel(
-            itemProvider,
-            registerForApplicationMessages,
-            libraryProvider,
+			itemProvider,
+			registerForApplicationMessages,
+			libraryNameLookup,
         )
 	}
 
@@ -48,8 +48,8 @@ class ScopedViewModelRegistry(
 
 	override val librarySettingsViewModel by viewModelStoreOwner.buildViewModelLazily {
 		LibrarySettingsViewModel(
-			libraryProvider = libraryProvider,
-			libraryStorage = libraryStorage,
+			librarySettingsProvider = librarySettingsProvider,
+			librarySettingsStorage = librarySettingsStorage,
 			libraryRemoval = libraryRemoval,
 			applicationPermissions = permissionsDependencies.applicationPermissions,
 		)

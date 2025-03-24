@@ -2,15 +2,13 @@ package com.lasthopesoftware.bluewater.client.settings
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.RemoveLibraries
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.parsedConnectionSettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.ProvideLibrarySettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.StoreLibrarySettings
 import com.lasthopesoftware.bluewater.permissions.RequestApplicationPermissions
 import com.lasthopesoftware.bluewater.shared.NullBox
 import com.lasthopesoftware.bluewater.shared.observables.InteractionState
@@ -26,23 +24,22 @@ import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import io.reactivex.rxjava3.core.Observable
-import kotlinx.serialization.json.Json
 
 @OptIn(ExperimentalStdlibApi::class)
 class LibrarySettingsViewModel(
-	private val libraryProvider: ILibraryProvider,
-	private val libraryStorage: ILibraryStorage,
+	private val librarySettingsProvider: ProvideLibrarySettings,
+	private val librarySettingsStorage: StoreLibrarySettings,
 	private val libraryRemoval: RemoveLibraries,
 	private val applicationPermissions: RequestApplicationPermissions,
-) : ViewModel(), PromisedResponse<Boolean, Boolean>, ImmediateResponse<Library?, Unit>, TrackLoadedViewState, ImmediateAction {
+) :
+	ViewModel(),
+	TrackLoadedViewState,
+	PromisedResponse<Boolean, Boolean>,
+	ImmediateResponse<LibrarySettings?, Unit>,
+	ImmediateAction
+{
 
 	companion object {
-		private val defaultLibrary = Library(
-			id = -1,
-			nowPlayingId = -1,
-			libraryName = "",
-			serverType = Library.ServerType.MediaCenter,
-		)
 
 		private val defaultConnectionSettings = StoredMediaCenterConnectionSettings(
 			accessCode = "",
@@ -53,22 +50,26 @@ class LibrarySettingsViewModel(
 			sslCertificateFingerprint = "",
 			syncedFileLocation = SyncedFileLocation.INTERNAL,
 		)
+
+		private val defaultLibrarySettings = LibrarySettings(
+			libraryName = "",
+			connectionSettings = defaultConnectionSettings
+		)
 	}
 
 	private val autoCloseables = AutoCloseableManager()
-	private val libraryState = MutableInteractionState(defaultLibrary.copy())
-	private val connectionSettingsState = MutableInteractionState(defaultConnectionSettings.copy())
+	private val libraryState = MutableInteractionState(defaultLibrarySettings.copy())
 	private val mutableIsLoading = MutableInteractionState(false)
 	private val mutableIsSaving = MutableInteractionState(false)
 	private val mutableIsPermissionsNeeded = MutableInteractionState(false)
 	private val mutableIsRemovalRequested = MutableInteractionState(false)
 
 	private val isSettingsChangedObserver = lazy {
-		fun <T> observeLibraryChanges(observable: Observable<NullBox<T>>, libraryValue: Library.() -> T?) =
+		fun <T> observeLibraryChanges(observable: Observable<NullBox<T>>, libraryValue: LibrarySettings.() -> T?) =
 			Observable.combineLatest(libraryState, observable) { l, o -> l.value.run(libraryValue) != o.value }
 
 		fun <T> observeConnectionSettingsChanges(observable: Observable<NullBox<T>>, connectionValue: StoredMediaCenterConnectionSettings.() -> T?) =
-			Observable.combineLatest(connectionSettingsState, observable) { l, o -> l.value.run(connectionValue) != o.value }
+			Observable.combineLatest(libraryState, observable) { l, o -> l.value.connectionSettings?.run(connectionValue) != o.value }
 
 		val changeTrackers = arrayOf(
 			observeLibraryChanges(libraryName) { libraryName },
@@ -96,8 +97,8 @@ class LibrarySettingsViewModel(
 		autoCloseables.manage(LiftedInteractionState(sslCertificateFingerprint.map { it.value.any() }, false))
 	}
 
-	val libraryName = MutableInteractionState(defaultLibrary.libraryName ?: "")
-	val isUsingExistingFiles = MutableInteractionState(defaultLibrary.isUsingExistingFiles)
+	val libraryName = MutableInteractionState(defaultLibrarySettings.libraryName ?: "")
+	val isUsingExistingFiles = MutableInteractionState(defaultLibrarySettings.isUsingExistingFiles)
 	val syncedFileLocation = MutableInteractionState(defaultConnectionSettings.syncedFileLocation ?: SyncedFileLocation.INTERNAL)
 	val accessCode = MutableInteractionState(defaultConnectionSettings.accessCode ?: "")
 	val userName = MutableInteractionState(defaultConnectionSettings.userName ?: "")
@@ -118,7 +119,7 @@ class LibrarySettingsViewModel(
 		get() = isSettingsChangedObserver.value as InteractionState<Boolean>
 
 	val activeLibraryId
-		get() = libraryState.value.libraryId.takeIf { it.id > -1 }
+		get() = libraryState.value.libraryId?.takeIf { it.id > -1 }
 
 	init {
 		autoCloseables.manage(
@@ -141,8 +142,8 @@ class LibrarySettingsViewModel(
 	fun loadLibrary(libraryId: LibraryId): Promise<*> {
 		mutableIsLoading.value = true
 
-		return libraryProvider
-			.promiseLibrary(libraryId)
+		return librarySettingsProvider
+			.promiseLibrarySettings(libraryId)
 			.then(this)
 			.must(this)
 	}
@@ -163,17 +164,15 @@ class LibrarySettingsViewModel(
 			syncedFileLocation = syncedFileLocation.value,
 		)
 
-		connectionSettingsState.value =localConnectionSettings
-
 		libraryState.value = localLibrary
 			.copy(
 				isUsingExistingFiles = isUsingExistingFiles.value,
 				libraryName = libraryName.value,
-				connectionSettings = Json.encodeToString(localConnectionSettings)
+				connectionSettings = localConnectionSettings
 			)
 
 		return applicationPermissions
-			.promiseIsLibraryPermissionsGranted(localLibrary)
+			.promiseIsAllPermissionsGranted(localLibrary)
 			.eventually(this)
 			.must(this)
 	}
@@ -186,18 +185,16 @@ class LibrarySettingsViewModel(
 		mutableIsRemovalRequested.value = false
 	}
 
-	fun removeLibrary(): Promise<*> = libraryState.value.takeIf { mutableIsRemovalRequested.value }?.let(libraryRemoval::removeLibrary).keepPromise()
+	fun removeLibrary(): Promise<*> = libraryState.value.libraryId
+		.takeIf { mutableIsRemovalRequested.value }
+		?.let(libraryRemoval::removeLibrary)
+		.keepPromise()
 
-	override fun respond(result: Library?) {
+	override fun respond(result: LibrarySettings?) {
 		isUsingExistingFiles.value = result?.isUsingExistingFiles ?: false
 		libraryName.value = result?.libraryName ?: ""
 
-		libraryState.value = (result ?: defaultLibrary).copy(
-			isUsingExistingFiles = isUsingExistingFiles.value,
-			libraryName = libraryName.value,
-		)
-
-		val parsedConnectionSettings = result?.parsedConnectionSettings() ?: defaultConnectionSettings.copy()
+		val parsedConnectionSettings = result?.connectionSettings ?: defaultConnectionSettings.copy()
 		isWakeOnLanEnabled.value = parsedConnectionSettings.isWakeOnLanEnabled
 		isSyncLocalConnectionsOnly.value = parsedConnectionSettings.isSyncLocalConnectionsOnly
 		accessCode.value = parsedConnectionSettings.accessCode ?: ""
@@ -208,16 +205,20 @@ class LibrarySettingsViewModel(
 		mutableSslStringCertificate.value = parsedConnectionSettings.sslCertificateFingerprint ?: ""
 		syncedFileLocation.value = parsedConnectionSettings.syncedFileLocation ?: SyncedFileLocation.INTERNAL
 
-		connectionSettingsState.value = StoredMediaCenterConnectionSettings(
-			isWakeOnLanEnabled = isWakeOnLanEnabled.value,
-			isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly.value,
-			accessCode = accessCode.value,
-			userName = userName.value,
-			password = password.value,
-			isLocalOnly = isLocalOnly.value,
-			macAddress = macAddress.value,
-			sslCertificateFingerprint = mutableSslStringCertificate.value,
-			syncedFileLocation = syncedFileLocation.value
+		libraryState.value = (result ?: defaultLibrarySettings).copy(
+			isUsingExistingFiles = isUsingExistingFiles.value,
+			libraryName = libraryName.value,
+			connectionSettings = StoredMediaCenterConnectionSettings(
+				isWakeOnLanEnabled = isWakeOnLanEnabled.value,
+				isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly.value,
+				accessCode = accessCode.value,
+				userName = userName.value,
+				password = password.value,
+				isLocalOnly = isLocalOnly.value,
+				macAddress = macAddress.value,
+				sslCertificateFingerprint = mutableSslStringCertificate.value,
+				syncedFileLocation = syncedFileLocation.value
+			)
 		)
 	}
 
@@ -229,8 +230,8 @@ class LibrarySettingsViewModel(
 
 		val localLibrary = libraryState.value
 
-		return libraryStorage
-			.saveLibrary(localLibrary)
+		return librarySettingsStorage
+			.promiseSavedLibrarySettings(localLibrary)
 			.then { it ->
 				libraryState.value = it
 				true

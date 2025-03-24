@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRemo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryViewModel
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.connection.trust.UserSslCertificateProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
@@ -78,11 +77,11 @@ class ActivityDependencies(
 		)
 	}
 
-	override val libraryStorage by lazy {
+	override val librarySettingsStorage by lazy {
 		ObservableConnectionSettingsLibraryStorage(
-			applicationDependencies.libraryStorage,
-			ConnectionSettingsLookup(libraryProvider),
-			messageBus
+			applicationDependencies.librarySettingsStorage,
+			connectionSettingsLookup,
+			sendApplicationMessages
 		)
 	}
 
@@ -118,7 +117,8 @@ class ActivityDependencies(
 		ApplicationSettingsViewModel(
 			applicationSettingsRepository,
 			selectedPlaybackEngineTypeAccess,
-			libraryProvider,
+			librarySettingsProvider,
+			libraryNameLookup,
 			messageBus,
 			syncScheduler,
 		)
