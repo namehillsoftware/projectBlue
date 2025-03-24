@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.permissions.read.GivenLibraryRequestingStorageReadPermissions
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import io.mockk.every
 import io.mockk.mockk
@@ -15,7 +15,7 @@ class `When checking if OS read permissions are required for the library` {
 			}
 		)
 
-		applicationReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(Library())
+		applicationReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(LibrarySettings())
 	}
 
 	@Test

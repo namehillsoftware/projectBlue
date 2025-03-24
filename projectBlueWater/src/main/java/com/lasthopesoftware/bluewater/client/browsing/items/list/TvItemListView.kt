@@ -18,7 +18,6 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,11 +57,11 @@ fun TvItemListView(
 	playbackServiceController: ControlPlaybackService,
 ) {
 	val files by fileListViewModel.files.subscribeAsState()
-	val itemValue by itemListViewModel.itemValue.collectAsState()
+	val itemValue by itemListViewModel.itemValue.subscribeAsState()
 
 	@Composable
 	fun LoadedItemListView() {
-		val items by itemListViewModel.items.collectAsState()
+		val items by itemListViewModel.items.subscribeAsState()
 
 		LazyColumn(
 			modifier = Modifier.focusGroup(),

@@ -6,7 +6,10 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.U
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.DiskFileCacheStreamSupplier
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryNameLookup
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.ProvideLibrarySettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.StoreLibrarySettings
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgressingLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
@@ -29,6 +32,8 @@ interface ApplicationDependencies {
 	val bitmapProducer: ProduceBitmaps
 	val libraryProvider: ILibraryProvider
 	val libraryStorage: ILibraryStorage
+	val librarySettingsProvider: ProvideLibrarySettings
+	val librarySettingsStorage: StoreLibrarySettings
 	val storedItemAccess: AccessStoredItems
 	val connectionSessions: ManageConnectionSessions
 	val libraryConnectionProvider: ProvideLibraryConnections
@@ -51,5 +56,6 @@ interface ApplicationDependencies {
 	val connectionSettingsLookup: LookupConnectionSettings
     val audioCacheStreamSupplier: DiskFileCacheStreamSupplier
 	val okHttpClients: OkHttpFactory
+	val libraryNameLookup: LibraryNameLookup
 }
 

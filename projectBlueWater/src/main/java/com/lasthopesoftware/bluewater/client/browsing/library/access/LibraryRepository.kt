@@ -20,14 +20,14 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 	override fun promiseLibrary(libraryId: LibraryId): Promise<Library?> =
 		promiseTableMessage<Library?, Library>(GetLibraryWriter(context, libraryId))
 
-	override val allLibraries: Promise<Collection<Library>>
-		get() = promiseTableMessage<Collection<Library>, Library>(GetAllLibrariesWriter(context))
+	override fun promiseAllLibraries(): Promise<Collection<Library>> =
+		promiseTableMessage<Collection<Library>, Library>(GetAllLibrariesWriter(context))
 
 	override fun saveLibrary(library: Library): Promise<Library> =
 		promiseTableMessage<Library, Library>(SaveLibraryWriter(context, library))
 
-	override fun removeLibrary(library: Library): Promise<Unit> =
-		promiseTableMessage<Unit, Library>(RemoveLibraryWriter(context, library))
+	override fun removeLibrary(libraryId: LibraryId): Promise<Unit> =
+		promiseTableMessage<Unit, Library>(RemoveLibraryWriter(context, libraryId))
 
 	private class GetAllLibrariesWriter(private val context: Context) : CancellableMessageWriter<Collection<Library>> {
 		override fun prepareMessage(cancellationSignal: CancellationSignal): Collection<Library> {
@@ -85,10 +85,10 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 		}
 	}
 
-	private class RemoveLibraryWriter(private val context: Context, private val library: Library) : CancellableMessageWriter<Unit> {
+	private class RemoveLibraryWriter(private val context: Context, private val libraryId: LibraryId) : CancellableMessageWriter<Unit> {
 
 		override fun prepareMessage(cancellationSignal: CancellationSignal) {
-			val libraryInt = library.id
+			val libraryInt = libraryId.id
 			if (libraryInt < 0 || cancellationSignal.isCancelled) return
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use {

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.permissions.requests.GivenALibraryWithReadPermissionsRequired
 
 import android.Manifest
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
 import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
@@ -20,7 +20,7 @@ class `When making a permissions request` {
 				every { isReadPermissionsRequiredForLibrary(any()) } returns false
 				every { isReadMediaPermissionsRequiredForLibrary(any()) } returns true
 			},
-            mockk {
+			mockk {
 				every { requestPermissions(any()) } answers {
 					requestedPermissions.addAll(firstArg())
 					Promise(emptyMap())
@@ -37,7 +37,7 @@ class `When making a permissions request` {
 
 	@BeforeAll
 	fun act() {
-		isPermissionsGranted = mut.promiseIsLibraryPermissionsGranted(Library()).toExpiringFuture().get() ?: false
+		isPermissionsGranted = mut.promiseIsAllPermissionsGranted(LibrarySettings()).toExpiringFuture().get() ?: false
 	}
 
 	@Test

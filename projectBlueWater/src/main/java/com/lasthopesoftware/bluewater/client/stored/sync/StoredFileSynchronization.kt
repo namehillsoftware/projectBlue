@@ -38,7 +38,7 @@ class StoredFileSynchronization(
 					.also(cp::doCancel)
 					.eventually { checkSync.promiseIsSyncNeeded() }
 					.eventually { isNeeded ->
-						if (isNeeded && !cp.isCancelled) libraryProvider.allLibraries
+						if (isNeeded && !cp.isCancelled) libraryProvider.promiseAllLibraries()
 						else Promise(emptyList())
 					}
 			}

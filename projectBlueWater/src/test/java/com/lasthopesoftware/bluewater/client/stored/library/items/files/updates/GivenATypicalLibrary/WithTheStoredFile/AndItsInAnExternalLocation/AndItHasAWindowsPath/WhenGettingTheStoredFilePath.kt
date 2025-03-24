@@ -3,11 +3,10 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilesPropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.ExternalMusicContent
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUrisLookup
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -15,7 +14,6 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -43,13 +41,16 @@ class WhenGettingTheStoredFilePath {
 
 		val storedFilePathsLookup = StoredFileUrisLookup(
 			filePropertiesProvider,
-			FakeLibraryRepository(
-				Library(id = libraryId, connectionSettings = Json.encodeToString(
-					StoredMediaCenterConnectionSettings(
-						syncedFileLocation = SyncedFileLocation.EXTERNAL,
+			mockk {
+				every { promiseLibrarySettings(LibraryId(libraryId)) } returns Promise(
+					LibrarySettings(
+						libraryId = LibraryId(libraryId),
+						connectionSettings = StoredMediaCenterConnectionSettings(
+							syncedFileLocation = SyncedFileLocation.EXTERNAL,
+						)
 					)
-				))
-			),
+				)
+			},
 			mockk {
 				every { promiseSyncDirectory(LibraryId(libraryId)) } returns Promise(File("/lock"))
 			},

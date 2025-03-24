@@ -1,12 +1,12 @@
 package com.lasthopesoftware.bluewater.client.connection.settings.GivenALibraryWithoutAnAccessCode
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.client.connection.settings.MissingAccessCodeException
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -17,12 +17,16 @@ import java.util.concurrent.ExecutionException
 class WhenGettingServerMediaCenterConnectionSettings {
 
 	private val mut by lazy {
-		val libraryProvider = mockk<ILibraryProvider>()
-		every { libraryProvider.promiseLibrary(LibraryId(10)) } returns Library(connectionSettings = "{}").toPromise()
-
-		val connectionSettingsLookup = ConnectionSettingsLookup(libraryProvider)
-
-		connectionSettingsLookup
+		ConnectionSettingsLookup(
+			mockk {
+				every { promiseLibrarySettings(LibraryId(10)) } returns Promise(
+					LibrarySettings(
+						libraryId = LibraryId(10),
+						connectionSettings = StoredMediaCenterConnectionSettings()
+					)
+				)
+			}
+		)
 	}
 
 	private var exception: MissingAccessCodeException? = null

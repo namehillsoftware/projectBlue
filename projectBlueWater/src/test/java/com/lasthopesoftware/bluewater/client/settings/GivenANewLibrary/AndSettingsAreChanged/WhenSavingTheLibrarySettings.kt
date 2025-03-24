@@ -1,10 +1,8 @@
 package com.lasthopesoftware.bluewater.client.settings.GivenANewLibrary.AndSettingsAreChanged
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -14,25 +12,23 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-private val newLibraryId = 918
-
 class WhenSavingTheLibrarySettings {
 
-	private val services by lazy {
-		val libraryRepository = mockk<FakeLibraryRepository> {
-			every { saveLibrary(match { it.libraryId.id == -1 }) } answers {
-				firstArg<Library>().run {
-					copy(id = newLibraryId)
-				}.toPromise()
-			}
-		}
+	companion object {
+		private val newLibraryId = 918
+	}
 
-        LibrarySettingsViewModel(
-			libraryRepository,
-			libraryRepository,
+	private val services by lazy {
+		LibrarySettingsViewModel(
 			mockk(),
 			mockk {
-				every { promiseIsLibraryPermissionsGranted(any()) } returns true.toPromise()
+				every { promiseSavedLibrarySettings(any()) } answers {
+					firstArg<LibrarySettings>().copy(libraryId = LibraryId(newLibraryId)).toPromise()
+				}
+			},
+			mockk(),
+			mockk {
+				every { promiseIsAllPermissionsGranted(any()) } returns true.toPromise()
 			},
 		)
     }

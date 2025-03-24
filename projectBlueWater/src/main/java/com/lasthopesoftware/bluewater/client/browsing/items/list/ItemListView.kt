@@ -361,13 +361,13 @@ fun ItemListView(
 ) {
 	val files by fileListViewModel.files.subscribeAsState()
 	val rowHeight = Dimensions.standardRowHeight
-	val itemValue by itemListViewModel.itemValue.collectAsState()
+	val itemValue by itemListViewModel.itemValue.subscribeAsState()
 
 	val lazyListState = rememberLazyListState()
 
 	@Composable
 	fun BoxWithConstraintsScope.LoadedItemListView(headerHeight: Dp) {
-		val items by itemListViewModel.items.collectAsState()
+		val items by itemListViewModel.items.subscribeAsState()
 
 		val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
 		LazyColumn(

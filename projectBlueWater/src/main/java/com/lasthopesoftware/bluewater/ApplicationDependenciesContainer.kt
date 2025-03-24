@@ -15,9 +15,13 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.D
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.DiskFileCacheStreamSupplier
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryNameLookup
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.CachedLibrarySettingsAccess
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.LibrarySettingsAccess
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.StoreLibrarySettings
 import com.lasthopesoftware.bluewater.client.connection.PacketSender
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgressingLibraryConnections
@@ -140,6 +144,16 @@ object ApplicationDependenciesContainer {
 		override val libraryStorage: ILibraryStorage
 			get() = libraryRepository
 
+		override val librarySettingsProvider by lazy {
+			val access = LibrarySettingsAccess(libraryProvider, libraryStorage)
+			CachedLibrarySettingsAccess(access, access)
+		}
+
+		override val librarySettingsStorage: StoreLibrarySettings
+			get() = librarySettingsProvider
+
+		override val libraryNameLookup by lazy { LibraryNameLookup(librarySettingsProvider) }
+
 		override val storedItemAccess by lazy { StoredItemAccess(context) }
 
 		override val defaultImageProvider by lazy { DefaultImageProvider(context) }
@@ -154,8 +168,9 @@ object ApplicationDependenciesContainer {
 				.initializeComponent(cls<SyncSchedulerInitializer>())
 		}
 
+		override val connectionSettingsLookup by lazy { ConnectionSettingsLookup(librarySettingsProvider) }
+
 		override val connectionSessions by lazy {
-			val connectionSettingsLookup = ConnectionSettingsLookup(LibraryRepository(context))
 			val serverLookup = ServerLookup(
 				connectionSettingsLookup,
 				ServerInfoXmlRequest(connectionSettingsLookup, okHttpClients),
@@ -224,7 +239,5 @@ object ApplicationDependenciesContainer {
 		override val stringResources by lazy { StringResources(context) }
 
 		override val nowPlayingDisplaySettings by lazy { InMemoryNowPlayingDisplaySettings() }
-
-		override val connectionSettingsLookup by lazy { ConnectionSettingsLookup(libraryProvider) }
 	}
 }

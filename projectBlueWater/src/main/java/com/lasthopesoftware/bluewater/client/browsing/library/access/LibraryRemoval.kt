@@ -2,9 +2,10 @@ package com.lasthopesoftware.bluewater.client.browsing.library.access
 
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectBrowserLibrary
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class LibraryRemoval(
@@ -14,22 +15,23 @@ class LibraryRemoval(
     private val libraryProvider: ILibraryProvider,
     private val librarySelection: SelectBrowserLibrary) : RemoveLibraries {
 
-	override fun removeLibrary(library: Library): Promise<*> {
-		val promisedNewLibrarySelection =
-			selectedLibraryIdProvider.promiseSelectedLibraryId()
-				.eventually {
-					if (library.libraryId != it) Promise.empty()
-					else libraryProvider.allLibraries.eventually { libraries ->
-						val firstOtherLibrary = libraries.firstOrNull { l -> l.libraryId != library.libraryId }
-						if (firstOtherLibrary != null) librarySelection.selectBrowserLibrary(firstOtherLibrary.libraryId)
-						else Promise.empty()
-					}
+	override fun removeLibrary(libraryId: LibraryId): Promise<*> {
+		val promisedNewLibrarySelection = selectedLibraryIdProvider
+			.promiseSelectedLibraryId()
+			.eventually {
+				if (libraryId != it) Promise.empty()
+				else libraryProvider.promiseAllLibraries().eventually { libraries ->
+					libraries
+						.firstOrNull { l -> l.libraryId != libraryId }
+						?.let { firstOtherLibrary -> librarySelection.selectBrowserLibrary(firstOtherLibrary.libraryId) }
+						.keepPromise()
 				}
+			}
 
 		return promisedNewLibrarySelection.eventually {
 			Promise.whenAll(
-				storedItems.disableAllLibraryItems(library.libraryId),
-				libraryStorage.removeLibrary(library))
+				storedItems.disableAllLibraryItems(libraryId),
+				libraryStorage.removeLibrary(libraryId))
 		}
 	}
 }

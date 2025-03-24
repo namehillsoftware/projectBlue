@@ -1,12 +1,12 @@
 package com.lasthopesoftware.bluewater.permissions.read.GivenLibraryRequestingStorageReadPermissions.AndTheLibraryIsSavingToAnExternalLocation
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.StoredMediaCenterConnectionSettings
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -20,11 +20,12 @@ class `When checking if OS read permissions are required for the library` {
 
 		applicationReadPermissionsRequirementsProvider
 			.isReadPermissionsRequiredForLibrary(
-				Library(connectionSettings = Json.encodeToString(
-					StoredMediaCenterConnectionSettings(
+				LibrarySettings(
+					libraryId = LibraryId(37),
+					connectionSettings = StoredMediaCenterConnectionSettings(
 						syncedFileLocation = SyncedFileLocation.EXTERNAL,
-					)
-				))
+					),
+				)
 			)
 	}
 
