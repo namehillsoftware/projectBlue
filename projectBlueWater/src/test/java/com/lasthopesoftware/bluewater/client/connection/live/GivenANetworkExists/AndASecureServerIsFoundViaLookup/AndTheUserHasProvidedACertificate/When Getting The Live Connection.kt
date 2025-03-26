@@ -1,8 +1,9 @@
 package com.lasthopesoftware.bluewater.client.connection.live.GivenANetworkExists.AndASecureServerIsFoundViaLookup.AndTheUserHasProvidedACertificate
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.ConfiguredActiveNetwork
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.live.PassThroughBase64Encoder
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfo
@@ -15,14 +16,17 @@ import io.mockk.every
 import io.mockk.mockk
 import org.apache.commons.codec.binary.Hex
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-private const val libraryId = 973
-
 class `When Getting The Live Connection` {
 
-	private val serverConnection by lazy {
+	companion object {
+		private const val libraryId = 973
+	}
+
+	private val mutt by lazy {
 		val urlScanner = LiveServerConnectionProvider(
 			ConfiguredActiveNetwork(isNetworkActive = true),
 			PassThroughBase64Encoder,
@@ -31,7 +35,7 @@ class `When Getting The Live Connection` {
 					ServerInfo(
 						717,
 						617,
-						"681.241.214.352",
+						setOf("681.241.214.352"),
 						emptySet(),
 						emptySet(),
 						Hex.decodeHex("E5252D4CEFB873A93BA1D7017EFB47D09F8BA924")
@@ -46,14 +50,15 @@ class `When Getting The Live Connection` {
 			},
 			mockk {
 				every {
-					getServerClient(match { a ->
+					getServerClient(match<MediaCenterConnectionDetails> { a ->
 						listOf(
 							"https://681.241.214.352:617",
 							"http://681.241.214.352:717"
 						).contains(a.baseUrl.toString())
 					})
 				} answers {
-					val urlProvider = firstArg<ServerConnection>()
+					val urlProvider = firstArg<MediaCenterConnectionDetails>()
+					selectedConnectionDetails = urlProvider
 					mockk {
 						every { promiseResponse(URL(urlProvider.baseUrl, "MCWS/v1/Alive")) } returns Promise(
 							PassThroughHttpResponse(
@@ -69,17 +74,25 @@ class `When Getting The Live Connection` {
 			mockk(),
 		)
 
-		urlScanner.promiseLiveServerConnection(LibraryId(libraryId)).toExpiringFuture().get()
+		urlScanner
+	}
+
+	private var selectedConnectionDetails: MediaCenterConnectionDetails? = null
+	private var serverConnection: LiveServerConnection? = null
+
+	@BeforeAll
+	fun act() {
+		serverConnection = mutt.promiseLiveServerConnection(LibraryId(libraryId)).toExpiringFuture().get()
 	}
 
 	@Test
 	fun `then the base url is correct`() {
-		assertThat(serverConnection?.serverConnection?.baseUrl.toString()).isEqualTo("https://681.241.214.352:617")
+		assertThat(selectedConnectionDetails?.baseUrl.toString()).isEqualTo("https://681.241.214.352:617")
 	}
 
 	@Test
 	fun `then the certificate fingerprint is correct`() {
-		assertThat(serverConnection?.serverConnection?.certificateFingerprint)
+		assertThat(selectedConnectionDetails?.certificateFingerprint)
 			.isEqualTo(Hex.decodeHex("E5252D4CEFB873A93BA1D7017EFB47D09F8BA924"))
 	}
 }

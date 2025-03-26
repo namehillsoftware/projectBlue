@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.live.GivenANetworkExists.AndASecureServerIsFoundViaLookup.AndTheLocalIpsCanBeConnected.AndTheInsecureRemoteServerCanConnect
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.ConfiguredActiveNetwork
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
@@ -30,7 +30,7 @@ class `When Getting The Live Connection` {
 			ServerInfo(
 				143,
 				452,
-				"1.2.3.4",
+				setOf("1.2.3.4"),
 				setOf(
 					"53.24.19.245",
 					"192.168.1.56"
@@ -49,7 +49,7 @@ class `When Getting The Live Connection` {
 				).toPromise()
 			},
 			mockk {
-				every { getServerClient(any()) } returns mockk {
+				every { getServerClient(any<MediaCenterConnectionDetails>()) } returns mockk {
 					every { promiseResponse(any()) } returns Promise(
 						PassThroughHttpResponse(
 							200,
@@ -62,14 +62,15 @@ class `When Getting The Live Connection` {
 				}
 
 				every {
-					getServerClient(match { a ->
+					getServerClient(match<MediaCenterConnectionDetails> { a ->
 						listOf(
 							"https://192.168.1.56:452",
 							"http://1.2.3.4:143"
 						).contains(a.baseUrl.toString())
 					})
 				} answers {
-					val urlProvider = firstArg<ServerConnection>()
+					val urlProvider = firstArg<MediaCenterConnectionDetails>()
+					selectedConnectionDetails = urlProvider
 					mockk {
 						every { promiseResponse(URL(urlProvider.baseUrl, "MCWS/v1/Alive")) } returns Promise(
 							PassThroughHttpResponse(
@@ -86,6 +87,7 @@ class `When Getting The Live Connection` {
 		)
 	}
 
+	private var selectedConnectionDetails: MediaCenterConnectionDetails? = null
 	private var liveServerConnection: LiveServerConnection? = null
 
 	@BeforeAll
@@ -100,6 +102,6 @@ class `When Getting The Live Connection` {
 
 	@Test
 	fun `then the base url is correct`() {
-		assertThat(liveServerConnection?.serverConnection?.baseUrl.toString()).isEqualTo("http://1.2.3.4:143")
+		assertThat(selectedConnectionDetails?.baseUrl.toString()).isEqualTo("http://1.2.3.4:143")
 	}
 }

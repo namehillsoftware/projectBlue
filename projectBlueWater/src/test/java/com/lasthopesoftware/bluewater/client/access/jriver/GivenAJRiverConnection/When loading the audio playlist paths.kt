@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnecti
 
 import com.lasthopesoftware.TestMcwsUrl
 import com.lasthopesoftware.TestUrl
-import com.lasthopesoftware.bluewater.client.connection.ServerConnection
-import com.lasthopesoftware.bluewater.client.connection.live.MediaCenterConnection
+import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
+import com.lasthopesoftware.bluewater.client.connection.live.LiveMediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.url.MediaCenterUrlBuilder
@@ -66,8 +66,8 @@ class `When loading the audio playlist paths` {
 			}
 		}
 
-		MediaCenterConnection(
-			ServerConnection(TestUrl),
+		LiveMediaCenterConnection(
+			MediaCenterConnectionDetails(TestUrl),
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
 		)

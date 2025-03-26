@@ -141,4 +141,5 @@
     <string name="optional_mac_address">Optional MAC Address</string>
     <string name="refresh">Refresh</string>
     <string name="view_more_options">View More Options</string>
+    <string name="subsonic">Subsonic</string>
 </resources>
