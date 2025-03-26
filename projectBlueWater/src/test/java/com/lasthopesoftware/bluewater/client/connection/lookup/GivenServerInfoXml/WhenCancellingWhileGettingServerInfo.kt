@@ -26,7 +26,7 @@ class WhenCancellingWhileGettingServerInfo {
 
 		val serverLookup = ServerLookup(
 			mockk {
-				every { lookupConnectionSettings(any()) } returns Promise.empty()
+				every { promiseConnectionSettings(any()) } returns Promise.empty()
 			},
 			serverInfoXml)
 		serverLookup

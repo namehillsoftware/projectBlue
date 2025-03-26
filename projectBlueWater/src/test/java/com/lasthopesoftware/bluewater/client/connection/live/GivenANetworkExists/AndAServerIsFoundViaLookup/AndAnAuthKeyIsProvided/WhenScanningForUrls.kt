@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.connection.live.ConfiguredActiveNet
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfo
-import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -31,18 +30,17 @@ class WhenScanningForUrls {
 			)
 		)
 
-		val connectionSettingsLookup = mockk<LookupConnectionSettings>()
-		every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(15)) } returns MediaCenterConnectionSettings(
-			accessCode = "gooPc",
-			userName = "myuser",
-			password = "myPass"
-		).toPromise()
-
 		val urlScanner = LiveServerConnectionProvider(
 			ConfiguredActiveNetwork(isNetworkActive = true),
 			mockk { every { encodeString(any()) } returns "gooey" },
 			serverLookup,
-			connectionSettingsLookup,
+			mockk {
+				every { promiseConnectionSettings(LibraryId(15)) } returns MediaCenterConnectionSettings(
+					accessCode = "gooPc",
+					userName = "myuser",
+					password = "myPass"
+				).toPromise()
+			},
 			mockk {
 				every {
 					getServerClient(match { a ->

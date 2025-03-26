@@ -21,7 +21,7 @@ class `When Getting the Server Info` {
 	private val services by lazy {
         ServerLookup(
             mockk {
-                every { lookupConnectionSettings(LibraryId(libraryId)) } returns MediaCenterConnectionSettings(
+                every { promiseConnectionSettings(LibraryId(libraryId)) } returns MediaCenterConnectionSettings(
                     accessCode = "acziGulWke",
                     macAddress = "",
                 ).toPromise()

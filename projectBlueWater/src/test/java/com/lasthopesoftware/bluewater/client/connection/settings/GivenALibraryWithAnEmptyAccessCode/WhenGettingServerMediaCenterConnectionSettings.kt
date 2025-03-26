@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.settings.GivenALibraryWithoutAnAccessCode
+package com.lasthopesoftware.bluewater.client.connection.settings.GivenALibraryWithAnEmptyAccessCode
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
@@ -19,7 +19,7 @@ class WhenGettingServerMediaCenterConnectionSettings {
 		ValidConnectionSettingsLookup(
 			mockk {
 				every { promiseConnectionSettings(LibraryId(10)) } returns Promise(
-					MediaCenterConnectionSettings(accessCode = "")
+					MediaCenterConnectionSettings(accessCode = " 		")
 				)
 			}
 		)

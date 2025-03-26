@@ -30,10 +30,7 @@ class WhenRetrievingTheLibraryServerConnection {
 
 		val libraryConnectionProvider = LibraryConnectionProvider(
             mockk {
-                every { isValid(any()) } returns true
-            },
-            mockk {
-                every { lookupConnectionSettings(LibraryId(3)) } returns deferredConnectionSettings
+                every { promiseConnectionSettings(LibraryId(3)) } returns deferredConnectionSettings
             },
             {
                 ++wakeAttempts

@@ -32,7 +32,7 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsValidation
+import com.lasthopesoftware.bluewater.client.connection.settings.ValidConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
@@ -168,7 +168,9 @@ object ApplicationDependenciesContainer {
 				.initializeComponent(cls<SyncSchedulerInitializer>())
 		}
 
-		override val connectionSettingsLookup by lazy { ConnectionSettingsLookup(librarySettingsProvider) }
+		override val connectionSettingsLookup by lazy {
+			ValidConnectionSettingsLookup(ConnectionSettingsLookup(librarySettingsProvider))
+		}
 
 		override val connectionSessions by lazy {
 			val serverLookup = ServerLookup(
@@ -179,7 +181,6 @@ object ApplicationDependenciesContainer {
 			val activeNetwork = ActiveNetworkFinder(context)
 			ConnectionSessionManager(
                 LibraryConnectionProvider(
-					ConnectionSettingsValidation,
 					connectionSettingsLookup,
 					ServerAlarm(serverLookup, activeNetwork, ServerWakeSignal(PacketSender())),
 					CachedDataSourceServerConnectionProvider(

@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.connection.ServerConnection
 import com.lasthopesoftware.bluewater.client.connection.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
-import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.LookupValidConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.keepPromise
@@ -18,14 +18,14 @@ class LiveServerConnectionProvider(
 	private val activeNetwork: LookupActiveNetwork,
 	private val base64: EncodeToBase64,
 	private val serverLookup: LookupServers,
-	private val connectionSettingsLookup: LookupConnectionSettings,
+	private val connectionSettingsLookup: LookupValidConnectionSettings,
 	private val httpClients: ProvideHttpPromiseClients,
 	private val okHttpClients: ProvideOkHttpClients,
 ) : ProvideLiveServerConnection {
 	override fun promiseLiveServerConnection(libraryId: LibraryId): Promise<LiveServerConnection?> =
 		if (activeNetwork.isNetworkActive) {
 			connectionSettingsLookup
-				.lookupConnectionSettings(libraryId)
+				.promiseConnectionSettings(libraryId)
 				.cancelBackEventually { connectionSettings ->
 					connectionSettings
 						?.let { settings -> promiseTestedServerConnection(libraryId, settings) }

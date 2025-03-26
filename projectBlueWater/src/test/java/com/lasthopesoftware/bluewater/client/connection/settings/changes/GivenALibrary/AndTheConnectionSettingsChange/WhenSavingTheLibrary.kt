@@ -23,7 +23,7 @@ class WhenSavingTheLibrary {
 	private val mut by lazy {
 		val connectionSettingsLookup = mockk<LookupConnectionSettings>()
 		every {
-			connectionSettingsLookup.lookupConnectionSettings(LibraryId(13))
+			connectionSettingsLookup.promiseConnectionSettings(LibraryId(13))
 		} returns MediaCenterConnectionSettings("codeOne").toPromise() andThen MediaCenterConnectionSettings("codeTwo").toPromise()
 
 		val connectionSettingsChangeDetectionLibraryStorage = ObservableConnectionSettingsLibraryStorage(

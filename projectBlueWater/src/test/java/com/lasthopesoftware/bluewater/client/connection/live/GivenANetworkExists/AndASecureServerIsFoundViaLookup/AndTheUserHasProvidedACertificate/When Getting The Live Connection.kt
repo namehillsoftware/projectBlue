@@ -39,7 +39,7 @@ class `When Getting The Live Connection` {
 				)
 			},
 			mockk {
-				every { lookupConnectionSettings(LibraryId(libraryId)) } returns MediaCenterConnectionSettings(
+				every { promiseConnectionSettings(LibraryId(libraryId)) } returns MediaCenterConnectionSettings(
 					accessCode = "gooPc",
 					sslCertificateFingerprint = Hex.decodeHex("F951D0C4AC2778F5C36344D7F0CD6D61E4BFE01F")
 				).toPromise()
