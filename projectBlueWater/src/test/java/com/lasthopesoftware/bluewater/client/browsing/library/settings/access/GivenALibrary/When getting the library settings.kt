@@ -8,9 +8,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMed
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.LibrarySettingsAccess
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.gson
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -31,7 +31,7 @@ class `When getting the library settings` {
 					nowPlayingProgress = 401,
 					savedTracksString = "MN2zlU8F1w6",
 					syncedFileLocation = SyncedFileLocation.EXTERNAL,
-					connectionSettings = Json.encodeToString(
+					connectionSettings = gson.toJson(
 						StoredMediaCenterConnectionSettings(
 							accessCode = "DLKicYx",
 							password = "LKHPUXwrF",

@@ -1,5 +1,6 @@
 package com.lasthopesoftware.resources.io
 
+import com.google.gson.Gson
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.client.connection.requests.bodyString
 import com.lasthopesoftware.bluewater.shared.StandardResponse
@@ -15,7 +16,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.parser.Parser
 import kotlin.coroutines.cancellation.CancellationException
 
-private fun xmlParsingCancelledException() = CancellationException("XML parsing was cancelled.")
+inline fun <reified T> Gson.fromJson(value: String): T? = fromJson(value, T::class.java)
 
 fun Promise<HttpResponse>.promiseStringBody(): Promise<String> = then(HttpStringBodyResponse)
 fun Promise<String>.promiseXmlDocument(): Promise<Document> = eventually(ParsedXmlDocumentResponse)
@@ -57,3 +58,5 @@ object ParsedStandardDocumentResponse : PromisedResponse<Document, StandardRespo
 		document.toStandardResponse()
 	}
 }
+
+private fun xmlParsingCancelledException() = CancellationException("XML parsing was cancelled.")

@@ -26,7 +26,6 @@ class WhenCollectingTheAssociatedServiceFiles {
 			StoredItem(1, "1", StoredItem.ItemType.ITEM),
 			StoredItem(1, "2", StoredItem.ItemType.ITEM),
 			StoredItem(1, "3", StoredItem.ItemType.ITEM))
-
 		val fileProvider = mockk<ProvideLibraryFiles> {
 			every {
 				promiseFiles(LibraryId(10), ItemId("1"))

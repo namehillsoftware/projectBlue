@@ -52,4 +52,7 @@ interface GetStringResources {
 
 	val set: String
 		get() = ""
+
+	val subsonic: String
+		get() = ""
 }

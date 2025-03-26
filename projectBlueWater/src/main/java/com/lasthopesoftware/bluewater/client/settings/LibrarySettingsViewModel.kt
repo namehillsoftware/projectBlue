@@ -69,7 +69,7 @@ class LibrarySettingsViewModel(
 			Observable.combineLatest(libraryState, observable) { l, o -> l.value.run(libraryValue) != o.value }
 
 		fun <T> observeConnectionSettingsChanges(observable: Observable<NullBox<T>>, connectionValue: StoredMediaCenterConnectionSettings.() -> T?) =
-			Observable.combineLatest(libraryState, observable) { l, o -> l.value.connectionSettings?.run(connectionValue) != o.value }
+			Observable.combineLatest(libraryState, observable) { l, o -> l.value.connectionSettings?.let { it as? StoredMediaCenterConnectionSettings }?.run(connectionValue) != o.value }
 
 		val changeTrackers = arrayOf(
 			observeLibraryChanges(libraryName) { libraryName },
@@ -196,14 +196,16 @@ class LibrarySettingsViewModel(
 		syncedFileLocation.value = result?.syncedFileLocation ?: SyncedFileLocation.INTERNAL
 
 		val parsedConnectionSettings = result?.connectionSettings ?: defaultConnectionSettings.copy()
-		isWakeOnLanEnabled.value = parsedConnectionSettings.isWakeOnLanEnabled
-		isSyncLocalConnectionsOnly.value = parsedConnectionSettings.isSyncLocalConnectionsOnly
-		accessCode.value = parsedConnectionSettings.accessCode ?: ""
-		userName.value = parsedConnectionSettings.userName ?: ""
-		password.value = parsedConnectionSettings.password ?: ""
-		isLocalOnly.value = parsedConnectionSettings.isLocalOnly
-		macAddress.value = parsedConnectionSettings.macAddress ?: ""
-		mutableSslStringCertificate.value = parsedConnectionSettings.sslCertificateFingerprint ?: ""
+		if (parsedConnectionSettings is StoredMediaCenterConnectionSettings) {
+			isWakeOnLanEnabled.value = parsedConnectionSettings.isWakeOnLanEnabled
+			isSyncLocalConnectionsOnly.value = parsedConnectionSettings.isSyncLocalConnectionsOnly
+			accessCode.value = parsedConnectionSettings.accessCode ?: ""
+			userName.value = parsedConnectionSettings.userName ?: ""
+			password.value = parsedConnectionSettings.password ?: ""
+			isLocalOnly.value = parsedConnectionSettings.isLocalOnly
+			macAddress.value = parsedConnectionSettings.macAddress ?: ""
+			mutableSslStringCertificate.value = parsedConnectionSettings.sslCertificateFingerprint ?: ""
+		}
 
 		libraryState.value = (result ?: defaultLibrarySettings).copy(
 			isUsingExistingFiles = isUsingExistingFiles.value,

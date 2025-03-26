@@ -19,6 +19,6 @@ data class Library(
 
 	@Keep
 	enum class ServerType {
-		MediaCenter
+		MediaCenter, Subsonic
 	}
 }
