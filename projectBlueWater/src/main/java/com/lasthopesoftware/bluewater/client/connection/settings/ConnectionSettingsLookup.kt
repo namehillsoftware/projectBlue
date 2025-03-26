@@ -5,15 +5,15 @@ import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.Pr
 import com.lasthopesoftware.resources.emptyByteArray
 import com.namehillsoftware.handoff.promises.Promise
 
-class ConnectionSettingsLookup(private val librarySettings: ProvideLibrarySettings) : LookupConnectionSettings {
+class ConnectionSettingsLookup(private val librarySettings: ProvideLibrarySettings) : LookupValidConnectionSettings {
 	@OptIn(ExperimentalStdlibApi::class)
-	override fun lookupConnectionSettings(libraryId: LibraryId): Promise<MediaCenterConnectionSettings?> =
+	override fun promiseConnectionSettings(libraryId: LibraryId): Promise<MediaCenterConnectionSettings?> =
 		librarySettings
 			.promiseLibrarySettings(libraryId)
 			.then { it ->
 				it?.connectionSettings?.run {
 					MediaCenterConnectionSettings(
-						accessCode = accessCode ?: throw MissingAccessCodeException(libraryId),
+						accessCode = accessCode ?: "",
 						userName = userName,
 						password = password,
 						isLocalOnly = isLocalOnly,

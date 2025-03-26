@@ -20,7 +20,6 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnect
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfoXmlRequest
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerLookup
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsValidation
 import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
@@ -84,7 +83,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 
 	private val libraryConnections by lazy {
 		with (applicationDependencies) {
-			val connectionSettingsLookup = SyncLibraryConnectionSettings(connectionSettingsLookup)
+			val connectionSettingsLookup = SyncLibraryConnectionSettings(librarySettingsProvider)
 
 			val serverLookup = ServerLookup(
 				connectionSettingsLookup,
@@ -94,7 +93,6 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			val activeNetwork = ActiveNetworkFinder(context)
 			DelegatingLibraryConnectionProvider(
 				LibraryConnectionProvider(
-					ConnectionSettingsValidation,
 					connectionSettingsLookup,
 					ServerAlarm(serverLookup, activeNetwork, ServerWakeSignal(PacketSender())),
 					CachedDataSourceServerConnectionProvider(

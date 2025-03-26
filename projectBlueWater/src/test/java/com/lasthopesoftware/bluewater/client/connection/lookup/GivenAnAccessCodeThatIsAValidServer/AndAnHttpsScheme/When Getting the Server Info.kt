@@ -20,7 +20,7 @@ class `When Getting the Server Info` {
 	private val services by lazy {
         ServerLookup(
             mockk {
-                every { lookupConnectionSettings(LibraryId(libraryId)) } returns MediaCenterConnectionSettings(
+                every { promiseConnectionSettings(LibraryId(libraryId)) } returns MediaCenterConnectionSettings(
                     accessCode = "https://b7XpyOQv:63389",
 					sslCertificateFingerprint = Hex.decodeHex("d0a3e4bf62221422a2e5dc9c479c2b36")
                 ).toPromise()

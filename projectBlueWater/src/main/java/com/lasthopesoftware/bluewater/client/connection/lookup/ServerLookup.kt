@@ -67,7 +67,7 @@ class ServerLookup(
 	@OptIn(ExperimentalStdlibApi::class)
 	override fun promiseServerInformation(libraryId: LibraryId): Promise<ServerInfo> = Promise.Proxy { proxy ->
 		connectionSettingsLookup
-			.lookupConnectionSettings(libraryId)
+			.promiseConnectionSettings(libraryId)
 			.also(proxy::doCancel)
 			.eventually { connectionSettings ->
 				if (proxy.isCancelled) Promise.empty()

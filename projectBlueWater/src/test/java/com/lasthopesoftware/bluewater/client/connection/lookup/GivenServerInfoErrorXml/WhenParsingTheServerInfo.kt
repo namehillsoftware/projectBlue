@@ -19,7 +19,7 @@ class WhenParsingTheServerInfo {
 	private val mut by lazy {
 		ServerLookup(
 			mockk {
-				every { lookupConnectionSettings(any()) } returns Promise.empty()
+				every { promiseConnectionSettings(any()) } returns Promise.empty()
 			},
 			mockk {
 				every { promiseServerInfoXml(any()) } returns Promise(

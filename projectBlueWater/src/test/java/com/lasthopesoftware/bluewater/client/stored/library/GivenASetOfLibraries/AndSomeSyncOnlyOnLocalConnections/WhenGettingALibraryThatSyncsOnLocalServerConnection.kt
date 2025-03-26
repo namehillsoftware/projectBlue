@@ -1,7 +1,8 @@
 package com.lasthopesoftware.bluewater.client.stored.library.GivenASetOfLibraries.AndSomeSyncOnlyOnLocalConnections
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.stored.library.SyncLibraryConnectionSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -14,14 +15,16 @@ class WhenGettingALibraryThatSyncsOnLocalServerConnection {
 	private val library by lazy {
 		val syncLibraryProvider = SyncLibraryConnectionSettings(
 			mockk {
-				every { lookupConnectionSettings(LibraryId(8)) } returns MediaCenterConnectionSettings(
-					accessCode = "9d8dIQP0",
-					isSyncLocalConnectionsOnly = true,
+				every { promiseLibrarySettings(LibraryId(8)) } returns LibrarySettings(
+					connectionSettings = StoredMediaCenterConnectionSettings(
+						accessCode = "9d8dIQP0",
+						isSyncLocalConnectionsOnly = true,
+                	)
 				).toPromise()
 			}
 		)
 
-		syncLibraryProvider.lookupConnectionSettings(LibraryId(8)).toExpiringFuture().get()
+		syncLibraryProvider.promiseConnectionSettings(LibraryId(8)).toExpiringFuture().get()
 	}
 
 	@Test

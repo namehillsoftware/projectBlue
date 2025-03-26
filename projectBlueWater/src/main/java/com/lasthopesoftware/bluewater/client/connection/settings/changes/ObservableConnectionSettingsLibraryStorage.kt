@@ -15,13 +15,13 @@ class ObservableConnectionSettingsLibraryStorage(
 ) : StoreLibrarySettings {
 
 	override fun promiseSavedLibrarySettings(librarySettings: LibrarySettings): Promise<LibrarySettings> {
-		val promisedOriginalConnectionSettings = librarySettings.libraryId?.let(connectionSettingsLookup::lookupConnectionSettings)
+		val promisedOriginalConnectionSettings = librarySettings.libraryId?.let(connectionSettingsLookup::promiseConnectionSettings)
 
 		return inner.promiseSavedLibrarySettings(librarySettings).then { updatedLibrary ->
 			promisedOriginalConnectionSettings
 				?.then { originalConnectionSettings ->
 					connectionSettingsLookup
-						.lookupConnectionSettings(librarySettings.libraryId)
+						.promiseConnectionSettings(librarySettings.libraryId)
 						.then { updatedConnectionSettings ->
 							if (updatedConnectionSettings != originalConnectionSettings) {
 								sendApplicationMessages.sendMessage(ConnectionSettingsUpdated(librarySettings.libraryId))

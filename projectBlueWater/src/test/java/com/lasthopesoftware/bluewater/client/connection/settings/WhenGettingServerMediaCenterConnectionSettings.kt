@@ -1,8 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection.settings
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
-import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
@@ -14,18 +12,16 @@ import org.junit.jupiter.api.Test
 
 class WhenGettingServerMediaCenterConnectionSettings {
 
+	@OptIn(ExperimentalStdlibApi::class)
 	private val mut by lazy {
-		val connectionSettingsLookup = ConnectionSettingsLookup(mockk {
-			every { promiseLibrarySettings(LibraryId(10)) } returns LibrarySettings(
-				libraryId = LibraryId(10),
-				connectionSettings = StoredMediaCenterConnectionSettings(
-					accessCode = "P9qd",
-					userName = "x39",
-					isLocalOnly = true,
-					password = "gEaP",
-					sslCertificateFingerprint = "A10B",
-					isWakeOnLanEnabled = true,
-				)
+		val connectionSettingsLookup = ValidConnectionSettingsLookup(mockk {
+			every { promiseConnectionSettings(LibraryId(10)) } returns MediaCenterConnectionSettings(
+				accessCode = "P9qd",
+				userName = "x39",
+				isLocalOnly = true,
+				password = "gEaP",
+				sslCertificateFingerprint = "A10B".hexToByteArray(),
+				isWakeOnLanEnabled = true,
 			).toPromise()
 		})
 
@@ -36,7 +32,7 @@ class WhenGettingServerMediaCenterConnectionSettings {
 
 	@BeforeAll
 	fun act() {
-		connectionSettings = mut.lookupConnectionSettings(LibraryId(10)).toExpiringFuture().get()
+		connectionSettings = mut.promiseConnectionSettings(LibraryId(10)).toExpiringFuture().get()
 	}
 
 	@Test

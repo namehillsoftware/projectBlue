@@ -4,5 +4,5 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 interface LookupConnectionSettings {
-	fun lookupConnectionSettings(libraryId: LibraryId): Promise<MediaCenterConnectionSettings?>
+	fun promiseConnectionSettings(libraryId: LibraryId): Promise<MediaCenterConnectionSettings?>
 }

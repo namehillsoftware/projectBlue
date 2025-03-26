@@ -19,7 +19,7 @@ class WhenParsingTheServerInfo {
 	private val serverInfo by lazy {
 		val serverLookup = ServerLookup(
 			mockk {
-				every { lookupConnectionSettings(LibraryId(libraryId)) } returns Promise(
+				every { promiseConnectionSettings(LibraryId(libraryId)) } returns Promise(
 					MediaCenterConnectionSettings(
 						accessCode = "JcMHkVt5mty",
 						sslCertificateFingerprint = Hex.decodeHex("2386166660562C5AAA1253B2BED7C2483F9C2D45")

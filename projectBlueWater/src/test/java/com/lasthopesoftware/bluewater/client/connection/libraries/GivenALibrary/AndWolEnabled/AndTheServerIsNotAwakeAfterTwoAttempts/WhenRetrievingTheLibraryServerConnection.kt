@@ -27,11 +27,8 @@ class WhenRetrievingTheLibraryServerConnection {
 			DeferredPromise<MediaCenterConnectionSettings?>(MediaCenterConnectionSettings(accessCode = "aB5nf", isWakeOnLanEnabled = true))
 
 		val libraryConnectionProvider = LibraryConnectionProvider(
-			mockk {
-				every { isValid(any()) } returns true
-			},
-			mockk {
-				every { lookupConnectionSettings(LibraryId(3)) } returns deferredConnectionSettings
+            mockk {
+				every { promiseConnectionSettings(LibraryId(3)) } returns deferredConnectionSettings
 			},
 			{
 				++wakeAttempts
