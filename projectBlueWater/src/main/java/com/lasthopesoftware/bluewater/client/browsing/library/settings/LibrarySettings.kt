@@ -8,5 +8,5 @@ data class LibrarySettings(
 	val libraryName: String? = null,
 	val isUsingExistingFiles: Boolean = false,
 	val syncedFileLocation: SyncedFileLocation? = null,
-	val connectionSettings: StoredMediaCenterConnectionSettings? = null,
+	val connectionSettings: StoredConnectionSettings? = null,
 )

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.live.GivenANetworkExists.AndASecureServerIsFoundViaLookup.AndTheFingerprintIsNull
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.ConfiguredActiveNetwork
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
@@ -28,7 +28,7 @@ class `When Getting The Live Connection` {
 			ServerInfo(
 				143,
 				452,
-				"1.2.3.4", emptySet(), emptySet(),
+				setOf("1.2.3.4"), emptySet(), emptySet(),
 				ByteArray(0),
 			)
 		)
@@ -42,9 +42,10 @@ class `When Getting The Live Connection` {
 			},
 			mockk {
 				every {
-					getServerClient(match { a -> "https://1.2.3.4:452" == a.baseUrl.toString() })
+					getServerClient(match<MediaCenterConnectionDetails> { a -> "https://1.2.3.4:452" == a.baseUrl.toString() })
 				} answers {
-					val urlProvider = firstArg<ServerConnection>()
+					val urlProvider = firstArg<MediaCenterConnectionDetails>()
+					selectedConnectionDetails = urlProvider
 					mockk {
 						every { promiseResponse(URL(urlProvider.baseUrl, "MCWS/v1/Alive")) } returns Promise(
 							PassThroughHttpResponse(
@@ -62,6 +63,7 @@ class `When Getting The Live Connection` {
 		)
 	}
 
+	private var selectedConnectionDetails: MediaCenterConnectionDetails? = null
 	private var serverConnection: LiveServerConnection? = null
 
 	@BeforeAll
@@ -76,11 +78,11 @@ class `When Getting The Live Connection` {
 
 	@Test
 	fun `then the base url is correct`() {
-		assertThat(serverConnection?.serverConnection?.baseUrl?.toString()).isEqualTo("https://1.2.3.4:452")
+		assertThat(selectedConnectionDetails?.baseUrl?.toString()).isEqualTo("https://1.2.3.4:452")
 	}
 
 	@Test
 	fun `then the certificate fingerprint is empty`() {
-		assertThat(serverConnection?.serverConnection?.certificateFingerprint).isEmpty()
+		assertThat(selectedConnectionDetails?.certificateFingerprint).isEmpty()
 	}
 }

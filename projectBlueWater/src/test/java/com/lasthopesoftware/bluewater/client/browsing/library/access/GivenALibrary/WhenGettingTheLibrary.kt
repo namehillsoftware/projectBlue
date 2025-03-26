@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedF
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import kotlinx.serialization.json.Json
+import com.lasthopesoftware.resources.gson
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,7 +26,7 @@ class WhenGettingTheLibrary {
 				isRepeating = true,
 				savedTracksString = "This is not even a real track string",
 				syncedFileLocation = SyncedFileLocation.EXTERNAL,
-				connectionSettings = Json.encodeToString(
+				connectionSettings = gson.toJson(
 					StoredMediaCenterConnectionSettings(
 						accessCode = "aCxeS",
 						isSyncLocalConnectionsOnly = true,

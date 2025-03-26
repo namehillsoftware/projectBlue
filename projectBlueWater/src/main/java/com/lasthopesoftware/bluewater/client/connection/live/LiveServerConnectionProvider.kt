@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.live
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
@@ -28,6 +28,7 @@ class LiveServerConnectionProvider(
 				.promiseConnectionSettings(libraryId)
 				.cancelBackEventually { connectionSettings ->
 					connectionSettings
+						?.let { it as? MediaCenterConnectionSettings }
 						?.let { settings -> promiseTestedServerConnection(libraryId, settings) }
 						?: Promise(MissingConnectionSettingsException(libraryId))
 				}
@@ -43,13 +44,13 @@ class LiveServerConnectionProvider(
 			.promiseServerInformation(libraryId)
 			.also(cp::doCancel)
 			.eventually {
-				it?.let { (httpPort, httpsPort, remoteIp, localIps, _, certificateFingerprint) ->
-					val serverConnections = LinkedList<ServerConnection>()
+				it?.let { (httpPort, httpsPort, remoteIps, localIps, _, certificateFingerprint) ->
+					val mediaCenterConnectionDetails = LinkedList<MediaCenterConnectionDetails>()
 
 					fun testUrls(): Promise<LiveServerConnection?> {
 						if (cp.isCancelled) return Promise.empty()
-						val serverConnection = serverConnections.poll() ?: return Promise.empty()
-						val potentialConnection = MediaCenterConnection(serverConnection, httpClients, okHttpClients)
+						val serverConnection = mediaCenterConnectionDetails.poll() ?: return Promise.empty()
+						val potentialConnection = LiveMediaCenterConnection(serverConnection, httpClients, okHttpClients)
 						return potentialConnection
 							.promiseIsConnectionPossible()
 							.also(cp::doCancel)
@@ -58,31 +59,35 @@ class LiveServerConnectionProvider(
 
 					if (!settings.isLocalOnly) {
 						if (httpsPort != null) {
-							serverConnections.offer(
-								ServerConnection(
-									authKey,
-									remoteIp,
-									httpsPort,
-									certificateFingerprint
+							for (ip in remoteIps) {
+								mediaCenterConnectionDetails.offer(
+									MediaCenterConnectionDetails(
+										authKey,
+										ip,
+										httpsPort,
+										certificateFingerprint
+									)
 								)
-							)
+							}
 						}
 
 						if (httpPort != null) {
-							serverConnections.offer(
-								ServerConnection(
-									authKey,
-									remoteIp,
-									httpPort,
+							for (ip in remoteIps) {
+								mediaCenterConnectionDetails.offer(
+									MediaCenterConnectionDetails(
+										authKey,
+										ip,
+										httpPort,
+									)
 								)
-							)
+							}
 						}
 					}
 
 					if (httpPort != null) {
 						for (ip in localIps) {
-							serverConnections.offer(
-								ServerConnection(
+							mediaCenterConnectionDetails.offer(
+								MediaCenterConnectionDetails(
 									authKey,
 									ip,
 									httpPort,

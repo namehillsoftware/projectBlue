@@ -88,7 +88,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			val serverLookup = ServerLookup(
 				connectionSettingsLookup,
 				ServerInfoXmlRequest(connectionSettingsLookup, okHttpClients),
-			)
+            )
 
 			val activeNetwork = ActiveNetworkFinder(context)
 			DelegatingLibraryConnectionProvider(

@@ -1,8 +1,9 @@
 package com.lasthopesoftware.bluewater.client.connection.live.GivenANetworkExists.AndAServerIsFoundViaLookup
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.ConfiguredActiveNetwork
+import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.live.PassThroughBase64Encoder
 import com.lasthopesoftware.bluewater.client.connection.lookup.LookupServers
@@ -16,17 +17,18 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
 class `When Getting The Live Connection` {
-	private val serverConnection by lazy {
+	private val mutt by lazy {
 		val serverLookup = mockk<LookupServers>()
 		every { serverLookup.promiseServerInformation(LibraryId(55)) } returns Promise(
 			ServerInfo(
 				143,
 				null,
-				"1.2.3.4", emptySet(), emptySet(),
+				setOf("1.2.3.4"), emptySet(), emptySet(),
 				emptyByteArray
 			)
 		)
@@ -40,11 +42,12 @@ class `When Getting The Live Connection` {
 			},
 			mockk {
 				every {
-					getServerClient(match { a ->
+					getServerClient(match<MediaCenterConnectionDetails> { a ->
 						listOf("http://1.2.3.4:143").contains(a.baseUrl.toString())
 					})
 				} answers {
-					val urlProvider = firstArg<ServerConnection>()
+					val urlProvider = firstArg<MediaCenterConnectionDetails>()
+					selectedConnectionDetails = urlProvider
 					mockk {
 						every { promiseResponse(URL(urlProvider.baseUrl, "MCWS/v1/Alive")) } returns Promise(
 							PassThroughHttpResponse(
@@ -60,7 +63,15 @@ class `When Getting The Live Connection` {
 			mockk(),
 		)
 
-		urlScanner.promiseLiveServerConnection(LibraryId(55)).toExpiringFuture().get()
+		urlScanner
+	}
+
+	private var selectedConnectionDetails: MediaCenterConnectionDetails? = null
+	private var serverConnection: LiveServerConnection? = null
+
+	@BeforeAll
+	fun act() {
+		serverConnection = mutt.promiseLiveServerConnection(LibraryId(55)).toExpiringFuture().get()
 	}
 
 	@Test
@@ -70,6 +81,6 @@ class `When Getting The Live Connection` {
 
 	@Test
 	fun `then the base url is correct`() {
-		assertThat(serverConnection?.serverConnection?.baseUrl.toString()).isEqualTo("http://1.2.3.4:143")
+		assertThat(selectedConnectionDetails?.baseUrl.toString()).isEqualTo("http://1.2.3.4:143")
 	}
 }

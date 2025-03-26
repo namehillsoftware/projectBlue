@@ -20,13 +20,13 @@ class `When Getting the Library Name` {
 
 	private val mut by lazy {
 		LibraryNameLookup(
-			mockk {
-				every { promiseLibrarySettings(LibraryId(libraryId)) } returns LibrarySettings(
-					libraryName = "",
-					connectionSettings = StoredMediaCenterConnectionSettings(accessCode = "q7hfTIL")
-				).toPromise()
-			},
-		)
+            mockk {
+                every { promiseLibrarySettings(LibraryId(libraryId)) } returns LibrarySettings(
+                    libraryName = "",
+                    connectionSettings = StoredMediaCenterConnectionSettings(accessCode = "q7hfTIL")
+                ).toPromise()
+            }
+        )
 	}
 
 	private var name: String? = null
