@@ -23,6 +23,7 @@ class WhenLoadingTheLibrarySettings {
 				every { promiseLibrarySettings(libraryId) } returns LibrarySettings(
 					libraryId = libraryId,
 					isUsingExistingFiles = true,
+					syncedFileLocation = SyncedFileLocation.EXTERNAL,
 					connectionSettings = StoredMediaCenterConnectionSettings(
 						userName = "ZaxM5Iid",
 						accessCode = "r64HLI",
@@ -30,7 +31,6 @@ class WhenLoadingTheLibrarySettings {
 						isSyncLocalConnectionsOnly = true,
 						isWakeOnLanEnabled = true,
 						password = "sL33L3Xt",
-						syncedFileLocation = SyncedFileLocation.EXTERNAL,
 					)
 				).toPromise()
 			},

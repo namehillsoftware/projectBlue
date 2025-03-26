@@ -26,9 +26,8 @@ class WhenLookingUpTheSyncDrive {
 				every { promiseLibrarySettings(LibraryId(14)) } returns Promise(
 					LibrarySettings(
 						libraryId = LibraryId(14),
-						connectionSettings = StoredMediaCenterConnectionSettings(
-							syncedFileLocation = SyncedFileLocation.INTERNAL,
-						)
+						syncedFileLocation = SyncedFileLocation.INTERNAL,
+						connectionSettings = StoredMediaCenterConnectionSettings()
 					)
 				)
 			},

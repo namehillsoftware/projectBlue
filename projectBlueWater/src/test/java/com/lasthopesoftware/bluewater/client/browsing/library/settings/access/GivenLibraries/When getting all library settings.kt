@@ -30,6 +30,7 @@ class `When getting all library settings` {
 						nowPlayingId = 828,
 						nowPlayingProgress = 870,
 						savedTracksString = "xqZ3RYqDhyY",
+						syncedFileLocation = SyncedFileLocation.INTERNAL,
 						connectionSettings = Json.encodeToString(
 							StoredMediaCenterConnectionSettings(
 								accessCode = "UDHLsaeeIv",
@@ -37,7 +38,6 @@ class `When getting all library settings` {
 								userName = "SzgouVHF",
 								macAddress = "J7AJnGf1f",
 								isLocalOnly = false,
-								syncedFileLocation = SyncedFileLocation.INTERNAL,
 								isWakeOnLanEnabled = false,
 								sslCertificateFingerprint = "sf3gmyTQyx6",
 								isSyncLocalConnectionsOnly = true,
@@ -52,6 +52,7 @@ class `When getting all library settings` {
 						nowPlayingId = 101,
 						nowPlayingProgress = 371,
 						savedTracksString = "VPiOKYtkSOV",
+						syncedFileLocation = SyncedFileLocation.EXTERNAL,
 						connectionSettings = Json.encodeToString(
 							StoredMediaCenterConnectionSettings(
 								accessCode = "NQde3Dk",
@@ -59,7 +60,6 @@ class `When getting all library settings` {
 								userName = "Tuj4WES",
 								macAddress = "hrSCxMJQMnT",
 								isLocalOnly = true,
-								syncedFileLocation = SyncedFileLocation.EXTERNAL,
 								isWakeOnLanEnabled = false,
 								sslCertificateFingerprint = "D4hQF8cMazI",
 								isSyncLocalConnectionsOnly = true,
@@ -86,13 +86,13 @@ class `When getting all library settings` {
 				libraryId = LibraryId(566),
 				libraryName = "WBJ9Ay87S",
 				isUsingExistingFiles = false,
+				syncedFileLocation = SyncedFileLocation.INTERNAL,
 				connectionSettings = StoredMediaCenterConnectionSettings(
 					accessCode = "UDHLsaeeIv",
 					password = "paebSds",
 					userName = "SzgouVHF",
 					macAddress = "J7AJnGf1f",
 					isLocalOnly = false,
-					syncedFileLocation = SyncedFileLocation.INTERNAL,
 					isWakeOnLanEnabled = false,
 					sslCertificateFingerprint = "sf3gmyTQyx6",
 					isSyncLocalConnectionsOnly = true,
@@ -102,13 +102,13 @@ class `When getting all library settings` {
 				libraryId = LibraryId(425),
 				libraryName = "XGBiOmj4GcU",
 				isUsingExistingFiles = true,
+				syncedFileLocation = SyncedFileLocation.EXTERNAL,
 				connectionSettings = StoredMediaCenterConnectionSettings(
 					accessCode = "NQde3Dk",
 					password = "b7fPnOx",
 					userName = "Tuj4WES",
 					macAddress = "hrSCxMJQMnT",
 					isLocalOnly = true,
-					syncedFileLocation = SyncedFileLocation.EXTERNAL,
 					isWakeOnLanEnabled = false,
 					sslCertificateFingerprint = "D4hQF8cMazI",
 					isSyncLocalConnectionsOnly = true,

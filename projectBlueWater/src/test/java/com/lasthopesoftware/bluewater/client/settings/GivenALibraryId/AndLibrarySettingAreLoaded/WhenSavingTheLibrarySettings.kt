@@ -25,6 +25,7 @@ class WhenSavingTheLibrarySettings {
 				every { promiseLibrarySettings(libraryId) } returns LibrarySettings(
 					libraryId = libraryId,
 					isUsingExistingFiles = true,
+					syncedFileLocation = SyncedFileLocation.EXTERNAL,
 					connectionSettings = StoredMediaCenterConnectionSettings(
 						accessCode = "b2q",
 						isLocalOnly = false,
@@ -32,7 +33,6 @@ class WhenSavingTheLibrarySettings {
 						isWakeOnLanEnabled = false,
 						password = "hmpyA",
 						macAddress = "S4YhepUHBcj",
-						syncedFileLocation = SyncedFileLocation.EXTERNAL,
 					)
 				).toPromise()
 			},
@@ -178,6 +178,7 @@ class WhenSavingTheLibrarySettings {
 				libraryId = libraryId,
 				libraryName = "left",
 				isUsingExistingFiles = false,
+				syncedFileLocation = SyncedFileLocation.EXTERNAL,
 				StoredMediaCenterConnectionSettings(
 					accessCode = "V68Bp9rS",
 					isLocalOnly = true,
@@ -187,7 +188,6 @@ class WhenSavingTheLibrarySettings {
 					password = "sl0Ha",
 					macAddress = "sVU0zPNKdFu",
 					sslCertificateFingerprint = "",
-					syncedFileLocation = SyncedFileLocation.EXTERNAL,
 				)
 			)
 		)

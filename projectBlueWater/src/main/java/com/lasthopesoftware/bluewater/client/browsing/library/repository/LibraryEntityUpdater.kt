@@ -3,15 +3,26 @@ package com.lasthopesoftware.bluewater.client.browsing.library.repository
 import android.database.sqlite.SQLiteDatabase
 import android.util.Base64
 import androidx.annotation.Keep
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.ServerType
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.connectionSettingsColumn
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.createTableSql
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.isRepeatingColumn
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.isUsingExistingFilesColumn
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.isWakeOnLanEnabledColumn
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.libraryNameColumn
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.nowPlayingIdColumn
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.nowPlayingProgressColumn
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.savedTracksStringColumn
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.serverTypeColumn
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.syncedFileLocationColumn
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.tableName
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
+import com.lasthopesoftware.bluewater.repository.InsertBuilder
 import com.lasthopesoftware.bluewater.repository.fetch
 import com.lasthopesoftware.resources.emptyByteArray
-import com.namehillsoftware.querydroid.SqLiteAssistants
 import com.namehillsoftware.querydroid.SqLiteCommand
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 @OptIn(ExperimentalStdlibApi::class)
@@ -72,10 +83,22 @@ object LibraryEntityUpdater : IEntityUpdater {
 			val createTempTableSql = createTableSql.replaceFirst("`$tableName`", "`$tempTableName`")
 			db.execSQL(createTempTableSql)
 			val oldLibraries = SqLiteCommand(db, "SELECT * FROM $tableName").fetch<Version13Library>()
+			val libraryInsertStatement = libraryInsertStatement(tempTableName)
 			for (oldLibrary in oldLibraries) {
 				val newLibrary = oldLibrary.toLibrary()
 
-				SqLiteAssistants.insertValue(db, tempTableName, newLibrary)
+				SqLiteCommand(db, libraryInsertStatement)
+					.addParameter("id", newLibrary.id)
+					.addParameter(isRepeatingColumn, newLibrary.isRepeating)
+					.addParameter(isUsingExistingFilesColumn, newLibrary.isUsingExistingFiles)
+					.addParameter(syncedFileLocationColumn, newLibrary.syncedFileLocation)
+					.addParameter(libraryNameColumn, newLibrary.libraryName)
+					.addParameter(nowPlayingIdColumn, newLibrary.nowPlayingId)
+					.addParameter(nowPlayingProgressColumn, newLibrary.nowPlayingProgress)
+					.addParameter(savedTracksStringColumn, newLibrary.savedTracksString)
+					.addParameter(serverTypeColumn, newLibrary.serverType)
+					.addParameter(connectionSettingsColumn, newLibrary.connectionSettings)
+					.execute()
 			}
 
 			db.execSQL("DROP TABLE `$tableName`")
@@ -90,10 +113,51 @@ object LibraryEntityUpdater : IEntityUpdater {
 			val createTempTableSql = createTableSql.replaceFirst("`$tableName`", "`$tempTableName`")
 			db.execSQL(createTempTableSql)
 			val oldLibraries = SqLiteCommand(db, "SELECT * FROM $tableName").fetch<Version17Library>()
+			val libraryInsertStatement = libraryInsertStatement(tempTableName)
 			for (oldLibrary in oldLibraries) {
 				val newLibrary = oldLibrary.toLibrary()
 
-				SqLiteAssistants.insertValue(db, tempTableName, newLibrary)
+				SqLiteCommand(db, libraryInsertStatement)
+					.addParameter("id", newLibrary.id)
+					.addParameter(isRepeatingColumn, newLibrary.isRepeating)
+					.addParameter(isUsingExistingFilesColumn, newLibrary.isUsingExistingFiles)
+					.addParameter(syncedFileLocationColumn, newLibrary.syncedFileLocation)
+					.addParameter(libraryNameColumn, newLibrary.libraryName)
+					.addParameter(nowPlayingIdColumn, newLibrary.nowPlayingId)
+					.addParameter(nowPlayingProgressColumn, newLibrary.nowPlayingProgress)
+					.addParameter(savedTracksStringColumn, newLibrary.savedTracksString)
+					.addParameter(serverTypeColumn, newLibrary.serverType)
+					.addParameter(connectionSettingsColumn, newLibrary.connectionSettings)
+					.execute()
+			}
+
+			db.execSQL("DROP TABLE `$tableName`")
+			db.execSQL("ALTER TABLE `$tempTableName` RENAME TO `$tableName`")
+			return
+		}
+
+		if (oldVersion < 19) {
+			val tempTableName = tableName + "Temp"
+			db.execSQL("DROP TABLE IF EXISTS `$tempTableName`")
+			val createTempTableSql = createTableSql.replaceFirst("`$tableName`", "`$tempTableName`")
+			db.execSQL(createTempTableSql)
+			val oldLibraries = SqLiteCommand(db, "SELECT * FROM $tableName").fetch<Version18Library>()
+			val libraryInsertStatement = libraryInsertStatement(tempTableName)
+			for (oldLibrary in oldLibraries) {
+				val newLibrary = oldLibrary.toLibrary()
+
+				SqLiteCommand(db, libraryInsertStatement)
+					.addParameter("id", newLibrary.id)
+					.addParameter(isRepeatingColumn, newLibrary.isRepeating)
+					.addParameter(isUsingExistingFilesColumn, newLibrary.isUsingExistingFiles)
+					.addParameter(syncedFileLocationColumn, newLibrary.syncedFileLocation)
+					.addParameter(libraryNameColumn, newLibrary.libraryName)
+					.addParameter(nowPlayingIdColumn, newLibrary.nowPlayingId)
+					.addParameter(nowPlayingProgressColumn, newLibrary.nowPlayingProgress)
+					.addParameter(savedTracksStringColumn, newLibrary.savedTracksString)
+					.addParameter(serverTypeColumn, newLibrary.serverType)
+					.addParameter(connectionSettingsColumn, newLibrary.connectionSettings)
+					.execute()
 			}
 
 			db.execSQL("DROP TABLE `$tableName`")
@@ -127,7 +191,12 @@ object LibraryEntityUpdater : IEntityUpdater {
 				nowPlayingId = nowPlayingId,
 				nowPlayingProgress = nowPlayingProgress,
 				savedTracksString = savedTracksString,
-				serverType = Library.ServerType.MediaCenter,
+				serverType = ServerType.MediaCenter,
+				syncedFileLocation = when (syncedFileLocation) {
+					SyncedFileLocation.CUSTOM, SyncedFileLocation.EXTERNAL -> com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation.EXTERNAL
+					SyncedFileLocation.INTERNAL -> com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation.INTERNAL
+					null -> null
+				},
 				connectionSettings = Json.encodeToString(
 					StoredMediaCenterConnectionSettings(
 						accessCode = accessCode ?: "",
@@ -136,11 +205,6 @@ object LibraryEntityUpdater : IEntityUpdater {
 						isLocalOnly = isLocalOnly,
 						isWakeOnLanEnabled = isWakeOnLanEnabled,
 						isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly,
-						syncedFileLocation = when (syncedFileLocation) {
-							SyncedFileLocation.CUSTOM, SyncedFileLocation.EXTERNAL -> com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation.EXTERNAL
-							SyncedFileLocation.INTERNAL -> com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation.INTERNAL
-							null -> null
-						},
 					)
 				)
 			)
@@ -180,7 +244,8 @@ object LibraryEntityUpdater : IEntityUpdater {
 				nowPlayingProgress = nowPlayingProgress,
 				savedTracksString = savedTracksString,
 				isUsingExistingFiles = isUsingExistingFiles,
-				serverType = Library.ServerType.MediaCenter,
+				serverType = ServerType.MediaCenter,
+				syncedFileLocation = syncedFileLocation,
 				connectionSettings = Json.encodeToString(
 					StoredMediaCenterConnectionSettings(
 						accessCode = accessCode ?: "",
@@ -191,10 +256,77 @@ object LibraryEntityUpdater : IEntityUpdater {
 						isWakeOnLanEnabled = isWakeOnLanEnabled,
 						sslCertificateFingerprint = sslCertificateFingerprint.toHexString(),
 						macAddress = macAddress,
-						syncedFileLocation = syncedFileLocation,
 					)
 				)
 			)
 		}
 	}
+
+	@Keep
+	class Version18Library {
+		var id: Int = -1
+		var libraryName: String? = null
+		var isRepeating: Boolean = false
+		var nowPlayingId: Int = -1
+		var nowPlayingProgress: Long = -1
+		var savedTracksString: String? = null
+		var isUsingExistingFiles: Boolean = false
+		var serverType: ServerType? = null
+		var connectionSettings: String? = null
+
+		fun toLibrary(): Library {
+			val connectionSettings = connectionSettings?.let { Json.decodeFromString<Version18ConnectionSettings>(it) }
+
+			return Library(
+				id = id,
+				libraryName = libraryName,
+				isRepeating = isRepeating,
+				nowPlayingId = nowPlayingId,
+				nowPlayingProgress = nowPlayingProgress,
+				savedTracksString = savedTracksString,
+				isUsingExistingFiles = isUsingExistingFiles,
+				serverType = serverType,
+				syncedFileLocation = connectionSettings?.syncedFileLocation,
+				connectionSettings = Json.encodeToString(
+					StoredMediaCenterConnectionSettings(
+						accessCode = connectionSettings?.accessCode,
+						userName = connectionSettings?.userName,
+						password = connectionSettings?.password,
+						isLocalOnly = connectionSettings?.isLocalOnly ?: false,
+						isSyncLocalConnectionsOnly = connectionSettings?.isSyncLocalConnectionsOnly ?: false,
+						isWakeOnLanEnabled = connectionSettings?.isWakeOnLanEnabled ?: false,
+						sslCertificateFingerprint = connectionSettings?.sslCertificateFingerprint,
+						macAddress = connectionSettings?.macAddress,
+					)
+				)
+			)
+		}
+
+		@Serializable
+		private class Version18ConnectionSettings(
+			val accessCode: String? = null,
+			val userName: String? = null,
+			val password: String? = null,
+			val isLocalOnly: Boolean = false,
+			val isSyncLocalConnectionsOnly: Boolean = false,
+			val syncedFileLocation: SyncedFileLocation? = null,
+			val isWakeOnLanEnabled: Boolean = false,
+			val sslCertificateFingerprint: String? = null,
+			val macAddress: String? = null,
+		)
+	}
+
+	private fun libraryInsertStatement(tableName: String) = InsertBuilder
+		.fromTable(tableName)
+		.addColumn("id")
+		.addColumn(isRepeatingColumn)
+		.addColumn(isUsingExistingFilesColumn)
+		.addColumn(syncedFileLocationColumn)
+		.addColumn(libraryNameColumn)
+		.addColumn(nowPlayingIdColumn)
+		.addColumn(nowPlayingProgressColumn)
+		.addColumn(savedTracksStringColumn)
+		.addColumn(serverTypeColumn)
+		.addColumn(connectionSettingsColumn)
+		.build()
 }

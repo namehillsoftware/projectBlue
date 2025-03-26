@@ -25,13 +25,13 @@ class WhenLoadingTheLibrarySettings {
 				every { promiseLibrarySettings(libraryId) } returns LibrarySettings(
 					libraryId = libraryId,
 					isUsingExistingFiles = true,
+					syncedFileLocation = SyncedFileLocation.EXTERNAL,
 					connectionSettings = StoredMediaCenterConnectionSettings(
 						accessCode = "yKV48o",
 						isLocalOnly = true,
 						isSyncLocalConnectionsOnly = true,
 						isWakeOnLanEnabled = true,
 						password = "7t5nHd",
-						syncedFileLocation = SyncedFileLocation.EXTERNAL,
 					),
 				).toPromise()
 			},

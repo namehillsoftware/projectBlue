@@ -27,7 +27,7 @@ class SyncDirectoryLookup(
 			.promiseLibrarySettings(libraryId)
 			.eventually { settings ->
 				settings
-					?.takeIf { it.connectionSettings?.syncedFileLocation == SyncedFileLocation.INTERNAL }
+					?.takeIf { it.syncedFileLocation == SyncedFileLocation.INTERNAL }
 					?.run {
 						val promisedPrivateDrive = privateDrives.promisePrivateDrives()
 						if (settings.libraryId == null) promisedPrivateDrive

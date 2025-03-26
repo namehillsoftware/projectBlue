@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.browsing.library.repository.permis
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
-import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.isWritePermissionsRequired
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -13,7 +12,7 @@ class WhenCheckingIfStorageWritePermissionsAreRequired {
 
 	@BeforeAll
 	fun act() {
-		val libraryRequiringExistingFiles = LibrarySettings(connectionSettings = StoredMediaCenterConnectionSettings(syncedFileLocation = SyncedFileLocation.INTERNAL))
+		val libraryRequiringExistingFiles = LibrarySettings(syncedFileLocation = SyncedFileLocation.INTERNAL)
 		isWritePermissionsRequired = libraryRequiringExistingFiles.isWritePermissionsRequired
 	}
 
