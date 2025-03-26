@@ -30,6 +30,7 @@ class StringResources(private val context: Context): GetStringResources {
 	override val clear by lazyString(R.string.clear)
 	override val set by lazyString(R.string.set)
 	override val change by lazyString(R.string.change)
+	override val subsonic by lazyString(R.string.subsonic)
 
 	private fun lazyString(@StringRes stringResourceId: Int) = lazy { context.getString(stringResourceId) }
 }

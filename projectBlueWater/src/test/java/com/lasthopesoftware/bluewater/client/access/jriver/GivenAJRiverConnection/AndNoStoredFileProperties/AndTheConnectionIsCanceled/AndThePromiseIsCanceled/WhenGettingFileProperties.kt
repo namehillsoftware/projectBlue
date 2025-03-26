@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnecti
 import com.lasthopesoftware.TestMcwsUrl
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.connection.ServerConnection
-import com.lasthopesoftware.bluewater.client.connection.live.MediaCenterConnection
+import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
+import com.lasthopesoftware.bluewater.client.connection.live.LiveMediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.client.connection.url.MediaCenterUrlBuilder
@@ -27,8 +27,8 @@ class WhenGettingFileProperties {
 	private val deferredReject = DeferredPromise<HttpResponse>(IOException("Canceled"))
 
 	private val filePropertiesProvider by lazy {
-		MediaCenterConnection(
-			ServerConnection(TestUrl),
+		LiveMediaCenterConnection(
+			MediaCenterConnectionDetails(TestUrl),
 			FakeHttpConnectionProvider(
 				mockk {
 					every { promiseResponse(MediaCenterUrlBuilder.buildUrl(TestMcwsUrl, "File/GetInfo", "File=$serviceFileId")) } returns deferredReject

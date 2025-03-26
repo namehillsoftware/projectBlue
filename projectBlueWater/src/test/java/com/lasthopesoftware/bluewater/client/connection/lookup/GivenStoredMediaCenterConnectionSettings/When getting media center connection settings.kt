@@ -42,7 +42,7 @@ class `When getting media center connection settings` {
 
 	@BeforeAll
 	fun act() {
-		connectionsSettings = services.promiseConnectionSettings(LibraryId(libraryId)).toExpiringFuture().get()
+		connectionsSettings = services.promiseConnectionSettings(LibraryId(libraryId)).toExpiringFuture().get() as? MediaCenterConnectionSettings
 	}
 
 	@Test
