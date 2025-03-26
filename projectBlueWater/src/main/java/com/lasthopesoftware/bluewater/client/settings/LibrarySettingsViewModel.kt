@@ -48,12 +48,12 @@ class LibrarySettingsViewModel(
 			isSyncLocalConnectionsOnly = false,
 			macAddress = "",
 			sslCertificateFingerprint = "",
-			syncedFileLocation = SyncedFileLocation.INTERNAL,
 		)
 
 		private val defaultLibrarySettings = LibrarySettings(
 			libraryName = "",
-			connectionSettings = defaultConnectionSettings
+			connectionSettings = defaultConnectionSettings,
+			syncedFileLocation = SyncedFileLocation.INTERNAL,
 		)
 	}
 
@@ -74,7 +74,7 @@ class LibrarySettingsViewModel(
 		val changeTrackers = arrayOf(
 			observeLibraryChanges(libraryName) { libraryName },
 			observeLibraryChanges(isUsingExistingFiles) { isUsingExistingFiles },
-			observeConnectionSettingsChanges(syncedFileLocation) { syncedFileLocation },
+			observeLibraryChanges(syncedFileLocation) { syncedFileLocation },
 			observeConnectionSettingsChanges(accessCode) { accessCode },
 			observeConnectionSettingsChanges(userName) { userName },
 			observeConnectionSettingsChanges(password) { password },
@@ -99,7 +99,7 @@ class LibrarySettingsViewModel(
 
 	val libraryName = MutableInteractionState(defaultLibrarySettings.libraryName ?: "")
 	val isUsingExistingFiles = MutableInteractionState(defaultLibrarySettings.isUsingExistingFiles)
-	val syncedFileLocation = MutableInteractionState(defaultConnectionSettings.syncedFileLocation ?: SyncedFileLocation.INTERNAL)
+	val syncedFileLocation = MutableInteractionState(defaultLibrarySettings.syncedFileLocation ?: SyncedFileLocation.INTERNAL)
 	val accessCode = MutableInteractionState(defaultConnectionSettings.accessCode ?: "")
 	val userName = MutableInteractionState(defaultConnectionSettings.userName ?: "")
 	val password = MutableInteractionState(defaultConnectionSettings.password ?: "")
@@ -161,13 +161,13 @@ class LibrarySettingsViewModel(
 			isWakeOnLanEnabled = isWakeOnLanEnabled.value,
 			sslCertificateFingerprint = mutableSslStringCertificate.value,
 			macAddress = macAddress.value,
-			syncedFileLocation = syncedFileLocation.value,
 		)
 
 		libraryState.value = localLibrary
 			.copy(
 				isUsingExistingFiles = isUsingExistingFiles.value,
 				libraryName = libraryName.value,
+				syncedFileLocation = syncedFileLocation.value,
 				connectionSettings = localConnectionSettings
 			)
 
@@ -193,6 +193,7 @@ class LibrarySettingsViewModel(
 	override fun respond(result: LibrarySettings?) {
 		isUsingExistingFiles.value = result?.isUsingExistingFiles ?: false
 		libraryName.value = result?.libraryName ?: ""
+		syncedFileLocation.value = result?.syncedFileLocation ?: SyncedFileLocation.INTERNAL
 
 		val parsedConnectionSettings = result?.connectionSettings ?: defaultConnectionSettings.copy()
 		isWakeOnLanEnabled.value = parsedConnectionSettings.isWakeOnLanEnabled
@@ -203,11 +204,11 @@ class LibrarySettingsViewModel(
 		isLocalOnly.value = parsedConnectionSettings.isLocalOnly
 		macAddress.value = parsedConnectionSettings.macAddress ?: ""
 		mutableSslStringCertificate.value = parsedConnectionSettings.sslCertificateFingerprint ?: ""
-		syncedFileLocation.value = parsedConnectionSettings.syncedFileLocation ?: SyncedFileLocation.INTERNAL
 
 		libraryState.value = (result ?: defaultLibrarySettings).copy(
 			isUsingExistingFiles = isUsingExistingFiles.value,
 			libraryName = libraryName.value,
+			syncedFileLocation = syncedFileLocation.value,
 			connectionSettings = StoredMediaCenterConnectionSettings(
 				isWakeOnLanEnabled = isWakeOnLanEnabled.value,
 				isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly.value,
@@ -217,7 +218,6 @@ class LibrarySettingsViewModel(
 				isLocalOnly = isLocalOnly.value,
 				macAddress = macAddress.value,
 				sslCertificateFingerprint = mutableSslStringCertificate.value,
-				syncedFileLocation = syncedFileLocation.value
 			)
 		)
 	}

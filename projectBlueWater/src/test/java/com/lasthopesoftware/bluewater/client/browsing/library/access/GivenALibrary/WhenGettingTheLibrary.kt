@@ -25,6 +25,7 @@ class WhenGettingTheLibrary {
 				nowPlayingProgress = 80000000000000L,
 				isRepeating = true,
 				savedTracksString = "This is not even a real track string",
+				syncedFileLocation = SyncedFileLocation.EXTERNAL,
 				connectionSettings = Json.encodeToString(
 					StoredMediaCenterConnectionSettings(
 						accessCode = "aCxeS",
@@ -32,7 +33,6 @@ class WhenGettingTheLibrary {
 						password = "somePass",
 						userName = "myUser",
 						isWakeOnLanEnabled = true,
-						syncedFileLocation = SyncedFileLocation.EXTERNAL,
 					)
 				),
 			)

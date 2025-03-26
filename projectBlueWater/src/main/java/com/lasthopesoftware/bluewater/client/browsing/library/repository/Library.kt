@@ -13,6 +13,7 @@ data class Library(
 	var savedTracksString: String? = null,
 	var isUsingExistingFiles: Boolean = false,
 	var serverType: ServerType? = null,
+	var syncedFileLocation: SyncedFileLocation? = null,
 	var connectionSettings: String? = null,
 ) : IdentifiableEntity {
 

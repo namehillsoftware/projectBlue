@@ -24,9 +24,8 @@ class WhenLookingUpTheSyncDrive {
 			mockk {
 				every { promiseLibrarySettings(LibraryId(1)) } returns LibrarySettings(
 					libraryId = LibraryId(1),
-					connectionSettings = StoredMediaCenterConnectionSettings(
-						syncedFileLocation = SyncedFileLocation.INTERNAL,
-					)
+					syncedFileLocation = SyncedFileLocation.INTERNAL,
+					connectionSettings = StoredMediaCenterConnectionSettings()
 				).toPromise()
 			},
             fakePrivateDirectoryLookup,

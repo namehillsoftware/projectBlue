@@ -7,6 +7,7 @@ object LibraryEntityInformation {
 	const val nowPlayingIdColumn = "nowPlayingId"
 	const val nowPlayingProgressColumn = "nowPlayingProgress"
 	const val savedTracksStringColumn = "savedTracksString"
+	const val syncedFileLocationColumn = "syncedFileLocation"
 	const val isUsingExistingFilesColumn = "isUsingExistingFiles"
 	const val userNameColumn = "userName"
 	const val passwordColumn = "password"
@@ -17,6 +18,7 @@ object LibraryEntityInformation {
 			`id` INTEGER PRIMARY KEY AUTOINCREMENT ,
 			`$isRepeatingColumn` SMALLINT ,
 			`$isUsingExistingFilesColumn` SMALLINT ,
+			`$syncedFileLocationColumn` VARCHAR ,
 			`$libraryNameColumn` VARCHAR(50) ,
 			`$nowPlayingIdColumn` INTEGER DEFAULT -1 NOT NULL ,
 			`$nowPlayingProgressColumn` INTEGER DEFAULT -1 NOT NULL ,

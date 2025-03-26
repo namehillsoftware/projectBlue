@@ -45,9 +45,8 @@ class WhenGettingTheStoredFilePath {
 				every { promiseLibrarySettings(LibraryId(libraryId)) } returns Promise(
 					LibrarySettings(
 						libraryId = LibraryId(libraryId),
-						connectionSettings = StoredMediaCenterConnectionSettings(
-							syncedFileLocation = SyncedFileLocation.EXTERNAL,
-						)
+						syncedFileLocation = SyncedFileLocation.EXTERNAL,
+						connectionSettings = StoredMediaCenterConnectionSettings()
 					)
 				)
 			},

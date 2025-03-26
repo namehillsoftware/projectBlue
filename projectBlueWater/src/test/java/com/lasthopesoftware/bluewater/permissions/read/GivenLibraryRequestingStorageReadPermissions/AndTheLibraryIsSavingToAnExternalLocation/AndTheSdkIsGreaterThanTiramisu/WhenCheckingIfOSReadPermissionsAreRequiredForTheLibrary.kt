@@ -28,9 +28,8 @@ class WhenCheckingIfOSReadPermissionsAreRequiredForTheLibrary {
 			.isReadPermissionsRequiredForLibrary(
 				LibrarySettings(
 					libraryId = LibraryId(707),
-					connectionSettings = StoredMediaCenterConnectionSettings(
-						syncedFileLocation = SyncedFileLocation.EXTERNAL,
-					),
+					syncedFileLocation = SyncedFileLocation.EXTERNAL,
+					connectionSettings = StoredMediaCenterConnectionSettings(),
 				)
 			)
 	}

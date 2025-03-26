@@ -23,13 +23,13 @@ class WhenSavingTheLibrarySettings {
 					libraryId = libraryId,
 					isUsingExistingFiles = true,
 					libraryName = "theater",
+					syncedFileLocation = SyncedFileLocation.EXTERNAL,
 					connectionSettings = StoredMediaCenterConnectionSettings(
 						accessCode = "b2q",
 						isLocalOnly = false,
 						isSyncLocalConnectionsOnly = true,
 						isWakeOnLanEnabled = false,
 						password = "hmpyA",
-						syncedFileLocation = SyncedFileLocation.EXTERNAL,
 					)
 				).toPromise()
 			},

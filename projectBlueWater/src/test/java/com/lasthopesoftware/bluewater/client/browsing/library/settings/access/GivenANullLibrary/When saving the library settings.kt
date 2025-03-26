@@ -44,6 +44,7 @@ class `When saving the library settings` {
 				libraryId = LibraryId(901),
 				libraryName = "3YzKTfvRGcq",
 				isUsingExistingFiles = false,
+				syncedFileLocation = SyncedFileLocation.EXTERNAL,
 				connectionSettings = StoredMediaCenterConnectionSettings(
 					accessCode = "nol6ZCLE",
 					macAddress = "vOfUFH8a",
@@ -52,7 +53,6 @@ class `When saving the library settings` {
 					isSyncLocalConnectionsOnly = false,
 					userName = "wWs0tKOH",
 					password = "GLYY75dLTI",
-					syncedFileLocation = SyncedFileLocation.EXTERNAL,
 					sslCertificateFingerprint = "EDxQcvG"
 				)
 			)
@@ -67,6 +67,7 @@ class `When saving the library settings` {
 				libraryName = "3YzKTfvRGcq",
 				isUsingExistingFiles = false,
 				serverType = Library.ServerType.MediaCenter,
+				syncedFileLocation = SyncedFileLocation.EXTERNAL,
 				connectionSettings = Json.encodeToString(
 					StoredMediaCenterConnectionSettings(
 						accessCode = "nol6ZCLE",
@@ -76,7 +77,6 @@ class `When saving the library settings` {
 						isSyncLocalConnectionsOnly = false,
 						userName = "wWs0tKOH",
 						password = "GLYY75dLTI",
-						syncedFileLocation = SyncedFileLocation.EXTERNAL,
 						sslCertificateFingerprint = "EDxQcvG"
 					)
 				)
@@ -91,6 +91,7 @@ class `When saving the library settings` {
 				libraryId = LibraryId(940),
 				libraryName = "3YzKTfvRGcq",
 				isUsingExistingFiles = false,
+				syncedFileLocation = SyncedFileLocation.EXTERNAL,
 				connectionSettings = StoredMediaCenterConnectionSettings(
 					accessCode = "nol6ZCLE",
 					macAddress = "vOfUFH8a",
@@ -99,7 +100,6 @@ class `When saving the library settings` {
 					isSyncLocalConnectionsOnly = false,
 					userName = "wWs0tKOH",
 					password = "GLYY75dLTI",
-					syncedFileLocation = SyncedFileLocation.EXTERNAL,
 					sslCertificateFingerprint = "EDxQcvG"
 				)
 			)

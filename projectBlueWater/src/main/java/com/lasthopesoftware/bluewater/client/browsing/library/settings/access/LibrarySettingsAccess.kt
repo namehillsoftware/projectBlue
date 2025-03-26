@@ -26,6 +26,7 @@ class LibrarySettingsAccess(
 			libraryName = libraryName,
 			isUsingExistingFiles = isUsingExistingFiles,
 			serverType = Library.ServerType.MediaCenter,
+			syncedFileLocation = syncedFileLocation,
 			connectionSettings = connectionSettings?.let(Json::encodeToString),
 		)
 
@@ -33,6 +34,7 @@ class LibrarySettingsAccess(
 			libraryId = libraryId,
 			isUsingExistingFiles = isUsingExistingFiles,
 			libraryName = libraryName,
+			syncedFileLocation = syncedFileLocation,
 			connectionSettings = connectionSettings
 				?.let { Json.decodeFromString<StoredMediaCenterConnectionSettings>(it) }
 		)
@@ -79,6 +81,7 @@ class LibrarySettingsAccess(
 
 							l.libraryName = librarySettings.libraryName
 							l.isUsingExistingFiles = librarySettings.isUsingExistingFiles
+							l.syncedFileLocation = librarySettings.syncedFileLocation
 							l.connectionSettings = librarySettings.connectionSettings?.let(Json::encodeToString)
 							l
 						}

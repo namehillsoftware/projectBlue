@@ -30,6 +30,7 @@ class `When getting the library settings` {
 					nowPlayingId = 499,
 					nowPlayingProgress = 401,
 					savedTracksString = "MN2zlU8F1w6",
+					syncedFileLocation = SyncedFileLocation.EXTERNAL,
 					connectionSettings = Json.encodeToString(
 						StoredMediaCenterConnectionSettings(
 							accessCode = "DLKicYx",
@@ -37,7 +38,6 @@ class `When getting the library settings` {
 							userName = "UMm5g8jEN",
 							macAddress = "fh1Y3MWf",
 							isLocalOnly = true,
-							syncedFileLocation = SyncedFileLocation.EXTERNAL,
 							isWakeOnLanEnabled = true,
 							sslCertificateFingerprint = "8ZuBp6yyjiT",
 							isSyncLocalConnectionsOnly = true,
@@ -63,13 +63,13 @@ class `When getting the library settings` {
 				libraryId = libraryId,
 				libraryName = "cdtX4lVz",
 				isUsingExistingFiles = true,
+				syncedFileLocation = SyncedFileLocation.EXTERNAL,
 				connectionSettings = StoredMediaCenterConnectionSettings(
 					accessCode = "DLKicYx",
 					password = "LKHPUXwrF",
 					userName = "UMm5g8jEN",
 					macAddress = "fh1Y3MWf",
 					isLocalOnly = true,
-					syncedFileLocation = SyncedFileLocation.EXTERNAL,
 					isWakeOnLanEnabled = true,
 					sslCertificateFingerprint = "8ZuBp6yyjiT",
 					isSyncLocalConnectionsOnly = true,

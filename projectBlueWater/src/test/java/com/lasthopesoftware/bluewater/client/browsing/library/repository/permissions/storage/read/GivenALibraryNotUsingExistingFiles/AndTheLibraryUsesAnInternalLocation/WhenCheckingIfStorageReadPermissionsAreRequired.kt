@@ -16,9 +16,8 @@ class WhenCheckingIfStorageReadPermissionsAreRequired {
 	fun act() {
 		val libraryRequiringExistingFiles = LibrarySettings(
 			isUsingExistingFiles = false,
-			connectionSettings = StoredMediaCenterConnectionSettings(
-				syncedFileLocation = SyncedFileLocation.INTERNAL,
-			),
+			syncedFileLocation = SyncedFileLocation.INTERNAL,
+			connectionSettings = StoredMediaCenterConnectionSettings(),
 		)
 		isReadPermissionsRequired = libraryRequiringExistingFiles.isReadPermissionsRequired
 	}

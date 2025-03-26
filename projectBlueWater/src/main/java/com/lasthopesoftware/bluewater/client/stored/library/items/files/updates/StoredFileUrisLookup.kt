@@ -35,7 +35,7 @@ class StoredFileUrisLookup(
 				librarySettingsProvider
 					.promiseLibrarySettings(libraryId)
 					.eventually { l ->
-						when (l?.connectionSettings?.syncedFileLocation) {
+						when (l?.syncedFileLocation) {
 							SyncedFileLocation.INTERNAL -> promiseLocalFileUri(libraryId, fileProperties)
 							SyncedFileLocation.EXTERNAL -> promiseExternalUri(libraryId, serviceFile, fileProperties)
 							else -> Promise.empty()
