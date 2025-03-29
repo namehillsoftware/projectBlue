@@ -11,7 +11,6 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.lazyj.Lazy
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions.*
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,9 +25,7 @@ class WhenUpdatingTheFile {
 		private val storedFile = Lazy {
 			val libraryId = LibraryId(705)
 
-			val fakeLibraryRepository = FakeLibraryRepository(
-				Library(id = libraryId.id, syncedFileLocation = Library.SyncedFileLocation.EXTERNAL)
-			)
+			val fakeLibraryRepository = FakeLibraryRepository(Library(id = libraryId.id))
 
 			val serviceFile = ServiceFile(596)
 

@@ -22,7 +22,6 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -38,9 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationInfoText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationLogo
@@ -59,7 +56,7 @@ private fun LazyListScope.settingsList(
 	applicationSettingsViewModel: ApplicationSettingsViewModel,
 	applicationNavigation: NavigateApplication,
 	playbackService: ControlPlaybackService,
-	libraries: List<Library>,
+	libraries: List<Pair<LibraryId, String>>,
 	selectedLibraryId: LibraryId,
 	isLoading: Boolean
 ) {
@@ -91,7 +88,7 @@ private fun LazyListScope.settingsList(
 			modifier = standardRowModifier.padding(optionsPadding),
 			verticalAlignment = Alignment.CenterVertically,
 		) {
-			val isVolumeLevelingEnabled by applicationSettingsViewModel.isVolumeLevelingEnabled.collectAsState()
+			val isVolumeLevelingEnabled by applicationSettingsViewModel.isVolumeLevelingEnabled.subscribeAsState()
 			LabeledSelection(
 				label = stringResource(id = R.string.useVolumeLevelingSetting),
 				selected = isVolumeLevelingEnabled,
@@ -122,20 +119,20 @@ private fun LazyListScope.settingsList(
 		}
 	}
 
-	items(libraries) { library ->
+	items(libraries) { (libraryId, name) ->
 		Row(
 			modifier = standardRowModifier
-				.navigable(onClick =  { applicationNavigation.viewServerSettings(library.libraryId) }),
+				.navigable(onClick =  { applicationNavigation.viewServerSettings(libraryId) }),
 			verticalAlignment = Alignment.CenterVertically,
 		) {
 			Text(
-				text = library.accessCode ?: "",
+				text = name,
 				modifier = Modifier
 					.weight(1f)
 					.padding(Dimensions.viewPaddingUnit),
 				maxLines = 1,
 				overflow = TextOverflow.Ellipsis,
-				fontWeight = if (library.libraryId == selectedLibraryId) FontWeight.Bold else FontWeight.Normal,
+				fontWeight = if (libraryId == selectedLibraryId) FontWeight.Bold else FontWeight.Normal,
 				fontSize = rowFontSize,
 			)
 
@@ -205,8 +202,8 @@ private fun ApplicationSettingsViewHorizontal(
 			.fillMaxWidth()
 			.height(rowHeight)
 
-		val libraries by applicationSettingsViewModel.libraries.collectAsState()
-		val selectedLibraryId by applicationSettingsViewModel.chosenLibraryId.collectAsState()
+		val libraries by applicationSettingsViewModel.libraries.subscribeAsState()
+		val selectedLibraryId by applicationSettingsViewModel.chosenLibraryId.subscribeAsState()
 		val isLoading by applicationSettingsViewModel.isLoading.subscribeAsState()
 
 		LazyColumn(

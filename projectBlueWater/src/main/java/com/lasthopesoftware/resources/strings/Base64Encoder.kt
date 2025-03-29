@@ -1,9 +1,15 @@
 package com.lasthopesoftware.resources.strings
 
-import android.util.Base64
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
+@OptIn(ExperimentalEncodingApi::class)
 object Base64Encoder : EncodeToBase64 {
-	override fun encodeString(decodedString: String): String {
-		return Base64.encodeToString(decodedString.toByteArray(), Base64.DEFAULT).trim { it <= ' ' }
-	}
+	private val base64 = Base64.Default
+
+	override fun encodeString(decodedString: String): String = encodeBytes(decodedString.toByteArray())
+
+	override fun encodeBytes(bytes: ByteArray): String = base64.encode(bytes)
+
+	override fun decodeToBytes(string: String): ByteArray = base64.decode(string)
 }

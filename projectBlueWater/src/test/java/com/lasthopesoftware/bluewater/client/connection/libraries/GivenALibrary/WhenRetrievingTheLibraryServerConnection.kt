@@ -2,11 +2,10 @@ package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgressingLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
-import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
@@ -21,12 +20,9 @@ class WhenRetrievingTheLibraryServerConnection {
 	private val expectedConnectionProvider = mockk<LiveServerConnection>()
 
 	private val mut by lazy {
-		val validateConnectionSettings = mockk<ValidateConnectionSettings>()
-		every { validateConnectionSettings.isValid(any()) } returns true
-
 		val deferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>()
 
-		val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
+		val libraryConnectionProvider = mockk<ProvideProgressingLibraryConnections>()
 		every { libraryConnectionProvider.promiseLibraryConnection(LibraryId(3)) } returns deferredConnectionProvider
 
 		val connectionSessionManager = ConnectionSessionManager(

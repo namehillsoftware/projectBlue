@@ -15,11 +15,16 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.D
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.DiskFileCacheStreamSupplier
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryNameLookup
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.CachedLibrarySettingsAccess
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.LibrarySettingsAccess
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.StoreLibrarySettings
 import com.lasthopesoftware.bluewater.client.connection.PacketSender
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgressingLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfoXmlRequest
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerLookup
@@ -27,7 +32,7 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsValidation
+import com.lasthopesoftware.bluewater.client.connection.settings.ValidConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
@@ -85,13 +90,13 @@ object ApplicationDependenciesContainer {
 
 		private val imageDiskCacheDirectory by lazy { AndroidDiskCacheDirectoryProvider(context, ImageCacheConfiguration) }
 
-		private val okHttpClients by lazy { OkHttpFactory(context) }
-
 		private val audioDiskCacheDirectoryProvider by lazy { AndroidDiskCacheDirectoryProvider(context, AudioCacheConfiguration) }
 
 		private val audioCacheFilesProvider by lazy { CachedFilesProvider(context, AudioCacheConfiguration) }
 
-		private val audioCacheStreamSupplier by lazy {
+		override val okHttpClients by lazy { OkHttpFactory(context) }
+
+		override val audioCacheStreamSupplier by lazy {
 			DiskFileCacheStreamSupplier(
 				audioDiskCacheDirectoryProvider,
 				DiskFileCachePersistence(
@@ -139,6 +144,16 @@ object ApplicationDependenciesContainer {
 		override val libraryStorage: ILibraryStorage
 			get() = libraryRepository
 
+		override val librarySettingsProvider by lazy {
+			val access = LibrarySettingsAccess(libraryProvider, libraryStorage)
+			CachedLibrarySettingsAccess(access, access)
+		}
+
+		override val librarySettingsStorage: StoreLibrarySettings
+			get() = librarySettingsProvider
+
+		override val libraryNameLookup by lazy { LibraryNameLookup(librarySettingsProvider) }
+
 		override val storedItemAccess by lazy { StoredItemAccess(context) }
 
 		override val defaultImageProvider by lazy { DefaultImageProvider(context) }
@@ -153,17 +168,19 @@ object ApplicationDependenciesContainer {
 				.initializeComponent(cls<SyncSchedulerInitializer>())
 		}
 
+		override val connectionSettingsLookup by lazy {
+			ValidConnectionSettingsLookup(ConnectionSettingsLookup(librarySettingsProvider))
+		}
+
 		override val connectionSessions by lazy {
-			val connectionSettingsLookup = ConnectionSettingsLookup(LibraryRepository(context))
 			val serverLookup = ServerLookup(
 				connectionSettingsLookup,
-				ServerInfoXmlRequest(LibraryRepository(context), okHttpClients),
+				ServerInfoXmlRequest(connectionSettingsLookup, okHttpClients),
 			)
 
 			val activeNetwork = ActiveNetworkFinder(context)
 			ConnectionSessionManager(
                 LibraryConnectionProvider(
-					ConnectionSettingsValidation,
 					connectionSettingsLookup,
 					ServerAlarm(serverLookup, activeNetwork, ServerWakeSignal(PacketSender())),
 					CachedDataSourceServerConnectionProvider(
@@ -185,6 +202,9 @@ object ApplicationDependenciesContainer {
 		}
 
 		override val libraryConnectionProvider
+			get() = connectionSessions
+
+		override val progressingLibraryConnectionProvider: ProvideProgressingLibraryConnections
 			get() = connectionSessions
 
 		override val sendApplicationMessages: SendApplicationMessages

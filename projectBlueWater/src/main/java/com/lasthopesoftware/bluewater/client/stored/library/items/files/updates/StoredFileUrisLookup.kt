@@ -6,9 +6,9 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePrope
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.localExternalRelativeFileDirectory
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.localExternalRelativeFilePathAsMp3
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.ProvideLibrarySettings
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.ExternalMusicContent
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.HaveExternalContent
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.MediaFileUriProvider
@@ -22,7 +22,7 @@ import java.net.URI
 
 class StoredFileUrisLookup(
 	private val libraryFileProperties: ProvideLibraryFileProperties,
-	private val libraryProvider: ILibraryProvider,
+	private val librarySettingsProvider: ProvideLibrarySettings,
 	private val lookupSyncDirectory: LookupSyncDirectory,
 	private val mediaFileUriProvider: MediaFileUriProvider,
 	private val externalContent: HaveExternalContent,
@@ -32,12 +32,12 @@ class StoredFileUrisLookup(
 		libraryFileProperties
 			.promiseFileProperties(libraryId, serviceFile)
 			.eventually { fileProperties ->
-				libraryProvider
-					.promiseLibrary(libraryId)
+				librarySettingsProvider
+					.promiseLibrarySettings(libraryId)
 					.eventually { l ->
 						when (l?.syncedFileLocation) {
-							Library.SyncedFileLocation.INTERNAL -> promiseLocalFileUri(libraryId, fileProperties)
-							Library.SyncedFileLocation.EXTERNAL -> promiseExternalUri(libraryId, serviceFile, fileProperties)
+							SyncedFileLocation.INTERNAL -> promiseLocalFileUri(libraryId, fileProperties)
+							SyncedFileLocation.EXTERNAL -> promiseExternalUri(libraryId, serviceFile, fileProperties)
 							else -> Promise.empty()
 						}
 					}

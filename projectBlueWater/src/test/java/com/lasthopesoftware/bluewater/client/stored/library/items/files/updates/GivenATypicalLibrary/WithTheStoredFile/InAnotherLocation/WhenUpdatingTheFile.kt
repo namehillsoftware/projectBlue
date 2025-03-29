@@ -31,7 +31,6 @@ class WhenUpdatingTheFile {
 			val fakeLibraryRepository = FakeLibraryRepository(
 				Library(
 					id = 14,
-					syncedFileLocation = Library.SyncedFileLocation.INTERNAL
 				)
 			)
 

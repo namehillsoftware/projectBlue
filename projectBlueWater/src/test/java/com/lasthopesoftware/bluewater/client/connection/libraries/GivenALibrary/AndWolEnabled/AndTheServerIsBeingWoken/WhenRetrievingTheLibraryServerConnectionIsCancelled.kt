@@ -5,9 +5,7 @@ import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.live.ProvideLiveServerConnection
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -24,7 +22,7 @@ import java.util.concurrent.TimeUnit
 class WhenRetrievingTheLibraryServerConnectionIsCancelled {
 
 	private val deferredConnectionSettings =
-		DeferredPromise<ConnectionSettings?>(ConnectionSettings(accessCode = "aB5nf", isWakeOnLanEnabled = true))
+		DeferredPromise<MediaCenterConnectionSettings?>(MediaCenterConnectionSettings(accessCode = "aB5nf", isWakeOnLanEnabled = true))
 
 	private val deferredLibraryWake = object : DeferredPromise<Unit>(Unit) {
 		override fun cancellationRequested() {
@@ -33,22 +31,15 @@ class WhenRetrievingTheLibraryServerConnectionIsCancelled {
 	}
 
 	private val mut by lazy {
-		val validateConnectionSettings = mockk<ValidateConnectionSettings>()
-		every { validateConnectionSettings.isValid(any()) } returns true
-
-		val lookupConnection = mockk<LookupConnectionSettings>()
-		every {
-			lookupConnection.lookupConnectionSettings(LibraryId(3))
-		} returns deferredConnectionSettings
-
 		val liveUrlProvider = mockk<ProvideLiveServerConnection>()
 		every { liveUrlProvider.promiseLiveServerConnection(LibraryId(3)) } returns Promise.empty() andThen Promise(
 			mockk<LiveServerConnection>()
 		)
 
 		val libraryConnectionProvider = LibraryConnectionProvider(
-			validateConnectionSettings,
-			lookupConnection,
+            mockk {
+				every { promiseConnectionSettings(LibraryId(3)) } returns deferredConnectionSettings
+			},
 			{
 				isLibraryServerWakeRequested = true
 				deferredLibraryWake

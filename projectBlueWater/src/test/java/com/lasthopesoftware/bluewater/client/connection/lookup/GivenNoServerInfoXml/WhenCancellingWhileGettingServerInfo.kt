@@ -18,7 +18,7 @@ class WhenCancellingWhileGettingServerInfo {
 	private val mut by lazy {
 		ServerLookup(
 			mockk {
-				every { lookupConnectionSettings(any()) } returns Promise { m ->
+				every { promiseConnectionSettings(any()) } returns Promise { m ->
 					m.awaitCancellation {
 						m.sendRejection(CancellationException("Bye now!"))
 					}

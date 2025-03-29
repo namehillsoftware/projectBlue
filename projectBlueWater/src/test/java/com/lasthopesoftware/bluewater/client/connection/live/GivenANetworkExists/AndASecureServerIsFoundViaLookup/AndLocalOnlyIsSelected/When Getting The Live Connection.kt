@@ -8,8 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectio
 import com.lasthopesoftware.bluewater.client.connection.live.PassThroughBase64Encoder
 import com.lasthopesoftware.bluewater.client.connection.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfo
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.PassThroughHttpResponse
@@ -24,7 +23,6 @@ import java.net.URL
 class `When Getting The Live Connection` {
 
 	private val services by lazy {
-
 		val serverLookup = mockk<LookupServers>()
 		every { serverLookup.promiseServerInformation(LibraryId(15)) } returns Promise(
 			ServerInfo(
@@ -40,17 +38,16 @@ class `When Getting The Live Connection` {
 			)
 		)
 
-		val connectionSettingsLookup = mockk<LookupConnectionSettings>()
-		every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(15)) } returns ConnectionSettings(
-			accessCode = "gooPc",
-			isLocalOnly = true
-		).toPromise()
-
 		LiveServerConnectionProvider(
 			ConfiguredActiveNetwork(isNetworkActive = true),
 			PassThroughBase64Encoder,
 			serverLookup,
-			connectionSettingsLookup,
+			mockk {
+				every { promiseConnectionSettings(LibraryId(15)) } returns MediaCenterConnectionSettings(
+					accessCode = "gooPc",
+					isLocalOnly = true
+				).toPromise()
+			},
 			mockk {
 				every { getServerClient(any()) } returns mockk {
 					every { promiseResponse(any()) } returns Promise(

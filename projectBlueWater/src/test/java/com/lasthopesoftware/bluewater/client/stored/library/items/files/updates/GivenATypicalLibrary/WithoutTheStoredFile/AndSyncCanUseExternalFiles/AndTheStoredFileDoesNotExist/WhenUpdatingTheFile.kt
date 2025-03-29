@@ -29,7 +29,6 @@ class WhenUpdatingTheFile {
 				Library(
 					isUsingExistingFiles = true,
 					id = libraryId,
-					syncedFileLocation = Library.SyncedFileLocation.INTERNAL
 				)
 			)
 

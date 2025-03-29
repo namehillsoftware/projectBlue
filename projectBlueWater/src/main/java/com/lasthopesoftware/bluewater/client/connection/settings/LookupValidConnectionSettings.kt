@@ -1,0 +1,3 @@
+package com.lasthopesoftware.bluewater.client.connection.settings
+
+interface LookupValidConnectionSettings : LookupConnectionSettings

@@ -12,7 +12,7 @@ class SyncChecker(
 	private val checkForAnyStoredFiles: CheckForAnyStoredFiles,
 ) : CheckForSync {
 	override fun promiseIsSyncNeeded(): Promise<Boolean> {
-		return libraryProvider.allLibraries
+		return libraryProvider.promiseAllLibraries()
 			.eventually { libraries ->
 				Promise.whenAll(libraries.map { l ->
 					serviceFilesForSync

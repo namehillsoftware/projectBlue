@@ -4,8 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.live.ProvideLiveServerConnection
-import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.LookupValidConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.client.connection.waking.WakeLibraryServer
 import com.lasthopesoftware.promises.PromiseDelay
@@ -16,12 +15,11 @@ import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import java.util.concurrent.CancellationException
 
 class LibraryConnectionProvider(
-	private val validateConnectionSettings: ValidateConnectionSettings,
-	private val lookupConnectionSettings: LookupConnectionSettings,
+	private val lookupConnectionSettings: LookupValidConnectionSettings,
 	private val wakeAlarm: WakeLibraryServer,
 	private val liveUrlProvider: ProvideLiveServerConnection,
 	private val alarmConfiguration: AlarmConfiguration,
-) : ProvideLibraryConnections {
+) : ProvideProgressingLibraryConnections {
 
 	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?> =
 		object : ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>() {
@@ -38,10 +36,10 @@ class LibraryConnectionProvider(
 			private fun fulfillPromise() {
 				reportProgress(BuildingConnectionStatus.GettingLibrary)
 				lookupConnectionSettings
-					.lookupConnectionSettings(libraryId)
+					.promiseConnectionSettings(libraryId)
 					.eventually({ settings ->
 						when {
-							settings == null || !validateConnectionSettings.isValid(settings) -> {
+							settings == null -> {
 								reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
 								resolve(null)
 								empty()

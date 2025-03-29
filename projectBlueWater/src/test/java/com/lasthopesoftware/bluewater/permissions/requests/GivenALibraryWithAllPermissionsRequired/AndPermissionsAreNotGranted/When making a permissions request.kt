@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.permissions.requests.GivenALibraryWithAllPermissionsRequired.AndPermissionsAreNotGranted
 
 import android.Manifest
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
 import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
@@ -42,7 +42,7 @@ class `When making a permissions request` {
 
 	@BeforeAll
 	fun act() {
-		isPermissionsGranted = mut.promiseIsLibraryPermissionsGranted(Library()).toExpiringFuture().get() ?: false
+		isPermissionsGranted = mut.promiseIsAllPermissionsGranted(LibrarySettings()).toExpiringFuture().get() ?: false
 	}
 
 	@Test

@@ -161,10 +161,10 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedVi
 	}
 
 	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-		val halfWidth by remember { derivedStateOf { maxWidth / 2 } }
-		val halfWidthPx by LocalDensity.current.run { remember { derivedStateOf { halfWidth.toPx() } } }
+		val halfWidth = maxWidth / 2
+		val halfWidthPx = LocalDensity.current.run { halfWidth.toPx() }
 
-		val maxWidthPx by LocalDensity.current.run { remember { derivedStateOf { maxWidth.toPx() } } }
+		val maxWidthPx = LocalDensity.current.run { maxWidth.toPx() }
 
 		var previousBrowserDragValue by rememberSaveable {
 			mutableStateOf(SlideOutState.Open)

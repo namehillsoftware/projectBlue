@@ -39,6 +39,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Bro
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
@@ -1081,15 +1082,18 @@ import java.util.concurrent.TimeoutException
 
 		val notificationBuilderProducer by lazy { NotificationBuilderProducer(playbackService) }
 
-		override val libraryConnectionProvider by lazy {
+		override val progressingLibraryConnectionProvider by lazy {
 			NotifyingLibraryConnectionProvider(
 				notificationBuilderProducer,
-				inner.libraryConnectionProvider,
+				inner.progressingLibraryConnectionProvider,
 				connectionNotificationsConfiguration,
 				playbackService.notificationController,
 				inner.stringResources,
 			)
 		}
+
+		override val libraryConnectionProvider: ProvideLibraryConnections
+			get() = progressingLibraryConnectionProvider
 
 		val guaranteedLibraryConnectionProvider by lazy { GuaranteedLibraryConnectionProvider(libraryConnectionProvider) }
 	}

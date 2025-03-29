@@ -1,10 +1,13 @@
 package com.lasthopesoftware.bluewater.client.settings.GivenALibraryId
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
+import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -16,21 +19,23 @@ class WhenLoadingTheLibrarySettings {
 
     private val services by lazy {
         LibrarySettingsViewModel(
-            FakeLibraryRepository(
-                Library(
-                    id = libraryId.id,
-					userName = "ZaxM5Iid",
-                    accessCode = "r64HLI",
-                    isLocalOnly = true,
-                    isSyncLocalConnectionsOnly = true,
-                    isWakeOnLanEnabled = true,
-					password = "sL33L3Xt",
-                    syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
-                    isUsingExistingFiles = true,
-                )
-            ),
-            mockk(),
-            mockk(),
+			mockk {
+				every { promiseLibrarySettings(libraryId) } returns LibrarySettings(
+					libraryId = libraryId,
+					isUsingExistingFiles = true,
+					syncedFileLocation = SyncedFileLocation.EXTERNAL,
+					connectionSettings = StoredMediaCenterConnectionSettings(
+						userName = "ZaxM5Iid",
+						accessCode = "r64HLI",
+						isLocalOnly = true,
+						isSyncLocalConnectionsOnly = true,
+						isWakeOnLanEnabled = true,
+						password = "sL33L3Xt",
+					)
+				).toPromise()
+			},
+			mockk(),
+			mockk(),
 			mockk(),
 		)
     }
@@ -73,7 +78,7 @@ class WhenLoadingTheLibrarySettings {
     @Test
     fun `then synced file location is correct`() {
         assertThat(services.syncedFileLocation.value)
-            .isEqualTo(Library.SyncedFileLocation.EXTERNAL)
+            .isEqualTo(SyncedFileLocation.EXTERNAL)
     }
 
     @Test

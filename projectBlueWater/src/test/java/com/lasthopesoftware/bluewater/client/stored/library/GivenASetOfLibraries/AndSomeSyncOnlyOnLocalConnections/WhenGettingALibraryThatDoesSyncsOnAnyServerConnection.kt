@@ -1,25 +1,26 @@
 package com.lasthopesoftware.bluewater.client.stored.library.GivenASetOfLibraries.AndSomeSyncOnlyOnLocalConnections
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.SyncLibraryProvider
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
+import com.lasthopesoftware.bluewater.client.stored.library.SyncLibraryConnectionSettings
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class WhenGettingALibraryThatDoesSyncsOnAnyServerConnection {
 	private val library by lazy {
-		val syncLibraryProvider = SyncLibraryProvider(
-			FakeLibraryRepository(
-				Library(id = 3),
-				Library(id = 4),
-				Library(id = 8, isSyncLocalConnectionsOnly = true),
-				Library(id = 1),
-				Library(id = 13, isSyncLocalConnectionsOnly = true)
-			)
+		val syncLibraryProvider = SyncLibraryConnectionSettings(
+			mockk {
+				every { promiseLibrarySettings(LibraryId(4)) } returns LibrarySettings(
+					connectionSettings = StoredMediaCenterConnectionSettings(accessCode = "2OoO9Vefrb")
+				).toPromise()
+			}
 		)
-		ExpiringFuturePromise(syncLibraryProvider.promiseLibrary(LibraryId(4))).get()
+		syncLibraryProvider.promiseConnectionSettings(LibraryId(4)).toExpiringFuture().get()
 	}
 
     @Test

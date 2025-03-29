@@ -1,8 +1,9 @@
 package com.lasthopesoftware.bluewater.client.settings.GivenALibraryId.AndLibrarySettingAreLoaded.AndNotAllPermissionsAreGranted
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -16,26 +17,26 @@ class WhenSavingTheLibrarySettings {
 
 	private val libraryId = LibraryId(56)
     private val services by lazy {
-		val libraryRepository = FakeLibraryRepository(
-			Library(
-				id = libraryId.id,
-				accessCode = "b2q",
-				isLocalOnly = false,
-				isSyncLocalConnectionsOnly = true,
-				isWakeOnLanEnabled = false,
-                password = "hmpyA",
-				syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
-				isUsingExistingFiles = true,
-				libraryName = "theater",
-			)
-		)
-
-        LibrarySettingsViewModel(
-            libraryRepository,
-            libraryRepository,
-            mockk(),
+		LibrarySettingsViewModel(
 			mockk {
-				every { promiseIsLibraryPermissionsGranted(any()) } returns false.toPromise()
+				every { promiseLibrarySettings(libraryId) } returns LibrarySettings(
+					libraryId = libraryId,
+					isUsingExistingFiles = true,
+					libraryName = "theater",
+					syncedFileLocation = SyncedFileLocation.EXTERNAL,
+					connectionSettings = StoredMediaCenterConnectionSettings(
+						accessCode = "b2q",
+						isLocalOnly = false,
+						isSyncLocalConnectionsOnly = true,
+						isWakeOnLanEnabled = false,
+						password = "hmpyA",
+					)
+				).toPromise()
+			},
+			mockk(),
+			mockk(),
+			mockk {
+				every { promiseIsAllPermissionsGranted(any()) } returns false.toPromise()
 			},
 		)
     }
@@ -53,7 +54,7 @@ class WhenSavingTheLibrarySettings {
 			isSyncLocalConnectionsOnly.value = !isSyncLocalConnectionsOnly.value
 			isUsingExistingFiles.value = !isUsingExistingFiles.value
 			isWakeOnLanEnabled.value = !isWakeOnLanEnabled.value
-			syncedFileLocation.value = Library.SyncedFileLocation.INTERNAL
+			syncedFileLocation.value = SyncedFileLocation.INTERNAL
 			libraryName.value = "spit"
 			isSaved = saveLibrary().toExpiringFuture().get() == true
 		}
@@ -102,7 +103,7 @@ class WhenSavingTheLibrarySettings {
     @Test
     fun `then synced file location is correct`() {
         assertThat(services.syncedFileLocation.value)
-            .isEqualTo(Library.SyncedFileLocation.INTERNAL)
+            .isEqualTo(SyncedFileLocation.INTERNAL)
     }
 
     @Test

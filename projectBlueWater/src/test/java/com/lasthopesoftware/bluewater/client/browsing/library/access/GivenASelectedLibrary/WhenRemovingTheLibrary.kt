@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test
 
 class WhenRemovingTheLibrary {
 
-	private val library = Library(id = 14)
+	private val libraryId = LibraryId(id = 14)
 
 	private val libraryRemoval by lazy {
 		val fakeStoredItemAccess: AccessStoredItems = FakeStoredItemAccess(
@@ -31,13 +31,13 @@ class WhenRemovingTheLibrary {
 			StoredItem(14, 5, StoredItem.ItemType.ITEM)
 		)
 		val libraryStorage = mockk<ILibraryStorage>()
-		every { libraryStorage.removeLibrary(library) } returns Promise.empty()
+		every { libraryStorage.removeLibrary(libraryId) } returns Promise.empty()
 
 		val libraryIdentifierProvider = mockk<ProvideSelectedLibraryId>()
-		every { libraryIdentifierProvider.promiseSelectedLibraryId() } returns Promise(library.libraryId)
+		every { libraryIdentifierProvider.promiseSelectedLibraryId() } returns Promise(libraryId)
 
 		val libraryProvider = FakeLibraryRepository(
-			library,
+			Library(id = libraryId.id),
 			Library(id = 4),
 			Library(id = 15)
 		)
@@ -63,7 +63,7 @@ class WhenRemovingTheLibrary {
 
 	@BeforeAll
 	fun act() {
-		libraryRemoval.removeLibrary(library).toExpiringFuture().get()
+		libraryRemoval.removeLibrary(libraryId).toExpiringFuture().get()
 	}
 
 	@Test
