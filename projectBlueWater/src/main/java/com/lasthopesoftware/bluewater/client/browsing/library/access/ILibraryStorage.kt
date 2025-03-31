@@ -10,5 +10,7 @@ import com.namehillsoftware.handoff.promises.Promise
 interface ILibraryStorage {
 	fun saveLibrary(library: Library): Promise<Library>
 
+	fun updateNowPlaying(libraryId: LibraryId, nowPlayingId: Int, nowPlayingProgress: Long, savedTracksString: String, isRepeating: Boolean): Promise<Unit>
+
 	fun removeLibrary(libraryId: LibraryId): Promise<Unit>
 }

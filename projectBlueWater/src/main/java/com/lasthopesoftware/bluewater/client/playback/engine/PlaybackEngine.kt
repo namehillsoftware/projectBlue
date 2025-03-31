@@ -119,37 +119,38 @@ class PlaybackEngine(
 			val currentActiveLibraryId = activeLibraryId
 
 			if (libraryId == currentActiveLibraryId) promiseState()
-			else pausePlayback()
-				.eventually {
-					if (activeLibraryId != currentActiveLibraryId) promisedPlayingState
-					else promisedPlayingState
-						.eventually { originalState ->
-							nowPlayingRepository
-								.promiseNowPlaying(libraryId)
-								.then(
-									{ nowPlaying ->
-										nowPlaying
-											.takeIf { activeLibraryId == originalState.libraryId }
-											?.run {
-												activeLibraryId = libraryId
-												PlayingState(
-													libraryId,
-													playlist.toMutableList(),
-													isRepeating,
-													playlistPosition,
-													StaticProgressedFile(Duration.millis(filePosition).toPromise())
-												)
-											}
-											?: originalState
-									},
-									{ originalState }
-								)
-						}
-				}
-				.also { promisedPlayingState = it }
-				.eventually {
-					promiseState()
-				}
+			else {
+				val currentPromisedPlayingState = promisedPlayingState
+				pausePlayback()
+					.eventually {
+						if (activeLibraryId != currentActiveLibraryId) currentPromisedPlayingState
+						else currentPromisedPlayingState
+							.eventually { originalState ->
+								nowPlayingRepository
+									.promiseNowPlaying(libraryId)
+									.then(
+										{ nowPlaying ->
+											nowPlaying
+												.takeIf { activeLibraryId == originalState.libraryId }
+												?.run {
+													activeLibraryId = libraryId
+													PlayingState(
+														libraryId,
+														playlist.toMutableList(),
+														isRepeating,
+														playlistPosition,
+														StaticProgressedFile(Duration.millis(filePosition).toPromise())
+													)
+												}
+												?: originalState
+										},
+										{ originalState }
+									)
+							}
+					}
+					.also { promisedPlayingState = it }
+					.eventually { promiseState() }
+			}
 		}
 	}
 
@@ -210,10 +211,7 @@ class PlaybackEngine(
 						.progress
 						.then { p ->
 							if (p is ContinuingResult) Pair(libraryId, p.current.asPositionedFile())
-							else {
-								val serviceFile = playlist[playlistPosition]
-								Pair(libraryId, PositionedFile(playlistPosition, serviceFile))
-							}
+							else Pair(libraryId, PositionedFile(playlistPosition, playlist[playlistPosition]))
 						}
 				}
 			}
@@ -386,15 +384,15 @@ class PlaybackEngine(
 
 		val promisedPlayback = newPlayer.promisePlayedPlaylist()
 
-		promisedPlayback.onEach(
-			{ p ->
+		promisedPlayback
+			.onEach { p ->
 				isPlaying = true
 				withState {
 					playlistPosition = p.playlistPosition
 					fileProgress = ProgressingFile(p)
 					saveState().then { np -> np?.run { onPlayingFileChanged?.onPlayingFileChanged(libraryId, p) } }
 				}
-			})
+			}
 			.then { _ ->
 				isPlaying = false
 				activePlayer = null

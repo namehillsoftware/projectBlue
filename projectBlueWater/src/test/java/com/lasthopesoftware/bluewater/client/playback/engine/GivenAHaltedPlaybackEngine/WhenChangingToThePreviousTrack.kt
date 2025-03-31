@@ -28,9 +28,11 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 
-private const val libraryId = 224
-
 class WhenChangingToThePreviousTrack {
+
+	companion object {
+		private const val libraryId = 224
+	}
 
 	private val mut by lazy {
 
@@ -73,7 +75,7 @@ class WhenChangingToThePreviousTrack {
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)
 
-		Pair(libraryUnderTest, playbackEngine)
+		Pair(libraryProvider, playbackEngine)
 	}
 	private var nextSwitchedFile: PositionedFile? = null
 
@@ -92,7 +94,7 @@ class WhenChangingToThePreviousTrack {
 
 	@Test
 	fun `then the saved library is at the correct track position`() {
-		val (libraryUnderTest) = mut
-		assertThat(libraryUnderTest.nowPlayingId).isEqualTo(3)
+		val (libraryProvider) = mut
+		assertThat(libraryProvider.libraries[libraryId]?.nowPlayingId).isEqualTo(3)
 	}
 }

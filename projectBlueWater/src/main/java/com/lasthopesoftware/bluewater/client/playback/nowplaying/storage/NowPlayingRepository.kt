@@ -59,20 +59,20 @@ class NowPlayingRepository(
 
 		holdNowPlayingState[libraryId] = nowPlaying
 
-		libraryProvider
-			.promiseLibrary(libraryId)
-			.then { library ->
-				library?.apply {
-					nowPlayingId = nowPlaying.playlistPosition
-					nowPlayingProgress = nowPlaying.filePosition
-					isRepeating = nowPlaying.isRepeating
-					promiseSerializedFileStringList(nowPlaying.playlist)
-						.then { serializedPlaylist ->
-							savedTracksString = serializedPlaylist
-							libraryRepository.saveLibrary(this)
-						}
+		promiseSerializedFileStringList(nowPlaying.playlist)
+			.then { serializedPlaylist ->
+				with (nowPlaying) {
+					libraryRepository
+						.updateNowPlaying(
+							libraryId = libraryId,
+							nowPlayingId = playlistPosition,
+							nowPlayingProgress = filePosition,
+							savedTracksString = serializedPlaylist,
+							isRepeating = isRepeating
+						)
 				}
 			}
+
 		return nowPlaying.toPromise()
 	}
 }

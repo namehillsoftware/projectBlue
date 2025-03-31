@@ -2,6 +2,10 @@ package com.lasthopesoftware.bluewater.client.browsing.library.access
 
 import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.isRepeatingColumn
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.nowPlayingIdColumn
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.nowPlayingProgressColumn
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.savedTracksStringColumn
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.tableName
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
@@ -14,6 +18,7 @@ import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
+import com.namehillsoftware.querydroid.SqLiteAssistants
 import kotlin.coroutines.cancellation.CancellationException
 
 class LibraryRepository(private val context: Context) : ILibraryStorage, ILibraryProvider {
@@ -25,6 +30,22 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 
 	override fun saveLibrary(library: Library): Promise<Library> =
 		promiseTableMessage<Library, Library>(SaveLibraryWriter(context, library))
+
+	override fun updateNowPlaying(
+		libraryId: LibraryId,
+		nowPlayingId: Int,
+		nowPlayingProgress: Long,
+		savedTracksString: String,
+		isRepeating: Boolean
+	): Promise<Unit> = promiseTableMessage<Unit, Library>(
+		UpdateNowPlayingLibraryWriter(
+			context,
+			libraryId,
+			nowPlayingId,
+			nowPlayingProgress,
+			savedTracksString,
+			isRepeating)
+	)
 
 	override fun removeLibrary(libraryId: LibraryId): Promise<Unit> =
 		promiseTableMessage<Unit, Library>(RemoveLibraryWriter(context, libraryId))
@@ -80,6 +101,54 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 					logger.debug("Library saved.")
 					closeableTransaction.setTransactionSuccessful()
 					returnLibrary
+				}
+			}
+		}
+	}
+
+	private class UpdateNowPlayingLibraryWriter(
+		private val context: Context,
+		private val libraryId: LibraryId,
+		private val nowPlayingId: Int,
+		private val nowPlayingProgress: Long,
+		private val savedTracksString: String,
+		private val isRepeating: Boolean
+	) : CancellableMessageWriter<Unit> {
+
+		companion object {
+			private val logger by lazyLogger<SaveLibraryWriter>()
+
+			private val updateStatement by lazy {
+				SqLiteAssistants.UpdateBuilder
+					.fromTable(tableName)
+					.addSetter(nowPlayingIdColumn)
+					.addSetter(nowPlayingProgressColumn)
+					.addSetter(savedTracksStringColumn)
+					.addSetter(isRepeatingColumn)
+					.setFilter("where id = @id")
+					.buildQuery()
+			}
+		}
+
+		override fun prepareMessage(cancellationSignal: CancellationSignal) {
+			if (cancellationSignal.isCancelled) throw CancellationException("Cancelled while saving library")
+
+			val libraryInt = libraryId.id
+			if (libraryInt < 0) return
+
+			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
+					repositoryAccessHelper
+						.mapSql(updateStatement)
+						.addParameter(nowPlayingIdColumn, nowPlayingId)
+						.addParameter(nowPlayingProgressColumn, nowPlayingProgress)
+						.addParameter(savedTracksStringColumn, savedTracksString)
+						.addParameter(isRepeatingColumn, isRepeating)
+						.addParameter("id", libraryInt)
+						.execute()
+
+					logger.debug("Now Playing updated for library $libraryInt.")
+					closeableTransaction.setTransactionSuccessful()
 				}
 			}
 		}
