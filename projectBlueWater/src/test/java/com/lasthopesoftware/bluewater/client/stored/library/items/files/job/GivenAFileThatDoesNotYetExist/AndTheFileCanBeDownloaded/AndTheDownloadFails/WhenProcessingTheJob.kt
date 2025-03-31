@@ -22,7 +22,7 @@ import java.net.URI
 class WhenProcessingTheJob {
 
 	private var storedFileWriteException: Throwable? = null
-	private val storedFile = StoredFile(LibraryId(5), ServiceFile(1), URI("test-path"), true)
+	private val storedFile = StoredFile(LibraryId(5), ServiceFile("1"), URI("test-path"), true)
 	private val states = ArrayList<StoredFileJobState>()
 
 	@RequiresApi(api = Build.VERSION_CODES.N)
@@ -50,7 +50,7 @@ class WhenProcessingTheJob {
 			setOf(
 				StoredFileJob(
 					LibraryId(5),
-					ServiceFile(1),
+					ServiceFile("1"),
 					storedFile
 				)
 			)

@@ -30,12 +30,12 @@ class WhenGettingTheImageBytes {
 			mockk {
 				every { promiseLibraryConnection(LibraryId(21)) } returns Promise(mockk<LiveServerConnection> {
 					every { dataAccess } returns mockk<RemoteLibraryAccess> {
-						every { promiseImageBytes(ServiceFile(31)) } returns byteArrayOf(39, 127, 8).toPromise()
+						every { promiseImageBytes(ServiceFile("31")) } returns byteArrayOf(39, 127, 8).toPromise()
 					}
 				})
 			})
 
-		memoryCachedImageAccess.promiseImageBytes(LibraryId(21), ServiceFile(31)).toExpiringFuture().get()
+		memoryCachedImageAccess.promiseImageBytes(LibraryId(21), ServiceFile("31")).toExpiringFuture().get()
 	}
 
 	@Test

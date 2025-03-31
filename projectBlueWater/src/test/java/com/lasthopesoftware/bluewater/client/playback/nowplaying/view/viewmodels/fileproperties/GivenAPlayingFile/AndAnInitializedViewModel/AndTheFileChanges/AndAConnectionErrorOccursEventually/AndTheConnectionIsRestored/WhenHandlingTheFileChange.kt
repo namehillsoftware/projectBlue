@@ -26,11 +26,13 @@ import org.junit.jupiter.api.Test
 import java.io.EOFException
 import java.net.URL
 
-private const val libraryId = 630
-private const val firstServiceFileId = 179
-private const val secondServiceFileId = 36
-
 class WhenHandlingTheFileChange {
+
+	companion object {
+		private const val libraryId = 630
+		private const val firstServiceFileId = "179"
+		private const val secondServiceFileId = "36"
+	}
 
 	private val mut by lazy {
 		val nowPlayingRepository = mockk<MaintainNowPlayingState> {
@@ -38,11 +40,11 @@ class WhenHandlingTheFileChange {
                 NowPlaying(
                     LibraryId(libraryId),
                     listOf(
-                        ServiceFile(815),
-                        ServiceFile(449),
-                        ServiceFile(592),
+                        ServiceFile("815"),
+                        ServiceFile("449"),
+                        ServiceFile("592"),
                         ServiceFile(firstServiceFileId),
-                        ServiceFile(390),
+                        ServiceFile("390"),
                         ServiceFile(secondServiceFileId),
                     ),
                     3,
@@ -111,11 +113,11 @@ class WhenHandlingTheFileChange {
             NowPlaying(
                 LibraryId(libraryId),
                 listOf(
-                    ServiceFile(815),
-                    ServiceFile(449),
-                    ServiceFile(592),
+                    ServiceFile("815"),
+                    ServiceFile("449"),
+                    ServiceFile("592"),
                     ServiceFile(firstServiceFileId),
-                    ServiceFile(390),
+                    ServiceFile("390"),
                     ServiceFile(secondServiceFileId),
                 ),
                 5,

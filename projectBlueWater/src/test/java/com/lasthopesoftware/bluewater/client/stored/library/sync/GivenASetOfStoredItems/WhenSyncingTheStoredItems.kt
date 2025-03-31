@@ -32,17 +32,17 @@ class WhenSyncingTheStoredItems {
 			StoredItemServiceFileCollector(
 				mockk {
 					every { promiseStoredItems(LibraryId(52)) } returns Promise(
-						setOf(StoredItem(52, 14, StoredItem.ItemType.PLAYLIST))
+						setOf(StoredItem(52, "14", StoredItem.ItemType.PLAYLIST))
 					)
 				},
 				mockk {
-					every { promiseFiles(LibraryId(52), PlaylistId(14)) } returns Promise(
+					every { promiseFiles(LibraryId(52), PlaylistId("14")) } returns Promise(
 						listOf(
-							ServiceFile(1),
-							ServiceFile(2),
-							ServiceFile(4),
-							ServiceFile(19),
-							ServiceFile(10)
+							ServiceFile("1"),
+							ServiceFile("2"),
+							ServiceFile("4"),
+							ServiceFile("19"),
+							ServiceFile("10")
 						)
 					)
 				}
@@ -55,8 +55,8 @@ class WhenSyncingTheStoredItems {
 					Promise(StoredFile(firstArg(), lastArg(), URI("fake-file-name"), true))
 				}
 
-				every { promiseStoredFileUpdate(any(), ServiceFile(19)) } returns Promise(
-					StoredFile(LibraryId(52), ServiceFile(19), URI("fake"), true).setIsDownloadComplete(true)
+				every { promiseStoredFileUpdate(any(), ServiceFile("19")) } returns Promise(
+					StoredFile(LibraryId(52), ServiceFile("19"), URI("fake"), true).setIsDownloadComplete(true)
 				)
 			},
 			mockk {
@@ -91,7 +91,7 @@ class WhenSyncingTheStoredItems {
 	@Test
 	fun `then the files in the stored items are synced`() {
 		assertThat(
-			storedFileJobResults.map { obj -> obj.serviceId })
+			storedFileJobResults.map { obj -> obj.serviceId.toInt() })
 			.containsExactly(1, 2, 4, 10)
 	}
 }

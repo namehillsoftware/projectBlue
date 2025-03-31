@@ -25,10 +25,10 @@ private const val libraryId = 476
 class WhenTheQueueIsStarted {
 
 	private val mut by lazy {
-		val serviceFiles = (0..2).map(::ServiceFile)
+		val serviceFiles = (0..2).map { ServiceFile(it.toString()) }
 		val playbackPreparer = mockk<PlayableFilePreparationSource>().apply {
-			every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile(0), Duration.ZERO) } returns Promise(FakePreparedPlayableFile(FakeBufferingPlaybackHandler()))
-			every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile(1), Duration.ZERO) } returnsMany(
+			every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile("0"), Duration.ZERO) } returns Promise(FakePreparedPlayableFile(FakeBufferingPlaybackHandler()))
+			every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile("1"), Duration.ZERO) } returnsMany(
 				listOf(
 					Promise { messenger: Messenger<PreparedPlayableFile?> ->
 						messenger.awaitCancellation {

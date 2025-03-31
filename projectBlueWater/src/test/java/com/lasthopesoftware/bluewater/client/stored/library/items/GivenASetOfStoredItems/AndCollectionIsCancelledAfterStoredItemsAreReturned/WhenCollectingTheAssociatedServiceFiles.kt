@@ -31,23 +31,23 @@ class WhenCollectingTheAssociatedServiceFiles {
 			object : FakeDeferredStoredItemAccess() {
 				override val storedItems: Collection<StoredItem>
 					get() = listOf(
-						StoredItem(1, 1, StoredItem.ItemType.ITEM),
-						StoredItem(1, 2, StoredItem.ItemType.ITEM),
-						StoredItem(1, 3, StoredItem.ItemType.ITEM)
+						StoredItem(1, "1", StoredItem.ItemType.ITEM),
+						StoredItem(1, "2", StoredItem.ItemType.ITEM),
+						StoredItem(1, "3", StoredItem.ItemType.ITEM)
 					)
 			}
 
 		val fileProvider = mockk<ProvideLibraryFiles> {
 			every {
-				promiseFiles(LibraryId(2), ItemId(1))
+				promiseFiles(LibraryId(2), ItemId("1"))
 			} returns firstItemExpectedFiles.toPromise()
 
 			every {
-				promiseFiles(LibraryId(2), ItemId(2))
+				promiseFiles(LibraryId(2), ItemId("2"))
 			} returns secondItemExpectedFiles.toPromise()
 
 			every {
-				promiseFiles(LibraryId(2), ItemId(3))
+				promiseFiles(LibraryId(2), ItemId("3"))
 			} returns thirdItemExpectedFiles.toPromise()
 		}
 
@@ -76,7 +76,7 @@ class WhenCollectingTheAssociatedServiceFiles {
 			val random = Random()
 			val floor = random.nextInt(10000)
 			val ceiling = random.nextInt(10000 - floor) + floor
-			return (floor..ceiling).map(::ServiceFile)
+			return (floor..ceiling).map { ServiceFile(it.toString()) }
 		}
 	}
 }

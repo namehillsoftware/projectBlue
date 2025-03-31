@@ -20,7 +20,7 @@ import java.io.ByteArrayOutputStream
 import java.net.URI
 
 class WhenProcessingTheJob {
-	private val storedFile = StoredFile(LibraryId(5), ServiceFile(1), URI("test-path"), true)
+	private val storedFile = StoredFile(LibraryId(5), ServiceFile("1"), URI("test-path"), true)
 	private val storedFileAccess = mockk<UpdateStoredFiles> {
 		every { markStoredFileAsDownloaded(any()) } answers { Promise(firstArg<StoredFile>()) }
 	}
@@ -39,7 +39,7 @@ class WhenProcessingTheJob {
 			setOf(
 				StoredFileJob(
 					LibraryId(5),
-					ServiceFile(1),
+					ServiceFile("1"),
 					storedFile
 				)
 			)

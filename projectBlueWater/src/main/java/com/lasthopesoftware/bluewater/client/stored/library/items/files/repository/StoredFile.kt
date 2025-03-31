@@ -13,7 +13,7 @@ class StoredFile() : IdentifiableEntity {
 		private set
 	var libraryId = 0
 		private set
-	var serviceId = 0
+	var serviceId = ""
 		private set
 	var isDownloadComplete = false
 		private set
@@ -44,7 +44,7 @@ class StoredFile() : IdentifiableEntity {
 		return this
 	}
 
-	fun setServiceId(serviceId: Int): StoredFile {
+	fun setServiceId(serviceId: String): StoredFile {
 		this.serviceId = serviceId
 		return this
 	}

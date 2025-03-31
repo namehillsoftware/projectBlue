@@ -24,7 +24,7 @@ class WhenPausingPlayback {
 				0,
 				playbackHandler,
 				NoTransformVolumeManager(),
-				ServiceFile(1)
+				ServiceFile("1")
 			)
 		)
 		val playlistPlayback = PlaylistPlayer(

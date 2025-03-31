@@ -6,4 +6,4 @@ import kotlinx.parcelize.Parcelize
 
 @JvmInline
 @Parcelize
-value class PlaylistId(override val id: Int) : KeyedIdentifier, Parcelable
+value class PlaylistId(override val id: String) : KeyedIdentifier, Parcelable

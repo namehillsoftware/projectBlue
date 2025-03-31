@@ -17,10 +17,12 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-private const val libraryId = 72
-private const val serviceFileId = 300
-
 class WhenHighlightingTheProperty {
+	companion object {
+		private const val libraryId = 72
+		private const val serviceFileId = "300"
+	}
+
 	private val viewModel by lazy {
 		FileDetailsViewModel(
 			mockk {

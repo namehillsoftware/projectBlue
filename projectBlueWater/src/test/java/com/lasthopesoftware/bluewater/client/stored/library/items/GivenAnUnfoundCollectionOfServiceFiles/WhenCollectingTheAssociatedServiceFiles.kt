@@ -29,9 +29,9 @@ class WhenCollectingTheAssociatedServiceFiles {
 	private val syncToggledItems = HashMap<KeyedIdentifier, Boolean>()
 	private val serviceFileCollector by lazy {
 		val storedItemAccess: AccessStoredItems = object : FakeStoredItemAccess(
-			StoredItem(4, 1, StoredItem.ItemType.ITEM),
-			StoredItem(4, 2, StoredItem.ItemType.ITEM),
-			StoredItem(4, 3, StoredItem.ItemType.ITEM)
+			StoredItem(4, "1", StoredItem.ItemType.ITEM),
+			StoredItem(4, "2", StoredItem.ItemType.ITEM),
+			StoredItem(4, "3", StoredItem.ItemType.ITEM)
 		) {
 			override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean): Promise<Unit> {
 				syncToggledItems[itemId] = enable
@@ -42,15 +42,15 @@ class WhenCollectingTheAssociatedServiceFiles {
 		val fileListParameters = FileListParameters
 		val fileProvider = mockk<ProvideLibraryFiles>()
 		every {
-			fileProvider.promiseFiles(LibraryId(4), ItemId(1))
+			fileProvider.promiseFiles(LibraryId(4), ItemId("1"))
 		} returns firstItemExpectedFiles.toPromise()
 
 		every {
-			fileProvider.promiseFiles(LibraryId(4), ItemId(2))
+			fileProvider.promiseFiles(LibraryId(4), ItemId("2"))
 		} returns Promise(FileNotFoundException())
 
 		every {
-			fileProvider.promiseFiles(LibraryId(4), ItemId(3))
+			fileProvider.promiseFiles(LibraryId(4), ItemId("3"))
 		} returns thirdItemExpectedFiles.toPromise()
 
 		StoredItemServiceFileCollector(
@@ -78,7 +78,7 @@ class WhenCollectingTheAssociatedServiceFiles {
 	@Test
 	fun `then the file that was not found had sync toggled off`() {
 		assertThat(syncToggledItems).hasEntrySatisfying(object : Condition<KeyedIdentifier>() {
-			override fun matches(value: KeyedIdentifier): Boolean = value.id == 2
+			override fun matches(value: KeyedIdentifier): Boolean = value.id == "2"
 		}, object : Condition<Boolean>() {
 			override fun matches(value: Boolean): Boolean = !value
 		})
@@ -87,6 +87,6 @@ class WhenCollectingTheAssociatedServiceFiles {
 	private fun givenARandomCollectionOfFiles(): List<ServiceFile> {
 		val floor = nextInt(10000)
 		val ceiling = nextInt(10000 - floor) + floor
-		return IntRange(floor, ceiling).map { ServiceFile(it) }.toList()
+		return IntRange(floor, ceiling).map { ServiceFile(it.toString()) }.toList()
 	}
 }

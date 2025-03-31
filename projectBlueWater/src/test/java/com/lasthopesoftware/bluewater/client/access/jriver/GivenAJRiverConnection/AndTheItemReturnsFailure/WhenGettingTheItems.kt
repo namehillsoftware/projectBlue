@@ -20,7 +20,7 @@ import java.util.concurrent.ExecutionException
 class WhenGettingTheItems {
 
 	companion object {
-		private const val itemId = 398
+		private const val itemId = "398"
 	}
 
 	private val mut by lazy {

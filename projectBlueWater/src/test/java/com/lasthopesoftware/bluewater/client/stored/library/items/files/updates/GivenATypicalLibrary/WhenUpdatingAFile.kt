@@ -24,7 +24,7 @@ class WhenUpdatingAFile : AndroidContext() {
 	}
 
 	override fun before() {
-		val storedFile = services.promiseNewStoredFile(LibraryId(405), ServiceFile(936)).toExpiringFuture().get()!!
+		val storedFile = services.promiseNewStoredFile(LibraryId(405), ServiceFile("936")).toExpiringFuture().get()!!
 
 		updatedStoredFile = services
 			.promiseUpdatedStoredFile(storedFile.setIsDownloadComplete(true).setUri("nXpBx"))

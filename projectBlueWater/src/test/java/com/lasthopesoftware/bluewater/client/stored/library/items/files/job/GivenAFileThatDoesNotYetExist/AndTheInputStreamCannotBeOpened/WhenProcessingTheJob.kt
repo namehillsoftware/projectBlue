@@ -18,7 +18,7 @@ import java.io.IOException
 import java.net.URI
 
 class WhenProcessingTheJob {
-	private val storedFile = StoredFile(LibraryId(6), ServiceFile(1), URI("test-path"), true)
+	private val storedFile = StoredFile(LibraryId(6), ServiceFile("1"), URI("test-path"), true)
 	private var jobStates: List<StoredFileJobState>? = null
 
 	@BeforeAll
@@ -33,7 +33,7 @@ class WhenProcessingTheJob {
 
 		jobStates = storedFileJobProcessor.observeStoredFileDownload(
 			setOf(
-				StoredFileJob(LibraryId(6), ServiceFile(1), storedFile)
+				StoredFileJob(LibraryId(6), ServiceFile("1"), storedFile)
 			)
 		).map { j -> j.storedFileJobState }.toList().blockingGet()
 	}

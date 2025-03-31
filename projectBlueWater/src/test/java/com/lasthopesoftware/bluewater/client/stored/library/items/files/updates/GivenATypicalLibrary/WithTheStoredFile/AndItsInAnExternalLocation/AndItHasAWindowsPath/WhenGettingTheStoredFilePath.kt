@@ -29,7 +29,7 @@ class WhenGettingTheStoredFilePath {
 	private val services by lazy {
 		val filePropertiesProvider = FakeFilesPropertiesProvider()
 		filePropertiesProvider.addFilePropertiesToCache(
-			ServiceFile(340),
+			ServiceFile("340"),
 			LibraryId(libraryId),
 			mapOf(
 				Pair(KnownFileProperties.AlbumArtist, "6YYPwSql"),
@@ -73,7 +73,7 @@ class WhenGettingTheStoredFilePath {
 	@BeforeAll
 	fun act() {
 		newUri = services
-			.promiseStoredFileUri(LibraryId(libraryId), ServiceFile(340))
+			.promiseStoredFileUri(LibraryId(libraryId), ServiceFile("340"))
 			.toExpiringFuture()
 			.get()
 	}

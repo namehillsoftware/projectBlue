@@ -25,15 +25,15 @@ import kotlin.random.Random.Default.nextInt
 class WhenSynchronizing {
 
 	private val storedFiles = arrayOf(
-		StoredFile().setId(nextInt()).setServiceId(1).setLibraryId(4),
-		StoredFile().setId(nextInt()).setServiceId(2).setLibraryId(4),
-		StoredFile().setId(nextInt()).setServiceId(4).setLibraryId(4),
-		StoredFile().setId(nextInt()).setServiceId(5).setLibraryId(4),
-		StoredFile().setId(nextInt()).setServiceId(7).setLibraryId(4),
-		StoredFile().setId(nextInt()).setServiceId(114).setLibraryId(4),
-		StoredFile().setId(nextInt()).setServiceId(92).setLibraryId(4)
+		StoredFile().setId(nextInt()).setServiceId("1").setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId("2").setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId("4").setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId("5").setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId("7").setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId("114").setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId("92").setLibraryId(4)
 	)
-	private val expectedStoredFileJobs = storedFiles.filter { f: StoredFile -> f.serviceId != 7 }
+	private val expectedStoredFileJobs = storedFiles.filter { f: StoredFile -> f.serviceId != "7" }
 	private val recordingMessageBus = RecordingApplicationMessageBus()
 	private val synchronization by lazy {
 		val filePruner = mockk<PruneStoredFiles>()
@@ -48,7 +48,7 @@ class WhenSynchronizing {
 		every { librarySyncHandler.observeLibrarySync(any()) } returns Observable.concat(
 			Observable
 				.fromArray(*storedFiles)
-				.filter { f -> f.serviceId != 7 }
+				.filter { f -> f.serviceId != "7" }
 				.flatMap { f ->
 					Observable.just(
 						StoredFileJobStatus(f, StoredFileJobState.Queued),
@@ -58,7 +58,7 @@ class WhenSynchronizing {
 				},
 			Observable
 				.fromArray(*storedFiles)
-				.filter { f -> f.serviceId == 7 }
+				.filter { f -> f.serviceId == "7" }
 				.flatMap({ f ->
 					Observable.concat(
 						Observable.just(
@@ -115,7 +115,7 @@ class WhenSynchronizing {
 			recordingMessageBus.recordedMessages
 				.filterIsInstance<StoredFileMessage.FileWriteError>()
 				.map { i -> i.storedFileId })
-			.containsExactlyElementsOf(storedFiles.filter { f -> f.serviceId == 7 }.map { it.id })
+			.containsExactlyElementsOf(storedFiles.filter { f -> f.serviceId == "7" }.map { it.id })
 	}
 
 	@Test

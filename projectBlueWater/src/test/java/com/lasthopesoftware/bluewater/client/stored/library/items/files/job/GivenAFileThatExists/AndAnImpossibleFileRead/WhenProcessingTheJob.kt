@@ -27,8 +27,8 @@ class WhenProcessingTheJob {
 				setOf(
 					StoredFileJob(
 						LibraryId(12),
-						ServiceFile(1),
-						StoredFile(LibraryId(12), ServiceFile(1), URI("test-path"), true)
+						ServiceFile("1"),
+						StoredFile(LibraryId(12), ServiceFile("1"), URI("test-path"), true)
 					)
 				)
 			)

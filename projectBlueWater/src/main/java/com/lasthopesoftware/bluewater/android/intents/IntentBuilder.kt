@@ -39,7 +39,7 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 	override fun buildFileDetailsIntent(libraryId: LibraryId, playlist: Collection<ServiceFile>, position: Int) = context.getIntent<FileDetailsActivity>().apply {
 		putExtra(FileDetailsActivity.libraryIdKey, libraryId)
 		putExtra(FileDetailsActivity.playlistPosition, position)
-		putExtra(FileDetailsActivity.playlist, playlist.map { it.key }.toIntArray())
+		putExtra(FileDetailsActivity.playlist, playlist.map { it.key }.toTypedArray())
 	}
 
 	override fun buildNowPlayingIntent(libraryId: LibraryId): Intent = getBrowserActivityIntent(NowPlayingScreen(libraryId))

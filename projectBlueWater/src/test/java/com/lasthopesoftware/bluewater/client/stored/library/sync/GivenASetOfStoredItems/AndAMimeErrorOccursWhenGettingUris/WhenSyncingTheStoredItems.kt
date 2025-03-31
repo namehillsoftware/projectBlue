@@ -29,21 +29,21 @@ class WhenSyncingTheStoredItems {
 		val storedItemAccessMock = mockk<AccessStoredItems>()
 		every { storedItemAccessMock.promiseStoredItems(LibraryId(42)) } returns Promise(
 			setOf(
-				StoredItem(1, 14, StoredItem.ItemType.ITEM)
+				StoredItem(1, "14", StoredItem.ItemType.ITEM)
 			)
 		)
 
 		val fileListParameters = FileListParameters
 		val mockFileProvider = mockk<ProvideLibraryFiles>()
 		every {
-			mockFileProvider.promiseFiles(LibraryId(42), ItemId(14))
+			mockFileProvider.promiseFiles(LibraryId(42), ItemId("14"))
 		} returns Promise(
 			listOf(
-				ServiceFile(692),
-				ServiceFile(703),
-				ServiceFile(36),
-				ServiceFile(356),
-				ServiceFile(862),
+				ServiceFile("692"),
+				ServiceFile("703"),
+				ServiceFile("36"),
+				ServiceFile("356"),
+				ServiceFile("862"),
 			)
 		)
 
@@ -69,7 +69,7 @@ class WhenSyncingTheStoredItems {
 					)
 				}
 
-				every { promiseStoredFileUpdate(any(), match { it.key == 356 }) } returns Promise(
+				every { promiseStoredFileUpdate(any(), match { it.key == "356" }) } returns Promise(
 					IllegalArgumentException("MIME type application/octet-stream cannot be inserted into content://media/external/audio/media; expected MIME type under audio/*")
 				)
 			},
@@ -97,6 +97,6 @@ class WhenSyncingTheStoredItems {
 
 	@Test
 	fun `then the other files in the stored items are synced`() {
-		assertThat(storedFileJobResults.map { it.serviceId }).containsExactly(692, 703, 36, 862)
+		assertThat(storedFileJobResults.map { it.serviceId }).containsExactly("692", "703", "36", "862")
 	}
 }

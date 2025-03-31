@@ -18,7 +18,7 @@ class WhenGettingTheMaxVolume {
 		val maxFileVolumeProvider = MaxFileVolumeProvider(volumeLevelSettings, mockk())
 
 		maxFileVolumeProvider
-			.promiseMaxFileVolume(LibraryId(244), ServiceFile(1))
+			.promiseMaxFileVolume(LibraryId(244), ServiceFile("1"))
 			.toExpiringFuture()
 			.get()
 	}

@@ -24,7 +24,7 @@ class WhenPlaybackIsPausedBeforeNextFileIsPrepared {
 		0,
 		secondPlaybackHandler,
 		NoTransformVolumeManager(),
-		ServiceFile(1)
+		ServiceFile("1")
 	)
 
 	private var positionedPlayingFile: PositionedPlayingFile? = null
@@ -37,7 +37,7 @@ class WhenPlaybackIsPausedBeforeNextFileIsPrepared {
 				0,
 				playbackHandler,
 				NoTransformVolumeManager(),
-				ServiceFile(1)
+				ServiceFile("1")
 			)
 		)
 		val secondPositionedPlaybackHandlerContainer = DeferredPromise(expectedPositionedPlayableFile)

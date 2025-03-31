@@ -27,12 +27,12 @@ class WhenChangingTheVolume {
 			0,
 			playbackHandler,
 			NoTransformVolumeManager(),
-			ServiceFile(1)))
+			ServiceFile("1")))
 		val secondPositionedPlaybackHandlerContainer = Promise(PositionedPlayableFile(
 			0,
 			secondPlaybackHandler,
 			volumeManagerUnderTest,
-			ServiceFile(1)))
+			ServiceFile("1")))
 		val preparedPlaybackFileQueue = mockk<SupplyQueuedPreparedFiles>().apply {
 			every { promiseNextPreparedPlaybackFile(Duration.ZERO) } returnsMany listOf(
 				positionedPlaybackHandlerContainer,

@@ -29,11 +29,11 @@ class WhenMovingTracksFromBeforeToJustAfterPlayingTrack {
 				id = 220,
 				savedTracksString = FileStringListUtilities.promiseSerializedFileStringList(
 					listOf(
-						ServiceFile(1),
-						ServiceFile(2),
-						ServiceFile(3),
-						ServiceFile(4),
-						ServiceFile(5)
+						ServiceFile("1"),
+						ServiceFile("2"),
+						ServiceFile("3"),
+						ServiceFile("4"),
+						ServiceFile("5")
 					)
 				).toExpiringFuture().get(),
 				nowPlayingId = 3,
@@ -60,11 +60,11 @@ class WhenMovingTracksFromBeforeToJustAfterPlayingTrack {
 	fun `then the playlist is updated`() {
 		assertThat(updatedNowPlaying?.playlist).isEqualTo(
 			listOf(
-				ServiceFile(1),
-				ServiceFile(2),
-				ServiceFile(4),
-				ServiceFile(3),
-				ServiceFile(5),
+				ServiceFile("1"),
+				ServiceFile("2"),
+				ServiceFile("4"),
+				ServiceFile("3"),
+				ServiceFile("5"),
 			)
 		)
 	}

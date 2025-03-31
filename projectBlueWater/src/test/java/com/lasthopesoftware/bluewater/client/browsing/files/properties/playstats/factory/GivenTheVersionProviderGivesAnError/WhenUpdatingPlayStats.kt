@@ -31,7 +31,7 @@ class WhenUpdatingPlayStats {
 	@BeforeAll
 	fun act() {
 		try {
-			scopedPlaystatsUpdateSelector.promisePlaystatsUpdate(LibraryId(libraryId), ServiceFile(41))
+			scopedPlaystatsUpdateSelector.promisePlaystatsUpdate(LibraryId(libraryId), ServiceFile("41"))
 				.toExpiringFuture().get()
 		} catch (e: ExecutionException) {
 			exception = e.cause

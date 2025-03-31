@@ -27,10 +27,10 @@ class `When saving the now playing playlist` {
 				NowPlaying(
 					LibraryId(libraryId),
 					listOf(
-						ServiceFile(312),
-						ServiceFile(851),
-						ServiceFile(780),
-						ServiceFile(650),
+						ServiceFile("312"),
+						ServiceFile("851"),
+						ServiceFile("780"),
+						ServiceFile("650"),
 					),
 					0,
 					0,
@@ -79,20 +79,20 @@ class `When saving the now playing playlist` {
 	@Test
 	fun `then the playlist is saved correctly`() {
 		assertThat(savedFiles).containsExactly(
-			ServiceFile(312),
-			ServiceFile(851),
-			ServiceFile(780),
-			ServiceFile(650),
+			ServiceFile("312"),
+			ServiceFile("851"),
+			ServiceFile("780"),
+			ServiceFile("650"),
 		)
 	}
 
 	@Test
 	fun `then the playlist is correct`() {
 		assertThat(mut.nowPlayingList.value).containsExactly(
-			PositionedFile(0, ServiceFile(312)),
-			PositionedFile(1, ServiceFile(851)),
-			PositionedFile(2, ServiceFile(780)),
-			PositionedFile(3, ServiceFile(650)),
+			PositionedFile(0, ServiceFile("312")),
+			PositionedFile(1, ServiceFile("851")),
+			PositionedFile(2, ServiceFile("780")),
+			PositionedFile(3, ServiceFile("650")),
 		)
 	}
 

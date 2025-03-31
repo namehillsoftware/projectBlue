@@ -22,7 +22,7 @@ class WhenTheQueueIsStarted {
 
 	private val mut by lazy {
 		val numberOfFiles = nextInt(2, 500)
-		val serviceFiles = (0..numberOfFiles).map { ServiceFile(nextInt()) }
+		val serviceFiles = (0..numberOfFiles).map { ServiceFile(nextInt().toString()) }
 
 		val fileActionMap = serviceFiles.associateBy ({ it }, { MockResolveAction() })
 		val bufferingPlaybackQueuesProvider = CyclicalFileQueueProvider()

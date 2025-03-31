@@ -26,7 +26,8 @@ import org.junit.Test
 class WhenTheFileChanges : AndroidContext() {
 	companion object {
 		private const val libraryId = 451
-		private const val serviceFileId = 404
+		private const val serviceFileId = "404"
+
 		private val loadingNotification = Notification()
 		private val startedNotification = Notification()
 		private val notificationController = mockk<ControlNotifications>(relaxUnitFun = true)

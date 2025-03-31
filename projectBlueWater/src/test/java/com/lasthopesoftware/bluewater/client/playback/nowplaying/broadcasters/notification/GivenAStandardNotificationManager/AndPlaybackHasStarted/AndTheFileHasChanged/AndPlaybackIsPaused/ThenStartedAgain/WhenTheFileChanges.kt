@@ -21,12 +21,12 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Test
 
-private const val libraryId = 197
-private const val serviceFileId = 97
-
 class WhenTheFileChanges : AndroidContext() {
 
 	companion object {
+		private const val libraryId = 197
+		private const val serviceFileId = "97"
+
 		private val loadingNotification = Notification()
 		private val startingNotification = Notification()
 		private val firstNotification = Notification()
@@ -40,7 +40,7 @@ class WhenTheFileChanges : AndroidContext() {
             ApplicationProvider.getApplicationContext(),
             loadingNotification
         ))
-		every { notificationContentBuilder.promiseNowPlayingNotification(LibraryId(libraryId), ServiceFile(1), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+		every { notificationContentBuilder.promiseNowPlayingNotification(LibraryId(libraryId), ServiceFile("1"), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
             ApplicationProvider.getApplicationContext(),
             firstNotification
         ))
@@ -51,7 +51,7 @@ class WhenTheFileChanges : AndroidContext() {
 
 		val nowPlaying = NowPlaying(
 			LibraryId(libraryId),
-			listOf(ServiceFile(1), ServiceFile(serviceFileId)),
+			listOf(ServiceFile("1"), ServiceFile(serviceFileId)),
 			0,
 			0,
 			false

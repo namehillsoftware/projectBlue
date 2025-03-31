@@ -21,14 +21,14 @@ class WhenCheckingIfSyncIsNecessary {
 		every { collector.promiseServiceFilesToSync(any()) } returns Promise(emptySet())
 		every { collector.promiseServiceFilesToSync(LibraryId(3)) } returns Promise(
 			listOf(
-				ServiceFile(1),
-				ServiceFile(18)
+				ServiceFile("1"),
+				ServiceFile("18")
 			)
 		)
 		every { collector.promiseServiceFilesToSync(LibraryId(10)) } returns Promise(
 			listOf(
-				ServiceFile(3),
-				ServiceFile(6)
+				ServiceFile("3"),
+				ServiceFile("6")
 			)
 		)
 

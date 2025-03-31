@@ -49,7 +49,7 @@ class `When A File Track Changes` {
 		mut.first.sendMessage(
 			LibraryPlaybackMessage.TrackChanged(
 				libraryId,
-				PositionedFile(159, ServiceFile(995))))
+				PositionedFile(159, ServiceFile("995"))))
 	}
 
 	@Test

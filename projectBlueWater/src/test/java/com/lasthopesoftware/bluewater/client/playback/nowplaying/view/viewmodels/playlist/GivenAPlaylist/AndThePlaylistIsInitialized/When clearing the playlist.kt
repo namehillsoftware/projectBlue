@@ -24,10 +24,10 @@ class `When clearing the playlist` {
 				NowPlaying(
 					LibraryId(libraryId),
 					listOf(
-						ServiceFile(312),
-						ServiceFile(851),
-						ServiceFile(780),
-						ServiceFile(650),
+						ServiceFile("312"),
+						ServiceFile("851"),
+						ServiceFile("780"),
+						ServiceFile("650"),
 					),
 					0,
 					0,

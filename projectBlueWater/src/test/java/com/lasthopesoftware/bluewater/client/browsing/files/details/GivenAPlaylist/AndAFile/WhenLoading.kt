@@ -19,10 +19,13 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-private const val libraryId = 944
-private const val serviceFileId = 161
-
 class WhenLoading {
+
+	companion object {
+		private const val libraryId = 944
+		private const val serviceFileId = "161"
+	}
+
 	private val viewModel by lazy {
 		FileDetailsViewModel(
 			mockk {

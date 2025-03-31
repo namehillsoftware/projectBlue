@@ -8,8 +8,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
-import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -19,17 +19,17 @@ import org.junit.jupiter.api.Test
 class WhenLoadingTheFiles {
 	private val viewModel by lazy {
 		val itemProvider = mockk<ProvideItemFiles>().apply {
-			every { promiseFiles(LibraryId(516), ItemId(585), FileListParameters.Options.None) } returns listOf(
-				ServiceFile(471),
-				ServiceFile(469),
-				ServiceFile(102),
-				ServiceFile(890),
+			every { promiseFiles(LibraryId(516), ItemId("585"), FileListParameters.Options.None) } returns listOf(
+				ServiceFile("471"),
+				ServiceFile("469"),
+				ServiceFile("102"),
+				ServiceFile("890"),
 			).toPromise()
 		}
 
 		val storedItemAccess = mockk<AccessStoredItems>().apply {
 			every { isItemMarkedForSync(any(), any<Item>()) } returns false.toPromise()
-			every { isItemMarkedForSync(LibraryId(516), Item(585, "king")) } returns true.toPromise()
+			every { isItemMarkedForSync(LibraryId(516), Item("585", "king")) } returns true.toPromise()
 		}
 
 		FileListViewModel(
@@ -40,7 +40,7 @@ class WhenLoadingTheFiles {
 
 	@BeforeAll
 	fun act() {
-		viewModel.loadItem(LibraryId(516), Item(585, "king")).toExpiringFuture().get()
+		viewModel.loadItem(LibraryId(516), Item("585", "king")).toExpiringFuture().get()
 	}
 
 	@Test
@@ -63,10 +63,10 @@ class WhenLoadingTheFiles {
 		assertThat(viewModel.files.value)
 			.hasSameElementsAs(
 				listOf(
-					ServiceFile(471),
-					ServiceFile(469),
-					ServiceFile(102),
-					ServiceFile(890),
+					ServiceFile("471"),
+					ServiceFile("469"),
+					ServiceFile("102"),
+					ServiceFile("890"),
 				)
 			)
 	}

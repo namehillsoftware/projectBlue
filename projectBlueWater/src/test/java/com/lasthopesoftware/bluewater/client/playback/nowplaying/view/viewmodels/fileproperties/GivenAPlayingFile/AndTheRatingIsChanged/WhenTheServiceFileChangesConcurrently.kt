@@ -30,15 +30,15 @@ private const val libraryId = 681
 class WhenTheServiceFileChangesConcurrently {
 
 	private val playlist = listOf(
-		ServiceFile(738),
-		ServiceFile(441),
-		ServiceFile(595),
-		ServiceFile(285),
-		ServiceFile(833),
-		ServiceFile(78),
-		ServiceFile(819),
-		ServiceFile(386),
-		ServiceFile(989),
+		ServiceFile("738"),
+		ServiceFile("441"),
+		ServiceFile("595"),
+		ServiceFile("285"),
+		ServiceFile("833"),
+		ServiceFile("78"),
+		ServiceFile("819"),
+		ServiceFile("386"),
+		ServiceFile("989"),
 	)
 
 	private val firstPlaylistPosition by lazy { 945 % playlist.size }

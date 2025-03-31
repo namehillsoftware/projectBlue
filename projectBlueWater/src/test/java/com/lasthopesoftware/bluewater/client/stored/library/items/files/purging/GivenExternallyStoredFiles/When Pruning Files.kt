@@ -18,38 +18,37 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.URI
 
-private const val libraryId = 718
-
 @RunWith(AndroidJUnit4::class)
 class `When Pruning Files` {
 
 	companion object {
+		private const val libraryId = 718
 
 		private val storedFileDefinitions by lazy {
 			arrayOf(
 				Triple(
 					LibraryId(libraryId),
-					ServiceFile(64),
+					ServiceFile("64"),
 					URI("${MediaCollections.ExternalAudio}/L86O9Bq")
 				),
 				Triple(
 					LibraryId(libraryId),
-					ServiceFile(51),
+					ServiceFile("51"),
 					URI("${MediaCollections.ExternalAudio}/F91E4"),
 				),
 				Triple(
 					LibraryId(474),
-					ServiceFile(890),
+					ServiceFile("890"),
 					URI("${MediaCollections.ExternalAudio}/1Y2c"),
 				),
 				Triple(
 					LibraryId(libraryId),
-					ServiceFile(566),
+					ServiceFile("566"),
 					URI("${MediaCollections.ExternalAudio}/z1e4CeAA"),
 				),
 				Triple(
 					LibraryId(465),
-					ServiceFile(221),
+					ServiceFile("221"),
 					URI("${MediaCollections.ExternalAudio}/Sk2"),
 				),
 			)
@@ -70,10 +69,10 @@ class `When Pruning Files` {
 				mockk {
 					every { promiseServiceFilesToSync(LibraryId(libraryId)) } returns Promise(
 						listOf(
-							ServiceFile(890),
-							ServiceFile(64),
-							ServiceFile(566),
-							ServiceFile(516),
+							ServiceFile("890"),
+							ServiceFile("64"),
+							ServiceFile("566"),
+							ServiceFile("516"),
 						)
 					)
 				},
@@ -104,10 +103,10 @@ class `When Pruning Files` {
                 it.serviceId
             )
         }).containsExactly(
-			Pair(libraryId, 64),
-			Pair(474, 890),
-			Pair(libraryId, 566),
-			Pair(465, 221),
+			Pair(libraryId, "64"),
+			Pair(474, "890"),
+			Pair(libraryId, "566"),
+			Pair(465, "221"),
 		)
 	}
 

@@ -21,9 +21,9 @@ class `When Prepending A Filter` {
 				every { promiseAudioFiles(LibraryId(libraryId), "[FhFuGYramwv]=YVUf8Q83 T8Dtib8Rh") } returns
 					Promise(
 						listOf(
-							ServiceFile(438),
-							ServiceFile(340),
-							ServiceFile(249),
+							ServiceFile("438"),
+							ServiceFile("340"),
+							ServiceFile("249"),
 						)
 					)
 			},
@@ -48,9 +48,9 @@ class `When Prepending A Filter` {
 	@Test fun `then the results are correct`() {
 		assertThat(viewModel.files.value).hasSameElementsAs(
 			listOf(
-				ServiceFile(438),
-				ServiceFile(340),
-				ServiceFile(249),
+				ServiceFile("438"),
+				ServiceFile("340"),
+				ServiceFile("249"),
 			)
 		)
 	}

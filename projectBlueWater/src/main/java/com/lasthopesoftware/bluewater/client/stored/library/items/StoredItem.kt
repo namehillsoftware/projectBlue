@@ -12,12 +12,12 @@ class StoredItem : IdentifiableEntity, IEntityCreator, IEntityUpdater {
 	var libraryId = 0
 
 	// unique with library id
-	var serviceId = 0
+	var serviceId = ""
 	var itemType: ItemType? = null
 
 	constructor()
 
-	constructor(libraryId: Int, serviceId: Int, itemType: ItemType) {
+	constructor(libraryId: Int, serviceId: String, itemType: ItemType) {
 		this.libraryId = libraryId
 		this.serviceId = serviceId
 		this.itemType = itemType

@@ -14,7 +14,7 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.jupiter.api.Test
-import java.util.*
+import java.util.Random
 
 class WhenFindingThePlaylistItem {
 	companion object {
@@ -23,8 +23,8 @@ class WhenFindingThePlaylistItem {
 		private fun setupItemProviderWithItems(itemProvider: ProvideItems, sourceItem: ItemId, numberOfChildren: Int, withPlaylistIds: Boolean): List<Item> {
 			val items = ArrayList<Item>(numberOfChildren)
 			for (i in 0 until numberOfChildren) {
-				val newItem = if (withPlaylistIds) Item(random.nextInt(), null, PlaylistId(random.nextInt()))
-				else Item(random.nextInt())
+				val newItem = if (withPlaylistIds) Item(random.nextInt().toString(), null, PlaylistId(random.nextInt().toString()))
+				else Item(random.nextInt().toString())
 				items.add(newItem)
 			}
 			every { itemProvider.promiseItems(LibraryId(3), sourceItem) } returns Promise(items)
@@ -32,29 +32,29 @@ class WhenFindingThePlaylistItem {
 		}
 	}
 
-	private val playlistId by lazy { random.nextInt() }
+	private val playlistId by lazy { random.nextInt().toString() }
 
-	private val expectedItem by lazy { Item(random.nextInt(), null, PlaylistId(playlistId)) }
+	private val expectedItem by lazy { Item(random.nextInt().toString(), null, PlaylistId(playlistId)) }
 
 	private val item by lazy {
 		val itemProvider = mockk<ProvideItems>()
 		every { itemProvider.promiseItems(any(), any()) } returns Promise(emptyList())
 		every { itemProvider.promiseItems(LibraryId(3)) } returns Promise(
 			listOf(
-				Item(2, "Music"),
-				Item(16, KnownViews.Playlists)
+				Item("2", "Music"),
+				Item("16", KnownViews.Playlists)
 			)
 		)
 
 		setupItemProviderWithItems(
 			itemProvider,
-			ItemId(2),
+			ItemId("2"),
 			3,
 			false
 		)
 		var generatedItems = setupItemProviderWithItems(
 			itemProvider,
-			ItemId(16),
+			ItemId("16"),
 			15,
 			true
 		)
@@ -70,7 +70,7 @@ class WhenFindingThePlaylistItem {
 		}
 		generatedItems = setupItemProviderWithItems(
 			itemProvider,
-			ItemId(16),
+			ItemId("16"),
 			90,
 			true
 		)
@@ -80,7 +80,7 @@ class WhenFindingThePlaylistItem {
 			if (item == secondLevelChosenItem) continue
 			every { itemProvider.promiseItems(LibraryId(3), item.itemId) } returns Promise(emptyList())
 		}
-		val decoy = Item(random.nextInt(), null, PlaylistId(random.nextInt()))
+		val decoy = Item(random.nextInt().toString(), null, PlaylistId(random.nextInt().toString()))
 
 		every { itemProvider.promiseItems(LibraryId(3), secondLevelChosenItem.itemId) } returns Promise(
 			listOf(

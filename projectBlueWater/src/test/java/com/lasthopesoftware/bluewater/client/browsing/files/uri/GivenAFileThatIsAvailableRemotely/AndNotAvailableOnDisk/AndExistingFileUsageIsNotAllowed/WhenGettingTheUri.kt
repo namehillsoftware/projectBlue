@@ -19,14 +19,13 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-private const val libraryId = 362
-private const val serviceFile = 458
-
-
 @RunWith(RobolectricTestRunner::class)
 class WhenGettingTheUri {
 
     companion object {
+		private const val libraryId = 362
+		private const val serviceFile = "458"
+
 		private val returnedFileUri by lazy {
 			val mockStoredFileUriProvider = mockk<StoredFileUriProvider>()
 			every { mockStoredFileUriProvider.promiseUri(any(), any()) } returns Promise.empty()

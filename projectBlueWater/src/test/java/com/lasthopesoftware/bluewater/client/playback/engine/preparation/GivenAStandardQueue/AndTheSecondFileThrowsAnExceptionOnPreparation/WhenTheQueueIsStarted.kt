@@ -25,11 +25,11 @@ class WhenTheQueueIsStarted {
 
 	private val expectedPlaybackHandler = FakeBufferingPlaybackHandler()
 	private val queue by lazy {
-		val serviceFiles = (0..2).map(::ServiceFile)
+		val serviceFiles = (0..2).map { ServiceFile(it.toString()) }
 
 		val playbackPreparer = mockk<PlayableFilePreparationSource>().apply {
-			every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile(0), Duration.ZERO) } returns Promise(FakePreparedPlayableFile(FakeBufferingPlaybackHandler()))
-			every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile(1), Duration.ZERO) } returns Promise(Exception())
+			every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile("0"), Duration.ZERO) } returns Promise(FakePreparedPlayableFile(FakeBufferingPlaybackHandler()))
+			every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile("1"), Duration.ZERO) } returns Promise(Exception())
 		}
 
 		val bufferingPlaybackQueuesProvider = CompletingFileQueueProvider()

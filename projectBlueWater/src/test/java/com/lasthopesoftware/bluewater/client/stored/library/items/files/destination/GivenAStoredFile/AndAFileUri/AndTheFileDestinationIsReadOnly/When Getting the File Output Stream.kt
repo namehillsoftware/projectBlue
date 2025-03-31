@@ -26,7 +26,7 @@ class `When Getting the File Output Stream` {
 		val tempPathFile = tempPath.toFile()
 		tempPathFile.deleteOnExit()
 		val tempFile = File(File(tempPathFile, "cB4a7bvP"), "alive")
-		val storedFile = StoredFile(LibraryId(1), ServiceFile(1), tempFile.toURI(), true)
+		val storedFile = StoredFile(LibraryId(1), ServiceFile("1"), tempFile.toURI(), true)
 		storedFile.setIsDownloadComplete(true)
 		val storedFileJobProcessor = StoredFileUriDestinationBuilder(
 			OsFileSupplier,

@@ -21,12 +21,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.AfterClass
 import org.junit.Test
 
-private const val libraryId = 923
-private const val serviceFileId = 404
-
 class WhenTheFileChanges : AndroidContext() {
 
 	companion object {
+		private const val libraryId = 923
+		private const val serviceFileId = "404"
+
 		private var playbackStates: MutableList<PlaybackStateCompat>? = ArrayList()
 		private var mediaMetadata: MutableList<MediaMetadataCompat>? = ArrayList()
 

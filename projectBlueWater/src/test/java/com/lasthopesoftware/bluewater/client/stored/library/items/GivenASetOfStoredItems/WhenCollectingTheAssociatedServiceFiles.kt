@@ -26,24 +26,24 @@ class WhenCollectingTheAssociatedServiceFiles {
 	private val collectedFiles by lazy {
         val storedItemAccess = mockk<AccessStoredItems> {
 			every { promiseStoredItems(LibraryId(15)) } returns listOf(
-				StoredItem(1, 1, StoredItem.ItemType.ITEM),
-				StoredItem(1, 2, StoredItem.ItemType.ITEM),
-				StoredItem(1, 3, StoredItem.ItemType.ITEM)
+				StoredItem(1, "1", StoredItem.ItemType.ITEM),
+				StoredItem(1, "2", StoredItem.ItemType.ITEM),
+				StoredItem(1, "3", StoredItem.ItemType.ITEM)
 			).toPromise()
 		}
 
         val fileListParameters = FileListParameters
         val fileProvider = mockk<ProvideLibraryFiles> {
 			every {
-				promiseFiles(LibraryId(15), ItemId(1))
+				promiseFiles(LibraryId(15), ItemId("1"))
 			} answers { Promise(firstItemExpectedFiles) }
 
 			every {
-				promiseFiles(LibraryId(15), ItemId(2))
+				promiseFiles(LibraryId(15), ItemId("2"))
 			} answers { Promise(secondItemExpectedFiles) }
 
 			every {
-				promiseFiles(LibraryId(15), ItemId(3))
+				promiseFiles(LibraryId(15), ItemId("3"))
 			} answers { Promise(thirdItemExpectedFiles) }
 		}
 
@@ -67,7 +67,7 @@ class WhenCollectingTheAssociatedServiceFiles {
             val random = Random()
             val floor = random.nextInt(10000)
             val ceiling = random.nextInt(10000 - floor) + floor
-            return (floor..ceiling).map(::ServiceFile)
-        }
+            return (floor..ceiling).map { ServiceFile(it.toString()) }
+		}
     }
 }

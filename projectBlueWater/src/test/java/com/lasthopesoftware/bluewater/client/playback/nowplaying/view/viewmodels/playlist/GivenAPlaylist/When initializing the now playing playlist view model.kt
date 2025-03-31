@@ -25,9 +25,9 @@ class `When initializing the now playing playlist view model` {
 				NowPlaying(
 					LibraryId(libraryId),
 					listOf(
-						ServiceFile(731),
-						ServiceFile(29),
-						ServiceFile(294),
+						ServiceFile("731"),
+						ServiceFile("29"),
+						ServiceFile("294"),
 					),
 					0,
 					0,
@@ -63,9 +63,9 @@ class `When initializing the now playing playlist view model` {
 	@Test
 	fun `then the playlist is correct`() {
 		assertThat(mut.nowPlayingList.value).containsExactly(
-			PositionedFile(0, ServiceFile(731)),
-			PositionedFile(1, ServiceFile(29)),
-			PositionedFile(2, ServiceFile(294))
+			PositionedFile(0, ServiceFile("731")),
+			PositionedFile(1, ServiceFile("29")),
+			PositionedFile(2, ServiceFile("294"))
 		)
 	}
 

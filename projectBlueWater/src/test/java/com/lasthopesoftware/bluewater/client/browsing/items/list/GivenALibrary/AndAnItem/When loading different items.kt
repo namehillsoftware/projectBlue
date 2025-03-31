@@ -14,16 +14,18 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-private const val libraryId = 922
-private const val firstItemId = 981
-private const val secondItemId = 210
-
 class `When loading different items` {
+	companion object {
+		private const val libraryId = 922
+		private const val firstItemId = "981"
+		private const val secondItemId = "210"
+	}
+
 	private val expectedItems = listOf(
-        Item(792),
-        Item(175),
-        Item(631),
-        Item(211),
+        Item("792"),
+        Item("175"),
+        Item("631"),
+        Item("211"),
 	)
 
 	private val mut by lazy {
@@ -34,11 +36,11 @@ class `When loading different items` {
             ItemListViewModel(
 				mockk {
 					every { promiseItems(LibraryId(libraryId), ItemId(firstItemId)) } returns listOf(
-						Item(645),
-						Item(820),
-						Item(358),
-						Item(886),
-						Item(50),
+						Item("645"),
+						Item("820"),
+						Item("358"),
+						Item("886"),
+						Item("50"),
 					).toPromise()
 
 					every { promiseItems(LibraryId(libraryId), ItemId(secondItemId)) } returns deferredItems

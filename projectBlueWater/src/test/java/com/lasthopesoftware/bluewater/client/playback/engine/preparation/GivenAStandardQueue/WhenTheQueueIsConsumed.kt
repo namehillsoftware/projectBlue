@@ -23,7 +23,7 @@ class WhenTheQueueIsConsumed {
 	private val expectedNumberOfFiles by lazy { nextInt(1, 501) }
 
 	private val mut by lazy {
-		val serviceFiles = (0 until expectedNumberOfFiles).map { ServiceFile(nextInt()) }
+		val serviceFiles = (0 until expectedNumberOfFiles).map { ServiceFile(nextInt().toString()) }
 		val fileActionMap = serviceFiles.associateWith { MockResolveAction() }
 		val bufferingPlaybackQueuesProvider = CompletingFileQueueProvider()
 		val queue = PreparedPlayableFileQueue(

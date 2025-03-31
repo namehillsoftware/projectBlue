@@ -18,10 +18,13 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-private const val libraryId = 469
-private const val serviceFileId = 220
-
 class WhenTheLyricsPropertyIsEdited {
+
+	companion object {
+		private const val libraryId = 469
+		private const val serviceFileId = "220"
+	}
+
 	private var persistedValue = ""
 
 	private val viewModel by lazy {
@@ -84,16 +87,16 @@ class WhenTheLyricsPropertyIsEdited {
 
 	@Test
 	fun `then the property has the correct editable type`() {
-		assertThat(viewModel.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.Lyrics }?.editableType).isEqualTo(FilePropertyType.LongFormText)
+		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == KnownFileProperties.Lyrics }?.editableType).isEqualTo(FilePropertyType.LongFormText)
 	}
 
 	@Test
 	fun `then the property is being edited`() {
-		assertThat(viewModel.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.Lyrics }?.isEditing?.value).isTrue
+		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == KnownFileProperties.Lyrics }?.isEditing?.value).isTrue
 	}
 
 	@Test
 	fun `then the new property is highlighted`() {
-		assertThat(viewModel.highlightedProperty?.value).isEqualTo(viewModel.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.Lyrics })
+		assertThat(viewModel.highlightedProperty.value).isEqualTo(viewModel.fileProperties.value.firstOrNull { it.property == KnownFileProperties.Lyrics })
 	}
 }

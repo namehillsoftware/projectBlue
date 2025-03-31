@@ -58,11 +58,11 @@ class WhenPlaybackIsInterrupted {
 			.startPlaylist(
 				LibraryId(libraryId),
 				listOf(
-					ServiceFile(1),
-					ServiceFile(2),
-					ServiceFile(3),
-					ServiceFile(4),
-					ServiceFile(5)
+					ServiceFile("1"),
+					ServiceFile("2"),
+					ServiceFile("3"),
+					ServiceFile("4"),
+					ServiceFile("5")
 				),
 				0,
 				Duration.ZERO
@@ -106,11 +106,11 @@ class WhenPlaybackIsInterrupted {
 	fun `then the saved playlist is correct`() {
 		assertThat(nowPlaying?.playlist)
 			.containsExactly(
-				ServiceFile(1),
-				ServiceFile(2),
-				ServiceFile(3),
-				ServiceFile(4),
-				ServiceFile(5)
+				ServiceFile("1"),
+				ServiceFile("2"),
+				ServiceFile("3"),
+				ServiceFile("4"),
+				ServiceFile("5")
 			)
 	}
 }

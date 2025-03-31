@@ -25,10 +25,10 @@ class WhenRemovingTheLibrary {
 
 	private val libraryRemoval by lazy {
 		val fakeStoredItemAccess: AccessStoredItems = FakeStoredItemAccess(
-			StoredItem(14, 1, StoredItem.ItemType.ITEM),
-			StoredItem(1, 3, StoredItem.ItemType.ITEM),
-			StoredItem(5, 2, StoredItem.ItemType.ITEM),
-			StoredItem(14, 5, StoredItem.ItemType.ITEM)
+			StoredItem(14, "1", StoredItem.ItemType.ITEM),
+			StoredItem(1, "3", StoredItem.ItemType.ITEM),
+			StoredItem(5, "2", StoredItem.ItemType.ITEM),
+			StoredItem(14, "5", StoredItem.ItemType.ITEM)
 		)
 		val libraryStorage = mockk<ILibraryStorage>()
 		every { libraryStorage.removeLibrary(libraryId) } returns Promise.empty()

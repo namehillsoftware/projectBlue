@@ -28,14 +28,14 @@ private const val libraryId = 697
 class WhenItsPropertiesChanges {
 
 	private val playlist = listOf(
-		ServiceFile(71),
-		ServiceFile(614),
-		ServiceFile(252),
-		ServiceFile(643),
-		ServiceFile(409),
-		ServiceFile(1000),
-		ServiceFile(188),
-		ServiceFile(118),
+		ServiceFile("71"),
+		ServiceFile("614"),
+		ServiceFile("252"),
+		ServiceFile("643"),
+		ServiceFile("409"),
+		ServiceFile("1000"),
+		ServiceFile("188"),
+		ServiceFile("118"),
 	)
 
 	private val playlistPosition

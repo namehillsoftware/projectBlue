@@ -24,11 +24,11 @@ import io.mockk.verify
 import org.junit.Test
 import java.net.URL
 
-private const val libraryId = 818
-private const val serviceFileId = 225
-
 class WhenTheFileChanges : AndroidContext() {
 	companion object {
+		private const val libraryId = 818
+		private const val serviceFileId = "225"
+
 		private val notificationController = mockk<ControlNotifications>()
 		private val notificationContentBuilder = mockk<BuildNowPlayingNotificationContent>()
 	}
@@ -72,7 +72,7 @@ class WhenTheFileChanges : AndroidContext() {
 		)
 
 		applicationMessages.sendMessage(
-			LibraryPlaybackMessage.TrackChanged(LibraryId(1), PositionedFile(1, ServiceFile(1))))
+			LibraryPlaybackMessage.TrackChanged(LibraryId(1), PositionedFile(1, ServiceFile("1"))))
 	}
 
 	@Test

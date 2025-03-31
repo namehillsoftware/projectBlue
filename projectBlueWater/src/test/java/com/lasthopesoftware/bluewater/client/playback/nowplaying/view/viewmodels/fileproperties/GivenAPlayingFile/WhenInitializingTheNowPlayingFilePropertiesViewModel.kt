@@ -23,10 +23,12 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-private const val libraryId = 718
-private const val serviceFileId = 355
-
 class WhenInitializingTheNowPlayingFilePropertiesViewModel {
+
+	companion object {
+		private const val libraryId = 718
+		private const val serviceFileId = "355"
+	}
 
 	private var filePropertiesReturnedTime = 0L
 
@@ -36,11 +38,11 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 				NowPlaying(
 					LibraryId(libraryId),
 					listOf(
-						ServiceFile(815),
-						ServiceFile(449),
-						ServiceFile(592),
+						ServiceFile("815"),
+						ServiceFile("449"),
+						ServiceFile("592"),
 						ServiceFile(serviceFileId),
-						ServiceFile(390),
+						ServiceFile("390"),
 					),
 					3,
 					439774,

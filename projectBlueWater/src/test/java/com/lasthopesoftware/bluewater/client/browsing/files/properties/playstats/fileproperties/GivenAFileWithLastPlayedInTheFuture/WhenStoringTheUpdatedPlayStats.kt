@@ -14,10 +14,12 @@ import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-private const val libraryId = 548
-private const val serviceFileId = 894
-
 class WhenStoringTheUpdatedPlayStats {
+
+	companion object {
+		private const val libraryId = 548
+		private const val serviceFileId = "894"
+	}
 
 	private val services by lazy {
 		val fileProperties = mutableMapOf(

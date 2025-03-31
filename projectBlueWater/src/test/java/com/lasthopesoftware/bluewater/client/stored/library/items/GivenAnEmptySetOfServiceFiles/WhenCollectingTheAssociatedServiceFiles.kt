@@ -24,21 +24,21 @@ class WhenCollectingTheAssociatedServiceFiles {
 
 	private val collectedFiles by lazy {
 		val storedItemAccess = FakeStoredItemAccess(
-			StoredItem(1, 1, StoredItem.ItemType.ITEM),
-			StoredItem(1, 2, StoredItem.ItemType.ITEM),
-			StoredItem(1, 3, StoredItem.ItemType.ITEM))
+			StoredItem(1, "1", StoredItem.ItemType.ITEM),
+			StoredItem(1, "2", StoredItem.ItemType.ITEM),
+			StoredItem(1, "3", StoredItem.ItemType.ITEM))
 		val fileListParameters = FileListParameters
 		val fileProvider = mockk<ProvideLibraryFiles> {
 			every {
-				promiseFiles(LibraryId(10), ItemId(1))
+				promiseFiles(LibraryId(10), ItemId("1"))
 			} returns Promise(firstItemExpectedFiles)
 
 			every {
-				promiseFiles(LibraryId(10), ItemId(2))
+				promiseFiles(LibraryId(10), ItemId("2"))
 			} returns Promise(secondItemExpectedFiles)
 
 			every {
-				promiseFiles(LibraryId(10), ItemId(3))
+				promiseFiles(LibraryId(10), ItemId("3"))
 			} returns Promise(thirdItemExpectedFiles)
 		}
 

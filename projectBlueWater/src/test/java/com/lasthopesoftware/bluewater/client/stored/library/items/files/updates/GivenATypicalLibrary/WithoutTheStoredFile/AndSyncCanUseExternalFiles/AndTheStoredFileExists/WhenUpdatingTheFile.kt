@@ -30,34 +30,29 @@ class WhenUpdatingTheFile : AndroidContext() {
 
 	override fun before() {
 		val mediaFileUriProvider = mockk<MediaFileUriProvider> {
-			every { promiseUri(libraryId, ServiceFile(4)) } returns Uri.fromFile(File("/custom-root/a-file.mp3")).toPromise()
+			every { promiseUri(libraryId, ServiceFile("4")) } returns Uri.fromFile(File("/custom-root/a-file.mp3")).toPromise()
 		}
 
-		val fakeLibraryRepository = FakeLibraryRepository(
-			Library(
-				isUsingExistingFiles = true,
-				id = 14,
-			)
-		)
+		val fakeLibraryRepository = FakeLibraryRepository(Library(isUsingExistingFiles = true, id = 14))
 
 		val storedFileUpdater = StoredFileUpdater(
 			affectedSystems,
 			mediaFileUriProvider,
             fakeLibraryRepository,
 			mockk {
-				every { promiseStoredFileUri(libraryId, ServiceFile(4)) } returns Promise(
+				every { promiseStoredFileUri(libraryId, ServiceFile("4")) } returns Promise(
 					URI("file:/my-public-drive/busy/sweeten.mp3")
 				)
 			},
 			mockk(),
 		)
 		storedFile =
-			storedFileUpdater.promiseStoredFileUpdate(libraryId, ServiceFile(4)).toExpiringFuture().get()
+			storedFileUpdater.promiseStoredFileUpdate(libraryId, ServiceFile("4")).toExpiringFuture().get()
 	}
 
 	@Test
 	fun thenTheFileIsInsertedIntoTheDatabase() {
-		assertThat(affectedSystems.storedFiles.values).allMatch { sf -> sf.libraryId == 14 && sf.serviceId == 4 }
+		assertThat(affectedSystems.storedFiles.values).allMatch { sf -> sf.libraryId == 14 && sf.serviceId == "4" }
 	}
 
 	@Test

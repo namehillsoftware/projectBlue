@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test
 class WhenGettingTheItems {
 
 	companion object {
-		private const val itemId = 398
+		private const val itemId = "398"
 	}
 
 	private val mut by lazy {
@@ -65,17 +65,17 @@ class WhenGettingTheItems {
 	@Test
 	fun `then the items are correct`() {
 		assertThat(items).containsExactly(
-			Item(key=1693, value="A.A. Bondy", playlistId=null),
-			Item(key=1769, value="Billy Bragg & Wilco", playlistId=null),
-			Item(key=1790, value="BØRNS", playlistId=null),
-			Item(key=1801, value="Bruce Springsteen", playlistId=null),
-			Item(key=1906, value="Fleetwood Mac", playlistId=null),
-			Item(key=1961, value="Harvey Danger", playlistId=null),
-			Item(key=1962, value="The Head And The Heart", playlistId=null),
-			Item(key=1972, value="Hozier", playlistId=null),
-			Item(key=1973, value="Hurray For The Riff Raff", playlistId=null),
-			Item(key=2221, value="Shakey Graves", playlistId=null),
-			Item(key=2222, value="The Shins", playlistId=null),
+			Item(key="1693", value="A.A. Bondy", playlistId=null),
+			Item(key="1769", value="Billy Bragg & Wilco", playlistId=null),
+			Item(key="1790", value="BØRNS", playlistId=null),
+			Item(key="1801", value="Bruce Springsteen", playlistId=null),
+			Item(key="1906", value="Fleetwood Mac", playlistId=null),
+			Item(key="1961", value="Harvey Danger", playlistId=null),
+			Item(key="1962", value="The Head And The Heart", playlistId=null),
+			Item(key="1972", value="Hozier", playlistId=null),
+			Item(key="1973", value="Hurray For The Riff Raff", playlistId=null),
+			Item(key="2221", value="Shakey Graves", playlistId=null),
+			Item(key="2222", value="The Shins", playlistId=null),
 		)
 	}
 }

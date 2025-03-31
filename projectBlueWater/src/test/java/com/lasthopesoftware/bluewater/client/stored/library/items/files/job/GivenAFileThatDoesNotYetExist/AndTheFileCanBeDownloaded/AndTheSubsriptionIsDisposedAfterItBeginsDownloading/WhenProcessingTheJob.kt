@@ -24,7 +24,7 @@ import java.io.InputStream
 import java.net.URI
 
 class WhenProcessingTheJob {
-	private val storedFile = StoredFile(LibraryId(55), ServiceFile(1), URI("test://test-path"), true)
+	private val storedFile = StoredFile(LibraryId(55), ServiceFile("1"), URI("test://test-path"), true)
 	private val storedFileUpdater = mockk<UpdateStoredFiles>()
 	private val states: MutableList<StoredFileJobState> = ArrayList()
 
@@ -42,7 +42,7 @@ class WhenProcessingTheJob {
 			setOf(
 				StoredFileJob(
 					LibraryId(55),
-					ServiceFile(1),
+					ServiceFile("1"),
 					storedFile
 				)
 			)

@@ -58,7 +58,7 @@ object StoredFileEntityUpdater : IEntityUpdater {
 					db,
 					storedFilesTempTableName,
 					StoredFile()
-						.setServiceId(oldStoredFile.serviceId)
+						.setServiceId(oldStoredFile.serviceId.toString())
 						.setLibraryId(oldStoredFile.libraryId)
 						.setIsDownloadComplete(oldStoredFile.isDownloadComplete)
 						.setIsOwner(oldStoredFile.isOwner)

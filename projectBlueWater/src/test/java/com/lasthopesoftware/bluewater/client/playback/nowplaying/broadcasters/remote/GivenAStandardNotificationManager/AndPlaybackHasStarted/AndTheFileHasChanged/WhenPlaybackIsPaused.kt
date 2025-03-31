@@ -20,12 +20,12 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Test
 
-private const val libraryId = 324
-private const val serviceFileId = 654
-
 class WhenPlaybackIsPaused : AndroidContext() {
 
 	companion object {
+		private const val libraryId = 324
+		private const val serviceFileId = "654"
+
 		private val mediaSessionCompat = mockk<ControlMediaSession>(relaxUnitFun = true)
 	}
 

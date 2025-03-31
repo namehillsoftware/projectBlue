@@ -40,11 +40,11 @@ class WhenChangingTracks {
 			id = libraryId,
 			savedTracksString = FileStringListUtilities.promiseSerializedFileStringList(
 				listOf(
-					ServiceFile(1),
-					ServiceFile(2),
-					ServiceFile(3),
-					ServiceFile(4),
-					ServiceFile(5)
+					ServiceFile("1"),
+					ServiceFile("2"),
+					ServiceFile("3"),
+					ServiceFile("4"),
+					ServiceFile("5")
 				)
 			).toExpiringFuture().get(),
 			nowPlayingId = 0,

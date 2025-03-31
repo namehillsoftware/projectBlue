@@ -20,7 +20,7 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class `When Getting Items` {
 	companion object {
-		private val serviceFileIds by lazy { listOf(702, 586, 516, 78) }
+		private val serviceFileIds by lazy { listOf("702", "586", "516", "78") }
 
 		private val expectedMediaItems by lazy {
 			serviceFileIds.map { i ->

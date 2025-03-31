@@ -30,13 +30,13 @@ class WhenGettingTheUri {
 			every { mockStoredFileUriProvider.promiseUri(any(), any()) } returns Promise.empty()
 
 			val cachedAudioFileUriProvider = mockk<CachedAudioFileUriProvider>()
-			every { cachedAudioFileUriProvider.promiseUri(LibraryId(libraryId), ServiceFile(3)) } returns Promise.empty()
+			every { cachedAudioFileUriProvider.promiseUri(LibraryId(libraryId), ServiceFile("3")) } returns Promise.empty()
 
 			val mockMediaFileUriProvider = mockk<MediaFileUriProvider>()
 			every { mockMediaFileUriProvider.promiseUri(LibraryId(libraryId), any()) } returns Promise.empty()
 
 			val mockRemoteFileUriProvider = mockk<RemoteFileUriProvider>()
-			every { mockRemoteFileUriProvider.promiseUri(LibraryId(libraryId), ServiceFile(3)) } returns Promise(Uri.parse("http://remote-url/to_a_file.mp3"))
+			every { mockRemoteFileUriProvider.promiseUri(LibraryId(libraryId), ServiceFile("3")) } returns Promise(Uri.parse("http://remote-url/to_a_file.mp3"))
 
 			val bestMatchUriProvider = BestMatchUriProvider(
 				mockk {
@@ -48,7 +48,7 @@ class WhenGettingTheUri {
 				mockRemoteFileUriProvider
 			)
 
-			bestMatchUriProvider.promiseUri(LibraryId(libraryId), ServiceFile(3)).toExpiringFuture().get()
+			bestMatchUriProvider.promiseUri(LibraryId(libraryId), ServiceFile("3")).toExpiringFuture().get()
 		}
 	}
 

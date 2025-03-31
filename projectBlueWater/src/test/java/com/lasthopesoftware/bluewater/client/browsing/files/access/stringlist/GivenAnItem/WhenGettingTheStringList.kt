@@ -21,12 +21,12 @@ class WhenGettingTheStringList {
 			mockk {
 				every { promiseLibraryConnection(LibraryId(14)) } returns Promise(mockk<LiveServerConnection> {
 					every { dataAccess } returns mockk<RemoteLibraryAccess> {
-						every { promiseFileStringList(ItemId(32)) } returns "BfCs02".toPromise()
+						every { promiseFileStringList(ItemId("32")) } returns "BfCs02".toPromise()
 					}
 				})
 			}
 		)
-		itemStringListProvider.promiseFileStringList(LibraryId(14), ItemId(32), FileListParameters.Options.None)
+		itemStringListProvider.promiseFileStringList(LibraryId(14), ItemId("32"), FileListParameters.Options.None)
 			.toExpiringFuture()
 			.get()
 	}

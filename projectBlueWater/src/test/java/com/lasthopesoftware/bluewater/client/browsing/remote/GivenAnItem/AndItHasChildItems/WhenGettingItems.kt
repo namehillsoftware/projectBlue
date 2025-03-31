@@ -21,7 +21,7 @@ import org.robolectric.RobolectricTestRunner
 class `When Getting Items` {
 	companion object {
 		private val expectedMediaItems by lazy {
-			listOf(605, 842, 264, 224, 33, 412, 488, 394).map { i ->
+			listOf("605", "842", "264", "224", "33", "412", "488", "394").map { i ->
 				val metadata = MediaMetadataCompat.Builder()
 					.apply {
 						putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, "it:$i")
@@ -40,8 +40,8 @@ class `When Getting Items` {
 			every { selectedLibraryId.promiseSelectedLibraryId() } returns Promise(LibraryId(22))
 
 			val itemsProvider = mockk<ProvideItems>()
-			every { itemsProvider.promiseItems(LibraryId(22), ItemId(504)) } returns Promise(
-				listOf(605, 842, 264, 224, 33, 412, 488, 394).map(::Item)
+			every { itemsProvider.promiseItems(LibraryId(22), ItemId("504")) } returns Promise(
+				listOf("605", "842", "264", "224", "33", "412", "488", "394").map(::Item)
 			)
 
 			val mediaItemsBrowser = MediaItemsBrowser(
@@ -52,7 +52,7 @@ class `When Getting Items` {
                 mockk(),
 			)
 			mediaItemsBrowser
-				.promiseItems(ItemId(504))
+				.promiseItems(ItemId("504"))
 				.toExpiringFuture()
 				.get()
 		}

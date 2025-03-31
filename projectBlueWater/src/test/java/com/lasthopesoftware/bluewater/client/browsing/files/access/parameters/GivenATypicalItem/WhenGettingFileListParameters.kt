@@ -11,7 +11,7 @@ class WhenGettingFileListParameters {
 		"ID=48",
 		"Version=2"
 	)
-	private val returnedFileListParameters by lazy { FileListParameters.getFileListParameters(ItemId(48)) }
+	private val returnedFileListParameters by lazy { FileListParameters.getFileListParameters(ItemId("48")) }
 
 	@Test
 	fun thenTheFileListParametersAreCorrect() {

@@ -21,13 +21,13 @@ class `When refreshing the files` {
 
 	companion object {
 		private const val libraryId = 477
-		private const val itemId = 294
+		private const val itemId = "294"
 	}
 
 	private val expectedFiles = listOf(
-        ServiceFile(0),
-        ServiceFile(541),
-        ServiceFile(878)
+        ServiceFile("0"),
+        ServiceFile("541"),
+        ServiceFile("878")
 	)
 
 	private val mut by lazy {
@@ -41,11 +41,11 @@ class `When refreshing the files` {
                     FileListParameters.Options.None
                 )
             } returns listOf(
-                ServiceFile(278),
-                ServiceFile(145),
-                ServiceFile(382),
-                ServiceFile(561),
-                ServiceFile(529),
+                ServiceFile("278"),
+                ServiceFile("145"),
+                ServiceFile("382"),
+                ServiceFile("561"),
+                ServiceFile("529"),
             ).toPromise() andThen deferredFiles
         }
 

@@ -22,11 +22,11 @@ import io.mockk.verify
 import org.junit.AfterClass
 import org.junit.Test
 
-private const val libraryId = 869
-private const val serviceFileId = 585
-
 class WhenPlaybackIsPaused : AndroidContext() {
 	companion object {
+		private const val libraryId = 869
+		private const val serviceFileId = "585"
+
 		private val pausedNotification = Notification()
 		private var controlNotifications: ControlNotifications? = mockk(relaxUnitFun = true)
 

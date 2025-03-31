@@ -15,10 +15,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-private const val libraryId = 554
-private const val serviceFileId = 907
-
 class WhenGettingTheFileProperties {
+	companion object {
+		private const val libraryId = 554
+		private const val serviceFileId = "907"
+	}
+
 	private val editableFilePropertyProvider by lazy {
 		EditableLibraryFilePropertiesProvider(
 			mockk {
@@ -47,7 +49,7 @@ class WhenGettingTheFileProperties {
 				FileProperty(KnownFileProperties.DateFirstRated, "Nr13052"),
 				FileProperty(KnownFileProperties.AlbumArtist, "MB4Q"),
 				FileProperty("Aj8", "4vBz"),
-			).plus(EditableFilePropertyDefinition.values().filterNot { arrayOf(KnownFileProperties.DateFirstRated, KnownFileProperties.AlbumArtist, "Aj8").contains(it.propertyName) }.map {
+			).plus(EditableFilePropertyDefinition.entries.filterNot { arrayOf(KnownFileProperties.DateFirstRated, KnownFileProperties.AlbumArtist, "Aj8").contains(it.propertyName) }.map {
 				when(it.type) {
 					FilePropertyType.Integer -> FileProperty(it.propertyName, "0")
 					else -> FileProperty(it.propertyName, "")

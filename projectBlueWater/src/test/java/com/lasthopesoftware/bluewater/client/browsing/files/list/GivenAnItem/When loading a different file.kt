@@ -8,28 +8,30 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
-import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-private const val libraryId = 525
-private const val firstItemId = 932
-private const val secondItemId = 716
-
 class `When loading a different file` {
 
+	companion object {
+		private const val libraryId = 525
+		private const val firstItemId = "932"
+		private const val secondItemId = "716"
+	}
+
 	private val expectedFiles = listOf(
-        ServiceFile(96),
-        ServiceFile(768),
-        ServiceFile(505),
-        ServiceFile(90),
-        ServiceFile(219),
-        ServiceFile(11),
+        ServiceFile("96"),
+        ServiceFile("768"),
+        ServiceFile("505"),
+        ServiceFile("90"),
+        ServiceFile("219"),
+        ServiceFile("11"),
 	)
 
 	private val mut by lazy {
@@ -43,11 +45,11 @@ class `When loading a different file` {
                     FileListParameters.Options.None
                 )
             } returns listOf(
-                ServiceFile(278),
-                ServiceFile(145),
-                ServiceFile(382),
-                ServiceFile(561),
-                ServiceFile(529),
+                ServiceFile("278"),
+                ServiceFile("145"),
+                ServiceFile("382"),
+                ServiceFile("561"),
+                ServiceFile("529"),
             ).toPromise()
 
 			every {

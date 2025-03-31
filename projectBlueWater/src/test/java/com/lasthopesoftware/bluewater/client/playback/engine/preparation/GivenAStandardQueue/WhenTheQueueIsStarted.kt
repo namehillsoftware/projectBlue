@@ -24,7 +24,7 @@ class WhenTheQueueIsStarted {
 	private val numberOfFiles by lazy { nextInt(1,500) }
 	private val startPosition by lazy { nextInt(0, numberOfFiles) }
 	private val queue by lazy {
-		val serviceFiles = (0..numberOfFiles).map { ServiceFile(nextInt()) }
+		val serviceFiles = (0..numberOfFiles).map { ServiceFile(nextInt().toString()) }
 		val fileActionMap = serviceFiles.associateWith { MockResolveAction() }
 		val bufferingPlaybackQueuesProvider = CompletingFileQueueProvider()
 		PreparedPlayableFileQueue(

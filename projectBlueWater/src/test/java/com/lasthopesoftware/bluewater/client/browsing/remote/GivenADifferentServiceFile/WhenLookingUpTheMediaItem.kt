@@ -24,7 +24,7 @@ class `When Looking Up The Media Item` {
 		private val mediaItem by lazy {
 			val fileProperties = FakeFilesPropertiesProvider()
 			fileProperties.addFilePropertiesToCache(
-				ServiceFile(703),
+				ServiceFile("703"),
 				LibraryId(libraryId),
 				mapOf(
 					Pair(KnownFileProperties.Key, "703"),
@@ -38,11 +38,11 @@ class `When Looking Up The Media Item` {
 			val mediaItemServiceFileLookup = MediaItemServiceFileLookup(
 				fileProperties,
 				mockk {
-					every { promiseImageBytes(LibraryId(libraryId), ServiceFile(703)) } returns byteArrayOf(3, 4).toPromise()
+					every { promiseImageBytes(LibraryId(libraryId), ServiceFile("703")) } returns byteArrayOf(3, 4).toPromise()
 				},
 				ImmediateBitmapProducer,
 			)
-			mediaItemServiceFileLookup.promiseMediaItem(LibraryId(libraryId), ServiceFile(703))
+			mediaItemServiceFileLookup.promiseMediaItem(LibraryId(libraryId), ServiceFile("703"))
 				.toExpiringFuture()
 				.get()
 		}

@@ -69,6 +69,6 @@ class WhenCollectingTheStoredFiles {
 
 	@Test
 	fun thenTheStoredFilesAreCorrect() {
-		assertThat(storedFiles?.`object`?.map { it.serviceId }).isSubsetOf(13..23)
+		assertThat(storedFiles?.`object`?.map { it.serviceId.toInt() }).isSubsetOf(13..23)
 	}
 }

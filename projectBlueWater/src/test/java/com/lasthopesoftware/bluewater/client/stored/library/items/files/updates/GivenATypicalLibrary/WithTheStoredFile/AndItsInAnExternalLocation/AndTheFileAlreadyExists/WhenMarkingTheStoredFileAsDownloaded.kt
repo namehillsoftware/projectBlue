@@ -17,11 +17,13 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URI
 
-private const val libraryId = 449
-private const val serviceFileId = 193
-private const val contentUri = "${IoCommon.contentUriScheme}://kitchen"
-
 class WhenMarkingTheStoredFileAsDownloaded {
+
+	companion object {
+		private const val libraryId = 449
+		private const val serviceFileId = "193"
+		private const val contentUri = "${IoCommon.contentUriScheme}://kitchen"
+	}
 
 	private val sut by lazy {
 		val fakeLibraryRepository = FakeLibraryRepository(

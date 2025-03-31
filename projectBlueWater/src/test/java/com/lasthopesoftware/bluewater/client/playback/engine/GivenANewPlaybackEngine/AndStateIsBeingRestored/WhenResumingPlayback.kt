@@ -37,7 +37,7 @@ class WhenResumingPlayback {
 		val deferredNowPlaying = DeferredPromise<NowPlaying?>(
 			NowPlaying(
 				libraryId = LibraryId(libraryId),
-				playlist = listOf(ServiceFile(312), ServiceFile(982), ServiceFile(83)),
+				playlist = listOf(ServiceFile("312"), ServiceFile("982"), ServiceFile("83")),
 				playlistPosition = 0,
 				filePosition = 556,
 				isRepeating = false
@@ -74,6 +74,6 @@ class WhenResumingPlayback {
 
 	@Test
 	fun `then the restored state is correct`() {
-		assertThat(restoredState).isEqualTo(Pair(LibraryId(libraryId), PositionedProgressedFile(0, ServiceFile(312), Duration.millis(556))))
+		assertThat(restoredState).isEqualTo(Pair(LibraryId(libraryId), PositionedProgressedFile(0, ServiceFile("312"), Duration.millis(556))))
 	}
 }

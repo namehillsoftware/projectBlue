@@ -86,11 +86,11 @@ class `When Playback is Resumed` {
 			.startPlaylist(
 				LibraryId(libraryId),
 				listOf(
-					ServiceFile(1),
-					ServiceFile(2),
-					ServiceFile(3),
-					ServiceFile(4),
-					ServiceFile(5)
+					ServiceFile("1"),
+					ServiceFile("2"),
+					ServiceFile("3"),
+					ServiceFile("4"),
+					ServiceFile("5")
 				),
 				0,
 				Duration.ZERO

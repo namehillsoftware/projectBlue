@@ -18,7 +18,7 @@ class WhenBroadcastingTheFileProgress {
 		val appMessageBus = RecordingApplicationMessageBus()
 		val fileProperties = FakeFilesPropertiesProvider()
 		fileProperties.addFilePropertiesToCache(
-			ServiceFile(880),
+			ServiceFile("880"),
 			LibraryId(758),
 			mapOf(Pair(KnownFileProperties.Duration, ".389"))
 		)
@@ -27,7 +27,7 @@ class WhenBroadcastingTheFileProgress {
 			LibraryId(758),
 			PositionedProgressedFile(
 				313,
-				ServiceFile(880),
+				ServiceFile("880"),
 				Duration.millis(45955),
 			)
 		)

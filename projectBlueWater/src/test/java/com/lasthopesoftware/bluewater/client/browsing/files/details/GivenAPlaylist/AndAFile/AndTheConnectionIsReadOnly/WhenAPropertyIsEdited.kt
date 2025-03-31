@@ -19,10 +19,12 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-private const val libraryId = 792
-private const val serviceFileId = 220
-
 class WhenAnotherPropertyIsEdited {
+	companion object {
+		private const val libraryId = 792
+		private const val serviceFileId = "220"
+	}
+
 	private var persistedValue = ""
 
 	private val viewModel by lazy {

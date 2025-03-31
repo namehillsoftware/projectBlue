@@ -18,10 +18,13 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-private const val libraryId = 856
-private const val serviceFileId = 491
 
 class WhenTheFilePropertiesChange {
+	companion object {
+		private const val libraryId = 856
+		private const val serviceFileId = "491"
+	}
+
 	private val services by lazy {
 		val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 
@@ -85,14 +88,14 @@ class WhenTheFilePropertiesChange {
 		viewModel.loadFromList(
 			LibraryId(libraryId),
 			listOf(
-				ServiceFile(291),
-				ServiceFile(312),
-				ServiceFile(783),
-				ServiceFile(380),
+				ServiceFile("291"),
+				ServiceFile("312"),
+				ServiceFile("783"),
+				ServiceFile("380"),
 				ServiceFile(serviceFileId),
-				ServiceFile(723),
-				ServiceFile(81),
-				ServiceFile(543),
+				ServiceFile("723"),
+				ServiceFile("81"),
+				ServiceFile("543"),
 			),
 			4
 		).toExpiringFuture().get()

@@ -11,10 +11,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-private const val libraryId = 391
-private const val childItemId = 637
-
 class WhenShowingTheItemMenu {
+
+	companion object {
+		private const val libraryId = 391
+		private const val childItemId = "637"
+	}
 
 	private val recordingMessageBus = RecordingTypedMessageBus<ItemListMenuMessage>()
 

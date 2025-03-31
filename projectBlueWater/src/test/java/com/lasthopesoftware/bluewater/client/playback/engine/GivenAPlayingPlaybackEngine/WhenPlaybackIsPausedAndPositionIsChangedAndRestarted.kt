@@ -60,11 +60,11 @@ class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 			.startPlaylist(
 				LibraryId(libraryId),
 				listOf(
-					ServiceFile(1),
-					ServiceFile(2),
-					ServiceFile(3),
-					ServiceFile(4),
-					ServiceFile(5)
+					ServiceFile("1"),
+					ServiceFile("2"),
+					ServiceFile("3"),
+					ServiceFile("4"),
+					ServiceFile("5")
 				),
 				0,
 				Duration.ZERO
@@ -98,11 +98,11 @@ class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 	fun `then the saved playlist is correct`() {
 		assertThat(nowPlaying!!.playlist)
 			.containsExactly(
-				ServiceFile(1),
-				ServiceFile(2),
-				ServiceFile(3),
-				ServiceFile(4),
-				ServiceFile(5)
+				ServiceFile("1"),
+				ServiceFile("2"),
+				ServiceFile("3"),
+				ServiceFile("4"),
+				ServiceFile("5")
 			)
 	}
 
@@ -116,7 +116,7 @@ class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 		assertThat(
 			positionedFiles
 				.map { it?.asPositionedFile() })
-			.containsOnlyOnce(PositionedFile(1, ServiceFile(2)))
+			.containsOnlyOnce(PositionedFile(1, ServiceFile("2")))
 	}
 
 	@Test
@@ -124,6 +124,6 @@ class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 		assertThat(
 			positionedFiles
 				.map { it?.asPositionedFile() })
-			.doesNotContain(PositionedFile(2, ServiceFile(3)))
+			.doesNotContain(PositionedFile(2, ServiceFile("3")))
 	}
 }

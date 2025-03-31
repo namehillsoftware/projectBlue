@@ -17,17 +17,17 @@ import org.junit.jupiter.api.Test
 class `When loading the items twice` {
 	companion object {
 		private const val libraryId = 105
-		private const val itemId = 259
+		private const val itemId = "259"
 	}
 
 	private val expectedItems = listOf(
-        Item(980),
-        Item(313),
-        Item(502),
-        Item(778),
-        Item(7),
-        Item(514),
-        Item(979),
+        Item("980"),
+        Item("313"),
+        Item("502"),
+        Item("778"),
+        Item("7"),
+        Item("514"),
+        Item("979"),
 	)
 
 	private val mut by lazy {
@@ -38,11 +38,11 @@ class `When loading the items twice` {
             ItemListViewModel(
 				mockk {
 					every { promiseItems(LibraryId(libraryId), ItemId(itemId)) } returns listOf(
-						Item(645),
-						Item(820),
-						Item(358),
-						Item(886),
-						Item(50),
+						Item("645"),
+						Item("820"),
+						Item("358"),
+						Item("886"),
+						Item("50"),
 					).toPromise() andThen deferredItems
 				},
 				RecordingApplicationMessageBus(),

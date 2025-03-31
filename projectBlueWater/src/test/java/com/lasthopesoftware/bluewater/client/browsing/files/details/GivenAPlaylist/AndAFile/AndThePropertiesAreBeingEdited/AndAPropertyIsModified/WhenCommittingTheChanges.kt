@@ -17,10 +17,12 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-private const val libraryId = 713
-private const val serviceFileId = 294
-
 class WhenCommittingTheChanges {
+	companion object {
+		private const val libraryId = 713
+		private const val serviceFileId = "294"
+	}
+
 	private var persistedValue = ""
 
 	private val viewModel by lazy {

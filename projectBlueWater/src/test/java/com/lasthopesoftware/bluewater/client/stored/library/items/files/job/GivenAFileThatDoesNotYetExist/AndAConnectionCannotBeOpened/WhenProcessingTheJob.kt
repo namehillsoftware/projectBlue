@@ -18,7 +18,7 @@ import java.io.IOException
 import java.net.URI
 
 class WhenProcessingTheJob {
-    private val storedFile = StoredFile(LibraryId(4), ServiceFile(1), URI("test://test-path"), true)
+    private val storedFile = StoredFile(LibraryId(4), ServiceFile("1"), URI("test://test-path"), true)
     private val jobStates by lazy {
         val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
@@ -32,7 +32,7 @@ class WhenProcessingTheJob {
 				setOf(
 					StoredFileJob(
 						LibraryId(4),
-						ServiceFile(1),
+						ServiceFile("1"),
 						storedFile
 					)
 				)

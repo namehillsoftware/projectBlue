@@ -17,11 +17,14 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-private const val libraryId = 591
-private const val serviceFileId = 338
-
 // Needed for image bytes
 class WhenPlayingFromFileDetails {
+
+	companion object {
+		private const val libraryId = 591
+		private const val serviceFileId = "338"
+	}
+
 	private lateinit var startedLibraryId: LibraryId
 	private lateinit var startedList: List<ServiceFile>
 	private var startedPosition = -1
@@ -71,14 +74,14 @@ class WhenPlayingFromFileDetails {
 			loadFromList(
 				LibraryId(libraryId),
 				listOf(
-					ServiceFile(830),
+					ServiceFile("830"),
 					ServiceFile(serviceFileId),
-					ServiceFile(628),
-					ServiceFile(537),
-					ServiceFile(284),
-					ServiceFile(419),
-					ServiceFile(36),
-					ServiceFile(396),
+					ServiceFile("628"),
+					ServiceFile("537"),
+					ServiceFile("284"),
+					ServiceFile("419"),
+					ServiceFile("36"),
+					ServiceFile("396"),
 				),
 				1
 			).toExpiringFuture().get()
@@ -95,14 +98,14 @@ class WhenPlayingFromFileDetails {
 	@Test
 	fun `then the correct playlist is started`() {
 		assertThat(startedList).containsExactlyInAnyOrder(
-			ServiceFile(830),
+			ServiceFile("830"),
 			ServiceFile(serviceFileId),
-			ServiceFile(628),
-			ServiceFile(537),
-			ServiceFile(284),
-			ServiceFile(419),
-			ServiceFile(36),
-			ServiceFile(396),
+			ServiceFile("628"),
+			ServiceFile("537"),
+			ServiceFile("284"),
+			ServiceFile("419"),
+			ServiceFile("36"),
+			ServiceFile("396"),
 		)
 	}
 
