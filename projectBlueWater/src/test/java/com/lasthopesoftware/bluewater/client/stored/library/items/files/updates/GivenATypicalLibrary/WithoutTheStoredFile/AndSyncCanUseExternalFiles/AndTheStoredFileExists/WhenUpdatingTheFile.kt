@@ -37,7 +37,6 @@ class WhenUpdatingTheFile : AndroidContext() {
 			Library(
 				isUsingExistingFiles = true,
 				id = 14,
-				syncedFileLocation = Library.SyncedFileLocation.EXTERNAL
 			)
 		)
 

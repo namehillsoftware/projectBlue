@@ -1,10 +1,9 @@
 package com.lasthopesoftware.bluewater.client.connection.settings.changes.GivenALibrary.AndTheConnectionSettingsDoNotChange
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -16,24 +15,26 @@ import org.junit.jupiter.api.Test
 
 class WhenSavingTheLibrary {
 
-	private val expectedLibrary = Library()
+	private val expectedLibrary = LibrarySettings()
 	private val messageBus = RecordingApplicationMessageBus()
 	private val updatedLibrary by lazy {
-		val libraryStorage = mockk<ILibraryStorage>()
-		every { libraryStorage.saveLibrary(any()) } returns expectedLibrary.toPromise()
-
 		val connectionSettingsLookup = mockk<LookupConnectionSettings>()
 		every {
-			connectionSettingsLookup.lookupConnectionSettings(LibraryId(13))
-		} returns ConnectionSettings("codeOne").toPromise() andThen ConnectionSettings("codeOne").toPromise()
+			connectionSettingsLookup.promiseConnectionSettings(LibraryId(13))
+		} returns MediaCenterConnectionSettings("codeOne").toPromise() andThen MediaCenterConnectionSettings("codeOne").toPromise()
 
 		val connectionSettingsChangeDetectionLibraryStorage = ObservableConnectionSettingsLibraryStorage(
-			libraryStorage,
+			mockk {
+				every { promiseSavedLibrarySettings(any()) } returns expectedLibrary.toPromise()
+			},
 			connectionSettingsLookup,
 			messageBus
 		)
 
-		connectionSettingsChangeDetectionLibraryStorage.saveLibrary(Library(id = 13)).toExpiringFuture().get()
+		connectionSettingsChangeDetectionLibraryStorage
+			.promiseSavedLibrarySettings(LibrarySettings(libraryId = LibraryId(13)))
+			.toExpiringFuture()
+			.get()
 	}
 
 	@Test

@@ -4,7 +4,7 @@ import androidx.core.app.NotificationCompat
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgressingLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications
@@ -18,11 +18,11 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 class NotifyingLibraryConnectionProvider(
 	private val notificationBuilders: ProduceNotificationBuilders,
-	private val inner: ProvideLibraryConnections,
+	private val inner: ProvideProgressingLibraryConnections,
 	private val notificationsConfiguration: NotificationsConfiguration,
 	private val notifications: ControlNotifications,
 	private val stringResources: GetStringResources,
-) : ProvideLibraryConnections {
+) : ProvideProgressingLibraryConnections {
 	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?> =
 		object : ProgressingPromiseProxy<BuildingConnectionStatus, LiveServerConnection?>(inner.promiseLibraryConnection(libraryId)),
 			ImmediateResponse<ContinuableResult<BuildingConnectionStatus>, Unit>,

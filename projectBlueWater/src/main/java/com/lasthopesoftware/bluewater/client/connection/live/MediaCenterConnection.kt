@@ -15,7 +15,9 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClie
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
 import com.lasthopesoftware.bluewater.client.connection.requests.bodyString
-import com.lasthopesoftware.bluewater.client.connection.url.MediaCenterUrlBuilder
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withMcApi
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
 import com.lasthopesoftware.bluewater.shared.NonStandardResponseException
@@ -31,7 +33,6 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.emptyByteArray
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.promiseStandardResponse
-import com.lasthopesoftware.resources.io.promiseStreamedResponse
 import com.lasthopesoftware.resources.io.promiseStringBody
 import com.lasthopesoftware.resources.io.promiseXmlDocument
 import com.namehillsoftware.handoff.cancellation.CancellationSignal
@@ -44,6 +45,7 @@ import org.joda.time.Duration
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.parser.Parser
+import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.net.URL
@@ -66,6 +68,8 @@ class MediaCenterConnection(
 		private val checkedExpirationTime by lazy { Duration.standardSeconds(30) }
 	}
 
+	private val mcApiUrl by lazy { serverConnection.baseUrl.withMcApi() }
+
 	private val revisionCache by lazy { TimedExpirationPromiseCache<Unit, Int?>(checkedExpirationTime) }
 
 	private val httpClient by lazy { httpPromiseClients.getServerClient(serverConnection) }
@@ -73,15 +77,15 @@ class MediaCenterConnection(
 	override fun <T> getConnectionKey(key: T): UrlKeyHolder<T> = UrlKeyHolder(serverConnection.baseUrl, key)
 
 	override fun getFileUrl(serviceFile: ServiceFile): URL =
-		MediaCenterUrlBuilder.buildUrl(
-			serverConnection.baseUrl,
-			"File/GetFile",
-			"File=${serviceFile.key}",
-			"Quality=Medium",
-			"Conversion=Android",
-			"Playback=0",
-			"AndroidVersion=${Build.VERSION.RELEASE}"
-		)
+			mcApiUrl
+				.addPath("File/GetFile")
+				.addParams(
+					"File=${serviceFile.key}",
+					"Quality=Medium",
+					"Conversion=Android",
+					"Playback=0",
+					"AndroidVersion=${Build.VERSION.RELEASE}"
+				)
 
 	override val dataSourceFactory by lazy {
 		OkHttpDataSource.Factory(
@@ -191,7 +195,10 @@ class MediaCenterConnection(
 
 	override fun promiseFile(serviceFile: ServiceFile): Promise<InputStream> =
 		Promise.Proxy { cp ->
-			httpClient.promiseResponse(getFileUrl(serviceFile)).also(cp::doCancel).promiseStreamedResponse()
+			httpClient
+				.promiseResponse(getFileUrl(serviceFile))
+				.also(cp::doCancel)
+				.then(HttpStreamedResponse())
 		}
 
 	override fun promiseImageBytes(serviceFile: ServiceFile): Promise<ByteArray> =
@@ -305,7 +312,7 @@ class MediaCenterConnection(
 		}
 
 	private fun promiseResponse(path: String, vararg params: String): Promise<HttpResponse> {
-		val url = MediaCenterUrlBuilder.buildUrl(serverConnection.baseUrl, path, *params)
+		val url = mcApiUrl.addPath(path).addParams(*params)
 		return httpClient.promiseResponse(url)
 	}
 
@@ -461,5 +468,34 @@ class MediaCenterConnection(
 			}
 			return false
 		}
+	}
+
+	private class HttpStreamedResponse : ImmediateResponse<HttpResponse?, InputStream>, InputStream() {
+		private var savedResponse: HttpResponse? = null
+		private lateinit var byteStream: InputStream
+
+		override fun respond(response: HttpResponse?): InputStream {
+			savedResponse = response
+
+			byteStream = response
+				?.takeIf { it.code != 404 }
+				?.run { body }
+				?: ByteArrayInputStream(emptyByteArray)
+
+			return this
+		}
+
+		override fun read(): Int = byteStream.read()
+
+		override fun read(b: ByteArray, off: Int, len: Int): Int = byteStream.read(b, off, len)
+
+		override fun available(): Int = byteStream.available()
+
+		override fun close() {
+			byteStream.close()
+			savedResponse?.close()
+		}
+
+		override fun toString(): String = byteStream.toString()
 	}
 }

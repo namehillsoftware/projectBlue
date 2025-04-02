@@ -2,10 +2,10 @@ package com.lasthopesoftware.bluewater.settings
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LookupLibraryName
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.ProvideLibrarySettings
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.LookupSelectedPlaybackEngineType
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.client.stored.sync.ScheduleSyncs
@@ -16,13 +16,12 @@ import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 class ApplicationSettingsViewModel(
 	private val applicationSettingsRepository: HoldApplicationSettings,
 	private val selectedPlaybackEngineTypeAccess: LookupSelectedPlaybackEngineType,
-	private val libraryProvider: ILibraryProvider,
+	private val librarySettingsProvider: ProvideLibrarySettings,
+	private val libraryNameLookup: LookupLibraryName,
 	receiveMessages: RegisterForApplicationMessages,
 	private val syncScheduler: ScheduleSyncs,
 ) : ViewModel(), TrackLoadedViewState, ImmediateAction
@@ -31,19 +30,19 @@ class ApplicationSettingsViewModel(
 		mutableChosenLibraryId.value = m.chosenLibraryId
 	}
 
-	private val mutableLibraries = MutableStateFlow(emptyList<Library>())
+	private val mutableLibraries = MutableInteractionState(emptyList<Pair<LibraryId, String>>())
 	private val mutableIsLoading = MutableInteractionState(false)
-	private val mutableChosenLibraryId = MutableStateFlow(LibraryId(-1))
-	private val mutableIsSyncOnPowerOnly = MutableStateFlow(false)
-	private val mutableIsSyncOnWifiOnly = MutableStateFlow(false)
-	private val mutableIsVolumeLevelingEnabled = MutableStateFlow(false)
+	private val mutableChosenLibraryId = MutableInteractionState(LibraryId(-1))
+	private val mutableIsSyncOnPowerOnly = MutableInteractionState(false)
+	private val mutableIsSyncOnWifiOnly = MutableInteractionState(false)
+	private val mutableIsVolumeLevelingEnabled = MutableInteractionState(false)
 
-	val isSyncOnWifiOnly = mutableIsSyncOnWifiOnly.asStateFlow()
-	val isSyncOnPowerOnly = mutableIsSyncOnPowerOnly.asStateFlow()
-	val isVolumeLevelingEnabled = mutableIsVolumeLevelingEnabled.asStateFlow()
-	val playbackEngineType = MutableStateFlow(PlaybackEngineType.ExoPlayer)
-	val chosenLibraryId = mutableChosenLibraryId.asStateFlow()
-	val libraries = mutableLibraries.asStateFlow()
+	val isSyncOnWifiOnly = mutableIsSyncOnWifiOnly.asInteractionState()
+	val isSyncOnPowerOnly = mutableIsSyncOnPowerOnly.asInteractionState()
+	val isVolumeLevelingEnabled = mutableIsVolumeLevelingEnabled.asInteractionState()
+	val playbackEngineType = MutableInteractionState(PlaybackEngineType.ExoPlayer)
+	val chosenLibraryId = mutableChosenLibraryId.asInteractionState()
+	val libraries = mutableLibraries.asInteractionState()
 	override val isLoading = mutableIsLoading.asInteractionState()
 
 	override fun onCleared() {
@@ -66,7 +65,21 @@ class ApplicationSettingsViewModel(
 			.promiseSelectedPlaybackEngineType()
 			.then { it -> playbackEngineType.value = it }
 
-		val promisedLibrariesUpdate = libraryProvider.allLibraries.then { it -> mutableLibraries.value = it.toList() }
+		val promisedLibrariesUpdate = librarySettingsProvider
+			.promiseAllLibrarySettings()
+			.eventually {
+				Promise.whenAll(
+					it.mapNotNull { l ->
+						l.libraryId
+							?.let { libraryId ->
+								libraryNameLookup
+									.promiseLibraryName(libraryId)
+									.then { n -> Pair(libraryId, n ?: "") }
+							}
+					}
+				)
+			}
+			.then { it -> mutableLibraries.value = it.toList() }
 
 		return Promise
 			.whenAll(promisedSimpleValuesUpdate, promisedEngineTypeUpdate, promisedLibrariesUpdate)

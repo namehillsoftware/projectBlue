@@ -43,7 +43,7 @@ class WhenSynchronizing {
 
 
 		val libraryProvider = mockk<ILibraryProvider>()
-		every { libraryProvider.allLibraries } returns Promise(listOf(Library(id = 4)))
+		every { libraryProvider.promiseAllLibraries() } returns Promise(listOf(Library(id = 4)))
 		val librarySyncHandler = mockk<ControlLibrarySyncs>()
 		every { librarySyncHandler.observeLibrarySync(any()) } returns
 			Observable.concat(

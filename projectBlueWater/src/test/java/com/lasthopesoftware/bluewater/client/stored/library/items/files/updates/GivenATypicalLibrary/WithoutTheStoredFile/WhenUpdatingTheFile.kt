@@ -23,9 +23,7 @@ class WhenUpdatingTheFile {
 	}
 
 	private val sut by lazy {
-		val fakeLibraryRepository = FakeLibraryRepository(
-			Library(id = 14, syncedFileLocation = Library.SyncedFileLocation.INTERNAL)
-		)
+		val fakeLibraryRepository = FakeLibraryRepository(Library(id = 14))
 
 		StoredFileUpdater(
 			affectedSystems,

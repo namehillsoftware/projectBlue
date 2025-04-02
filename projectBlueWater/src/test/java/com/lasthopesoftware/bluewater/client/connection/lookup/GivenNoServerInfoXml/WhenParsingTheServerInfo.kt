@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.lookup.GivenNoServerInf
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfo
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerLookup
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -19,8 +19,8 @@ class WhenParsingTheServerInfo {
 	private val serverInfo by lazy {
 		val serverLookup = ServerLookup(
 			mockk {
-				every { lookupConnectionSettings(LibraryId(libraryId)) } returns Promise(
-					ConnectionSettings(
+				every { promiseConnectionSettings(LibraryId(libraryId)) } returns Promise(
+					MediaCenterConnectionSettings(
 						accessCode = "JcMHkVt5mty",
 						sslCertificateFingerprint = Hex.decodeHex("2386166660562C5AAA1253B2BED7C2483F9C2D45")
 					)

@@ -8,9 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.live.ProvideLiveServerCo
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.LibraryConnectionChangedMessage
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.waking.NoopServerAlarm
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -30,22 +28,15 @@ class WhenRetrievingTheLibraryServerConnectionTwice {
 	private val serverConnection = mockk<LiveServerConnection>()
 
 	private val mut by lazy {
-		val validateConnectionSettings = mockk<ValidateConnectionSettings>()
-		every { validateConnectionSettings.isValid(any()) } returns true
-
-		val deferredConnectionSettings = DeferredPromise<ConnectionSettings?>(ConnectionSettings(accessCode = "aB5nf"))
-
-		val lookupConnection = mockk<LookupConnectionSettings>()
-		every {
-			lookupConnection.lookupConnectionSettings(LibraryId(libraryId))
-		} returns deferredConnectionSettings
+		val deferredConnectionSettings = DeferredPromise<MediaCenterConnectionSettings?>(MediaCenterConnectionSettings(accessCode = "aB5nf"))
 
 		val liveUrlProvider = mockk<ProvideLiveServerConnection>()
 		every { liveUrlProvider.promiseLiveServerConnection(LibraryId(libraryId)) } returns serverConnection.toPromise()
 
 		val libraryConnectionProvider = LibraryConnectionProvider(
-			validateConnectionSettings,
-			lookupConnection,
+            mockk {
+				every { promiseConnectionSettings(LibraryId(libraryId)) } returns deferredConnectionSettings
+			},
 			NoopServerAlarm,
 			liveUrlProvider,
 			mockk(),

@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.GivenAHaltedPlayba
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
@@ -17,6 +18,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNow
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -25,9 +27,11 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 
-private const val libraryId = 311
-
 class WhenChangingTracks {
+
+	companion object {
+		private const val libraryId = 311
+	}
 
 	private val mut by lazy {
 
@@ -47,6 +51,15 @@ class WhenChangingTracks {
 		)
 
 		val libraryProvider = FakeLibraryRepository(library)
+		val savedLibrary = object : Promise<Library>() {
+			val libraryStorage = mockk<ILibraryStorage> {
+				every { updateNowPlaying(any(), any(), any(), any(), any()) } answers {
+					libraryProvider.updateNowPlaying(arg(0), arg(1), arg(2), arg(3), arg(4)).then { _ ->
+						resolve(libraryProvider.libraries[libraryId])
+					}
+				}
+			}
+		}
 		val playbackEngine = PlaybackEngine(
 			PreparedPlaybackQueueResourceManagement(
 				fakePlaybackPreparerProvider,
@@ -58,16 +71,16 @@ class WhenChangingTracks {
 			NowPlayingRepository(
 				FakeSelectedLibraryProvider(),
 				libraryProvider,
-				libraryProvider,
+				savedLibrary.libraryStorage,
 				FakeNowPlayingState(),
 			),
 			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 		)
 
-		Pair(library, playbackEngine)
+		Pair(savedLibrary, playbackEngine)
 	}
-	private val library: Library
-		get() = mut.first
+	private val library: Library?
+		get() = mut.first.toExpiringFuture().get()
 	private var initialState: PositionedProgressedFile? = null
 	private var nextSwitchedFile: PositionedFile? = null
 
@@ -90,6 +103,6 @@ class WhenChangingTracks {
 
 	@Test
 	fun `then the saved library is at the correct playlist position`() {
-		assertThat(library.nowPlayingId).isEqualTo(3)
+		assertThat(library?.nowPlayingId).isEqualTo(3)
 	}
 }

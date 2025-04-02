@@ -4,7 +4,7 @@ import android.content.Context
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgressingLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
@@ -13,7 +13,7 @@ import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class ConnectionSessionManager(
-	private val libraryConnections: ProvideLibraryConnections,
+	private val libraryConnections: ProvideProgressingLibraryConnections,
 	private val holdConnections: HoldPromisedConnections,
 	private val sendApplicationMessages: SendApplicationMessages,
 ) : ManageConnectionSessions {

@@ -3,9 +3,10 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilesPropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUrisLookup
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LookupSyncDirectory
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -35,9 +36,15 @@ class WhenGettingTheStoredFilePath {
 
 		val privateStoredFilePaths = StoredFileUrisLookup(
 			filePropertiesProvider,
-			FakeLibraryRepository(
-				Library(id = 550, syncedFileLocation = Library.SyncedFileLocation.INTERNAL)
-			),
+			mockk {
+				every { promiseLibrarySettings(LibraryId(550)) } returns Promise(
+					LibrarySettings(
+						libraryId = LibraryId(550),
+						syncedFileLocation = SyncedFileLocation.INTERNAL,
+						connectionSettings = StoredMediaCenterConnectionSettings()
+					)
+				)
+			},
 			directoryLookup,
 			mockk(),
 			mockk(),

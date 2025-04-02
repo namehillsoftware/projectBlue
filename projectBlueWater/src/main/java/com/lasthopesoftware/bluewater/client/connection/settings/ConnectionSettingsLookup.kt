@@ -1,23 +1,25 @@
 package com.lasthopesoftware.bluewater.client.connection.settings
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.ProvideLibrarySettings
+import com.lasthopesoftware.resources.emptyByteArray
 import com.namehillsoftware.handoff.promises.Promise
 
-class ConnectionSettingsLookup(private val libraryProvider: ILibraryProvider) : LookupConnectionSettings {
-	override fun lookupConnectionSettings(libraryId: LibraryId): Promise<ConnectionSettings?> =
-		libraryProvider.promiseLibrary(libraryId).then { it ->
-			it?.run {
-				val accessCode = accessCode ?: throw MissingAccessCodeException(libraryId)
-				ConnectionSettings(
-					accessCode,
-					userName,
-					password,
-					isLocalOnly,
-					isWakeOnLanEnabled,
-					sslCertificateFingerprint,
-					macAddress,
-				)
+class ConnectionSettingsLookup(private val librarySettings: ProvideLibrarySettings) : LookupValidConnectionSettings {
+	@OptIn(ExperimentalStdlibApi::class)
+	override fun promiseConnectionSettings(libraryId: LibraryId): Promise<MediaCenterConnectionSettings?> =
+		librarySettings
+			.promiseLibrarySettings(libraryId)
+			.then { it ->
+				it?.connectionSettings?.run {
+					MediaCenterConnectionSettings(
+						accessCode = accessCode ?: "",
+						userName = userName,
+						password = password,
+						isLocalOnly = isLocalOnly,
+						isWakeOnLanEnabled = isWakeOnLanEnabled,
+						sslCertificateFingerprint = sslCertificateFingerprint?.hexToByteArray() ?: emptyByteArray,
+					)
+				}
 			}
-		}
 }

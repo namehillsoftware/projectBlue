@@ -1,6 +1,9 @@
 package com.lasthopesoftware.bluewater.permissions.read.GivenLibraryRequestingStorageReadPermissions.AndTheLibraryIsSavingToAnExternalLocation
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import io.mockk.every
 import io.mockk.mockk
@@ -17,7 +20,11 @@ class `When checking if OS read permissions are required for the library` {
 
 		applicationReadPermissionsRequirementsProvider
 			.isReadPermissionsRequiredForLibrary(
-				Library(syncedFileLocation = Library.SyncedFileLocation.EXTERNAL)
+				LibrarySettings(
+					libraryId = LibraryId(37),
+					syncedFileLocation = SyncedFileLocation.EXTERNAL,
+					connectionSettings = StoredMediaCenterConnectionSettings(),
+				)
 			)
 	}
 

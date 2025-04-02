@@ -1,12 +1,11 @@
-package com.lasthopesoftware.bluewater.client.connection.settings.GivenALibraryWithoutAnAccessCode
+package com.lasthopesoftware.bluewater.client.connection.settings.GivenALibraryWithAnEmptyAccessCode
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
+import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.MissingAccessCodeException
+import com.lasthopesoftware.bluewater.client.connection.settings.ValidConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -14,15 +13,16 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.ExecutionException
 
-class WhenGettingServerConnectionSettings {
+class WhenGettingServerMediaCenterConnectionSettings {
 
 	private val mut by lazy {
-		val libraryProvider = mockk<ILibraryProvider>()
-		every { libraryProvider.promiseLibrary(LibraryId(10)) } returns Library().toPromise()
-
-		val connectionSettingsLookup = ConnectionSettingsLookup(libraryProvider)
-
-		connectionSettingsLookup
+		ValidConnectionSettingsLookup(
+			mockk {
+				every { promiseConnectionSettings(LibraryId(10)) } returns Promise(
+					MediaCenterConnectionSettings(accessCode = " 		")
+				)
+			}
+		)
 	}
 
 	private var exception: MissingAccessCodeException? = null
@@ -30,7 +30,7 @@ class WhenGettingServerConnectionSettings {
 	@BeforeAll
 	fun act() {
 		try {
-			mut.lookupConnectionSettings(LibraryId(10)).toExpiringFuture().get()
+			mut.promiseConnectionSettings(LibraryId(10)).toExpiringFuture().get()
 		} catch (e: ExecutionException) {
 			exception = e.cause as? MissingAccessCodeException
 		}

@@ -32,9 +32,11 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 
-private const val libraryId = 837
-
 class WhenRemovingTheCurrentlyPlayingFile {
+
+	companion object {
+		private const val libraryId = 837
+	}
 
 	private val mut by lazy {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
@@ -57,11 +59,11 @@ class WhenRemovingTheCurrentlyPlayingFile {
 		val libraryProvider = FakeLibraryRepository(library)
 		val savedLibrary = object : Promise<Library>() {
 			val libraryStorage = mockk<ILibraryStorage> {
-				every { saveLibrary(any()) } answers {
-					libraryProvider.saveLibrary(firstArg()).then { lib ->
-						if (lib.savedTracksString != library.savedTracksString)
+				every { updateNowPlaying(any(), any(), any(), any(), any()) } answers {
+					libraryProvider.updateNowPlaying(arg(0), arg(1), arg(2), arg(3), arg(4)).then { _ ->
+						val lib = libraryProvider.libraries[libraryId]
+						if (lib?.savedTracksString != library.savedTracksString)
 							resolve(lib)
-						lib
 					}
 				}
 			}

@@ -5,9 +5,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilesPropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUrisLookup
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
@@ -39,12 +40,15 @@ class WhenGettingTheStoredFilePath {
 
 			val storedFilePathsLookup = StoredFileUrisLookup(
                 filePropertiesProvider,
-                FakeLibraryRepository(
-                    Library(
-                        id = libraryId,
-                        syncedFileLocation = Library.SyncedFileLocation.EXTERNAL
-                    )
-                ),
+                mockk {
+					every { promiseLibrarySettings(LibraryId(libraryId)) } returns Promise(
+						LibrarySettings(
+							libraryId = LibraryId(libraryId),
+							syncedFileLocation = SyncedFileLocation.EXTERNAL,
+							connectionSettings = StoredMediaCenterConnectionSettings()
+						)
+					)
+				},
                 mockk {
                     every { promiseSyncDirectory(LibraryId(libraryId)) } returns Promise(File("/lock"))
                 },

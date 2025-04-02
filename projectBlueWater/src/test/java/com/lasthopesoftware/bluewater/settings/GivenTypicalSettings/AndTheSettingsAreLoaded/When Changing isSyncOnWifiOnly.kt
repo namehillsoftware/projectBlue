@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.settings.GivenTypicalSettings.AndTheSettingsAreLoaded
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
@@ -41,13 +42,16 @@ class `When Changing isSyncOnWifiOnly` {
 				every { promiseSelectedPlaybackEngineType() } returns PlaybackEngineType.ExoPlayer.toPromise()
 			},
 			mockk {
-				every { allLibraries } returns Promise(
+				every { promiseAllLibrarySettings() } returns Promise(
 					listOf(
-						Library(id = 585),
-						Library(id = 893),
-						Library(id = 72),
+						LibrarySettings(libraryId = LibraryId(363)),
+						LibrarySettings(libraryId = LibraryId(579)),
 					)
 				)
+			},
+			mockk {
+				every { promiseLibraryName(LibraryId(363)) } returns "D6UtT4d9w".toPromise()
+				every { promiseLibraryName(LibraryId(579)) } returns "GM4m9F9g2".toPromise()
 			},
 			RecordingApplicationMessageBus(),
 			mockk {
@@ -102,9 +106,8 @@ class `When Changing isSyncOnWifiOnly` {
 	fun `then the libraries are correct`() {
 		assertThat(mutt.libraries.value).isEqualTo(
 			listOf(
-				Library(id = 585),
-				Library(id = 893),
-				Library(id = 72),
+				Pair(LibraryId(363), "D6UtT4d9w"),
+				Pair(LibraryId(579), "GM4m9F9g2"),
 			)
 		)
 	}

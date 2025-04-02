@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.connection.settings
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -12,35 +10,35 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class WhenGettingServerConnectionSettings {
+class WhenGettingServerMediaCenterConnectionSettings {
 
+	@OptIn(ExperimentalStdlibApi::class)
 	private val mut by lazy {
-		val libraryProvider = mockk<ILibraryProvider>()
-		every { libraryProvider.promiseLibrary(LibraryId(10)) } returns Library(
-			accessCode = "P9qd",
-			userName = "x39",
-			isLocalOnly = true,
-			password = "gEaP",
-			sslCertificateFingerprint = Hex.decodeHex("A10B"),
-			isWakeOnLanEnabled = true,
-		).toPromise()
-
-		val connectionSettingsLookup = ConnectionSettingsLookup(libraryProvider)
+		val connectionSettingsLookup = ValidConnectionSettingsLookup(mockk {
+			every { promiseConnectionSettings(LibraryId(10)) } returns MediaCenterConnectionSettings(
+				accessCode = "P9qd",
+				userName = "x39",
+				isLocalOnly = true,
+				password = "gEaP",
+				sslCertificateFingerprint = "A10B".hexToByteArray(),
+				isWakeOnLanEnabled = true,
+			).toPromise()
+		})
 
 		connectionSettingsLookup
 	}
 
-	private var connectionSettings: ConnectionSettings? = null
+	private var connectionSettings: MediaCenterConnectionSettings? = null
 
 	@BeforeAll
 	fun act() {
-		connectionSettings = mut.lookupConnectionSettings(LibraryId(10)).toExpiringFuture().get()
+		connectionSettings = mut.promiseConnectionSettings(LibraryId(10)).toExpiringFuture().get()
 	}
 
 	@Test
 	fun `then the connection settings are correct`() {
 		assertThat(connectionSettings).isEqualTo(
-			ConnectionSettings(
+			MediaCenterConnectionSettings(
 				accessCode = "P9qd",
 				userName = "x39",
 				password = "gEaP",

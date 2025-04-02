@@ -1,8 +1,9 @@
 package com.lasthopesoftware.bluewater.client.settings.GivenALibraryId.AndLibrarySettingAreLoaded
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -16,27 +17,35 @@ class WhenSavingTheLibrarySettings {
 
 	private val libraryId = LibraryId(56)
 
-	private val libraryRepository = FakeLibraryRepository(
-		Library(
-			id = libraryId.id,
-			accessCode = "b2q",
-			isLocalOnly = false,
-			isSyncLocalConnectionsOnly = true,
-			isWakeOnLanEnabled = false,
-			password = "hmpyA",
-			syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
-			isUsingExistingFiles = true,
-			macAddress = "S4YhepUHBcj",
-		)
-	)
+	private val savedLibrarySettings = mutableListOf<LibrarySettings>()
 
 	private val services by lazy {
         LibrarySettingsViewModel(
-            libraryRepository,
-            libraryRepository,
-            mockk(),
 			mockk {
-				every { promiseIsLibraryPermissionsGranted(any()) } returns true.toPromise()
+				every { promiseLibrarySettings(libraryId) } returns LibrarySettings(
+					libraryId = libraryId,
+					isUsingExistingFiles = true,
+					syncedFileLocation = SyncedFileLocation.EXTERNAL,
+					connectionSettings = StoredMediaCenterConnectionSettings(
+						accessCode = "b2q",
+						isLocalOnly = false,
+						isSyncLocalConnectionsOnly = true,
+						isWakeOnLanEnabled = false,
+						password = "hmpyA",
+						macAddress = "S4YhepUHBcj",
+					)
+				).toPromise()
+			},
+			mockk {
+				every { promiseSavedLibrarySettings(any()) } answers {
+					val settings = firstArg<LibrarySettings>()
+					savedLibrarySettings.add(settings)
+					settings.toPromise()
+				}
+			},
+			mockk(),
+			mockk {
+				every { promiseIsAllPermissionsGranted(any()) } returns true.toPromise()
 			},
 		)
     }
@@ -67,7 +76,7 @@ class WhenSavingTheLibrarySettings {
 			isSyncLocalConnectionsOnly.value = !isSyncLocalConnectionsOnly.value
 			isUsingExistingFiles.value = !isUsingExistingFiles.value
 			isWakeOnLanEnabled.value = !isWakeOnLanEnabled.value
-			syncedFileLocation.value = Library.SyncedFileLocation.EXTERNAL
+			syncedFileLocation.value = SyncedFileLocation.EXTERNAL
 			macAddress.value = "sVU0zPNKdFu"
 
 			didSettingsChange = isSettingsChanged.value
@@ -144,7 +153,7 @@ class WhenSavingTheLibrarySettings {
     @Test
     fun `then synced file location is correct`() {
         assertThat(services.syncedFileLocation.value)
-            .isEqualTo(Library.SyncedFileLocation.EXTERNAL)
+            .isEqualTo(SyncedFileLocation.EXTERNAL)
     }
 
     @Test
@@ -163,19 +172,24 @@ class WhenSavingTheLibrarySettings {
 	}
 
 	@Test
-	fun `then the saved library is correct`() {
-		assertThat(libraryRepository.libraries[56]).isEqualTo(Library(
-			id = libraryId.id,
-			libraryName = "left",
-			accessCode = "V68Bp9rS",
-			isLocalOnly = true,
-			isSyncLocalConnectionsOnly = false,
-			isWakeOnLanEnabled = true,
-			userName = "xw9wy0T",
-			password = "sl0Ha",
-			syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
-			isUsingExistingFiles = false,
-			macAddress = "sVU0zPNKdFu",
-		))
+	fun `then the saved library settings are correct`() {
+		assertThat(savedLibrarySettings).containsExactly(
+			LibrarySettings(
+				libraryId = libraryId,
+				libraryName = "left",
+				isUsingExistingFiles = false,
+				syncedFileLocation = SyncedFileLocation.EXTERNAL,
+				StoredMediaCenterConnectionSettings(
+					accessCode = "V68Bp9rS",
+					isLocalOnly = true,
+					isSyncLocalConnectionsOnly = false,
+					isWakeOnLanEnabled = true,
+					userName = "xw9wy0T",
+					password = "sl0Ha",
+					macAddress = "sVU0zPNKdFu",
+					sslCertificateFingerprint = "",
+				)
+			)
+		)
 	}
 }

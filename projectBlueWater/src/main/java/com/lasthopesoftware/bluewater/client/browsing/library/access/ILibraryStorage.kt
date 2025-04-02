@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.access
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.namehillsoftware.handoff.promises.Promise
 
 /**
@@ -9,5 +10,7 @@ import com.namehillsoftware.handoff.promises.Promise
 interface ILibraryStorage {
 	fun saveLibrary(library: Library): Promise<Library>
 
-	fun removeLibrary(library: Library): Promise<Unit>
+	fun updateNowPlaying(libraryId: LibraryId, nowPlayingId: Int, nowPlayingProgress: Long, savedTracksString: String, isRepeating: Boolean): Promise<Unit>
+
+	fun removeLibrary(libraryId: LibraryId): Promise<Unit>
 }

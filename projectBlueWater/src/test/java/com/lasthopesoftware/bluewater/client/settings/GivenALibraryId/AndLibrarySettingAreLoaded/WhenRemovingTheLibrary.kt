@@ -1,11 +1,13 @@
 package com.lasthopesoftware.bluewater.client.settings.GivenALibraryId.AndLibrarySettingAreLoaded
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -16,23 +18,17 @@ class WhenRemovingTheLibrary {
 
 	private val libraryId = LibraryId(354)
     private val services by lazy {
-		val libraryRepository = FakeLibraryRepository(
-			Library(
-				id = libraryId.id,
-				accessCode = "b2q",
-				isLocalOnly = false,
-				isSyncLocalConnectionsOnly = true,
-				isWakeOnLanEnabled = false,
-				password = "hmpyA",
-				syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
-				isUsingExistingFiles = true,
-			)
-		)
 
-        LibrarySettingsViewModel(
-            libraryRepository,
-            libraryRepository,
-            mockk {
+		LibrarySettingsViewModel(
+			mockk {
+				every { promiseLibrarySettings(any()) } answers {
+					val id = firstArg<LibraryId>()
+					if (removedLibraries.any { it.libraryId == id }) Promise.empty()
+					else LibrarySettings(libraryId = id).toPromise()
+				}
+			},
+			mockk(),
+			mockk {
 				every { removeLibrary(any()) } answers {
 					removedLibraries.add(firstArg())
 					Unit.toPromise()

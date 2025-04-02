@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.settings
 
 import com.lasthopesoftware.resources.emptyByteArray
 
-data class ConnectionSettings(
+data class MediaCenterConnectionSettings(
 	val accessCode: String,
 	val userName: String? = null,
 	val password: String? = null,
@@ -15,7 +15,7 @@ data class ConnectionSettings(
 		if (this === other) return true
 		if (javaClass != other?.javaClass) return false
 
-		other as ConnectionSettings
+		other as MediaCenterConnectionSettings
 
 		if (accessCode != other.accessCode) return false
 		if (userName != other.userName) return false

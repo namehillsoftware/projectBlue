@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.permissions.read.GivenLibraryNotRequestingStorageReadPermissions
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.shared.android.permissions.CheckOsPermissions
 import io.mockk.every
@@ -16,7 +16,7 @@ class WhenGrantingOsPermissions {
 			}
 		)
 
-		applicationReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(Library())
+		applicationReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(LibrarySettings())
 	}
 
 	@Test

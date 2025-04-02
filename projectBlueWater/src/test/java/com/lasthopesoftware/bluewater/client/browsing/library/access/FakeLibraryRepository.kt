@@ -10,14 +10,31 @@ open class FakeLibraryRepository(vararg libraries: Library) : ILibraryProvider, 
 
     override fun promiseLibrary(libraryId: LibraryId): Promise<Library?> = Promise(libraries[libraryId.id])
 
-    override val allLibraries: Promise<Collection<Library>>
-        get() = Promise(libraries.values)
+    override fun promiseAllLibraries(): Promise<Collection<Library>> = Promise(libraries.values)
 
 	override fun saveLibrary(library: Library): Promise<Library> =
 		library.copy().also { libraries[it.id] = it }.toPromise()
 
-	override fun removeLibrary(library: Library): Promise<Unit> {
-		libraries.remove(library.id)
+	override fun updateNowPlaying(
+		libraryId: LibraryId,
+		nowPlayingId: Int,
+		nowPlayingProgress: Long,
+		savedTracksString: String,
+		isRepeating: Boolean
+	): Promise<Unit> {
+		val library = libraries[libraryId.id] ?: return Promise.empty()
+		library.copy(
+			nowPlayingId = nowPlayingId,
+			nowPlayingProgress = nowPlayingProgress,
+			savedTracksString = savedTracksString,
+			isRepeating = isRepeating
+		).also { libraries[it.id] = it }
+
+		return Unit.toPromise()
+	}
+
+	override fun removeLibrary(libraryId: LibraryId): Promise<Unit> {
+		libraries.remove(libraryId.id)
 		return Unit.toPromise()
 	}
 }

@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgressingLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
@@ -25,7 +25,7 @@ class WhenTestingIfTheServerConnectionIsActive {
 		val deferredConnectionProvider =
 			DeferredProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>()
 
-		val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
+		val libraryConnectionProvider = mockk<ProvideProgressingLibraryConnections>()
 		every { libraryConnectionProvider.promiseLibraryConnection(LibraryId(2)) } returns deferredConnectionProvider
 
 		val connectionSessionManager = ConnectionSessionManager(

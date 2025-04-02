@@ -1,9 +1,10 @@
 package com.lasthopesoftware.bluewater.permissions.requests.GivenLibrariesWithAllRequiredPermissions
 
 import android.Manifest
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
 import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -16,9 +17,7 @@ class `When making a permissions request` {
 	private val mut by lazy {
 		ApplicationPermissionsRequests(
 			mockk {
-				every { allLibraries } returns Promise(
-					listOf(Library(), Library())
-				)
+				every { promiseAllLibrarySettings() } returns listOf(LibrarySettings(), LibrarySettings()).toPromise()
 			},
 			mockk {
 				every { isReadPermissionsRequiredForLibrary(any()) } returns true

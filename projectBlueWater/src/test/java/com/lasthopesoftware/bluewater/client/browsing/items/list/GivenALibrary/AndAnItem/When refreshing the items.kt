@@ -3,13 +3,11 @@ package com.lasthopesoftware.bluewater.client.browsing.items.list.GivenALibrary.
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
-import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -38,24 +36,19 @@ class `When refreshing the items` {
 		Pair(
 			deferredItems,
             ItemListViewModel(
-                mockk {
-                    every { promiseItems(LibraryId(libraryId), ItemId(itemId)) } returns listOf(
-                        Item(645),
-                        Item(820),
-                        Item(358),
-                        Item(886),
-                        Item(50),
-                    ).toPromise() andThen deferredItems
-                },
-                RecordingApplicationMessageBus(),
-                mockk {
-                    every { promiseLibrary(LibraryId(libraryId)) } returns Promise(
-                        Library(
-                            id = libraryId,
-                            accessCode = "Lh33",
-                        )
-                    )
-                },
+				mockk {
+					every { promiseItems(LibraryId(libraryId), ItemId(itemId)) } returns listOf(
+						Item(645),
+						Item(820),
+						Item(358),
+						Item(886),
+						Item(50),
+					).toPromise() andThen deferredItems
+				},
+				RecordingApplicationMessageBus(),
+				mockk {
+					every { promiseLibraryName(LibraryId(libraryId)) } returns "Lh33".toPromise()
+				},
             )
 		)
 	}
