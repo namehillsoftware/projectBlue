@@ -3,17 +3,36 @@ package com.lasthopesoftware.bluewater.shared.promises.extensions
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import org.joda.time.Duration
-import java.util.concurrent.*
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 fun <Resolution> Promise<Resolution>.toExpiringFuture() = ExpiringFuturePromise(this)
 
 class ExpiringFuturePromise<Resolution>(promise: Promise<Resolution>) : Future<Resolution?> {
 	private val defaultCancellationDuration = Duration.standardSeconds(30)
 	private val cancellationProxy = CancellationProxy()
-	private val promise: Promise<Unit>
+	private val countDownLatch = CountDownLatch(1)
+
 	private var resolution: Resolution? = null
 	private var rejection: Throwable? = null
 	private var isCompleted = false
+
+	init {
+		cancellationProxy.doCancel(promise)
+		promise
+			.then({ r ->
+				resolution = r
+				isCompleted = true
+				countDownLatch.countDown()
+			}, { e ->
+				rejection = e
+				isCompleted = true
+				countDownLatch.countDown()
+			})
+	}
 
 	override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
 		if (isCompleted) return false
@@ -29,37 +48,15 @@ class ExpiringFuturePromise<Resolution>(promise: Promise<Resolution>) : Future<R
 		return isCompleted
 	}
 
-	@Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
-	override fun get(): Resolution? {
-		val countDownLatch = CountDownLatch(1)
-		promise.then { _ -> countDownLatch.countDown() }
-		if (countDownLatch.await(defaultCancellationDuration.millis, TimeUnit.MILLISECONDS)) return getResolution()
-		throw TimeoutException()
-	}
+	override fun get(): Resolution? = get(defaultCancellationDuration.millis, TimeUnit.MILLISECONDS)
 
-	@Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
 	override fun get(timeout: Long, unit: TimeUnit): Resolution? {
-		val countDownLatch = CountDownLatch(1)
-		promise.then { _ -> countDownLatch.countDown() }
 		if (countDownLatch.await(timeout, unit)) return getResolution()
-		throw TimeoutException()
+		throw TimeoutException("Timed out waiting $timeout $unit for promise to resolve")
 	}
 
-	@Throws(ExecutionException::class)
 	private fun getResolution(): Resolution? {
-		rejection?.also { throw ExecutionException(rejection) }
+		rejection?.also { throw ExecutionException(it) }
 		return resolution
-	}
-
-	init {
-		cancellationProxy.doCancel(promise)
-		this.promise = promise
-			.then({ r: Resolution ->
-				resolution = r
-				isCompleted = true
-			}, { e: Throwable? ->
-				rejection = e
-				isCompleted = true
-			})
 	}
 }

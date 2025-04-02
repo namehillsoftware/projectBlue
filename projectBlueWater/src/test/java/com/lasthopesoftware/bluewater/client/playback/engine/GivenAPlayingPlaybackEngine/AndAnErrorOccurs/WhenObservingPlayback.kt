@@ -15,7 +15,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Co
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
-import com.namehillsoftware.handoff.Messenger
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
@@ -62,7 +62,7 @@ class WhenObservingPlayback {
 	fun act() {
 		val (deferredErrorPlaybackPreparer, playbackEngine) = mut
 
-		playbackEngine
+		val promisedStart = playbackEngine
 			.setOnPlaylistError { e -> error = e }
 			.startPlaylist(
 				LibraryId(libraryId),
@@ -77,6 +77,7 @@ class WhenObservingPlayback {
 				Duration.ZERO
 			)
 		deferredErrorPlaybackPreparer.resolve()
+		promisedStart.toExpiringFuture().get()
 	}
 
 	@Test
@@ -84,19 +85,11 @@ class WhenObservingPlayback {
 		assertThat(error).isNotNull
 	}
 
-	private class DeferredErrorPlaybackPreparer : PlayableFilePreparationSource {
-		private var reject: Messenger<PreparedPlayableFile?>? = null
-
+	private class DeferredErrorPlaybackPreparer : Promise<PreparedPlayableFile?>(), PlayableFilePreparationSource {
 		fun resolve() {
-			reject?.sendRejection(Exception())
+			reject(Exception())
 		}
 
-		override fun promisePreparedPlaybackFile(
-			libraryId: LibraryId,
-			serviceFile: ServiceFile,
-			preparedAt: Duration
-		): Promise<PreparedPlayableFile?> {
-			return Promise { messenger -> reject = messenger }
-		}
+		override fun promisePreparedPlaybackFile(libraryId: LibraryId, serviceFile: ServiceFile, preparedAt: Duration): Promise<PreparedPlayableFile?> = this
 	}
 }

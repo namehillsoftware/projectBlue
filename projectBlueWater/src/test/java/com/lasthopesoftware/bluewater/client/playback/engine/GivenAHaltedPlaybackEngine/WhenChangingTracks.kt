@@ -55,7 +55,7 @@ class WhenChangingTracks {
 			val libraryStorage = mockk<ILibraryStorage> {
 				every { updateNowPlaying(any(), any(), any(), any(), any()) } answers {
 					libraryProvider.updateNowPlaying(arg(0), arg(1), arg(2), arg(3), arg(4)).then { _ ->
-						resolve(libraryProvider.libraries[libraryId])
+						resolve(libraryProvider.libraries[firstArg<LibraryId>().id])
 					}
 				}
 			}

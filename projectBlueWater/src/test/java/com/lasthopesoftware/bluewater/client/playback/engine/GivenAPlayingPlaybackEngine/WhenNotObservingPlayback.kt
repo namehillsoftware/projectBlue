@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConne
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
@@ -27,7 +27,15 @@ import org.junit.jupiter.api.Test
 class WhenNotObservingPlayback {
 
 	private val mut by lazy {
-		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
+		val fakePlaybackPreparerProvider = FakeMappedPlayableFilePreparationSourceProvider(
+			listOf(
+				ServiceFile("1"),
+				ServiceFile("2"),
+				ServiceFile("3"),
+				ServiceFile("4"),
+				ServiceFile("5")
+			)
+		)
 
 		val library = Library(id = 1, nowPlayingId = 5)
 
@@ -57,19 +65,15 @@ class WhenNotObservingPlayback {
 		playbackEngine
 			.startPlaylist(
 				library.libraryId,
-				listOf(
-					ServiceFile("1"),
-					ServiceFile("2"),
-					ServiceFile("3"),
-					ServiceFile("4"),
-					ServiceFile("5")
-				), 0, Duration.ZERO
+				fakePlaybackPreparerProvider.deferredResolutions.keys.toList(),
+				0,
+				Duration.ZERO
 			)
 			.toExpiringFuture()
 			.get()
-		val resolvablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
-		fakePlaybackPreparerProvider.deferredResolution.resolve()
-		resolvablePlaybackHandler.resolve()
+		val resolvablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("1")]?.resolve()
+		fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("2")]?.resolve()
+		resolvablePlaybackHandler?.resolve()
 		promisedLibraryStorageUpdate.toExpiringFuture().get()
 		Pair(libraryProvider, playbackEngine)
 	}

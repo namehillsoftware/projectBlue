@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistP
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
@@ -29,7 +29,15 @@ private const val libraryId = 265
 class WhenChangingTracks {
 
 	private val mut by lazy {
-		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
+		val fakePlaybackPreparerProvider = FakeMappedPlayableFilePreparationSourceProvider(
+			listOf(
+				ServiceFile("1"),
+				ServiceFile("2"),
+				ServiceFile("3"),
+				ServiceFile("4"),
+				ServiceFile("5")
+			)
+		)
 		val library = Library(id = libraryId)
 		val libraryProvider = FakeLibraryRepository(library)
 		val playbackEngine =
@@ -56,7 +64,7 @@ class WhenChangingTracks {
 		val (fakePlaybackPreparerProvider, playbackEngine) = mut
 
 		val countDownLatch = CountDownLatch(1)
-		playbackEngine
+		val promisedStart = playbackEngine
 			.setOnPlayingFileChanged { _, p ->
 				startedFiles.add(p)
 				latestFile = p
@@ -75,10 +83,12 @@ class WhenChangingTracks {
 				Duration.ZERO
 			)
 
-		val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
+		val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("1")]?.resolve()
+		promisedStart.toExpiringFuture().get()
+
 		val futurePositionChange = playbackEngine.changePosition(3, Duration.ZERO).toExpiringFuture()
-		fakePlaybackPreparerProvider.deferredResolution.resolve()
-		playingPlaybackHandler.resolve()
+		fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("4")]?.resolve()
+		playingPlaybackHandler?.resolve()
 
 		countDownLatch.await(10, TimeUnit.SECONDS)
 		nextSwitchedFile = futurePositionChange.get()?.second

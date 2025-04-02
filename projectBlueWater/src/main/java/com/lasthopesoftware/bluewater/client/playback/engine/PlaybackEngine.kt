@@ -24,6 +24,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.Maintai
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.playlist.ManagePlaylistPlayback
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.promises.ContinuingResult
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.keepPromise
@@ -77,6 +78,8 @@ class PlaybackEngine(
 			)
 		}
 	}
+
+	private val saveStateRateLimit = PromisingRateLimiter<NowPlaying?>(1)
 
 	private val positionedFileQueueProviders = positionedFileQueueProviders.associateBy({ it.isRepeating }, { it })
 
@@ -441,19 +444,21 @@ class PlaybackEngine(
 		}
 	}
 
+	@Suppress("UNCHECKED_CAST")
 	private fun saveState(): Promise<NowPlaying?> = withState {
-		if (libraryId.id > -1) fileProgress.progress.eventually {
-			nowPlayingRepository.updateNowPlaying(
-				NowPlaying(
-					libraryId,
-					playlist,
-					playlistPosition,
-					it.millis,
-					isRepeating,
-				)
-			)
-		}
-		else Promise.empty()
+		if (libraryId.id > -1) saveStateRateLimit.limit {
+			fileProgress.progress.eventually {
+				nowPlayingRepository.updateNowPlaying(
+					NowPlaying(
+						libraryId,
+						playlist,
+						playlistPosition,
+						it.millis,
+						isRepeating,
+					)
+				) as Promise<NowPlaying?>
+			}
+		} else Promise.empty()
 	}
 
 	override fun promiseClose(): Promise<Unit> {
@@ -472,9 +477,7 @@ class PlaybackEngine(
 	}
 
 	private fun <T> withState(action: PlayingState.() -> Promise<T>): Promise<T> = synchronized(playingStateSync) {
-		promisedPlayingState.eventually {
-			synchronized(it) { it.action() }
-		}
+		promisedPlayingState.eventually { synchronized(it) { it.action() } }
 	}
 
 	private fun updateLibraryState(libraryId: LibraryId, updateFunc: PlayingState.(LibraryId) -> PlayingState?) =
@@ -486,10 +489,7 @@ class PlaybackEngine(
 						activeLibraryId = libraryId
 						originalState.updateFunc(libraryId)
 					} catch (e: Throwable) {
-						logger.warn(
-							"There was an error updating the playing state, returning to original state",
-							e
-						)
+						logger.warn("There was an error updating the playing state, returning to original state", e)
 						originalState
 					}
 				} else {
@@ -500,9 +500,17 @@ class PlaybackEngine(
 
 	private class PlayingState(
 		val libraryId: LibraryId,
+
+		@Volatile
 		var playlist: MutableList<ServiceFile>,
+
+		@Volatile
 		var isRepeating: Boolean,
+
+		@Volatile
 		var playlistPosition: Int,
+
+		@Volatile
 		var fileProgress: ReadFileProgress
 	)
 

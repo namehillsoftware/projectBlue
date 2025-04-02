@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistP
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
@@ -24,13 +24,24 @@ import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-private const val libraryId = 358
-private const val restoringLibraryId = 506
-
 class WhenStateIsRestoredWithADifferentLibraryId {
 
+	companion object {
+		private const val libraryId = 358
+		private const val restoringLibraryId = 506
+	}
+
 	private val mut by lazy {
-		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
+		val fakePlaybackPreparerProvider = FakeMappedPlayableFilePreparationSourceProvider(
+			listOf(
+				ServiceFile("1"),
+				ServiceFile("2"),
+				ServiceFile("3"),
+				ServiceFile("4"),
+				ServiceFile("5")
+			)
+		)
+
 		val library = Library(id = libraryId)
 
 		val restoringLibrary = Library(
@@ -72,23 +83,22 @@ class WhenStateIsRestoredWithADifferentLibraryId {
 	fun before() {
 		val (fakePlaybackPreparerProvider, nowPlayingRepository, playbackEngine) = mut
 
-		playbackEngine
+		val promisedStart = playbackEngine
 			.startPlaylist(
                 LibraryId(libraryId),
-				listOf(
-                    ServiceFile("1"),
-                    ServiceFile("2"),
-                    ServiceFile("3"),
-                    ServiceFile("4"),
-                    ServiceFile("5")
-				),
+				fakePlaybackPreparerProvider.deferredResolutions.keys.toList(),
 				0,
                 Duration.ZERO
 			)
-		val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
-		resolvablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
-		playingPlaybackHandler.resolve()
+
+		val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("1")]?.resolve()
+
+		resolvablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("2")]?.resolve()
 		resolvablePlaybackHandler?.setCurrentPosition(30)
+
+		promisedStart.toExpiringFuture().get()
+		playingPlaybackHandler?.resolve()
+
 		val restoredState = playbackEngine.restoreFromSavedState(LibraryId(restoringLibraryId)).toExpiringFuture().get()
 		restoredLibraryId = restoredState?.first
 		restoredFile = restoredState?.second

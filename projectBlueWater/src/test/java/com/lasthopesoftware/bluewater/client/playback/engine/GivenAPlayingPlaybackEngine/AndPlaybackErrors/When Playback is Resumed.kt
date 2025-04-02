@@ -29,6 +29,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 private const val libraryId = 362
 
@@ -76,9 +78,13 @@ class `When Playback is Resumed` {
 	fun act() {
 		val (deferredErrorPlaybackPreparer, nowPlayingRepository, playbackEngine) = mut
 
+		val errorSignal = CountDownLatch(1)
 		playbackEngine
 			.setOnPlaylistError { e ->
-				if (e is PlaybackException) error = e
+				if (e is PlaybackException) {
+					error = e
+					errorSignal.countDown()
+				}
 			}
 			.setOnPlayingFileChanged { _, pf ->
 				positionedPlayingFile = pf
@@ -106,6 +112,7 @@ class `When Playback is Resumed` {
 			reject(Exception("f"))
 		}
 
+		errorSignal.await(30, TimeUnit.SECONDS)
 		nowPlaying = nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()
 		isPlayingBeforeResume = playbackEngine.isPlaying
 
@@ -161,6 +168,7 @@ class `When Playback is Resumed` {
 		val preparedPlayableFile = FakePreparedPlayableFile(playbackHandler)
 
 		private var messenger: Messenger<PreparedPlayableFile?>? = null
+
 		fun resolve(): ResolvablePlaybackHandler {
 			messenger?.sendResolution(preparedPlayableFile)
 			return playbackHandler

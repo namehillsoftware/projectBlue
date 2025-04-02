@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
@@ -24,7 +24,15 @@ private const val libraryId = 428
 class WhenATrackIsSwitched {
 
 	private val nextSwitchedFile by lazy {
-		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
+		val playlist = listOf(
+			ServiceFile("1"),
+			ServiceFile("2"),
+			ServiceFile("3"),
+			ServiceFile("4"),
+			ServiceFile("5")
+		)
+
+		val fakePlaybackPreparerProvider = FakeMappedPlayableFilePreparationSourceProvider(playlist)
 		val library = Library(id = libraryId)
 
 		val libraryProvider = FakeLibraryRepository(library)
@@ -47,20 +55,11 @@ class WhenATrackIsSwitched {
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)
 		playbackEngine
-			.startPlaylist(
-				LibraryId(libraryId),
-				mutableListOf(
-					ServiceFile("1"),
-					ServiceFile("2"),
-					ServiceFile("3"),
-					ServiceFile("4"),
-					ServiceFile("5")
-				), 0, Duration.ZERO
-			)
+			.startPlaylist(LibraryId(libraryId), playlist, 0, Duration.ZERO)
 			.toExpiringFuture()
 			.get()
 		val futurePositionedFile = playbackEngine.changePosition(3, Duration.ZERO).toExpiringFuture()
-		fakePlaybackPreparerProvider.deferredResolution.resolve()
+		fakePlaybackPreparerProvider.deferredResolutions[playlist[3]]?.resolve()
 		futurePositionedFile.get()
 	}
 
