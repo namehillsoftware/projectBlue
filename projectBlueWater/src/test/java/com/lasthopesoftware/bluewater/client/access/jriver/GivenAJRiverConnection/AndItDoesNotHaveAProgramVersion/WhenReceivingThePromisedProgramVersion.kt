@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDet
 import com.lasthopesoftware.bluewater.client.connection.live.LiveMediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.url.MediaCenterUrlBuilder
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
 import io.mockk.mockk
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test
 class WhenReceivingThePromisedProgramVersion {
     private val version by lazy {
 		val httpConnection = FakeHttpConnection().apply {
-			mapResponse(MediaCenterUrlBuilder.buildUrl(TestMcwsUrl, "Alive")) {
+			mapResponse(TestMcwsUrl.addPath("Alive")) {
 				PassThroughHttpResponse(
 					200,
 					"OK",
