@@ -6,7 +6,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.LiveMediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
-import com.lasthopesoftware.bluewater.client.connection.url.MediaCenterUrlBuilder
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
 import io.mockk.every
@@ -19,7 +20,7 @@ class `When saving a new playlist` {
 
 	private val mut by lazy {
 		val httpConnection = FakeHttpConnection().apply {
-			mapResponse(MediaCenterUrlBuilder.buildUrl(TestMcwsUrl, "Playlists/Add", "Type=Playlist", "Path=My Fancy Album", "CreateMode=Overwrite")) {
+			mapResponse(TestMcwsUrl.addPath("Playlists/Add").addParams("Type=Playlist", "Path=My Fancy Album", "CreateMode=Overwrite")) {
 				PassThroughHttpResponse(
 					200,
 					"OK",
@@ -29,7 +30,7 @@ class `When saving a new playlist` {
 				)
 			}
 
-			mapResponse(MediaCenterUrlBuilder.buildUrl(TestMcwsUrl, "Playlist/AddFiles", "PlaylistType=ID", "&Playlist=554772758", "Keys=954,172,366")) {
+			mapResponse(TestMcwsUrl.addPath("Playlist/AddFiles").addParams("PlaylistType=ID", "&Playlist=554772758", "Keys=954,172,366")) {
 				PassThroughHttpResponse(
 					200,
 					"OK",
@@ -68,8 +69,8 @@ class `When saving a new playlist` {
 	@Test
 	fun `then the playlist is created correctly`() {
 		assertThat(mut.first.recordedRequests).containsExactly(
-			MediaCenterUrlBuilder.buildUrl(TestMcwsUrl, "Playlists/Add", "Type=Playlist", "Path=My Fancy Album", "CreateMode=Overwrite"),
-			MediaCenterUrlBuilder.buildUrl(TestMcwsUrl, "Playlist/AddFiles", "PlaylistType=ID", "Playlist=554772758", "Keys=954,172,366")
+			TestMcwsUrl.addPath( "Playlists/Add").addParams("Type=Playlist", "Path=My Fancy Album", "CreateMode=Overwrite"),
+			TestMcwsUrl.addPath("Playlist/AddFiles").addParams("PlaylistType=ID", "Playlist=554772758", "Keys=954,172,366")
 		)
 	}
 }

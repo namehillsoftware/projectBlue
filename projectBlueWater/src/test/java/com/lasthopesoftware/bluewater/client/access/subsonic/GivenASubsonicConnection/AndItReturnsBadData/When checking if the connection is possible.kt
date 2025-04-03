@@ -13,7 +13,7 @@ import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.jupiter.api.Test
 
-class WhenCheckingIfTheMediaCenterConnectionDetailsIsPossible {
+class `When checking if the connection is possible` {
 
 	private val result by lazy {
 		val connectionDetails = SubsonicConnectionDetails(TestUrl,"wifZkdUcp", "1pacEhQuA")

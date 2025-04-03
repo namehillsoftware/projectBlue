@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.live
 import androidx.annotation.Keep
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import com.google.gson.Gson
-import com.google.gson.JsonObject
+import com.google.gson.annotations.SerializedName
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.FileResponses
@@ -21,14 +21,16 @@ import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withSubsonicApi
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
-import com.lasthopesoftware.bluewater.shared.NonStandardResponseException
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.exceptions.isOkHttpCanceled
 import com.lasthopesoftware.policies.caching.TimedExpirationPromiseCache
+import com.lasthopesoftware.promises.extensions.cancelBackThen
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.emptyByteArray
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.lasthopesoftware.resources.io.InvalidResponseCodeException
+import com.lasthopesoftware.resources.io.NonStandardResponseException
 import com.lasthopesoftware.resources.io.fromJson
 import com.lasthopesoftware.resources.io.promiseStringBody
 import com.lasthopesoftware.resources.io.promiseXmlDocument
@@ -36,6 +38,7 @@ import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
+import com.namehillsoftware.handoff.promises.response.ImmediateCancellableResponse
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import org.joda.time.Duration
@@ -102,7 +105,11 @@ class LiveSubsonicConnection(
 
 	override fun promiseIsReadOnly(): Promise<Boolean> = true.toPromise()
 
-	override fun promiseServerVersion(): Promise<SemanticVersion?> = Promise.empty()
+	override fun promiseServerVersion(): Promise<SemanticVersion?> = PingViewPromise().cancelBackThen { r, _ ->
+		r.subsonicResponse?.version?.split(".")?.let {
+			SemanticVersion(it[0].toInt(), it[1].toInt(), it[2].toInt())
+		}
+	}
 
 	override fun promiseFile(serviceFile: ServiceFile): Promise<InputStream> = emptyByteArray.inputStream().toPromise()
 
@@ -267,46 +274,59 @@ class LiveSubsonicConnection(
 		private fun itemParsingCancelledException() = CancellationException("Item parsing was cancelled.")
 	}
 
-	private inner class ConnectionPossiblePromise : Promise<Boolean>() {
+	private inner class ConnectionPossiblePromise : Promise.Proxy<Boolean>() {
 		init {
-			val cancellationProxy = CancellationProxy()
-			awaitCancellation(cancellationProxy)
+			proxy(
+				PingViewPromise()
+					.also(::doCancel)
+					.then(
+						{ it.subsonicResponse?.status == "ok" },
+						{ e ->
+							when (e) {
+								is CancellationException, is InvalidResponseCodeException -> {}
 
-			httpClient
-				.promiseResponse(subsonicApiUrl.addPath("ping.view"))
-				.also(cancellationProxy::doCancel)
-				.then(
-					{ it, cp -> resolve(testResponse(it, cp)) },
-					{ e, _ ->
-						logger.error("Error checking connection at URL {}.", subsonicConnectionDetails.baseUrl, e)
-						resolve(false)
-					}
-				)
-				.also(cancellationProxy::doCancel)
-		}
+								is NonStandardResponseException -> logger.warn("Non-standard response received.", e)
 
-		private fun testResponse(response: HttpResponse, cancellationSignal: CancellationSignal): Boolean = response.use { r ->
-			try {
-				if (cancellationSignal.isCancelled || r.code != 200) return false
+								is IOException -> logger.error("Unexpected IO exception checking connection", e)
 
-				val gson = Gson()
-				val json = gson.fromJson<JsonObject>(r.bodyString)
-				json?.get("subsonic-response")?.asJsonObject?.get("status")?.asString == "ok"
-			} catch (e: NonStandardResponseException) {
-				logger.warn("Non standard response received.", e)
-				false
-			} catch (e: IOException) {
-				logger.error("Error closing connection, device failure?", e)
-				false
-			} catch (e: IllegalArgumentException) {
-				logger.warn("Illegal argument passed in", e)
-				false
-			} catch (t: Throwable) {
-				logger.error("Unexpected error parsing response.", t)
-				false
-			}
+								else -> logger.error(
+									"Unexpected error checking connection at URL {}.",
+									subsonicConnectionDetails.baseUrl,
+									e
+								)
+							}
+
+							false
+						}
+					)
+			)
 		}
 	}
+
+	private inner class PingViewPromise : Promise.Proxy<RootSubsonicResponse>(), ImmediateCancellableResponse<HttpResponse, RootSubsonicResponse> {
+		init {
+			proxy(
+				httpClient
+					.promiseResponse(subsonicApiUrl.addPath("ping.view"))
+					.also(::doCancel)
+					.then(this)
+			)
+		}
+
+		override fun respond(response: HttpResponse, cancellationSignal: CancellationSignal): RootSubsonicResponse = response.use { r ->
+			if (cancellationSignal.isCancelled) throw CancellationException("Cancelled before parsing ping.view response.")
+			if (r.code != 200) throw InvalidResponseCodeException(r.code)
+
+			val gson = Gson()
+			gson.fromJson<RootSubsonicResponse>(r.bodyString) ?: throw NonStandardResponseException()
+		}
+	}
+
+	@Keep
+	private class RootSubsonicResponse(
+		@SerializedName("subsonic-response")
+		val subsonicResponse: SubsonicResponse?
+	)
 
 	@Keep
 	private class SubsonicResponse(

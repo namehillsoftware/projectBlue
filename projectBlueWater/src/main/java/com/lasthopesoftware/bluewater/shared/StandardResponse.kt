@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.shared
 
+import com.lasthopesoftware.resources.io.NonStandardResponseException
 import org.jsoup.nodes.Document
-import java.io.IOException
 
 class StandardResponse internal constructor(
 	status: String?,
@@ -30,4 +30,3 @@ class StandardResponse internal constructor(
 	}
 }
 
-class NonStandardResponseException : IOException("Not a standard response.")
