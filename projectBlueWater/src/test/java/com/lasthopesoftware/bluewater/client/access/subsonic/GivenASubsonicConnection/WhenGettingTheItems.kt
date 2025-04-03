@@ -8,7 +8,8 @@ import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetail
 import com.lasthopesoftware.bluewater.client.connection.live.LiveSubsonicConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.url.MediaCenterUrlBuilder
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
 import io.mockk.mockk
@@ -24,7 +25,7 @@ class WhenGettingTheItems {
 
 	private val mut by lazy {
 		val httpConnection = FakeHttpConnection().apply {
-			mapResponse(MediaCenterUrlBuilder.buildUrl(TestMcwsUrl, "Browse/Children", "ID=$itemId", "Version=2", "ErrorOnMissing=1")) {
+			mapResponse(TestMcwsUrl.addPath("Browse/Children").addParams("ID=$itemId", "Version=2", "ErrorOnMissing=1")) {
 				PassThroughHttpResponse(
 					200,
 					"OK",

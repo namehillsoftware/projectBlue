@@ -8,7 +8,8 @@ import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDet
 import com.lasthopesoftware.bluewater.client.connection.live.LiveMediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.url.MediaCenterUrlBuilder
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
 import com.lasthopesoftware.resources.emptyByteArray
@@ -22,14 +23,15 @@ class `When Downloading the File` {
 			MediaCenterConnectionDetails(TestUrl),
 			FakeHttpConnectionProvider(FakeHttpConnection().apply {
 				mapResponse(
-					MediaCenterUrlBuilder.buildUrl(
-						TestMcwsUrl,
-						"File/GetFile",
-						"File=4",
-						"Quality=Medium",
-						"Conversion=Android",
-						"Playback=0",
-						"AndroidVersion=${Build.VERSION.RELEASE}")
+						TestMcwsUrl
+							.addPath("File/GetFile")
+							.addParams(
+								"File=4",
+								"Quality=Medium",
+								"Conversion=Android",
+								"Playback=0",
+								"AndroidVersion=${Build.VERSION.RELEASE}"
+							)
 				) {
 					PassThroughHttpResponse(202, "Not found", emptyByteArray.inputStream())
 				}
