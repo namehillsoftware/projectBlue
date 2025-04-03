@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.ManageNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.StoreNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
@@ -51,6 +52,7 @@ interface ApplicationDependencies {
 	val stringResources: GetStringResources
 	val applicationSettings: HoldApplicationSettings
 	val nowPlayingState: GetNowPlayingState
+	val nowPlayingStateMaintenance: ManageNowPlayingState
 	val nowPlayingDisplaySettings: StoreNowPlayingDisplaySettings
 	val audioFileCache: DiskFileCache
 	val connectionSettingsLookup: LookupConnectionSettings

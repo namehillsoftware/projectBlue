@@ -10,8 +10,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFi
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.client.connection.libraries.RateLimitedFilePropertiesDependencies
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.InMemoryNowPlayingState
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
@@ -73,16 +71,9 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 	}
 
 	private val nowPlayingMediaItemLookup by lazy {
-		val repository = NowPlayingRepository(
-			selectedLibraryIdProvider,
-			applicationDependencies.libraryProvider,
-			applicationDependencies.libraryStorage,
-			InMemoryNowPlayingState,
-		)
-
 		NowPlayingMediaItemLookup(
 			selectedLibraryIdProvider,
-			repository,
+			applicationDependencies.nowPlayingState,
 			mediaItemServiceFileLookup
 		)
 	}

@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.F
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.ManageNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
@@ -42,7 +42,7 @@ class WhenItsPropertiesChanges {
 		get() = 708 % playlist.size
 
 	private val services by lazy {
-		val nowPlayingRepository = mockk<MaintainNowPlayingState> {
+		val nowPlayingRepository = mockk<ManageNowPlayingState> {
 			every { promiseNowPlaying(LibraryId(libraryId)) } returns Promise(
 				NowPlaying(
 					LibraryId(libraryId),

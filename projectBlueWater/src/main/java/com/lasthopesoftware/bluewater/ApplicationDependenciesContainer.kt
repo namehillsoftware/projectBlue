@@ -37,7 +37,9 @@ import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguratio
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.CachedDataSourceServerConnectionProvider
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.CachingNowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookupInitializer
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
@@ -130,6 +132,16 @@ object ApplicationDependenciesContainer {
 
 		override val selectedLibraryIdProvider by lazy {
 			CachedSelectedLibraryIdProvider(SelectedLibraryIdProvider(applicationSettings))
+		}
+
+		override val nowPlayingStateMaintenance by lazy {
+			CachingNowPlayingRepository(
+				NowPlayingRepository(
+					selectedLibraryIdProvider,
+					libraryProvider,
+					libraryStorage,
+				),
+			)
 		}
 
 		override val nowPlayingState by lazy {

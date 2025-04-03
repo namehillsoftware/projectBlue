@@ -13,7 +13,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
@@ -44,7 +43,6 @@ class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 				FakeSelectedLibraryProvider(),
 				libraryProvider,
 				libraryProvider,
-				FakeNowPlayingState(),
 			)
 		val playbackEngine =
 			PlaybackEngine(

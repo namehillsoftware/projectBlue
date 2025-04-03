@@ -77,8 +77,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.no
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.MediaStyleNotificationSetup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.PlaybackStartingNotificationBuilder
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.InMemoryNowPlayingState
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Action.Bag
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
@@ -411,17 +409,6 @@ import java.util.concurrent.TimeoutException
 		}
 	}
 
-	private val nowPlayingRepository by lazy {
-		with (playbackServiceDependencies) {
-			NowPlayingRepository(
-				selectedLibraryIdProvider,
-				libraryProvider,
-				libraryStorage,
-				InMemoryNowPlayingState,
-			)
-		}
-	}
-
 	private val libraryFilePropertiesProvider by lazy {
 		libraryConnectionDependencies.libraryFilePropertiesProvider
 	}
@@ -449,7 +436,7 @@ import java.util.concurrent.TimeoutException
 
 				promisingServiceCloseables.manage(
 					PlaybackNotificationBroadcaster(
-						nowPlayingRepository,
+						playbackServiceDependencies.nowPlayingState,
 						applicationMessageBus,
 						urlKeyProvider,
 						notificationController,
@@ -548,7 +535,7 @@ import java.util.concurrent.TimeoutException
 				val engine = PlaybackEngine(
 					preparedPlaybackQueueResourceManagement,
 					QueueProviders.providers(),
-					nowPlayingRepository,
+					playbackServiceDependencies.nowPlayingStateMaintenance,
 					playlistPlaybackBootstrapper
 				)
 

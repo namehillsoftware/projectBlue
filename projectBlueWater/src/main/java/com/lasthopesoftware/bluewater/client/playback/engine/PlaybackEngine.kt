@@ -20,7 +20,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedF
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.ProvidePositionedFileQueue
 import com.lasthopesoftware.bluewater.client.playback.file.progress.ReadFileProgress
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.ManageNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.playlist.ManagePlaylistPlayback
 import com.lasthopesoftware.bluewater.shared.lazyLogger
@@ -42,7 +42,7 @@ import kotlin.math.max
 class PlaybackEngine(
 	private val preparedPlaybackQueueResourceManagement: ManagePlaybackQueues,
 	positionedFileQueueProviders: Iterable<ProvidePositionedFileQueue>,
-	private val nowPlayingRepository: MaintainNowPlayingState,
+	private val nowPlayingRepository: ManageNowPlayingState,
 	private val playbackBootstrapper: IStartPlayback,
 ) :
 	ChangePlaybackState,
