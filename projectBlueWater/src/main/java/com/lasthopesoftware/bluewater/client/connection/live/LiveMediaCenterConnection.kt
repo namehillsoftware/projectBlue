@@ -20,7 +20,6 @@ import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withMcApi
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
-import com.lasthopesoftware.bluewater.shared.NonStandardResponseException
 import com.lasthopesoftware.bluewater.shared.StandardResponse.Companion.toStandardResponse
 import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.lazyLogger
@@ -33,6 +32,7 @@ import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.emptyByteArray
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.lasthopesoftware.resources.io.NonStandardResponseException
 import com.lasthopesoftware.resources.io.promiseStandardResponse
 import com.lasthopesoftware.resources.io.promiseStringBody
 import com.lasthopesoftware.resources.io.promiseXmlDocument

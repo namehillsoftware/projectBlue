@@ -6,7 +6,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.LiveMediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.url.MediaCenterUrlBuilder
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -26,7 +27,7 @@ class WhenGettingFileProperties {
         LiveMediaCenterConnection(
 			MediaCenterConnectionDetails(TestUrl),
 			FakeHttpConnectionProvider(mockk {
-				every { promiseResponse(MediaCenterUrlBuilder.buildUrl(TestMcwsUrl, "File/GetInfo", "File=$serviceFileId")) } returns Promise(IOException("Canceled"))
+				every { promiseResponse(TestMcwsUrl.addPath("File/GetInfo").addParams("File=$serviceFileId")) } returns Promise(IOException("Canceled"))
 			}),
 			mockk(),
 		)
