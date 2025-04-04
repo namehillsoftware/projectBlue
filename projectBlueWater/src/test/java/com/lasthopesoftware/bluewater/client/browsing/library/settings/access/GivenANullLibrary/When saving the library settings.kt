@@ -22,15 +22,13 @@ class `When saving the library settings` {
 		LibrarySettingsAccess(
 			mockk {
 				every { promiseLibrary(any()) } returns Promise.empty()
-			},
-			mockk {
 				every { saveLibrary(any()) } answers {
 					val library = firstArg<Library>()
 					library.id = 940
 					storedLibraries.add(library)
 					library.toPromise()
 				}
-			}
+			},
 		)
 	}
 

@@ -35,7 +35,6 @@ class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 			NowPlayingRepository(
 				FakeSelectedLibraryProvider(),
 				libraryProvider,
-				libraryProvider,
 			)
 		val playbackEngine =
 			PlaybackEngine(

@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.savedTracksStringColumn
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.tableName
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryNowPlayingValues
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.repository.fetch
 import com.lasthopesoftware.bluewater.repository.fetchFirst
@@ -19,9 +20,10 @@ import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.querydroid.SqLiteAssistants
+import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 
-class LibraryRepository(private val context: Context) : ILibraryStorage, ILibraryProvider {
+class LibraryRepository(private val context: Context) : ManageLibraries, ProvideLibraries {
 	override fun promiseLibrary(libraryId: LibraryId): Promise<Library?> =
 		promiseTableMessage<Library?, Library>(GetLibraryWriter(context, libraryId))
 
@@ -31,21 +33,11 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 	override fun saveLibrary(library: Library): Promise<Library> =
 		promiseTableMessage<Library, Library>(SaveLibraryWriter(context, library))
 
-	override fun updateNowPlaying(
-		libraryId: LibraryId,
-		nowPlayingId: Int,
-		nowPlayingProgress: Long,
-		savedTracksString: String,
-		isRepeating: Boolean
-	): Promise<Unit> = promiseTableMessage<Unit, Library>(
-		UpdateNowPlayingLibraryWriter(
-			context,
-			libraryId,
-			nowPlayingId,
-			nowPlayingProgress,
-			savedTracksString,
-			isRepeating)
-	)
+	override fun updateNowPlaying(values: LibraryNowPlayingValues): Promise<Unit> =
+		promiseTableMessage<Unit, Library>(UpdateNowPlayingLibraryWriter(context, values))
+
+	override fun promiseNowPlayingValues(libraryId: LibraryId): Promise<LibraryNowPlayingValues?> =
+		promiseTableMessage<LibraryNowPlayingValues?, Library>(GetNowPlayingValuesWriter(context, libraryId))
 
 	override fun removeLibrary(libraryId: LibraryId): Promise<Unit> =
 		promiseTableMessage<Unit, Library>(RemoveLibraryWriter(context, libraryId))
@@ -68,12 +60,30 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 		override fun prepareMessage(cancellationSignal: CancellationSignal): Library? {
 			val libraryInt = libraryId.id
 			if (libraryInt < 0) return null
-			if (cancellationSignal.isCancelled) throw CancellationException("Cancelled while getting library")
+			if (cancellationSignal.isCancelled) throw CancellationException("Cancelled while getting library.")
 
 			return RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginNonExclusiveTransaction().use {
 					repositoryAccessHelper
 						.mapSql("SELECT * FROM $tableName WHERE id = @id")
+						.addParameter("id", libraryInt)
+						.fetchFirst()
+				}
+			}
+		}
+	}
+
+	private class GetNowPlayingValuesWriter(private val context: Context, private val libraryId: LibraryId) : CancellableMessageWriter<LibraryNowPlayingValues?> {
+
+		override fun prepareMessage(cancellationSignal: CancellationSignal): LibraryNowPlayingValues? {
+			val libraryInt = libraryId.id
+			if (libraryInt < 0) return null
+			if (cancellationSignal.isCancelled) throw CancellationException("Cancelled while getting now playing values.")
+
+			return RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+				repositoryAccessHelper.beginNonExclusiveTransaction().use {
+					repositoryAccessHelper
+						.mapSql("SELECT id, $nowPlayingIdColumn, $nowPlayingProgressColumn, $savedTracksStringColumn, $isRepeatingColumn FROM $tableName WHERE id = @id")
 						.addParameter("id", libraryInt)
 						.fetchFirst()
 				}
@@ -108,44 +118,26 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 
 	private class UpdateNowPlayingLibraryWriter(
 		private val context: Context,
-		private val libraryId: LibraryId,
-		private val nowPlayingId: Int,
-		private val nowPlayingProgress: Long,
-		private val savedTracksString: String,
-		private val isRepeating: Boolean
+		private val values: LibraryNowPlayingValues
 	) : CancellableMessageWriter<Unit> {
 
 		companion object {
 			private val logger by lazyLogger<SaveLibraryWriter>()
-
-			private val updateStatement by lazy {
-				SqLiteAssistants.UpdateBuilder
-					.fromTable(tableName)
-					.addSetter(nowPlayingIdColumn)
-					.addSetter(nowPlayingProgressColumn)
-					.addSetter(savedTracksStringColumn)
-					.addSetter(isRepeatingColumn)
-					.setFilter("where id = @id")
-					.buildQuery()
-			}
 		}
 
 		override fun prepareMessage(cancellationSignal: CancellationSignal) {
-			if (cancellationSignal.isCancelled) throw CancellationException("Cancelled while saving library")
+			if (cancellationSignal.isCancelled) throw CancellationException("Cancelled while saving now playing values.")
 
-			val libraryInt = libraryId.id
+			val libraryInt = values.id
 			if (libraryInt < 0) return
 
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
-					repositoryAccessHelper
-						.mapSql(updateStatement)
-						.addParameter(nowPlayingIdColumn, nowPlayingId)
-						.addParameter(nowPlayingProgressColumn, nowPlayingProgress)
-						.addParameter(savedTracksStringColumn, savedTracksString)
-						.addParameter(isRepeatingColumn, isRepeating)
-						.addParameter("id", libraryInt)
-						.execute()
+					val result = SqLiteAssistants.updateValue(repositoryAccessHelper.writableDatabase, tableName, values)
+
+					if (result == 0L) {
+						throw IOException("Updating $tableName for id ${values.id} returned 0 rows.")
+					}
 
 					logger.debug("Now Playing updated for library $libraryInt.")
 					closeableTransaction.setTransactionSuccessful()

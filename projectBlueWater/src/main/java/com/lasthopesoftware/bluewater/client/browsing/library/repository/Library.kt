@@ -7,15 +7,15 @@ import com.lasthopesoftware.bluewater.IdentifiableEntity
 data class Library(
 	override var id: Int = -1,
 	var libraryName: String? = null,
-	var isRepeating: Boolean = false,
-	var nowPlayingId: Int = -1,
-	var nowPlayingProgress: Long = -1,
-	var savedTracksString: String? = null,
+	override var isRepeating: Boolean = false,
+	override var nowPlayingId: Int = -1,
+	override var nowPlayingProgress: Long = -1,
+	override var savedTracksString: String? = null,
 	var isUsingExistingFiles: Boolean = false,
 	var serverType: ServerType? = null,
 	var syncedFileLocation: SyncedFileLocation? = null,
 	var connectionSettings: String? = null,
-) : IdentifiableEntity {
+) : IdentifiableEntity, StoredNowPlayingValues {
 
 	@Keep
 	enum class ServerType {

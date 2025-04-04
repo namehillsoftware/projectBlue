@@ -51,7 +51,6 @@ class `When Playback is Resumed` {
 		val nowPlayingRepository = NowPlayingRepository(
 			FakeSelectedLibraryProvider(),
 			libraryProvider,
-			libraryProvider,
 		)
 
 		val playbackEngine = PlaybackEngine(

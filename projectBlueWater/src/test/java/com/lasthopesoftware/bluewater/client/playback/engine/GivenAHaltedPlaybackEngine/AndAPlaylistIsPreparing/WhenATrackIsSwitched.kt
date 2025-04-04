@@ -48,7 +48,6 @@ class WhenATrackIsSwitched {
 				NowPlayingRepository(
 					mockk(),
 					libraryProvider,
-					libraryProvider,
 				),
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)

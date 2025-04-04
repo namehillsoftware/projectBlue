@@ -57,7 +57,6 @@ class WhenStateIsRestoredWithADifferentLibraryId {
             NowPlayingRepository(
                 FakeSelectedLibraryProvider(),
                 libraryProvider,
-                libraryProvider,
             )
 		val playbackEngine = PlaybackEngine(
             PreparedPlaybackQueueResourceManagement(

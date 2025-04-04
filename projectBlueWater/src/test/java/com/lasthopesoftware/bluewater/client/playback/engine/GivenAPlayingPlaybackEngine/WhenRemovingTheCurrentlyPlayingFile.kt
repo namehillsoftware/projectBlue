@@ -4,9 +4,9 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryNowPlayingValues
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
@@ -20,7 +20,7 @@ import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManag
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
-import io.mockk.mockk
+import io.mockk.spyk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -64,9 +64,10 @@ class WhenRemovingTheCurrentlyPlayingFile {
 
 		val libraryProvider = FakeLibraryRepository(library)
 		val savedLibrary = object : Promise<Library>() {
-			val libraryStorage = mockk<ILibraryStorage> {
-				every { updateNowPlaying(any(), any(), any(), any(), any()) } answers {
-					libraryProvider.updateNowPlaying(arg(0), arg(1), arg(2), arg(3), arg(4)).then { _ ->
+			val libraryStorage = spyk(libraryProvider) {
+				every { updateNowPlaying(any()) } answers {
+					val values = firstArg<LibraryNowPlayingValues>()
+					libraryProvider.updateNowPlaying(values).then { _ ->
 						val lib = libraryProvider.libraries[libraryId]
 						if (lib?.savedTracksString != library.savedTracksString && lib?.nowPlayingId == 5)
 							resolve(lib)
@@ -81,7 +82,6 @@ class WhenRemovingTheCurrentlyPlayingFile {
 				listOf(CompletingFileQueueProvider()),
 				NowPlayingRepository(
 					FakeSelectedLibraryProvider(),
-					libraryProvider,
 					savedLibrary.libraryStorage,
 				),
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))

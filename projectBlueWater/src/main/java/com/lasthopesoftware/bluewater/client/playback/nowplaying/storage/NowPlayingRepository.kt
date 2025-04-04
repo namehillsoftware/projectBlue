@@ -3,21 +3,21 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.storage
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities.promiseParsedFileStringList
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities.promiseSerializedFileStringList
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ManageLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.promises.extensions.cancelBackEventually
-import com.lasthopesoftware.promises.extensions.cancelBackThen
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryNowPlayingValues
+import com.lasthopesoftware.policies.caching.LruPromiseCache
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class NowPlayingRepository(
 	private val selectedLibraryId: ProvideSelectedLibraryId,
-	private val libraryProvider: ILibraryProvider,
-	private val libraryRepository: ILibraryStorage
+	private val libraryManager: ManageLibraries
 ) : ManageNowPlayingState {
+
+	private val serializedTracksCache by lazy { LruPromiseCache<List<ServiceFile>, String>(1) }
 
 	override fun promiseActiveNowPlaying(): Promise<NowPlaying?> =
 		selectedLibraryId
@@ -25,8 +25,8 @@ class NowPlayingRepository(
 			.eventually { it?.let(::promiseNowPlaying).keepPromise() }
 
 	override fun promiseNowPlaying(libraryId: LibraryId): Promise<NowPlaying?> =
-		libraryProvider
-			.promiseLibrary(libraryId)
+		libraryManager
+			.promiseNowPlayingValues(libraryId)
 			.eventually { library ->
 				library?.run {
 					savedTracksString
@@ -55,19 +55,26 @@ class NowPlayingRepository(
 	override fun updateNowPlaying(nowPlaying: NowPlaying): Promise<NowPlaying> {
 		val libraryId = nowPlaying.libraryId
 
-		return promiseSerializedFileStringList(nowPlaying.playlist)
-			.cancelBackEventually { serializedPlaylist ->
-				nowPlaying.run {
-					libraryRepository
-						.updateNowPlaying(
-							libraryId = libraryId,
-							nowPlayingId = playlistPosition,
-							nowPlayingProgress = filePosition,
-							savedTracksString = serializedPlaylist,
-							isRepeating = isRepeating
-						)
+		return Promise.Proxy { cp ->
+			serializedTracksCache
+				.getOrAdd(nowPlaying.playlist, ::promiseSerializedFileStringList)
+				.also(cp::doCancel)
+				.eventually { serializedPlaylist ->
+					nowPlaying.run {
+						libraryManager
+							.updateNowPlaying(
+								LibraryNowPlayingValues(
+									id = libraryId.id,
+									nowPlayingId = playlistPosition,
+									nowPlayingProgress = filePosition,
+									savedTracksString = serializedPlaylist,
+									isRepeating = isRepeating
+								)
+							)
+							.also(cp::doCancel)
+					}
 				}
-				.cancelBackThen { _, _ -> nowPlaying }
-			}
+				.then { _ -> nowPlaying }
+		}
 	}
 }

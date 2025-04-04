@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.client.playback.engine.GivenAHaltedPlayba
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryNowPlayingValues
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
@@ -20,6 +20,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFutur
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.spyk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
@@ -51,10 +52,11 @@ class WhenChangingTracks {
 
 		val libraryProvider = FakeLibraryRepository(library)
 		val savedLibrary = object : Promise<Library>() {
-			val libraryStorage = mockk<ILibraryStorage> {
-				every { updateNowPlaying(any(), any(), any(), any(), any()) } answers {
-					libraryProvider.updateNowPlaying(arg(0), arg(1), arg(2), arg(3), arg(4)).then { _ ->
-						resolve(libraryProvider.libraries[firstArg<LibraryId>().id])
+			val libraryStorage = spyk(libraryProvider) {
+				every { updateNowPlaying(any()) } answers {
+					val values = firstArg<LibraryNowPlayingValues>()
+					libraryProvider.updateNowPlaying(values).then { _ ->
+						resolve(libraryProvider.libraries[values.id])
 					}
 				}
 			}
@@ -69,7 +71,6 @@ class WhenChangingTracks {
 			listOf(CompletingFileQueueProvider()),
 			NowPlayingRepository(
 				FakeSelectedLibraryProvider(),
-				libraryProvider,
 				savedLibrary.libraryStorage,
 			),
 			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))

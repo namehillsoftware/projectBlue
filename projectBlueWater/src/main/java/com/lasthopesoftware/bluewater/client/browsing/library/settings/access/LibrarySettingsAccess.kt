@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.settings.access
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ManageLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
@@ -15,10 +14,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.serialization.json.Json
 import kotlin.coroutines.cancellation.CancellationException
 
-class LibrarySettingsAccess(
-	private val libraryProvider: ILibraryProvider,
-	private val libraryStorage: ILibraryStorage,
-) : ProvideLibrarySettings, StoreLibrarySettings {
+class LibrarySettingsAccess(private val libraryManager: ManageLibraries) : ProvideLibrarySettings, StoreLibrarySettings {
 	companion object {
 		private fun librarySettingsAccessCancelled() = CancellationException("Cancelled while accessing Library Settings.")
 
@@ -41,7 +37,7 @@ class LibrarySettingsAccess(
 	}
 
 	override fun promiseAllLibrarySettings(): Promise<Collection<LibrarySettings>> =
-		libraryProvider
+		libraryManager
 			.promiseAllLibraries()
 			.cancelBackEventually { libraries ->
 				Promise.whenAll(
@@ -56,7 +52,7 @@ class LibrarySettingsAccess(
 			}
 
 	override fun promiseLibrarySettings(libraryId: LibraryId): Promise<LibrarySettings?> =
-		libraryProvider
+		libraryManager
 			.promiseLibrary(libraryId)
 			.cancelBackEventually { maybeLibrary ->
 				maybeLibrary
@@ -72,7 +68,7 @@ class LibrarySettingsAccess(
 
 	override fun promiseSavedLibrarySettings(librarySettings: LibrarySettings): Promise<LibrarySettings> =
 		(librarySettings.libraryId
-			?.let(libraryProvider::promiseLibrary)
+			?.let(libraryManager::promiseLibrary)
 			?.cancelBackEventually { maybeLibrary ->
 				maybeLibrary
 					?.let { l ->
@@ -95,7 +91,7 @@ class LibrarySettingsAccess(
 				if (cs.isCancelled) throw librarySettingsAccessCancelled()
 				librarySettings.toNewLibrary()
 			})
-			.cancelBackEventually(libraryStorage::saveLibrary)
+			.cancelBackEventually(libraryManager::saveLibrary)
 			.cancelBackEventually {
 				ThreadPools.compute.preparePromise { cs ->
 					if (cs.isCancelled) throw librarySettingsAccessCancelled()

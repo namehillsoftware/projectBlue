@@ -56,7 +56,6 @@ class WhenSettingEngineToComplete {
 			NowPlayingRepository(
 				FakeSelectedLibraryProvider(),
 				libraryProvider,
-				libraryProvider,
 			)
 		val playbackEngine =
 			PlaybackEngine(

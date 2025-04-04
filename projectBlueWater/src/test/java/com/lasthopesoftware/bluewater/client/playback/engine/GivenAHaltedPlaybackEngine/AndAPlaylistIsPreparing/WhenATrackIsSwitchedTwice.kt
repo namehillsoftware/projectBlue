@@ -46,7 +46,6 @@ class WhenATrackIsSwitchedTwice {
 			NowPlayingRepository(
 				FakeSelectedLibraryProvider(),
 				libraryProvider,
-				libraryProvider,
 			),
 			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f)))
 

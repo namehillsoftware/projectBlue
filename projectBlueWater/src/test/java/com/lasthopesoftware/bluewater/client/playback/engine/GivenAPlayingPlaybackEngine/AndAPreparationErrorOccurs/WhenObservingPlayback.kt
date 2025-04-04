@@ -49,7 +49,6 @@ class WhenObservingPlayback {
 		val nowPlayingRepository = NowPlayingRepository(
 			FakeSelectedLibraryProvider(),
 			libraryProvider,
-			libraryProvider,
 		)
 
 		val playbackEngine = PlaybackEngine(

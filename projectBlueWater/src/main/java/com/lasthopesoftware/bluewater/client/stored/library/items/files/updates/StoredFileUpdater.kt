@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ProvideLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.HaveExternalContent
@@ -17,7 +17,7 @@ import java.net.URI
 class StoredFileUpdater(
     private val storedFileAccess: AccessStoredFiles,
     private val mediaFileUriProvider: MediaFileUriProvider,
-    private val libraryProvider: ILibraryProvider,
+    private val libraryProvider: ProvideLibraries,
     private val lookupStoredFilePaths: GetStoredFileUris,
     private val externalContent: HaveExternalContent,
 ) : UpdateStoredFiles {

@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.sync
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ProvideLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.PruneStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
@@ -18,11 +18,11 @@ import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.exceptions.CompositeException
 
 class StoredFileSynchronization(
-	private val libraryProvider: ILibraryProvider,
-	private val applicationMessages: SendApplicationMessages,
-	private val pruneStoredFiles: PruneStoredFiles,
-	private val checkSync: CheckForSync,
-	private val syncHandler: ControlLibrarySyncs
+    private val libraryProvider: ProvideLibraries,
+    private val applicationMessages: SendApplicationMessages,
+    private val pruneStoredFiles: PruneStoredFiles,
+    private val checkSync: CheckForSync,
+    private val syncHandler: ControlLibrarySyncs
 ) : SynchronizeStoredFiles {
 
 	companion object {

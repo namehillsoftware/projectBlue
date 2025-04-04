@@ -13,10 +13,10 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.disk.AndroidD
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.DiskFileAccessTimeUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.DiskFileCachePersistence
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.DiskFileCacheStreamSupplier
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryNameLookup
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ManageLibraries
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ProvideLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.CachedLibrarySettingsAccess
@@ -139,7 +139,6 @@ object ApplicationDependenciesContainer {
 				selectedLibraryIdProvider,
 				NowPlayingRepository(
 					selectedLibraryIdProvider,
-					libraryProvider,
 					libraryStorage,
 				),
 			)
@@ -151,14 +150,14 @@ object ApplicationDependenciesContainer {
 				.initializeComponent(cls<LiveNowPlayingLookupInitializer>())
 		}
 
-		override val libraryProvider: ILibraryProvider
+		override val libraryProvider: ProvideLibraries
 			get() = libraryRepository
 
-		override val libraryStorage: ILibraryStorage
+		override val libraryStorage: ManageLibraries
 			get() = libraryRepository
 
 		override val librarySettingsProvider by lazy {
-			val access = LibrarySettingsAccess(libraryProvider, libraryStorage)
+			val access = LibrarySettingsAccess(libraryStorage)
 			CachedLibrarySettingsAccess(access, access)
 		}
 

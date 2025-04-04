@@ -18,8 +18,10 @@ import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManag
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.util.Collections
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -46,7 +48,6 @@ class WhenChangingTracks {
 				NowPlayingRepository(
 					FakeSelectedLibraryProvider(),
 					libraryProvider,
-					libraryProvider,
 				),
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)
@@ -55,13 +56,13 @@ class WhenChangingTracks {
 
 	private var nextSwitchedFile: PositionedFile? = null
 	private var latestFile: PositionedPlayingFile? = null
-	private val startedFiles: MutableList<PositionedPlayingFile?> = ArrayList()
+	private val startedFiles = Collections.synchronizedList(ArrayList<PositionedPlayingFile?>())
 
 	@BeforeAll
 	fun act() {
 		val (fakePlaybackPreparerProvider, playbackEngine) = mut
 
-		val countDownLatch = CountDownLatch(1)
+		val countDownLatch = CountDownLatch(2)
 		val promisedStart = playbackEngine
 			.setOnPlayingFileChanged { _, p ->
 				startedFiles.add(p)
@@ -88,7 +89,7 @@ class WhenChangingTracks {
 		fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("4")]?.resolve()
 		playingPlaybackHandler?.resolve()
 
-		countDownLatch.await(10, TimeUnit.SECONDS)
+		if (!countDownLatch.await(10, TimeUnit.SECONDS)) Assertions.fail<Unit>("Timed out waiting for file change")
 		nextSwitchedFile = futurePositionChange.get()?.second
 	}
 

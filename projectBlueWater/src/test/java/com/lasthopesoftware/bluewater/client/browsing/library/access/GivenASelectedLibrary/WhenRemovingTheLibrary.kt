@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.access.GivenASelectedLibrary
 
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRemoval
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ManageLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectBrowserLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
@@ -30,7 +30,7 @@ class WhenRemovingTheLibrary {
 			StoredItem(5, "2", StoredItem.ItemType.ITEM),
 			StoredItem(14, "5", StoredItem.ItemType.ITEM)
 		)
-		val libraryStorage = mockk<ILibraryStorage>()
+		val libraryStorage = mockk<ManageLibraries>()
 		every { libraryStorage.removeLibrary(libraryId) } returns Promise.empty()
 
 		val libraryIdentifierProvider = mockk<ProvideSelectedLibraryId>()

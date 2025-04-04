@@ -44,14 +44,13 @@ class `When saving the library settings` {
 						)
 					)
 				).toPromise()
-			},
-			mockk {
+
 				every { saveLibrary(any()) } answers {
 					val library = firstArg<Library>()
 					storedLibraries.add(library)
 					library.toPromise()
 				}
-			}
+			},
 		)
 	}
 

@@ -9,11 +9,11 @@ import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class LibraryRemoval(
-    private val storedItems: AccessStoredItems,
-    private val libraryStorage: ILibraryStorage,
-    private val selectedLibraryIdProvider: ProvideSelectedLibraryId,
-    private val libraryProvider: ILibraryProvider,
-    private val librarySelection: SelectBrowserLibrary) : RemoveLibraries {
+	private val storedItems: AccessStoredItems,
+	private val libraryStorage: ManageLibraries,
+	private val selectedLibraryIdProvider: ProvideSelectedLibraryId,
+	private val libraryProvider: ProvideLibraries,
+	private val librarySelection: SelectBrowserLibrary) : RemoveLibraries {
 
 	override fun removeLibrary(libraryId: LibraryId): Promise<*> {
 		val promisedNewLibrarySelection = selectedLibraryIdProvider

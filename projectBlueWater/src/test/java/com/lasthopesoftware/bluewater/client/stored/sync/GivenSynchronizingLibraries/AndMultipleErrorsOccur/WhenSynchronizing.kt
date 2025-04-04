@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.sync.GivenSynchronizingLibraries.AndMultipleErrorsOccur
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ProvideLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.PruneStoredFiles
@@ -45,7 +45,7 @@ class WhenSynchronizing {
 				every { pruneDanglingFiles() } returns Unit.toPromise()
 			}
 
-		val libraryProvider = mockk<ILibraryProvider>()
+		val libraryProvider = mockk<ProvideLibraries>()
 		every { libraryProvider.promiseAllLibraries() } returns Promise(listOf(Library(id = 4)))
 		val librarySyncHandler = mockk<ControlLibrarySyncs>()
 		every { librarySyncHandler.observeLibrarySync(LibraryId(4)) } returns Observable.concatArrayDelayError(

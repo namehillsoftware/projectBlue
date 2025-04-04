@@ -68,7 +68,6 @@ class `When getting all library settings` {
 					)
 				).toPromise()
 			},
-			mockk()
 		)
 	}
 

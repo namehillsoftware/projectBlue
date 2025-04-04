@@ -42,7 +42,6 @@ class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 			NowPlayingRepository(
 				FakeSelectedLibraryProvider(),
 				libraryProvider,
-				libraryProvider,
 			)
 		val playbackEngine =
 			PlaybackEngine(

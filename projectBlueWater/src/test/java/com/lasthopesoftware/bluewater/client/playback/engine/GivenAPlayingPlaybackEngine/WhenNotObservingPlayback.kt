@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.client.playback.engine.GivenAPlayingPlayb
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ManageLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryNowPlayingValues
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
@@ -40,10 +40,11 @@ class WhenNotObservingPlayback {
 
 		val libraryProvider = FakeLibraryRepository(library)
 		val promisedLibraryStorageUpdate = object : Promise<Unit>() {
-			val storage = mockk<ILibraryStorage> {
-				every { updateNowPlaying(any(), any(), any(), any(), any()) } answers {
-					libraryProvider.updateNowPlaying(arg(0), arg(1), arg(2), arg(3), arg(4)).then { _ ->
-						if (libraryProvider.libraries[firstArg<LibraryId>().id]?.nowPlayingId == 1)
+			val storage = mockk<ManageLibraries> {
+				every { updateNowPlaying(any()) } answers {
+					val values = firstArg<LibraryNowPlayingValues>()
+					libraryProvider.updateNowPlaying(values).then { _ ->
+						if (libraryProvider.libraries[values.id]?.nowPlayingId == 1)
 							resolve(Unit)
 					}
 				}
@@ -55,7 +56,6 @@ class WhenNotObservingPlayback {
 			listOf(CompletingFileQueueProvider()),
 			NowPlayingRepository(
 				FakeSelectedLibraryProvider(),
-				libraryProvider,
 				promisedLibraryStorageUpdate.storage
 			),
 			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))

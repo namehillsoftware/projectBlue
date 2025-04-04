@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
@@ -26,13 +26,20 @@ private const val libraryId = 852
 class WhenPlaybackIsInterrupted {
 
 	private val mut by lazy {
-		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
+		val fakePlaybackPreparerProvider = FakeMappedPlayableFilePreparationSourceProvider(
+			listOf(
+				ServiceFile("1"),
+				ServiceFile("2"),
+				ServiceFile("3"),
+				ServiceFile("4"),
+				ServiceFile("5")
+			)
+		)
 		val library = Library(id = libraryId)
 		val libraryProvider = FakeLibraryRepository(library)
 		val nowPlayingRepository =
 			NowPlayingRepository(
 				FakeSelectedLibraryProvider(),
-				libraryProvider,
 				libraryProvider,
 			)
 		val playbackEngine = PlaybackEngine(
@@ -55,21 +62,15 @@ class WhenPlaybackIsInterrupted {
 		playbackEngine
 			.startPlaylist(
 				LibraryId(libraryId),
-				listOf(
-					ServiceFile("1"),
-					ServiceFile("2"),
-					ServiceFile("3"),
-					ServiceFile("4"),
-					ServiceFile("5")
-				),
+				fakePlaybackPreparerProvider.deferredResolutions.keys.toList(),
 				0,
 				Duration.ZERO
 			)
 		playbackEngine.setOnPlaybackInterrupted { isInterrupted = true }
 
-		val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
-		resolvablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
-		playingPlaybackHandler.resolve()
+		val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("1")]?.resolve()
+		resolvablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("2")]?.resolve()
+		playingPlaybackHandler?.resolve()
 		resolvablePlaybackHandler?.setCurrentPosition(30)
 		playbackEngine.interrupt()
 		nowPlaying = nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()
