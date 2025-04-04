@@ -63,7 +63,9 @@ class StoredItem : IdentifiableEntity, IEntityCreator, IEntityUpdater {
 		FILE, PLAYLIST, ITEM
 	}
 
+	@Keep
 	class Version5StoredItem {
+		var id = 0
 		var libraryId = 0
 
 		// unique with library id
@@ -75,7 +77,7 @@ class StoredItem : IdentifiableEntity, IEntityCreator, IEntityUpdater {
 				libraryId = libraryId,
 				serviceId = serviceId.toString(),
 				itemType = itemType
-			)
+			).also { it.id = id }
 		}
 	}
 
