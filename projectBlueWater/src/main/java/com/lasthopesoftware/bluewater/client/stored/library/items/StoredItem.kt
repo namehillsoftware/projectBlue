@@ -63,6 +63,7 @@ class StoredItem : IdentifiableEntity, IEntityCreator, IEntityUpdater {
 		FILE, PLAYLIST, ITEM
 	}
 
+	@Keep
 	class Version5StoredItem {
 		var libraryId = 0
 
