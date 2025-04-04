@@ -19,11 +19,11 @@ private const val libraryId = 163
 class WhenLoadingTheItems {
 	private val viewModel by lazy {
 		val itemProvider = mockk<ProvideItems>().apply {
-			every { promiseItems(LibraryId(libraryId), ItemId(826)) } returns listOf(
-                Item(55),
-                Item(137),
-                Item(766),
-                Item(812),
+			every { promiseItems(LibraryId(libraryId), ItemId("826")) } returns listOf(
+                Item("55"),
+                Item("137"),
+                Item("766"),
+                Item("812"),
 			).toPromise()
 		}
 
@@ -36,7 +36,7 @@ class WhenLoadingTheItems {
 
 	@BeforeAll
 	fun act() {
-		viewModel.loadItem(LibraryId(libraryId), Item(826, "leaf")).toExpiringFuture().get()
+		viewModel.loadItem(LibraryId(libraryId), Item("826", "leaf")).toExpiringFuture().get()
 	}
 
 	@Test
@@ -54,10 +54,10 @@ class WhenLoadingTheItems {
 		assertThat(viewModel.items.value)
 			.hasSameElementsAs(
 				listOf(
-                    Item(55),
-                    Item(137),
-                    Item(766),
-                    Item(812),
+                    Item("55"),
+                    Item("137"),
+                    Item("766"),
+                    Item("812"),
 				)
 			)
 	}

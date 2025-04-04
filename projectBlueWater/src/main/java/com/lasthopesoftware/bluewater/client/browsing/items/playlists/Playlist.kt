@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue
 
 class Playlist : AbstractIntKeyStringValue, IItem {
     constructor() : super()
-    constructor(key: Int) {
+    constructor(key: String) {
         this.key = key
     }
 }

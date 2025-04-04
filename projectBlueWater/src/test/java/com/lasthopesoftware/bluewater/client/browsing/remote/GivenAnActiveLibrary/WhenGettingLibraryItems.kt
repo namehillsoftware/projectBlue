@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFutur
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions.*
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -18,7 +18,7 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class `When Getting Library Items` {
 	companion object {
-		private val viewIds by lazy { listOf(911, 126, 231, 790, 574, 905, 471, 535) }
+		private val viewIds by lazy { listOf("911", "126", "231", "790", "574", "905", "471", "535") }
 
 		private val expectedMediaItems by lazy {
 			viewIds.map { i ->

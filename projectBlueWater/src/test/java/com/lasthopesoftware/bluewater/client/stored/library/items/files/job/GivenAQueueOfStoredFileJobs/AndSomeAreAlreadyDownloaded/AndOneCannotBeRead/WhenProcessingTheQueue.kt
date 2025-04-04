@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.AndSomeAreAlreadyDownloaded.AndOneCannotBeRead
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.MarkedFilesStoredFilesUpdater
@@ -25,58 +23,57 @@ class WhenProcessingTheQueue {
 	private val storedFileJobs = setOf(
 		StoredFileJob(
 			LibraryId(1),
-			ServiceFile(1),
-			StoredFile().setServiceId(1).setLibraryId(1)
+			ServiceFile("1"),
+			StoredFile().setServiceId("1").setLibraryId(1)
 		),
 		StoredFileJob(
 			LibraryId(1),
-			ServiceFile(2),
-			StoredFile().setServiceId(2).setLibraryId(1)
+			ServiceFile("2"),
+			StoredFile().setServiceId("2").setLibraryId(1)
 		),
 		StoredFileJob(
 			LibraryId(1),
-			ServiceFile(4),
-			StoredFile().setServiceId(4).setLibraryId(1)
+			ServiceFile("4"),
+			StoredFile().setServiceId("4").setLibraryId(1)
 		),
 		StoredFileJob(
 			LibraryId(1),
-			ServiceFile(5),
-			StoredFile().setServiceId(5).setLibraryId(1).setIsDownloadComplete(true)
+			ServiceFile("5"),
+			StoredFile().setServiceId("5").setLibraryId(1).setIsDownloadComplete(true)
 		),
 		StoredFileJob(
 			LibraryId(1),
-			ServiceFile(7),
-			StoredFile().setServiceId(7).setLibraryId(1)
+			ServiceFile("7"),
+			StoredFile().setServiceId("7").setLibraryId(1)
 		),
 		StoredFileJob(
 			LibraryId(1),
-			ServiceFile(114),
-			StoredFile().setServiceId(114).setLibraryId(1).setIsDownloadComplete(false)
+			ServiceFile("114"),
+			StoredFile().setServiceId("114").setLibraryId(1).setIsDownloadComplete(false)
 		),
 		StoredFileJob(
 			LibraryId(1),
-			ServiceFile(92),
-			StoredFile().setServiceId(92).setLibraryId(1).setIsDownloadComplete(true)
+			ServiceFile("92"),
+			StoredFile().setServiceId("92").setLibraryId(1).setIsDownloadComplete(true)
 		)
 	)
 
 	private val expectedStoredFiles = arrayOf(
-		StoredFile().setServiceId(1).setLibraryId(1),
-		StoredFile().setServiceId(2).setLibraryId(1),
-		StoredFile().setServiceId(4).setLibraryId(1),
-		StoredFile().setServiceId(7).setLibraryId(1)
+		StoredFile().setServiceId("1").setLibraryId(1),
+		StoredFile().setServiceId("2").setLibraryId(1),
+		StoredFile().setServiceId("4").setLibraryId(1),
+		StoredFile().setServiceId("7").setLibraryId(1)
 	)
 	private val storedFilesUpdater = MarkedFilesStoredFilesUpdater()
 	private val storedFileStatuses = ArrayList<StoredFileJobStatus>()
 	private var exception: StorageReadFileException? = null
 
-	@RequiresApi(api = Build.VERSION_CODES.N)
 	@BeforeAll
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
 				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
-				every { promiseOutputStream(match { arrayOf(114, 92, 5).contains(it.serviceId) }) } returns Promise.empty()
+				every { promiseOutputStream(match { arrayOf("114", "92", "5").contains(it.serviceId) }) } returns Promise.empty()
 			},
 			mockk {
 				every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
@@ -98,7 +95,7 @@ class WhenProcessingTheQueue {
 	fun `then the correct files are marked unreadable`() {
 		assertThat(
 			storedFileStatuses.single { s -> s.storedFileJobState === StoredFileJobState.Unreadable }.storedFile.serviceId
-		).isEqualTo(114)
+		).isEqualTo("114")
 	}
 
 	@Test
@@ -125,7 +122,7 @@ class WhenProcessingTheQueue {
 		).isSubsetOf(
 			storedFileJobs
 				.map(StoredFileJob::storedFile)
-				.filter { f -> f.serviceId != 114 }
+				.filter { f -> f.serviceId != "114" }
 		)
 	}
 }

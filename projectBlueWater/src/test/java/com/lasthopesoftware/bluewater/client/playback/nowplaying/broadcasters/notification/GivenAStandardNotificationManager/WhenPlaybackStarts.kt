@@ -18,12 +18,12 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
-private const val libraryId = 779
-private const val serviceFileId = 848
-
 class WhenPlaybackStarts : AndroidContext() {
 
 	companion object {
+		private const val libraryId = 779
+		private const val serviceFileId = "848"
+
 		private val startedNotification = Notification()
 		private val foregroundNotifications = mutableListOf<Pair<Notification?, Int>>()
 	}

@@ -1,10 +1,10 @@
 package com.lasthopesoftware.bluewater.shared
 
-import java.util.*
+import java.util.Objects
 
 abstract class AbstractIntKeyStringValue protected constructor(
-	override var key: Int = 0,
-	override var value: String? = null)
+    override var key: String = "",
+    override var value: String? = null)
 : IIntKeyStringValue {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

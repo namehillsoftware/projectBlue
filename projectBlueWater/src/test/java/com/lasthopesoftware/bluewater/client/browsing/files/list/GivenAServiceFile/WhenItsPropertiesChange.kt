@@ -21,10 +21,12 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-private const val libraryId = 95
-private const val serviceFileId = 889
-
 class WhenItsPropertiesChange {
+
+	companion object {
+		private const val libraryId = 95
+		private const val serviceFileId = "889"
+	}
 
 	private val recordingMessageBus = RecordingTypedMessageBus<ItemListMenuMessage>()
 

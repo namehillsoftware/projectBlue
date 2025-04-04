@@ -21,11 +21,11 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Test
 
-private const val libraryId = 613
-private const val serviceFileId = 543
-
 class WhenPlaybackIsInterrupted : AndroidContext() {
 	companion object {
+		private const val libraryId = 613
+		private const val serviceFileId = "543"
+
 		private val pausedNotification = Notification()
 		private val notificationController = mockk<ControlNotifications>(relaxUnitFun = true, relaxed = true)
 		private val notificationContentBuilder by lazy {

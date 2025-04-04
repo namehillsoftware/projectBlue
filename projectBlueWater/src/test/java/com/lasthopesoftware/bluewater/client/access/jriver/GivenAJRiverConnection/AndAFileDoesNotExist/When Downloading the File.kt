@@ -20,7 +20,7 @@ class `When Downloading the File` {
 			},
 			mockk(),
 		)
-		downloader.promiseFile(ServiceFile(4)).toExpiringFuture().get()
+		downloader.promiseFile(ServiceFile("4")).toExpiringFuture().get()
 	}
 
 	@Test

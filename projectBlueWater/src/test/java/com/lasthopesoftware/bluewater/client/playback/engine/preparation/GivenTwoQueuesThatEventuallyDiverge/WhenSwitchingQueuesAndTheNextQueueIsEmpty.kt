@@ -20,11 +20,11 @@ class WhenSwitchingQueuesAndTheNextQueueIsEmpty {
 		val positionedFileQueue = mockk<PositionedFileQueue>().apply {
 			every { libraryId } returns LibraryId(168)
 			every { poll() } returnsMany listOf(
-				PositionedFile(1, ServiceFile(1)),
-				PositionedFile(2, ServiceFile(2)),
-				PositionedFile(3, ServiceFile(3)),
-				PositionedFile(4, ServiceFile(4)),
-				PositionedFile(5, ServiceFile(5)),
+				PositionedFile(1, ServiceFile("1")),
+				PositionedFile(2, ServiceFile("2")),
+				PositionedFile(3, ServiceFile("3")),
+				PositionedFile(4, ServiceFile("4")),
+				PositionedFile(5, ServiceFile("5")),
 				null
 			)
 		}

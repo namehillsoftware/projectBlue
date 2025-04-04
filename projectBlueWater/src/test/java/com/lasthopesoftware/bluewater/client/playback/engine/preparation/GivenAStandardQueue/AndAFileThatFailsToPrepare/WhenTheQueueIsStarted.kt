@@ -26,10 +26,10 @@ private const val libraryId = 34
 class WhenTheQueueIsStarted {
 
 	private val mut by lazy {
-		val serviceFiles = (0..2).map { key -> ServiceFile(key) }
+		val serviceFiles = (0..2).map { key -> ServiceFile(key.toString()) }
 		val playbackPreparer = mockk<PlayableFilePreparationSource>().apply {
-			every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile(0), Duration.ZERO) } returns Promise(expectedException)
-			every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile(1), Duration.ZERO) } returns Promise(
+			every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile("0"), Duration.ZERO) } returns Promise(expectedException)
+			every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile("1"), Duration.ZERO) } returns Promise(
 				FakePreparedPlayableFile(FakeBufferingPlaybackHandler())
 			)
 		}
@@ -66,7 +66,7 @@ class WhenTheQueueIsStarted {
 	@Test
 	fun `then the positioned file exception contains the positioned file`() {
 		assertThat(caughtException!!.positionedFile)
-			.isEqualTo(PositionedFile(0, ServiceFile(0)))
+			.isEqualTo(PositionedFile(0, ServiceFile("0")))
 	}
 
 	@Test

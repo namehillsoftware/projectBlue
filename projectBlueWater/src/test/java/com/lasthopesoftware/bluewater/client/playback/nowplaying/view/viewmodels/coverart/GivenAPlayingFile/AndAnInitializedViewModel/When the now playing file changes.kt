@@ -23,8 +23,8 @@ import java.net.URL
 class `When the now playing file changes` {
 	companion object {
 		private const val libraryId = 283
-		private const val originalServiceFileId = 1000
-		private const val newServiceFileId = 340
+		private const val originalServiceFileId = "1000"
+		private const val newServiceFileId = "340"
 	}
 
 	private val services by lazy {
@@ -39,11 +39,11 @@ class `When the now playing file changes` {
 						NowPlaying(
 							LibraryId(libraryId),
 							listOf(
-								ServiceFile(815),
-								ServiceFile(449),
-								ServiceFile(592),
+								ServiceFile("815"),
+								ServiceFile("449"),
+								ServiceFile("592"),
 								ServiceFile(originalServiceFileId),
-								ServiceFile(390),
+								ServiceFile("390"),
 							),
 							3,
 							439774,

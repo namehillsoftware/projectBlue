@@ -35,11 +35,11 @@ class WhenUpdatingTheFile {
 			val storedFileUpdater = StoredFileUpdater(
 				FakeStoredFileAccess(),
 				mockk {
-					every { promiseUri(LibraryId(libraryId), ServiceFile(4)) } returns Promise.empty()
+					every { promiseUri(LibraryId(libraryId), ServiceFile("4")) } returns Promise.empty()
 				},
 				fakeLibraryRepository,
 				mockk {
-					every { promiseStoredFileUri(LibraryId(libraryId), ServiceFile(4)) } returns Promise(
+					every { promiseStoredFileUri(LibraryId(libraryId), ServiceFile("4")) } returns Promise(
 						URI("file:/my-public-drive/14/artist/album/my-filename.mp3")
 					)
 				},
@@ -47,7 +47,7 @@ class WhenUpdatingTheFile {
 			)
 
 			storedFileUpdater
-				.promiseStoredFileUpdate(LibraryId(libraryId), ServiceFile(4))
+				.promiseStoredFileUpdate(LibraryId(libraryId), ServiceFile("4"))
 				.toExpiringFuture()
 				.get(1, TimeUnit.MINUTES)
 		}

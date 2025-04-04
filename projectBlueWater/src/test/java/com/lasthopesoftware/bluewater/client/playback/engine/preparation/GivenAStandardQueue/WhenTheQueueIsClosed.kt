@@ -28,7 +28,7 @@ class WhenTheQueueIsClosed {
 		PreparedPlayableFileQueue(
 			FakePlaybackQueueConfiguration(1),
 			{ _, _, _ -> cancelRecordingPromise },
-			bufferingPlaybackQueuesProvider.provideQueue(LibraryId(libraryId), listOf(ServiceFile(1)), 0)
+			bufferingPlaybackQueuesProvider.provideQueue(LibraryId(libraryId), listOf(ServiceFile("1")), 0)
 		)
 	}
 

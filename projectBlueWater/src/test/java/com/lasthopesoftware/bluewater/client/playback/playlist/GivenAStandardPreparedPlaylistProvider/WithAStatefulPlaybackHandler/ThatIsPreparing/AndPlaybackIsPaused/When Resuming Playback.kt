@@ -23,7 +23,7 @@ class `When Resuming Playback` {
 			0,
 			playbackHandler,
 			NoTransformVolumeManager(),
-			ServiceFile(1)
+			ServiceFile("1")
 		)
 	)
 

@@ -17,10 +17,12 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-private const val libraryId = 114
-private const val serviceFileId = 371
-
 class WhenCancellingAndEditingAgain {
+	companion object {
+		private const val libraryId = 114
+		private const val serviceFileId = "371"
+	}
+
 	private var persistedTrackNumber = ""
 
 	private val viewModel by lazy {

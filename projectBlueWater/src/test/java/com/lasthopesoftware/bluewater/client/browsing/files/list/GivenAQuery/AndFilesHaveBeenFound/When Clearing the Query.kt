@@ -31,18 +31,18 @@ class `When Clearing the Query` {
 
 			Promise(
 				listOf(
-					ServiceFile(209),
-					ServiceFile(792),
-					ServiceFile(61),
-					ServiceFile(637),
-					ServiceFile(948),
-					ServiceFile(349),
-					ServiceFile(459),
-					ServiceFile(747),
-					ServiceFile(922),
-					ServiceFile(713),
-					ServiceFile(617),
-					ServiceFile(249),
+					ServiceFile("209"),
+					ServiceFile("792"),
+					ServiceFile("61"),
+					ServiceFile("637"),
+					ServiceFile("948"),
+					ServiceFile("349"),
+					ServiceFile("459"),
+					ServiceFile("747"),
+					ServiceFile("922"),
+					ServiceFile("713"),
+					ServiceFile("617"),
+					ServiceFile("249"),
 				)
 			)
 		}
@@ -84,18 +84,18 @@ class `When Clearing the Query` {
 	fun `then the results are correct`() {
 		assertThat(searchResults).hasSameElementsAs(
 			listOf(
-				ServiceFile(209),
-				ServiceFile(792),
-				ServiceFile(61),
-				ServiceFile(637),
-				ServiceFile(948),
-				ServiceFile(349),
-				ServiceFile(459),
-				ServiceFile(747),
-				ServiceFile(922),
-				ServiceFile(713),
-				ServiceFile(617),
-				ServiceFile(249),
+				ServiceFile("209"),
+				ServiceFile("792"),
+				ServiceFile("61"),
+				ServiceFile("637"),
+				ServiceFile("948"),
+				ServiceFile("349"),
+				ServiceFile("459"),
+				ServiceFile("747"),
+				ServiceFile("922"),
+				ServiceFile("713"),
+				ServiceFile("617"),
+				ServiceFile("249"),
 			)
 		)
 	}

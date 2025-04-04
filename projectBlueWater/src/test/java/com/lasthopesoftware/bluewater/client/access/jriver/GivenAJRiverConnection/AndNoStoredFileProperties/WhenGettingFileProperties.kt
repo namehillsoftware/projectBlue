@@ -19,7 +19,7 @@ class WhenGettingFileProperties {
 		val httpConnection = FakeHttpConnection().apply {
 			setupFile(
 				MediaCenterUrlBuilder.buildUrl(TestMcwsUrl, "File/GetInfo", "File=15"),
-				ServiceFile(15),
+				ServiceFile("15"),
 				mapOf(
 					Pair(KnownFileProperties.Key, "45"),
 					Pair(KnownFileProperties.Lyrics, """[In the Fade]
@@ -102,7 +102,7 @@ Some more valid text... la di da..."""),
 		)
 
 		connection
-			.promiseFileProperties(ServiceFile(15))
+			.promiseFileProperties(ServiceFile("15"))
 			.toExpiringFuture()
 			.get()
 	}

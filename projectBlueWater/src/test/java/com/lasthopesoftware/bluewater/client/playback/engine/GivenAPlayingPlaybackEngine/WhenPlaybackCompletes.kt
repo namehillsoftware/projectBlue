@@ -67,11 +67,11 @@ class WhenPlaybackCompletes {
 			.startPlaylist(
 				LibraryId(libraryId),
 				listOf(
-					ServiceFile(1),
-					ServiceFile(2),
-					ServiceFile(3),
-					ServiceFile(4),
-					ServiceFile(5)
+					ServiceFile("1"),
+					ServiceFile("2"),
+					ServiceFile("3"),
+					ServiceFile("4"),
+					ServiceFile("5")
 				),
 				0,
 				Duration.ZERO
@@ -95,17 +95,17 @@ class WhenPlaybackCompletes {
 	@Test
 	fun `then the observed file position is correct`() {
 		assertThat(observedPlayingFile!!.asPositionedFile())
-			.isEqualTo(PositionedFile(4, ServiceFile(5)))
+			.isEqualTo(PositionedFile(4, ServiceFile("5")))
 	}
 
 	@Test
 	fun `then the completed played file is correct`() {
-		assertThat(lastCompletedPlayedFile!!).isEqualTo(PositionedFile(4, ServiceFile(5)))
+		assertThat(lastCompletedPlayedFile!!).isEqualTo(PositionedFile(4, ServiceFile("5")))
 	}
 
 	@Test
 	fun `then the reset file position is zero`() {
-		assertThat(resetPositionedFile).isEqualTo(PositionedFile(0, ServiceFile(1)))
+		assertThat(resetPositionedFile).isEqualTo(PositionedFile(0, ServiceFile("1")))
 	}
 
 	@Test
@@ -122,11 +122,11 @@ class WhenPlaybackCompletes {
 	fun `then the saved playlist is correct`() {
 		assertThat(nowPlaying!!.playlist)
 			.containsExactly(
-				ServiceFile(1),
-				ServiceFile(2),
-				ServiceFile(3),
-				ServiceFile(4),
-				ServiceFile(5)
+				ServiceFile("1"),
+				ServiceFile("2"),
+				ServiceFile("3"),
+				ServiceFile("4"),
+				ServiceFile("5")
 			)
 	}
 }

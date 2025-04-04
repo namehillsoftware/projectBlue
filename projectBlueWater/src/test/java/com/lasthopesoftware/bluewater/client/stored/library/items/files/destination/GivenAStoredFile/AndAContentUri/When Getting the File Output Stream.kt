@@ -44,7 +44,7 @@ class `When Getting the File Output Stream` {
 		fun act() {
 			val storedFile = StoredFile(
                 LibraryId(1),
-                ServiceFile(1),
+                ServiceFile("1"),
                 ContentUris.withAppendedId(MediaCollections.ExternalAudio, storedMediaId).toURI(),
                 true
             )

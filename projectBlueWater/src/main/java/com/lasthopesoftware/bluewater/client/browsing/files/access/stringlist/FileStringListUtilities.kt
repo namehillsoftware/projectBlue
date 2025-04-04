@@ -18,7 +18,7 @@ object FileStringListUtilities {
 		return headerInfo[2].splitToSequence(";")
 			.drop(offset - 2)
 			.filter { it.isNotEmpty() && it != "-1" }
-			.map { k -> ServiceFile(k.toInt()) }
+			.map(::ServiceFile)
 			.toCollection(ArrayList(listSize))
 	}
 

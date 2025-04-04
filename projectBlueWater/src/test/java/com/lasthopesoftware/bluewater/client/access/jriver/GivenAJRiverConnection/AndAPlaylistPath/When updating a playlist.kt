@@ -54,10 +54,10 @@ class `When updating a playlist` {
 			.promiseStoredPlaylist(
 				"bold\\voyage",
 				listOf(
-                    ServiceFile(885),
-                    ServiceFile(481),
-                    ServiceFile(139),
-                    ServiceFile(935),
+                    ServiceFile("885"),
+                    ServiceFile("481"),
+                    ServiceFile("139"),
+                    ServiceFile("935"),
 				)
 			)
 			.toExpiringFuture()

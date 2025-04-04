@@ -44,13 +44,13 @@ class WhenRemovingTheCurrentlyPlayingFile {
 			id = libraryId,
 			savedTracksString = FileStringListUtilities.promiseSerializedFileStringList(
 				listOf(
-					ServiceFile(1),
-					ServiceFile(2),
-					ServiceFile(3),
-					ServiceFile(4),
-					ServiceFile(5),
-					ServiceFile(13),
-					ServiceFile(27)
+					ServiceFile("1"),
+					ServiceFile("2"),
+					ServiceFile("3"),
+					ServiceFile("4"),
+					ServiceFile("5"),
+					ServiceFile("13"),
+					ServiceFile("27")
 				)
 			).toExpiringFuture().get(),
 			nowPlayingId = 5,
@@ -62,7 +62,7 @@ class WhenRemovingTheCurrentlyPlayingFile {
 				every { updateNowPlaying(any(), any(), any(), any(), any()) } answers {
 					libraryProvider.updateNowPlaying(arg(0), arg(1), arg(2), arg(3), arg(4)).then { _ ->
 						val lib = libraryProvider.libraries[libraryId]
-						if (lib?.savedTracksString != library.savedTracksString)
+						if (lib?.savedTracksString != library.savedTracksString && lib?.nowPlayingId == 5)
 							resolve(lib)
 					}
 				}
@@ -71,7 +71,7 @@ class WhenRemovingTheCurrentlyPlayingFile {
 
 		val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()
 		every {
-			filePropertiesContainerRepository.getFilePropertiesContainer(UrlKeyHolder(TestUrl, ServiceFile(5)))
+			filePropertiesContainerRepository.getFilePropertiesContainer(UrlKeyHolder(TestUrl, ServiceFile("5")))
 		} returns FilePropertiesContainer(1, mapOf(Pair(KnownFileProperties.Duration, "100")))
 
 		val playbackEngine =
@@ -114,11 +114,11 @@ class WhenRemovingTheCurrentlyPlayingFile {
 
 	@Test
 	fun `then the file queue is shifted to the next file`() {
-		assertThat(positionedPlayingFile!!.serviceFile).isEqualTo(ServiceFile(27))
+		assertThat(positionedPlayingFile!!.serviceFile).isEqualTo(ServiceFile("27"))
 	}
 
 	@Test
 	fun `then the initial service file is correct`() {
-		assertThat(initialState?.serviceFile).isEqualTo(ServiceFile(13))
+		assertThat(initialState?.serviceFile).isEqualTo(ServiceFile("13"))
 	}
 }

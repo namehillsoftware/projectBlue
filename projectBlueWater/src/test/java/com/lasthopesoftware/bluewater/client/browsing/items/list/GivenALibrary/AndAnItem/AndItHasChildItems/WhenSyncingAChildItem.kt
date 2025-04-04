@@ -10,11 +10,14 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-private const val libraryId = 374
-private const val itemId = 178
-private const val itemValue = "reply"
-
 class WhenSyncingAChildItem {
+
+	companion object {
+		private const val libraryId = 374
+		private const val itemId = "178"
+		private const val itemValue = "reply"
+	}
+
 	private val viewModel by lazy {
 		val storedItemAccess = FakeStoredItemAccess()
 		ReusableChildItemViewModel(

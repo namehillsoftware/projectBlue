@@ -24,18 +24,18 @@ class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 		6,
 		mockk(),
 		NoTransformVolumeManager(),
-		ServiceFile(6)
+		ServiceFile("6")
 	)
 
 	private val mut by lazy {
 		val positionedFileQueue = mockk<PositionedFileQueue>().apply {
 			every { libraryId } returns LibraryId(732)
 			every { poll() } returnsMany listOf(
-				PositionedFile(1, ServiceFile(1)),
-				PositionedFile(2, ServiceFile(2)),
-				PositionedFile(3, ServiceFile(3)),
-				PositionedFile(4, ServiceFile(4)),
-				PositionedFile(5, ServiceFile(5)),
+				PositionedFile(1, ServiceFile("1")),
+				PositionedFile(2, ServiceFile("2")),
+				PositionedFile(3, ServiceFile("3")),
+				PositionedFile(4, ServiceFile("4")),
+				PositionedFile(5, ServiceFile("5")),
 				null
 			)
 		}
@@ -58,8 +58,8 @@ class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 			every { libraryId } returns LibraryId(954)
 			every { peek() } returns null
 			every { poll() } returnsMany listOf(
-				PositionedFile(3, ServiceFile(3)),
-				PositionedFile(6, ServiceFile(6)),
+				PositionedFile(3, ServiceFile("3")),
+				PositionedFile(6, ServiceFile("6")),
 				null
 			)
 		}

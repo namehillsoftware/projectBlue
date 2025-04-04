@@ -32,7 +32,7 @@ class WhenUpdatingTheFile {
 			},
 			fakeLibraryRepository,
 			mockk {
-				every { promiseStoredFileUri(LibraryId(14), ServiceFile(4)) } returns Promise(
+				every { promiseStoredFileUri(LibraryId(14), ServiceFile("4")) } returns Promise(
 					URI("file:/my-private-drive/14/artist/album/my-filename.mp3")
 				)
 			},
@@ -43,19 +43,19 @@ class WhenUpdatingTheFile {
 	@BeforeAll
 	fun act() {
 		sut
-			.promiseStoredFileUpdate(LibraryId(14), ServiceFile(4))
+			.promiseStoredFileUpdate(LibraryId(14), ServiceFile("4"))
 			.toExpiringFuture()
 			.get(1, TimeUnit.MINUTES)
 	}
 
 	@Test
 	fun thenTheFileIsOwnedByTheLibrary() {
-		assertThat(affectedSystems.storedFiles.values.first { sf -> sf.libraryId == 14 && sf.serviceId == 4 }.isOwner).isTrue
+		assertThat(affectedSystems.storedFiles.values.first { sf -> sf.libraryId == 14 && sf.serviceId == "4" }.isOwner).isTrue
 	}
 
 	@Test
 	fun `then the file uri is correct`() {
-		assertThat(affectedSystems.storedFiles.values.first { sf -> sf.libraryId == 14 && sf.serviceId == 4 }.uri)
+		assertThat(affectedSystems.storedFiles.values.first { sf -> sf.libraryId == 14 && sf.serviceId == "4" }.uri)
 			.isEqualTo("file:/my-private-drive/14/artist/album/my-filename.mp3")
 	}
 }

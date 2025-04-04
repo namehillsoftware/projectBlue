@@ -28,7 +28,7 @@ class WhenShowingTheMenu {
 
 	private val viewModel by lazy {
 		val filePropertiesProvider = mockk<ProvideLibraryFileProperties>().apply {
-			every { promiseFileProperties(LibraryId(libraryId), ServiceFile(99)) } returns mapOf(
+			every { promiseFileProperties(LibraryId(libraryId), ServiceFile("99")) } returns mapOf(
 				Pair("Artist", "fool"),
 				Pair("Name", "coin"),
 			).toPromise()
@@ -59,7 +59,7 @@ class WhenShowingTheMenu {
 
 	@BeforeAll
 	fun act() {
-		viewModel.promiseUpdate(LibraryId(libraryId), ServiceFile(99)).toExpiringFuture().get()
+		viewModel.promiseUpdate(LibraryId(libraryId), ServiceFile("99")).toExpiringFuture().get()
 		viewModel.showMenu()
 	}
 

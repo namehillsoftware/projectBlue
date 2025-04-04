@@ -21,12 +21,12 @@ class WhenItIsPrepared {
 		val maxFileVolumePreparer = MaxFileVolumePreparer(
 			fakeFilePreparer,
 			mockk {
-				every { promiseMaxFileVolume(LibraryId(388), ServiceFile(5)) } returns Promise(.89f)
+				every { promiseMaxFileVolume(LibraryId(388), ServiceFile("5")) } returns Promise(.89f)
 			}
 		)
 		maxFileVolumePreparer.promisePreparedPlaybackFile(
 			LibraryId(388),
-			ServiceFile(5),
+			ServiceFile("5"),
 			Duration.ZERO
 		).toExpiringFuture().get()
 	}

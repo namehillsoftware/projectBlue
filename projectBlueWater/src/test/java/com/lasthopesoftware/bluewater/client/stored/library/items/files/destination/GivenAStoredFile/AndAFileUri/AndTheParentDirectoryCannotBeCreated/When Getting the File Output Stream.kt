@@ -37,7 +37,7 @@ class `When Getting the File Output Stream` {
 		)
 
 		try {
-			val storedFile = StoredFile(LibraryId(1), ServiceFile(1), tempFileUri, true)
+			val storedFile = StoredFile(LibraryId(1), ServiceFile("1"), tempFileUri, true)
 			storedFile.setIsDownloadComplete(true)
 			storedFileJobProcessor.promiseOutputStream(storedFile).toExpiringFuture().get(1, TimeUnit.MINUTES)
 		} catch (e: ExecutionException) {

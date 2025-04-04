@@ -29,11 +29,11 @@ class WhenResumingPlayback {
 			id = 1,
 			savedTracksString = FileStringListUtilities.promiseSerializedFileStringList(
 				listOf(
-					ServiceFile(1),
-					ServiceFile(2),
-					ServiceFile(3),
-					ServiceFile(4),
-					ServiceFile(5)
+					ServiceFile("1"),
+					ServiceFile("2"),
+					ServiceFile("3"),
+					ServiceFile("4"),
+					ServiceFile("5")
 				)
 			).toExpiringFuture().get(),
 			nowPlayingId = 3,
@@ -77,11 +77,11 @@ class WhenResumingPlayback {
 			.startPlaylist(
 				LibraryId(1),
 				listOf(
-					ServiceFile(1),
-					ServiceFile(2),
-					ServiceFile(3),
-					ServiceFile(4),
-					ServiceFile(5)
+					ServiceFile("1"),
+					ServiceFile("2"),
+					ServiceFile("3"),
+					ServiceFile("4"),
+					ServiceFile("5")
 				),
 				0,
 				Duration.standardMinutes(1)
@@ -92,7 +92,7 @@ class WhenResumingPlayback {
 		updatedNowPlayingAfterClearing = engine.clearPlaylist().toExpiringFuture()[1, TimeUnit.SECONDS]
 		playlistAfterClearing = updatedNowPlayingAfterClearing?.playlist?.toList()
 		isPlayingAfterPlaylistCleared = engine.isPlaying
-		engine.addFile(ServiceFile(701)).toExpiringFuture().get()
+		engine.addFile(ServiceFile("701")).toExpiringFuture().get()
 		engine.resume().toExpiringFuture().get()
 		provider.deferredResolution.resolve()
 	}
@@ -129,6 +129,6 @@ class WhenResumingPlayback {
 
 	@Test
 	fun `then the playing files is correct`() {
-		assertThat(playingFiles).containsExactly(ServiceFile(1), ServiceFile(701))
+		assertThat(playingFiles).containsExactly(ServiceFile("1"), ServiceFile("701"))
 	}
 }

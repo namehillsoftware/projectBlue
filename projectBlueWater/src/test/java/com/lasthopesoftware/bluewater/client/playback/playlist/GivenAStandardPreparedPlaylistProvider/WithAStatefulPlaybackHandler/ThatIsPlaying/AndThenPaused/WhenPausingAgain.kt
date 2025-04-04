@@ -27,7 +27,7 @@ class WhenPausingAgain {
 			0,
 			playbackHandler,
 			NoTransformVolumeManager(),
-			ServiceFile(1)))
+			ServiceFile("1")))
 		val preparedPlaybackFileQueue = mockk<SupplyQueuedPreparedFiles>().apply {
 			every { promiseNextPreparedPlaybackFile(Duration.ZERO) } returns positionedPlaybackHandlerContainer
 		}
@@ -54,6 +54,6 @@ class WhenPausingAgain {
 
 	@Test
 	fun `then the playable file is correct`() {
-		assertThat(playableFile?.serviceFile).isEqualTo(ServiceFile(1))
+		assertThat(playableFile?.serviceFile).isEqualTo(ServiceFile("1"))
 	}
 }

@@ -26,7 +26,8 @@ import org.junit.Test
 class WhenPlaybackStarts : AndroidContext() {
 	companion object {
 		private const val libraryId = 99
-		private const val serviceFileId = 598
+		private const val serviceFileId = "598"
+
 		private val loadingNotification = Notification()
 		private val startedNotification = Notification()
 		private val notificationController = mockk<ControlNotifications>(relaxUnitFun = true)

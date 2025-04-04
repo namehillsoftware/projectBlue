@@ -14,10 +14,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-private const val libraryId = 411
-private const val itemId = 883
-
 class WhenPlayingAShuffledChildItem {
+	companion object {
+		private const val libraryId = 411
+		private const val itemId = "883"
+	}
+
 	private var playedFileList = ""
 
 	private val mut by lazy {

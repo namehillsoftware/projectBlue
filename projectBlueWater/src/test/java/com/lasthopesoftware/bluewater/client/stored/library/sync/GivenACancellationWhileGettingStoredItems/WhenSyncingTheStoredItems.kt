@@ -36,18 +36,18 @@ class WhenSyncingTheStoredItems {
 	fun before() {
 		val deferredStoredItemAccess: FakeDeferredStoredItemAccess = object : FakeDeferredStoredItemAccess() {
 			override val storedItems: Collection<StoredItem>
-				get() = setOf(StoredItem(1, 14, StoredItem.ItemType.PLAYLIST))
+				get() = setOf(StoredItem(1, "14", StoredItem.ItemType.PLAYLIST))
 		}
 		val mockFileProvider = mockk<ProvideLibraryFiles>()
 		every {
-			mockFileProvider.promiseFiles(LibraryId(13), PlaylistId(14))
+			mockFileProvider.promiseFiles(LibraryId(13), PlaylistId("14"))
 		} returns
 			Promise(
 				listOf(
-					ServiceFile(1),
-					ServiceFile(2),
-					ServiceFile(4),
-					ServiceFile(10)
+					ServiceFile("1"),
+					ServiceFile("2"),
+					ServiceFile("4"),
+					ServiceFile("10")
 				)
 			)
 

@@ -27,11 +27,11 @@ import io.mockk.verify
 import org.junit.Test
 import org.robolectric.Robolectric
 
-private const val libraryId = 510
-private const val serviceFileId = 249
-
 class WhenTheFileChanges : AndroidContext() {
 	companion object {
+		private const val libraryId = 510
+		private const val serviceFileId = "249"
+
 		private val secondNotification = Notification()
 		private val service by lazy {
 			spyk(Robolectric.buildService(PlaybackService::class.java).get())

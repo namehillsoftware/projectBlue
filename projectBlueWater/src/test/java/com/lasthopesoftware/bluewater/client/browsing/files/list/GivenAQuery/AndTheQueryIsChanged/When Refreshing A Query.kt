@@ -22,16 +22,16 @@ class `When Refreshing A Query` {
                 every { promiseAudioFiles(LibraryId(libraryId), "qlJJKMs") } returnsMany listOf(
                     Promise(
                         listOf(
-                            ServiceFile(426),
-                            ServiceFile(445),
+                            ServiceFile("426"),
+                            ServiceFile("445"),
                         )
                     ),
                     Promise(
                         listOf(
-                            ServiceFile(736),
-                            ServiceFile(100),
-                            ServiceFile(115),
-                            ServiceFile(732),
+                            ServiceFile("736"),
+                            ServiceFile("100"),
+                            ServiceFile("115"),
+                            ServiceFile("732"),
                         )
                     ),
                 )
@@ -59,10 +59,10 @@ class `When Refreshing A Query` {
     fun `then the results are correct`() {
 		assertThat(viewModel.files.value).hasSameElementsAs(
 			listOf(
-                ServiceFile(736),
-                ServiceFile(100),
-                ServiceFile(115),
-                ServiceFile(732),
+                ServiceFile("736"),
+                ServiceFile("100"),
+                ServiceFile("115"),
+                ServiceFile("732"),
 			)
 		)
 	}

@@ -15,10 +15,13 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-private const val libraryId = 275
-private const val serviceFileId = 860
-
 class WhenAddingTheFileToNowPlaying {
+
+	companion object {
+		private const val libraryId = 275
+		private const val serviceFileId = "860"
+	}
+
 	private var addedLibraryId: LibraryId? = null
 	private var addedServiceFile: ServiceFile? = null
 
@@ -55,14 +58,14 @@ class WhenAddingTheFileToNowPlaying {
 		viewModel.loadFromList(
 			LibraryId(libraryId),
 			listOf(
-				ServiceFile(291),
-				ServiceFile(312),
-				ServiceFile(783),
-				ServiceFile(380),
+				ServiceFile("291"),
+				ServiceFile("312"),
+				ServiceFile("783"),
+				ServiceFile("380"),
 				ServiceFile(serviceFileId),
-				ServiceFile(723),
-				ServiceFile(81),
-				ServiceFile(543),
+				ServiceFile("723"),
+				ServiceFile("81"),
+				ServiceFile("543"),
 			),
 			4
 		).toExpiringFuture().get()

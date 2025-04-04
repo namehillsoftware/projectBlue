@@ -19,10 +19,13 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-private const val libraryId = 944
-private const val serviceFileId = 161
-
 class WhenLoading {
+
+	companion object {
+		private const val libraryId = 944
+		private const val serviceFileId = "161"
+	}
+
 	private val viewModel by lazy {
 		FileDetailsViewModel(
 			mockk {
@@ -63,7 +66,7 @@ class WhenLoading {
 
 	@Test
 	fun `then the properties are correct`() {
-		assertThat(viewModel.fileProperties?.value?.map { Pair(it.property, it.committedValue.value) }).hasSameElementsAs(
+		assertThat(viewModel.fileProperties.value.map { Pair(it.property, it.committedValue.value) }).hasSameElementsAs(
 			listOf(
 				Pair(KnownFileProperties.Rating, "3"),
 				Pair("too", "prevent"),
@@ -90,21 +93,21 @@ class WhenLoading {
 
 	@Test
 	fun `then the rating is correct`() {
-		assertThat(viewModel.rating?.value).isEqualTo(3)
+		assertThat(viewModel.rating.value).isEqualTo(3)
 	}
 
 	@Test
 	fun `then the artist is correct`() {
-		assertThat(viewModel.artist?.value).isEqualTo("board")
+		assertThat(viewModel.artist.value).isEqualTo("board")
 	}
 
 	@Test
 	fun `then the file name is correct`() {
-		assertThat(viewModel.fileName?.value).isEqualTo("holiday")
+		assertThat(viewModel.fileName.value).isEqualTo("holiday")
 	}
 
 	@Test
 	fun `then the album is correct`() {
-		assertThat(viewModel.album?.value).isEqualTo("virtue")
+		assertThat(viewModel.album.value).isEqualTo("virtue")
 	}
 }

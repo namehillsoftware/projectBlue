@@ -22,7 +22,7 @@ class `When Getting the File Output Stream` {
 	fun before() {
 		val tempFile = File.createTempFile("80l7u", "r24gdQ1c")
 		tempFile.deleteOnExit()
-		val storedFile = StoredFile(LibraryId(1), ServiceFile(1), tempFile.toURI(), true)
+		val storedFile = StoredFile(LibraryId(1), ServiceFile("1"), tempFile.toURI(), true)
 		val storedFileJobProcessor = StoredFileUriDestinationBuilder(
 			OsFileSupplier,
 			mockk {

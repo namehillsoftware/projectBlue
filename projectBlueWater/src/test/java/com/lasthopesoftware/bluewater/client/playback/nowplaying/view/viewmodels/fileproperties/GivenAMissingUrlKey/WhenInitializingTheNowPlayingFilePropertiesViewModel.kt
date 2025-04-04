@@ -21,10 +21,12 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-private const val libraryId = 590
-private const val serviceFileId = 385
-
 class WhenInitializingTheNowPlayingFilePropertiesViewModel {
+
+	companion object {
+		private const val libraryId = 590
+		private const val serviceFileId = "385"
+	}
 
 	private val mut by lazy {
 		var isConnectionChangedMessageSent = false
@@ -43,11 +45,11 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 					NowPlaying(
 						LibraryId(libraryId),
 						listOf(
-							ServiceFile(815),
-							ServiceFile(449),
-							ServiceFile(592),
+							ServiceFile("815"),
+							ServiceFile("449"),
+							ServiceFile("592"),
 							ServiceFile(serviceFileId),
-							ServiceFile(390),
+							ServiceFile("390"),
 						),
 						3,
 						439774,

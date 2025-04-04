@@ -22,7 +22,7 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class `When Getting Items` {
 	companion object {
-		private val serviceFileIds by lazy { listOf(482, 763, 291, 386, 993, 541, 482, 351, 390) }
+		private val serviceFileIds by lazy { listOf("482", "763", "291", "386", "993", "541", "482", "351", "390") }
 
 		private val expectedMediaItems by lazy {
 			serviceFileIds.map { i ->
@@ -45,7 +45,7 @@ class `When Getting Items` {
 			every { selectedLibraryId.promiseSelectedLibraryId() } returns Promise(LibraryId(22))
 
 			val itemsProvider = mockk<ProvideItems>()
-			every { itemsProvider.promiseItems(LibraryId(22), ItemId(743)) } returns Promise(emptyList())
+			every { itemsProvider.promiseItems(LibraryId(22), ItemId("743")) } returns Promise(emptyList())
 
 			val serviceFiles = mockk<GetMediaItemsFromServiceFiles>()
 			for (id in serviceFileIds) {

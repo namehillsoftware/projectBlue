@@ -11,7 +11,7 @@ class WhenGettingFileListParameters {
 		"Playlist/Files",
 		"Playlist=57"
 	)
-	private val returnedFileListParameters by lazy { FileListParameters.getFileListParameters(PlaylistId(57)) }
+	private val returnedFileListParameters by lazy { FileListParameters.getFileListParameters(PlaylistId("57")) }
 
     @Test
     fun thenTheFileListParametersAreCorrect() {

@@ -17,11 +17,11 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
-private const val libraryId = 12
-private const val serviceFileId = 412
-
 class `When Getting The Uri Using Metadata` : AndroidContext() {
 	companion object {
+		private const val libraryId = 12
+		private const val serviceFileId = "412"
+
 		private val uriProvider by lazy {
             MetadataMediaFileUriProvider(
                 mockk {

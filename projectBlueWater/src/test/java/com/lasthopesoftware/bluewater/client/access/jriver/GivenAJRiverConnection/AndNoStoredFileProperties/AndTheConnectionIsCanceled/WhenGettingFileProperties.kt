@@ -17,9 +17,11 @@ import org.junit.jupiter.api.Test
 import java.io.IOException
 import java.util.concurrent.ExecutionException
 
-private const val serviceFileId = 31
-
 class WhenGettingFileProperties {
+	companion object {
+		private const val serviceFileId = "31"
+	}
+
 	private val filePropertiesProvider by lazy {
         MediaCenterConnection(
 			ServerConnection(TestUrl),

@@ -47,10 +47,10 @@ class WhenBuildingTheNotification : AndroidContext() {
 				every { getMediaStyleNotification(libraryId) } returns spiedBuilder
 			},
 			mockk {
-				every { promiseUrlKey(libraryId, ServiceFile(3)) } returns UrlKeyHolder(TestUrl, ServiceFile(3)).toPromise()
+				every { promiseUrlKey(libraryId, ServiceFile("3")) } returns UrlKeyHolder(TestUrl, ServiceFile("3")).toPromise()
 			},
 			mockk {
-				every { promiseFileProperties(libraryId, ServiceFile(3)) } returns mapOf(
+				every { promiseFileProperties(libraryId, ServiceFile("3")) } returns mapOf(
 					Pair(KnownFileProperties.Artist, "test-artist"),
 					Pair(KnownFileProperties.Name, "song")
 				).toPromise()
@@ -60,7 +60,7 @@ class WhenBuildingTheNotification : AndroidContext() {
 			},
 			ImmediateBitmapProducer,
 		)
-		builder = npBuilder.promiseNowPlayingNotification(libraryId, ServiceFile(3), false).toExpiringFuture().get()
+		builder = npBuilder.promiseNowPlayingNotification(libraryId, ServiceFile("3"), false).toExpiringFuture().get()
 	}
 
 	@Test

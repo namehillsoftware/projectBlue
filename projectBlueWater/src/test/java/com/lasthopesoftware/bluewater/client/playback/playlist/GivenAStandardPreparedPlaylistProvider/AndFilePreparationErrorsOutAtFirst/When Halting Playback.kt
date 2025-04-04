@@ -29,7 +29,7 @@ class `When Halting Playback` {
 			0,
 			playbackHandler,
 			NoTransformVolumeManager(),
-			ServiceFile(1)
+			ServiceFile("1")
 		)
 	)
 

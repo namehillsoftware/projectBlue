@@ -25,15 +25,15 @@ import kotlin.random.Random.Default.nextInt
 class WhenSynchronizing {
 
 	private val storedFiles = arrayOf(
-		StoredFile().setId(nextInt()).setServiceId(1).setLibraryId(4),
-		StoredFile().setId(nextInt()).setServiceId(2).setLibraryId(4),
-		StoredFile().setId(nextInt()).setServiceId(4).setLibraryId(4),
-		StoredFile().setId(nextInt()).setServiceId(5).setLibraryId(4),
-		StoredFile().setId(nextInt()).setServiceId(7).setLibraryId(4),
-		StoredFile().setId(nextInt()).setServiceId(114).setLibraryId(4),
-		StoredFile().setId(nextInt()).setServiceId(92).setLibraryId(4)
+		StoredFile().setId(nextInt()).setServiceId("1").setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId("2").setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId("4").setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId("5").setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId("7").setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId("114").setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId("92").setLibraryId(4)
 	)
-	private val expectedStoredFileJobs = storedFiles.filter { f -> f.serviceId != 114 }
+	private val expectedStoredFileJobs = storedFiles.filter { f -> f.serviceId != "114" }
 	private val applicationMessageBus = RecordingApplicationMessageBus()
 	private val synchronization by lazy {
 		val filePruner = mockk<PruneStoredFiles> {
@@ -48,7 +48,7 @@ class WhenSynchronizing {
 			Observable.concat(
 				Observable
 					.fromArray(*storedFiles)
-					.filter { f -> f.serviceId != 114 }
+					.filter { f -> f.serviceId != "114" }
 					.flatMap { f ->
 						Observable.just(
 							StoredFileJobStatus(f, StoredFileJobState.Queued),
@@ -57,7 +57,7 @@ class WhenSynchronizing {
 					},
 				Observable
 					.fromArray(*storedFiles)
-					.filter { f -> f.serviceId == 114 }
+					.filter { f -> f.serviceId == "114" }
 					.flatMap({ f ->
 						Observable.concat(
 							Observable.just(

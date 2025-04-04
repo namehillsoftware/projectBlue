@@ -33,7 +33,7 @@ class WhenHandlingThePlaylistChange {
 				NowPlaying(
 					LibraryId(libraryId),
 					listOf(
-						ServiceFile(5)
+						ServiceFile("5")
 					),
 					0,
 					649,
@@ -54,7 +54,7 @@ class WhenHandlingThePlaylistChange {
 			every {
 				promiseFileProperties(
 					LibraryId(libraryId),
-					ServiceFile(5)
+					ServiceFile("5")
 				)
 			} returns mapOf(
 				Pair(KnownFileProperties.Artist, "tea"),
@@ -77,8 +77,8 @@ class WhenHandlingThePlaylistChange {
 			nowPlayingRepository,
 			filePropertiesProvider,
 			mockk {
-				every { promiseGuaranteedUrlKey(LibraryId(libraryId), ServiceFile(5)) } returns Promise(
-					UrlKeyHolder(URL("http://77Q8Tq2h/"), ServiceFile(5))
+				every { promiseGuaranteedUrlKey(LibraryId(libraryId), ServiceFile("5")) } returns Promise(
+					UrlKeyHolder(URL("http://77Q8Tq2h/"), ServiceFile("5"))
 				)
 			},
 			mockk(),

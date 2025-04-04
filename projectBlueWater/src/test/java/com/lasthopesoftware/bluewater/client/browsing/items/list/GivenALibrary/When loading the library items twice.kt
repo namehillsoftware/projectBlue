@@ -17,10 +17,10 @@ private const val libraryId = 256
 
 class `When loading the library items twice` {
 	private val expectedItems = listOf(
-		Item(330),
-		Item(686),
-		Item(186),
-		Item(929),
+		Item("330"),
+		Item("686"),
+		Item("186"),
+		Item("929"),
 	)
 
 	private val mut by lazy {
@@ -31,11 +31,11 @@ class `When loading the library items twice` {
 			ItemListViewModel(
 				mockk {
 					every { promiseItems(LibraryId(libraryId)) } returns listOf(
-						Item(645),
-						Item(820),
-						Item(358),
-						Item(886),
-						Item(50),
+						Item("645"),
+						Item("820"),
+						Item("358"),
+						Item("886"),
+						Item("50"),
 					).toPromise() andThen deferredItems
 				},
 				RecordingApplicationMessageBus(),

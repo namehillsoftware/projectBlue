@@ -20,12 +20,12 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Test
 
-private const val libraryId = 142
-private const val serviceFileId = 617
-
 class WhenTheFileChanges : AndroidContext() {
 
 	companion object {
+		private const val libraryId = 142
+		private const val serviceFileId = "617"
+
 		private val mediaSessionCompat = mockk<ControlMediaSession>(relaxUnitFun = true)
 	}
 

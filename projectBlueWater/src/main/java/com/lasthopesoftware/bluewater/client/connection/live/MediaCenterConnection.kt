@@ -426,7 +426,7 @@ class MediaCenterConnection(
 				.getElementsByTag("Item")
 				.map { el ->
 					if (cs.isCancelled) throw itemParsingCancelledException()
-					Item(el.wholeOwnText().toInt(), el.attr("Name"))
+					Item(el.wholeOwnText(), el.attr("Name"))
 				}
 		}
 

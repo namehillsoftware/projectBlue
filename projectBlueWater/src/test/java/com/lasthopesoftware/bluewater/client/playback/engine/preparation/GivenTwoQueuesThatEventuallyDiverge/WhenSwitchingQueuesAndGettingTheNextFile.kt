@@ -26,11 +26,11 @@ class WhenSwitchingQueuesAndGettingTheNextFile {
 		val originalFileQueue = mockk<PositionedFileQueue> {
 			every { libraryId } returns LibraryId(237)
 			every { poll() } returnsMany listOf(
-				PositionedFile(1, ServiceFile(1)),
-				PositionedFile(2, ServiceFile(2)),
-				PositionedFile(3, ServiceFile(3)),
-				PositionedFile(4, ServiceFile(4)),
-				PositionedFile(5, ServiceFile(5)),
+				PositionedFile(1, ServiceFile("1")),
+				PositionedFile(2, ServiceFile("2")),
+				PositionedFile(3, ServiceFile("3")),
+				PositionedFile(4, ServiceFile("4")),
+				PositionedFile(5, ServiceFile("5")),
 				null
 			)
 		}
@@ -42,10 +42,10 @@ class WhenSwitchingQueuesAndGettingTheNextFile {
 	}
 	private val playedFiles = ArrayList<PositionedPlayableFile>()
 	private val expectedPositionedPlayableFile = listOf(
-		PositionedPlayableFile(3, mockk(), NoTransformVolumeManager(), ServiceFile(3)),
-		PositionedPlayableFile(4, mockk(), NoTransformVolumeManager(), ServiceFile(4)),
-		PositionedPlayableFile(5, mockk(), NoTransformVolumeManager(), ServiceFile(6)),
-		PositionedPlayableFile(6, mockk(), NoTransformVolumeManager(), ServiceFile(7)))
+		PositionedPlayableFile(3, mockk(), NoTransformVolumeManager(), ServiceFile("3")),
+		PositionedPlayableFile(4, mockk(), NoTransformVolumeManager(), ServiceFile("4")),
+		PositionedPlayableFile(5, mockk(), NoTransformVolumeManager(), ServiceFile("6")),
+		PositionedPlayableFile(6, mockk(), NoTransformVolumeManager(), ServiceFile("7")))
 
 	@BeforeAll
 	fun act() {
@@ -57,10 +57,10 @@ class WhenSwitchingQueuesAndGettingTheNextFile {
 			every { libraryId } returns LibraryId(119)
 			every { peek() } returns null
 			every { poll() } returnsMany listOf(
-				PositionedFile(3, ServiceFile(3)),
-				PositionedFile(4, ServiceFile(4)),
-				PositionedFile(5, ServiceFile(6)),
-				PositionedFile(6, ServiceFile(7)),
+				PositionedFile(3, ServiceFile("3")),
+				PositionedFile(4, ServiceFile("4")),
+				PositionedFile(5, ServiceFile("6")),
+				PositionedFile(6, ServiceFile("7")),
 				null
 			)
 		}

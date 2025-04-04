@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenASetOfSto
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
@@ -31,20 +30,19 @@ class WhenSyncingTheStoredItems {
 		val storedItemAccessMock = mockk<AccessStoredItems>()
 		every { storedItemAccessMock.promiseStoredItems(LibraryId(42)) } returns Promise(
 			setOf(
-				StoredItem(1, 14, StoredItem.ItemType.ITEM)
+				StoredItem(1, "14", StoredItem.ItemType.ITEM)
 			)
 		)
 
-		val fileListParameters = FileListParameters
 		val mockFileProvider = mockk<ProvideLibraryFiles>()
 		every {
-			mockFileProvider.promiseFiles(LibraryId(42), ItemId(14))
+			mockFileProvider.promiseFiles(LibraryId(42), ItemId("14"))
 		} returns Promise(
 			listOf(
-				ServiceFile(1),
-				ServiceFile(2),
-				ServiceFile(4),
-				ServiceFile(10)
+				ServiceFile("1"),
+				ServiceFile("2"),
+				ServiceFile("4"),
+				ServiceFile("10")
 			)
 		)
 
@@ -77,7 +75,7 @@ class WhenSyncingTheStoredItems {
 				},
 				mockk {
 					every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
-					every { promiseDownload(any(), match { it.serviceId == 2 }) } returns Promise(IOException())
+					every { promiseDownload(any(), match { it.serviceId == "2" }) } returns Promise(IOException())
 				},
 				mockk {
 					every { markStoredFileAsDownloaded(any()) } answers { Promise(firstArg<StoredFile>()) }
@@ -96,6 +94,6 @@ class WhenSyncingTheStoredItems {
 
 	@Test
 	fun `then the other files in the stored items are synced`() {
-		assertThat(storedFileJobResults.map { it.serviceId }).containsExactly(1, 4, 10)
+		assertThat(storedFileJobResults.map { it.serviceId }).containsExactly("1", "4", "10")
 	}
 }

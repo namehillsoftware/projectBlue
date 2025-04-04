@@ -12,10 +12,12 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.File
 
-private const val libraryId = 292
-private const val serviceFileId = 113
-
 class `When Getting the Image Bytes` {
+
+	companion object {
+		private const val libraryId = 292
+		private const val serviceFileId = "113"
+	}
 
 	private val expectedBytes = byteArrayOf(
 		(892 % 128).toByte(),

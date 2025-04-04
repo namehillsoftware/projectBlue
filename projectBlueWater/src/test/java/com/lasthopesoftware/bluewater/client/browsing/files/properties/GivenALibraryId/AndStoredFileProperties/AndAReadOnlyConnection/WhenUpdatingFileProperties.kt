@@ -16,10 +16,13 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-private const val libraryId = 875
-private const val serviceFileId = 946
-
 class WhenUpdatingFileProperties {
+
+	companion object {
+		private const val libraryId = 875
+		private const val serviceFileId = "946"
+	}
+
 	private val services by lazy {
         val filePropertiesContainer = FakeFilePropertiesContainerRepository().apply {
 			putFilePropertiesContainer(
@@ -68,11 +71,7 @@ class WhenUpdatingFileProperties {
 				.first
 				.getFilePropertiesContainer(UrlKeyHolder(URL("http://test:80/MCWS/v1/"), ServiceFile(serviceFileId)))
 				?.properties)
-			.containsExactlyEntriesOf(
-				mapOf(
-					Pair("politics", "postpone")
-				)
-			)
+			.containsExactlyEntriesOf(mapOf(Pair("politics", "postpone")))
     }
 
 	@Test

@@ -26,18 +26,18 @@ import kotlin.random.Random.Default.nextInt
 class WhenSynchronizing {
 
 	private val storedFiles = arrayOf(
-		StoredFile().setId(nextInt()).setServiceId(1).setLibraryId(4),
-		StoredFile().setId(nextInt()).setServiceId(2).setLibraryId(4),
-		StoredFile().setId(nextInt()).setServiceId(4).setLibraryId(4),
-		StoredFile().setId(nextInt()).setServiceId(5).setLibraryId(4),
-		StoredFile().setId(nextInt()).setServiceId(114).setLibraryId(4),
-		StoredFile().setId(nextInt()).setServiceId(92).setLibraryId(4),
-		StoredFile().setId(nextInt()).setServiceId(nextInt()).setLibraryId(10),
-		StoredFile().setId(nextInt()).setServiceId(nextInt()).setLibraryId(10),
-		StoredFile().setId(nextInt()).setServiceId(nextInt()).setLibraryId(10),
-		StoredFile().setId(nextInt()).setServiceId(nextInt()).setLibraryId(10),
-		StoredFile().setId(nextInt()).setServiceId(nextInt()).setLibraryId(10),
-		StoredFile().setId(nextInt()).setServiceId(nextInt()).setLibraryId(10)
+		StoredFile().setId(nextInt()).setServiceId("1").setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId("2").setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId("4").setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId("5").setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId("114").setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId("92").setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId(nextInt().toString()).setLibraryId(10),
+		StoredFile().setId(nextInt()).setServiceId(nextInt().toString()).setLibraryId(10),
+		StoredFile().setId(nextInt()).setServiceId(nextInt().toString()).setLibraryId(10),
+		StoredFile().setId(nextInt()).setServiceId(nextInt().toString()).setLibraryId(10),
+		StoredFile().setId(nextInt()).setServiceId(nextInt().toString()).setLibraryId(10),
+		StoredFile().setId(nextInt()).setServiceId(nextInt().toString()).setLibraryId(10)
 	)
 	private val recordingMessageBus = RecordingApplicationMessageBus()
 	private var danglingFilesWerePruned = false

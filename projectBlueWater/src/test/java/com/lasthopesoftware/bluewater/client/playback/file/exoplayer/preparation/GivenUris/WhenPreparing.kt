@@ -56,12 +56,12 @@ class WhenPreparing {
 				}
 			},
 			mockk {
-				every { promiseUri(LibraryId(libraryId), ServiceFile(1)) } returns Promise(mockk<Uri>())
+				every { promiseUri(LibraryId(libraryId), ServiceFile("1")) } returns Promise(mockk<Uri>())
 			}
 		)
 		val promisedPreparedFile = preparer.promisePreparedPlaybackFile(
 			LibraryId(libraryId),
-			ServiceFile(1),
+			ServiceFile("1"),
 			Duration.ZERO
 		)
 

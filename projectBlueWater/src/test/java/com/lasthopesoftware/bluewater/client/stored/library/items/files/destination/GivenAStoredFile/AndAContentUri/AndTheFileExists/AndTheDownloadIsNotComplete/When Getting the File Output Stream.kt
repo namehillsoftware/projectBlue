@@ -11,7 +11,7 @@ import com.lasthopesoftware.resources.uri.MediaCollections
 import com.lasthopesoftware.resources.uri.toURI
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions.*
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -49,7 +49,7 @@ class `When Getting the File Output Stream` {
 		fun act() {
 			val storedFile = StoredFile(
                 LibraryId(1),
-                ServiceFile(1),
+                ServiceFile("1"),
                 ContentUris.withAppendedId(MediaCollections.ExternalAudio, storedMediaId).toURI(),
                 true
             )

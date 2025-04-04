@@ -28,7 +28,7 @@ class `When Halting Playback` {
 				0,
 				affectedSystems,
 				NoTransformVolumeManager(),
-				ServiceFile(1)
+				ServiceFile("1")
 			).toPromise()
 		}
 		PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)

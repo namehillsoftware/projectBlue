@@ -25,12 +25,12 @@ import io.mockk.verify
 import org.junit.Test
 import org.robolectric.Robolectric
 
-private const val libraryId = 384
-private const val serviceFileId = 830
-
 class WhenPlaybackIsPaused : AndroidContext() {
 
 	companion object {
+		private const val libraryId = 384
+		private const val serviceFileId = "830"
+
 		private val pausedNotification = Notification()
 		private val service by lazy { spyk(Robolectric.buildService(PlaybackService::class.java).get()) }
 		private val notificationManager = mockk<NotificationManager>(relaxed = true, relaxUnitFun = true)

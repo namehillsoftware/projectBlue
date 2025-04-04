@@ -16,7 +16,7 @@ class `When Getting the Image Bytes` {
 
 	companion object {
 		private const val libraryId = 754
-		private const val serviceFileId = 818
+		private const val serviceFileId = "818"
 	}
 
 	private val expectedBytes = byteArrayOf()

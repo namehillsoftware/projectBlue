@@ -20,7 +20,7 @@ class `When Getting the Server Info` {
 		ServerLookup(
 			mockk {
 				every { promiseConnectionSettings(LibraryId(libraryId)) } returns MediaCenterConnectionSettings(
-					accessCode = "http://gooPc:80",
+					accessCode = "http://gooPc",
 					macAddress = "5A:D2:D4:F6:D0:4A",
 				).toPromise()
 			},

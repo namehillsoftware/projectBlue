@@ -17,7 +17,7 @@ import java.io.File
 import java.net.URI
 
 class WhenProcessingTheJob {
-    private val storedFile = StoredFile(LibraryId(7), ServiceFile(1), URI("test-path"), true)
+    private val storedFile = StoredFile(LibraryId(7), ServiceFile("1"), URI("test-path"), true)
     private var storageCreatePathException: StorageCreatePathException? = null
 
     @BeforeAll
@@ -32,7 +32,7 @@ class WhenProcessingTheJob {
         try {
             storedFileJobProcessor.observeStoredFileDownload(
                 setOf(
-                    StoredFileJob(LibraryId(7), ServiceFile(1), storedFile)
+                    StoredFileJob(LibraryId(7), ServiceFile("1"), storedFile)
                 )
             ).blockingSubscribe()
         } catch (e: Throwable) {

@@ -144,7 +144,6 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		val promisedMediaItems = parentId
 			.takeIf { id -> id.startsWith(itemFileMediaIdPrefix) }
 			?.substring(3)
-			?.toIntOrNull()
 			?.let { id ->
 				mediaItemBrowser.promiseItems(ItemId(id)).keepPromise(emptyList())
 			}
@@ -162,7 +161,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		val type = itemIdParts[0]
 		if (type != serviceFileMediaIdPrefix) return super.onLoadItem(itemId, result)
 
-		val id = itemIdParts[1].toIntOrNull() ?: return super.onLoadItem(itemId, result)
+		val id = itemIdParts[1]
 
 		result.detach()
 

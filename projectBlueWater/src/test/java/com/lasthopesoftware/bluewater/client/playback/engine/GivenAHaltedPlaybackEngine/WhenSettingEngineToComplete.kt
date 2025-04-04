@@ -35,11 +35,11 @@ class WhenSettingEngineToComplete {
 			id = 607,
 			savedTracksString = FileStringListUtilities.promiseSerializedFileStringList(
 				listOf(
-					ServiceFile(1),
-					ServiceFile(2),
-					ServiceFile(3),
-					ServiceFile(4),
-					ServiceFile(5)
+					ServiceFile("1"),
+					ServiceFile("2"),
+					ServiceFile("3"),
+					ServiceFile("4"),
+					ServiceFile("5")
 				)
 			).toExpiringFuture().get(),
 			nowPlayingId = 0,
@@ -50,7 +50,7 @@ class WhenSettingEngineToComplete {
 
 		val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()
 		every {
-			filePropertiesContainerRepository.getFilePropertiesContainer(UrlKeyHolder(TestUrl, ServiceFile(4)))
+			filePropertiesContainerRepository.getFilePropertiesContainer(UrlKeyHolder(TestUrl, ServiceFile("4")))
 		} returns FilePropertiesContainer(1, mapOf(Pair(KnownFileProperties.Duration, "100")))
 
 		val repository =

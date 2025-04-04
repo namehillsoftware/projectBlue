@@ -15,7 +15,7 @@ import java.net.URI
 
 class WhenProcessingTheJob {
 	private val storedFileJobStatus by lazy {
-		val storedFile = StoredFile(LibraryId(10), ServiceFile(1), URI("test-path"), true)
+		val storedFile = StoredFile(LibraryId(10), ServiceFile("1"), URI("test-path"), true)
 		storedFile.setIsDownloadComplete(true)
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
@@ -30,7 +30,7 @@ class WhenProcessingTheJob {
 				setOf(
 					StoredFileJob(
 						LibraryId(10),
-						ServiceFile(1),
+						ServiceFile("1"),
 						storedFile
 					)
 				)

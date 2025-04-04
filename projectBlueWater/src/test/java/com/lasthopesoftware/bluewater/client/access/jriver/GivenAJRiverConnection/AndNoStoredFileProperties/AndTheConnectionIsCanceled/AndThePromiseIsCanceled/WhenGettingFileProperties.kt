@@ -19,9 +19,11 @@ import java.io.IOException
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 
-private const val serviceFileId = 155
-
 class WhenGettingFileProperties {
+	companion object {
+		private const val serviceFileId = "155"
+	}
+
 	private val deferredReject = DeferredPromise<HttpResponse>(IOException("Canceled"))
 
 	private val filePropertiesProvider by lazy {

@@ -40,7 +40,7 @@ class WhenSendingPlayedToServer {
 
 	@BeforeAll
 	fun act() {
-		updater.promisePlaystatsUpdate(ServiceFile(15)).toExpiringFuture().get()
+		updater.promisePlaystatsUpdate(ServiceFile("15")).toExpiringFuture().get()
 	}
 
 	@Test

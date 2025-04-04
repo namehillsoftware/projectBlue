@@ -17,11 +17,11 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
-private const val libraryId = 895
-private const val serviceFileId = 194
-
 class `When Getting The Uri Using the File Path` : AndroidContext() {
 	companion object {
+		private const val libraryId = 895
+		private const val serviceFileId = "194"
+
 		private val uriProvider by lazy {
             DataFileUriProvider(
                 mockk {

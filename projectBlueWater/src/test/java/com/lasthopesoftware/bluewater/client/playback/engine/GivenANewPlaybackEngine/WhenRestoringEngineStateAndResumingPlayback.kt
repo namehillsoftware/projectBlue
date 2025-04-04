@@ -36,11 +36,11 @@ class WhenRestoringEngineStateAndResumingPlayback {
 			id = 35,
 			savedTracksString = FileStringListUtilities.promiseSerializedFileStringList(
 				listOf(
-					ServiceFile(32),
-					ServiceFile(329),
-					ServiceFile(580),
-					ServiceFile(915),
-					ServiceFile(899)
+					ServiceFile("32"),
+					ServiceFile("329"),
+					ServiceFile("580"),
+					ServiceFile("915"),
+					ServiceFile("899")
 				)
 			).toExpiringFuture().get(),
 			nowPlayingProgress = 893,
@@ -54,7 +54,7 @@ class WhenRestoringEngineStateAndResumingPlayback {
 			filePropertiesContainerRepository.getFilePropertiesContainer(
 				UrlKeyHolder(
 					TestUrl,
-					ServiceFile(4)
+					ServiceFile("4")
 				)
 			)
 		} returns FilePropertiesContainer(1, mapOf(Pair(KnownFileProperties.Duration, "100")))
@@ -89,7 +89,7 @@ class WhenRestoringEngineStateAndResumingPlayback {
 
 	@Test
 	fun `then the service file is correct`() {
-		assertThat(restoredState?.second?.serviceFile).isEqualTo(ServiceFile(915))
+		assertThat(restoredState?.second?.serviceFile).isEqualTo(ServiceFile("915"))
 	}
 
 	@Test
@@ -109,6 +109,6 @@ class WhenRestoringEngineStateAndResumingPlayback {
 
 	@Test
 	fun `then the playing file is correct`() {
-		assertThat(positionedPlayingFile?.serviceFile).isEqualTo(ServiceFile(915))
+		assertThat(positionedPlayingFile?.serviceFile).isEqualTo(ServiceFile("915"))
 	}
 }

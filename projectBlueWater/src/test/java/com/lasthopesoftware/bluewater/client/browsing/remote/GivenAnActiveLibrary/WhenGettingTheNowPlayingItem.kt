@@ -41,7 +41,7 @@ class `When Getting The Now Playing Item` {
 			every { nowPlaying.promiseNowPlaying(LibraryId(libraryId)) } returns Promise(
 				NowPlaying(
 					LibraryId(libraryId),
-					listOf(ServiceFile(89), ServiceFile(393), ServiceFile(714), ServiceFile(760)),
+					listOf(ServiceFile("89"), ServiceFile("393"), ServiceFile("714"), ServiceFile("760")),
 					1,
 					561L,
 					true
@@ -49,7 +49,7 @@ class `When Getting The Now Playing Item` {
 			)
 
 			val serviceFiles = mockk<GetMediaItemsFromServiceFiles>()
-			every { serviceFiles.promiseMediaItemWithImage(LibraryId(libraryId), ServiceFile(393)) } returns expectedMediaItem.toPromise()
+			every { serviceFiles.promiseMediaItemWithImage(LibraryId(libraryId), ServiceFile("393")) } returns expectedMediaItem.toPromise()
 
 			val mediaItemsBrowser = NowPlayingMediaItemLookup(
 				mockk {

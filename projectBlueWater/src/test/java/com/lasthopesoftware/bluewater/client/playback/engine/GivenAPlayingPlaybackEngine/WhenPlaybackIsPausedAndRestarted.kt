@@ -61,11 +61,11 @@ class WhenPlaybackIsPausedAndRestarted {
 			.startPlaylist(
 				LibraryId(libraryId),
 				listOf(
-					ServiceFile(1),
-					ServiceFile(2),
-					ServiceFile(3),
-					ServiceFile(4),
-					ServiceFile(5)
+					ServiceFile("1"),
+					ServiceFile("2"),
+					ServiceFile("3"),
+					ServiceFile("4"),
+					ServiceFile("5")
 				), 0, Duration.ZERO
 			)
 		val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
@@ -101,9 +101,9 @@ class WhenPlaybackIsPausedAndRestarted {
 	@Test
 	fun `then the changed files are correct`() {
 		assertThat(changedFiles).containsExactly(
-			ServiceFile(1),
-			ServiceFile(2),
-			ServiceFile(2)
+			ServiceFile("1"),
+			ServiceFile("2"),
+			ServiceFile("2")
 		)
 	}
 
@@ -116,11 +116,11 @@ class WhenPlaybackIsPausedAndRestarted {
 	fun `then the saved playlist is correct`() {
 		assertThat(nowPlaying!!.playlist)
 			.containsExactly(
-				ServiceFile(1),
-				ServiceFile(2),
-				ServiceFile(3),
-				ServiceFile(4),
-				ServiceFile(5)
+				ServiceFile("1"),
+				ServiceFile("2"),
+				ServiceFile("3"),
+				ServiceFile("4"),
+				ServiceFile("5")
 			)
 	}
 }

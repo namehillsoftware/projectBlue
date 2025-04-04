@@ -35,7 +35,7 @@ class WhenUpdatingTheFile {
 			)
 
 			val lookupStoredFilePaths = mockk<GetStoredFileUris> {
-				every { promiseStoredFileUri(LibraryId(14), ServiceFile(4)) } returns Promise(
+				every { promiseStoredFileUri(LibraryId(14), ServiceFile("4")) } returns Promise(
 					URI("file:/my-private-drive-1/14/artist/album/my-filename.mp3")
 				)
 			}
@@ -48,9 +48,9 @@ class WhenUpdatingTheFile {
                 fakeLibraryRepository,
 				lookupStoredFilePaths,
 				mockk(),
-			).promiseStoredFileUpdate(LibraryId(14), ServiceFile(4)).toExpiringFuture().get()
+			).promiseStoredFileUpdate(LibraryId(14), ServiceFile("4")).toExpiringFuture().get()
 
-			every { lookupStoredFilePaths.promiseStoredFileUri(LibraryId(14), ServiceFile(4)) } returns Promise(
+			every { lookupStoredFilePaths.promiseStoredFileUri(LibraryId(14), ServiceFile("4")) } returns Promise(
 				URI("file:/my-private-drive/14/artist/album/my-filename.mp3")
 			)
 
@@ -63,7 +63,7 @@ class WhenUpdatingTheFile {
 			)
 
 			storedFileUpdater
-				.promiseStoredFileUpdate(LibraryId(14), ServiceFile(4))
+				.promiseStoredFileUpdate(LibraryId(14), ServiceFile("4"))
 				.toExpiringFuture()
 				.get()
 		}

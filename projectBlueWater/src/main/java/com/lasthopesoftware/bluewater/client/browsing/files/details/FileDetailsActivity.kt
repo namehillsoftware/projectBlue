@@ -112,7 +112,7 @@ import java.io.IOException
 								position < 0 -> finish()
 								!isInitialized -> isConnectionLost = true
 								else -> {
-									val playlist = intent.getIntArrayExtra(playlist)?.map(::ServiceFile) ?: emptyList()
+									val playlist = intent.getStringArrayExtra(playlist)?.map(::ServiceFile) ?: emptyList()
 
 									vm.loadFromList(libraryId, playlist, position).suspend()
 								}

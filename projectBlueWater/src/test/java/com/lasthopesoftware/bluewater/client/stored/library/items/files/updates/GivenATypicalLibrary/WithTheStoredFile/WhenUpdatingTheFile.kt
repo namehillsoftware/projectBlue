@@ -27,7 +27,7 @@ class WhenUpdatingTheFile {
 
 			val fakeLibraryRepository = FakeLibraryRepository(Library(id = libraryId.id))
 
-			val serviceFile = ServiceFile(596)
+			val serviceFile = ServiceFile("596")
 
 			val storedFileUpdater = StoredFileUpdater(
 				FakeStoredFileAccess(),

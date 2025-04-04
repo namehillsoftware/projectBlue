@@ -24,10 +24,10 @@ class WhenGettingTheMaxVolume {
 		val maxFileVolumeProvider = MaxFileVolumeProvider(
 			volumeLevelSettings,
 			mockk {
-				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(1)) } returns mapOf(Pair(KnownFileProperties.VolumeLevelReplayGain, "-13.5")).toPromise()
+				every { promiseFileProperties(LibraryId(libraryId), ServiceFile("1")) } returns mapOf(Pair(KnownFileProperties.VolumeLevelReplayGain, "-13.5")).toPromise()
 			}
 		)
-		maxFileVolumeProvider.promiseMaxFileVolume(LibraryId(libraryId), ServiceFile(1)).toExpiringFuture().get()!!
+		maxFileVolumeProvider.promiseMaxFileVolume(LibraryId(libraryId), ServiceFile("1")).toExpiringFuture().get()!!
 	}
 
 	@Test

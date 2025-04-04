@@ -56,9 +56,9 @@ class `When saving a new playlist` {
 			.promiseStoredPlaylist(
 				"My Fancy Album",
 				listOf(
-					ServiceFile(954),
-					ServiceFile(172),
-					ServiceFile(366),
+					ServiceFile("954"),
+					ServiceFile("172"),
+					ServiceFile("366"),
 				)
 			)
 			.toExpiringFuture()

@@ -23,11 +23,14 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-private const val libraryId = 446
-private const val serviceFileId = 111
-private const val revision = 416
-
 class WhenUpdatingFileProperties {
+
+	companion object {
+		private const val libraryId = 446
+		private const val serviceFileId = "111"
+		private const val revision = 416
+	}
+
 	private val deferredRevisionPromise = DeferredPromise(revision)
 	private val properties = mutableMapOf<String, String>()
 

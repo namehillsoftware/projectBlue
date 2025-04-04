@@ -31,7 +31,7 @@ class WhenSendingPlayedToServer {
 	@BeforeAll
 	fun act() {
 		try {
-			updater.promisePlaystatsUpdate(ServiceFile(627)).toExpiringFuture().get()
+			updater.promisePlaystatsUpdate(ServiceFile("627")).toExpiringFuture().get()
 		} catch (e: ExecutionException) {
 			httpResponseException = e.cause as? HttpResponseException
 		}

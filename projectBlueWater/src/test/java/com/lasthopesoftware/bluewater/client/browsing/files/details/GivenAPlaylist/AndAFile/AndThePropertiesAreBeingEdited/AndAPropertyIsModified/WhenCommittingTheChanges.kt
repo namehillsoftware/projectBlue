@@ -17,10 +17,12 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-private const val libraryId = 713
-private const val serviceFileId = 294
-
 class WhenCommittingTheChanges {
+	companion object {
+		private const val libraryId = 713
+		private const val serviceFileId = "294"
+	}
+
 	private var persistedValue = ""
 
 	private val viewModel by lazy {
@@ -82,16 +84,16 @@ class WhenCommittingTheChanges {
 
 	@Test
 	fun `then the property is not being edited`() {
-		assertThat(viewModel?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.Track }?.isEditing?.value).isFalse
+		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == KnownFileProperties.Track }?.isEditing?.value).isFalse
 	}
 
 	@Test
 	fun `then the committed property is changed`() {
 		assertThat(
 			viewModel
-				?.fileProperties
-				?.value
-				?.firstOrNull { it.property == KnownFileProperties.Track }
+				.fileProperties
+				.value
+				.firstOrNull { it.property == KnownFileProperties.Track }
 				?.committedValue
 				?.value).isEqualTo("617")
 	}

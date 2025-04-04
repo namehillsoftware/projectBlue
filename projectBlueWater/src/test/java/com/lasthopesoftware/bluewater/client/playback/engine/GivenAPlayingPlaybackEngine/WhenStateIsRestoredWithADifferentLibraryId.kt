@@ -36,7 +36,7 @@ class WhenStateIsRestoredWithADifferentLibraryId {
 		val restoringLibrary = Library(
 			id = restoringLibraryId,
 			savedTracksString = FileStringListUtilities
-				.promiseSerializedFileStringList(listOf(ServiceFile(467), ServiceFile(144)))
+				.promiseSerializedFileStringList(listOf(ServiceFile("467"), ServiceFile("144")))
 				.toExpiringFuture()
 				.get(),
 			nowPlayingId = 1,
@@ -76,11 +76,11 @@ class WhenStateIsRestoredWithADifferentLibraryId {
 			.startPlaylist(
                 LibraryId(libraryId),
 				listOf(
-                    ServiceFile(1),
-                    ServiceFile(2),
-                    ServiceFile(3),
-                    ServiceFile(4),
-                    ServiceFile(5)
+                    ServiceFile("1"),
+                    ServiceFile("2"),
+                    ServiceFile("3"),
+                    ServiceFile("4"),
+                    ServiceFile("5")
 				),
 				0,
                 Duration.ZERO
@@ -107,7 +107,7 @@ class WhenStateIsRestoredWithADifferentLibraryId {
 
 	@Test
 	fun `then the restored file is correct`() {
-		assertThat(restoredFile?.serviceFile).isEqualTo(ServiceFile(144))
+		assertThat(restoredFile?.serviceFile).isEqualTo(ServiceFile("144"))
 	}
 
 	@Test
@@ -129,11 +129,11 @@ class WhenStateIsRestoredWithADifferentLibraryId {
 	fun `then the saved playlist is correct`() {
 		assertThat(nowPlaying!!.playlist)
 			.containsExactly(
-                ServiceFile(1),
-                ServiceFile(2),
-                ServiceFile(3),
-                ServiceFile(4),
-                ServiceFile(5)
+                ServiceFile("1"),
+                ServiceFile("2"),
+                ServiceFile("3"),
+                ServiceFile("4"),
+                ServiceFile("5")
 			)
 	}
 }

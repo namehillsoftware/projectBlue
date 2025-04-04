@@ -22,7 +22,7 @@ class WhenChangingTracks {
 		0,
 		FakeBufferingPlaybackHandler(),
 		NoTransformVolumeManager(),
-		ServiceFile(1)
+		ServiceFile("1")
 	)
 
 	private var positionedPlayingFile: PositionedPlayingFile? = null
@@ -35,7 +35,7 @@ class WhenChangingTracks {
                 0,
                 playbackHandler,
                 NoTransformVolumeManager(),
-                ServiceFile(1)
+                ServiceFile("1")
             )
         )
         val secondPositionedPlaybackHandlerContainer = Promise(expectedPositionedPlayableFile)

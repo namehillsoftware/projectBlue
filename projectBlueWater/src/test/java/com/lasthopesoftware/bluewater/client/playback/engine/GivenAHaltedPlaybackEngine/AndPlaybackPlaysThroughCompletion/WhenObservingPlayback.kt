@@ -75,11 +75,11 @@ class WhenObservingPlayback {
 			.startPlaylist(
 				LibraryId(libraryId),
 				listOf(
-					ServiceFile(1),
-					ServiceFile(2),
-					ServiceFile(3),
-					ServiceFile(4),
-					ServiceFile(5)
+					ServiceFile("1"),
+					ServiceFile("2"),
+					ServiceFile("3"),
+					ServiceFile("4"),
+					ServiceFile("5")
 				),
 				0,
 				Duration.ZERO
@@ -105,7 +105,7 @@ class WhenObservingPlayback {
 
 	@Test
 	fun `then the first playing file is the first service file`() {
-		assertThat(firstPlayingFile!!.serviceFile).isEqualTo(ServiceFile(1))
+		assertThat(firstPlayingFile!!.serviceFile).isEqualTo(ServiceFile("1"))
 	}
 
 	@Test

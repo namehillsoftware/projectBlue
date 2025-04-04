@@ -18,7 +18,7 @@ class WhenStoringTheUpdatedPlayStats {
 
 	companion object {
 		private const val libraryId = 548
-		private const val serviceFileId = 23
+		private const val serviceFileId = "23"
 	}
 
 	private val services by lazy {
@@ -56,7 +56,7 @@ class WhenStoringTheUpdatedPlayStats {
 		val (filePropertiesPlayStatsUpdater, sessionFileProperties) = services
 		fileProperties = sessionFileProperties
 		filePropertiesPlayStatsUpdater
-			.promisePlaystatsUpdate(LibraryId(libraryId), ServiceFile(23))
+			.promisePlaystatsUpdate(LibraryId(libraryId), ServiceFile("23"))
 			.toExpiringFuture()
 			.get()
 	}

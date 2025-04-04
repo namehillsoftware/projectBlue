@@ -48,7 +48,7 @@ class MediaSessionCallbackReceiver(
 	}
 
 	override fun onAddQueueItem(description: MediaDescriptionCompat?) {
-		val fileId = description?.mediaId?.toIntOrNull() ?: return
+		val fileId = description?.mediaId ?: return
 		withSelectedLibraryId { l -> controlPlaybackService.addToPlaylist(l, ServiceFile(fileId)) }
 	}
 
@@ -58,7 +58,7 @@ class MediaSessionCallbackReceiver(
 
 		if (itemIdParts[0] != RemoteBrowserService.itemFileMediaIdPrefix) return
 
-		val ids = itemIdParts.drop(1).mapNotNull { id -> id.toIntOrNull() }
+		val ids = itemIdParts.drop(1)
 		val itemId = ids.firstOrNull() ?: return
 
 		withSelectedLibraryId { libraryId ->
@@ -68,7 +68,7 @@ class MediaSessionCallbackReceiver(
 			if (ids.size < 2) {
 				promisedFileStringList.then { sl -> controlPlaybackService.startPlaylist(libraryId, sl) }
 			} else {
-				promisedFileStringList.then { sl -> controlPlaybackService.startPlaylist(libraryId, sl, ids[1]) }
+				promisedFileStringList.then { sl -> controlPlaybackService.startPlaylist(libraryId, sl, ids[1].toInt()) }
 			}
 		}
 	}

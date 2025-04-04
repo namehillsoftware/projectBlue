@@ -29,15 +29,15 @@ private const val libraryId = 798
 class WhenTheRatingPropertyChangesConcurrently {
 
 	private val playlist = listOf(
-		ServiceFile(408),
-		ServiceFile(480),
-		ServiceFile(124),
-		ServiceFile(224),
-		ServiceFile(567),
-		ServiceFile(235),
-		ServiceFile(656),
-		ServiceFile(882),
-		ServiceFile(848),
+		ServiceFile("408"),
+		ServiceFile("480"),
+		ServiceFile("124"),
+		ServiceFile("224"),
+		ServiceFile("567"),
+		ServiceFile("235"),
+		ServiceFile("656"),
+		ServiceFile("882"),
+		ServiceFile("848"),
 	)
 
 	private val playlistPosition by lazy { 831 % playlist.size }

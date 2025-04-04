@@ -19,12 +19,12 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
 
-private const val libraryId = 954
-private const val serviceFileId = 745
-
 @RunWith(AndroidJUnit4::class)
 class WhenGettingTheStoredFilePath {
 	companion object {
+		private const val libraryId = 954
+		private const val serviceFileId = "745"
+
 		private val filePath by lazy {
 			val filePropertiesProvider = FakeFilesPropertiesProvider()
 			filePropertiesProvider.addFilePropertiesToCache(

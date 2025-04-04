@@ -21,7 +21,7 @@ class WhenAQueueIsCycledThroughManyTimes {
 
 	private val mut by lazy {
 		val numberOfFiles = nextInt(1, 500)
-		val serviceFiles = generateSequence { ServiceFile(nextInt()) }.take(numberOfFiles).toList()
+		val serviceFiles = generateSequence { ServiceFile(nextInt().toString()) }.take(numberOfFiles).toList()
 		val fileActionMap = serviceFiles.associateWith { MockResolveAction() }
 		val bufferingPlaybackQueuesProvider = CyclicalFileQueueProvider()
 		val queue = PreparedPlayableFileQueue(

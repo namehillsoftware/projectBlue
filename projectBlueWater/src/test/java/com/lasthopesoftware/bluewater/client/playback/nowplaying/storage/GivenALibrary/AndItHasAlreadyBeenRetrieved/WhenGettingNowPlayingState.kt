@@ -40,7 +40,7 @@ class WhenGettingNowPlayingState {
 					LibraryId(libraryId),
 					NowPlaying(
 						LibraryId(libraryId),
-						listOf(ServiceFile(780), ServiceFile(979), ServiceFile(655)),
+						listOf(ServiceFile("780"), ServiceFile("979"), ServiceFile("655")),
 						1,
 						672,
 						true
@@ -59,7 +59,7 @@ class WhenGettingNowPlayingState {
 
 	@Test
 	fun `then the playing file is correct`() {
-		assertThat(nowPlaying?.playingFile).isEqualTo(PositionedFile(1, ServiceFile(979)))
+		assertThat(nowPlaying?.playingFile).isEqualTo(PositionedFile(1, ServiceFile("979")))
 	}
 
 	@Test
@@ -67,7 +67,7 @@ class WhenGettingNowPlayingState {
 		assertThat(nowPlaying).isEqualTo(
 			NowPlaying(
 				LibraryId(libraryId),
-				listOf(ServiceFile(780), ServiceFile(979), ServiceFile(655)),
+				listOf(ServiceFile("780"), ServiceFile("979"), ServiceFile("655")),
 				1,
 				672,
 				true
