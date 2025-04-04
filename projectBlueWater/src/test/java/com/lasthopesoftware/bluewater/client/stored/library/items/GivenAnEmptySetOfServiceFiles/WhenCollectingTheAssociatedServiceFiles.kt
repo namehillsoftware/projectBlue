@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.GivenAnEmptyS
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
@@ -27,7 +26,7 @@ class WhenCollectingTheAssociatedServiceFiles {
 			StoredItem(1, "1", StoredItem.ItemType.ITEM),
 			StoredItem(1, "2", StoredItem.ItemType.ITEM),
 			StoredItem(1, "3", StoredItem.ItemType.ITEM))
-		val fileListParameters = FileListParameters
+
 		val fileProvider = mockk<ProvideLibraryFiles> {
 			every {
 				promiseFiles(LibraryId(10), ItemId("1"))

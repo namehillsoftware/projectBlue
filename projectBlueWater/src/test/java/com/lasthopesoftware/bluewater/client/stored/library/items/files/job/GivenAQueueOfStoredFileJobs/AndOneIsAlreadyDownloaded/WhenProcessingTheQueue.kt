@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.AndOneIsAlreadyDownloaded
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.MarkedFilesStoredFilesUpdater
@@ -70,7 +68,6 @@ class WhenProcessingTheQueue {
 	private val storedFilesUpdates = MarkedFilesStoredFilesUpdater()
 	private lateinit var storedFileStatuses: List<StoredFileJobStatus>
 
-	@RequiresApi(api = Build.VERSION_CODES.N)
 	@BeforeAll
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(

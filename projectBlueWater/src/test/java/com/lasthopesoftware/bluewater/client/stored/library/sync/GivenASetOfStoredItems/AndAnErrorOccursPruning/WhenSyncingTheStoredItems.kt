@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenASetOfStoredItems.AndAnErrorOccursPruning
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
@@ -23,8 +22,6 @@ import java.net.URI
 class WhenSyncingTheStoredItems {
 
 	private val librarySyncsHandler by lazy {
-		val fileListParameters = FileListParameters
-
 		LibrarySyncsHandler(
 			StoredItemServiceFileCollector(
 				mockk {

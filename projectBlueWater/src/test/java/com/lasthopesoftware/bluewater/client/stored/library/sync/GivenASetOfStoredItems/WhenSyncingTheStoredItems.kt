@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenASetOfStoredItems
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
@@ -26,8 +25,6 @@ class WhenSyncingTheStoredItems {
 	private lateinit var storedFileJobResults: MutableList<StoredFile>
 
 	private val librarySyncsHandler by lazy {
-		val fileListParameters = FileListParameters
-
 		LibrarySyncsHandler(
 			StoredItemServiceFileCollector(
 				mockk {

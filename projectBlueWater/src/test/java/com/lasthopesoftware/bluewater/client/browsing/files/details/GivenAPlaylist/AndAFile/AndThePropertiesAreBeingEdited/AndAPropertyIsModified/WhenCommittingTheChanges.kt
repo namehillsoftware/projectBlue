@@ -84,16 +84,16 @@ class WhenCommittingTheChanges {
 
 	@Test
 	fun `then the property is not being edited`() {
-		assertThat(viewModel?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.Track }?.isEditing?.value).isFalse
+		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == KnownFileProperties.Track }?.isEditing?.value).isFalse
 	}
 
 	@Test
 	fun `then the committed property is changed`() {
 		assertThat(
 			viewModel
-				?.fileProperties
-				?.value
-				?.firstOrNull { it.property == KnownFileProperties.Track }
+				.fileProperties
+				.value
+				.firstOrNull { it.property == KnownFileProperties.Track }
 				?.committedValue
 				?.value).isEqualTo("617")
 	}

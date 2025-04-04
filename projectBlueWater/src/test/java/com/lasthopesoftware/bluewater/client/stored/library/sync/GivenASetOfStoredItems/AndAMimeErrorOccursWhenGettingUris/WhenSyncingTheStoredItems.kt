@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenASetOfSto
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
@@ -33,7 +32,6 @@ class WhenSyncingTheStoredItems {
 			)
 		)
 
-		val fileListParameters = FileListParameters
 		val mockFileProvider = mockk<ProvideLibraryFiles>()
 		every {
 			mockFileProvider.promiseFiles(LibraryId(42), ItemId("14"))

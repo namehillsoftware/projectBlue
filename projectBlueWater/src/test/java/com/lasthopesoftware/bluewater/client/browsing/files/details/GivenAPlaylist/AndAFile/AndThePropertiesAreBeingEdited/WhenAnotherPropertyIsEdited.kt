@@ -98,26 +98,26 @@ class WhenAnotherPropertyIsEdited {
 
 	@Test
 	fun `then the original property is not being edited`() {
-		assertThat(viewModel?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.Custom }?.isEditing?.value).isFalse
+		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == KnownFileProperties.Custom }?.isEditing?.value).isFalse
 	}
 
 	@Test
 	fun `then the new property is being edited`() {
-		assertThat(viewModel?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.AlbumArtist }?.isEditing?.value).isTrue
+		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == KnownFileProperties.AlbumArtist }?.isEditing?.value).isTrue
 	}
 
 	@Test
 	fun `then the new property is highlighted`() {
-		assertThat(viewModel?.highlightedProperty?.value).isEqualTo(viewModel?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.AlbumArtist })
+		assertThat(viewModel.highlightedProperty.value).isEqualTo(viewModel.fileProperties.value.firstOrNull { it.property == KnownFileProperties.AlbumArtist })
 	}
 
 	@Test
 	fun `then the property has the correct editable type`() {
-		assertThat(viewModel?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.AlbumArtist }?.editableType).isEqualTo(FilePropertyType.ShortFormText)
+		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == KnownFileProperties.AlbumArtist }?.editableType).isEqualTo(FilePropertyType.ShortFormText)
 	}
 
 	@Test
 	fun `then the property is edited`() {
-		assertThat(viewModel?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.AlbumArtist }?.uncommittedValue?.value).isEqualTo("silk")
+		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == KnownFileProperties.AlbumArtist }?.uncommittedValue?.value).isEqualTo("silk")
 	}
 }

@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.GivenAnUnfoun
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -39,7 +38,6 @@ class WhenCollectingTheAssociatedServiceFiles {
 			}
 		}
 
-		val fileListParameters = FileListParameters
 		val fileProvider = mockk<ProvideLibraryFiles>()
 		every {
 			fileProvider.promiseFiles(LibraryId(4), ItemId("1"))

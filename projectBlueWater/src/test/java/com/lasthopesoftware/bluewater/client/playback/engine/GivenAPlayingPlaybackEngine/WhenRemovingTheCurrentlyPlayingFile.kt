@@ -62,7 +62,7 @@ class WhenRemovingTheCurrentlyPlayingFile {
 				every { updateNowPlaying(any(), any(), any(), any(), any()) } answers {
 					libraryProvider.updateNowPlaying(arg(0), arg(1), arg(2), arg(3), arg(4)).then { _ ->
 						val lib = libraryProvider.libraries[libraryId]
-						if (lib?.savedTracksString != library.savedTracksString)
+						if (lib?.savedTracksString != library.savedTracksString && lib?.nowPlayingId == 5)
 							resolve(lib)
 					}
 				}

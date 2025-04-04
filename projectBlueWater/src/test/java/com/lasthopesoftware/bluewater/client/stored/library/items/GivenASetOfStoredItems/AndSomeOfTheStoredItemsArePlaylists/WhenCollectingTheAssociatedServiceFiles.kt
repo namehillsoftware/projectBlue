@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.GivenASetOfSt
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -40,7 +39,7 @@ class WhenCollectingTheAssociatedServiceFiles {
 			StoredItem(1, "3", StoredItem.ItemType.ITEM),
 			StoredItem(1, "5", StoredItem.ItemType.PLAYLIST)
 		)
-		val fileListParameters = FileListParameters
+
 		val fileProvider = mockk<ProvideLibraryFiles>().apply {
 			every { promiseFiles(any(), any<ItemId>()) } returns emptyList<ServiceFile>().toPromise()
 			every { promiseFiles(LibraryId(5), ItemId("1")) } returns firstItemExpectedFiles.toPromise()

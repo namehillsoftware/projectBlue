@@ -116,22 +116,22 @@ class WhenPlayingFromFileDetails {
 
 	@Test
 	fun `then the artist is correct`() {
-		assertThat(mut.artist?.value).isEqualTo("load")
+		assertThat(mut.artist.value).isEqualTo("load")
 	}
 
 	@Test
 	fun `then the rating is correct`() {
-		assertThat(mut.rating?.value).isEqualTo(4)
+		assertThat(mut.rating.value).isEqualTo(4)
 	}
 
 	@Test
 	fun `then the file name is correct`() {
-		assertThat(mut.fileName?.value).isEqualTo("toward")
+		assertThat(mut.fileName.value).isEqualTo("toward")
 	}
 
 	@Test
 	fun `then the file properties are correct`() {
-		assertThat(mut.fileProperties?.value?.map { Pair(it.property, it.committedValue.value) }).containsExactlyInAnyOrder(
+		assertThat(mut.fileProperties.value.map { Pair(it.property, it.committedValue.value) }).containsExactlyInAnyOrder(
 			Pair(KnownFileProperties.Name, "toward"),
 			Pair(KnownFileProperties.Artist, "load"),
 			Pair(KnownFileProperties.Album, "square"),
