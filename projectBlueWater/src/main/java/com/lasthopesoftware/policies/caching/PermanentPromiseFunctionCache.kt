@@ -25,4 +25,8 @@ class PermanentPromiseFunctionCache<Input : Any, Output> :
 					?: produceAndStoreValue()
 			}
 	}
+
+	override fun overrideCachedValue(input: Input, output: Output) = synchronized(cachedSyncs.getOrPut(input, ::Any)) {
+		cachedPromises[input] = ResolvedPromiseBox(output.toPromise())
+	}
 }

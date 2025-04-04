@@ -136,6 +136,7 @@ object ApplicationDependenciesContainer {
 
 		override val nowPlayingStateMaintenance by lazy {
 			CachingNowPlayingRepository(
+				selectedLibraryIdProvider,
 				NowPlayingRepository(
 					selectedLibraryIdProvider,
 					libraryProvider,
