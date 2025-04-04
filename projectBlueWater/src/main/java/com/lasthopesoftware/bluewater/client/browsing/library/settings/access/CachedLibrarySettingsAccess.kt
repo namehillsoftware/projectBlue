@@ -30,7 +30,7 @@ class CachedLibrarySettingsAccess(
 	override fun promiseSavedLibrarySettings(librarySettings: LibrarySettings): Promise<LibrarySettings> {
 		return librarySettings
 			.libraryId
-			?.let { cache.getOrAdd(it, { libraryStorage.promiseSavedLibrarySettings(librarySettings).thenForward() }) }
+			?.let { cache.getOrAdd(it) { libraryStorage.promiseSavedLibrarySettings(librarySettings).thenForward() } }
 			?.eventually { savedSettings ->
 				savedSettings
 					.takeIf { it == librarySettings }
