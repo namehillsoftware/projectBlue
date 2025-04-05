@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.access
 
 import android.content.Context
+import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.isRepeatingColumn
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.nowPlayingIdColumn
@@ -108,7 +109,11 @@ class LibraryRepository(private val context: Context) : ManageLibraries, Provide
 					val returnLibrary =
 						if (isLibraryExists) repositoryAccessHelper.update(tableName, library)
 						else repositoryAccessHelper.insert(tableName, library)
-					logger.debug("Library saved.")
+
+					if (BuildConfig.DEBUG) {
+						logger.debug("Library saved.")
+					}
+
 					closeableTransaction.setTransactionSuccessful()
 					returnLibrary
 				}
@@ -139,7 +144,10 @@ class LibraryRepository(private val context: Context) : ManageLibraries, Provide
 						throw IOException("Updating $tableName for id ${values.id} returned 0 rows.")
 					}
 
-					logger.debug("Now Playing updated for library $libraryInt.")
+					if (BuildConfig.DEBUG) {
+						logger.debug("Now Playing updated for library {}.", libraryInt)
+					}
+
 					closeableTransaction.setTransactionSuccessful()
 				}
 			}

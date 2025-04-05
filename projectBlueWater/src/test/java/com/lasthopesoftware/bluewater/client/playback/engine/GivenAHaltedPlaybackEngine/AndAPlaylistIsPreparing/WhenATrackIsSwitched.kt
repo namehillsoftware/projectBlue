@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
@@ -16,21 +17,24 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-
-private const val libraryId = 428
 
 class WhenATrackIsSwitched {
 
-	private val nextSwitchedFile by lazy {
-		val playlist = listOf(
+	companion object {
+		private const val libraryId = 428
+
+		private val playlist = listOf(
 			ServiceFile("1"),
 			ServiceFile("2"),
 			ServiceFile("3"),
 			ServiceFile("4"),
 			ServiceFile("5")
 		)
+	}
 
+	private val mutt by lazy {
 		val fakePlaybackPreparerProvider = FakeMappedPlayableFilePreparationSourceProvider(playlist)
 		val library = Library(id = libraryId)
 
@@ -51,13 +55,33 @@ class WhenATrackIsSwitched {
 				),
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)
+
+		Pair(fakePlaybackPreparerProvider, playbackEngine)
+	}
+
+	private var nextSwitchedFile: Pair<LibraryId, PositionedFile>? = null
+	private var error: Throwable? = null
+
+	@BeforeAll
+	fun act() {
+		val (fakePlaybackPreparerProvider, playbackEngine) = mutt
+
+		playbackEngine.setOnPlaylistError {
+			error = it
+		}
+
 		playbackEngine
 			.startPlaylist(LibraryId(libraryId), playlist, 0, Duration.ZERO)
 			.toExpiringFuture()
 			.get()
 		val futurePositionedFile = playbackEngine.changePosition(3, Duration.ZERO).toExpiringFuture()
 		fakePlaybackPreparerProvider.deferredResolutions[playlist[3]]?.resolve()
-		futurePositionedFile.get()
+		nextSwitchedFile = futurePositionedFile.get()
+	}
+
+	@Test
+	fun `then the error is null`() {
+		assertThat(error).isNull()
 	}
 
 	@Test

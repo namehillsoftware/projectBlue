@@ -24,7 +24,6 @@ import io.mockk.spyk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 class WhenRemovingTheCurrentlyPlayingFile {
@@ -106,15 +105,17 @@ class WhenRemovingTheCurrentlyPlayingFile {
 			deferredPreparedPlayableFile.resolve()
 		}
 
-		val playingFileChangedLatch = CountDownLatch(1)
-		playbackEngine.setOnPlayingFileChanged { _, c ->
-			positionedPlayingFile = c
-			playingFileChangedLatch.countDown()
+		val promisedPlayingFile = object : Promise<PositionedPlayingFile>() {
+			init {
+				playbackEngine.setOnPlayingFileChanged { _, c ->
+					resolve(c)
+				}
+			}
 		}
 
 		val futurePlaying = playbackEngine.removeFileAtPosition(playingPosition).toExpiringFuture()
 		futurePlaying[1, TimeUnit.SECONDS]
-		playingFileChangedLatch.await(10, TimeUnit.SECONDS)
+		positionedPlayingFile = promisedPlayingFile.toExpiringFuture().get()
 	}
 
 	@Test
