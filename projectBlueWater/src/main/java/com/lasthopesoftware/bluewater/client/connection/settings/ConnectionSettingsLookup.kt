@@ -19,6 +19,7 @@ class ConnectionSettingsLookup(private val librarySettings: ProvideLibrarySettin
 						isLocalOnly = isLocalOnly,
 						isWakeOnLanEnabled = isWakeOnLanEnabled,
 						sslCertificateFingerprint = sslCertificateFingerprint?.hexToByteArray() ?: emptyByteArray,
+						macAddress = macAddress
 					)
 				}
 			}

@@ -8,8 +8,6 @@ import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicati
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.InMemoryNowPlayingState
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver
 import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.promises.toFuture
@@ -37,12 +35,7 @@ import java.util.concurrent.TimeUnit
 			)
 
 			val broadcaster = MediaSessionBroadcaster(
-				NowPlayingRepository(
-					selectedLibraryIdProvider,
-					libraryProvider,
-					libraryStorage,
-					InMemoryNowPlayingState,
-				),
+				nowPlayingState,
 				libraryConnectionDependencies.libraryFilePropertiesProvider,
 				libraryFilePropertiesDependents.imageBytesProvider,
 				applicationDependencies.bitmapProducer,

@@ -224,4 +224,8 @@ dependencies {
 	testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit5_version"
 	testRuntimeOnly "org.junit.vintage:junit-vintage-engine:$junit5_version"
 	androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
+	androidTestImplementation "org.assertj:assertj-core:3.27.3"
+	androidTestImplementation 'androidx.test.ext:junit-ktx:1.2.1'
+	androidTestImplementation 'androidx.test:core:1.6.1'
+	androidTestImplementation 'androidx.test:runner:1.6.2'
 }

@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.sync.GivenSynchronizingLibraries
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ProvideLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.PruneStoredFiles
@@ -46,7 +46,7 @@ class WhenSynchronizationIsDisposing {
 				every { pruneDanglingFiles() } returns Unit.toPromise()
 			}
 
-		val libraryProvider = mockk<ILibraryProvider>()
+		val libraryProvider = mockk<ProvideLibraries>()
 		every { libraryProvider.promiseAllLibraries() } returns Promise(
 			listOf(
 				Library(id = 4),

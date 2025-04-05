@@ -193,7 +193,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 	}
 
 	private fun handlePlaybackException(exception: Throwable) {
-		if (isHalted && exception is CancellationException) return
+		if (exception is CancellationException || exception.cause is CancellationException) return
 
 		reject(exception)
 		haltPlayback()

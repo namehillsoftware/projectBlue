@@ -2,6 +2,7 @@ package com.lasthopesoftware.policies.caching
 
 import com.google.common.cache.Cache
 import com.lasthopesoftware.promises.ResolvedPromiseBox
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 open class GuavaPromiseCache<Input : Any, Output>(
@@ -9,6 +10,10 @@ open class GuavaPromiseCache<Input : Any, Output>(
 ) : CachePromiseFunctions<Input, Output> {
 	final override fun getOrAdd(input: Input, factory: (Input) -> Promise<Output>): Promise<Output> =
 		cachedPromises.getIfPresent(input)?.resolvedPromise ?: buildNewIfNeeded(input, factory)
+
+	final override fun overrideCachedValue(input: Input, output: Output) {
+		cachedPromises.put(input, ResolvedPromiseBox(output.toPromise()))
+	}
 
 	private fun buildNewIfNeeded(input: Input, factory: (Input) -> Promise<Output>): Promise<Output> {
 		var factoryBuiltPromise: Promise<Output>? = null

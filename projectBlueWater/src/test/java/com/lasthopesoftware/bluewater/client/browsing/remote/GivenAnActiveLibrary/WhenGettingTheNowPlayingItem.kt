@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.remote.GetMediaItemsFromServiceFiles
 import com.lasthopesoftware.bluewater.client.browsing.remote.NowPlayingMediaItemLookup
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.ManageNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -37,7 +37,7 @@ class `When Getting The Now Playing Item` {
 		}
 
 		private val mediaItem by lazy {
-			val nowPlaying = mockk<MaintainNowPlayingState>()
+			val nowPlaying = mockk<ManageNowPlayingState>()
 			every { nowPlaying.promiseNowPlaying(LibraryId(libraryId)) } returns Promise(
 				NowPlaying(
 					LibraryId(libraryId),

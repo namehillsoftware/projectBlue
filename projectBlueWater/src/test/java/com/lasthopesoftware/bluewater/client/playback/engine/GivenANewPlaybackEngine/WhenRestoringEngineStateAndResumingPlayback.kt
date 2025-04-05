@@ -1,47 +1,41 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.GivenANewPlaybackEngine
 
-import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertiesContainer
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.IFilePropertiesContainerRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
-import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CyclicalFileQueueProvider
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import io.mockk.every
-import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class WhenRestoringEngineStateAndResumingPlayback {
 	private var positionedPlayingFile: PositionedPlayingFile? = null
 	private val restoredState by lazy {
-		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
+		val fakePlaybackPreparerProvider = FakeMappedPlayableFilePreparationSourceProvider(
+			listOf(
+				ServiceFile("32"),
+				ServiceFile("329"),
+				ServiceFile("580"),
+				ServiceFile("915"),
+				ServiceFile("899")
+			)
+		)
 		val library = Library(
 			id = 35,
 			savedTracksString = FileStringListUtilities.promiseSerializedFileStringList(
-				listOf(
-					ServiceFile("32"),
-					ServiceFile("329"),
-					ServiceFile("580"),
-					ServiceFile("915"),
-					ServiceFile("899")
-				)
+				fakePlaybackPreparerProvider.deferredResolutions.keys
 			).toExpiringFuture().get(),
 			nowPlayingProgress = 893,
 			nowPlayingId = 3,
@@ -49,22 +43,10 @@ class WhenRestoringEngineStateAndResumingPlayback {
 
 		val libraryProvider = FakeLibraryRepository(library)
 
-		val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()
-		every {
-			filePropertiesContainerRepository.getFilePropertiesContainer(
-				UrlKeyHolder(
-					TestUrl,
-					ServiceFile("4")
-				)
-			)
-		} returns FilePropertiesContainer(1, mapOf(Pair(KnownFileProperties.Duration, "100")))
-
 		val repository =
 			NowPlayingRepository(
 				FakeSelectedLibraryProvider(),
 				libraryProvider,
-				libraryProvider,
-				FakeNowPlayingState(),
 			)
 		val playbackEngine = PlaybackEngine(
 			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration()),
@@ -76,7 +58,7 @@ class WhenRestoringEngineStateAndResumingPlayback {
 
 		playbackEngine.setOnPlayingFileChanged { _, c -> positionedPlayingFile = c	}
 		val promisedResumption = playbackEngine.resume()
-		fakePlaybackPreparerProvider.deferredResolution.resolve()
+		fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("915")]?.resolve()
 		promisedResumption.toExpiringFuture().get()
 
 		restoredState

@@ -11,16 +11,17 @@ import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistP
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.util.Collections
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -29,7 +30,15 @@ private const val libraryId = 265
 class WhenChangingTracks {
 
 	private val mut by lazy {
-		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
+		val fakePlaybackPreparerProvider = FakeMappedPlayableFilePreparationSourceProvider(
+			listOf(
+				ServiceFile("1"),
+				ServiceFile("2"),
+				ServiceFile("3"),
+				ServiceFile("4"),
+				ServiceFile("5")
+			)
+		)
 		val library = Library(id = libraryId)
 		val libraryProvider = FakeLibraryRepository(library)
 		val playbackEngine =
@@ -39,8 +48,6 @@ class WhenChangingTracks {
 				NowPlayingRepository(
 					FakeSelectedLibraryProvider(),
 					libraryProvider,
-					libraryProvider,
-					FakeNowPlayingState(),
 				),
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)
@@ -49,14 +56,14 @@ class WhenChangingTracks {
 
 	private var nextSwitchedFile: PositionedFile? = null
 	private var latestFile: PositionedPlayingFile? = null
-	private val startedFiles: MutableList<PositionedPlayingFile?> = ArrayList()
+	private val startedFiles = Collections.synchronizedList(ArrayList<PositionedPlayingFile?>())
 
 	@BeforeAll
 	fun act() {
 		val (fakePlaybackPreparerProvider, playbackEngine) = mut
 
-		val countDownLatch = CountDownLatch(1)
-		playbackEngine
+		val countDownLatch = CountDownLatch(2)
+		val promisedStart = playbackEngine
 			.setOnPlayingFileChanged { _, p ->
 				startedFiles.add(p)
 				latestFile = p
@@ -75,12 +82,14 @@ class WhenChangingTracks {
 				Duration.ZERO
 			)
 
-		val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
-		val futurePositionChange = playbackEngine.changePosition(3, Duration.ZERO).toExpiringFuture()
-		fakePlaybackPreparerProvider.deferredResolution.resolve()
-		playingPlaybackHandler.resolve()
+		val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("1")]?.resolve()
+		promisedStart.toExpiringFuture().get()
 
-		countDownLatch.await(10, TimeUnit.SECONDS)
+		val futurePositionChange = playbackEngine.changePosition(3, Duration.ZERO).toExpiringFuture()
+		fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("4")]?.resolve()
+		playingPlaybackHandler?.resolve()
+
+		if (!countDownLatch.await(10, TimeUnit.SECONDS)) Assertions.fail<Unit>("Timed out waiting for file change")
 		nextSwitchedFile = futurePositionChange.get()?.second
 	}
 

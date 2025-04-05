@@ -8,9 +8,8 @@ import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConne
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -24,7 +23,16 @@ private const val libraryId = 411
 
 class WhenATrackIsSwitchedTwice {
 	private val nextSwitchedFile by lazy {
-		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
+		val playlist = listOf(
+			ServiceFile("1"),
+			ServiceFile("2"),
+			ServiceFile("3"),
+			ServiceFile("4"),
+			ServiceFile("5")
+		)
+
+		val fakePlaybackPreparerProvider = FakeMappedPlayableFilePreparationSourceProvider(playlist)
+
 		val library = Library(id = libraryId)
 		val libraryProvider = FakeLibraryRepository(library)
 		val playbackEngine = PlaybackEngine(
@@ -38,32 +46,25 @@ class WhenATrackIsSwitchedTwice {
 			NowPlayingRepository(
 				FakeSelectedLibraryProvider(),
 				libraryProvider,
-				libraryProvider,
-				FakeNowPlayingState(),
 			),
 			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f)))
 
 		playbackEngine
 			.startPlaylist(
 				LibraryId(libraryId),
-				listOf(
-					ServiceFile("1"),
-					ServiceFile("2"),
-					ServiceFile("3"),
-					ServiceFile("4"),
-					ServiceFile("5")
-				),
+				playlist,
 				0,
 				Duration.ZERO
 			)
 			.toExpiringFuture()
 			.get()
-		fakePlaybackPreparerProvider.deferredResolution.resolve()
-		playbackEngine.changePosition(3, Duration.ZERO).toExpiringFuture()
 
+		fakePlaybackPreparerProvider.deferredResolutions[playlist[0]]?.resolve()
+
+		playbackEngine.changePosition(3, Duration.ZERO)
 		val futurePlaylist = playbackEngine.changePosition(4, Duration.ZERO).toExpiringFuture()
 
-		fakePlaybackPreparerProvider.deferredResolution.resolve()
+		fakePlaybackPreparerProvider.deferredResolutions[playlist[4]]?.resolve()
 
 		futurePlaylist.get()
 	}

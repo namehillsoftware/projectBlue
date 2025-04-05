@@ -4,9 +4,9 @@ import com.lasthopesoftware.bluewater.android.intents.BuildIntents
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.DiskFileCache
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.UpdateDiskFileAccessTime
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.DiskFileCacheStreamSupplier
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryNameLookup
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ManageLibraries
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ProvideLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.ProvideLibrarySettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.StoreLibrarySettings
@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.ManageNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.StoreNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
@@ -30,8 +31,8 @@ import com.lasthopesoftware.resources.strings.GetStringResources
 
 interface ApplicationDependencies {
 	val bitmapProducer: ProduceBitmaps
-	val libraryProvider: ILibraryProvider
-	val libraryStorage: ILibraryStorage
+	val libraryProvider: ProvideLibraries
+	val libraryStorage: ManageLibraries
 	val librarySettingsProvider: ProvideLibrarySettings
 	val librarySettingsStorage: StoreLibrarySettings
 	val storedItemAccess: AccessStoredItems
@@ -51,6 +52,7 @@ interface ApplicationDependencies {
 	val stringResources: GetStringResources
 	val applicationSettings: HoldApplicationSettings
 	val nowPlayingState: GetNowPlayingState
+	val nowPlayingStateMaintenance: ManageNowPlayingState
 	val nowPlayingDisplaySettings: StoreNowPlayingDisplaySettings
 	val audioFileCache: DiskFileCache
 	val connectionSettingsLookup: LookupConnectionSettings

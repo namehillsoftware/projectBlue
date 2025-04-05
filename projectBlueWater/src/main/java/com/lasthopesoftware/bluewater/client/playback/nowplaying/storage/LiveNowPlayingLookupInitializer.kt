@@ -8,12 +8,7 @@ class LiveNowPlayingLookupInitializer : Initializer<LiveNowPlayingLookup> {
 	override fun create(context: Context): LiveNowPlayingLookup = with (context.applicationDependencies) {
 		LiveNowPlayingLookup(
 			selectedLibraryIdProvider,
-			NowPlayingRepository(
-				selectedLibraryIdProvider,
-				libraryProvider,
-				libraryStorage,
-				InMemoryNowPlayingState,
-			),
+			nowPlayingStateMaintenance,
 			registerForApplicationMessages,
 		)
 	}
