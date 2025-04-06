@@ -62,6 +62,8 @@ class LiveSubsonicConnection(
 		private const val playlistFilesPath = "Playlist/Files"
 		private const val searchFilesPath = "Files/Search"
 		private const val imageFormat = "jpg"
+		private const val playlistItemKey = "playlists"
+		private val playlistItem = ItemId(playlistItemKey)
 		private val checkedExpirationTime by lazy { Duration.standardSeconds(30) }
 	}
 
