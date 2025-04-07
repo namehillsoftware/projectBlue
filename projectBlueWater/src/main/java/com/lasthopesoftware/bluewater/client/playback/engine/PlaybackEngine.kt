@@ -37,6 +37,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.rxjava3.disposables.Disposable
 import org.jetbrains.annotations.Contract
 import org.joda.time.Duration
+import java.util.concurrent.CancellationException
 import kotlin.math.max
 
 class PlaybackEngine(
@@ -408,6 +409,11 @@ class PlaybackEngine(
 			.excuse { e ->
 				when (e) {
 					is PreparationException -> {
+						if (e.cause is CancellationException) {
+							logger.debug("Preparation was cancelled, expecting cancellation caller to handle resource clean-up.", e)
+							return@excuse
+						}
+
 						withState {
 							playlistPosition = e.positionedFile.playlistPosition
 							fileProgress = zeroProgressedFile

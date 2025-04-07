@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Co
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
@@ -55,8 +56,16 @@ class WhenObservingPlayback {
 	fun act() {
 		val (fakePlaybackPreparerProvider, playbackEngine) = mut
 
+		val promisedFirstFile = object : Promise<PositionedPlayingFile>() {
+			init {
+				playbackEngine
+					.setOnPlayingFileChanged { _, p ->
+						resolve(p)
+					}
+			}
+		}
+
 		val startedPlaylist = playbackEngine
-			.setOnPlayingFileChanged { _, p -> firstSwitchedFile = p }
 			.startPlaylist(
 				LibraryId(libraryId),
 				listOf(
@@ -69,6 +78,7 @@ class WhenObservingPlayback {
 			)
 		fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("1")]?.resolve()
 		startedPlaylist.toExpiringFuture().get()
+		firstSwitchedFile = promisedFirstFile.toExpiringFuture().get()
 	}
 
 	@Test

@@ -16,10 +16,13 @@ import java.io.Closeable
 import java.io.IOException
 import java.util.concurrent.CancellationException
 
-private val logger by lazyLogger<PlaylistPlayer>()
-
 class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPreparedFiles, private val preparedPosition: Duration) :
-	ManagePlaylistPlayback, Closeable, ProgressingPromise<PositionedPlayingFile, Unit>() {
+	ManagePlaylistPlayback, Closeable, ProgressingPromise<PositionedPlayingFile, Unit>()
+{
+	companion object {
+		private val logger by lazyLogger<PlaylistPlayer>()
+		private const val releasingMediaPlayerError = "There was an error releasing the media player"
+	}
 
 	private val stateChangeSync = Any()
 
@@ -98,7 +101,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 					try {
 						p?.playableFile?.close()
 					} catch (e: Throwable) {
-						logger.error("There was an error releasing the media player", e)
+						logger.error(releasingMediaPlayerError, e)
 						reject(e)
 						throw e
 					}
@@ -106,7 +109,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 			}, { e ->
 				isHalted = true
 
-				logger.error("There was an error releasing the media player", e)
+				logger.error(releasingMediaPlayerError, e)
 				reject(e)
 				throw e
 			})
@@ -117,7 +120,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 			try {
 				playbackHandler.close()
 			} catch (e: IOException) {
-				logger.error("There was an error releasing the media player", e)
+				logger.error(releasingMediaPlayerError, e)
 			}
 			positionedPlayingFile = playNextFile()
 		}
