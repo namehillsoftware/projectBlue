@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.live
 import androidx.annotation.Keep
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
+import com.google.gson.JsonParser
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.FileResponses
@@ -31,9 +31,7 @@ import com.lasthopesoftware.resources.emptyByteArray
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.InvalidResponseCodeException
 import com.lasthopesoftware.resources.io.NonStandardResponseException
-import com.lasthopesoftware.resources.io.fromJson
 import com.lasthopesoftware.resources.io.promiseStringBody
-import com.lasthopesoftware.resources.io.promiseXmlDocument
 import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
@@ -43,7 +41,6 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import org.joda.time.Duration
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import java.io.IOException
 import java.io.InputStream
 import java.net.URL
@@ -65,10 +62,23 @@ class LiveSubsonicConnection(
 		private const val playlistItemKey = "playlists"
 		private val playlistItem = ItemId(playlistItemKey)
 		private val checkedExpirationTime by lazy { Duration.standardSeconds(30) }
+
+		private inline fun <reified T> Promise<HttpResponse>.promiseSubsonicResponse(): Promise<T> = eventually { r ->
+			ThreadPools.compute.preparePromise { r.parseSubsonicResponse() }
+		}
+
+		private inline fun <reified T> HttpResponse.parseSubsonicResponse(): T {
+			body.use {
+				it.reader().use { r ->
+					val json = JsonParser.parseReader(r).asJsonObject.get("subsonic-response")
+					return Gson().fromJson(json, T::class.java) ?: throw NonStandardResponseException()
+				}
+			}
+		}
 	}
 
 	private val subsonicApiUrl by lazy {
-		with (subsonicConnectionDetails) { baseUrl.withSubsonicApi() }
+		with(subsonicConnectionDetails) { baseUrl.withSubsonicApi() }
 	}
 
 	private val revisionCache by lazy { TimedExpirationPromiseCache<Unit, Int?>(checkedExpirationTime) }
@@ -99,7 +109,7 @@ class LiveSubsonicConnection(
 	override fun promiseFilePropertyUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> =
 		Unit.toPromise()
 
-	override fun promiseItems(itemId: ItemId?): Promise<List<Item>> = ItemFilePromise(itemId)
+	override fun promiseItems(itemId: ItemId?): Promise<List<Item>> = itemId?.let(::ItemPromise) ?: RootItemPromise()
 
 	override fun promiseAudioPlaylistPaths(): Promise<List<String>> = Promise(emptyList())
 
@@ -108,7 +118,7 @@ class LiveSubsonicConnection(
 	override fun promiseIsReadOnly(): Promise<Boolean> = true.toPromise()
 
 	override fun promiseServerVersion(): Promise<SemanticVersion?> = PingViewPromise().cancelBackThen { r, _ ->
-		r.subsonicResponse?.version?.split(".")?.let {
+		r.version.split(".").let {
 			SemanticVersion(it[0].toInt(), it[1].toInt(), it[2].toInt())
 		}
 	}
@@ -232,45 +242,56 @@ class LiveSubsonicConnection(
 			CancellationException("Getting file properties cancelled for $serviceFile.")
 	}
 
-	private inner class ItemFilePromise(itemId: ItemId?) :
+	private inner class RootItemPromise :
 		Promise.Proxy<List<Item>>(),
-		PromisedResponse<Document, List<Item>>
+		PromisedResponse<SubsonicIndexesResponse, List<Item>>
 	{
 		init {
-			val promisedResponse = itemId
-				?.run {
-					promiseResponse(
-						"library/playlists",
-						"ID=$id"
-					)
-				}
-				?: promiseResponse("library/playlists")
-
 			proxy(
-				promisedResponse
+				promiseResponse("getIndexes")
 					.also(::doCancel)
-					.promiseStringBody()
-					.also(::doCancel)
-					.promiseXmlDocument()
+					.promiseSubsonicResponse<SubsonicIndexesResponse>()
 					.also(::doCancel)
 					.eventually(this)
 			)
 		}
 
-		override fun promiseResponse(document: Document): Promise<List<Item>> = ThreadPools.compute.preparePromise { cs ->
-			val body = document.getElementsByTag("Response").firstOrNull()
-				?: throw IOException("Response tag not found")
-
-			val status = body.attr("Status")
-			if (status.equals("Failure", ignoreCase = true))
-				throw IOException("Server returned 'Failure'.")
-
-			body
-				.getElementsByTag("Item")
-				.map { el ->
+		override fun promiseResponse(response: SubsonicIndexesResponse): Promise<List<Item>> = ThreadPools.compute.preparePromise { cs ->
+			response.indexes.index.flatMap {
+				it.artist.map { artist ->
 					if (cs.isCancelled) throw itemParsingCancelledException()
-					Item(el.wholeOwnText(), el.attr("Name"))
+
+					Item(artist.id, artist.name, playlistId = null)
 				}
+			}
+		}
+
+		private fun itemParsingCancelledException() = CancellationException("Item parsing was cancelled.")
+	}
+
+	private inner class ItemPromise(itemId: ItemId) :
+		Promise.Proxy<List<Item>>(),
+		PromisedResponse<SubsonicDirectoryRoot, List<Item>>
+	{
+		init {
+			proxy(
+				promiseResponse(
+					"getMusicDirectory",
+					"id=${itemId.id}"
+				)
+					.also(::doCancel)
+					.promiseSubsonicResponse<SubsonicDirectoryRoot>()
+					.also(::doCancel)
+					.eventually(this)
+			)
+		}
+
+		override fun promiseResponse(response: SubsonicDirectoryRoot): Promise<List<Item>> = ThreadPools.compute.preparePromise { cs ->
+			response.directory.child.map {
+				if (cs.isCancelled) throw itemParsingCancelledException()
+
+				Item(it.id, it.name, playlistId = null)
+			}
 		}
 
 		private fun itemParsingCancelledException() = CancellationException("Item parsing was cancelled.")
@@ -282,7 +303,7 @@ class LiveSubsonicConnection(
 				PingViewPromise()
 					.also(::doCancel)
 					.then(
-						{ it.subsonicResponse?.status == "ok" },
+						{ it.status == "ok" },
 						{ e ->
 							when (e) {
 								is CancellationException, is InvalidResponseCodeException -> {}
@@ -305,7 +326,7 @@ class LiveSubsonicConnection(
 		}
 	}
 
-	private inner class PingViewPromise : Promise.Proxy<RootSubsonicResponse>(), ImmediateCancellableResponse<HttpResponse, RootSubsonicResponse> {
+	private inner class PingViewPromise : Promise.Proxy<SubsonicResponse>(), ImmediateCancellableResponse<HttpResponse, SubsonicResponse> {
 		init {
 			proxy(
 				httpClient
@@ -315,27 +336,52 @@ class LiveSubsonicConnection(
 			)
 		}
 
-		override fun respond(response: HttpResponse, cancellationSignal: CancellationSignal): RootSubsonicResponse = response.use { r ->
+		override fun respond(response: HttpResponse, cancellationSignal: CancellationSignal): SubsonicResponse = response.use { r ->
 			if (cancellationSignal.isCancelled) throw CancellationException("Cancelled before parsing ping.view response.")
 			if (r.code != 200) throw InvalidResponseCodeException(r.code)
 
-			val gson = Gson()
-			gson.fromJson<RootSubsonicResponse>(r.bodyString) ?: throw NonStandardResponseException()
+			r.parseSubsonicResponse()
 		}
 	}
 
 	@Keep
-	private class RootSubsonicResponse(
-		@SerializedName("subsonic-response")
-		val subsonicResponse: SubsonicResponse?
-	)
-
-	@Keep
-	private class SubsonicResponse(
+	private open class SubsonicResponse(
 		val status: String,
 		val version: String,
 		val type: String,
 		val serverVersion: String,
 		val openSubsonic: Boolean
+	)
+
+	@Keep
+	private class SubsonicNamedItem(
+		val id: String,
+		val name: String
+	)
+
+	@Keep
+	private class SubsonicIndex(
+		val name: String,
+		val artist: List<SubsonicNamedItem>
+	)
+
+	@Keep
+	private class SubsonicIndexResponse(
+		val index: List<SubsonicIndex>
+	)
+
+	@Keep
+	private class SubsonicIndexesResponse(
+		val indexes: SubsonicIndexResponse
+	)
+
+	@Keep
+	private class SubsonicDirectory(
+		val child: List<SubsonicNamedItem>
+	)
+
+	@Keep
+	private class SubsonicDirectoryRoot(
+		val directory: SubsonicDirectory
 	)
 }
