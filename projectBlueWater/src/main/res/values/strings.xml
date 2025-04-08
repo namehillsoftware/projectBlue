@@ -142,4 +142,5 @@
     <string name="refresh">Refresh</string>
     <string name="view_more_options">View More Options</string>
     <string name="subsonic">Subsonic</string>
+    <string name="change_server_type">Change Server Type</string>
 </resources>
