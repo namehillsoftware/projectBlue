@@ -15,6 +15,7 @@ fun LabeledSelection(
 	selected: Boolean,
 	onSelected: () -> Unit,
 	role: Role? = null,
+	enabled: Boolean = true,
 	selectableContent: @Composable () -> Unit,
 ) {
 	Row(
@@ -22,6 +23,7 @@ fun LabeledSelection(
 			.selectable(
 				selected = selected,
 				onClick = onSelected,
+				enabled = enabled,
 				role = role,
 			),
 	) {
