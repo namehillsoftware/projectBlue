@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.settings
 
+import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ManageLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
@@ -15,11 +16,11 @@ import io.reactivex.rxjava3.core.Observable
 
 class ServerTypeSelectionViewModel(
 	private val libraryAccess: ManageLibraries,
-) : TrackLoadedViewState, ImmediateAction, ImmediateResponse<Library?, Unit> {
+) : ViewModel(), TrackLoadedViewState, ImmediateAction, ImmediateResponse<Library?, Unit> {
 	private val loadedLibrary = MutableInteractionState<Library?>(null)
 	private val mutableIsLoading = MutableInteractionState(false)
 
-	val serverType = MutableInteractionState(Library.ServerType.MediaCenter)
+	val serverType = MutableInteractionState<Library.ServerType?>(null)
 	val isChanged by lazy {
 		LiftedInteractionState(
 			Observable.combineLatest(serverType, loadedLibrary) { serverType, library ->
@@ -58,7 +59,7 @@ class ServerTypeSelectionViewModel(
 
 	override fun respond(library: Library?) {
 		loadedLibrary.value = library
-		serverType.value = library?.serverType ?: Library.ServerType.MediaCenter
+		serverType.value = library?.serverType
 	}
 
 	override fun act() {

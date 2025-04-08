@@ -29,7 +29,7 @@ class LibrarySettingsAccess(private val libraryManager: ManageLibraries) : Provi
 			isUsingExistingFiles = isUsingExistingFiles,
 			serverType = Library.ServerType.MediaCenter.name,
 			syncedFileLocation = syncedFileLocation,
-			connectionSettings = connectionSettings?.let(gson.get()::toJson),
+			connectionSettings = connectionSettings?.let { gson.get()?.toJson(it) },
 		)
 
 		private fun Library.toLibrarySettings() = LibrarySettings(
@@ -97,7 +97,7 @@ class LibrarySettingsAccess(private val libraryManager: ManageLibraries) : Provi
 								if (librarySettings.connectionSettings != null) Library.ServerType.MediaCenter.name
 								else null
 
-							l.connectionSettings = librarySettings.connectionSettings?.let(gson.get()::toJson)
+							l.connectionSettings = librarySettings.connectionSettings?.let { gson.get()?.toJson(it) }
 							l
 						}
 					}

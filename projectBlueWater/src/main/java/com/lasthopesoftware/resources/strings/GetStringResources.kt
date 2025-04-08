@@ -55,4 +55,7 @@ interface GetStringResources {
 
 	val subsonic: String
 		get() = ""
+
+	val changeServerType: String
+		get() = ""
 }

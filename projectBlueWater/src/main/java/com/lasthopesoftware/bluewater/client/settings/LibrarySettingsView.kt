@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.settings
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,6 +48,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.connection.trust.ProvideUserSslCertificates
 import com.lasthopesoftware.bluewater.shared.android.BuildUndoBackStack
@@ -57,6 +59,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelect
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.StandardTextField
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
+import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
@@ -93,6 +96,37 @@ private fun SpacedOutRow(modifier: Modifier = Modifier, content: @Composable (Ro
 		content()
 	}
 }
+
+
+@Composable
+private fun RowScope.LabelledChangeServerTypeButton(
+	stringResources: GetStringResources,
+	onClick: () -> Unit,
+	modifier: Modifier = Modifier,
+) {
+	ColumnMenuIcon(
+		onClick = onClick,
+		iconPainter = painterResource(id = R.drawable.select_library_36dp),
+		contentDescription = stringResources.changeServerType,
+		label = stringResources.changeServerType,
+		labelModifier = modifier,
+	)
+}
+
+
+@Composable
+private fun RowScope.UnlabelledChangeServerTypeButton(
+	stringResources: GetStringResources,
+	onClick: () -> Unit,
+) {
+	ColumnMenuIcon(
+		onClick = onClick,
+		iconPainter = painterResource(id = R.drawable.select_library_36dp),
+		contentDescription = stringResources.changeServerType,
+		label = null,
+	)
+}
+
 
 @Composable
 private fun RowScope.LabelledRemoveServerButton(
@@ -208,10 +242,10 @@ private fun LibrarySettingsList(
 	stringResources: GetStringResources,
 	userSslCertificates: ProvideUserSslCertificates,
 ) {
-	val isSettingsChanged by librarySettingsViewModel.isSettingsChanged.subscribeAsState()
-
 	librarySettingsViewModel.apply {
-		var accessCodeState by librarySettingsViewModel.accessCode.subscribeAsMutableState()
+		val isSettingsChanged by isSettingsChanged.subscribeAsState()
+
+		var accessCodeState by accessCode.subscribeAsMutableState()
 		SpacedOutRow {
 			StandardTextField(
 				placeholder = stringResource(R.string.lbl_access_code),
@@ -443,10 +477,84 @@ private fun LibrarySettingsList(
 	}
 }
 
+
+@Composable
+fun ServerTypeSelection(
+	serverTypeSelectionViewModel: ServerTypeSelectionViewModel,
+	onServerTypeSelectionFinished: () -> Unit = {},
+) {
+	BackHandler { onServerTypeSelectionFinished() }
+
+	Box(
+		modifier = Modifier.fillMaxSize(),
+		contentAlignment = Alignment.Center,
+	) {
+		Column(
+			modifier = Modifier
+				.fillMaxWidth(inputRowMaxWidth)
+				.selectableGroup(),
+		) {
+			Text(
+				text = "Server Type",
+				modifier = Modifier.padding(innerGroupPadding),
+			)
+
+			val isLoadingState by serverTypeSelectionViewModel.isLoading.subscribeAsState()
+
+			var serverTypeState by serverTypeSelectionViewModel.serverType.subscribeAsMutableState()
+			for (serverType in Library.ServerType.entries) {
+				Box(
+					modifier = Modifier.padding(innerGroupPadding),
+				) {
+					LabeledSelection(
+						label = serverType.name,
+						selected = serverTypeState == serverType,
+						onSelected = { serverTypeState = serverType },
+						enabled = !isLoadingState,
+						role = Role.RadioButton,
+					) {
+						RadioButton(
+							selected = serverTypeState == serverType,
+							onClick = null,
+						)
+					}
+				}
+			}
+
+			Row(
+				modifier = Modifier.fillMaxWidth(),
+				horizontalArrangement = Arrangement.SpaceBetween,
+			) {
+				val scope = rememberCoroutineScope()
+				val isSettingsChanged by serverTypeSelectionViewModel.isChanged.subscribeAsState()
+				Button(
+					onClick = {
+						scope.launch {
+							serverTypeSelectionViewModel.promiseSavedConnectionType().suspend()
+							onServerTypeSelectionFinished()
+						}
+					},
+					enabled = isSettingsChanged && !isLoadingState,
+				) {
+					Text(text = if (!isSettingsChanged) stringResource(id = R.string.saved) else stringResource(id = R.string.save))
+				}
+
+				Button(
+					onClick = onServerTypeSelectionFinished,
+				) {
+					Text(text = stringResource(id = R.string.btn_cancel))
+				}
+			}
+		}
+	}
+}
+
+
 @OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun LibrarySettingsView(
 	librarySettingsViewModel: LibrarySettingsViewModel,
+	serverTypeSelectionViewModel: ServerTypeSelectionViewModel,
 	navigateApplication: NavigateApplication,
 	stringResources: GetStringResources,
 	userSslCertificates: ProvideUserSslCertificates,
@@ -461,6 +569,9 @@ fun LibrarySettingsView(
 		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 		val collapsedHeightPx = LocalDensity.current.run { appBarHeight.toPx() }
 		val heightScaler = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
+
+		val serverTypeState by serverTypeSelectionViewModel.serverType.subscribeAsMutableState()
+		var isSelectingServerType by remember { mutableStateOf(false) }
 
 		BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 			val isHeaderTall by remember { derivedStateOf { (boxHeight + menuHeight) * 2 < maxHeight } }
@@ -584,6 +695,11 @@ fun LibrarySettingsView(
 							.fillMaxWidth()
 							.height(expandedIconSize)
 					) {
+						LabelledChangeServerTypeButton(
+							stringResources = stringResources,
+							onClick = { isSelectingServerType = true },
+						)
+
 						LabelledRemoveServerButton(
 							librarySettingsViewModel = librarySettingsViewModel,
 							stringResources = stringResources,
@@ -597,11 +713,25 @@ fun LibrarySettingsView(
 						)
 					}
 
-					LibrarySettingsList(
-						librarySettingsViewModel = librarySettingsViewModel,
-						stringResources = stringResources,
-						userSslCertificates = userSslCertificates,
-					)
+					val isLoadingState by serverTypeSelectionViewModel.isLoading.subscribeAsState()
+					val isServerTypeShown by remember {
+						derivedStateOf {
+							serverTypeState == null || (!isLoadingState && isSelectingServerType)
+						}
+					}
+
+					if (isServerTypeShown) {
+						ServerTypeSelection(
+							serverTypeSelectionViewModel = serverTypeSelectionViewModel,
+							onServerTypeSelectionFinished = { isSelectingServerType = false }
+						)
+					} else {
+						LibrarySettingsList(
+							librarySettingsViewModel = librarySettingsViewModel,
+							stringResources = stringResources,
+							userSslCertificates = userSslCertificates,
+						)
+					}
 				}
 			}
 		}
