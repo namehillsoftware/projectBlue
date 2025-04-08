@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableL
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
+import com.lasthopesoftware.bluewater.client.settings.ServerTypeSelectionViewModel
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
 import com.lasthopesoftware.bluewater.shared.android.UndoStackApplicationNavigation
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
@@ -54,6 +55,10 @@ class ScopedViewModelRegistry(
 			libraryRemoval = libraryRemoval,
 			applicationPermissions = permissionsDependencies.applicationPermissions,
 		)
+	}
+
+	override val serverTypeSelectionViewModel by viewModelStoreOwner.buildViewModelLazily {
+		ServerTypeSelectionViewModel(libraryStorage)
 	}
 
 	override val fileDetailsViewModel by viewModelStoreOwner.buildViewModelLazily {

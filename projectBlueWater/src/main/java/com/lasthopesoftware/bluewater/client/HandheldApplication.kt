@@ -182,6 +182,7 @@ fun LibraryDestination.Navigate(
 				systemUiController.setNavigationBarColor(Color.Black)
 
 				val viewModel = librarySettingsViewModel
+				val serverTypeSelectionViewModel = serverTypeSelectionViewModel
 
 				val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 
@@ -192,6 +193,7 @@ fun LibraryDestination.Navigate(
 				) {
 					LibrarySettingsView(
 						librarySettingsViewModel = viewModel,
+						serverTypeSelectionViewModel = serverTypeSelectionViewModel,
 						navigateApplication = applicationNavigation,
 						stringResources = stringResources,
 						userSslCertificates = userSslCertificateProvider,
@@ -200,6 +202,7 @@ fun LibraryDestination.Navigate(
 				}
 
 				viewModel.loadLibrary(libraryId)
+				serverTypeSelectionViewModel.promiseLoadedConnectionType(libraryId)
 			}
 
 			is NowPlayingScreen -> {
@@ -427,6 +430,7 @@ fun HandheldApplication(
 									navigateApplication = applicationNavigation,
 									stringResources = stringResources,
 									userSslCertificates = userSslCertificateProvider,
+									serverTypeSelectionViewModel = serverTypeSelectionViewModel,
 									undoBackStack = undoBackStackBuilder,
 								)
 							}

@@ -70,8 +70,8 @@ class LiveSubsonicConnection(
 		private inline fun <reified T> HttpResponse.parseSubsonicResponse(): T {
 			body.use {
 				it.reader().use { r ->
-					val json = JsonParser.parseReader(r).asJsonObject.get("subsonic-response")
-					return Gson().fromJson(json, T::class.java) ?: throw NonStandardResponseException()
+					val json = JsonParser.parseReader(r).asJsonObject.get("subsonic-response") ?: throw NonStandardResponseException()
+					return Gson().fromJson(json, T::class.java)
 				}
 			}
 		}
@@ -118,9 +118,9 @@ class LiveSubsonicConnection(
 	override fun promiseIsReadOnly(): Promise<Boolean> = true.toPromise()
 
 	override fun promiseServerVersion(): Promise<SemanticVersion?> = PingViewPromise().cancelBackThen { r, _ ->
-		r.version.split(".").let {
+		r?.version?.split(".")?.let {
 			SemanticVersion(it[0].toInt(), it[1].toInt(), it[2].toInt())
-		}
+		} ?: throw NonStandardResponseException()
 	}
 
 	override fun promiseFile(serviceFile: ServiceFile): Promise<InputStream> = emptyByteArray.inputStream().toPromise()
@@ -303,7 +303,7 @@ class LiveSubsonicConnection(
 				PingViewPromise()
 					.also(::doCancel)
 					.then(
-						{ it.status == "ok" },
+						{ it?.status == "ok" },
 						{ e ->
 							when (e) {
 								is CancellationException, is InvalidResponseCodeException -> {}
@@ -336,7 +336,7 @@ class LiveSubsonicConnection(
 			)
 		}
 
-		override fun respond(response: HttpResponse, cancellationSignal: CancellationSignal): SubsonicResponse = response.use { r ->
+		override fun respond(response: HttpResponse, cancellationSignal: CancellationSignal): SubsonicResponse? = response.use { r ->
 			if (cancellationSignal.isCancelled) throw CancellationException("Cancelled before parsing ping.view response.")
 			if (r.code != 200) throw InvalidResponseCodeException(r.code)
 
@@ -350,19 +350,19 @@ class LiveSubsonicConnection(
 		val version: String,
 		val type: String,
 		val serverVersion: String,
-		val openSubsonic: Boolean
+		val openSubsonic: Boolean,
 	)
 
 	@Keep
 	private class SubsonicNamedItem(
 		val id: String,
-		val name: String
+		val name: String,
 	)
 
 	@Keep
 	private class SubsonicIndex(
 		val name: String,
-		val artist: List<SubsonicNamedItem>
+		val artist: List<SubsonicNamedItem>,
 	)
 
 	@Keep
