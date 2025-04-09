@@ -27,7 +27,11 @@ class LibrarySettingsAccess(private val libraryManager: ManageLibraries) : Provi
 		private fun LibrarySettings.toNewLibrary() = Library(
 			libraryName = libraryName,
 			isUsingExistingFiles = isUsingExistingFiles,
-			serverType = Library.ServerType.MediaCenter.name,
+			serverType = when (connectionSettings) {
+				is StoredMediaCenterConnectionSettings -> Library.ServerType.MediaCenter.name
+				is StoredSubsonicConnectionSettings -> Library.ServerType.Subsonic.name
+				null -> null
+			},
 			syncedFileLocation = syncedFileLocation,
 			connectionSettings = connectionSettings?.let { gson.get()?.toJson(it) },
 		)
@@ -92,11 +96,11 @@ class LibrarySettingsAccess(private val libraryManager: ManageLibraries) : Provi
 							l.libraryName = librarySettings.libraryName
 							l.isUsingExistingFiles = librarySettings.isUsingExistingFiles
 							l.syncedFileLocation = librarySettings.syncedFileLocation
-
-							l.serverType =
-								if (librarySettings.connectionSettings != null) Library.ServerType.MediaCenter.name
-								else null
-
+							l.serverType = when (librarySettings.connectionSettings) {
+								is StoredMediaCenterConnectionSettings -> Library.ServerType.MediaCenter.name
+								is StoredSubsonicConnectionSettings -> Library.ServerType.Subsonic.name
+								null -> null
+							}
 							l.connectionSettings = librarySettings.connectionSettings?.let { gson.get()?.toJson(it) }
 							l
 						}

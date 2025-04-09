@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredSubsonicConnectionSettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.LibrarySettingsAccess
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -64,12 +65,10 @@ class `When saving the library settings` {
 				libraryName = "jPStogpyW4",
 				isUsingExistingFiles = false,
 				syncedFileLocation = SyncedFileLocation.EXTERNAL,
-				connectionSettings = StoredMediaCenterConnectionSettings(
-					accessCode = "94NI0r9XP6x",
+				connectionSettings = StoredSubsonicConnectionSettings(
+					url = "94NI0r9XP6x",
 					macAddress = "aRm4Zqh9O",
-					isLocalOnly = true,
 					isWakeOnLanEnabled = true,
-					isSyncLocalConnectionsOnly = false,
 					userName = "RsZ6mNFK",
 					password = "RZ5c4MGRC",
 					sslCertificateFingerprint = "KLSYONYutn"
@@ -85,18 +84,16 @@ class `When saving the library settings` {
 				id = libraryId.id,
 				libraryName = "jPStogpyW4",
 				isUsingExistingFiles = false,
-				serverType = Library.ServerType.MediaCenter.name,
+				serverType = Library.ServerType.Subsonic.name,
 				nowPlayingId = 322,
 				nowPlayingProgress = 234,
 				savedTracksString = "DSJaIU9",
 				syncedFileLocation = SyncedFileLocation.EXTERNAL,
 				connectionSettings = gson.toJson(
-					StoredMediaCenterConnectionSettings(
-						accessCode = "94NI0r9XP6x",
+					StoredSubsonicConnectionSettings(
+						url = "94NI0r9XP6x",
 						macAddress = "aRm4Zqh9O",
-						isLocalOnly = true,
 						isWakeOnLanEnabled = true,
-						isSyncLocalConnectionsOnly = false,
 						userName = "RsZ6mNFK",
 						password = "RZ5c4MGRC",
 						sslCertificateFingerprint = "KLSYONYutn"
@@ -114,12 +111,10 @@ class `When saving the library settings` {
 				libraryName = "jPStogpyW4",
 				isUsingExistingFiles = false,
 				syncedFileLocation = SyncedFileLocation.EXTERNAL,
-				connectionSettings = StoredMediaCenterConnectionSettings(
-					accessCode = "94NI0r9XP6x",
+				connectionSettings = StoredSubsonicConnectionSettings(
+					url = "94NI0r9XP6x",
 					macAddress = "aRm4Zqh9O",
-					isLocalOnly = true,
 					isWakeOnLanEnabled = true,
-					isSyncLocalConnectionsOnly = false,
 					userName = "RsZ6mNFK",
 					password = "RZ5c4MGRC",
 					sslCertificateFingerprint = "KLSYONYutn"

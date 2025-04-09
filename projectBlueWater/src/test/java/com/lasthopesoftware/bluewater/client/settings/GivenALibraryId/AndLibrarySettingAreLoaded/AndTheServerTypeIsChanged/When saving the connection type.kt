@@ -22,7 +22,7 @@ class `When saving the connection type` {
 			Library(
 				id = libraryId,
 				connectionSettings = "HVLJOQZODyf",
-				serverType = Library.ServerType.Subsonic
+				serverType = Library.ServerType.Subsonic.name
 			)
 		)
 
@@ -69,7 +69,7 @@ class `When saving the connection type` {
 			Library(
 				id = libraryId,
 				connectionSettings = null,
-				serverType = Library.ServerType.MediaCenter
+				serverType = Library.ServerType.MediaCenter.name
 			)
 		)
 	}

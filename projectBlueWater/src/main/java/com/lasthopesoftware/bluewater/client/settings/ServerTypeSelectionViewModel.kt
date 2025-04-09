@@ -24,7 +24,7 @@ class ServerTypeSelectionViewModel(
 	val isChanged by lazy {
 		LiftedInteractionState(
 			Observable.combineLatest(serverType, loadedLibrary) { serverType, library ->
-				serverType.value != library.value?.serverType
+				serverType.value != library.value?.serverType?.let(Library.ServerType::valueOf)
 			},
 			false
 		)
@@ -42,12 +42,12 @@ class ServerTypeSelectionViewModel(
 	}
 
 	fun promiseSavedConnectionType(): Promise<Unit> {
-		val library = loadedLibrary.value?.takeUnless { it.serverType == serverType.value } ?: return Unit.toPromise()
+		val library = loadedLibrary.value?.takeUnless { it.serverType == serverType.value?.name } ?: return Unit.toPromise()
 
 		mutableIsLoading.value = true
 
 		val updatedLibrary = library.copy(
-			serverType = serverType.value,
+			serverType = serverType.value?.name,
 			connectionSettings = null
 		)
 
@@ -59,7 +59,7 @@ class ServerTypeSelectionViewModel(
 
 	override fun respond(library: Library?) {
 		loadedLibrary.value = library
-		serverType.value = library?.serverType
+		serverType.value = library?.serverType?.let(Library.ServerType::valueOf)
 	}
 
 	override fun act() {
