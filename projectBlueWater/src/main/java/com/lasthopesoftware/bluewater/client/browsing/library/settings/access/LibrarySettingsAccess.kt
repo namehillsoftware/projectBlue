@@ -88,11 +88,11 @@ class LibrarySettingsAccess(private val libraryManager: ManageLibraries) : Provi
 							l.libraryName = librarySettings.libraryName
 							l.isUsingExistingFiles = librarySettings.isUsingExistingFiles
 							l.syncedFileLocation = librarySettings.syncedFileLocation
-
-							l.serverType =
-								if (librarySettings.connectionSettings != null) Library.ServerType.MediaCenter
-								else null
-
+							l.serverType = when (librarySettings.connectionSettings) {
+								is StoredMediaCenterConnectionSettings -> Library.ServerType.MediaCenter
+								is StoredSubsonicConnectionSettings -> Library.ServerType.Subsonic
+								null -> null
+							}
 							l.connectionSettings = librarySettings.connectionSettings?.let { gson.get()?.toJson(it) }
 							l
 						}
