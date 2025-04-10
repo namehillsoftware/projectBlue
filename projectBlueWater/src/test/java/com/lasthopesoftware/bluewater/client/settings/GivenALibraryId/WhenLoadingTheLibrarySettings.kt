@@ -3,10 +3,11 @@ package com.lasthopesoftware.bluewater.client.settings.GivenALibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
-import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredSubsonicConnectionSettings
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.strings.FakeStringResources
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -20,15 +21,16 @@ class WhenLoadingTheLibrarySettings {
     private val services by lazy {
         LibrarySettingsViewModel(
 			mockk {
+				every { promiseLibraryName(libraryId) } returns "Zt0HwXFNWT".toPromise()
+			},
+			mockk {
 				every { promiseLibrarySettings(libraryId) } returns LibrarySettings(
 					libraryId = libraryId,
 					isUsingExistingFiles = true,
 					syncedFileLocation = SyncedFileLocation.EXTERNAL,
-					connectionSettings = StoredMediaCenterConnectionSettings(
+					connectionSettings = StoredSubsonicConnectionSettings(
 						userName = "ZaxM5Iid",
-						accessCode = "r64HLI",
-						isLocalOnly = true,
-						isSyncLocalConnectionsOnly = true,
+						url = "r64HLI",
 						isWakeOnLanEnabled = true,
 						password = "sL33L3Xt",
 					)
@@ -37,42 +39,41 @@ class WhenLoadingTheLibrarySettings {
 			mockk(),
 			mockk(),
 			mockk(),
+			FakeStringResources(),
 		)
     }
+
+	private val connectionSettingsViewModel
+		get() = services.connectionSettingsViewModel.value as? LibrarySettingsViewModel.SubsonicConnectionSettingsViewModel
 
     @BeforeAll
     fun act() {
         services.loadLibrary(libraryId).toExpiringFuture().get()
     }
 
-    @Test
-    fun `then the access code is correct`() {
-        assertThat(services.accessCode.value).isEqualTo("r64HLI")
-    }
+	@Test
+	fun `then the saved library name is correct`() {
+		assertThat(services.savedLibraryName.value).isEqualTo("Zt0HwXFNWT")
+	}
 
     @Test
-    fun `then the connection is local only`() {
-        assertThat(services.isLocalOnly.value).isTrue
-    }
-
-    @Test
-    fun `then sync local only connections is correct`() {
-        assertThat(services.isSyncLocalConnectionsOnly.value).isTrue
+    fun `then the url is correct`() {
+        assertThat(connectionSettingsViewModel?.url?.value).isEqualTo("r64HLI")
     }
 
     @Test
     fun `then wake on lan is correct`() {
-        assertThat(services.isWakeOnLanEnabled.value).isTrue
+        assertThat(connectionSettingsViewModel?.isWakeOnLanEnabled?.value).isTrue
     }
 
     @Test
     fun `then the user name is correct`() {
-        assertThat(services.userName.value).isEqualTo("ZaxM5Iid")
+        assertThat(connectionSettingsViewModel?.userName?.value).isEqualTo("ZaxM5Iid")
     }
 
     @Test
     fun `then the password is correct`() {
-        assertThat(services.password.value).isEqualTo("sL33L3Xt")
+        assertThat(connectionSettingsViewModel?.password?.value).isEqualTo("sL33L3Xt")
     }
 
     @Test
@@ -93,6 +94,6 @@ class WhenLoadingTheLibrarySettings {
 
 	@Test
 	fun `then the mac address is correct`() {
-		assertThat(services.macAddress.value).isEmpty()
+		assertThat(connectionSettingsViewModel?.macAddress?.value).isEmpty()
 	}
 }

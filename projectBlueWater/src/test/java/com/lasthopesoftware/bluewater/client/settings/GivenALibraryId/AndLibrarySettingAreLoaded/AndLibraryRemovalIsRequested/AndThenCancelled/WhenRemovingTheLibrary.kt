@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySe
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.strings.FakeStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -19,6 +20,9 @@ class WhenRemovingTheLibrary {
 	private val libraryId = LibraryId(799)
     private val services by lazy {
         LibrarySettingsViewModel(
+			mockk {
+				every { promiseLibraryName(any()) } returns "".toPromise()
+			},
 			mockk {
 				every { promiseLibrarySettings(any()) } answers {
 					val id = firstArg<LibraryId>()
@@ -34,6 +38,7 @@ class WhenRemovingTheLibrary {
 				}
 			},
 			mockk(),
+			FakeStringResources(),
 		)
     }
 
