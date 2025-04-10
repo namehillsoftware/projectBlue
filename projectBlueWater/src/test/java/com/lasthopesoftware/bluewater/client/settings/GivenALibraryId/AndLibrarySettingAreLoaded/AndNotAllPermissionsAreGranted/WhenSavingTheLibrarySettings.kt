@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMed
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.strings.FakeStringResources
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -18,6 +19,9 @@ class WhenSavingTheLibrarySettings {
 	private val libraryId = LibraryId(56)
     private val services by lazy {
 		LibrarySettingsViewModel(
+			mockk {
+				every { promiseLibraryName(libraryId) } returns "Bm2udAFPP".toPromise()
+			},
 			mockk {
 				every { promiseLibrarySettings(libraryId) } returns LibrarySettings(
 					libraryId = libraryId,
@@ -38,25 +42,31 @@ class WhenSavingTheLibrarySettings {
 			mockk {
 				every { promiseIsAllPermissionsGranted(any()) } returns false.toPromise()
 			},
+			FakeStringResources(),
 		)
     }
+
+	private val connectionSettingsViewModel
+		get() = services.connectionSettingsViewModel.value as? LibrarySettingsViewModel.MediaCenterConnectionSettingsViewModel
 
 	private var isSaved = false
 
     @BeforeAll
     fun act() {
 		with (services) {
-			loadLibrary(libraryId).toExpiringFuture().get()
-			accessCode.value = "V68Bp9rS"
-			password.value = "sl0Ha"
-			userName.value = "xw9wy0T"
-			isLocalOnly.value = !isLocalOnly.value
-			isSyncLocalConnectionsOnly.value = !isSyncLocalConnectionsOnly.value
-			isUsingExistingFiles.value = !isUsingExistingFiles.value
-			isWakeOnLanEnabled.value = !isWakeOnLanEnabled.value
-			syncedFileLocation.value = SyncedFileLocation.INTERNAL
-			libraryName.value = "spit"
-			isSaved = saveLibrary().toExpiringFuture().get() == true
+			services.loadLibrary(libraryId).toExpiringFuture().get()
+			(connectionSettingsViewModel.value as? LibrarySettingsViewModel.MediaCenterConnectionSettingsViewModel)?.apply {
+				accessCode.value = "V68Bp9rS"
+				password.value = "sl0Ha"
+				userName.value = "xw9wy0T"
+				isLocalOnly.value = !isLocalOnly.value
+				isSyncLocalConnectionsOnly.value = !isSyncLocalConnectionsOnly.value
+				isUsingExistingFiles.value = !isUsingExistingFiles.value
+				isWakeOnLanEnabled.value = !isWakeOnLanEnabled.value
+				syncedFileLocation.value = SyncedFileLocation.INTERNAL
+				libraryName.value = "spit"
+				isSaved = saveLibrary().toExpiringFuture().get() == true
+			}
 		}
     }
 
@@ -72,32 +82,32 @@ class WhenSavingTheLibrarySettings {
 
     @Test
     fun `then the access code is correct`() {
-        assertThat(services.accessCode.value).isEqualTo("V68Bp9rS")
+        assertThat(connectionSettingsViewModel?.accessCode?.value).isEqualTo("V68Bp9rS")
     }
 
     @Test
     fun `then the connection is local only`() {
-        assertThat(services.isLocalOnly.value).isTrue
+        assertThat(connectionSettingsViewModel?.isLocalOnly?.value).isTrue
     }
 
     @Test
     fun `then sync local only connections is correct`() {
-        assertThat(services.isSyncLocalConnectionsOnly.value).isFalse
+        assertThat(connectionSettingsViewModel?.isSyncLocalConnectionsOnly?.value).isFalse
     }
 
     @Test
     fun `then wake on lan is correct`() {
-        assertThat(services.isWakeOnLanEnabled.value).isTrue
+        assertThat(connectionSettingsViewModel?.isWakeOnLanEnabled?.value).isTrue
     }
 
     @Test
     fun `then the user name is correct`() {
-        assertThat(services.userName.value).isEqualTo("xw9wy0T")
+        assertThat(connectionSettingsViewModel?.userName?.value).isEqualTo("xw9wy0T")
     }
 
     @Test
     fun `then the password is correct`() {
-        assertThat(services.password.value).isEqualTo("sl0Ha")
+        assertThat(connectionSettingsViewModel?.password?.value).isEqualTo("sl0Ha")
     }
 
     @Test
