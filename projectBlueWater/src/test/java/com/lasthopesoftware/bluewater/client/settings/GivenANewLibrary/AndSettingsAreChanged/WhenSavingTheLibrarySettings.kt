@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySe
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.strings.FakeStringResources
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -15,11 +16,12 @@ import org.junit.jupiter.api.Test
 class WhenSavingTheLibrarySettings {
 
 	companion object {
-		private val newLibraryId = 918
+		private const val newLibraryId = 918
 	}
 
 	private val services by lazy {
 		LibrarySettingsViewModel(
+			mockk(),
 			mockk(),
 			mockk {
 				every { promiseSavedLibrarySettings(any()) } answers {
@@ -30,34 +32,43 @@ class WhenSavingTheLibrarySettings {
 			mockk {
 				every { promiseIsAllPermissionsGranted(any()) } returns true.toPromise()
 			},
+			FakeStringResources(),
 		)
     }
+
+	private val mediaCenterConnectionSettingsViewModel
+		get() = services.connectionSettingsViewModel.value as? LibrarySettingsViewModel.MediaCenterConnectionSettingsViewModel
+
 	private var isSaved = false
 	private var settingsChangedAfterSaving = false
 	private var didSettingsChange = false
 	private var initialSettingsChanged = false
-	private var didSettingsChangeAfterAccessCodeChanged = false
+	private var didSettingsChangeAfterConnectionSettingsChosen = false
 
     @BeforeAll
     fun act() {
 		with (services) {
 			initialSettingsChanged = isSettingsChanged.value
 
-			userName.value = "xw9wy0T"
-			didSettingsChangeAfterAccessCodeChanged = isSettingsChanged.value
+			connectionSettingsViewModel.value = availableConnectionSettings.first { it is LibrarySettingsViewModel.MediaCenterConnectionSettingsViewModel }
+			didSettingsChangeAfterConnectionSettingsChosen = isSettingsChanged.value
 
-			accessCode.value = "7P9tU"
-			password.value = "sl0Ha"
-			libraryName.value = "left"
-			isLocalOnly.value = !isLocalOnly.value
-			isSyncLocalConnectionsOnly.value = !isSyncLocalConnectionsOnly.value
-			isUsingExistingFiles.value = !isUsingExistingFiles.value
-			isWakeOnLanEnabled.value = !isWakeOnLanEnabled.value
-			syncedFileLocation.value = SyncedFileLocation.INTERNAL
+			mediaCenterConnectionSettingsViewModel?.apply {
+				userName.value = "xw9wy0T"
 
-			didSettingsChange = isSettingsChanged.value
-			isSaved = saveLibrary().toExpiringFuture().get() == true
-			settingsChangedAfterSaving = isSettingsChanged.value
+				accessCode.value = "7P9tU"
+				password.value = "sl0Ha"
+				libraryName.value = "left"
+				isLocalOnly.value = !isLocalOnly.value
+				isSyncLocalConnectionsOnly.value = !isSyncLocalConnectionsOnly.value
+				isUsingExistingFiles.value = !isUsingExistingFiles.value
+				isWakeOnLanEnabled.value = !isWakeOnLanEnabled.value
+				syncedFileLocation.value = SyncedFileLocation.INTERNAL
+
+				didSettingsChange = isSettingsChanged.value
+				isSaved = saveLibrary().toExpiringFuture().get() == true
+				settingsChangedAfterSaving = isSettingsChanged.value
+			}
 		}
     }
 
@@ -72,8 +83,8 @@ class WhenSavingTheLibrarySettings {
 	}
 
 	@Test
-	fun `then the settings changed after the access code changed`() {
-		assertThat(didSettingsChangeAfterAccessCodeChanged).isTrue
+	fun `then the settings changed after the connection settings were chosen`() {
+		assertThat(didSettingsChangeAfterConnectionSettingsChosen).isTrue
 	}
 
 	@Test
@@ -87,7 +98,7 @@ class WhenSavingTheLibrarySettings {
 	}
 
 	@Test
-	fun `then the settings are changed after saving`() {
+	fun `then the settings are not changed after saving`() {
 		assertThat(settingsChangedAfterSaving).isFalse
 	}
 
@@ -98,32 +109,32 @@ class WhenSavingTheLibrarySettings {
 
     @Test
     fun `then the access code is correct`() {
-        assertThat(services.accessCode.value).isEqualTo("7P9tU")
+        assertThat(mediaCenterConnectionSettingsViewModel?.accessCode?.value).isEqualTo("7P9tU")
     }
 
     @Test
     fun `then the connection is local only`() {
-        assertThat(services.isLocalOnly.value).isTrue
+        assertThat(mediaCenterConnectionSettingsViewModel?.isLocalOnly?.value).isTrue
     }
 
     @Test
     fun `then sync local only connections is correct`() {
-        assertThat(services.isSyncLocalConnectionsOnly.value).isTrue
+        assertThat(mediaCenterConnectionSettingsViewModel?.isSyncLocalConnectionsOnly?.value).isTrue
     }
 
     @Test
     fun `then wake on lan is correct`() {
-        assertThat(services.isWakeOnLanEnabled.value).isTrue
+        assertThat(mediaCenterConnectionSettingsViewModel?.isWakeOnLanEnabled?.value).isTrue
     }
 
     @Test
     fun `then the user name is correct`() {
-        assertThat(services.userName.value).isEqualTo("xw9wy0T")
+        assertThat(mediaCenterConnectionSettingsViewModel?.userName?.value).isEqualTo("xw9wy0T")
     }
 
     @Test
     fun `then the password is correct`() {
-        assertThat(services.password.value).isEqualTo("sl0Ha")
+        assertThat(mediaCenterConnectionSettingsViewModel?.password?.value).isEqualTo("sl0Ha")
     }
 
     @Test

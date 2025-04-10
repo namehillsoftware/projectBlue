@@ -3,10 +3,11 @@ package com.lasthopesoftware.bluewater.client.settings.GivenALibraryId.AndLibrar
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
-import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredSubsonicConnectionSettings
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.strings.FakeStringResources
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -22,14 +23,15 @@ class WhenSavingTheLibrarySettings {
 	private val services by lazy {
         LibrarySettingsViewModel(
 			mockk {
+				every { promiseLibraryName(libraryId) } returns "h7xOYcFV".toPromise()
+			},
+			mockk {
 				every { promiseLibrarySettings(libraryId) } returns LibrarySettings(
 					libraryId = libraryId,
 					isUsingExistingFiles = true,
 					syncedFileLocation = SyncedFileLocation.EXTERNAL,
-					connectionSettings = StoredMediaCenterConnectionSettings(
-						accessCode = "b2q",
-						isLocalOnly = false,
-						isSyncLocalConnectionsOnly = true,
+					connectionSettings = StoredSubsonicConnectionSettings(
+						url = "b2q",
 						isWakeOnLanEnabled = false,
 						password = "hmpyA",
 						macAddress = "S4YhepUHBcj",
@@ -47,8 +49,13 @@ class WhenSavingTheLibrarySettings {
 			mockk {
 				every { promiseIsAllPermissionsGranted(any()) } returns true.toPromise()
 			},
+			FakeStringResources(),
 		)
     }
+
+	private val connectionSettingsViewModel
+		get() = services.connectionSettingsViewModel.value as? LibrarySettingsViewModel.SubsonicConnectionSettingsViewModel
+
 	private var isSaved = false
 	private var settingsChangedAfterSaving = false
 	private var didSettingsChange = false
@@ -60,28 +67,29 @@ class WhenSavingTheLibrarySettings {
     fun act() {
 		with (services) {
 			loadLibrary(libraryId).toExpiringFuture().get()
-			didSettingsChangeAfterLoad = isSettingsChanged.value
 
-			accessCode.value = "V68Bp9rS"
-			didSettingsChangeAfterAccessCodeChanged = isSettingsChanged.value
+			(connectionSettingsViewModel.value as? LibrarySettingsViewModel.SubsonicConnectionSettingsViewModel)?.apply {
+				didSettingsChangeAfterLoad = isSettingsChanged.value
 
-			accessCode.value = "b2q"
-			didSettingsChangeAfterAccessCodeReverted = isSettingsChanged.value
+				url.value = "V68Bp9rS"
+				didSettingsChangeAfterAccessCodeChanged = isSettingsChanged.value
 
-			accessCode.value = "V68Bp9rS"
-			password.value = "sl0Ha"
-			userName.value = "xw9wy0T"
-			libraryName.value = "left"
-			isLocalOnly.value = !isLocalOnly.value
-			isSyncLocalConnectionsOnly.value = !isSyncLocalConnectionsOnly.value
-			isUsingExistingFiles.value = !isUsingExistingFiles.value
-			isWakeOnLanEnabled.value = !isWakeOnLanEnabled.value
-			syncedFileLocation.value = SyncedFileLocation.EXTERNAL
-			macAddress.value = "sVU0zPNKdFu"
+				url.value = "b2q"
+				didSettingsChangeAfterAccessCodeReverted = isSettingsChanged.value
 
-			didSettingsChange = isSettingsChanged.value
-			isSaved = saveLibrary().toExpiringFuture().get() == true
-			settingsChangedAfterSaving = isSettingsChanged.value
+				url.value = "V68Bp9rS"
+				password.value = "sl0Ha"
+				userName.value = "xw9wy0T"
+				libraryName.value = "left"
+				isUsingExistingFiles.value = !isUsingExistingFiles.value
+				isWakeOnLanEnabled.value = !isWakeOnLanEnabled.value
+				syncedFileLocation.value = SyncedFileLocation.EXTERNAL
+				macAddress.value = "sVU0zPNKdFu"
+
+				didSettingsChange = isSettingsChanged.value
+				isSaved = saveLibrary().toExpiringFuture().get() == true
+				settingsChangedAfterSaving = isSettingsChanged.value
+			}
 		}
     }
 
@@ -116,38 +124,33 @@ class WhenSavingTheLibrarySettings {
 	}
 
 	@Test
+	fun `then the saved library name is correct`() {
+		assertThat(services.savedLibraryName.value).isEqualTo("h7xOYcFV")
+	}
+
+	@Test
 	fun `then permissions are not required`() {
 		assertThat(services.isStoragePermissionsNeeded.value).isFalse
 	}
 
     @Test
     fun `then the access code is correct`() {
-        assertThat(services.accessCode.value).isEqualTo("V68Bp9rS")
-    }
-
-    @Test
-    fun `then the connection is local only`() {
-        assertThat(services.isLocalOnly.value).isTrue
-    }
-
-    @Test
-    fun `then sync local only connections is correct`() {
-        assertThat(services.isSyncLocalConnectionsOnly.value).isFalse
+        assertThat(connectionSettingsViewModel?.url?.value).isEqualTo("V68Bp9rS")
     }
 
     @Test
     fun `then wake on lan is correct`() {
-        assertThat(services.isWakeOnLanEnabled.value).isTrue
+        assertThat(connectionSettingsViewModel?.isWakeOnLanEnabled?.value).isTrue
     }
 
     @Test
     fun `then the user name is correct`() {
-        assertThat(services.userName.value).isEqualTo("xw9wy0T")
+        assertThat(connectionSettingsViewModel?.userName?.value).isEqualTo("xw9wy0T")
     }
 
     @Test
     fun `then the password is correct`() {
-        assertThat(services.password.value).isEqualTo("sl0Ha")
+        assertThat(connectionSettingsViewModel?.password?.value).isEqualTo("sl0Ha")
     }
 
     @Test
@@ -168,7 +171,7 @@ class WhenSavingTheLibrarySettings {
 
 	@Test
 	fun `then the mac address is correct`() {
-		assertThat(services.macAddress.value).isEqualTo("sVU0zPNKdFu")
+		assertThat(connectionSettingsViewModel?.macAddress?.value).isEqualTo("sVU0zPNKdFu")
 	}
 
 	@Test
@@ -179,10 +182,8 @@ class WhenSavingTheLibrarySettings {
 				libraryName = "left",
 				isUsingExistingFiles = false,
 				syncedFileLocation = SyncedFileLocation.EXTERNAL,
-				StoredMediaCenterConnectionSettings(
-					accessCode = "V68Bp9rS",
-					isLocalOnly = true,
-					isSyncLocalConnectionsOnly = false,
+				StoredSubsonicConnectionSettings(
+					url = "V68Bp9rS",
 					isWakeOnLanEnabled = true,
 					userName = "xw9wy0T",
 					password = "sl0Ha",

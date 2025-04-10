@@ -533,7 +533,6 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedViewModel
 				) {
 					LibrarySettingsView(
 						librarySettingsViewModel = viewModel,
-						serverTypeSelectionViewModel = serverTypeSelectionViewModel,
 						navigateApplication = applicationNavigation,
 						stringResources = stringResources,
 						userSslCertificates = userSslCertificateProvider,
@@ -851,7 +850,6 @@ fun NowPlayingTvApplication(
 							) {
 								LibrarySettingsView(
 									librarySettingsViewModel = librarySettingsViewModel,
-									serverTypeSelectionViewModel = serverTypeSelectionViewModel,
 									navigateApplication = applicationNavigation,
 									stringResources = stringResources,
 									userSslCertificates = userSslCertificateProvider,
