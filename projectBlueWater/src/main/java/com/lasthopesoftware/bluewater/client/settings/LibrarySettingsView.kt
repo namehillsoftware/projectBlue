@@ -223,14 +223,14 @@ private fun RemoveServerConfirmationDialog(
 @Composable
 private fun LibrarySettingsList(
 	librarySettingsViewModel: LibrarySettingsViewModel,
-	mediaCenterConnectionSettingsViewModel: LibrarySettingsViewModel.MediaCenterConnectionSettingsViewModel,
+	connectionSettingsViewModel: LibrarySettingsViewModel.MediaCenterConnectionSettingsViewModel,
 	stringResources: GetStringResources,
 	userSslCertificates: ProvideUserSslCertificates,
 ) {
 	with (librarySettingsViewModel) {
 		val isSettingsChanged by isSettingsChanged.subscribeAsState()
 
-		with (mediaCenterConnectionSettingsViewModel) {
+		with (connectionSettingsViewModel) {
 			var accessCodeState by accessCode.subscribeAsMutableState()
 			SpacedOutRow {
 				StandardTextField(
@@ -435,6 +435,221 @@ private fun LibrarySettingsList(
 						checked = isSyncLocalConnectionsOnlyState,
 						null,
 					)
+				}
+			}
+
+			SpacedOutRow {
+				var isUsingExistingFilesState by isUsingExistingFiles.subscribeAsMutableState()
+				LabeledSelection(
+					label = stringResource(id = R.string.lbl_use_existing_music),
+					selected = isUsingExistingFilesState,
+					onSelected = { isUsingExistingFilesState = !isUsingExistingFilesState },
+					role = Role.Checkbox,
+				) {
+					Checkbox(
+						checked = isUsingExistingFilesState,
+						null,
+					)
+				}
+			}
+
+			val isSavingState by isSaving.subscribeAsState()
+			Button(
+				onClick = { saveLibrary() },
+				enabled = isSettingsChanged && !isSavingState,
+			) {
+				Text(text = if (!isSettingsChanged) stringResource(id = R.string.saved) else stringResource(id = R.string.save))
+			}
+		}
+	}
+}
+
+
+@Composable
+private fun LibrarySettingsList(
+	librarySettingsViewModel: LibrarySettingsViewModel,
+	connectionSettingsViewModel: LibrarySettingsViewModel.SubsonicConnectionSettingsViewModel,
+	stringResources: GetStringResources,
+	userSslCertificates: ProvideUserSslCertificates,
+) {
+	with (librarySettingsViewModel) {
+		val isSettingsChanged by isSettingsChanged.subscribeAsState()
+
+		with (connectionSettingsViewModel) {
+			var urlState by url.subscribeAsMutableState()
+			SpacedOutRow {
+				StandardTextField(
+					placeholder = stringResource(R.string.url),
+					value = urlState,
+					onValueChange = { urlState = it }
+				)
+			}
+
+			SpacedOutRow {
+				var userNameState by userName.subscribeAsMutableState()
+				StandardTextField(
+					placeholder = stringResource(R.string.lbl_user_name),
+					value = userNameState,
+					onValueChange = { userNameState = it }
+				)
+			}
+
+			SpacedOutRow {
+				var passwordState by password.subscribeAsMutableState()
+				StandardTextField(
+					placeholder = stringResource(R.string.lbl_password),
+					value = passwordState,
+					onValueChange = { passwordState = it },
+					visualTransformation = PasswordVisualTransformation(),
+					keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+				)
+			}
+
+			SpacedOutRow {
+				var libraryNameState by libraryName.subscribeAsMutableState()
+				StandardTextField(
+					placeholder = stringResource(R.string.lbl_library_name),
+					value = libraryNameState,
+					onValueChange = { libraryNameState = it },
+				)
+			}
+
+			Column(modifier = Modifier.fillMaxWidth(inputRowMaxWidth)) {
+				Text(
+					text = stringResource(R.string.optional_ssl_certificate),
+					modifier = Modifier.padding(top = innerGroupPadding, bottom = innerGroupPadding),
+				)
+
+				var hasError by remember { mutableStateOf(false) }
+				Row {
+					val hasSslCertificate by hasSslCertificate.subscribeAsState()
+
+					Button(
+						onClick = {
+							sslCertificateFingerprint.value = emptyByteArray
+						},
+						modifier = Modifier
+							.weight(1f)
+							.padding(end = innerGroupPadding),
+						enabled = hasSslCertificate,
+					) {
+						Text(text = stringResources.clear)
+					}
+
+					val scope = rememberCoroutineScope()
+					Button(
+						onClick = {
+							hasError = false
+							scope.launch {
+								try {
+									val fingerprint =
+										userSslCertificates.promiseUserSslCertificateFingerprint().suspend()
+									sslCertificateFingerprint.value = fingerprint
+								} catch (e: Throwable) {
+									hasError = true
+								}
+							}
+						},
+						modifier = Modifier
+							.weight(1f)
+							.padding(start = innerGroupPadding),
+					) {
+						Text(
+							text = stringResources.run { if (hasSslCertificate) change else set }
+						)
+					}
+				}
+
+				if (hasError) {
+					ProvideTextStyle(value = MaterialTheme.typography.caption) {
+						Text(
+							text = stringResource(R.string.invalid_ssl_certificate),
+							color = MaterialTheme.colors.error
+						)
+					}
+				}
+			}
+
+			Column(
+				modifier = Modifier
+					.fillMaxWidth(inputRowMaxWidth)
+					.selectableGroup()
+			) {
+				var isWolEnabledState by isWakeOnLanEnabled.subscribeAsMutableState()
+				LabeledSelection(
+					label = stringResource(id = R.string.wake_on_lan_setting),
+					selected = isWolEnabledState,
+					onSelected = { isWolEnabledState = !isWolEnabledState },
+					role = Role.Checkbox,
+				) {
+					Checkbox(
+						checked = isWolEnabledState,
+						onCheckedChange = null,
+					)
+				}
+
+				if (isWolEnabledState) {
+					var macAddressState by macAddress.subscribeAsMutableState()
+					StandardTextField(
+						placeholder = stringResource(R.string.optional_mac_address),
+						value = macAddressState,
+						onValueChange = { macAddressState = it },
+						modifier = Modifier.padding(innerGroupPadding),
+					)
+				}
+			}
+
+			Column(
+				modifier = Modifier
+					.fillMaxWidth(inputRowMaxWidth)
+					.selectableGroup()
+			) {
+				Text(
+					text = stringResource(id = R.string.lblSyncMusicLocation),
+					modifier = Modifier.padding(innerGroupPadding),
+				)
+
+				var syncedFileLocationState by syncedFileLocation.subscribeAsMutableState()
+				Row(
+					modifier = Modifier.padding(innerGroupPadding)
+				) {
+					LabeledSelection(
+						label = stringResource(id = R.string.rbPrivateToApp),
+						selected = syncedFileLocationState == SyncedFileLocation.INTERNAL,
+						onSelected = { syncedFileLocationState = SyncedFileLocation.INTERNAL },
+						role = Role.RadioButton,
+					) {
+						RadioButton(
+							selected = syncedFileLocationState == SyncedFileLocation.INTERNAL,
+							onClick = null,
+						)
+					}
+				}
+
+				Row(
+					modifier = Modifier.padding(innerGroupPadding)
+				) {
+					LabeledSelection(
+						label = stringResource(id = R.string.rbPublicLocation),
+						selected = syncedFileLocationState == SyncedFileLocation.EXTERNAL,
+						onSelected = { syncedFileLocationState = SyncedFileLocation.EXTERNAL },
+						role = Role.RadioButton,
+					) {
+						RadioButton(
+							selected = syncedFileLocationState == SyncedFileLocation.EXTERNAL,
+							onClick = null,
+						)
+					}
+				}
+
+				val isStoragePermissionsNeeded by isStoragePermissionsNeeded.subscribeAsState()
+				if (isStoragePermissionsNeeded) {
+					ProvideTextStyle(value = MaterialTheme.typography.caption) {
+						Text(
+							text = stringResource(R.string.permissions_must_be_granted_for_settings),
+							color = MaterialTheme.colors.error
+						)
+					}
 				}
 			}
 
@@ -712,7 +927,14 @@ fun LibrarySettingsView(
 							when (val connectionSettingsViewModel = connectionSettingsViewModelState) {
 								is LibrarySettingsViewModel.MediaCenterConnectionSettingsViewModel -> LibrarySettingsList(
 									librarySettingsViewModel = librarySettingsViewModel,
-									mediaCenterConnectionSettingsViewModel = connectionSettingsViewModel,
+									connectionSettingsViewModel = connectionSettingsViewModel,
+									stringResources = stringResources,
+									userSslCertificates = userSslCertificates,
+								)
+
+								is LibrarySettingsViewModel.SubsonicConnectionSettingsViewModel -> LibrarySettingsList(
+									librarySettingsViewModel = librarySettingsViewModel,
+									connectionSettingsViewModel = connectionSettingsViewModel,
 									stringResources = stringResources,
 									userSslCertificates = userSslCertificates,
 								)

@@ -352,7 +352,7 @@ class LibrarySettingsViewModel(
 		private val autoCloseables = AutoCloseableManager()
 
 		override val connectionTypeName: String
-			get() = stringResources.mediaCenter
+			get() = stringResources.subsonic
 
 		override val isConnectionSettingsChanged: Observable<Boolean> by lazy {
 			val changeTrackers = arrayOf(
