@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.live.LiveSubsonicConnect
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
 import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -23,6 +24,7 @@ class WhenSendingPlayedToServer {
 				every { getServerClient(any<SubsonicConnectionDetails>()) } returns FakeHttpConnection()
 			},
 			mockk(),
+			JsonEncoderDecoder,
 		)
 	}
 

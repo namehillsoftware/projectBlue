@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
+import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
@@ -43,6 +44,7 @@ class `When cancelling checking if the connection is possible` {
 				}
 			},
 			mockk(),
+			JsonEncoderDecoder,
 		).promiseIsConnectionPossible()
 		promisedTest.cancel()
 		deferredResponse.resolve()
