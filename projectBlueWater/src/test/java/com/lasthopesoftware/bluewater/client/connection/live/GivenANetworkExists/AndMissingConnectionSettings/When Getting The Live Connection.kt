@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.connection.live.ConfiguredActiveNet
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.live.MissingConnectionSettingsException
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -25,6 +26,7 @@ class `When Getting The Live Connection` {
 			},
 			mockk(),
 			mockk(),
+			JsonEncoderDecoder,
 		)
 	}
 

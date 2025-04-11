@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.connection.live
 
 import androidx.annotation.Keep
 import androidx.media3.datasource.okhttp.OkHttpDataSource
-import com.google.gson.Gson
 import com.google.gson.JsonParser
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
@@ -32,6 +31,8 @@ import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.InvalidResponseCodeException
 import com.lasthopesoftware.resources.io.NonStandardResponseException
 import com.lasthopesoftware.resources.io.promiseStringBody
+import com.lasthopesoftware.resources.strings.TranslateJson
+import com.lasthopesoftware.resources.strings.parseJson
 import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
@@ -51,6 +52,7 @@ class LiveSubsonicConnection(
 	private val subsonicConnectionDetails: SubsonicConnectionDetails,
 	private val httpPromiseClients: ProvideHttpPromiseClients,
 	private val okHttpClients: ProvideOkHttpClients,
+	private val jsonTranslator: TranslateJson,
 ) : LiveServerConnection, RemoteLibraryAccess
 {
 	companion object {
@@ -62,19 +64,6 @@ class LiveSubsonicConnection(
 		private const val playlistItemKey = "playlists"
 		private val playlistItem = ItemId(playlistItemKey)
 		private val checkedExpirationTime by lazy { Duration.standardSeconds(30) }
-
-		private inline fun <reified T> Promise<HttpResponse>.promiseSubsonicResponse(): Promise<T> = eventually { r ->
-			ThreadPools.compute.preparePromise { r.parseSubsonicResponse() }
-		}
-
-		private inline fun <reified T> HttpResponse.parseSubsonicResponse(): T {
-			body.use {
-				it.reader().use { r ->
-					val json = JsonParser.parseReader(r).asJsonObject.get("subsonic-response") ?: throw NonStandardResponseException()
-					return Gson().fromJson(json, T::class.java)
-				}
-			}
-		}
 	}
 
 	private val subsonicApiUrl by lazy {
@@ -170,6 +159,19 @@ class LiveSubsonicConnection(
 		return httpClient.promiseResponse(url)
 	}
 
+	private inline fun <reified T> Promise<HttpResponse>.promiseSubsonicResponse(): Promise<T?> = eventually { r ->
+		ThreadPools.compute.preparePromise { r.parseSubsonicResponse() }
+	}
+
+	private inline fun <reified T> HttpResponse.parseSubsonicResponse(): T? {
+		body.use {
+			it.reader().use { r ->
+				val json = JsonParser.parseReader(r).asJsonObject.get("subsonic-response") ?: throw NonStandardResponseException()
+				return jsonTranslator.parseJson<T>(json)
+			}
+		}
+	}
+
 	private inner class FilePropertiesPromise(private val serviceFile: ServiceFile) :
 		Promise<Map<String, String>>(),
 		PromisedResponse<HttpResponse, Unit>,
@@ -244,7 +246,7 @@ class LiveSubsonicConnection(
 
 	private inner class RootItemPromise :
 		Promise.Proxy<List<Item>>(),
-		PromisedResponse<SubsonicIndexesResponse, List<Item>>
+		PromisedResponse<SubsonicIndexesResponse?, List<Item>>
 	{
 		init {
 			proxy(
@@ -256,14 +258,14 @@ class LiveSubsonicConnection(
 			)
 		}
 
-		override fun promiseResponse(response: SubsonicIndexesResponse): Promise<List<Item>> = ThreadPools.compute.preparePromise { cs ->
-			response.indexes.index.flatMap {
+		override fun promiseResponse(response: SubsonicIndexesResponse?): Promise<List<Item>> = ThreadPools.compute.preparePromise { cs ->
+			response?.indexes?.index?.flatMap {
 				it.artist.map { artist ->
 					if (cs.isCancelled) throw itemParsingCancelledException()
 
 					Item(artist.id, artist.name, playlistId = null)
 				}
-			}
+			} ?: emptyList()
 		}
 
 		private fun itemParsingCancelledException() = CancellationException("Item parsing was cancelled.")
@@ -271,7 +273,7 @@ class LiveSubsonicConnection(
 
 	private inner class ItemPromise(itemId: ItemId) :
 		Promise.Proxy<List<Item>>(),
-		PromisedResponse<SubsonicDirectoryRoot, List<Item>>
+		PromisedResponse<SubsonicDirectoryRoot?, List<Item>>
 	{
 		init {
 			proxy(
@@ -286,12 +288,12 @@ class LiveSubsonicConnection(
 			)
 		}
 
-		override fun promiseResponse(response: SubsonicDirectoryRoot): Promise<List<Item>> = ThreadPools.compute.preparePromise { cs ->
-			response.directory.child.map {
+		override fun promiseResponse(response: SubsonicDirectoryRoot?): Promise<List<Item>> = ThreadPools.compute.preparePromise { cs ->
+			response?.directory?.child?.map {
 				if (cs.isCancelled) throw itemParsingCancelledException()
 
 				Item(it.id, it.name, playlistId = null)
-			}
+			} ?: emptyList()
 		}
 
 		private fun itemParsingCancelledException() = CancellationException("Item parsing was cancelled.")

@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetail
 import com.lasthopesoftware.bluewater.client.connection.live.LiveSubsonicConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -20,6 +21,7 @@ class `When Downloading the File` {
 				every { getServerClient(any<MediaCenterConnectionDetails>()) } returns FakeHttpConnection()
 			},
 			mockk(),
+			JsonEncoderDecoder,
 		)
 		downloader.promiseFile(ServiceFile("98e7097c383a412a8c184b6af08e082f")).toExpiringFuture().get()
 	}

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.settings.access
 
-import com.google.gson.Gson
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ManageLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -12,38 +11,17 @@ import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
-import com.lasthopesoftware.resources.io.fromJson
+import com.lasthopesoftware.resources.strings.TranslateJson
+import com.lasthopesoftware.resources.strings.parseJson
 import com.namehillsoftware.handoff.promises.Promise
 import kotlin.coroutines.cancellation.CancellationException
 
-class LibrarySettingsAccess(private val libraryManager: ManageLibraries) : ProvideLibrarySettings, StoreLibrarySettings {
+class LibrarySettingsAccess(
+	private val libraryManager: ManageLibraries,
+	private val jsonTranslator: TranslateJson
+) : ProvideLibrarySettings, StoreLibrarySettings {
 	companion object {
-		private val gson = ThreadLocal.withInitial { Gson() }
-
 		private fun librarySettingsAccessCancelled() = CancellationException("Cancelled while accessing Library Settings.")
-
-		private fun LibrarySettings.toNewLibrary() = Library(
-			libraryName = libraryName,
-			isUsingExistingFiles = isUsingExistingFiles,
-			serverType = Library.ServerType.MediaCenter,
-			syncedFileLocation = syncedFileLocation,
-			connectionSettings = connectionSettings?.let { gson.get()?.toJson(it) },
-		)
-
-		private fun Library.toLibrarySettings() = LibrarySettings(
-			libraryId = libraryId,
-			isUsingExistingFiles = isUsingExistingFiles,
-			libraryName = libraryName,
-			syncedFileLocation = syncedFileLocation,
-			connectionSettings = connectionSettings
-				?.let {
-					when (serverType) {
-						Library.ServerType.MediaCenter -> gson.get()?.fromJson<StoredMediaCenterConnectionSettings>(it)
-						Library.ServerType.Subsonic -> gson.get()?.fromJson<StoredSubsonicConnectionSettings>(it)
-						null -> null
-					}
-				}
-		)
 	}
 
 	override fun promiseAllLibrarySettings(): Promise<Collection<LibrarySettings>> =
@@ -93,7 +71,7 @@ class LibrarySettingsAccess(private val libraryManager: ManageLibraries) : Provi
 								is StoredSubsonicConnectionSettings -> Library.ServerType.Subsonic
 								null -> null
 							}
-							l.connectionSettings = librarySettings.connectionSettings?.let { gson.get()?.toJson(it) }
+							l.connectionSettings = librarySettings.connectionSettings?.let(jsonTranslator::toJson)
 							l
 						}
 					}
@@ -114,4 +92,28 @@ class LibrarySettingsAccess(private val libraryManager: ManageLibraries) : Provi
 					it.toLibrarySettings()
 				}
 			}
+
+
+	private fun LibrarySettings.toNewLibrary() = Library(
+		libraryName = libraryName,
+		isUsingExistingFiles = isUsingExistingFiles,
+		serverType = Library.ServerType.MediaCenter,
+		syncedFileLocation = syncedFileLocation,
+		connectionSettings = connectionSettings?.let(jsonTranslator::toJson),
+	)
+
+	private fun Library.toLibrarySettings() = LibrarySettings(
+		libraryId = libraryId,
+		isUsingExistingFiles = isUsingExistingFiles,
+		libraryName = libraryName,
+		syncedFileLocation = syncedFileLocation,
+		connectionSettings = connectionSettings
+			?.let {
+				when (serverType) {
+					Library.ServerType.MediaCenter -> jsonTranslator.parseJson<StoredMediaCenterConnectionSettings>(it)
+					Library.ServerType.Subsonic -> jsonTranslator.parseJson<StoredSubsonicConnectionSettings>(it)
+					null -> null
+				}
+			}
+	)
 }
