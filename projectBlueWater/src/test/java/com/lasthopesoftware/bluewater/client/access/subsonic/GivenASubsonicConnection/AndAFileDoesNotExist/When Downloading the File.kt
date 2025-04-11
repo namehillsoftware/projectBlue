@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.access.subsonic.GivenASubsonicConn
 
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.LiveSubsonicConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
@@ -18,7 +17,7 @@ class `When Downloading the File` {
 		val downloader = LiveSubsonicConnection(
 			SubsonicConnectionDetails(TestUrl, "v2oabCzaDZ", "vOAhLOYu"),
 			mockk {
-				every { getServerClient(any<MediaCenterConnectionDetails>()) } returns FakeHttpConnection()
+				every { getServerClient(any<SubsonicConnectionDetails>()) } returns FakeHttpConnection()
 			},
 			mockk(),
 			JsonEncoderDecoder,

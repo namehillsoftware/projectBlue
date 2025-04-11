@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.properties.playstat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.factory.LibraryPlaystatsUpdateSelector
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -13,12 +14,17 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-private const val libraryId = 382
-
 class WhenUpdatingPlayStats {
+
+	companion object {
+		private const val libraryId = 382
+	}
 
 	private val scopedPlaystatsUpdateSelector by lazy {
 		LibraryPlaystatsUpdateSelector(
+			mockk {
+				every { promiseConnectionSettings(LibraryId(libraryId)) } returns MediaCenterConnectionSettings(accessCode = "").toPromise()
+			},
 			mockk {
 				every { promiseServerVersion(LibraryId(libraryId)) } returns Promise(SemanticVersion(22, 0, 0))
 			},
