@@ -74,6 +74,7 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 			.hostnameVerifier(getHostnameVerifier(mediaCenterConnectionDetails))
 			.build()
 
+	@OptIn(ExperimentalStdlibApi::class)
 	override fun getOkHttpClient(subsonicConnectionDetails: SubsonicConnectionDetails): OkHttpClient =
 		commonClient
 			.newBuilder()
@@ -84,7 +85,7 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 					chain.request().url.toUrl().addParams(
 						"u=$userName",
 						"v=1.4.0",
-						"t=" + "$password$salt".hashString("MD5"),
+						"t=" + "$password$salt".hashString("MD5").toHexString(),
 						"s=$salt",
 						"c=" + BuildConfig.APPLICATION_ID,
 						"f=json",
