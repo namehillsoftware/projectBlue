@@ -5,11 +5,18 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.SubsonicConnectionSettings
 import com.lasthopesoftware.bluewater.client.servers.version.ProvideLibraryServerVersion
 import com.lasthopesoftware.policies.caching.PermanentPromiseFunctionCache
+import com.lasthopesoftware.promises.extensions.cancelBackEventually
+import com.lasthopesoftware.promises.extensions.cancelBackThen
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class LibraryPlaystatsUpdateSelector(
+	private val connectionSettingsLookup: LookupConnectionSettings,
 	private val programVersionProvider: ProvideLibraryServerVersion,
 	private val playedFilePlayStatsUpdater: PlayedFilePlayStatsUpdater,
 	private val filePropertiesPlayStatsUpdater: FilePropertiesPlayStatsUpdater
@@ -24,10 +31,18 @@ class LibraryPlaystatsUpdateSelector(
 		promiseCache.getOrAdd(libraryId, ::promiseNewPlaystatsUpdater)
 
 	private fun promiseNewPlaystatsUpdater(libraryId: LibraryId): Promise<UpdatePlaystats> =
-		programVersionProvider
-			.promiseServerVersion(libraryId)
-			.then { v ->
-				if (v != null && v.major >= 22) playedFilePlayStatsUpdater
-				else filePropertiesPlayStatsUpdater
+		connectionSettingsLookup
+			.promiseConnectionSettings(libraryId)
+			.cancelBackEventually {
+				when (it) {
+					is SubsonicConnectionSettings -> playedFilePlayStatsUpdater.toPromise()
+					is MediaCenterConnectionSettings -> programVersionProvider
+							.promiseServerVersion(libraryId)
+							.cancelBackThen { v, _ ->
+								if (v != null && v.major >= 22) playedFilePlayStatsUpdater
+								else filePropertiesPlayStatsUpdater
+							}
+					else -> Promise(IllegalArgumentException("Unknown connection type"))
+				}
 			}
 }
