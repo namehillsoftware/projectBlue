@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetail
 import com.lasthopesoftware.bluewater.client.connection.live.LiveSubsonicConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
+import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -35,6 +36,7 @@ class WhenCheckingIfTheMediaCenterConnectionDetailsIsPossible {
 				}
 			},
 			mockk(),
+			JsonEncoderDecoder,
 		).promiseIsConnectionPossible().toExpiringFuture().get()!!
 	}
 
