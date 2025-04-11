@@ -23,7 +23,7 @@ class `When getting the server info` {
 		ServerLookup(
 			mockk {
 				every { promiseConnectionSettings(LibraryId(libraryId)) } returns SubsonicConnectionSettings(
-					url = "http://0IsPoFSrIQ",
+					url = "http://0IsPoFSrIQ:316",
 					userName = "u7OY472Smvf",
 					password = "G5gVek1fn",
 					isWakeOnLanEnabled = false,
@@ -51,7 +51,7 @@ class `When getting the server info` {
 
 	@Test
 	fun `then the http port is correct`() {
-		assertThat(serverInfo!!.httpPort).isEqualTo(80)
+		assertThat(serverInfo!!.httpPort).isEqualTo(316)
 	}
 
 	@Test

@@ -16,6 +16,7 @@ import com.lasthopesoftware.resources.strings.EncodeToBase64
 import com.namehillsoftware.handoff.promises.Promise
 import java.net.URL
 import java.util.LinkedList
+import java.util.UUID
 
 class LiveServerConnectionProvider(
 	private val activeNetwork: LookupActiveNetwork,
@@ -112,6 +113,8 @@ class LiveServerConnectionProvider(
 			.also(cp::doCancel)
 			.eventually {
 				it?.let { (httpPort, httpsPort, remoteIps, localIps, _, certificateFingerprint) ->
+					val salt = UUID.randomUUID().toString()
+
 					val subsonicConnectionDetails = LinkedList<SubsonicConnectionDetails>()
 
 					fun testUrls(): Promise<LiveServerConnection?> {
@@ -131,7 +134,7 @@ class LiveServerConnectionProvider(
 									URL("https://$ip:$httpsPort"),
 									settings.userName,
 									settings.password,
-									"salt",
+									salt,
 									certificateFingerprint
 								)
 							)
@@ -145,7 +148,7 @@ class LiveServerConnectionProvider(
 									URL("http://$ip:$httpPort"),
 									settings.userName,
 									settings.password,
-									"salt",
+									salt,
 									certificateFingerprint
 								)
 							)
@@ -157,7 +160,7 @@ class LiveServerConnectionProvider(
 									URL("http://$ip:$httpPort"),
 									settings.userName,
 									settings.password,
-									"salt",
+									salt,
 									certificateFingerprint
 								)
 							)
