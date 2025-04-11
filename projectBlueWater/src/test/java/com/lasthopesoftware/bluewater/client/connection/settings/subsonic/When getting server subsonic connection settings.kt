@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.settings.audius
+package com.lasthopesoftware.bluewater.client.connection.settings.subsonic
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings

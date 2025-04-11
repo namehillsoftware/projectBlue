@@ -2,16 +2,19 @@ package com.lasthopesoftware.bluewater.client.connection.live
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
+import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupValidConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.SubsonicConnectionSettings
 import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.network.LookupActiveNetwork
 import com.lasthopesoftware.resources.strings.EncodeToBase64
 import com.namehillsoftware.handoff.promises.Promise
+import java.net.URL
 import java.util.LinkedList
 
 class LiveServerConnectionProvider(
@@ -27,10 +30,11 @@ class LiveServerConnectionProvider(
 			connectionSettingsLookup
 				.promiseConnectionSettings(libraryId)
 				.cancelBackEventually { connectionSettings ->
-					connectionSettings
-						?.let { it as? MediaCenterConnectionSettings }
-						?.let { settings -> promiseTestedServerConnection(libraryId, settings) }
-						?: Promise(MissingConnectionSettingsException(libraryId))
+					when (connectionSettings) {
+						is MediaCenterConnectionSettings -> promiseTestedServerConnection(libraryId, connectionSettings)
+						is SubsonicConnectionSettings -> promiseTestedServerConnection(libraryId, connectionSettings)
+						null -> Promise(MissingConnectionSettingsException(libraryId))
+					}
 				}
 		} else Promise.empty()
 
@@ -91,6 +95,70 @@ class LiveServerConnectionProvider(
 									authKey,
 									ip,
 									httpPort,
+								)
+							)
+						}
+					}
+
+					testUrls()
+				}.keepPromise()
+			}
+	}
+
+	private fun promiseTestedServerConnection(libraryId: LibraryId, settings: SubsonicConnectionSettings): Promise<LiveServerConnection?> = Promise.Proxy { cp ->
+		if (cp.isCancelled) Promise.empty()
+		else serverLookup
+			.promiseServerInformation(libraryId)
+			.also(cp::doCancel)
+			.eventually {
+				it?.let { (httpPort, httpsPort, remoteIps, localIps, _, certificateFingerprint) ->
+					val subsonicConnectionDetails = LinkedList<SubsonicConnectionDetails>()
+
+					fun testUrls(): Promise<LiveServerConnection?> {
+						if (cp.isCancelled) return Promise.empty()
+						val serverConnection = subsonicConnectionDetails.poll() ?: return Promise.empty()
+						val potentialConnection = LiveSubsonicConnection(serverConnection, httpClients, okHttpClients)
+						return potentialConnection
+							.promiseIsConnectionPossible()
+							.also(cp::doCancel)
+							.eventually { result -> if (result) Promise(potentialConnection) else testUrls() }
+					}
+
+					if (httpsPort != null) {
+						for (ip in remoteIps) {
+							subsonicConnectionDetails.offer(
+								SubsonicConnectionDetails(
+									URL("https://$ip:$httpsPort"),
+									settings.userName,
+									settings.password,
+									"salt",
+									certificateFingerprint
+								)
+							)
+						}
+					}
+
+					if (httpPort != null) {
+						for (ip in remoteIps) {
+							subsonicConnectionDetails.offer(
+								SubsonicConnectionDetails(
+									URL("http://$ip:$httpPort"),
+									settings.userName,
+									settings.password,
+									"salt",
+									certificateFingerprint
+								)
+							)
+						}
+
+						for (ip in localIps) {
+							subsonicConnectionDetails.offer(
+								SubsonicConnectionDetails(
+									URL("http://$ip:$httpPort"),
+									settings.userName,
+									settings.password,
+									"salt",
+									certificateFingerprint
 								)
 							)
 						}
