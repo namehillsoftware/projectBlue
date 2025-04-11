@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withSubso
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
+import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -37,6 +38,7 @@ class WhenReceivingThePromisedProgramVersion {
 			SubsonicConnectionDetails(TestUrl, "hi5ZMj3i", "7O1rsa2Yl"),
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
+			JsonEncoderDecoder,
 		)
 
 		connection.promiseServerVersion().toExpiringFuture()[100, TimeUnit.MILLISECONDS]

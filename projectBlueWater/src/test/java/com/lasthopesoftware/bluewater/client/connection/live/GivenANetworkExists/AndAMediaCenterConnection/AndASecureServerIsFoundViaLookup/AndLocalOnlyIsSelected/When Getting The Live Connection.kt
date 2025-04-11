@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConn
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.PassThroughHttpResponse
+import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -86,6 +87,7 @@ class `When Getting The Live Connection` {
 				}
 			},
 			mockk(),
+			JsonEncoderDecoder,
 		)
 	}
 

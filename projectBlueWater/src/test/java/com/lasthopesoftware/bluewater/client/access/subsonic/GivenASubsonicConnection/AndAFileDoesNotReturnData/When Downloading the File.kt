@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
 import com.lasthopesoftware.resources.emptyByteArray
+import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -37,6 +38,7 @@ class `When Downloading the File` {
 				}
 			}),
 			mockk(),
+			JsonEncoderDecoder,
 		)
 		downloader.promiseFile(ServiceFile("af6f5ae0b3b94ac4a5a8d9480b207bb7")).toExpiringFuture().get()
 	}

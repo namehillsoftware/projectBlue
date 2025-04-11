@@ -62,6 +62,7 @@ import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.OsFileSupplier
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder
 import com.lasthopesoftware.resources.strings.Base64Encoder
+import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import com.lasthopesoftware.storage.FreeSpaceLookup
 import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup
 import com.lasthopesoftware.storage.directories.PublicDirectoryLookup
@@ -102,7 +103,8 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 							serverLookup,
 							connectionSettingsLookup,
 							okHttpClients,
-							okHttpClients
+							okHttpClients,
+							JsonEncoderDecoder,
 						),
 						audioCacheStreamSupplier,
 					),

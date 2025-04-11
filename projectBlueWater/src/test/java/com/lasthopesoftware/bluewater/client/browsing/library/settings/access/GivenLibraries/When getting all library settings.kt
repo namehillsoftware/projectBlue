@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.Li
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.gson
+import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -104,6 +105,7 @@ class `When getting all library settings` {
 					),
 				).toPromise()
 			},
+			JsonEncoderDecoder,
 		)
 	}
 

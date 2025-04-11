@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withSubsonicApi
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
+import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -37,6 +38,7 @@ class `When saving a new playlist` {
 					every { getServerClient(any<SubsonicConnectionDetails>()) } returns httpConnection
 				},
 				mockk(),
+				JsonEncoderDecoder,
 			)
 		)
 	}

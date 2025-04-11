@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withSubsonicApi
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
+import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -33,6 +34,7 @@ class WhenGettingFileProperties {
 			SubsonicConnectionDetails(TestUrl, "2QbKsOo", "rIuUXpsY"),
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
+			JsonEncoderDecoder,
 		)
 
 		connection
