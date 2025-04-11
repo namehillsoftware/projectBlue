@@ -67,15 +67,16 @@ class ServerLookup(
 		}
 
 		private fun SubsonicConnectionSettings.parseServerInfo(): ServerInfo {
-			var host = ""
+			var url = this.url
+
 			val isHttps = when {
 				url.startsWith("http://", ignoreCase = true) -> {
-					host = url.replaceFirst("http://", "")
+					url = url.replaceFirst("http://", "")
 					false
 				}
 
 				url.startsWith("https://", ignoreCase = true) -> {
-					host = url.replaceFirst("https://", "")
+					url = url.replaceFirst("https://", "")
 					true
 				}
 
@@ -93,7 +94,7 @@ class ServerLookup(
 			}
 
 			return ServerInfo(
-				remoteHosts = setOf(host),
+				remoteHosts = setOf(urlParts[0]),
 				localHosts = emptySet(),
 				httpPort = port.takeUnless { isHttps },
 				httpsPort = port.takeIf { isHttps },
