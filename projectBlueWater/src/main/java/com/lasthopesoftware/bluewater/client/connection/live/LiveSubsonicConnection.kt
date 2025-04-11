@@ -130,7 +130,10 @@ class LiveSubsonicConnection(
 
 	override fun promiseFiles(playlistId: PlaylistId): Promise<List<ServiceFile>> = Promise(emptyList())
 
-	override fun promisePlaystatsUpdate(serviceFile: ServiceFile): Promise<*> = Unit.toPromise()
+	override fun promisePlaystatsUpdate(serviceFile: ServiceFile): Promise<*> = promiseResponse(
+		"scrobble",
+		"id=${serviceFile.key}"
+		)
 
 	override fun promiseRevision(): Promise<Int?> = Promise.empty()
 
