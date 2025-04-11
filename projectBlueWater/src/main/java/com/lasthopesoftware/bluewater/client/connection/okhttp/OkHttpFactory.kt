@@ -116,6 +116,8 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 			.build()
 
 	private val commonClient by lazy {
+		val userAgent = getUserAgent()
+
 		OkHttpClient.Builder()
 			.addNetworkInterceptor { chain ->
 				val requestBuilder =
@@ -123,7 +125,7 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 						.request()
 						.newBuilder()
 						.header("Connection", "close")
-						.header("User-Agent", getUserAgent())
+						.header("User-Agent", userAgent)
 				chain.proceed(requestBuilder.build())
 			}
 			.cache(null)
@@ -242,6 +244,19 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 	private fun String.hashString(algorithm: String): ByteArray =
 		MessageDigest.getInstance(algorithm).digest(toByteArray(UTF_8))
 
+	private fun getUserAgent(): String {
+		val versionName = try {
+			val packageName = context.packageName
+			val info = context.packageManager.getPackageInfo(packageName, 0)
+			info.versionName ?: "?"
+		} catch (e: PackageManager.NameNotFoundException) {
+			"?"
+		}
+
+		val applicationName = context.getString(R.string.app_name)
+		return "$applicationName/$versionName (Linux;Android ${Build.VERSION.RELEASE})"
+	}
+
 	private class OkHttpResponse(private val response: Response) : HttpResponse {
 		override val code: Int
 			get() = response.code
@@ -284,18 +299,5 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 			} catch (e: Throwable) {
 				Promise(e)
 			}
-	}
-
-	private fun getUserAgent(): String {
-		val versionName = try {
-			val packageName = context.packageName
-			val info = context.packageManager.getPackageInfo(packageName, 0)
-			info.versionName ?: "?"
-		} catch (e: PackageManager.NameNotFoundException) {
-			"?"
-		}
-
-		val applicationName = context.getString(R.string.app_name)
-		return ("$applicationName/$versionName (Linux;Android ${Build.VERSION.RELEASE})")
 	}
 }
