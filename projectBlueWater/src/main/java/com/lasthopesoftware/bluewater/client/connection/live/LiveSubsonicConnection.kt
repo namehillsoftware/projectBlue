@@ -20,6 +20,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withSubsonicApi
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
+import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.exceptions.isOkHttpCanceled
 import com.lasthopesoftware.policies.caching.TimedExpirationPromiseCache
@@ -133,7 +134,13 @@ class LiveSubsonicConnection(
 	override fun promisePlaystatsUpdate(serviceFile: ServiceFile): Promise<*> = promiseResponse(
 		"scrobble",
 		"id=${serviceFile.key}"
-		)
+	).cancelBackThen { response, _ ->
+		response.use {
+			val responseCode = it.code
+			logger.debug("api/v1/File/Played responded with a response code of {}", responseCode)
+			if (responseCode < 200 || responseCode >= 300) throw HttpResponseException(responseCode)
+		}
+	}
 
 	override fun promiseRevision(): Promise<Int?> = Promise.empty()
 
