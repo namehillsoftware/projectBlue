@@ -484,6 +484,7 @@ import java.util.concurrent.TimeoutException
 		UpdatePlayStatsOnPlaybackCompletedReceiver(
 			libraryConnectionDependencies.run {
 					LibraryPlaystatsUpdateSelector(
+						playbackServiceDependencies.connectionSettingsLookup,
 						LibraryServerVersionProvider(libraryConnectionProvider),
 						PlayedFilePlayStatsUpdater(libraryConnectionProvider),
 						FilePropertiesPlayStatsUpdater(

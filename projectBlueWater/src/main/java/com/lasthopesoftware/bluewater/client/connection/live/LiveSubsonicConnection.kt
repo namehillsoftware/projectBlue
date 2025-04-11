@@ -43,6 +43,7 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import org.joda.time.Duration
 import org.jsoup.Jsoup
+import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.net.URL
@@ -62,14 +63,14 @@ class LiveSubsonicConnection(
 		private const val playlistFilesPath = "Playlist/Files"
 		private const val searchFilesPath = "Files/Search"
 		private const val imageFormat = "jpg"
+		private const val musicFormat = "mp3"
+		private const val bitrate = "128"
 		private const val playlistItemKey = "playlists"
 		private val playlistItem = ItemId(playlistItemKey)
 		private val checkedExpirationTime by lazy { Duration.standardSeconds(30) }
 	}
 
-	private val subsonicApiUrl by lazy {
-		with(subsonicConnectionDetails) { baseUrl.withSubsonicApi() }
-	}
+	private val subsonicApiUrl by lazy { subsonicConnectionDetails.baseUrl.withSubsonicApi() }
 
 	private val revisionCache by lazy { TimedExpirationPromiseCache<Unit, Int?>(checkedExpirationTime) }
 
@@ -77,7 +78,14 @@ class LiveSubsonicConnection(
 
 	override fun <T> getConnectionKey(key: T): UrlKeyHolder<T> = UrlKeyHolder(subsonicConnectionDetails.baseUrl, key)
 
-	override fun getFileUrl(serviceFile: ServiceFile): URL = subsonicConnectionDetails.baseUrl
+	override fun getFileUrl(serviceFile: ServiceFile): URL =
+		subsonicApiUrl
+			.addPath("stream")
+			.addParams(
+				"id=${serviceFile.key}",
+				"format=$musicFormat",
+				"maxBitRate=$bitrate",
+			)
 
 	override val dataSourceFactory by lazy {
 		OkHttpDataSource.Factory(
@@ -110,10 +118,15 @@ class LiveSubsonicConnection(
 	override fun promiseServerVersion(): Promise<SemanticVersion?> = PingViewPromise().cancelBackThen { r, _ ->
 		r?.version?.split(".")?.let {
 			SemanticVersion(it[0].toInt(), it[1].toInt(), it[2].toInt())
-		} ?: throw NonStandardResponseException()
+		}
 	}
 
-	override fun promiseFile(serviceFile: ServiceFile): Promise<InputStream> = emptyByteArray.inputStream().toPromise()
+	override fun promiseFile(serviceFile: ServiceFile): Promise<InputStream> = Promise.Proxy { cp ->
+		httpClient
+			.promiseResponse(getFileUrl(serviceFile))
+			.also(cp::doCancel)
+			.then(HttpStreamedResponse())
+	}
 
 	override fun promiseImageBytes(serviceFile: ServiceFile): Promise<ByteArray> = emptyByteArray.toPromise()
 
@@ -354,6 +367,35 @@ class LiveSubsonicConnection(
 
 			r.parseSubsonicResponse()
 		}
+	}
+
+	private class HttpStreamedResponse : ImmediateResponse<HttpResponse?, InputStream>, InputStream() {
+		private var savedResponse: HttpResponse? = null
+		private lateinit var byteStream: InputStream
+
+		override fun respond(response: HttpResponse?): InputStream {
+			savedResponse = response
+
+			byteStream = response
+				?.takeIf { it.code != 404 }
+				?.run { body }
+				?: ByteArrayInputStream(emptyByteArray)
+
+			return this
+		}
+
+		override fun read(): Int = byteStream.read()
+
+		override fun read(b: ByteArray, off: Int, len: Int): Int = byteStream.read(b, off, len)
+
+		override fun available(): Int = byteStream.available()
+
+		override fun close() {
+			byteStream.close()
+			savedResponse?.close()
+		}
+
+		override fun toString(): String = byteStream.toString()
 	}
 
 	@Keep
