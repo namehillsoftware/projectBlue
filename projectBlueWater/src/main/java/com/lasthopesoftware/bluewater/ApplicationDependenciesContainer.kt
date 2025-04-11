@@ -56,6 +56,7 @@ import com.lasthopesoftware.resources.bitmaps.DefaultAwareCachingBitmapProducer
 import com.lasthopesoftware.resources.bitmaps.QueuedBitmapProducer
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder
 import com.lasthopesoftware.resources.strings.Base64Encoder
+import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import com.lasthopesoftware.resources.strings.StringResources
 
 object ApplicationDependenciesContainer {
@@ -157,7 +158,7 @@ object ApplicationDependenciesContainer {
 			get() = libraryRepository
 
 		override val librarySettingsProvider by lazy {
-			val access = LibrarySettingsAccess(libraryStorage)
+			val access = LibrarySettingsAccess(libraryStorage, JsonEncoderDecoder)
 			CachedLibrarySettingsAccess(access, access)
 		}
 
@@ -202,7 +203,8 @@ object ApplicationDependenciesContainer {
 							serverLookup,
 							connectionSettingsLookup,
 							okHttpClients,
-							okHttpClients
+							okHttpClients,
+							JsonEncoderDecoder,
 						),
 						audioCacheStreamSupplier,
 					),

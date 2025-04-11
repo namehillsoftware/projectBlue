@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withSubso
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
 import com.lasthopesoftware.resources.emptyByteArray
+import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -36,6 +37,7 @@ class WhenSendingPlayedToServer {
 				}
 			),
 			mockk(),
+			JsonEncoderDecoder,
 		)
 	}
 
