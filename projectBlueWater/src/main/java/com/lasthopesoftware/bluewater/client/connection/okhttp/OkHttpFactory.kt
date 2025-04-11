@@ -50,6 +50,26 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 		private val dispatcher by lazy { Dispatcher(ThreadPools.io) }
 	}
 
+	private val commonClient by lazy {
+		val userAgent = getUserAgent()
+
+		OkHttpClient.Builder()
+			.addNetworkInterceptor { chain ->
+				val requestBuilder =
+					chain
+						.request()
+						.newBuilder()
+						.header("Connection", "close")
+						.header("User-Agent", userAgent)
+				chain.proceed(requestBuilder.build())
+			}
+			.cache(null)
+			.readTimeout(1, TimeUnit.MINUTES)
+			.retryOnConnectionFailure(false)
+			.dispatcher(dispatcher)
+			.build()
+	}
+
 	override fun getServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails): HttpPromiseClient =
 		OkHttpPromiseClient(getOkHttpClient(mediaCenterConnectionDetails))
 
@@ -114,26 +134,6 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 			.newBuilder()
 			.connectTimeout(buildConnectionTime.millis, TimeUnit.MILLISECONDS)
 			.build()
-
-	private val commonClient by lazy {
-		val userAgent = getUserAgent()
-
-		OkHttpClient.Builder()
-			.addNetworkInterceptor { chain ->
-				val requestBuilder =
-					chain
-						.request()
-						.newBuilder()
-						.header("Connection", "close")
-						.header("User-Agent", userAgent)
-				chain.proceed(requestBuilder.build())
-			}
-			.cache(null)
-			.readTimeout(1, TimeUnit.MINUTES)
-			.retryOnConnectionFailure(false)
-			.dispatcher(dispatcher)
-			.build()
-	}
 
 	private fun getSslSocketFactory(mediaCenterConnectionDetails: MediaCenterConnectionDetails): SSLSocketFactory {
 		val sslContext = try {
