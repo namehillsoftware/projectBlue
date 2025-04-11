@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.settings.mediacenter.GivenALibraryWithAnEmptyAccessCode
+package com.lasthopesoftware.bluewater.client.connection.settings.mediacenter.GivenALibraryWithoutAnAccessCode
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
@@ -13,13 +13,13 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.ExecutionException
 
-class WhenGettingServerLiveMediaCenterConnectionSettings {
+class `When Getting Valid Media Center Connection Settings` {
 
 	private val mut by lazy {
 		ValidConnectionSettingsLookup(
 			mockk {
 				every { promiseConnectionSettings(LibraryId(10)) } returns Promise(
-					MediaCenterConnectionSettings(accessCode = " 		")
+					MediaCenterConnectionSettings(accessCode = "")
 				)
 			}
 		)
