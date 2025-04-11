@@ -50,60 +50,9 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 		private val dispatcher by lazy { Dispatcher(ThreadPools.io) }
 	}
 
-	override fun getServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails): HttpPromiseClient =
-		OkHttpPromiseClient(getOkHttpClient(mediaCenterConnectionDetails))
-
-	override fun getServerClient(subsonicConnectionDetails: SubsonicConnectionDetails): HttpPromiseClient =
-		OkHttpPromiseClient(getOkHttpClient(subsonicConnectionDetails))
-
-	override fun getClient(): HttpPromiseClient = OkHttpPromiseClient(getOkHttpClient())
-
-	override fun getOkHttpClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails): OkHttpClient =
-		commonClient
-			.newBuilder()
-			.addNetworkInterceptor { chain ->
-				val requestBuilder = chain.request().newBuilder()
-				val authCode = mediaCenterConnectionDetails.authCode
-				if (!authCode.isNullOrEmpty()) requestBuilder.header(
-					"Authorization",
-					"basic $authCode"
-				)
-				chain.proceed(requestBuilder.build())
-			}
-			.sslSocketFactory(getSslSocketFactory(mediaCenterConnectionDetails), getTrustManager(mediaCenterConnectionDetails))
-			.hostnameVerifier(getHostnameVerifier(mediaCenterConnectionDetails))
-			.build()
-
-	override fun getOkHttpClient(subsonicConnectionDetails: SubsonicConnectionDetails): OkHttpClient =
-		commonClient
-			.newBuilder()
-			.addNetworkInterceptor { chain ->
-				val requestBuilder = chain.request().newBuilder()
-
-				requestBuilder.url(with (subsonicConnectionDetails) {
-					chain.request().url.toUrl().addParams(
-						"u=$userName",
-						"v=1.4.0",
-						"t=" + "$password$salt".hashString("MD5"),
-						"s=$salt",
-						"c=" + BuildConfig.APPLICATION_ID,
-						"f=json",
-					)
-				})
-
-				chain.proceed(requestBuilder.build())
-			}
-			.sslSocketFactory(getSslSocketFactory(subsonicConnectionDetails), getTrustManager(subsonicConnectionDetails))
-			.hostnameVerifier(getHostnameVerifier(subsonicConnectionDetails))
-			.build()
-
-	private fun getOkHttpClient(): OkHttpClient =
-		commonClient
-			.newBuilder()
-			.connectTimeout(buildConnectionTime.millis, TimeUnit.MILLISECONDS)
-			.build()
-
 	private val commonClient by lazy {
+		val userAgent = getUserAgent()
+
 		OkHttpClient.Builder()
 			.addNetworkInterceptor { chain ->
 				val requestBuilder =
@@ -111,7 +60,7 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 						.request()
 						.newBuilder()
 						.header("Connection", "close")
-						.header("User-Agent", getUserAgent())
+						.header("User-Agent", userAgent)
 				chain.proceed(requestBuilder.build())
 			}
 			.cache(null)
@@ -120,6 +69,71 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 			.dispatcher(dispatcher)
 			.build()
 	}
+
+	override fun getServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails): HttpPromiseClient =
+		OkHttpPromiseClient(getOkHttpClient(mediaCenterConnectionDetails))
+
+	override fun getServerClient(subsonicConnectionDetails: SubsonicConnectionDetails): HttpPromiseClient =
+		OkHttpPromiseClient(getOkHttpClient(subsonicConnectionDetails))
+
+	override fun getClient(): HttpPromiseClient = OkHttpPromiseClient(getOkHttpClient())
+
+	override fun getOkHttpClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails): OkHttpClient {
+		val authHeaderValue = mediaCenterConnectionDetails.authCode.takeUnless { it.isNullOrEmpty() }?.let { "basic $it" }
+
+		val builder = commonClient
+			.newBuilder()
+			.sslSocketFactory(
+				getSslSocketFactory(mediaCenterConnectionDetails),
+				getTrustManager(mediaCenterConnectionDetails)
+			)
+			.hostnameVerifier(getHostnameVerifier(mediaCenterConnectionDetails))
+
+		return if (authHeaderValue.isNullOrEmpty()) builder.build()
+		else builder
+			.addNetworkInterceptor { chain ->
+				val requestBuilder = chain.request().newBuilder()
+				requestBuilder.header("Authorization", authHeaderValue)
+				chain.proceed(requestBuilder.build())
+			}
+			.build()
+	}
+
+	@OptIn(ExperimentalStdlibApi::class)
+	override fun getOkHttpClient(subsonicConnectionDetails: SubsonicConnectionDetails): OkHttpClient {
+		val addedParams = with(subsonicConnectionDetails) {
+			arrayOf(
+				"u=$userName",
+				"v=1.4.0",
+				"t=" + "$password$salt".hashString("MD5").toHexString(),
+				"s=$salt",
+				"c=" + BuildConfig.APPLICATION_ID,
+				"f=json",
+			)
+		}
+
+		return commonClient
+			.newBuilder()
+			.addNetworkInterceptor { chain ->
+				val requestBuilder = chain.request().newBuilder()
+
+				requestBuilder.url(chain.request().url.toUrl().addParams(*addedParams))
+
+				chain.proceed(requestBuilder.build())
+			}
+			.sslSocketFactory(
+				getSslSocketFactory(subsonicConnectionDetails),
+				getTrustManager(subsonicConnectionDetails)
+			)
+			.hostnameVerifier(getHostnameVerifier(subsonicConnectionDetails))
+			.build()
+	}
+
+	private fun getOkHttpClient(): OkHttpClient =
+		commonClient
+			.newBuilder()
+			.connectTimeout(buildConnectionTime.millis, TimeUnit.MILLISECONDS)
+			.build()
 
 	private fun getSslSocketFactory(mediaCenterConnectionDetails: MediaCenterConnectionDetails): SSLSocketFactory {
 		val sslContext = try {
@@ -230,6 +244,19 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 	private fun String.hashString(algorithm: String): ByteArray =
 		MessageDigest.getInstance(algorithm).digest(toByteArray(UTF_8))
 
+	private fun getUserAgent(): String {
+		val versionName = try {
+			val packageName = context.packageName
+			val info = context.packageManager.getPackageInfo(packageName, 0)
+			info.versionName ?: "?"
+		} catch (e: PackageManager.NameNotFoundException) {
+			"?"
+		}
+
+		val applicationName = context.getString(R.string.app_name)
+		return "$applicationName/$versionName (Linux;Android ${Build.VERSION.RELEASE})"
+	}
+
 	private class OkHttpResponse(private val response: Response) : HttpResponse {
 		override val code: Int
 			get() = response.code
@@ -272,18 +299,5 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 			} catch (e: Throwable) {
 				Promise(e)
 			}
-	}
-
-	private fun getUserAgent(): String {
-		val versionName = try {
-			val packageName = context.packageName
-			val info = context.packageManager.getPackageInfo(packageName, 0)
-			info.versionName ?: "?"
-		} catch (e: PackageManager.NameNotFoundException) {
-			"?"
-		}
-
-		val applicationName = context.getString(R.string.app_name)
-		return ("$applicationName/$versionName (Linux;Android ${Build.VERSION.RELEASE})")
 	}
 }
