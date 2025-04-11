@@ -24,6 +24,9 @@ class `When getting the server info` {
 			mockk {
 				every { promiseConnectionSettings(LibraryId(libraryId)) } returns SubsonicConnectionSettings(
 					url = "http://0IsPoFSrIQ",
+					userName = "u7OY472Smvf",
+					password = "G5gVek1fn",
+					isWakeOnLanEnabled = false,
 					macAddress = "E5:F1:36:B7:D3:75",
 					sslCertificateFingerprint = "79786347fca14302a8ce96f586b17af8".hexToByteArray()
 				).toPromise()

@@ -25,8 +25,8 @@ class ConnectionSettingsLookup(private val librarySettings: ProvideLibrarySettin
 							macAddress = macAddress)
 						is StoredSubsonicConnectionSettings -> SubsonicConnectionSettings(
 							url = url ?: "",
-							userName = userName,
-							password = password,
+							userName = userName ?: "",
+							password = password ?: "",
 							isWakeOnLanEnabled = isWakeOnLanEnabled,
 							sslCertificateFingerprint = sslCertificateFingerprint?.hexToByteArray() ?: emptyByteArray,
 							macAddress = macAddress,

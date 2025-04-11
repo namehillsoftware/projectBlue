@@ -9,7 +9,17 @@ class ValidConnectionSettingsLookup(private val connectionSettings: LookupConnec
 			.promiseConnectionSettings(libraryId)
 			.then { it ->
 				it?.also {
-					if (it is MediaCenterConnectionSettings && it.accessCode.isBlank()) throw MissingAccessCodeException(libraryId)
+					when (it) {
+						is MediaCenterConnectionSettings -> {
+							if (it.accessCode.isBlank()) throw MissingAccessCodeException(libraryId)
+						}
+
+						is SubsonicConnectionSettings -> {
+							if (it.url.isBlank()) throw MissingAccessCodeException(libraryId)
+							if (it.userName.isBlank()) throw MissingAccessCodeException(libraryId)
+							if (it.password.isBlank()) throw MissingAccessCodeException(libraryId)
+						}
+					}
 				}
 			}
 }

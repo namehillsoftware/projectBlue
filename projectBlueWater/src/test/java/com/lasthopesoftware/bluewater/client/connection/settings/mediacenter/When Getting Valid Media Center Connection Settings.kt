@@ -13,7 +13,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class WhenGettingServerLiveMediaCenterConnectionSettings {
+class `When Getting Valid Media Center Connection Settings` {
 
 	@OptIn(ExperimentalStdlibApi::class)
 	private val mut by lazy {

@@ -1,7 +1,9 @@
 package com.lasthopesoftware.bluewater.client.connection.settings
 
+import androidx.annotation.Keep
 import com.lasthopesoftware.resources.emptyByteArray
 
+@Keep
 data class MediaCenterConnectionSettings(
 	val accessCode: String,
 	val userName: String? = null,
