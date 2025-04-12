@@ -26,7 +26,6 @@ class `When saving the library settings` {
 					id = libraryId.id,
 					libraryName = "i0UnMlt",
 					isUsingExistingFiles = true,
-					serverType = Library.ServerType.MediaCenter,
 					nowPlayingId = 322,
 					nowPlayingProgress = 234,
 					savedTracksString = "DSJaIU9",

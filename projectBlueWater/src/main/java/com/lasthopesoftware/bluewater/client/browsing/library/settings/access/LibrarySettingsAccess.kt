@@ -78,6 +78,11 @@ class LibrarySettingsAccess(private val libraryManager: ManageLibraries) : Provi
 							l.libraryName = librarySettings.libraryName
 							l.isUsingExistingFiles = librarySettings.isUsingExistingFiles
 							l.syncedFileLocation = librarySettings.syncedFileLocation
+
+							l.serverType =
+								if (librarySettings.connectionSettings != null) Library.ServerType.MediaCenter
+								else null
+
 							l.connectionSettings = librarySettings.connectionSettings?.let(Json::encodeToString)
 							l
 						}
