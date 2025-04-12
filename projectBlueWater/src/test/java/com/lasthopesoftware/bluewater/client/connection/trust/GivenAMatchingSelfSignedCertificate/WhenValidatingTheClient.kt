@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.connection.trust.GivenAMatchingSel
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager
 import io.mockk.mockk
 import io.mockk.verify
+import org.apache.commons.codec.binary.Hex
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
-import org.bouncycastle.util.encoders.Hex
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
@@ -47,7 +47,7 @@ class WhenValidatingTheClient {
 		val cert =
 			ByteArrayInputStream(certificate.toByteArray(Charsets.UTF_8))
 				.use { caInput -> cf.generateCertificate(caInput) as X509Certificate }
-		val certBytes = Hex.decode("1b6fae967b4a13192d3b65bba33cf7fc510df456")
+		val certBytes = Hex.decodeHex("1b6fae967b4a13192d3b65bba33cf7fc510df456")
 		val selfSignedTrustManager = SelfSignedTrustManager(certBytes, fallbackTrustManager)
 		try {
 			selfSignedTrustManager.checkServerTrusted(arrayOf(cert), null)

@@ -1,36 +1,29 @@
 package com.lasthopesoftware.bluewater.shared.messages.application.GivenApplicationMessageRegistrations.AndTheFirstIsFaulting
 
-import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.AfterClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
-private val receivedMessages = ArrayList<TestMessage>()
+class WhenReceivingMessages {
 
-private object TestMessage : ApplicationMessage
+	private val receivedMessages = ArrayList<TestMessage>()
 
-private val registeredApplicationMessageBus by lazy {
-	getApplicationMessageBus().getScopedMessageBus().apply {
-		registerReceiver { _: TestMessage -> throw Exception("oh noes") }
-		registerReceiver(receivedMessages::add)
-	}
-}
+	private object TestMessage : ApplicationMessage
 
-class WhenReceivingMessages : AndroidContext() {
-	companion object {
-		@JvmStatic
-		@AfterClass
-		fun cleanup() {
-			registeredApplicationMessageBus.close()
+	private val registeredApplicationMessageBus by lazy {
+		ApplicationMessageBus.getApplicationMessageBus().getScopedMessageBus().apply {
+			registerReceiver { _: TestMessage -> throw Exception("oh noes") }
+			registerReceiver(receivedMessages::add)
 		}
 	}
 
-	override fun before() {
-		registeredApplicationMessageBus.sendMessage(TestMessage)
+	@BeforeAll
+	fun before() {
+		registeredApplicationMessageBus.use { it.sendMessage(TestMessage) }
 	}
 
 	@Test

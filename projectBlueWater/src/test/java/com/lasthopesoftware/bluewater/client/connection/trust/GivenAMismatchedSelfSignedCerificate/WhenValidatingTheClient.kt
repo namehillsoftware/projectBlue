@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.client.connection.trust.GivenAMismatchedS
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager
 import io.mockk.mockk
 import io.mockk.verify
+import org.apache.commons.codec.binary.Hex
 import org.apache.commons.io.IOUtils
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
-import org.bouncycastle.util.encoders.Hex
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.IOException
@@ -49,7 +49,7 @@ class WhenValidatingTheClient {
 	@BeforeAll
 	@Throws(CertificateException::class, IOException::class)
 	fun before() {
-		val certBytes = Hex.decode("1b6fae967b4a43192d3b65bba33cf7fc510df456")
+		val certBytes = Hex.decodeHex("1b6fae967b4a43192d3b65bba33cf7fc510df456")
 		val selfSignedTrustManager = SelfSignedTrustManager(certBytes, fallbackTrustManager)
 		try {
 			selfSignedTrustManager.checkServerTrusted(certChain, null)
