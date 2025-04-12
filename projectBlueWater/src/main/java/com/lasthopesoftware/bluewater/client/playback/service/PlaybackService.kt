@@ -30,8 +30,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlayStatsOnPlaybackCompletedReceiver
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.factory.LibraryPlaystatsUpdateSelector
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.BestMatchUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.RemoteFileUriProvider
@@ -83,7 +81,6 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messa
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.AudioBecomingNoisyReceiver
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
-import com.lasthopesoftware.bluewater.client.servers.version.LibraryServerVersionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.CompatibleMediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.uri.StoredFileUriProvider
@@ -482,17 +479,7 @@ import java.util.concurrent.TimeoutException
 	// Manage this resource separately, it needs to be cleaned up after everything else is cleaned up.
 	private val updatePlayStatsOnPlaybackCompletedReceiver = lazy {
 		UpdatePlayStatsOnPlaybackCompletedReceiver(
-			libraryConnectionDependencies.run {
-					LibraryPlaystatsUpdateSelector(
-						playbackServiceDependencies.connectionSettingsLookup,
-						LibraryServerVersionProvider(libraryConnectionProvider),
-						PlayedFilePlayStatsUpdater(libraryConnectionProvider),
-						FilePropertiesPlayStatsUpdater(
-							freshLibraryFileProperties,
-							filePropertiesStorage,
-						),
-					)
-				},
+			PlayedFilePlayStatsUpdater(libraryConnectionProvider),
 			this,
 		)
 	}
