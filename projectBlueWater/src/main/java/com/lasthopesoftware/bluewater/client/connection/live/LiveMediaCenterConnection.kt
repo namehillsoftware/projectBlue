@@ -7,6 +7,8 @@ import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.FileResponses
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
@@ -30,6 +32,7 @@ import com.lasthopesoftware.promises.extensions.cancelBackThen
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.emptyByteArray
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.NonStandardResponseException
@@ -272,15 +275,22 @@ class LiveMediaCenterConnection(
 	override fun promiseFiles(playlistId: PlaylistId): Promise<List<ServiceFile>> =
 		promiseFilesAtPath(playlistFilesPath, "Playlist=${playlistId.id}")
 
-	override fun promisePlaystatsUpdate(serviceFile: ServiceFile): Promise<*> =
-		promiseResponse("File/Played", "File=" + serviceFile.key, "FileType=Key")
-			.cancelBackThen { response, _ ->
-				response.use {
-					val responseCode = it.code
-					logger.debug("api/v1/File/Played responded with a response code of {}", responseCode)
-					if (responseCode < 200 || responseCode >= 300) throw HttpResponseException(responseCode)
-				}
+	override fun promisePlaystatsUpdate(serviceFile: ServiceFile): Promise<*> = Promise.Proxy { cp ->
+		promiseServerVersion()
+			.also(cp::doCancel)
+			.eventually { v ->
+				if (v != null && v.major >= 22) promiseResponse("File/Played", "File=" + serviceFile.key, "FileType=Key")
+					.also(cp::doCancel)
+					.then { response ->
+						response.use {
+							val responseCode = it.code
+							logger.debug("api/v1/File/Played responded with a response code of {}", responseCode)
+							if (responseCode < 200 || responseCode >= 300) throw HttpResponseException(responseCode)
+						}
+					}
+				else FilePropertiesPlayStatsUpdatePromise(serviceFile)
 			}
+	}
 
 	override fun promiseRevision(): Promise<Int?> =  revisionCache.getOrAdd(Unit) {
 		Promise.Proxy { cp ->
@@ -472,6 +482,49 @@ class LiveMediaCenterConnection(
 				}
 			}
 			return false
+		}
+	}
+
+	private inner class FilePropertiesPlayStatsUpdatePromise(private val serviceFile: ServiceFile) :
+		Promise.Proxy<Unit>(), PromisedResponse<Map<String, String>, Unit>
+	{
+		init {
+			proxy(
+				FilePropertiesPromise(serviceFile)
+					.also(::doCancel)
+					.eventually(this)
+			)
+		}
+
+		override fun promiseResponse(fileProperties: Map<String, String>): Promise<Unit> {
+			try {
+				val lastPlayedServer = fileProperties[KnownFileProperties.LastPlayed]
+				val duration = fileProperties.durationInMs ?: 0
+				val currentTime = System.currentTimeMillis()
+				if (lastPlayedServer != null && currentTime - duration <= lastPlayedServer.toLong() * 1000) return Unit.toPromise()
+
+				val numberPlaysString = fileProperties[KnownFileProperties.NumberPlays]
+				val numberPlays = (numberPlaysString?.toIntOrNull() ?: 0) + 1
+				val numberPlaysUpdate = promiseFilePropertyUpdate(
+					serviceFile,
+					KnownFileProperties.NumberPlays,
+					numberPlays.toString(),
+					false
+				)
+
+				val newLastPlayed = (currentTime / 1000).toString()
+				val lastPlayedUpdate = promiseFilePropertyUpdate(
+					serviceFile,
+					KnownFileProperties.LastPlayed,
+					newLastPlayed,
+					false
+				)
+
+				return Promise.whenAll(numberPlaysUpdate, lastPlayedUpdate).unitResponse()
+			} catch (ne: NumberFormatException) {
+				logger.error(ne.toString(), ne)
+				return Unit.toPromise()
+			}
 		}
 	}
 
