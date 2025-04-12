@@ -40,7 +40,7 @@ class WhenSyncingTheStoredItems {
 		}
 		val mockFileProvider = mockk<ProvideLibraryFiles>()
 		every {
-			mockFileProvider.promiseFiles(LibraryId(13), PlaylistId("14"))
+			mockFileProvider.promiseFiles(LibraryId(5), PlaylistId("14"))
 		} returns
 			Promise(
 				listOf(

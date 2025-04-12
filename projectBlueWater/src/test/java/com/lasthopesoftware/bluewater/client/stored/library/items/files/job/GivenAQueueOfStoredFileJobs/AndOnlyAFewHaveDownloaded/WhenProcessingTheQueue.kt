@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.AndOnlyAFewHaveDownloaded
 
-import android.os.Build
-import androidx.test.filters.SdkSuppress
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.MarkedFilesStoredFilesUpdater
@@ -77,7 +75,6 @@ class WhenProcessingTheQueue {
 	private var storedFileStatuses: List<StoredFileJobStatus> = ArrayList()
 
 	@BeforeAll
-	@SdkSuppress(minSdkVersion = Build.VERSION_CODES.N)
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {

@@ -1,37 +1,30 @@
 package com.lasthopesoftware.bluewater.shared.messages.GivenTypedMessageRegistrations.AndTheFirstIsFaulting
 
-import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.shared.messages.ScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.TypedMessage
 import com.lasthopesoftware.bluewater.shared.messages.TypedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.AfterClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
-private val receivedMessages = ArrayList<TestMessage>()
+class WhenReceivingMessages {
 
-private object TestMessage : TypedMessage
+	private val receivedMessages = ArrayList<TestMessage>()
 
-private val typedMessageBus by lazy {
-	val typedMessageBus = TypedMessageBus<TestMessage>()
-	ScopedMessageBus(typedMessageBus, typedMessageBus).apply {
-		registerReceiver { throw Exception("sore") }
-		registerReceiver(receivedMessages::add)
-	}
-}
+	private object TestMessage : TypedMessage
 
-class WhenReceivingMessages : AndroidContext() {
-	companion object {
-		@JvmStatic
-		@AfterClass
-		fun cleanup() {
-			typedMessageBus.close()
+	private val typedMessageBus by lazy {
+		val typedMessageBus = TypedMessageBus<TestMessage>()
+		ScopedMessageBus(typedMessageBus, typedMessageBus).apply {
+			registerReceiver { throw Exception("sore") }
+			registerReceiver(receivedMessages::add)
 		}
 	}
 
-	override fun before() {
-		typedMessageBus.sendMessage(TestMessage)
+	@BeforeAll
+	fun before() {
+		typedMessageBus.use { it.sendMessage(TestMessage) }
 	}
 
 	@Test
