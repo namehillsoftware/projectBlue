@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.FileResponses
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
@@ -14,7 +15,6 @@ import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetail
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
-import com.lasthopesoftware.bluewater.client.connection.requests.bodyString
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withSubsonicApi
@@ -42,7 +42,6 @@ import com.namehillsoftware.handoff.promises.response.ImmediateCancellableRespon
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import org.joda.time.Duration
-import org.jsoup.Jsoup
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
@@ -102,7 +101,7 @@ class LiveSubsonicConnection(
 
 	override fun promiseIsConnectionPossible(): Promise<Boolean> = ConnectionPossiblePromise()
 
-	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<Map<String, String>> = Promise(emptyMap())
+	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<Map<String, String>> = FilePropertiesPromise(serviceFile)
 
 	override fun promiseFilePropertyUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> =
 		Unit.toPromise()
@@ -183,8 +182,11 @@ class LiveSubsonicConnection(
 	}
 
 	private inline fun <reified T> Promise<HttpResponse>.promiseSubsonicResponse(): Promise<T?> = eventually { r ->
-		ThreadPools.compute.preparePromise { r.parseSubsonicResponse() }
+		r.promiseSubsonicResponse<T>()
 	}
+
+	private inline fun <reified T> HttpResponse.promiseSubsonicResponse(): Promise<T?> =
+		ThreadPools.compute.preparePromise { parseSubsonicResponse() }
 
 	private inline fun <reified T> HttpResponse.parseSubsonicResponse(): T? {
 		body.use {
@@ -196,17 +198,17 @@ class LiveSubsonicConnection(
 	}
 
 	private inner class FilePropertiesPromise(private val serviceFile: ServiceFile) :
-		Promise<Map<String, String>>(),
+		Promise.Proxy<Map<String, String>>(),
 		PromisedResponse<HttpResponse, Unit>,
 		CancellableMessageWriter<Unit>,
 		ImmediateResponse<Throwable, Unit>
 	{
 		private val cancellationProxy = CancellationProxy()
-		private lateinit var responseString: String
+		private lateinit var httpResponse: HttpResponse
 
 		init {
 			awaitCancellation(cancellationProxy)
-			val filePropertiesResponse = promiseResponse("File/GetInfo", "File=" + serviceFile.key)
+			val filePropertiesResponse = promiseResponse("getSong", "id=${serviceFile.key}")
 			val promisedProperties = filePropertiesResponse.eventually(this)
 
 			// Handle cancellation errors directly in stack so that they don't become unhandled
@@ -216,15 +218,7 @@ class LiveSubsonicConnection(
 		}
 
 		override fun promiseResponse(response: HttpResponse): Promise<Unit> {
-			responseString = response.use {
-				if (cancellationProxy.isCancelled) {
-					reject(filePropertiesCancellationException(serviceFile))
-					return Unit.toPromise()
-				}
-
-				it.bodyString
-			}
-
+			httpResponse = response
 			return ThreadPools.compute.preparePromise(this)
 		}
 
@@ -235,23 +229,24 @@ class LiveSubsonicConnection(
 			}
 
 			resolve(
-				responseString
-					.let(Jsoup::parse)
-					.let { xml ->
-						xml
-							.getElementsByTag("item")
-							.firstOrNull()
-							?.children()
-							?.associateTo(HashMap()) { el ->
-								if (cancellationSignal.isCancelled) {
-									reject(filePropertiesCancellationException(serviceFile))
-									return
-								}
+				httpResponse.body.use { b ->
+					b.reader().use { r ->
+						val subsonicResponse = JsonParser.parseReader(r).asJsonObject.get("subsonic-response")
 
-								Pair(el.attr("Name"), el.wholeOwnText())
+						val song = subsonicResponse?.asJsonObject?.get("song")
+
+						song
+							?.asJsonObject
+							?.asMap()
+							?.mapNotNull { (k, v) -> if (v.isJsonPrimitive) Pair(k, v.asString) else null }
+							?.toMap()
+							?.toMutableMap()
+							?.also {
+								it[KnownFileProperties.Key] = it["id"]
 							}
 							?: emptyMap()
 					}
+				}
 			)
 		}
 
@@ -437,5 +432,10 @@ class LiveSubsonicConnection(
 	@Keep
 	private class SubsonicDirectoryRoot(
 		val directory: SubsonicDirectory
+	)
+
+	@Keep
+	private class SubsonicFileProperties(
+		val song: Map<String, String>
 	)
 }
