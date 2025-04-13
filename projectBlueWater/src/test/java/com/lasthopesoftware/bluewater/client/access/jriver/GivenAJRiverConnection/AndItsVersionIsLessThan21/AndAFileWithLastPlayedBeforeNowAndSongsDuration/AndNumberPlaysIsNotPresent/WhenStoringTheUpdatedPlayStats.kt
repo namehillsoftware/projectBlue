@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnecti
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnection.buildFilePropertiesXml
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.LiveMediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
@@ -36,8 +36,8 @@ class WhenStoringTheUpdatedPlayStats {
 		val lastPlayed = Duration.millis(DateTime.now().minus(Duration.standardDays(10)).millis).standardSeconds
 
 		val fileProperties = mutableMapOf(
-			Pair(KnownFileProperties.LastPlayed, lastPlayed.toString()),
-			Pair(KnownFileProperties.Duration, duration.toString()),
+			Pair(NormalizedFileProperties.LastPlayed, lastPlayed.toString()),
+			Pair(NormalizedFileProperties.Duration, duration.toString()),
 		)
 
 		val connection = LiveMediaCenterConnection(
@@ -101,11 +101,11 @@ class WhenStoringTheUpdatedPlayStats {
 
 	@Test
 	fun thenTheLastPlayedIsRecent() {
-		assertThat(fileProperties!![KnownFileProperties.LastPlayed]?.toLong()).isCloseTo(Duration.millis(System.currentTimeMillis()).standardSeconds, Offset.offset(10L))
+		assertThat(fileProperties!![NormalizedFileProperties.LastPlayed]?.toLong()).isCloseTo(Duration.millis(System.currentTimeMillis()).standardSeconds, Offset.offset(10L))
 	}
 
 	@Test
 	fun thenTheNumberPlaysIsIncremented() {
-		assertThat(fileProperties!![KnownFileProperties.NumberPlays]).isEqualTo("1")
+		assertThat(fileProperties!![NormalizedFileProperties.NumberPlays]).isEqualTo("1")
 	}
 }

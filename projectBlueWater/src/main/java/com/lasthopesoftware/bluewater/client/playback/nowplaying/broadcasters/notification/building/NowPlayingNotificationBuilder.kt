@@ -5,7 +5,7 @@ import android.graphics.Bitmap
 import androidx.core.app.NotificationCompat
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
@@ -52,8 +52,8 @@ class NowPlayingNotificationBuilder(
 				filePropertiesProvider
 					.promiseFileProperties(libraryId, serviceFile)
 					.then { fileProperties ->
-						val artist = fileProperties[KnownFileProperties.Artist]
-						val name = fileProperties[KnownFileProperties.Name]
+						val artist = fileProperties[NormalizedFileProperties.Artist]
+						val name = fileProperties[NormalizedFileProperties.Name]
 						addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(libraryId), libraryId, isPlaying)
 							.setOngoing(isPlaying)
 							.setContentTitle(name)

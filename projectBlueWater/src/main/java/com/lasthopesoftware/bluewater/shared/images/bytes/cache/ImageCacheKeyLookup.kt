@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.shared.images.bytes.cache
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -24,11 +24,11 @@ class ImageCacheKeyLookup(private val cachedFilePropertiesProvider: CachedFilePr
 			override fun respond(fileProperties: Map<String, String>): String {
 				// First try storing by the album artist, which can cover the artist for the entire album (i.e. an album with various
 				// artists), and then by artist if that field is empty
-				var artist = fileProperties[KnownFileProperties.AlbumArtist]
-				if (artist.isNullOrEmpty()) artist = fileProperties[KnownFileProperties.Artist]
+				var artist = fileProperties[NormalizedFileProperties.AlbumArtist]
+				if (artist.isNullOrEmpty()) artist = fileProperties[NormalizedFileProperties.Artist]
 
-				var albumOrTrackName = fileProperties[KnownFileProperties.Album]
-				if (albumOrTrackName == null) albumOrTrackName = fileProperties[KnownFileProperties.Name]
+				var albumOrTrackName = fileProperties[NormalizedFileProperties.Album]
+				if (albumOrTrackName == null) albumOrTrackName = fileProperties[NormalizedFileProperties.Name]
 
 				return "$libraryId:$artist:$albumOrTrackName"
 			}

@@ -4,7 +4,7 @@ import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
@@ -48,18 +48,18 @@ class MediaItemServiceFileLookup(
 		filePropertiesProvider.promiseFileProperties(libraryId, serviceFile)
 			.then { p ->
 				MediaMetadataCompat.Builder().apply {
-					val artist = p[KnownFileProperties.Artist]
-					val name = p[KnownFileProperties.Name]
-					val album = p[KnownFileProperties.Album]
+					val artist = p[NormalizedFileProperties.Artist]
+					val name = p[NormalizedFileProperties.Name]
+					val album = p[NormalizedFileProperties.Album]
 					val duration = p.durationInMs ?: -1
 
-					putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, RemoteBrowserService.serviceFileMediaIdPrefix + RemoteBrowserService.mediaIdDelimiter + p[KnownFileProperties.Key])
+					putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, RemoteBrowserService.serviceFileMediaIdPrefix + RemoteBrowserService.mediaIdDelimiter + p[NormalizedFileProperties.Key])
 					putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
 					putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
 					putString(MediaMetadataCompat.METADATA_KEY_TITLE, name)
 					putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
 
-					val trackNumberString = p[KnownFileProperties.Track]
+					val trackNumberString = p[NormalizedFileProperties.Track]
 					val trackNumber = trackNumberString?.toLongOrNull()
 					if (trackNumber != null) {
 						putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, trackNumber)
