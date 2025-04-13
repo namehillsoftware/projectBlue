@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.PassThroughUrlKeyProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -35,27 +35,27 @@ class WhenTheLyricsPropertyIsEdited {
 			mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
 					sequenceOf(
-						FileProperty(KnownFileProperties.Rating, "2"),
+						FileProperty(NormalizedFileProperties.Rating, "2"),
 						FileProperty("awkward", "prevent"),
 						FileProperty("feast", "wind"),
-						FileProperty(KnownFileProperties.Name, "please"),
-						FileProperty(KnownFileProperties.Artist, "brown"),
-						FileProperty(KnownFileProperties.Genre, "subject"),
-						FileProperty(KnownFileProperties.Lyrics, "belief"),
-						FileProperty(KnownFileProperties.Comment, "pad"),
-						FileProperty(KnownFileProperties.Composer, "hotel"),
-						FileProperty(KnownFileProperties.Custom, "curl"),
-						FileProperty(KnownFileProperties.Publisher, "capital"),
-						FileProperty(KnownFileProperties.TotalDiscs, "354"),
-						FileProperty(KnownFileProperties.Track, "882"),
-						FileProperty(KnownFileProperties.AlbumArtist, "calm"),
-						FileProperty(KnownFileProperties.Album, "distant"),
-						FileProperty(KnownFileProperties.Date, "1355"),
+						FileProperty(NormalizedFileProperties.Name, "please"),
+						FileProperty(NormalizedFileProperties.Artist, "brown"),
+						FileProperty(NormalizedFileProperties.Genre, "subject"),
+						FileProperty(NormalizedFileProperties.Lyrics, "belief"),
+						FileProperty(NormalizedFileProperties.Comment, "pad"),
+						FileProperty(NormalizedFileProperties.Composer, "hotel"),
+						FileProperty(NormalizedFileProperties.Custom, "curl"),
+						FileProperty(NormalizedFileProperties.Publisher, "capital"),
+						FileProperty(NormalizedFileProperties.TotalDiscs, "354"),
+						FileProperty(NormalizedFileProperties.Track, "882"),
+						FileProperty(NormalizedFileProperties.AlbumArtist, "calm"),
+						FileProperty(NormalizedFileProperties.Album, "distant"),
+						FileProperty(NormalizedFileProperties.Date, "1355"),
 					)
 				)
 			},
 			mockk {
-				every { promiseFileUpdate(LibraryId(libraryId), ServiceFile(serviceFileId), KnownFileProperties.Custom, any(), false) } answers {
+				every { promiseFileUpdate(LibraryId(libraryId), ServiceFile(serviceFileId), NormalizedFileProperties.Custom, any(), false) } answers {
 					persistedValue = arg(2)
 					Unit.toPromise()
 				}
@@ -77,7 +77,7 @@ class WhenTheLyricsPropertyIsEdited {
 		viewModel.apply {
 			loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
 			fileProperties.apply {
-				value.first { it.property == KnownFileProperties.Lyrics }.apply {
+				value.first { it.property == NormalizedFileProperties.Lyrics }.apply {
 					highlight()
 					edit()
 				}
@@ -87,16 +87,16 @@ class WhenTheLyricsPropertyIsEdited {
 
 	@Test
 	fun `then the property has the correct editable type`() {
-		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == KnownFileProperties.Lyrics }?.editableType).isEqualTo(FilePropertyType.LongFormText)
+		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == NormalizedFileProperties.Lyrics }?.editableType).isEqualTo(FilePropertyType.LongFormText)
 	}
 
 	@Test
 	fun `then the property is being edited`() {
-		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == KnownFileProperties.Lyrics }?.isEditing?.value).isTrue
+		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == NormalizedFileProperties.Lyrics }?.isEditing?.value).isTrue
 	}
 
 	@Test
 	fun `then the new property is highlighted`() {
-		assertThat(viewModel.highlightedProperty.value).isEqualTo(viewModel.fileProperties.value.firstOrNull { it.property == KnownFileProperties.Lyrics })
+		assertThat(viewModel.highlightedProperty.value).isEqualTo(viewModel.fileProperties.value.firstOrNull { it.property == NormalizedFileProperties.Lyrics })
 	}
 }
