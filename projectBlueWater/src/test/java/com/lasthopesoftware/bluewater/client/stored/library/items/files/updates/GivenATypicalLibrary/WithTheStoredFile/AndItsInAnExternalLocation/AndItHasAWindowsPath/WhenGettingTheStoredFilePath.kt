@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilesPropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
@@ -32,10 +32,10 @@ class WhenGettingTheStoredFilePath {
 			ServiceFile("340"),
 			LibraryId(libraryId),
 			mapOf(
-				Pair(KnownFileProperties.AlbumArtist, "6YYPwSql"),
-				Pair(KnownFileProperties.Album, "baKCea7AEK"),
-				Pair(KnownFileProperties.Track, "704"),
-				Pair(KnownFileProperties.Filename, """F:\super\backslash\paths\in_windows.flac;255""")
+				Pair(NormalizedFileProperties.AlbumArtist, "6YYPwSql"),
+				Pair(NormalizedFileProperties.Album, "baKCea7AEK"),
+				Pair(NormalizedFileProperties.Track, "704"),
+				Pair(NormalizedFileProperties.Filename, """F:\super\backslash\paths\in_windows.flac;255""")
 			)
 		)
 

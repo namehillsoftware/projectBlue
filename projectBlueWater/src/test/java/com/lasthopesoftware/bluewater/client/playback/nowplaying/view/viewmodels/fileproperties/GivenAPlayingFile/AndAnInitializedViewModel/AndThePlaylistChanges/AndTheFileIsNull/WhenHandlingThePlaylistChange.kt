@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.fileproperties.GivenAPlayingFile.AndAnInitializedViewModel.AndThePlaylistChanges.AndTheFileIsNull
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFreshLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
@@ -57,9 +57,9 @@ class WhenHandlingThePlaylistChange {
 					ServiceFile("5")
 				)
 			} returns mapOf(
-				Pair(KnownFileProperties.Artist, "tea"),
-				Pair(KnownFileProperties.Name, "rake"),
-				Pair(KnownFileProperties.Rating, "748"),
+				Pair(NormalizedFileProperties.Artist, "tea"),
+				Pair(NormalizedFileProperties.Name, "rake"),
+				Pair(NormalizedFileProperties.Rating, "748"),
 			).toPromise()
 		}
 

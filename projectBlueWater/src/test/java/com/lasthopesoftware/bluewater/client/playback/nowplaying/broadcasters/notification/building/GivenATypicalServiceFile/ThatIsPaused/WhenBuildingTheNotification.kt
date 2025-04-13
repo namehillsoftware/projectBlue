@@ -8,7 +8,7 @@ import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
@@ -51,8 +51,8 @@ class WhenBuildingTheNotification : AndroidContext() {
 			},
 			mockk {
 				every { promiseFileProperties(libraryId, ServiceFile("3")) } returns mapOf(
-					Pair(KnownFileProperties.Artist, "test-artist"),
-					Pair(KnownFileProperties.Name, "song")
+					Pair(NormalizedFileProperties.Artist, "test-artist"),
+					Pair(NormalizedFileProperties.Name, "song")
 				).toPromise()
 			},
 			mockk {

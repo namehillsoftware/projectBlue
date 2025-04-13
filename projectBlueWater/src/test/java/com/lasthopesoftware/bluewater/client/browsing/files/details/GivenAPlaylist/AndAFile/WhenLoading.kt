@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlayl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -34,13 +34,13 @@ class WhenLoading {
 			mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
 					sequenceOf(
-						FileProperty(KnownFileProperties.Rating, "3"),
+						FileProperty(NormalizedFileProperties.Rating, "3"),
 						FileProperty("too", "prevent"),
 						FileProperty("shirt", "wind"),
-						FileProperty(KnownFileProperties.Name, "holiday"),
-						FileProperty(KnownFileProperties.Artist, "board"),
-						FileProperty(KnownFileProperties.Album, "virtue"),
-						FileProperty(KnownFileProperties.DateCreated, "1592510356")
+						FileProperty(NormalizedFileProperties.Name, "holiday"),
+						FileProperty(NormalizedFileProperties.Artist, "board"),
+						FileProperty(NormalizedFileProperties.Album, "virtue"),
+						FileProperty(NormalizedFileProperties.DateCreated, "1592510356")
 					)
 				)
 			},
@@ -68,13 +68,13 @@ class WhenLoading {
 	fun `then the properties are correct`() {
 		assertThat(viewModel.fileProperties.value.map { Pair(it.property, it.committedValue.value) }).hasSameElementsAs(
 			listOf(
-				Pair(KnownFileProperties.Rating, "3"),
+				Pair(NormalizedFileProperties.Rating, "3"),
 				Pair("too", "prevent"),
 				Pair("shirt", "wind"),
-				Pair(KnownFileProperties.Name, "holiday"),
-				Pair(KnownFileProperties.Artist, "board"),
-				Pair(KnownFileProperties.Album, "virtue"),
-				Pair(KnownFileProperties.DateCreated, DateTime(1592510356L * 1000).toString(DateTimeFormatterBuilder()
+				Pair(NormalizedFileProperties.Name, "holiday"),
+				Pair(NormalizedFileProperties.Artist, "board"),
+				Pair(NormalizedFileProperties.Album, "virtue"),
+				Pair(NormalizedFileProperties.DateCreated, DateTime(1592510356L * 1000).toString(DateTimeFormatterBuilder()
 					.appendMonthOfYear(1)
 					.appendLiteral('/')
 					.appendDayOfMonth(1)

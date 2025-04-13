@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnecti
 import com.lasthopesoftware.TestMcwsUrl
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.LiveMediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
@@ -22,8 +22,8 @@ class WhenGettingFileProperties {
 				TestMcwsUrl.addPath("File/GetInfo").addParams("File=15"),
 				ServiceFile("15"),
 				mapOf(
-					Pair(KnownFileProperties.Key, "45"),
-					Pair(KnownFileProperties.Lyrics, """[In the Fade]
+					Pair(NormalizedFileProperties.Key, "45"),
+					Pair(NormalizedFileProperties.Lyrics, """[In the Fade]
 
 [Verse 1: Josh Homme]
 Cracks in the ceiling, crooked pictures in the hall
@@ -110,12 +110,12 @@ Some more valid text... la di da..."""),
 
     @Test
     fun `then files property key is retrieved`() {
-        assertThat(fileProperties!![KnownFileProperties.Key]).isEqualTo("45")
+        assertThat(fileProperties!![NormalizedFileProperties.Key]).isEqualTo("45")
     }
 
 	@Test
 	fun `then lyric files property is retrieved`() {
-		assertThat(fileProperties!![KnownFileProperties.Lyrics]).isEqualTo("""[In the Fade]
+		assertThat(fileProperties!![NormalizedFileProperties.Lyrics]).isEqualTo("""[In the Fade]
 
 [Verse 1: Josh Homme]
 Cracks in the ceiling, crooked pictures in the hall
