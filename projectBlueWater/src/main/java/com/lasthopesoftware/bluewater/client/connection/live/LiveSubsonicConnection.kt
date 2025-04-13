@@ -195,7 +195,10 @@ class LiveSubsonicConnection(
 	}
 
 	private inline fun <reified T> HttpResponse.promiseSubsonicResponse(): Promise<T?> =
-		ThreadPools.compute.preparePromise { parseSubsonicResponse() }
+		ThreadPools.compute.preparePromise { cs ->
+			if (cs.isCancelled) throw CancellationException("Cancelled before parsing response.")
+			parseSubsonicResponse()
+		}
 
 	private inline fun <reified T> HttpResponse.parseSubsonicResponse(): T? {
 		body.use {
@@ -207,14 +210,13 @@ class LiveSubsonicConnection(
 	}
 
 	private inner class FilePropertiesPromise(private val serviceFile: ServiceFile) :
-		Promise.Proxy<Map<String, String>>(),
-		ImmediateResponse<Throwable, Unit>
+		Promise.Proxy<Map<String, String>>()
 	{
 		init {
 			proxy(
 				promiseResponse("getSong", "id=${serviceFile.key}")
 					.also(::doCancel)
-					.eventually { httpResponse ->
+					.eventually({ httpResponse ->
 						ThreadPools.compute.preparePromise { cs ->
 							if (cs.isCancelled) {
 								throw filePropertiesCancellationException(serviceFile)
@@ -240,26 +242,31 @@ class LiveSubsonicConnection(
 								}
 							}
 						}
-					}
-					.eventually { props ->
-						promiseResponse("getLyrics", "artist=${props[NormalizedFileProperties.Artist]}", "title=${props[KnownFileProperties.title]}")
+					}, ::handleException)
+					.also(::doCancel)
+					.eventually({ props ->
+						promiseResponse(
+							"getLyrics",
+							"artist=${props[NormalizedFileProperties.Artist]}",
+							"title=${props[KnownFileProperties.title]}"
+						)
 							.also(::doCancel)
 							.promiseSubsonicResponse<SubsonicLyricsResponse>()
+							.also(::doCancel)
 							.then { l ->
 								props[NormalizedFileProperties.Lyrics] = l?.lyrics?.value ?: ""
 								props
 							}
-					}
+					}, ::handleException)
 			)
 		}
 
-		override fun respond(rejection: Throwable) {
+		fun <T> handleException(rejection: Throwable): Promise<T> =
 			if (isCancelled && rejection is IOException && rejection.isOkHttpCanceled()) {
-				reject(filePropertiesCancellationException(serviceFile))
+				Promise(filePropertiesCancellationException(serviceFile))
 			} else {
-				reject(rejection)
+				Promise(rejection)
 			}
-		}
 
 		private fun filePropertiesCancellationException(serviceFile: ServiceFile) =
 			CancellationException("Getting file properties cancelled for $serviceFile.")
