@@ -10,7 +10,7 @@ import androidx.core.database.getLongOrNull
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.fileNameParts
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.localExternalRelativeFileDirectory
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.ProvideFileUrisForLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -100,10 +100,10 @@ class MetadataMediaFileUriProvider(
 
 	override fun promiseResponse(fileProperties: Map<String, String>): Promise<Uri?> = ThreadPools.io.preparePromise {
 		val selectionArgs = arrayOf(
-			fileProperties[KnownFileProperties.Artist] ?: "",
-			fileProperties[KnownFileProperties.AlbumArtist] ?: "",
-			fileProperties[KnownFileProperties.Name] ?: "",
-			fileProperties[KnownFileProperties.Album] ?: ""
+			fileProperties[NormalizedFileProperties.Artist] ?: "",
+			fileProperties[NormalizedFileProperties.AlbumArtist] ?: "",
+			fileProperties[NormalizedFileProperties.Name] ?: "",
+			fileProperties[NormalizedFileProperties.Album] ?: ""
 		)
 
 		val maybeCursor = contentResolver.query(

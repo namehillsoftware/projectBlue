@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings
@@ -30,7 +30,7 @@ class MaxFileVolumeProvider(
 				.promiseFileProperties(libraryId, serviceFile)
 				.also(cp::doCancel)
 				.then { fileProperties ->
-					fileProperties[KnownFileProperties.VolumeLevelReplayGain]
+					fileProperties[NormalizedFileProperties.VolumeLevelReplayGain]
 						?.let { peakGainString ->
 							// Formula based on Vanilla Player formula - https://github.com/vanilla-music/vanilla/blob/5eb97409ec4db866d5008ee92d9765bf7cf4ec8c/app/src/main/java/ch/blinkenlights/android/vanilla/PlaybackService.java#L758
 							try {
@@ -38,7 +38,7 @@ class MaxFileVolumeProvider(
 								10.0.pow(peakGainVolumeLevel / 20.0).toFloat().coerceIn(0f, UnityVolume)
 							} catch (e: NumberFormatException) {
 								logger.info(
-									"There was an error attempting to parse the given '${KnownFileProperties.VolumeLevelReplayGain}' level of $peakGainString.",
+									"There was an error attempting to parse the given '${NormalizedFileProperties.VolumeLevelReplayGain}' level of $peakGainString.",
 									e
 								)
 								UnityVolume

@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlayl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.PassThroughUrlKeyProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -33,27 +33,27 @@ class WhenCancelling {
 			mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
 					sequenceOf(
-						FileProperty(KnownFileProperties.Rating, "2"),
+						FileProperty(NormalizedFileProperties.Rating, "2"),
 						FileProperty("awkward", "prevent"),
 						FileProperty("feast", "wind"),
-						FileProperty(KnownFileProperties.Name, "please"),
-						FileProperty(KnownFileProperties.Artist, "brown"),
-						FileProperty(KnownFileProperties.Genre, "subject"),
-						FileProperty(KnownFileProperties.Lyrics, "belief"),
-						FileProperty(KnownFileProperties.Comment, "pad"),
-						FileProperty(KnownFileProperties.Composer, "hotel"),
-						FileProperty(KnownFileProperties.Custom, "curl"),
-						FileProperty(KnownFileProperties.Publisher, "capital"),
-						FileProperty(KnownFileProperties.TotalDiscs, "354"),
-						FileProperty(KnownFileProperties.Track, "703"),
-						FileProperty(KnownFileProperties.AlbumArtist, "calm"),
-						FileProperty(KnownFileProperties.Album, "distant"),
-						FileProperty(KnownFileProperties.Date, "1355"),
+						FileProperty(NormalizedFileProperties.Name, "please"),
+						FileProperty(NormalizedFileProperties.Artist, "brown"),
+						FileProperty(NormalizedFileProperties.Genre, "subject"),
+						FileProperty(NormalizedFileProperties.Lyrics, "belief"),
+						FileProperty(NormalizedFileProperties.Comment, "pad"),
+						FileProperty(NormalizedFileProperties.Composer, "hotel"),
+						FileProperty(NormalizedFileProperties.Custom, "curl"),
+						FileProperty(NormalizedFileProperties.Publisher, "capital"),
+						FileProperty(NormalizedFileProperties.TotalDiscs, "354"),
+						FileProperty(NormalizedFileProperties.Track, "703"),
+						FileProperty(NormalizedFileProperties.AlbumArtist, "calm"),
+						FileProperty(NormalizedFileProperties.Album, "distant"),
+						FileProperty(NormalizedFileProperties.Date, "1355"),
 					)
 				)
 			},
 			mockk {
-				every { promiseFileUpdate(LibraryId(libraryId), ServiceFile(serviceFileId), KnownFileProperties.Track, any(), false) } answers {
+				every { promiseFileUpdate(LibraryId(libraryId), ServiceFile(serviceFileId), NormalizedFileProperties.Track, any(), false) } answers {
 					persistedTrackNumber = arg(2)
 					Unit.toPromise()
 				}
@@ -74,7 +74,7 @@ class WhenCancelling {
 	fun act() {
 		viewModel.apply {
 			loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
-			fileProperties.value.first { it.property == KnownFileProperties.Track }.apply {
+			fileProperties.value.first { it.property == NormalizedFileProperties.Track }.apply {
 				updateValue("141")
 				cancel()
 			}
@@ -87,7 +87,7 @@ class WhenCancelling {
 			viewModel
 				.fileProperties
 				.value
-				.firstOrNull { it.property == KnownFileProperties.Track }
+				.firstOrNull { it.property == NormalizedFileProperties.Track }
 				?.isEditing
 				?.value).isFalse
 	}
@@ -98,7 +98,7 @@ class WhenCancelling {
 			viewModel
 				.fileProperties
 				.value
-				.firstOrNull { it.property == KnownFileProperties.Track }
+				.firstOrNull { it.property == NormalizedFileProperties.Track }
 				?.uncommittedValue
 				?.value).isEqualTo("703")
 	}
@@ -109,7 +109,7 @@ class WhenCancelling {
 			viewModel
 				.fileProperties
 				.value
-				.firstOrNull { it.property == KnownFileProperties.Track }
+				.firstOrNull { it.property == NormalizedFileProperties.Track }
 				?.committedValue
 				?.value).isEqualTo("703")
 	}

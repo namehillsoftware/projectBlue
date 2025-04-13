@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlayl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
@@ -36,23 +36,23 @@ class WhenTheFilePropertiesChange {
 				mockk {
 					every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
 						sequenceOf(
-							FileProperty(KnownFileProperties.Rating, "815"),
+							FileProperty(NormalizedFileProperties.Rating, "815"),
 							FileProperty("little", "more"),
 							FileProperty("evening", "skin"),
-							FileProperty(KnownFileProperties.Name, "ahead"),
-							FileProperty(KnownFileProperties.Artist, "moon"),
-							FileProperty(KnownFileProperties.Album, "number"),
-							FileProperty(KnownFileProperties.ImageFile, "battle"),
+							FileProperty(NormalizedFileProperties.Name, "ahead"),
+							FileProperty(NormalizedFileProperties.Artist, "moon"),
+							FileProperty(NormalizedFileProperties.Album, "number"),
+							FileProperty(NormalizedFileProperties.ImageFile, "battle"),
 						)
 					) andThen Promise(
 						sequenceOf(
-							FileProperty(KnownFileProperties.Rating, "7"),
+							FileProperty(NormalizedFileProperties.Rating, "7"),
 							FileProperty("bread", "scenery"),
 							FileProperty("rush", "offense"),
-							FileProperty(KnownFileProperties.Name, "kiss"),
-							FileProperty(KnownFileProperties.Artist, "adoption"),
-							FileProperty(KnownFileProperties.Album, "motherly"),
-							FileProperty(KnownFileProperties.StackTop, "under"),
+							FileProperty(NormalizedFileProperties.Name, "kiss"),
+							FileProperty(NormalizedFileProperties.Artist, "adoption"),
+							FileProperty(NormalizedFileProperties.Album, "motherly"),
+							FileProperty(NormalizedFileProperties.StackTop, "under"),
 						)
 					)
 				},
@@ -98,12 +98,12 @@ class WhenTheFilePropertiesChange {
 	fun `then the properties are correct`() {
 		assertThat(services.second.fileProperties.value.map { Pair(it.property, it.committedValue.value) }).hasSameElementsAs(
 			listOf(
-				Pair(KnownFileProperties.Rating, "815"),
+				Pair(NormalizedFileProperties.Rating, "815"),
 				Pair("little", "more"),
 				Pair("evening", "skin"),
-				Pair(KnownFileProperties.Name, "ahead"),
-				Pair(KnownFileProperties.Artist, "moon"),
-				Pair(KnownFileProperties.Album, "number"),
+				Pair(NormalizedFileProperties.Name, "ahead"),
+				Pair(NormalizedFileProperties.Artist, "moon"),
+				Pair(NormalizedFileProperties.Album, "number"),
 			)
 		)
 	}

@@ -1,22 +1,22 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties
 
 enum class EditableFilePropertyDefinition(val propertyName: String, val type: FilePropertyType? = null) {
-	Artist(KnownFileProperties.Artist, FilePropertyType.ShortFormText),
-	AlbumArtist(KnownFileProperties.AlbumArtist, FilePropertyType.ShortFormText),
-	Album(KnownFileProperties.Album, FilePropertyType.ShortFormText),
-	Band(KnownFileProperties.Band, FilePropertyType.ShortFormText),
-	Date(KnownFileProperties.Date, FilePropertyType.Date),
-	DiscNumber(KnownFileProperties.DiscNumber, FilePropertyType.Integer),
-	Name(KnownFileProperties.Name, FilePropertyType.ShortFormText),
-	Track(KnownFileProperties.Track, FilePropertyType.Integer),
-	Rating(KnownFileProperties.Rating, FilePropertyType.Integer),
-	Lyrics(KnownFileProperties.Lyrics, FilePropertyType.LongFormText),
-	Comment(KnownFileProperties.Comment, FilePropertyType.LongFormText),
-	Composer(KnownFileProperties.Composer, FilePropertyType.ShortFormText),
-	Custom(KnownFileProperties.Custom, FilePropertyType.LongFormText),
-	Publisher(KnownFileProperties.Publisher, FilePropertyType.ShortFormText),
-	TotalDiscs(KnownFileProperties.TotalDiscs, FilePropertyType.Integer),
-	Genre(KnownFileProperties.Genre, FilePropertyType.ShortFormText);
+	Artist(NormalizedFileProperties.Artist, FilePropertyType.ShortFormText),
+	AlbumArtist(NormalizedFileProperties.AlbumArtist, FilePropertyType.ShortFormText),
+	Album(NormalizedFileProperties.Album, FilePropertyType.ShortFormText),
+	Band(NormalizedFileProperties.Band, FilePropertyType.ShortFormText),
+	Date(NormalizedFileProperties.Date, FilePropertyType.Date),
+	DiscNumber(NormalizedFileProperties.DiscNumber, FilePropertyType.Integer),
+	Name(NormalizedFileProperties.Name, FilePropertyType.ShortFormText),
+	Track(NormalizedFileProperties.Track, FilePropertyType.Integer),
+	Rating(NormalizedFileProperties.Rating, FilePropertyType.Integer),
+	Lyrics(NormalizedFileProperties.Lyrics, FilePropertyType.LongFormText),
+	Comment(NormalizedFileProperties.Comment, FilePropertyType.LongFormText),
+	Composer(NormalizedFileProperties.Composer, FilePropertyType.ShortFormText),
+	Custom(NormalizedFileProperties.Custom, FilePropertyType.LongFormText),
+	Publisher(NormalizedFileProperties.Publisher, FilePropertyType.ShortFormText),
+	TotalDiscs(NormalizedFileProperties.TotalDiscs, FilePropertyType.Integer),
+	Genre(NormalizedFileProperties.Genre, FilePropertyType.ShortFormText);
 
 	override fun toString() = propertyName
 

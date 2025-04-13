@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties
 
-object KnownFileProperties {
+object NormalizedFileProperties {
 	const val Artist = "Artist"
 	const val AlbumArtist = "Album Artist"
 	const val Album = "Album"

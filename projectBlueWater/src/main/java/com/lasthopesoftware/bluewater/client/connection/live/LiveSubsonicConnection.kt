@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.FileResponses
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
@@ -36,8 +36,6 @@ import com.lasthopesoftware.resources.strings.TranslateJson
 import com.lasthopesoftware.resources.strings.parseJson
 import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
-import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.handoff.promises.response.ImmediateCancellableResponse
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
@@ -67,6 +65,11 @@ class LiveSubsonicConnection(
 		private const val playlistItemKey = "playlists"
 		private val playlistItem = ItemId(playlistItemKey)
 		private val checkedExpirationTime by lazy { Duration.standardSeconds(30) }
+	}
+
+	private object KnownFileProperties {
+		const val title = "title"
+		const val id = "id"
 	}
 
 	private val subsonicApiUrl by lazy { subsonicConnectionDetails.baseUrl.withSubsonicApi() }
@@ -199,59 +202,55 @@ class LiveSubsonicConnection(
 
 	private inner class FilePropertiesPromise(private val serviceFile: ServiceFile) :
 		Promise.Proxy<Map<String, String>>(),
-		PromisedResponse<HttpResponse, Unit>,
-		CancellableMessageWriter<Unit>,
 		ImmediateResponse<Throwable, Unit>
 	{
-		private val cancellationProxy = CancellationProxy()
 		private lateinit var httpResponse: HttpResponse
 
 		init {
-			awaitCancellation(cancellationProxy)
-			val filePropertiesResponse = promiseResponse("getSong", "id=${serviceFile.key}")
-			val promisedProperties = filePropertiesResponse.eventually(this)
-
-			// Handle cancellation errors directly in stack so that they don't become unhandled
-			promisedProperties.excuse(this)
-
-			cancellationProxy.doCancel(filePropertiesResponse)
-		}
-
-		override fun promiseResponse(response: HttpResponse): Promise<Unit> {
-			httpResponse = response
-			return ThreadPools.compute.preparePromise(this)
-		}
-
-		override fun prepareMessage(cancellationSignal: CancellationSignal) {
-			if (cancellationSignal.isCancelled) {
-				reject(filePropertiesCancellationException(serviceFile))
-				return
-			}
-
-			resolve(
-				httpResponse.body.use { b ->
-					b.reader().use { r ->
-						val subsonicResponse = JsonParser.parseReader(r).asJsonObject.get("subsonic-response")
-
-						val song = subsonicResponse?.asJsonObject?.get("song")
-
-						song
-							?.asJsonObject
-							?.asMap()
-							?.mapNotNull { (k, v) -> if (v.isJsonPrimitive) Pair(k, v.asString) else null }
-							?.toMap()
-							?.toMutableMap()
-							?.also {
-								it[KnownFileProperties.Key] = it["id"]
+			proxy(
+				promiseResponse("getSong", "id=${serviceFile.key}")
+					.also(::doCancel)
+					.eventually { httpResponse ->
+						ThreadPools.compute.preparePromise { cs ->
+							if (cs.isCancelled) {
+								throw filePropertiesCancellationException(serviceFile)
 							}
-							?: emptyMap()
+
+							httpResponse.body.use { b ->
+								b.reader().use { r ->
+									val subsonicResponse = JsonParser.parseReader(r).asJsonObject.get("subsonic-response")
+
+									val song = subsonicResponse?.asJsonObject?.get("song")
+
+									song
+										?.asJsonObject
+										?.asMap()
+										?.mapNotNull { (k, v) -> if (v.isJsonPrimitive) Pair(k, v.asString) else null }
+										?.toMap()
+										?.toSortedMap(String.CASE_INSENSITIVE_ORDER)
+										?.also {
+											it[NormalizedFileProperties.Key] = it[KnownFileProperties.id]
+											it[NormalizedFileProperties.Track] = it[KnownFileProperties.title]
+										}
+										?: mutableMapOf()
+								}
+							}
+						}
 					}
-				}
+					.eventually { props ->
+						promiseResponse("getLyrics", "artist=${props[NormalizedFileProperties.Artist]}", "title=${props[NormalizedFileProperties.Track]}")
+							.also(::doCancel)
+							.promiseSubsonicResponse<SubsonicLyricsResponse>()
+							.then { l ->
+								props[NormalizedFileProperties.Lyrics] = l?.lyrics?.value ?: ""
+								props
+							}
+					}
 			)
 		}
 
 		override fun respond(rejection: Throwable) {
-			if (cancellationProxy.isCancelled && rejection is IOException && rejection.isOkHttpCanceled()) {
+			if (isCancelled && rejection is IOException && rejection.isOkHttpCanceled()) {
 				reject(filePropertiesCancellationException(serviceFile))
 			} else {
 				reject(rejection)
@@ -435,7 +434,14 @@ class LiveSubsonicConnection(
 	)
 
 	@Keep
-	private class SubsonicFileProperties(
-		val song: Map<String, String>
+	private class SubsonicLyrics(
+		val artist: String,
+		val title: String,
+		val value: String,
+	)
+
+	@Keep
+	private class SubsonicLyricsResponse(
+		val lyrics: SubsonicLyrics,
 	)
 }

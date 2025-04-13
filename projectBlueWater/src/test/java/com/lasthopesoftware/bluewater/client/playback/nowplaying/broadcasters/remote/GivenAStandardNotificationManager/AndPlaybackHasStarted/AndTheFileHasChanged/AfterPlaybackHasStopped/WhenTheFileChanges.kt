@@ -5,7 +5,7 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.FakeNowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
@@ -45,19 +45,19 @@ class WhenTheFileChanges : AndroidContext() {
 			FakeNowPlayingRepository(nowPlaying),
 			mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns mapOf(
-					Pair(KnownFileProperties.Name, "wing"),
-					Pair(KnownFileProperties.Rating, "861"),
-					Pair(KnownFileProperties.Artist, "toe"),
-					Pair(KnownFileProperties.Album, "paint"),
-					Pair(KnownFileProperties.Duration, "618"),
-					Pair(KnownFileProperties.Track, "723"),
+					Pair(NormalizedFileProperties.Name, "wing"),
+					Pair(NormalizedFileProperties.Rating, "861"),
+					Pair(NormalizedFileProperties.Artist, "toe"),
+					Pair(NormalizedFileProperties.Album, "paint"),
+					Pair(NormalizedFileProperties.Duration, "618"),
+					Pair(NormalizedFileProperties.Track, "723"),
 				).toPromise() andThen mapOf(
-					Pair(KnownFileProperties.Name, "deep"),
-					Pair(KnownFileProperties.Rating, "861"),
-					Pair(KnownFileProperties.Artist, "hut"),
-					Pair(KnownFileProperties.Album, "self"),
-					Pair(KnownFileProperties.Duration, "97"),
-					Pair(KnownFileProperties.Track, "340"),
+					Pair(NormalizedFileProperties.Name, "deep"),
+					Pair(NormalizedFileProperties.Rating, "861"),
+					Pair(NormalizedFileProperties.Artist, "hut"),
+					Pair(NormalizedFileProperties.Album, "self"),
+					Pair(NormalizedFileProperties.Duration, "97"),
+					Pair(NormalizedFileProperties.Track, "340"),
 				).toPromise()
 			},
 			mockk {

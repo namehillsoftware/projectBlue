@@ -19,16 +19,16 @@ object FilePropertyHelpers {
 	)
 
 	val Map<String, String>.durationInMs: Long?
-		get() = this[KnownFileProperties.Duration]?.toDoubleOrNull()?.let { it * 1000 }?.toLong()
+		get() = this[NormalizedFileProperties.Duration]?.toDoubleOrNull()?.let { it * 1000 }?.toLong()
 
 	val Map<String, String>.duration: Duration?
 		get() = durationInMs?.let(Duration::millis)
 
 	val Map<String, String>.albumArtistOrArtist
-		get() = this[KnownFileProperties.AlbumArtist] ?: this[KnownFileProperties.Artist]
+		get() = this[NormalizedFileProperties.AlbumArtist] ?: this[NormalizedFileProperties.Artist]
 
 	val Map<String, String>.fileNameParts
-		get() = this[KnownFileProperties.Filename]
+		get() = this[NormalizedFileProperties.Filename]
 			?.let { f ->
 				val path = FilenameUtils.getPath(f)
 				val fileName = FilenameUtils.getName(f)
@@ -56,7 +56,7 @@ object FilePropertyHelpers {
 	val Map<String, String>.localExternalRelativeFileDirectory
 		get() = albumArtistOrArtist?.trim { c -> c <= ' ' }?.replaceReservedCharsAndPath()
 			?.let { path ->
-				this[KnownFileProperties.Album]
+				this[NormalizedFileProperties.Album]
 					?.let { album ->
 						FilenameUtils.concat(
 							path, album.trim { it <= ' ' }.replaceReservedCharsAndPath()

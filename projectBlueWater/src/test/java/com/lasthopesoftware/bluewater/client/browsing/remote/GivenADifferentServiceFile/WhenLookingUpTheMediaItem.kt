@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.remote.GivenADifferentSer
 import android.support.v4.media.MediaBrowserCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilesPropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.remote.MediaItemServiceFileLookup
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -27,11 +27,11 @@ class `When Looking Up The Media Item` {
 				ServiceFile("703"),
 				LibraryId(libraryId),
 				mapOf(
-					Pair(KnownFileProperties.Key, "703"),
-					Pair(KnownFileProperties.Artist, "division"),
-					Pair(KnownFileProperties.Album, "slide"),
-					Pair(KnownFileProperties.Name, "habit"),
-					Pair(KnownFileProperties.Duration, "451")
+					Pair(NormalizedFileProperties.Key, "703"),
+					Pair(NormalizedFileProperties.Artist, "division"),
+					Pair(NormalizedFileProperties.Album, "slide"),
+					Pair(NormalizedFileProperties.Name, "habit"),
+					Pair(NormalizedFileProperties.Duration, "451")
 				)
 			)
 

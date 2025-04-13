@@ -4,7 +4,7 @@ import android.net.Uri
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilesPropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
@@ -31,10 +31,10 @@ class WhenGettingTheStoredFilePath {
                 ServiceFile(serviceFileId),
                 LibraryId(libraryId),
 				mapOf(
-					Pair(KnownFileProperties.AlbumArtist, "sharp"),
-					Pair(KnownFileProperties.Album, "low"),
-					Pair(KnownFileProperties.Track, "72"),
-					Pair(KnownFileProperties.Filename, """/mixed\path\separators/are\awesome/for_music.mp3""")
+					Pair(NormalizedFileProperties.AlbumArtist, "sharp"),
+					Pair(NormalizedFileProperties.Album, "low"),
+					Pair(NormalizedFileProperties.Track, "72"),
+					Pair(NormalizedFileProperties.Filename, """/mixed\path\separators/are\awesome/for_music.mp3""")
 				)
 			)
 

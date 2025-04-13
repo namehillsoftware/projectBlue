@@ -6,7 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
@@ -50,8 +50,8 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 			UrlKeyProvider(libraryConnectionProvider),
 			mockk {
 				every { promiseFileProperties(libraryId, any()) } returns mapOf(
-					Pair(KnownFileProperties.Artist, "test-artist"),
-					Pair(KnownFileProperties.Name, "song")
+					Pair(NormalizedFileProperties.Artist, "test-artist"),
+					Pair(NormalizedFileProperties.Name, "song")
 				).toPromise()
 			},
 			mockk {

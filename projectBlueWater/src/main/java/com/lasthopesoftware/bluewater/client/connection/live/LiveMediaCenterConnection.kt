@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.FileResponses
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
@@ -498,16 +498,16 @@ class LiveMediaCenterConnection(
 
 		override fun promiseResponse(fileProperties: Map<String, String>): Promise<Unit> {
 			try {
-				val lastPlayedServer = fileProperties[KnownFileProperties.LastPlayed]
+				val lastPlayedServer = fileProperties[NormalizedFileProperties.LastPlayed]
 				val duration = fileProperties.durationInMs ?: 0
 				val currentTime = System.currentTimeMillis()
 				if (lastPlayedServer != null && currentTime - duration <= lastPlayedServer.toLong() * 1000) return Unit.toPromise()
 
-				val numberPlaysString = fileProperties[KnownFileProperties.NumberPlays]
+				val numberPlaysString = fileProperties[NormalizedFileProperties.NumberPlays]
 				val numberPlays = (numberPlaysString?.toIntOrNull() ?: 0) + 1
 				val numberPlaysUpdate = promiseFilePropertyUpdate(
 					serviceFile,
-					KnownFileProperties.NumberPlays,
+					NormalizedFileProperties.NumberPlays,
 					numberPlays.toString(),
 					false
 				)
@@ -515,7 +515,7 @@ class LiveMediaCenterConnection(
 				val newLastPlayed = (currentTime / 1000).toString()
 				val lastPlayedUpdate = promiseFilePropertyUpdate(
 					serviceFile,
-					KnownFileProperties.LastPlayed,
+					NormalizedFileProperties.LastPlayed,
 					newLastPlayed,
 					false
 				)

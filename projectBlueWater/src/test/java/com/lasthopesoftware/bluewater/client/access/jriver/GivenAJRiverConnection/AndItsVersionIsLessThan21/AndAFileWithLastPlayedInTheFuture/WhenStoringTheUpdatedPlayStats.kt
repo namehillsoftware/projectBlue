@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnecti
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnection.buildFilePropertiesXml
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.LiveMediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
@@ -31,8 +31,8 @@ class WhenStoringTheUpdatedPlayStats {
 
 	private val services by lazy {
 		val fileProperties = mutableMapOf(
-			Pair(KnownFileProperties.LastPlayed, lastPlayed.toString()),
-			Pair(KnownFileProperties.NumberPlays, 52.toString()),
+			Pair(NormalizedFileProperties.LastPlayed, lastPlayed.toString()),
+			Pair(NormalizedFileProperties.NumberPlays, 52.toString()),
 		)
 
 		val connection = LiveMediaCenterConnection(
@@ -97,11 +97,11 @@ class WhenStoringTheUpdatedPlayStats {
 
 	@Test
 	fun thenTheLastPlayedIsNotUpdated() {
-		assertThat(fileProperties!![KnownFileProperties.LastPlayed]).isEqualTo(lastPlayed.toString())
+		assertThat(fileProperties!![NormalizedFileProperties.LastPlayed]).isEqualTo(lastPlayed.toString())
 	}
 
 	@Test
 	fun thenTheNumberPlaysIsTheSame() {
-		assertThat(fileProperties!![KnownFileProperties.NumberPlays]).isEqualTo("52")
+		assertThat(fileProperties!![NormalizedFileProperties.NumberPlays]).isEqualTo("52")
 	}
 }

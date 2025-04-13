@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -147,8 +147,8 @@ class ReusableFileViewModel(
 		override fun respond(properties: Map<String, String>) {
 			if (isNotCurrentServiceFile || isUpdateCancelled) return
 
-			mutableTitle.value = properties[KnownFileProperties.Name] ?: stringResources.unknownTrack
-			mutableArtist.value = properties[KnownFileProperties.Artist] ?: stringResources.unknownArtist
+			mutableTitle.value = properties[NormalizedFileProperties.Name] ?: stringResources.unknownTrack
+			mutableArtist.value = properties[NormalizedFileProperties.Artist] ?: stringResources.unknownArtist
 		}
 
 		private fun handleError(e: Throwable) {
