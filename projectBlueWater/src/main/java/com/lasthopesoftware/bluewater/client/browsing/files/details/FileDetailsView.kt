@@ -75,7 +75,7 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.shared.NullBox
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePalette
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePaletteProvider
@@ -261,7 +261,7 @@ fun FilePropertyRow(
 		val propertyValue by property.committedValue.subscribeAsState()
 
 		when (property.property) {
-			KnownFileProperties.Rating -> {
+			NormalizedFileProperties.Rating -> {
 				Box(
 					modifier = Modifier
 						.weight(2f)
@@ -360,7 +360,7 @@ private fun FileDetailsEditor(
 						contentAlignment = Alignment.Center
 					) {
 						when {
-							fileProperty.property == KnownFileProperties.Rating -> {
+							fileProperty.property == NormalizedFileProperties.Rating -> {
 								val ratingValue by remember { derivedStateOf { propertyValue.toInt() } }
 								RatingBar(
 									rating = ratingValue,

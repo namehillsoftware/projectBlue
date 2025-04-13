@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.fileproperties.GivenAPlayingFile.AndTheRatingIsChanged
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFreshLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
@@ -63,16 +63,16 @@ class WhenTheServiceFileChangesConcurrently {
 		val filePropertiesProvider = mockk<ProvideFreshLibraryFileProperties> {
 			every { promiseFileProperties(LibraryId(libraryId), firstServiceFile) } returns
 				mapOf(
-					Pair(KnownFileProperties.Artist, "accident"),
-					Pair(KnownFileProperties.Name, "proposal"),
-					Pair(KnownFileProperties.Rating, "107"),
+					Pair(NormalizedFileProperties.Artist, "accident"),
+					Pair(NormalizedFileProperties.Name, "proposal"),
+					Pair(NormalizedFileProperties.Rating, "107"),
 				).toPromise()
 
 			every { promiseFileProperties(LibraryId(libraryId), secondServiceFile) } returns
 				mapOf(
-					Pair(KnownFileProperties.Artist, "offer"),
-					Pair(KnownFileProperties.Name, "film"),
-					Pair(KnownFileProperties.Rating, "476"),
+					Pair(NormalizedFileProperties.Artist, "offer"),
+					Pair(NormalizedFileProperties.Name, "film"),
+					Pair(NormalizedFileProperties.Rating, "476"),
 				).toPromise()
 		}
 
@@ -96,7 +96,7 @@ class WhenTheServiceFileChangesConcurrently {
 				}
             },
             mockk {
-				every { promiseFileUpdate(LibraryId(libraryId), firstServiceFile, KnownFileProperties.Rating, any(), any()) } returns deferredFilePropertiesPromise
+				every { promiseFileUpdate(LibraryId(libraryId), firstServiceFile, NormalizedFileProperties.Rating, any(), any()) } returns deferredFilePropertiesPromise
 			},
             checkAuthentication,
             playbackService,

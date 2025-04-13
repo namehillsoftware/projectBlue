@@ -4,7 +4,7 @@ import android.support.v4.media.MediaBrowserCompat
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilesPropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.remote.MediaItemServiceFileLookup
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -25,11 +25,11 @@ class `When Looking Up The Media Item` : AndroidContext() {
 			ServiceFile("14"),
 			libraryId,
 			mapOf(
-				Pair(KnownFileProperties.Key, "14"),
-				Pair(KnownFileProperties.Artist, "Billy Bob"),
-				Pair(KnownFileProperties.Album, "Bob's BIIIG Adventure"),
-				Pair(KnownFileProperties.Name, "Billy Bob Jr. Jr."),
-				Pair(KnownFileProperties.Duration, "30")
+				Pair(NormalizedFileProperties.Key, "14"),
+				Pair(NormalizedFileProperties.Artist, "Billy Bob"),
+				Pair(NormalizedFileProperties.Album, "Bob's BIIIG Adventure"),
+				Pair(NormalizedFileProperties.Name, "Billy Bob Jr. Jr."),
+				Pair(NormalizedFileProperties.Duration, "30")
 			)
 		)
 

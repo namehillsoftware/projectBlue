@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Give
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilesPropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
@@ -20,7 +20,7 @@ class WhenBroadcastingTheFileProgress {
 		fileProperties.addFilePropertiesToCache(
 			ServiceFile("880"),
 			LibraryId(758),
-			mapOf(Pair(KnownFileProperties.Duration, ".389"))
+			mapOf(Pair(NormalizedFileProperties.Duration, ".389"))
 		)
 		val trackPositionBroadcaster = TrackPositionBroadcaster(appMessageBus, fileProperties)
 		trackPositionBroadcaster.broadcastProgress(
