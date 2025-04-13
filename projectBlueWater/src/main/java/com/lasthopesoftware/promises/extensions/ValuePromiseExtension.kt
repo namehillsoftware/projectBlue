@@ -72,6 +72,7 @@ fun <T> T.toPromise(): Promise<T> = when (this) {
 	null -> Promise.empty()
 	is Unit -> UnitPromise as Promise<T>
 	is Boolean -> (if (this) TruePromise else FalsePromise) as Promise<T>
+	is String -> if (isEmpty()) EmptyStringPromise as Promise<T> else Promise(this)
 	else -> Promise(this)
 }
 
@@ -103,6 +104,7 @@ inline fun <T, P> Promise<T>.cancelBackEventually(crossinline response: (T) -> P
 
 private object TruePromise : Promise<Boolean>(true)
 private object FalsePromise: Promise<Boolean>(false)
+private object EmptyStringPromise: Promise<String>("")
 
 private object UnitPromise : Promise<Unit>(Unit)
 
