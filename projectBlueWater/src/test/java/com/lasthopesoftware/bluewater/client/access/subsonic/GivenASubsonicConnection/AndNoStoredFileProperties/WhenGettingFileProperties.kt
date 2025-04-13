@@ -54,7 +54,7 @@ class WhenGettingFileProperties {
 
 	@Test
 	fun `then the track name is correct`() {
-		assertThat(fileProperties!![NormalizedFileProperties.Track]).isEqualTo("How Will You Meet Your End")
+		assertThat(fileProperties!![NormalizedFileProperties.Name]).isEqualTo("How Will You Meet Your End")
 	}
 
 	@Test

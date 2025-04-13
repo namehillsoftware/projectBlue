@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.FileResponses
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -24,7 +25,9 @@ import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.exceptions.isOkHttpCanceled
 import com.lasthopesoftware.policies.caching.TimedExpirationPromiseCache
+import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.cancelBackThen
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.emptyByteArray
@@ -134,7 +137,10 @@ class LiveSubsonicConnection(
 
 	override fun promiseImageBytes(itemId: ItemId): Promise<ByteArray> = emptyByteArray.toPromise()
 
-	override fun promiseFileStringList(itemId: ItemId?): Promise<String> = "".toPromise()
+	override fun promiseFileStringList(itemId: ItemId?): Promise<String> = itemId
+		?.let(::ItemFilesPromise)
+		?.cancelBackEventually(FileStringListUtilities::promiseSerializedFileStringList)
+		.keepPromise("")
 
 	override fun promiseShuffledFileStringList(itemId: ItemId?): Promise<String> = "".toPromise()
 
@@ -142,7 +148,7 @@ class LiveSubsonicConnection(
 
 	override fun promiseFiles(query: String): Promise<List<ServiceFile>> = Promise(emptyList())
 
-	override fun promiseFiles(itemId: ItemId): Promise<List<ServiceFile>> = Promise(emptyList())
+	override fun promiseFiles(itemId: ItemId): Promise<List<ServiceFile>> = ItemFilesPromise(itemId)
 
 	override fun promiseFiles(playlistId: PlaylistId): Promise<List<ServiceFile>> = Promise(emptyList())
 
@@ -152,7 +158,7 @@ class LiveSubsonicConnection(
 	).cancelBackThen { response, _ ->
 		response.use {
 			val responseCode = it.code
-			logger.debug("api/v1/File/Played responded with a response code of {}", responseCode)
+			logger.debug("rest/scrobble responded with a response code of {}", responseCode)
 			if (responseCode < 200 || responseCode >= 300) throw HttpResponseException(responseCode)
 		}
 	}
@@ -204,8 +210,6 @@ class LiveSubsonicConnection(
 		Promise.Proxy<Map<String, String>>(),
 		ImmediateResponse<Throwable, Unit>
 	{
-		private lateinit var httpResponse: HttpResponse
-
 		init {
 			proxy(
 				promiseResponse("getSong", "id=${serviceFile.key}")
@@ -230,7 +234,7 @@ class LiveSubsonicConnection(
 										?.toSortedMap(String.CASE_INSENSITIVE_ORDER)
 										?.also {
 											it[NormalizedFileProperties.Key] = it[KnownFileProperties.id]
-											it[NormalizedFileProperties.Track] = it[KnownFileProperties.title]
+											it[NormalizedFileProperties.Name] = it[KnownFileProperties.title]
 										}
 										?: mutableMapOf()
 								}
@@ -238,7 +242,7 @@ class LiveSubsonicConnection(
 						}
 					}
 					.eventually { props ->
-						promiseResponse("getLyrics", "artist=${props[NormalizedFileProperties.Artist]}", "title=${props[NormalizedFileProperties.Track]}")
+						promiseResponse("getLyrics", "artist=${props[NormalizedFileProperties.Artist]}", "title=${props[KnownFileProperties.title]}")
 							.also(::doCancel)
 							.promiseSubsonicResponse<SubsonicLyricsResponse>()
 							.then { l ->
@@ -306,10 +310,38 @@ class LiveSubsonicConnection(
 		}
 
 		override fun promiseResponse(response: SubsonicDirectoryRoot?): Promise<List<Item>> = ThreadPools.compute.preparePromise { cs ->
-			response?.directory?.child?.map {
+			response?.directory?.child?.filter { it.isDir }?.map {
 				if (cs.isCancelled) throw itemParsingCancelledException()
 
 				Item(it.id, it.name, playlistId = null)
+			} ?: emptyList()
+		}
+
+		private fun itemParsingCancelledException() = CancellationException("Item parsing was cancelled.")
+	}
+
+	private inner class ItemFilesPromise(itemId: ItemId) :
+		Promise.Proxy<List<ServiceFile>>(),
+		PromisedResponse<SubsonicDirectoryRoot?, List<ServiceFile>>
+	{
+		init {
+			proxy(
+				promiseResponse(
+					"getMusicDirectory",
+					"id=${itemId.id}"
+				)
+					.also(::doCancel)
+					.promiseSubsonicResponse<SubsonicDirectoryRoot>()
+					.also(::doCancel)
+					.eventually(this)
+			)
+		}
+
+		override fun promiseResponse(response: SubsonicDirectoryRoot?): Promise<List<ServiceFile>> = ThreadPools.compute.preparePromise { cs ->
+			response?.directory?.child?.filter { !it.isDir }?.map {
+				if (cs.isCancelled) throw itemParsingCancelledException()
+
+				ServiceFile(it.id)
 			} ?: emptyList()
 		}
 
@@ -405,6 +437,7 @@ class LiveSubsonicConnection(
 	private class SubsonicNamedItem(
 		val id: String,
 		val name: String,
+		val isDir: Boolean,
 	)
 
 	@Keep
