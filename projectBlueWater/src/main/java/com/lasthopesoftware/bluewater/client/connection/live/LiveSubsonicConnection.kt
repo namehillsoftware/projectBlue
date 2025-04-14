@@ -73,6 +73,7 @@ class LiveSubsonicConnection(
 	private object KnownFileProperties {
 		const val title = "title"
 		const val id = "id"
+		const val artist = "artist"
 	}
 
 	private val subsonicApiUrl by lazy { subsonicConnectionDetails.baseUrl.withSubsonicApi() }
@@ -163,7 +164,7 @@ class LiveSubsonicConnection(
 		}
 	}
 
-	override fun promiseRevision(): Promise<Int?> = Promise.empty()
+	override fun promiseRevision(): Promise<Long?> = RevisionPromise()
 
 	private fun promiseFilesAtPath(path: String, vararg params: String): Promise<List<ServiceFile>> =
 		Promise.Proxy { cp ->
@@ -247,7 +248,7 @@ class LiveSubsonicConnection(
 					.eventually({ props ->
 						promiseResponse(
 							"getLyrics",
-							"artist=${props[NormalizedFileProperties.Artist]}",
+							"artist=${props[KnownFileProperties.artist]}",
 							"title=${props[KnownFileProperties.title]}"
 						)
 							.also(::doCancel)
@@ -270,6 +271,23 @@ class LiveSubsonicConnection(
 
 		private fun filePropertiesCancellationException(serviceFile: ServiceFile) =
 			CancellationException("Getting file properties cancelled for $serviceFile.")
+	}
+
+	private inner class RevisionPromise :
+		Promise.Proxy<Long?>(),
+		ImmediateResponse<SubsonicIndexesLastModifiedResponse?, Long?>
+	{
+		init {
+			proxy(
+				promiseResponse("getIndexes")
+					.also(::doCancel)
+					.promiseSubsonicResponse<SubsonicIndexesLastModifiedResponse>()
+					.also(::doCancel)
+					.then(this)
+			)
+		}
+
+		override fun respond(resolution: SubsonicIndexesLastModifiedResponse?): Long? = resolution?.indexes?.lastModified
 	}
 
 	private inner class RootItemPromise :
@@ -455,12 +473,22 @@ class LiveSubsonicConnection(
 
 	@Keep
 	private class SubsonicIndexResponse(
-		val index: List<SubsonicIndex>
+		val index: List<SubsonicIndex>,
 	)
 
 	@Keep
 	private class SubsonicIndexesResponse(
 		val indexes: SubsonicIndexResponse
+	)
+
+	@Keep
+	private class SubsonicLastModifiedResponse(
+		val lastModified: Long,
+	)
+
+	@Keep
+	private class SubsonicIndexesLastModifiedResponse(
+		val indexes: SubsonicLastModifiedResponse
 	)
 
 	@Keep

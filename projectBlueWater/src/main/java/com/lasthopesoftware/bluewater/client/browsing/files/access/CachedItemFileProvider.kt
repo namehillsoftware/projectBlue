@@ -12,11 +12,11 @@ import com.namehillsoftware.handoff.promises.Promise
 class CachedItemFileProvider(
 	private val inner: ProvideItemFiles,
 	private val revisions: CheckRevisions,
-	private val itemFunctionCache: CachePromiseFunctions<Pair<Triple<LibraryId, ItemId?, FileListParameters.Options>, Int>, List<ServiceFile>> = companionCache,
+	private val itemFunctionCache: CachePromiseFunctions<Pair<Triple<LibraryId, ItemId?, FileListParameters.Options>, Long>, List<ServiceFile>> = companionCache,
 ) : ProvideItemFiles {
 
 	companion object {
-		private val companionCache = LruPromiseCache<Pair<Triple<LibraryId, ItemId?, FileListParameters.Options>, Int>, List<ServiceFile>>(10)
+		private val companionCache = LruPromiseCache<Pair<Triple<LibraryId, ItemId?, FileListParameters.Options>, Long>, List<ServiceFile>>(10)
 	}
 
 	override fun promiseFiles(libraryId: LibraryId, itemId: ItemId?, options: FileListParameters.Options): Promise<List<ServiceFile>> =

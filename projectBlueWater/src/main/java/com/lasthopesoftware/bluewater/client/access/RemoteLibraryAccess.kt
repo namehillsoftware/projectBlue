@@ -22,7 +22,7 @@ interface RemoteLibraryAccess {
 	fun promiseStoredPlaylist(playlistPath: String, playlist: List<ServiceFile>): Promise<*>
 	fun promiseIsReadOnly(): Promise<Boolean>
 	fun promiseServerVersion(): Promise<SemanticVersion?>
-	fun promiseRevision(): Promise<Int?>
+	fun promiseRevision(): Promise<Long?>
 	fun promiseFile(serviceFile: ServiceFile): Promise<InputStream>
 	fun promisePlaystatsUpdate(serviceFile: ServiceFile): Promise<*>
 	fun promiseFiles(): Promise<List<ServiceFile>>
