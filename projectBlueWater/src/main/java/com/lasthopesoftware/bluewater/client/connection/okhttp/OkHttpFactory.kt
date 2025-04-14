@@ -45,34 +45,9 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 		private val dispatcher by lazy { Dispatcher(ThreadPools.io) }
 	}
 
-	override fun getServerClient(serverConnection: ServerConnection): HttpPromiseClient =
-		OkHttpPromiseClient(getOkHttpClient(serverConnection))
-
-	override fun getClient(): HttpPromiseClient = OkHttpPromiseClient(getOkHttpClient())
-
-	override fun getOkHttpClient(serverConnection: ServerConnection): OkHttpClient =
-		commonClient
-			.newBuilder()
-			.addNetworkInterceptor { chain ->
-				val requestBuilder = chain.request().newBuilder()
-				val authCode = serverConnection.authCode
-				if (!authCode.isNullOrEmpty()) requestBuilder.header(
-					"Authorization",
-					"basic $authCode"
-				)
-				chain.proceed(requestBuilder.build())
-			}
-			.sslSocketFactory(getSslSocketFactory(serverConnection), getTrustManager(serverConnection))
-			.hostnameVerifier(getHostnameVerifier(serverConnection))
-			.build()
-
-	private fun getOkHttpClient(): OkHttpClient =
-		commonClient
-			.newBuilder()
-			.connectTimeout(buildConnectionTime.millis, TimeUnit.MILLISECONDS)
-			.build()
-
 	private val commonClient by lazy {
+		val userAgent = getUserAgent()
+
 		OkHttpClient.Builder()
 			.addNetworkInterceptor { chain ->
 				val requestBuilder =
@@ -80,7 +55,7 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 						.request()
 						.newBuilder()
 						.header("Connection", "close")
-						.header("User-Agent", getUserAgent())
+						.header("User-Agent", userAgent)
 				chain.proceed(requestBuilder.build())
 			}
 			.cache(null)
@@ -89,6 +64,38 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 			.dispatcher(dispatcher)
 			.build()
 	}
+
+	override fun getServerClient(serverConnection: ServerConnection): HttpPromiseClient =
+		OkHttpPromiseClient(getOkHttpClient(serverConnection))
+
+	override fun getClient(): HttpPromiseClient = OkHttpPromiseClient(getOkHttpClient())
+
+	override fun getOkHttpClient(serverConnection: ServerConnection): OkHttpClient {
+		val authHeaderValue = serverConnection.authCode.takeUnless { it.isNullOrEmpty() }?.let { "basic $it" }
+
+		val builder = commonClient
+			.newBuilder()
+			.sslSocketFactory(
+				getSslSocketFactory(serverConnection),
+				getTrustManager(serverConnection)
+			)
+			.hostnameVerifier(getHostnameVerifier(serverConnection))
+
+		return if (authHeaderValue.isNullOrEmpty()) builder.build()
+		else builder
+			.addNetworkInterceptor { chain ->
+				val requestBuilder = chain.request().newBuilder()
+				requestBuilder.header("Authorization", authHeaderValue)
+				chain.proceed(requestBuilder.build())
+			}
+			.build()
+	}
+
+	private fun getOkHttpClient(): OkHttpClient =
+		commonClient
+			.newBuilder()
+			.connectTimeout(buildConnectionTime.millis, TimeUnit.MILLISECONDS)
+			.build()
 
 	private fun getSslSocketFactory(serverConnection: ServerConnection): SSLSocketFactory {
 		val sslContext = try {
@@ -143,6 +150,19 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 			?: defaultHostnameVerifier
 	}
 
+	private fun getUserAgent(): String {
+		val versionName = try {
+			val packageName = context.packageName
+			val info = context.packageManager.getPackageInfo(packageName, 0)
+			info.versionName ?: "?"
+		} catch (e: PackageManager.NameNotFoundException) {
+			"?"
+		}
+
+		val applicationName = context.getString(R.string.app_name)
+		return ("$applicationName/$versionName (Linux;Android ${Build.VERSION.RELEASE})")
+	}
+
 	private class OkHttpResponse(private val response: Response) : HttpResponse {
 		override val code: Int
 			get() = response.code
@@ -185,18 +205,5 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 			} catch (e: Throwable) {
 				Promise(e)
 			}
-	}
-
-	private fun getUserAgent(): String {
-		val versionName = try {
-			val packageName = context.packageName
-			val info = context.packageManager.getPackageInfo(packageName, 0)
-			info.versionName ?: "?"
-		} catch (e: PackageManager.NameNotFoundException) {
-			"?"
-		}
-
-		val applicationName = context.getString(R.string.app_name)
-		return ("$applicationName/$versionName (Linux;Android ${Build.VERSION.RELEASE})")
 	}
 }
