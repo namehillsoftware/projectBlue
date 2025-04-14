@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.live.LiveSubsonicConnect
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withSubsonicApi
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -32,7 +33,7 @@ class WhenGettingFileProperties {
 			SubsonicConnectionDetails(TestUrl, "4Vgsz0MKH3", "c3ZtnWx2", "bE98VYcj1D"),
 			FakeHttpConnectionProvider(
 				mockk {
-					every { promiseResponse(TestUrl.withSubsonicApi().addParams("getSong").addParams("id=$serviceFileId")) } returns deferredReject
+					every { promiseResponse(TestUrl.withSubsonicApi().addPath("getSong").addParams("id=$serviceFileId")) } returns deferredReject
 				}
 			),
 			mockk(),
