@@ -5,8 +5,6 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import com.google.gson.JsonParser
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.FileResponses
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
@@ -34,12 +32,9 @@ import com.lasthopesoftware.resources.emptyByteArray
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.InvalidResponseCodeException
 import com.lasthopesoftware.resources.io.NonStandardResponseException
-import com.lasthopesoftware.resources.io.promiseStringBody
 import com.lasthopesoftware.resources.strings.TranslateJson
 import com.lasthopesoftware.resources.strings.parseJson
-import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.response.ImmediateCancellableResponse
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import org.joda.time.Duration
@@ -165,26 +160,6 @@ class LiveSubsonicConnection(
 	}
 
 	override fun promiseRevision(): Promise<Long?> = RevisionPromise()
-
-	private fun promiseFilesAtPath(path: String, vararg params: String): Promise<List<ServiceFile>> =
-		Promise.Proxy { cp ->
-			promiseFileStringList(FileListParameters.Options.None, path, *params)
-				.also(cp::doCancel)
-				.eventually(FileResponses)
-				.also(cp::doCancel)
-				.then(FileResponses)
-		}
-
-	private fun promiseFileStringList(option: FileListParameters.Options, path: String, vararg params: String): Promise<String> =
-		Promise.Proxy { cp ->
-			promiseResponse(
-				path,
-				*FileListParameters.Helpers.processParams(
-					option,
-					*params
-				)
-			).also(cp::doCancel).promiseStringBody()
-		}
 
 	private fun promiseResponse(path: String, vararg params: String): Promise<HttpResponse> {
 		val url = subsonicApiUrl.addPath(path).addParams(*params)
@@ -402,21 +377,20 @@ class LiveSubsonicConnection(
 		}
 	}
 
-	private inner class PingViewPromise : Promise.Proxy<SubsonicResponse>(), ImmediateCancellableResponse<HttpResponse, SubsonicResponse> {
+	private inner class PingViewPromise : Promise.Proxy<SubsonicResponse>(), PromisedResponse<HttpResponse, SubsonicResponse?> {
 		init {
 			proxy(
 				httpClient
 					.promiseResponse(subsonicApiUrl.addPath("ping.view"))
 					.also(::doCancel)
-					.then(this)
+					.eventually(this)
 			)
 		}
 
-		override fun respond(response: HttpResponse, cancellationSignal: CancellationSignal): SubsonicResponse? = response.use { r ->
-			if (cancellationSignal.isCancelled) throw CancellationException("Cancelled before parsing ping.view response.")
-			if (r.code != 200) throw InvalidResponseCodeException(r.code)
+		override fun promiseResponse(response: HttpResponse): Promise<SubsonicResponse?> {
+			if (response.code != 200) throw InvalidResponseCodeException(response.code)
 
-			r.parseSubsonicResponse()
+			return response.promiseSubsonicResponse<SubsonicResponse>()
 		}
 	}
 
