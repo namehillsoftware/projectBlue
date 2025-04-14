@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.exceptions.isOkHttpCanceled
 import com.lasthopesoftware.policies.caching.TimedExpirationPromiseCache
+import com.lasthopesoftware.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.cancelBackThen
 import com.lasthopesoftware.promises.extensions.keepPromise
@@ -77,6 +78,14 @@ class LiveSubsonicConnection(
 
 	private val httpClient by lazy { httpPromiseClients.getServerClient(subsonicConnectionDetails) }
 
+	private val cachedVersion by RetryOnRejectionLazyPromise {
+		PingViewPromise().cancelBackThen { r, _ ->
+			r?.version?.split(".")?.let {
+				SemanticVersion(it[0].toInt(), it[1].toInt(), it[2].toInt())
+			}
+		}
+	}
+
 	override fun <T> getConnectionKey(key: T): UrlKeyHolder<T> = UrlKeyHolder(subsonicConnectionDetails.baseUrl, key)
 
 	override fun getFileUrl(serviceFile: ServiceFile): URL =
@@ -116,11 +125,7 @@ class LiveSubsonicConnection(
 
 	override fun promiseIsReadOnly(): Promise<Boolean> = true.toPromise()
 
-	override fun promiseServerVersion(): Promise<SemanticVersion?> = PingViewPromise().cancelBackThen { r, _ ->
-		r?.version?.split(".")?.let {
-			SemanticVersion(it[0].toInt(), it[1].toInt(), it[2].toInt())
-		}
-	}
+	override fun promiseServerVersion(): Promise<SemanticVersion?> = cachedVersion
 
 	override fun promiseFile(serviceFile: ServiceFile): Promise<InputStream> = Promise.Proxy { cp ->
 		httpClient
