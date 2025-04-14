@@ -74,7 +74,7 @@ class LiveMediaCenterConnection(
 
 	private val mcApiUrl by lazy { mediaCenterConnectionDetails.baseUrl.withMcApi() }
 
-	private val revisionCache by lazy { TimedExpirationPromiseCache<Unit, Int?>(checkedExpirationTime) }
+	private val revisionCache by lazy { TimedExpirationPromiseCache<Unit, Long?>(checkedExpirationTime) }
 
 	private val httpClient by lazy { httpPromiseClients.getServerClient(mediaCenterConnectionDetails) }
 
@@ -292,7 +292,7 @@ class LiveMediaCenterConnection(
 			}
 	}
 
-	override fun promiseRevision(): Promise<Int?> =  revisionCache.getOrAdd(Unit) {
+	override fun promiseRevision(): Promise<Long?> =  revisionCache.getOrAdd(Unit) {
 		Promise.Proxy { cp ->
 			promiseResponse("Library/GetRevision")
 				.also(cp::doCancel)
@@ -301,7 +301,7 @@ class LiveMediaCenterConnection(
 				.then { standardRequest ->
 					standardRequest.items["Sync"]
 						?.takeIf { revisionValue -> revisionValue.isNotEmpty() }
-						?.toInt()
+						?.toLong()
 				}
 		}
 	}
