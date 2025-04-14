@@ -26,6 +26,7 @@ import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.exceptions.isOkHttpCanceled
 import com.lasthopesoftware.policies.caching.TimedExpirationPromiseCache
+import com.lasthopesoftware.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.promises.extensions.cancelBackThen
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.preparePromise
@@ -73,6 +74,28 @@ class MediaCenterConnection(
 	private val revisionCache by lazy { TimedExpirationPromiseCache<Unit, Int?>(checkedExpirationTime) }
 
 	private val httpClient by lazy { httpPromiseClients.getServerClient(serverConnection) }
+
+	private val cachedServerVersionPromise by RetryOnRejectionLazyPromise {
+		Promise.Proxy { cp ->
+			promiseResponse("Alive")
+				.also(cp::doCancel)
+				.promiseStandardResponse()
+				.also(cp::doCancel)
+				.then { standardRequest ->
+					standardRequest.items["ProgramVersion"]
+						?.let { semVerString ->
+							val semVerParts = semVerString.split(".")
+							var major = 0
+							var minor = 0
+							var patch = 0
+							if (semVerParts.isNotEmpty()) major = semVerParts[0].toInt()
+							if (semVerParts.size > 1) minor = semVerParts[1].toInt()
+							if (semVerParts.size > 2) patch = semVerParts[2].toInt()
+							SemanticVersion(major, minor, patch)
+						}
+				}
+		}
+	}
 
 	override fun <T> getConnectionKey(key: T): UrlKeyHolder<T> = UrlKeyHolder(serverConnection.baseUrl, key)
 
@@ -173,25 +196,7 @@ class MediaCenterConnection(
 			}
 	}
 
-	override fun promiseServerVersion(): Promise<SemanticVersion?> = Promise.Proxy { cp ->
-		promiseResponse("Alive")
-			.also(cp::doCancel)
-			.promiseStandardResponse()
-			.also(cp::doCancel)
-			.then { standardRequest ->
-				standardRequest.items["ProgramVersion"]
-					?.let { semVerString ->
-						val semVerParts = semVerString.split(".")
-						var major = 0
-						var minor = 0
-						var patch = 0
-						if (semVerParts.isNotEmpty()) major = semVerParts[0].toInt()
-						if (semVerParts.size > 1) minor = semVerParts[1].toInt()
-						if (semVerParts.size > 2) patch = semVerParts[2].toInt()
-						SemanticVersion(major, minor, patch)
-					}
-			}
-	}
+	override fun promiseServerVersion(): Promise<SemanticVersion?> = cachedServerVersionPromise
 
 	override fun promiseFile(serviceFile: ServiceFile): Promise<InputStream> =
 		Promise.Proxy { cp ->
