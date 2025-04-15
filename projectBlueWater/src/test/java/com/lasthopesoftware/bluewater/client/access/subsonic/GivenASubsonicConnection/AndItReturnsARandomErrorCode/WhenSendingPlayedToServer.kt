@@ -43,6 +43,7 @@ class WhenSendingPlayedToServer {
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
 			JsonEncoderDecoder,
+			mockk(),
 		)
 	}
 	private var httpResponseException: HttpResponseException? = null

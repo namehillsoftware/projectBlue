@@ -81,6 +81,7 @@ class `When Getting The Live Connection` {
 			},
 			mockk(),
 			JsonEncoderDecoder,
+			mockk(),
 		)
 
 		urlScanner

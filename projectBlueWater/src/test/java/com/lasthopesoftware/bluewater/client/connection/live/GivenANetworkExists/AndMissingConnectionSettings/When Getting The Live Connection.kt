@@ -27,6 +27,7 @@ class `When Getting The Live Connection` {
 			mockk(),
 			mockk(),
 			JsonEncoderDecoder,
+			mockk(),
 		)
 	}
 

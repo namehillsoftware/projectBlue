@@ -25,6 +25,7 @@ class WhenSendingPlayedToServer {
 			},
 			mockk(),
 			JsonEncoderDecoder,
+			mockk(),
 		)
 	}
 
