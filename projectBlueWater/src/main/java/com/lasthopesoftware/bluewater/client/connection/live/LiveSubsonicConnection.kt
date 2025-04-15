@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.Normalize
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
+import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
@@ -135,11 +136,12 @@ class LiveSubsonicConnection(
 	override fun promiseFilePropertyUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> =
 		Unit.toPromise()
 
-	override fun promiseItems(itemId: ItemId?): Promise<List<IItem>> = when (itemId) {
+	override fun promiseItems(itemId: KeyedIdentifier?): Promise<List<IItem>> = when (itemId) {
 		null -> promisedRootItem
 		artistsItem -> RootIndexPromise()
 		playlistsItem -> RootPlaylistsPromise()
-		else -> ItemPromise(itemId)
+		is ItemId -> ItemPromise(itemId)
+		else -> emptyList<IItem>().toPromise()
 	}
 
 	override fun promiseAudioPlaylistPaths(): Promise<List<String>> = Promise(emptyList())
