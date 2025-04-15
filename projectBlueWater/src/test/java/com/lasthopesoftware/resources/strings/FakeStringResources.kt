@@ -2,6 +2,8 @@ package com.lasthopesoftware.resources.strings
 
 class FakeStringResources(
     override val loading: String = "",
+	override val artists: String = "",
+	override val playlists: String = "",
     override val unknownArtist: String = "",
     override val unknownTrack: String = "",
     override val defaultNowPlayingTrackTitle: String = "",

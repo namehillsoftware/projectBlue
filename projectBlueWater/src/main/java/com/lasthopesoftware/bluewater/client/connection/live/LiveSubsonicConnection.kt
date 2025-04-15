@@ -33,6 +33,7 @@ import com.lasthopesoftware.resources.emptyByteArray
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.InvalidResponseCodeException
 import com.lasthopesoftware.resources.io.NonStandardResponseException
+import com.lasthopesoftware.resources.strings.GetStringResources
 import com.lasthopesoftware.resources.strings.TranslateJson
 import com.lasthopesoftware.resources.strings.parseJson
 import com.namehillsoftware.handoff.promises.Promise
@@ -51,6 +52,7 @@ class LiveSubsonicConnection(
 	private val httpPromiseClients: ProvideHttpPromiseClients,
 	private val okHttpClients: ProvideOkHttpClients,
 	private val jsonTranslator: TranslateJson,
+	private val stringResources: GetStringResources,
 ) : LiveServerConnection, RemoteLibraryAccess
 {
 	companion object {
@@ -61,8 +63,14 @@ class LiveSubsonicConnection(
 		private const val imageFormat = "jpg"
 		private const val musicFormat = "mp3"
 		private const val bitrate = "128"
-		private const val playlistItemKey = "playlists"
-		private val playlistItem = ItemId(playlistItemKey)
+
+		private const val playlistsItemKey = "playlists"
+		private const val playlistItemKey = "playlist"
+		private const val artistsItemKey = "artists"
+
+		val playlistsItem = ItemId(playlistsItemKey)
+		val artistsItem = ItemId(artistsItemKey)
+
 		private val checkedExpirationTime by lazy { Duration.standardSeconds(30) }
 	}
 
@@ -70,6 +78,15 @@ class LiveSubsonicConnection(
 		const val title = "title"
 		const val id = "id"
 		const val artist = "artist"
+	}
+
+	private val promisedRootItem by lazy {
+		Promise(
+			listOf(
+				Item(artistsItemKey, stringResources.artists, null),
+				Item(playlistsItemKey, stringResources.playlists, null),
+			)
+		)
 	}
 
 	private val subsonicApiUrl by lazy { subsonicConnectionDetails.baseUrl.withSubsonicApi() }
@@ -117,7 +134,12 @@ class LiveSubsonicConnection(
 	override fun promiseFilePropertyUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> =
 		Unit.toPromise()
 
-	override fun promiseItems(itemId: ItemId?): Promise<List<Item>> = itemId?.let(::ItemPromise) ?: RootItemPromise()
+	override fun promiseItems(itemId: ItemId?): Promise<List<Item>> = when (itemId) {
+		null -> promisedRootItem
+		artistsItem -> RootIndexPromise()
+		playlistsItem -> RootPlaylistsPromise()
+		else -> ItemPromise(itemId)
+	}
 
 	override fun promiseAudioPlaylistPaths(): Promise<List<String>> = Promise(emptyList())
 
@@ -270,7 +292,7 @@ class LiveSubsonicConnection(
 		override fun respond(resolution: SubsonicIndexesLastModifiedResponse?): Long? = resolution?.indexes?.lastModified
 	}
 
-	private inner class RootItemPromise :
+	private inner class RootIndexPromise :
 		Promise.Proxy<List<Item>>(),
 		PromisedResponse<SubsonicIndexesResponse?, List<Item>>
 	{
@@ -319,6 +341,31 @@ class LiveSubsonicConnection(
 				if (cs.isCancelled) throw itemParsingCancelledException()
 
 				Item(it.id, it.name, playlistId = null)
+			} ?: emptyList()
+		}
+
+		private fun itemParsingCancelledException() = CancellationException("Item parsing was cancelled.")
+	}
+
+	private inner class RootPlaylistsPromise :
+		Promise.Proxy<List<Item>>(),
+		PromisedResponse<SubsonicPlaylistsResponse?, List<Item>>
+	{
+		init {
+			proxy(
+				promiseResponse("getPlaylists")
+					.also(::doCancel)
+					.promiseSubsonicResponse<SubsonicPlaylistsResponse>()
+					.also(::doCancel)
+					.eventually(this)
+			)
+		}
+
+		override fun promiseResponse(response: SubsonicPlaylistsResponse?): Promise<List<Item>> = ThreadPools.compute.preparePromise { cs ->
+			response?.playlists?.playlist?.map {
+				if (cs.isCancelled) throw itemParsingCancelledException()
+
+				Item(playlistItemKey, it.name, PlaylistId(it.id))
 			} ?: emptyList()
 		}
 
@@ -458,6 +505,16 @@ class LiveSubsonicConnection(
 	@Keep
 	private class SubsonicIndexesResponse(
 		val indexes: SubsonicIndexResponse
+	)
+
+	@Keep
+	private class SubsonicPlaylistResponse(
+		val playlist: List<SubsonicNamedItem>,
+	)
+
+	@Keep
+	private class SubsonicPlaylistsResponse(
+		val playlists: SubsonicPlaylistResponse
 	)
 
 	@Keep
