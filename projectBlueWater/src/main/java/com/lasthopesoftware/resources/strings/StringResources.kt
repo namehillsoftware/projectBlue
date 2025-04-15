@@ -32,6 +32,8 @@ class StringResources(private val context: Context): GetStringResources {
 	override val subsonic by lazyString(R.string.subsonic)
 	override val mediaCenter by lazyString(R.string.media_center)
 	override val changeServerType by lazyString(R.string.change_server_type)
+	override val artists by lazyString(R.string.artists)
+	override val playlists by lazyString(R.string.playlists)
 
 	private fun lazyString(@StringRes stringResourceId: Int) = lazy { context.getString(stringResourceId) }
 }

@@ -32,6 +32,7 @@ class WhenCheckingAuthentication {
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
 			JsonEncoderDecoder,
+			mockk(),
 		)
 		access.promiseIsReadOnly().toExpiringFuture().get()
 	}

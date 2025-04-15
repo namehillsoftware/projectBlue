@@ -105,6 +105,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 							okHttpClients,
 							okHttpClients,
 							JsonEncoderDecoder,
+							stringResources,
 						),
 						audioCacheStreamSupplier,
 					),

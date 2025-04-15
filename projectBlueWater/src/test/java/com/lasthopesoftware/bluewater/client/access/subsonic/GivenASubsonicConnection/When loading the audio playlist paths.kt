@@ -32,6 +32,7 @@ class `When loading the audio playlist paths` {
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
 			JsonEncoderDecoder,
+			mockk(),
 		)
 	}
 

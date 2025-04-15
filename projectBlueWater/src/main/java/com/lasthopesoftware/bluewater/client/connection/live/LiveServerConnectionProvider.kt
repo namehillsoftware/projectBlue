@@ -13,6 +13,7 @@ import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.network.LookupActiveNetwork
 import com.lasthopesoftware.resources.strings.EncodeToBase64
+import com.lasthopesoftware.resources.strings.GetStringResources
 import com.lasthopesoftware.resources.strings.TranslateJson
 import com.namehillsoftware.handoff.promises.Promise
 import java.net.URL
@@ -27,6 +28,7 @@ class LiveServerConnectionProvider(
 	private val httpClients: ProvideHttpPromiseClients,
 	private val okHttpClients: ProvideOkHttpClients,
 	private val jsonTranslator: TranslateJson,
+	private val stringResources: GetStringResources,
 ) : ProvideLiveServerConnection {
 	override fun promiseLiveServerConnection(libraryId: LibraryId): Promise<LiveServerConnection?> =
 		if (activeNetwork.isNetworkActive) {
@@ -122,7 +124,13 @@ class LiveServerConnectionProvider(
 					fun testUrls(): Promise<LiveServerConnection?> {
 						if (cp.isCancelled) return Promise.empty()
 						val serverConnection = subsonicConnectionDetails.poll() ?: return Promise.empty()
-						val potentialConnection = LiveSubsonicConnection(serverConnection, httpClients, okHttpClients, jsonTranslator)
+						val potentialConnection = LiveSubsonicConnection(
+							serverConnection,
+							httpClients,
+							okHttpClients,
+							jsonTranslator,
+							stringResources,
+						)
 						return potentialConnection
 							.promiseIsConnectionPossible()
 							.also(cp::doCancel)

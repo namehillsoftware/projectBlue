@@ -10,6 +10,12 @@ interface GetStringResources {
     val loading: String
 		get() = ""
 
+	val artists: String
+		get() = ""
+
+	val playlists: String
+		get() = ""
+
 	val unknownArtist: String
 		get() = ""
 

@@ -62,6 +62,7 @@ class `When Cancelling During Lookup` {
 			},
 			mockk(),
 			JsonEncoderDecoder,
+			mockk(),
 		)
 
 		val urlScan = urlScanner.promiseLiveServerConnection(LibraryId(35))

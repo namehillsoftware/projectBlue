@@ -312,6 +312,7 @@ class `When getting the file string list` {
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
 			JsonEncoderDecoder,
+			mockk(),
 		)
 	}
 

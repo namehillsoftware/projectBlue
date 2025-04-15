@@ -31,6 +31,7 @@ class WhenReceivingThePromisedProgramVersion {
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
 			JsonEncoderDecoder,
+			mockk(),
 		)
 		access.promiseServerVersion().toExpiringFuture().get()
 	}

@@ -63,6 +63,7 @@ class `When Cancelling During Connection Test` {
 			},
 			mockk(),
 			JsonEncoderDecoder,
+			mockk(),
 		)
 
 		val urlScan = urlScanner.promiseLiveServerConnection(LibraryId(35))

@@ -313,6 +313,7 @@ class `When getting files` {
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
 			JsonEncoderDecoder,
+			mockk(),
 		)
 	}
 

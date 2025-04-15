@@ -49,6 +49,7 @@ class `When Downloading a File` {
 			}),
 			mockk(),
 			JsonEncoderDecoder,
+			mockk(),
 		)
 
 		downloader.promiseFile(ServiceFile("69c8a22b41604844a698c2a6bb9635c2")).toExpiringFuture().get()

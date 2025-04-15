@@ -205,6 +205,7 @@ object ApplicationDependenciesContainer {
 							okHttpClients,
 							okHttpClients,
 							JsonEncoderDecoder,
+							stringResources,
 						),
 						audioCacheStreamSupplier,
 					),

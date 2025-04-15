@@ -39,6 +39,7 @@ class WhenReceivingThePromisedProgramVersion {
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
 			JsonEncoderDecoder,
+			mockk(),
 		)
 
 		connection.promiseServerVersion().toExpiringFuture()[100, TimeUnit.MILLISECONDS]

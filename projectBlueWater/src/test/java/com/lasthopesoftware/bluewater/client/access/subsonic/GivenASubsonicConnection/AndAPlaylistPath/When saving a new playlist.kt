@@ -39,6 +39,7 @@ class `When saving a new playlist` {
 				},
 				mockk(),
 				JsonEncoderDecoder,
+				mockk(),
 			)
 		)
 	}

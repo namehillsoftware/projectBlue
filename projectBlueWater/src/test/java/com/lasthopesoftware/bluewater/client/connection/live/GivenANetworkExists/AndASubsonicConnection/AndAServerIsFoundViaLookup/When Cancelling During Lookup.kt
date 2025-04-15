@@ -41,6 +41,7 @@ class `When Cancelling During Lookup` {
 			mockk(),
 			mockk(),
 			JsonEncoderDecoder,
+			mockk(),
 		)
 
 		val promisedConnection = connectionProvider.promiseLiveServerConnection(LibraryId(55))
