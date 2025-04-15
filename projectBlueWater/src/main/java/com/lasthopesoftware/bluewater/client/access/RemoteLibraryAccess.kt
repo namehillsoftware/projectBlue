@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.access
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
+import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
 import com.namehillsoftware.handoff.promises.Promise
@@ -17,7 +18,7 @@ interface RemoteLibraryAccess {
 		isFormatted: Boolean
 	): Promise<Unit>
 
-	fun promiseItems(itemId: ItemId?): Promise<List<IItem>>
+	fun promiseItems(itemId: KeyedIdentifier?): Promise<List<IItem>>
 	fun promiseAudioPlaylistPaths(): Promise<List<String>>
 	fun promiseStoredPlaylist(playlistPath: String, playlist: List<ServiceFile>): Promise<*>
 	fun promiseIsReadOnly(): Promise<Boolean>
