@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnecti
 
 import com.lasthopesoftware.TestMcwsUrl
 import com.lasthopesoftware.TestUrl
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
@@ -56,7 +57,7 @@ class WhenGettingTheItems {
 		)
 	}
 
-	private var items = emptyList<Item>()
+	private var items = emptyList<IItem>()
 
 	@BeforeAll
 	fun act() {
