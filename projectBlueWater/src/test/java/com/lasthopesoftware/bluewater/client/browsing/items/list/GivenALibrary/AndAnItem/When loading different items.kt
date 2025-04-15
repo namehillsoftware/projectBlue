@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list.GivenALibrary.AndAnItem
 
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
@@ -21,7 +22,7 @@ class `When loading different items` {
 		private const val secondItemId = "210"
 	}
 
-	private val expectedItems = listOf(
+	private val expectedItems = listOf<IItem>(
         Item("792"),
         Item("175"),
         Item("631"),

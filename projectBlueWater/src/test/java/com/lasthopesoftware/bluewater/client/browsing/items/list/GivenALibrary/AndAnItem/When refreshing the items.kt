@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list.GivenALibrary.AndAnItem
 
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
@@ -20,7 +21,7 @@ class `When refreshing the items` {
 		private const val itemId = "259"
 	}
 
-	private val expectedItems = listOf(
+	private val expectedItems = listOf<IItem>(
         Item("980"),
         Item("313"),
         Item("502"),
