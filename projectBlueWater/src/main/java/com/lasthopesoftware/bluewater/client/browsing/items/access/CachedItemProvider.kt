@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.access
 
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRevisions
@@ -11,14 +11,14 @@ import com.namehillsoftware.handoff.promises.Promise
 class CachedItemProvider(
 	private val inner: ProvideItems,
 	private val revisions: CheckRevisions,
-	private val itemFunctionCache: CachePromiseFunctions<Triple<LibraryId, ItemId?, Long>, List<Item>> = companionCache,
+	private val itemFunctionCache: CachePromiseFunctions<Triple<LibraryId, ItemId?, Long>, List<IItem>> = companionCache,
 ) : ProvideItems {
 
 	companion object {
-		private val companionCache = LruPromiseCache<Triple<LibraryId, ItemId?, Long>, List<Item>>(20)
+		private val companionCache = LruPromiseCache<Triple<LibraryId, ItemId?, Long>, List<IItem>>(20)
 	}
 
-	override fun promiseItems(libraryId: LibraryId, itemId: ItemId?): Promise<List<Item>> =
+	override fun promiseItems(libraryId: LibraryId, itemId: ItemId?): Promise<List<IItem>> =
 		revisions
 			.promiseRevision(libraryId)
 			.eventually { revision ->

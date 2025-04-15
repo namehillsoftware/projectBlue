@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.access.subsonic.GivenASubsonicConnection.AndPlaylistsId
 
 import com.lasthopesoftware.TestUrl
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
@@ -76,7 +77,7 @@ class `When getting items` {
 		)
 	}
 
-	private var items = emptyList<Item>()
+	private var items = emptyList<IItem>()
 
 	@BeforeAll
 	fun act() {

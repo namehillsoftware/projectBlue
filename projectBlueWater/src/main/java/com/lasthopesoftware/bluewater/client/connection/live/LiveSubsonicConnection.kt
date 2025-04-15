@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
@@ -82,7 +83,7 @@ class LiveSubsonicConnection(
 
 	private val promisedRootItem by lazy {
 		Promise(
-			listOf(
+			listOf<IItem>(
 				Item(artistsItemKey, stringResources.artists, null),
 				Item(playlistsItemKey, stringResources.playlists, null),
 			)
@@ -134,7 +135,7 @@ class LiveSubsonicConnection(
 	override fun promiseFilePropertyUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> =
 		Unit.toPromise()
 
-	override fun promiseItems(itemId: ItemId?): Promise<List<Item>> = when (itemId) {
+	override fun promiseItems(itemId: ItemId?): Promise<List<IItem>> = when (itemId) {
 		null -> promisedRootItem
 		artistsItem -> RootIndexPromise()
 		playlistsItem -> RootPlaylistsPromise()
@@ -293,8 +294,8 @@ class LiveSubsonicConnection(
 	}
 
 	private inner class RootIndexPromise :
-		Promise.Proxy<List<Item>>(),
-		PromisedResponse<SubsonicIndexesResponse?, List<Item>>
+		Promise.Proxy<List<IItem>>(),
+		PromisedResponse<SubsonicIndexesResponse?, List<IItem>>
 	{
 		init {
 			proxy(
@@ -306,7 +307,7 @@ class LiveSubsonicConnection(
 			)
 		}
 
-		override fun promiseResponse(response: SubsonicIndexesResponse?): Promise<List<Item>> = ThreadPools.compute.preparePromise { cs ->
+		override fun promiseResponse(response: SubsonicIndexesResponse?): Promise<List<IItem>> = ThreadPools.compute.preparePromise { cs ->
 			response?.indexes?.index?.flatMap {
 				it.artist.map { artist ->
 					if (cs.isCancelled) throw itemParsingCancelledException()
@@ -320,8 +321,8 @@ class LiveSubsonicConnection(
 	}
 
 	private inner class ItemPromise(itemId: ItemId) :
-		Promise.Proxy<List<Item>>(),
-		PromisedResponse<SubsonicDirectoryRoot?, List<Item>>
+		Promise.Proxy<List<IItem>>(),
+		PromisedResponse<SubsonicDirectoryRoot?, List<IItem>>
 	{
 		init {
 			proxy(
@@ -336,7 +337,7 @@ class LiveSubsonicConnection(
 			)
 		}
 
-		override fun promiseResponse(response: SubsonicDirectoryRoot?): Promise<List<Item>> = ThreadPools.compute.preparePromise { cs ->
+		override fun promiseResponse(response: SubsonicDirectoryRoot?): Promise<List<IItem>> = ThreadPools.compute.preparePromise { cs ->
 			response?.directory?.child?.filter { it.isDir }?.map {
 				if (cs.isCancelled) throw itemParsingCancelledException()
 
@@ -348,8 +349,8 @@ class LiveSubsonicConnection(
 	}
 
 	private inner class RootPlaylistsPromise :
-		Promise.Proxy<List<Item>>(),
-		PromisedResponse<SubsonicPlaylistsResponse?, List<Item>>
+		Promise.Proxy<List<IItem>>(),
+		PromisedResponse<SubsonicPlaylistsResponse?, List<IItem>>
 	{
 		init {
 			proxy(
@@ -361,7 +362,7 @@ class LiveSubsonicConnection(
 			)
 		}
 
-		override fun promiseResponse(response: SubsonicPlaylistsResponse?): Promise<List<Item>> = ThreadPools.compute.preparePromise { cs ->
+		override fun promiseResponse(response: SubsonicPlaylistsResponse?): Promise<List<IItem>> = ThreadPools.compute.preparePromise { cs ->
 			response?.playlists?.playlist?.map {
 				if (cs.isCancelled) throw itemParsingCancelledException()
 

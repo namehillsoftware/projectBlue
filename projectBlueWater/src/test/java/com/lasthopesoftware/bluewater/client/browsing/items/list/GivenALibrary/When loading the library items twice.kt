@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list.GivenALibrary
 
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -16,7 +17,7 @@ import org.junit.jupiter.api.Test
 private const val libraryId = 256
 
 class `When loading the library items twice` {
-	private val expectedItems = listOf(
+	private val expectedItems = listOf<IItem>(
 		Item("330"),
 		Item("686"),
 		Item("186"),
