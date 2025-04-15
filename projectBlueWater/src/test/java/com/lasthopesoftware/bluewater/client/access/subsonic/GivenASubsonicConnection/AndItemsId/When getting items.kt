@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.access.subsonic.GivenASubsonicConnection.AndNoId
+package com.lasthopesoftware.bluewater.client.access.subsonic.GivenASubsonicConnection.AndItemsId
 
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withSubsonicApi
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
-import com.lasthopesoftware.resources.strings.FakeStringResources
 import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -30,51 +29,6 @@ class `When getting items` {
 					""".encodeToByteArray().inputStream()
 				)
 			}
-
-			mapResponse(TestUrl.withSubsonicApi().addPath("getPlaylists")) {
-				PassThroughHttpResponse(
-					200,
-					"OK",
-					"""
-{
-  "subsonic-response": {
-    "status": "ok",
-    "version": "1.16.1",
-    "type": "navidrome",
-    "serverVersion": "0.53.3 (13af8ed4)",
-    "openSubsonic": true,
-    "playlists": {
-      "playlist": [
-        {
-          "id": "14f6b170-3eb1-4e17-995a-733cb23f5c9f",
-          "name": "Recently Played",
-          "comment": "Recently played tracks",
-          "songCount": 1,
-          "duration": 147,
-          "public": false,
-          "owner": "navidrome",
-          "created": "2025-02-10T04:33:31.506347198Z",
-          "changed": "2025-04-15T02:27:28.667682041Z",
-          "coverArt": "pl-14f6b170-3eb1-4e17-995a-733cb23f5c9f_67a9824c"
-        },
-        {
-          "id": "37ff086d-a35b-4888-9cd5-73d6db7b5e7f",
-          "name": "Test",
-          "songCount": 2,
-          "duration": 226,
-          "public": true,
-          "owner": "navidrome",
-          "created": "2025-02-10T04:26:50.999472737Z",
-          "changed": "2025-02-10T04:27:23.88859635Z",
-          "coverArt": "pl-37ff086d-a35b-4888-9cd5-73d6db7b5e7f_67a9802b"
-        }
-      ]
-    }
-  }
-}
-					""".encodeToByteArray().inputStream()
-				)
-			}
 		}
 
 		LiveSubsonicConnection(
@@ -82,10 +36,7 @@ class `When getting items` {
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
 			JsonEncoderDecoder,
-			FakeStringResources(
-				artists = "Artistes",
-				playlists = "Playalists"
-			)
+			mockk(),
 		)
 	}
 
@@ -93,14 +44,20 @@ class `When getting items` {
 
 	@BeforeAll
 	fun act() {
-		items = mut.promiseItems(null).toExpiringFuture().get()!!
+		items = mut.promiseItems(LiveSubsonicConnection.artistsItem).toExpiringFuture().get()!!
 	}
 
 	@Test
 	fun `then the items are correct`() {
 		assertThat(items).containsExactly(
-			Item(LiveSubsonicConnection.artistsItem.id, value = "Artistes", playlistId = null),
-			Item(LiveSubsonicConnection.playlistsItem.id, value = "Playalists", playlistId = null),
+			Item(key = "3ad1c4d579750f99ecb367ddebe46590", value = "22-20s", playlistId = null),
+			Item(key = "2f3317c0780aff2f6d6bdca89f4b9822", value = "22‐20s", playlistId = null),
+			Item(key = "cf70c8e7363ca943a5b80d2b95517113", value = "3 Doors Down", playlistId = null),
+			Item(key = "9dfcd5e558dfa04aaf37f137a1d9d3e5", value = "311", playlistId = null),
+			Item(key = "d27e9ceac68a17257c85a4d433e7a4c8", value = "50 Cent", playlistId = null),
+			Item(key = "563727e73731392260da4a787f534387", value = "A.A. Bondy", playlistId = null),
+			Item(key = "38ec9eabef4778ac77923ad3a59a23f9", value = "Gustavo Santaolalla", playlistId = null),
+			Item(key = "03b645ef2100dfc42fa9785ea3102295", value = "Various Artists", playlistId = null),
 		)
 	}
 }

@@ -145,4 +145,6 @@
     <string name="change_server_type">Change Server Type</string>
     <string name="media_center">JRiver Media Center</string>
     <string name="url">URL</string>
+    <string name="artists">Artists</string>
+    <string name="playlists">Playlists</string>
 </resources>

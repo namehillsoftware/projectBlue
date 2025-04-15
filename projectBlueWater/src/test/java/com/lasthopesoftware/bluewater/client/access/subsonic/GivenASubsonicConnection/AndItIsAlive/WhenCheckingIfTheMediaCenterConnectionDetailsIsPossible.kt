@@ -37,6 +37,7 @@ class WhenCheckingIfTheMediaCenterConnectionDetailsIsPossible {
 			},
 			mockk(),
 			JsonEncoderDecoder,
+			mockk(),
 		).promiseIsConnectionPossible().toExpiringFuture().get()!!
 	}
 

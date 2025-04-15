@@ -39,6 +39,7 @@ class WhenGettingFileProperties {
 			),
 			mockk(),
 			JsonEncoderDecoder,
+			mockk(),
 		)
 
 		connection

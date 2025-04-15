@@ -42,6 +42,7 @@ class WhenGettingTheItems {
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
 			JsonEncoderDecoder,
+			mockk(),
 		)
 	}
 
