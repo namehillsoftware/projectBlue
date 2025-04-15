@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.Normalize
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
+import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
@@ -142,7 +143,10 @@ class LiveMediaCenterConnection(
 				}
 			}
 
-	override fun promiseItems(itemId: ItemId?): Promise<List<IItem>> = ItemFilePromise(itemId)
+	override fun promiseItems(itemId: KeyedIdentifier?): Promise<List<IItem>> = itemId
+		?.let { it as? ItemId }
+		?.let(::ItemFilePromise)
+		.keepPromise(emptyList())
 
 	override fun promiseAudioPlaylistPaths(): Promise<List<String>> = Promise.Proxy { cp ->
 		promiseResponse("Playlists/List", "IncludeMediaTypes=1")
