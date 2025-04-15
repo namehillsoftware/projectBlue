@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.FileResponses
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
@@ -141,7 +142,7 @@ class LiveMediaCenterConnection(
 				}
 			}
 
-	override fun promiseItems(itemId: ItemId?): Promise<List<Item>> = ItemFilePromise(itemId)
+	override fun promiseItems(itemId: ItemId?): Promise<List<IItem>> = ItemFilePromise(itemId)
 
 	override fun promiseAudioPlaylistPaths(): Promise<List<String>> = Promise.Proxy { cp ->
 		promiseResponse("Playlists/List", "IncludeMediaTypes=1")
@@ -405,7 +406,7 @@ class LiveMediaCenterConnection(
 
 	private inner class ItemFilePromise(
 		itemId: ItemId?,
-	) : Promise.Proxy<List<Item>>(), PromisedResponse<Document, List<Item>> {
+	) : Promise.Proxy<List<IItem>>(), PromisedResponse<Document, List<IItem>> {
 		init {
 			val promisedResponse = itemId
 				?.run {
@@ -429,7 +430,7 @@ class LiveMediaCenterConnection(
 			)
 		}
 
-		override fun promiseResponse(document: Document): Promise<List<Item>> = ThreadPools.compute.preparePromise { cs ->
+		override fun promiseResponse(document: Document): Promise<List<IItem>> = ThreadPools.compute.preparePromise { cs ->
 			val body = document.getElementsByTag("Response").firstOrNull()
 				?: throw IOException("Response tag not found")
 
