@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAnItem
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -34,7 +33,7 @@ class `When loading the files twice` {
 		val deferredFiles = DeferredPromise(expectedFiles)
 
 		val itemProvider = mockk<ProvideItemFiles> {
-			every { promiseFiles(LibraryId(libraryId), ItemId(itemId), FileListParameters.Options.None) } returns listOf(
+			every { promiseFiles(LibraryId(libraryId), ItemId(itemId)) } returns listOf(
 				ServiceFile("278"),
 				ServiceFile("145"),
 				ServiceFile("382"),

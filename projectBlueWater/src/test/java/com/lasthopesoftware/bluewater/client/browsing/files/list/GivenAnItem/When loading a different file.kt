@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAnItem
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -41,8 +40,7 @@ class `When loading a different file` {
             every {
                 promiseFiles(
                     LibraryId(libraryId),
-                    ItemId(firstItemId),
-                    FileListParameters.Options.None
+                    ItemId(firstItemId)
                 )
             } returns listOf(
                 ServiceFile("278"),
@@ -54,10 +52,9 @@ class `When loading a different file` {
 
 			every {
 				promiseFiles(
-					LibraryId(libraryId),
-					ItemId(secondItemId),
-					FileListParameters.Options.None
-				)
+                    LibraryId(libraryId),
+                    ItemId(secondItemId)
+                )
 			} returns deferredFiles
         }
 
