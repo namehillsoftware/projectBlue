@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAnItem
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -36,28 +35,6 @@ class `When loading a different file` {
 	private val mut by lazy {
 		val deferredFiles = DeferredPromise(expectedFiles)
 
-		val itemProvider = mockk<ProvideItemFiles> {
-            every {
-                promiseFiles(
-                    LibraryId(libraryId),
-                    ItemId(firstItemId)
-                )
-            } returns listOf(
-                ServiceFile("278"),
-                ServiceFile("145"),
-                ServiceFile("382"),
-                ServiceFile("561"),
-                ServiceFile("529"),
-            ).toPromise()
-
-			every {
-				promiseFiles(
-                    LibraryId(libraryId),
-                    ItemId(secondItemId)
-                )
-			} returns deferredFiles
-        }
-
 		val storedItemAccess = mockk<AccessStoredItems> {
             every { isItemMarkedForSync(any(), any<Item>()) } returns false.toPromise()
         }
@@ -65,7 +42,27 @@ class `When loading a different file` {
 		Pair(
 			deferredFiles,
 			FileListViewModel(
-				itemProvider,
+				mockk {
+					every {
+						promiseFiles(
+							LibraryId(libraryId),
+							ItemId(firstItemId)
+						)
+					} returns listOf(
+						ServiceFile("278"),
+						ServiceFile("145"),
+						ServiceFile("382"),
+						ServiceFile("561"),
+						ServiceFile("529"),
+					).toPromise()
+
+					every {
+						promiseFiles(
+							LibraryId(libraryId),
+							ItemId(secondItemId)
+						)
+					} returns deferredFiles
+				},
 				storedItemAccess,
 			)
 		)

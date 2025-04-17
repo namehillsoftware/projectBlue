@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAnItem
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -15,24 +14,22 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class WhenLoadingTheFiles {
+class `When loading the files` {
 
 	private val viewModel by lazy {
-		val itemProvider = mockk<ProvideItemFiles>().apply {
-			every { promiseFiles(LibraryId(516), ItemId("585")) } returns listOf(
-				ServiceFile("471"),
-				ServiceFile("469"),
-				ServiceFile("102"),
-				ServiceFile("890"),
-			).toPromise()
-		}
-
 		val storedItemAccess = mockk<AccessStoredItems>().apply {
 			every { isItemMarkedForSync(any(), any<Item>()) } returns false.toPromise()
 		}
 
 		FileListViewModel(
-            itemProvider,
+			mockk {
+				every { promiseFiles(LibraryId(516), ItemId("585")) } returns listOf(
+					ServiceFile("471"),
+					ServiceFile("469"),
+					ServiceFile("102"),
+					ServiceFile("890"),
+				).toPromise()
+			},
             storedItemAccess,
 		)
 	}

@@ -1,11 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.libraries
 
 import com.lasthopesoftware.bluewater.ApplicationDependencies
-import com.lasthopesoftware.bluewater.client.browsing.files.access.CachedItemFileProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.DelegatingItemFileProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.ItemFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ProvideFileStringListForItem
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
@@ -37,7 +33,6 @@ interface LibraryConnectionDependents {
 	val revisionProvider: CheckRevisions
 	val filePropertiesStorage: FilePropertyStorage
 	val itemProvider: ProvideItems
-	val itemFileProvider: ProvideItemFiles
 	val libraryFilesProvider: LibraryFileProvider
 	val playbackLibraryItems: PlaybackLibraryItems
 	val pollForConnections: PollForLibraryConnections
@@ -88,13 +83,6 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 
 	override val itemStringListProvider by lazy { ItemStringListProvider(application.libraryConnectionProvider) }
 
-	override val itemFileProvider: ProvideItemFiles by lazy {
-		CachedItemFileProvider(
-			ItemFileProvider(itemStringListProvider),
-			revisionProvider
-		)
-	}
-
 	override val libraryFilesProvider by lazy { LibraryFileProvider(application.libraryConnectionProvider) }
 
 	override val playbackLibraryItems by lazy { ItemPlayback(itemStringListProvider, application.playbackServiceController) }
@@ -113,13 +101,6 @@ class RetryingLibraryConnectionRegistry(inner: LibraryConnectionDependents) : Li
 		DelegatingItemProvider(
 			inner.itemProvider,
 			connectionLostRetryPolicy
-		)
-	}
-
-	override val itemFileProvider by lazy {
-		DelegatingItemFileProvider(
-			inner.itemFileProvider,
-			connectionLostRetryPolicy,
 		)
 	}
 

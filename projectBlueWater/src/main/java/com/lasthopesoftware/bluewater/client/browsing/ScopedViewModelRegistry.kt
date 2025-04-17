@@ -30,7 +30,7 @@ class ScopedViewModelRegistry(
 
 	override val fileListViewModel by viewModelStoreOwner.buildViewModelLazily {
         FileListViewModel(
-            itemFileProvider,
+            libraryFilesProvider,
             storedItemAccess,
         )
 	}

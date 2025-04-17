@@ -2,11 +2,13 @@ package com.lasthopesoftware.bluewater.client.browsing.remote
 
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
-import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
+import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.keepPromise
@@ -17,7 +19,6 @@ class MediaItemsBrowser(
 	private val selectedLibraryIdProvider: ProvideSelectedLibraryId,
 	private val itemProvider: ProvideItems,
 	private val fileProvider: ProvideLibraryFiles,
-	private val itemFileProvider: ProvideItemFiles,
 	private val mediaItemServiceFileLookup: GetMediaItemsFromServiceFiles,
 ) : BrowseMediaItems {
 	companion object {
@@ -25,7 +26,12 @@ class MediaItemsBrowser(
 			MediaBrowserCompat.MediaItem(
 				MediaDescriptionCompat
 					.Builder()
-					.setMediaId(RemoteBrowserService.itemFileMediaIdPrefix + RemoteBrowserService.mediaIdDelimiter + item.key)
+					.setMediaId(
+						(when (item) {
+							is Item -> RemoteBrowserService.itemFileMediaIdPrefix
+							is Playlist -> RemoteBrowserService.playlistFileMediaIdPrefix
+							else -> ""
+						}) + RemoteBrowserService.mediaIdDelimiter + item.key)
 					.setTitle(item.value)
 					.build(),
 				MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
@@ -41,7 +47,7 @@ class MediaItemsBrowser(
 						.eventually { items ->
 							if (items.any()) items.map(::toMediaItem).toPromise()
 							else {
-								itemFileProvider
+								fileProvider
 									.promiseFiles(libraryId, itemId)
 									.eventually<Collection<MediaBrowserCompat.MediaItem>> { files ->
 										Promise.whenAll(files.map { f -> mediaItemServiceFileLookup.promiseMediaItem(libraryId, f).then { mi -> Pair(f, mi) } })
@@ -75,6 +81,44 @@ class MediaItemsBrowser(
 				}
 				.keepPromise(emptyList())
 		}
+
+	override fun promiseItems(playlistId: PlaylistId): Promise<Collection<MediaBrowserCompat.MediaItem>> =
+		selectedLibraryIdProvider.promiseSelectedLibraryId().eventually { maybeId ->
+			maybeId
+				?.let { libraryId ->
+					fileProvider
+						.promiseFiles(libraryId, playlistId)
+						.eventually<Collection<MediaBrowserCompat.MediaItem>> { files ->
+							Promise.whenAll(files.map { f -> mediaItemServiceFileLookup.promiseMediaItem(libraryId, f).then { mi -> Pair(f, mi) } })
+								.then { pairs ->
+									val mediaItemsLookup = pairs.associate { p -> p }
+									files.mapIndexedNotNull { i, f ->
+										mediaItemsLookup[f]?.let { mediaItem ->
+											val description = mediaItem.description
+											MediaBrowserCompat.MediaItem(
+												MediaDescriptionCompat
+													.Builder()
+													.setMediaId(
+														arrayOf(
+															RemoteBrowserService.playlistFileMediaIdPrefix,
+															playlistId.id,
+															i.toString()
+														).joinToString(RemoteBrowserService.mediaIdDelimiter.toString()))
+													.setDescription(description.description)
+													.setExtras(description.extras)
+													.setTitle(description.title)
+													.setSubtitle(description.subtitle)
+													.build(),
+												MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
+											)
+										}
+									}
+								}
+						}
+				}
+				.keepPromise(emptyList())
+		}
+
 
 	override fun promiseLibraryItems(): Promise<List<MediaBrowserCompat.MediaItem>> =
 		selectedLibraryIdProvider.promiseSelectedLibraryId().eventually { maybeId ->

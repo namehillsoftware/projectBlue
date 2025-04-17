@@ -1,10 +1,11 @@
-package com.lasthopesoftware.bluewater.client.browsing.remote.GivenAnItem.AndItDoesNotHaveChildItems
+package com.lasthopesoftware.bluewater.client.browsing.remote.GivenAPlaylist
 
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.remote.GetMediaItemsFromServiceFiles
@@ -21,18 +22,21 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class `When Getting Items` {
 	companion object {
-		private val serviceFileIds by lazy { listOf("549", "140", "985", "411", "565", "513", "485", "621") }
+		private const val libraryId = 720
+		private const val playlistId = "IDBgoCx"
+
+		private val serviceFileIds by lazy { listOf("135", "399", "304", "731") }
 
 		private val expectedMediaItems by lazy {
 			serviceFileIds.indices.map { i ->
 				MediaMetadataCompat.Builder()
 					.apply {
-						putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, "it:743:$i")
-						putString(MediaMetadataCompat.METADATA_KEY_ARTIST, "eat")
-						putString(MediaMetadataCompat.METADATA_KEY_ALBUM, "load")
-						putString(MediaMetadataCompat.METADATA_KEY_TITLE, "combine")
-						putLong(MediaMetadataCompat.METADATA_KEY_DURATION, 268)
-						putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, 240)
+						putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, "pl:$playlistId:$i")
+						putString(MediaMetadataCompat.METADATA_KEY_ARTIST, "Ultricesmaximus")
+						putString(MediaMetadataCompat.METADATA_KEY_ALBUM, "Pellentesquedictum")
+						putString(MediaMetadataCompat.METADATA_KEY_TITLE, "Nunceu")
+						putLong(MediaMetadataCompat.METADATA_KEY_DURATION, 709)
+						putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, 908)
 					}
 					.build()
 					.let { metadata ->
@@ -46,22 +50,22 @@ class `When Getting Items` {
 
 		private val mediaItems by lazy {
 			val selectedLibraryId = mockk<ProvideSelectedLibraryId>()
-			every { selectedLibraryId.promiseSelectedLibraryId() } returns Promise(LibraryId(22))
+			every { selectedLibraryId.promiseSelectedLibraryId() } returns Promise(LibraryId(libraryId))
 
 			val itemsProvider = mockk<ProvideItems>()
-			every { itemsProvider.promiseItems(LibraryId(22), ItemId("743")) } returns Promise(emptyList())
+			every { itemsProvider.promiseItems(LibraryId(libraryId), ItemId(playlistId)) } returns Promise(emptyList())
 
 			val serviceFiles = mockk<GetMediaItemsFromServiceFiles>()
 			for (id in serviceFileIds) {
-				every { serviceFiles.promiseMediaItem(LibraryId(22), ServiceFile(id)) } returns Promise(
+				every { serviceFiles.promiseMediaItem(LibraryId(libraryId), ServiceFile(id)) } returns Promise(
 					MediaMetadataCompat.Builder()
 						.apply {
 							putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, "sf:$id")
-							putString(MediaMetadataCompat.METADATA_KEY_ARTIST, "eat")
-							putString(MediaMetadataCompat.METADATA_KEY_ALBUM, "load")
-							putString(MediaMetadataCompat.METADATA_KEY_TITLE, "combine")
-							putLong(MediaMetadataCompat.METADATA_KEY_DURATION, 268)
-							putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, 240)
+							putString(MediaMetadataCompat.METADATA_KEY_ARTIST, "Ultricesmaximus")
+							putString(MediaMetadataCompat.METADATA_KEY_ALBUM, "Pellentesquedictum")
+							putString(MediaMetadataCompat.METADATA_KEY_TITLE, "Nunceu")
+							putLong(MediaMetadataCompat.METADATA_KEY_DURATION, 709)
+							putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, 908)
 						}
 						.build()
 						.let { metadata ->
@@ -77,7 +81,7 @@ class `When Getting Items` {
                 selectedLibraryId,
                 itemsProvider,
                 mockk {
-					every { promiseFiles(LibraryId(22), ItemId("743")) } returns Promise(
+					every { promiseFiles(LibraryId(libraryId), PlaylistId(playlistId)) } returns Promise(
 						serviceFileIds.map(::ServiceFile)
 					)
 				},
@@ -85,7 +89,7 @@ class `When Getting Items` {
 			)
 
 			mediaItemsBrowser
-				.promiseItems(ItemId("743"))
+				.promiseItems(PlaylistId(playlistId))
 				.toExpiringFuture()
 				.get()
 		}

@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.client.connection.libraries.RateLimitedFilePropertiesDependencies
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
@@ -36,7 +37,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		private const val contentStyleGrid = 2
 		const val serviceFileMediaIdPrefix = "sf"
 		const val itemFileMediaIdPrefix = "it"
-		private const val playlistFileMediaIdPrefix = "pl"
+		const val playlistFileMediaIdPrefix = "pl"
 		const val mediaIdDelimiter = ':'
 
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<RemoteBrowserService>()) }
@@ -83,7 +84,6 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 			selectedLibraryIdProvider,
 			libraryConnectionDependencies.itemProvider,
 			libraryConnectionDependencies.libraryFilesProvider,
-			libraryConnectionDependencies.itemFileProvider,
 			mediaItemServiceFileLookup
 		)
 	}
@@ -132,13 +132,11 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 			return
 		}
 
-		val promisedMediaItems = parentId
-			.takeIf { id -> id.startsWith(itemFileMediaIdPrefix) }
-			?.substring(3)
-			?.let { id ->
-				mediaItemBrowser.promiseItems(ItemId(id)).keepPromise(emptyList())
-			}
-			?: mediaItemBrowser.promiseLibraryItems().keepPromise(emptyList())
+		val promisedMediaItems = when {
+			parentId.startsWith(itemFileMediaIdPrefix) -> mediaItemBrowser.promiseItems(ItemId(parentId.substring(3)))
+			parentId.startsWith(playlistFileMediaIdPrefix) -> mediaItemBrowser.promiseItems(PlaylistId(parentId.substring(3)))
+			else -> mediaItemBrowser.promiseLibraryItems()
+		}
 
 		promisedMediaItems
 			.then { items -> result.sendResult(items.toMutableList()) }

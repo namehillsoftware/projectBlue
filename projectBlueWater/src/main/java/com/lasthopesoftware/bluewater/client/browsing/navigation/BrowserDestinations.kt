@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.navigation
 import android.os.Parcelable
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import kotlinx.parcelize.Parcelize
 
@@ -49,7 +49,7 @@ sealed interface BrowserLibraryDestination : LibraryDestination
 class LibraryScreen(override val libraryId: LibraryId) : BrowserLibraryDestination
 
 @Parcelize
-data class ItemScreen(override val libraryId: LibraryId, val item: Item) : BrowserLibraryDestination
+data class ItemScreen(override val libraryId: LibraryId, val item: IItem) : BrowserLibraryDestination
 
 @Parcelize
 class DownloadsScreen(override val libraryId: LibraryId) : BrowserLibraryDestination
