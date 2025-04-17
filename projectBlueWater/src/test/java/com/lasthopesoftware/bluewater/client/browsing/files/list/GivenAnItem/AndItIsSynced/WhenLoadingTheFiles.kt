@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAnItem.An
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -19,7 +18,7 @@ import org.junit.jupiter.api.Test
 class WhenLoadingTheFiles {
 	private val viewModel by lazy {
 		val itemProvider = mockk<ProvideItemFiles>().apply {
-			every { promiseFiles(LibraryId(516), ItemId("585"), FileListParameters.Options.None) } returns listOf(
+			every { promiseFiles(LibraryId(516), ItemId("585")) } returns listOf(
 				ServiceFile("471"),
 				ServiceFile("469"),
 				ServiceFile("102"),
