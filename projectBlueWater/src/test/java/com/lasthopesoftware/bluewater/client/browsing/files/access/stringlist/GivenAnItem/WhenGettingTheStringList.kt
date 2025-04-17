@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.GivenAnItem
 
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -26,7 +25,7 @@ class WhenGettingTheStringList {
 				})
 			}
 		)
-		itemStringListProvider.promiseFileStringList(LibraryId(14), ItemId("32"), FileListParameters.Options.None)
+		itemStringListProvider.promiseFileStringList(LibraryId(14), ItemId("32"))
 			.toExpiringFuture()
 			.get()
 	}
