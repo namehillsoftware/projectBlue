@@ -31,7 +31,9 @@ interface RemoteLibraryAccess {
 	fun promiseFiles(itemId: ItemId): Promise<List<ServiceFile>>
 	fun promiseFiles(playlistId: PlaylistId): Promise<List<ServiceFile>>
 	fun promiseFileStringList(itemId: ItemId? = null): Promise<String>
+	fun promiseFileStringList(playlistId: PlaylistId): Promise<String>
 	fun promiseShuffledFileStringList(itemId: ItemId? = null): Promise<String>
+	fun promiseShuffledFileStringList(playlistId: PlaylistId): Promise<String>
 	fun promiseImageBytes(serviceFile: ServiceFile): Promise<ByteArray>
 	fun promiseImageBytes(itemId: ItemId): Promise<ByteArray>
 }

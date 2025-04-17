@@ -1,6 +1,8 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.playlists
 
+import android.os.Parcelable
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
-import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue
+import kotlinx.parcelize.Parcelize
 
-class Playlist(key: String) : AbstractIntKeyStringValue(key), IItem
+@Parcelize
+data class Playlist(override val key: String, override val value: String? = null) :  IItem, Parcelable

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.access.subsonic.GivenASubsonicConnection
+package com.lasthopesoftware.bluewater.client.access.subsonic.GivenASubsonicConnection.AndAnItemId
 
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile

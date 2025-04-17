@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
@@ -165,7 +166,16 @@ class LiveSubsonicConnection(
 		?.cancelBackEventually(FileStringListUtilities::promiseSerializedFileStringList)
 		.keepPromise("")
 
-	override fun promiseShuffledFileStringList(itemId: ItemId?): Promise<String> = "".toPromise()
+	override fun promiseFileStringList(playlistId: PlaylistId): Promise<String> = PlaylistFilesPromise(playlistId)
+		.cancelBackEventually(FileStringListUtilities::promiseSerializedFileStringList)
+
+	override fun promiseShuffledFileStringList(itemId: ItemId?): Promise<String> = itemId
+		?.let(::ItemFilesPromise)
+		?.cancelBackEventually(FileStringListUtilities::promiseShuffledSerializedFileStringList)
+		.keepPromise("")
+
+	override fun promiseShuffledFileStringList(playlistId: PlaylistId): Promise<String> = PlaylistFilesPromise(playlistId)
+		.cancelBackEventually(FileStringListUtilities::promiseShuffledSerializedFileStringList)
 
 	override fun promiseFiles(): Promise<List<ServiceFile>> = Promise(emptyList())
 
@@ -365,7 +375,7 @@ class LiveSubsonicConnection(
 			response?.playlists?.playlist?.map {
 				if (cs.isCancelled) throw itemParsingCancelledException()
 
-				Item(playlistItemKey, it.name, PlaylistId(it.id))
+				Playlist(it.id, it.name)
 			} ?: emptyList()
 		}
 

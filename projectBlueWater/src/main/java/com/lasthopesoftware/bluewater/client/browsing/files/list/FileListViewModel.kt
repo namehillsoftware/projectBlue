@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -41,7 +40,7 @@ class FileListViewModel(
 		loadedLibraryId = libraryId
 
 		val promisedFilesUpdate = itemFileProvider
-			.promiseFiles(libraryId, item?.key?.let(::ItemId), FileListParameters.Options.None)
+			.promiseFiles(libraryId, item?.key?.let(::ItemId))
 			.then { f -> mutableFiles.value = f }
 
 		val promisedSyncUpdate = item

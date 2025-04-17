@@ -4,7 +4,6 @@ import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
@@ -43,7 +42,7 @@ class MediaItemsBrowser(
 							if (items.any()) items.map(::toMediaItem).toPromise()
 							else {
 								itemFileProvider
-									.promiseFiles(libraryId, itemId, FileListParameters.Options.None)
+									.promiseFiles(libraryId, itemId)
 									.eventually<Collection<MediaBrowserCompat.MediaItem>> { files ->
 										Promise.whenAll(files.map { f -> mediaItemServiceFileLookup.promiseMediaItem(libraryId, f).then { mi -> Pair(f, mi) } })
 											.then { pairs ->
@@ -57,7 +56,7 @@ class MediaItemsBrowser(
 																.setMediaId(
 																	arrayOf(
 																		RemoteBrowserService.itemFileMediaIdPrefix,
-																		itemId.id.toString(),
+																		itemId.id,
 																		i.toString()
 																	).joinToString(RemoteBrowserService.mediaIdDelimiter.toString()))
 																.setDescription(description.description)

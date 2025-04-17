@@ -54,6 +54,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.LabelledShuffle
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackTitleItemView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
+import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledActiveDownloadsButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledRefreshButton
@@ -61,6 +62,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledS
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.MoreFileOptionsMenu
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.MoreItemsOnlyOptionsMenu
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
@@ -281,7 +284,10 @@ fun ChildItem(
 					.navigable(
 						onClick = {
 							itemListViewModel.loadedLibraryId?.also {
-								playbackLibraryItems.playItem(it, ItemId(item.key))
+								when (item) {
+									is Item -> playbackLibraryItems.playItem(it, ItemId(item.key))
+									is Playlist -> playbackLibraryItems.playPlaylist(it, PlaylistId(item.key))
+								}
 							}
 						},
 						isDefault = true,
@@ -307,7 +313,10 @@ fun ChildItem(
 					.weight(1f)
 					.navigable(onClick = {
 						itemListViewModel.loadedLibraryId?.also {
-							playbackLibraryItems.playItemShuffled(it, ItemId(item.key))
+							when (item) {
+								is Item -> playbackLibraryItems.playItemShuffled(it, ItemId(item.key))
+								is Playlist -> playbackLibraryItems.playPlaylistShuffled(it, PlaylistId(item.key))
+							}
 						}
 					})
 					.align(Alignment.CenterVertically),
