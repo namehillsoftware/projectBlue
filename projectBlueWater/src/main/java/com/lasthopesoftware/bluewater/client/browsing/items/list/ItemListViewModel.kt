@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
 import com.lasthopesoftware.bluewater.client.browsing.files.list.LoadedLibraryState
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.ActivityLaunching
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LookupLibraryName
@@ -29,7 +28,7 @@ class ItemListViewModel(
 	private val mutableIsLoading = MutableInteractionState(true)
 	private val mutableItemValue = MutableInteractionState("")
 
-	private var loadedItem: Item? = null
+	private var loadedItem: IItem? = null
 	override var loadedLibraryId: LibraryId? = null
 		private set
 
@@ -41,7 +40,7 @@ class ItemListViewModel(
 		activityLaunchingReceiver.close()
 	}
 
-	fun loadItem(libraryId: LibraryId, item: Item? = null): Promise<Unit> {
+	fun loadItem(libraryId: LibraryId, item: IItem? = null): Promise<Unit> {
 		mutableIsLoading.value = loadedLibraryId != libraryId || loadedItem != item
 		mutableItemValue.value = item?.value ?: ""
 		loadedLibraryId = libraryId

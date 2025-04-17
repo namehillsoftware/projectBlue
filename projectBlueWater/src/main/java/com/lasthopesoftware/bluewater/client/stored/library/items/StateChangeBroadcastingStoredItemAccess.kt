@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.stored.library.items
 
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
-import com.lasthopesoftware.bluewater.client.browsing.items.itemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.namehillsoftware.handoff.promises.Promise
