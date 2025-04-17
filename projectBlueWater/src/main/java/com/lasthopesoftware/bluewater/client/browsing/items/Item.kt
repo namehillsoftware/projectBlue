@@ -8,5 +8,5 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class Item(override var key: String, override var value: String? = null, val playlistId: PlaylistId? = null) :  IItem, Parcelable {
 	@IgnoredOnParcel
-	val itemId = ItemId(key)
+	override val itemId = ItemId(key)
 }

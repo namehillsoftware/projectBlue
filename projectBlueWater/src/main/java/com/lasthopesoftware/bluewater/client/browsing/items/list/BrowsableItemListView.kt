@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
@@ -28,7 +28,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import java.io.IOException
 
 @Composable
-fun LoadedItemListView(viewModelDependencies: ScopedViewModelDependencies, libraryId: LibraryId, item: Item?) {
+fun LoadedItemListView(viewModelDependencies: ScopedViewModelDependencies, libraryId: LibraryId, item: IItem?) {
 	with (viewModelDependencies) {
 		LoadedItemListView(
 			libraryId,
@@ -51,7 +51,7 @@ fun LoadedItemListView(viewModelDependencies: ScopedViewModelDependencies, libra
 @Composable
 private fun LoadedItemListView(
 	libraryId: LibraryId,
-	item: Item?,
+	item: IItem?,
 	itemListViewModel: ItemListViewModel,
 	fileListViewModel: FileListViewModel,
 	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
