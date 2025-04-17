@@ -45,7 +45,6 @@ class `When Getting Library Items` {
 					every { promiseItems(LibraryId(489)) } returns Promise(viewIds.map(::Item))
 				},
                 mockk(),
-				mockk(),
                 mockk(),
 			)
 			mediaItemsBrowser

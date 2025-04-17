@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.browsing.items
 
+import android.os.Parcelable
 import com.lasthopesoftware.bluewater.shared.IIntKeyStringValue
 
-interface IItem : IIntKeyStringValue
-
-val IItem.itemId: KeyedIdentifier
-	get() = (this as? Item)?.playlistId ?: ItemId(key)
+interface IItem : IIntKeyStringValue, Parcelable {
+	val itemId: KeyedIdentifier
+}
