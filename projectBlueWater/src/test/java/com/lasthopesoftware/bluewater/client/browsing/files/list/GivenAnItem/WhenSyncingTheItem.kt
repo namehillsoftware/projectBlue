@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAnItem
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -20,7 +19,7 @@ class WhenSyncingTheItem {
 
 	private val viewModel by lazy {
 		val itemProvider = mockk<ProvideItemFiles>().apply {
-			every { promiseFiles(LibraryId(163), ItemId("826"), FileListParameters.Options.None) } returns listOf(
+			every { promiseFiles(LibraryId(163), ItemId("826")) } returns listOf(
 				ServiceFile("471"),
 				ServiceFile("469"),
 				ServiceFile("102"),

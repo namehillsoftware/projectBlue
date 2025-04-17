@@ -4,7 +4,6 @@ import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
@@ -76,7 +75,7 @@ class `When Getting Items` {
 			}
 
 			val provideFiles = mockk<ProvideItemFiles>()
-			every { provideFiles.promiseFiles(LibraryId(22), ItemId("743"), FileListParameters.Options.None) } returns Promise(
+			every { provideFiles.promiseFiles(LibraryId(22), ItemId("743")) } returns Promise(
 				serviceFileIds.map(::ServiceFile)
 			)
 

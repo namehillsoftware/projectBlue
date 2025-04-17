@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list.AndItHasChildItems
 
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ProvideFileStringListForItem
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemPlayback
@@ -24,7 +23,7 @@ class WhenPlayingAShuffledChildItem {
 
 	private val mut by lazy {
 		val itemStringListProvider = mockk<ProvideFileStringListForItem>().apply {
-			every { promiseFileStringList(LibraryId(libraryId), ItemId(itemId), FileListParameters.Options.Shuffled) } returns Promise(
+			every { promiseShuffledFileStringList(LibraryId(libraryId), ItemId(itemId)) } returns Promise(
 				"2;-1;920;388;906;356204;641;221;889;"
 			)
 		}

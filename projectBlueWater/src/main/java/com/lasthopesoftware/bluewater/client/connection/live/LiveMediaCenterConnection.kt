@@ -261,12 +261,16 @@ class LiveMediaCenterConnection(
 			}
 			?: promiseFileStringList(FileListParameters.Options.None, browseFilesPath, "Version=2")
 
+	override fun promiseFileStringList(playlistId: PlaylistId): Promise<String> = "".toPromise()
+
 	override fun promiseShuffledFileStringList(itemId: ItemId?): Promise<String> =
 		itemId
 			?.run {
 				promiseFileStringList(FileListParameters.Options.Shuffled, browseFilesPath, "ID=$id", "Version=2")
 			}
 			?: promiseFileStringList(FileListParameters.Options.Shuffled, browseFilesPath, "Version=2")
+
+	override fun promiseShuffledFileStringList(playlistId: PlaylistId): Promise<String> = "".toPromise()
 
 	override fun promiseFiles(): Promise<List<ServiceFile>> =
 		promiseFilesAtPath(browseFilesPath, "Version=2")
