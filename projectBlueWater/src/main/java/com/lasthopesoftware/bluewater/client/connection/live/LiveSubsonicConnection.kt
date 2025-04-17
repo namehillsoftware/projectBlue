@@ -59,9 +59,6 @@ class LiveSubsonicConnection(
 {
 	companion object {
 		private val logger by lazyLogger<LiveSubsonicConnection>()
-		private const val browseFilesPath = "Browse/Files"
-		private const val playlistFilesPath = "Playlist/Files"
-		private const val searchFilesPath = "Files/Search"
 		private const val imageFormat = "jpg"
 		private const val musicFormat = "mp3"
 		private const val bitrate = "128"
@@ -176,7 +173,7 @@ class LiveSubsonicConnection(
 
 	override fun promiseFiles(itemId: ItemId): Promise<List<ServiceFile>> = ItemFilesPromise(itemId)
 
-	override fun promiseFiles(playlistId: PlaylistId): Promise<List<ServiceFile>> = Promise(emptyList())
+	override fun promiseFiles(playlistId: PlaylistId): Promise<List<ServiceFile>> = PlaylistFilesPromise(playlistId)
 
 	override fun promisePlaystatsUpdate(serviceFile: ServiceFile): Promise<*> = promiseResponse(
 		"scrobble",
@@ -403,6 +400,34 @@ class LiveSubsonicConnection(
 		private fun itemParsingCancelledException() = CancellationException("Item parsing was cancelled.")
 	}
 
+	private inner class PlaylistFilesPromise(playlistId: PlaylistId) :
+		Promise.Proxy<List<ServiceFile>>(),
+		PromisedResponse<SubsonicPlaylistResponse?, List<ServiceFile>>
+	{
+		init {
+			proxy(
+				promiseResponse(
+					"getPlaylist",
+					"id=${playlistId.id}"
+				)
+					.also(::doCancel)
+					.promiseSubsonicResponse<SubsonicPlaylistResponse>()
+					.also(::doCancel)
+					.eventually(this)
+			)
+		}
+
+		override fun promiseResponse(response: SubsonicPlaylistResponse?): Promise<List<ServiceFile>> = ThreadPools.compute.preparePromise { cs ->
+			response?.playlist?.entry?.filter { !it.isDir }?.map {
+				if (cs.isCancelled) throw itemParsingCancelledException()
+
+				ServiceFile(it.id)
+			} ?: emptyList()
+		}
+
+		private fun itemParsingCancelledException() = CancellationException("Item parsing was cancelled.")
+	}
+
 	private inner class ConnectionPossiblePromise : Promise.Proxy<Boolean>() {
 		init {
 			proxy(
@@ -482,9 +507,6 @@ class LiveSubsonicConnection(
 	private open class SubsonicResponse(
 		val status: String,
 		val version: String,
-		val type: String,
-		val serverVersion: String,
-		val openSubsonic: Boolean,
 	)
 
 	@Keep
@@ -496,7 +518,6 @@ class LiveSubsonicConnection(
 
 	@Keep
 	private class SubsonicIndex(
-		val name: String,
 		val artist: List<SubsonicNamedItem>,
 	)
 
@@ -511,13 +532,13 @@ class LiveSubsonicConnection(
 	)
 
 	@Keep
-	private class SubsonicPlaylistResponse(
+	private class SubsonicPlaylistDirectoryResponse(
 		val playlist: List<SubsonicNamedItem>,
 	)
 
 	@Keep
 	private class SubsonicPlaylistsResponse(
-		val playlists: SubsonicPlaylistResponse
+		val playlists: SubsonicPlaylistDirectoryResponse
 	)
 
 	@Keep
@@ -542,13 +563,21 @@ class LiveSubsonicConnection(
 
 	@Keep
 	private class SubsonicLyrics(
-		val artist: String,
-		val title: String,
 		val value: String,
 	)
 
 	@Keep
 	private class SubsonicLyricsResponse(
 		val lyrics: SubsonicLyrics,
+	)
+
+	@Keep
+	private class SubsonicPlaylist(
+		val entry: List<SubsonicNamedItem>,
+	)
+
+	@Keep
+	private class SubsonicPlaylistResponse(
+		val playlist: SubsonicPlaylist,
 	)
 }

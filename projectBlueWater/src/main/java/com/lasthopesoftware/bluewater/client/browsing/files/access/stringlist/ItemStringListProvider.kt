@@ -12,7 +12,6 @@ class ItemStringListProvider(
 	private val libraryConnections: ProvideLibraryConnections
 ) : ProvideFileStringListForItem {
 	override fun promiseFileStringList(libraryId: LibraryId, itemId: ItemId?, options: FileListParameters.Options): Promise<String> {
-		// Put any crazy workarounds to get a fresh file list in here
 		return libraryConnections
 			.promiseLibraryConnection(libraryId)
 			.eventuallyFromDataAccess { a -> a?.promiseFileStringList(itemId).keepPromise("") }
