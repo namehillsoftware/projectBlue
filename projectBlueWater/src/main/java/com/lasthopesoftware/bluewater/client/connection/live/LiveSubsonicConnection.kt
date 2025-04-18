@@ -65,7 +65,6 @@ class LiveSubsonicConnection(
 		private const val bitrate = "128"
 
 		private const val playlistsItemKey = "playlists"
-		private const val playlistItemKey = "playlist"
 		private const val artistsItemKey = "artists"
 
 		val playlistsItem = ItemId(playlistsItemKey)
@@ -217,6 +216,10 @@ class LiveSubsonicConnection(
 		body.use {
 			it.reader().use { r ->
 				val json = JsonParser.parseReader(r).asJsonObject.get("subsonic-response") ?: throw NonStandardResponseException()
+				if (json.asJsonObject.get("status")?.asString == "failed") {
+					throw SubsonicServerException(jsonTranslator.parseJson<SubsonicErrorResponse>(json))
+				}
+
 				return jsonTranslator.parseJson<T>(json)
 			}
 		}
@@ -590,4 +593,12 @@ class LiveSubsonicConnection(
 	private class SubsonicPlaylistResponse(
 		val playlist: SubsonicPlaylist,
 	)
+
+	@Keep
+	class SubsonicErrorResponse(
+		val code: Int,
+		val message: String,
+	)
+
+	class SubsonicServerException(val error: SubsonicErrorResponse?) : IOException("Server returned 'failed'.")
 }
