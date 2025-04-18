@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.live
 import androidx.annotation.Keep
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import com.google.gson.JsonParser
+import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
@@ -58,15 +59,15 @@ class LiveSubsonicConnection(
 {
 	companion object {
 		private val logger by lazyLogger<LiveSubsonicConnection>()
-		private const val imageFormat = "jpg"
+
 		private const val musicFormat = "mp3"
 		private const val bitrate = "128"
 
 		private const val playlistsItemKey = "playlists"
 		private const val artistsItemKey = "artists"
 
-		val playlistsItem = ItemId(playlistsItemKey)
-		val artistsItem = ItemId(artistsItemKey)
+		private val playlistsItem = ItemId(playlistsItemKey)
+		private val artistsItem = ItemId(artistsItemKey)
 	}
 
 	private object KnownFileProperties {
@@ -117,8 +118,7 @@ class LiveSubsonicConnection(
 				.build())
 	}
 
-	override val dataAccess: RemoteLibraryAccess
-		get() = this
+	override val dataAccess = this
 
 	override fun promiseIsConnectionPossible(): Promise<Boolean> = ConnectionPossiblePromise()
 
@@ -150,9 +150,15 @@ class LiveSubsonicConnection(
 			.then(HttpStreamedResponse())
 	}
 
-	override fun promiseImageBytes(serviceFile: ServiceFile): Promise<ByteArray> = emptyByteArray.toPromise()
+	override fun promiseImageBytes(serviceFile: ServiceFile): Promise<ByteArray> = promiseResponse("getCoverArt", "id=${serviceFile.key}")
+		.cancelBackThen { httpResponse, _ ->
+			httpResponse.body.use { it.readBytes() }
+		}
 
-	override fun promiseImageBytes(itemId: ItemId): Promise<ByteArray> = emptyByteArray.toPromise()
+	override fun promiseImageBytes(itemId: ItemId): Promise<ByteArray> = promiseResponse("getCoverArt", "id=${itemId.id}")
+		.cancelBackThen { httpResponse, _ ->
+			httpResponse.body.use { it.readBytes() }
+		}
 
 	override fun promiseFileStringList(itemId: ItemId?): Promise<String> = itemId
 		?.let(::ItemFilesPromise)
@@ -184,7 +190,11 @@ class LiveSubsonicConnection(
 	).cancelBackThen { response, _ ->
 		response.use {
 			val responseCode = it.code
-			logger.debug("rest/scrobble responded with a response code of {}", responseCode)
+
+			if (BuildConfig.DEBUG) {
+				logger.debug("rest/scrobble responded with a response code of {}", responseCode)
+			}
+
 			if (responseCode < 200 || responseCode >= 300) throw HttpResponseException(responseCode)
 		}
 	}

@@ -100,8 +100,8 @@ class `When getting items` {
 	@Test
 	fun `then the items are correct`() {
 		assertThat(items).containsExactly(
-			Item(LiveSubsonicConnection.artistsItem.id, value = "Artistes", playlistId = null),
-			Item(LiveSubsonicConnection.playlistsItem.id, value = "Playalists", playlistId = null),
+			Item("artists", value = "Artistes", playlistId = null),
+			Item("playlists", value = "Playalists", playlistId = null),
 		)
 	}
 }

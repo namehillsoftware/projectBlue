@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.access.subsonic.GivenASubsonicConn
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.LiveSubsonicConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
@@ -45,7 +46,7 @@ class `When getting items` {
 
 	@BeforeAll
 	fun act() {
-		items = mut.promiseItems(LiveSubsonicConnection.artistsItem).toExpiringFuture().get()!!
+		items = mut.promiseItems(ItemId("artists")).toExpiringFuture().get()!!
 	}
 
 	@Test
