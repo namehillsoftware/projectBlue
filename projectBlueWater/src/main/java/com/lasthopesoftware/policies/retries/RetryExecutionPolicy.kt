@@ -1,10 +1,10 @@
 package com.lasthopesoftware.policies.retries
 
-import com.lasthopesoftware.policies.ApplyExecutionPolicies
+import com.lasthopesoftware.policies.ExecutionPolicies
 import com.namehillsoftware.handoff.promises.Promise
 
 class RetryExecutionPolicy(private val retryPromises: RetryPromises) :
-	ApplyExecutionPolicies {
+	ExecutionPolicies {
 	override fun <Input : Any?, Output> applyPolicy(function: (Input) -> Promise<Output>): (Input) -> Promise<Output> = { in1 ->
 		retryPromises.retryOnException { function(in1) }
 	}

@@ -4,10 +4,10 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.policies.ApplyExecutionPolicies
+import com.lasthopesoftware.policies.ExecutionPolicies
 import com.namehillsoftware.handoff.promises.Promise
 
-class DelegatingLibraryFileProvider(inner: ProvideLibraryFiles, policies: ApplyExecutionPolicies) : ProvideLibraryFiles {
+class DelegatingLibraryFileProvider(inner: ProvideLibraryFiles, policies: ExecutionPolicies) : ProvideLibraryFiles {
 	private val promiseLibraryFiles by lazy { policies.applyPolicy<LibraryId, List<ServiceFile>>(inner::promiseFiles) }
 	private val promiseItemFiles by lazy { policies.applyPolicy<LibraryId, ItemId, List<ServiceFile>>(inner::promiseFiles) }
 	private val promisePlaylistFiles by lazy { policies.applyPolicy<LibraryId, PlaylistId, List<ServiceFile>>(inner::promiseFiles) }
