@@ -19,6 +19,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemPlayback
 import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRevisions
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.DelegatingLibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostRetryHandler
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
@@ -29,9 +30,11 @@ import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryCo
 import com.lasthopesoftware.policies.caching.CachePromiseFunctions
 import com.lasthopesoftware.policies.caching.CachingPolicyFactory
 import com.lasthopesoftware.policies.caching.LruPromiseCache
+import com.lasthopesoftware.policies.caching.TimedExpirationPromiseCache
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
 import com.lasthopesoftware.policies.retries.RecursivePromiseRetryHandler
 import com.lasthopesoftware.policies.retries.RetryExecutionPolicy
+import org.joda.time.Duration
 
 interface LibraryConnectionDependents {
 	val urlKeyProvider: UrlKeyProvider
@@ -48,6 +51,11 @@ interface LibraryConnectionDependents {
 }
 
 class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryConnectionDependents {
+	companion object {
+		private val revisionExpirationTime by lazy { Duration.standardSeconds(30) }
+		private const val maxLibraryFiles = 10
+	}
+
 	private val guaranteedLibraryConnectionProvider by lazy { GuaranteedLibraryConnectionProvider(application.libraryConnectionProvider) }
 
 	override val connectionAuthenticationChecker by lazy { ConnectionAuthenticationChecker(application.libraryConnectionProvider) }
@@ -66,7 +74,15 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 
 	override val urlKeyProvider by lazy { UrlKeyProvider(application.libraryConnectionProvider) }
 
-	override val revisionProvider by lazy { LibraryRevisionProvider(application.libraryConnectionProvider) }
+	override val revisionProvider by lazy {
+		DelegatingLibraryRevisionProvider(
+			LibraryRevisionProvider(application.libraryConnectionProvider),
+			object : CachingPolicyFactory() {
+				override fun <Input : Any, Output> getCache(): CachePromiseFunctions<Input, Output> =
+					TimedExpirationPromiseCache(revisionExpirationTime)
+			}
+		)
+	}
 
 	override val filePropertiesStorage by lazy {
 		FilePropertyStorage(
@@ -93,7 +109,7 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 			LibraryFileProvider(application.libraryConnectionProvider),
 			object : CachingPolicyFactory() {
 				override fun <Input : Any, Output> getCache(): CachePromiseFunctions<Input, Output> =
-					LruPromiseCache(10)
+					LruPromiseCache(maxLibraryFiles)
 			}
 		)
 	}

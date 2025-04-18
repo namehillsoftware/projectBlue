@@ -1,9 +1,9 @@
 package com.lasthopesoftware.policies.ratelimiting
 
-import com.lasthopesoftware.policies.ApplyExecutionPolicies
+import com.lasthopesoftware.policies.ExecutionPolicies
 import com.namehillsoftware.handoff.promises.Promise
 
-class RateLimitingExecutionPolicy(private val rate: Int) : ApplyExecutionPolicies {
+class RateLimitingExecutionPolicy(private val rate: Int) : ExecutionPolicies {
 	override fun <Input, Output> applyPolicy(function: (Input) -> Promise<Output>): (Input) -> Promise<Output> {
 		val rateLimiter = PromisingRateLimiter<Output>(rate)
 		return { i -> rateLimiter.limit { function(i) } }
