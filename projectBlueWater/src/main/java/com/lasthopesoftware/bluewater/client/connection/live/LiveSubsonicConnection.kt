@@ -25,7 +25,6 @@ import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
 import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.exceptions.isOkHttpCanceled
-import com.lasthopesoftware.policies.caching.TimedExpirationPromiseCache
 import com.lasthopesoftware.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.cancelBackThen
@@ -42,7 +41,6 @@ import com.lasthopesoftware.resources.strings.parseJson
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
-import org.joda.time.Duration
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
@@ -69,8 +67,6 @@ class LiveSubsonicConnection(
 
 		val playlistsItem = ItemId(playlistsItemKey)
 		val artistsItem = ItemId(artistsItemKey)
-
-		private val checkedExpirationTime by lazy { Duration.standardSeconds(30) }
 	}
 
 	private object KnownFileProperties {
@@ -89,8 +85,6 @@ class LiveSubsonicConnection(
 	}
 
 	private val subsonicApiUrl by lazy { subsonicConnectionDetails.baseUrl.withSubsonicApi() }
-
-	private val revisionCache by lazy { TimedExpirationPromiseCache<Unit, Int?>(checkedExpirationTime) }
 
 	private val httpClient by lazy { httpPromiseClients.getServerClient(subsonicConnectionDetails) }
 
