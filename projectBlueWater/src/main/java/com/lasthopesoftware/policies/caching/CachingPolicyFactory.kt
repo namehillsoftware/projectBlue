@@ -1,10 +1,10 @@
 package com.lasthopesoftware.policies.caching
 
 import com.lasthopesoftware.bluewater.shared.NullBox
-import com.lasthopesoftware.policies.ApplyExecutionPolicies
+import com.lasthopesoftware.policies.ExecutionPolicies
 import com.namehillsoftware.handoff.promises.Promise
 
-abstract class CachingPolicyFactory : ApplyExecutionPolicies {
+abstract class CachingPolicyFactory : ExecutionPolicies {
 	override fun <Input : Any?, Output> applyPolicy(function: (Input) -> Promise<Output>): (Input) -> Promise<Output> {
 		val functionCache = getCache<NullBox<Input>, Output>()
 		return { input -> functionCache.getOrAdd(NullBox(input)) { function(it.value) } }
