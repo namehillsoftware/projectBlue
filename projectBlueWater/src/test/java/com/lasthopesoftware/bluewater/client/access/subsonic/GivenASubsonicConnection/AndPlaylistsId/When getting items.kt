@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.access.subsonic.GivenASubsonicConn
 
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.LiveSubsonicConnection
@@ -80,7 +81,7 @@ class `When getting items` {
 
 	@BeforeAll
 	fun act() {
-		items = mut.promiseItems(LiveSubsonicConnection.playlistsItem).toExpiringFuture().get()!!
+		items = mut.promiseItems(ItemId("playlists")).toExpiringFuture().get()!!
 	}
 
 	@Test
