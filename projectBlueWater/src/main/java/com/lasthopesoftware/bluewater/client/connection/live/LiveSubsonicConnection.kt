@@ -27,6 +27,7 @@ import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.exceptions.isOkHttpCanceled
 import com.lasthopesoftware.policies.retries.RetryOnRejectionLazyPromise
+import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.cancelBackThen
 import com.lasthopesoftware.promises.extensions.keepPromise
@@ -141,7 +142,7 @@ class LiveSubsonicConnection(
 
 	override fun promiseIsReadOnly(): Promise<Boolean> = true.toPromise()
 
-	override fun promiseServerVersion(): Promise<SemanticVersion?> = cachedVersion
+	override fun promiseServerVersion(): Promise<SemanticVersion?> = ServerVersionPromise()
 
 	override fun promiseFile(serviceFile: ServiceFile): Promise<InputStream> = Promise.Proxy { cp ->
 		httpClient
@@ -489,6 +490,18 @@ class LiveSubsonicConnection(
 
 			return response.promiseSubsonicResponse<SubsonicResponse>()
 		}
+	}
+
+	private inner class ServerVersionPromise : Promise.Proxy<SemanticVersion?>(), ImmediateResponse<Throwable, SemanticVersion?> {
+		init {
+			proxy(
+				cachedVersion
+					.also(::doCancel)
+					.then(forward(), this)
+			)
+		}
+
+		override fun respond(resolution: Throwable?): SemanticVersion? = null
 	}
 
 	private class HttpStreamedResponse : ImmediateResponse<HttpResponse?, InputStream>, InputStream() {
