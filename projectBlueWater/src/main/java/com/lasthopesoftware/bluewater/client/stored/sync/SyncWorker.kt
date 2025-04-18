@@ -54,7 +54,7 @@ import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsCh
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.policies.caching.CachingPolicyFactory
+import com.lasthopesoftware.policies.caching.PermanentCachePolicy
 import com.lasthopesoftware.promises.extensions.toListenableFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
@@ -80,7 +80,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 
 	private val applicationDependencies by lazy { context.applicationDependencies }
 
-	private val cachingPolicyFactory by lazy { CachingPolicyFactory }
+	private val cachingPolicyFactory by lazy { PermanentCachePolicy }
 
 	private val libraryConnections by lazy {
 		with (applicationDependencies) {
