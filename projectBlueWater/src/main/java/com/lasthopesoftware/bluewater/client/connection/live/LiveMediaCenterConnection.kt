@@ -175,7 +175,7 @@ class LiveMediaCenterConnection(
 			.eventually {
 				it?.let { playlistId ->
 					ThreadPools.compute
-						.preparePromise { playlist.map { sf -> sf.key }.joinToString(",") }
+						.preparePromise { playlist.joinToString(",") { sf -> sf.key } }
 						.also(cp::doCancel)
 						.eventually { keys ->
 							promiseResponse(
