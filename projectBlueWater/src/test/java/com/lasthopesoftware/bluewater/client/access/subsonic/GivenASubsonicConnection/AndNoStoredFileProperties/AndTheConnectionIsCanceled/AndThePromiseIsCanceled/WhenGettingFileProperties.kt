@@ -33,7 +33,7 @@ class WhenGettingFileProperties {
 			SubsonicConnectionDetails(TestUrl, "4Vgsz0MKH3", "c3ZtnWx2", "bE98VYcj1D"),
 			FakeHttpConnectionProvider(
 				mockk {
-					every { promiseResponse(TestUrl.withSubsonicApi().addPath("getSong").addParams("id=$serviceFileId")) } returns deferredReject
+					every { promiseResponse(TestUrl.withSubsonicApi().addPath("getSong").addParams("f=json").addParams("id=$serviceFileId")) } returns deferredReject
 				}
 			),
 			mockk(),

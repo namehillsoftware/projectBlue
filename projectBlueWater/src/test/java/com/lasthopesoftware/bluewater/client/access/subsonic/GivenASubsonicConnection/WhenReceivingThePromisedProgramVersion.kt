@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetail
 import com.lasthopesoftware.bluewater.client.connection.live.LiveSubsonicConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withSubsonicApi
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
@@ -25,7 +26,7 @@ class WhenReceivingThePromisedProgramVersion {
 
 	private val version by lazy {
 		val httpConnection = FakeHttpConnection().apply {
-			mapResponse(TestUrl.withSubsonicApi().addPath("ping.view")) {
+			mapResponse(TestUrl.withSubsonicApi().addPath("ping.view").addParams("f=json")) {
 				PassThroughHttpResponse(
 					200,
 					"OK",
