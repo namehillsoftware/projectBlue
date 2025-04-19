@@ -72,7 +72,7 @@ class WhenPlaybackIsInterrupted {
 		resolvablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("2")]?.resolve()
 		playingPlaybackHandler?.resolve()
 		resolvablePlaybackHandler?.setCurrentPosition(30)
-		playbackEngine.interrupt()
+		playbackEngine.interrupt().toExpiringFuture().get()
 		nowPlaying = nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()
 	}
 
