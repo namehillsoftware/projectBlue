@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.access.subsonic.GivenASubsonicConnection.AndItemsId
+package com.lasthopesoftware.bluewater.client.access.subsonic.GivenASubsonicConnection.AndArtistsId
 
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
