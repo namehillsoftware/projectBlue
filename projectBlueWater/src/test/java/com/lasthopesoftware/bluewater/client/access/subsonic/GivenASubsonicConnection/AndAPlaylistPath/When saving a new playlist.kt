@@ -48,7 +48,7 @@ class `When saving a new playlist` {
 	fun act() {
 		mut.second
 			.promiseStoredPlaylist(
-				"My Fancy Album",
+				"Mollislibero Dapibuslitora",
 				listOf(
 					ServiceFile("938"),
 					ServiceFile("519"),
