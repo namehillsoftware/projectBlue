@@ -150,7 +150,7 @@ class LiveSubsonicConnection(
 	override fun promiseIsReadOnly(): Promise<Boolean> =
 		promiseSubsonicResponse<UserResponse>("getUser", "username=${subsonicConnectionDetails.userName}")
 			.cancelBackThen { response, _ ->
-				!(response?.user?.commentRole ?: false)
+				response?.user?.run { !adminRole && !commentRole } ?: true
 			}
 
 	override fun promiseServerVersion(): Promise<SemanticVersion?> = ServerVersionPromise()
@@ -668,6 +668,7 @@ class LiveSubsonicConnection(
 
 	@Keep
 	private class UserDetailsResponse(
+		val adminRole: Boolean,
 		val commentRole: Boolean,
 	)
 
