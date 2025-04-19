@@ -173,7 +173,7 @@ class LiveSubsonicConnection(
 		}
 
 	override fun promiseFileStringList(itemId: ItemId?): Promise<String> = itemId
-		?.let(::ItemFilesPromise)
+		?.let(::promiseFiles)
 		?.cancelBackEventually(FileStringListUtilities::promiseSerializedFileStringList)
 		.keepPromise("")
 
@@ -181,7 +181,7 @@ class LiveSubsonicConnection(
 		.cancelBackEventually(FileStringListUtilities::promiseSerializedFileStringList)
 
 	override fun promiseShuffledFileStringList(itemId: ItemId?): Promise<String> = itemId
-		?.let(::ItemFilesPromise)
+		?.let(::promiseFiles)
 		?.cancelBackEventually(FileStringListUtilities::promiseShuffledSerializedFileStringList)
 		.keepPromise("")
 
@@ -192,7 +192,10 @@ class LiveSubsonicConnection(
 
 	override fun promiseFiles(query: String): Promise<List<ServiceFile>> = SearchFilesPromise(query)
 
-	override fun promiseFiles(itemId: ItemId): Promise<List<ServiceFile>> = ItemFilesPromise(itemId)
+	override fun promiseFiles(itemId: ItemId): Promise<List<ServiceFile>> = when (itemId) {
+		artistsItem, playlistsItem -> Promise(emptyList())
+		else -> ItemFilesPromise(itemId)
+	}
 
 	override fun promiseFiles(playlistId: PlaylistId): Promise<List<ServiceFile>> = PlaylistFilesPromise(playlistId)
 
