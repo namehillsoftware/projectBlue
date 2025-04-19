@@ -24,7 +24,7 @@ class `When searching for files` {
 
 	private val mut by lazy {
 		val httpConnection = FakeHttpConnection().apply {
-			mapResponse(TestUrl.withSubsonicApi().addPath("search2.view").addParams("query=$query", "albumCount=0", "songCount=1000")) {
+			mapResponse(TestUrl.withSubsonicApi().addPath("search2.view").addParams("f=json").addParams("query=$query", "albumCount=0", "songCount=1000")) {
 				PassThroughHttpResponse(
 					200,
 					"OK",

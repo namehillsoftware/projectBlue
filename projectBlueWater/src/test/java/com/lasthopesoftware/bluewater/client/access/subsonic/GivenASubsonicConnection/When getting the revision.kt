@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetail
 import com.lasthopesoftware.bluewater.client.connection.live.LiveSubsonicConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withSubsonicApi
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -18,7 +19,7 @@ import org.junit.jupiter.api.Test
 class `When getting the revision` {
 	private val mut by lazy {
 		val httpConnection = FakeHttpConnection().apply {
-			mapResponse(TestUrl.withSubsonicApi().addPath("getIndexes")) {
+			mapResponse(TestUrl.withSubsonicApi().addPath("getIndexes").addParams("f=json")) {
 				PassThroughHttpResponse(
 					200,
 					"OK",
