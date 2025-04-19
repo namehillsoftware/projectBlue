@@ -108,7 +108,6 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 				"t=" + "$password$salt".hashString("MD5").toHexString(),
 				"s=$salt",
 				"c=" + BuildConfig.APPLICATION_ID,
-				"f=json",
 			)
 		}
 

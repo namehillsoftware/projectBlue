@@ -8,6 +8,8 @@ import com.lasthopesoftware.bluewater.client.connection.live.PassThroughBase64En
 import com.lasthopesoftware.bluewater.client.connection.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfo
 import com.lasthopesoftware.bluewater.client.connection.settings.SubsonicConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
@@ -17,7 +19,6 @@ import io.mockk.mockk
 import org.apache.commons.codec.binary.Hex
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.net.URL
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -55,7 +56,7 @@ class `When Cancelling During Connection Test` {
 				} answers {
 					val urlProvider = firstArg<SubsonicConnectionDetails>()
 					mockk {
-						every { promiseResponse(URL(urlProvider.baseUrl, "rest/ping.view")) } returns Promise(
+						every { promiseResponse(urlProvider.baseUrl.addPath("rest/ping.view").addParams("f=json")) } returns Promise(
 							CancellationException("Maybe later!")
 						)
 					}

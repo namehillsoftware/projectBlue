@@ -22,7 +22,7 @@ class `When getting files` {
 
 	private val mut by lazy {
 		val httpConnection = FakeHttpConnection().apply {
-			mapResponse(TestUrl.withSubsonicApi().addPath("getPlaylist").addParams("id=37ff086d-a35b-4888-9cd5-73d6db7b5e7f")) {
+			mapResponse(TestUrl.withSubsonicApi().addPath("getPlaylist").addParams("id=37ff086d-a35b-4888-9cd5-73d6db7b5e7f").addParams("f=json")) {
 				PassThroughHttpResponse(
 					200,
 					"OK",

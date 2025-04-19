@@ -19,7 +19,7 @@ class `When Checking Authentication` {
 
 	private val isReadOnly by lazy {
 		val httpConnection = FakeHttpConnection().apply {
-			mapResponse(TestUrl.withSubsonicApi().addPath("getUser").addParams("username=AL6G6m6ZvP")) {
+			mapResponse(TestUrl.withSubsonicApi().addPath("getUser").addParams("username=AL6G6m6ZvP").addParams("f=json")) {
 				PassThroughHttpResponse(
 					200,
 					"OK",

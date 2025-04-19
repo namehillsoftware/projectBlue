@@ -9,6 +9,8 @@ import com.lasthopesoftware.bluewater.client.connection.live.PassThroughBase64En
 import com.lasthopesoftware.bluewater.client.connection.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfo
 import com.lasthopesoftware.bluewater.client.connection.settings.SubsonicConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.PassThroughHttpResponse
@@ -20,7 +22,6 @@ import org.apache.commons.codec.binary.Hex
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.net.URL
 
 class `When Getting The Live Connection` {
 
@@ -57,7 +58,7 @@ class `When Getting The Live Connection` {
 					val urlProvider = firstArg<SubsonicConnectionDetails>()
 					selectedConnectionDetails = urlProvider
 					mockk {
-						every { promiseResponse(URL(urlProvider.baseUrl, "rest/ping.view")) } returns Promise(
+						every { promiseResponse(urlProvider.baseUrl.addPath("rest/ping.view").addParams("f=json")) } returns Promise(
 							PassThroughHttpResponse(
 								200,
 								"Ok",

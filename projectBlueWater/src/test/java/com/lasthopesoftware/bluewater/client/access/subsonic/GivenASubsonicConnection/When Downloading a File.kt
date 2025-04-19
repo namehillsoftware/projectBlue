@@ -39,6 +39,7 @@ class `When Downloading a File` {
 							"format=mp3",
 							"maxBitRate=128",
 						)
+						.addParams("f=json")
 				) {
 					PassThroughHttpResponse(
 						200,

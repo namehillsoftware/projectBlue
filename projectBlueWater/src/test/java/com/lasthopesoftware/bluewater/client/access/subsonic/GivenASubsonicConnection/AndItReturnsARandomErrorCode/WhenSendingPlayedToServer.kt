@@ -29,7 +29,7 @@ class WhenSendingPlayedToServer {
 
 	private val updater by lazy {
 		val httpConnection = FakeHttpConnection().apply {
-			mapResponse(TestUrl.withSubsonicApi().addPath( "scrobble").addParams("id=7236aa0f123443348389a0bb6573567b")) {
+			mapResponse(TestUrl.withSubsonicApi().addPath( "scrobble").addParams("id=7236aa0f123443348389a0bb6573567b").addParams("f=json")) {
 				PassThroughHttpResponse(
 					expectedResponseCode,
 					"NOK",

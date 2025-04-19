@@ -24,7 +24,7 @@ class `When getting the file string list` {
 
 	private val mut by lazy {
 		val httpConnection = FakeHttpConnection().apply {
-			mapResponse(TestUrl.withSubsonicApi().addPath("getPlaylist").addParams("id=$itemId")) {
+			mapResponse(TestUrl.withSubsonicApi().addPath("getPlaylist").addParams("id=$itemId").addParams("f=json")) {
 				PassThroughHttpResponse(
 					200,
 					"OK",

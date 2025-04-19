@@ -27,7 +27,7 @@ class WhenGettingTheItems {
 
 	private val mut by lazy {
 		val httpConnection = FakeHttpConnection().apply {
-			mapResponse(TestUrl.withSubsonicApi().addPath("getMusicDirectory").addParams("id=${itemId}")) {
+			mapResponse(TestUrl.withSubsonicApi().addPath("getMusicDirectory").addParams("id=${itemId}").addParams("f=json")) {
 				PassThroughHttpResponse(
 					200,
 					"failed",

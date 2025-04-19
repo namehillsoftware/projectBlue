@@ -86,7 +86,7 @@ class LiveSubsonicConnection(
 		)
 	}
 
-	private val subsonicApiUrl by lazy { subsonicConnectionDetails.baseUrl.withSubsonicApi() }
+	private val subsonicApiUrl by lazy { subsonicConnectionDetails.baseUrl.withSubsonicApi().addParams("f=json") }
 
 	private val httpClient by lazy { httpPromiseClients.getServerClient(subsonicConnectionDetails) }
 
@@ -133,7 +133,7 @@ class LiveSubsonicConnection(
 		artistsItem -> RootIndexPromise()
 		playlistsItem -> RootPlaylistsPromise()
 		is ItemId -> ItemPromise(itemId)
-		else -> emptyList<IItem>().toPromise()
+		else -> Promise(emptyList())
 	}
 
 	override fun promiseAudioPlaylistPaths(): Promise<List<String>> = RootPlaylistsPromise()
@@ -527,8 +527,7 @@ class LiveSubsonicConnection(
 	private inner class PingViewPromise : Promise.Proxy<Response>(), PromisedResponse<HttpResponse, Response?> {
 		init {
 			proxy(
-				httpClient
-					.promiseResponse(subsonicApiUrl.addPath("ping.view"))
+				promiseResponse("ping.view")
 					.also(::doCancel)
 					.eventually(this)
 			)

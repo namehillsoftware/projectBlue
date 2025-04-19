@@ -37,6 +37,7 @@ class `When getting an item image` {
 						.withSubsonicApi()
 						.addPath("getCoverArt")
 						.addParams("id=$itemId")
+						.addParams("f=json")
 				) {
 					PassThroughHttpResponse(
 						200,

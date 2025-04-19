@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.access.subsonic.GivenASubsonicConn
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.LiveSubsonicConnection
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withSubsonicApi
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -26,7 +27,7 @@ class `When checking if the connection is possible` {
 				} answers {
 					val urlProvider = firstArg<SubsonicConnectionDetails>()
 					mockk {
-						every { promiseResponse(urlProvider.baseUrl.withSubsonicApi().addPath("ping.view")) } returns Promise(
+						every { promiseResponse(urlProvider.baseUrl.withSubsonicApi().addPath("ping.view").addParams("f=json")) } returns Promise(
 							PassThroughHttpResponse(
 								200,
 								"K",

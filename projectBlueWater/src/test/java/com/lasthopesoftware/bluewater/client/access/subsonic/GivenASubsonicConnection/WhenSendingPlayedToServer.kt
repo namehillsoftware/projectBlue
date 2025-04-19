@@ -26,7 +26,7 @@ class WhenSendingPlayedToServer {
 			SubsonicConnectionDetails(TestUrl, "P4PSyKKGhNR", "l048RtrdOV"),
 			FakeHttpConnectionProvider(
 				FakeHttpConnection().apply {
-					mapResponse(TestUrl.withSubsonicApi().addPath( "scrobble").addParams("id=8d57775ff6504d009e68c1de54d6990a")) {
+					mapResponse(TestUrl.withSubsonicApi().addPath( "scrobble").addParams("id=8d57775ff6504d009e68c1de54d6990a").addParams("f=json")) {
 						isFilePlayedCalled = true
 						PassThroughHttpResponse(
 							200,

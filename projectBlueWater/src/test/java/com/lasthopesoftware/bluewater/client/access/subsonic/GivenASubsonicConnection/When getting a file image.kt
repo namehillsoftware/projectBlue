@@ -37,6 +37,7 @@ class `When getting a file image` {
 						.withSubsonicApi()
 						.addPath("getCoverArt")
 						.addParams("id=$serviceFileId")
+						.addParams("f=json")
 				) {
 					PassThroughHttpResponse(
 						200,
