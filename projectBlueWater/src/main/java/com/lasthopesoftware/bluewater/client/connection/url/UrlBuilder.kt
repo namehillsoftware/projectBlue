@@ -16,7 +16,7 @@ object UrlBuilder {
 		}
 
 		val newPath = currentPath.trimEnd('/') + "/" + path.trimStart('/')
-		return URL(this, newPath)
+		return URL(this, newPath + if (this.query == null) "" else "?" + this.query)
 	}
 
 	fun URL.addParams(vararg params: String): URL {

@@ -21,7 +21,7 @@ class `When saving a new playlist` {
 
 	private val mut by lazy {
 		val httpConnection = FakeHttpConnection().apply {
-			mapResponse(TestUrl.withSubsonicApi().addPath("createPlaylist").addParams( "name=Mollislibero Dapibuslitora", "songId=938" , "songId=519", "songId=328", "songId=515")) {
+			mapResponse(TestUrl.withSubsonicApi().addPath("createPlaylist").addParams( "name=Mollislibero Dapibuslitora", "songId=938" , "songId=519", "songId=328", "songId=515").addParams("f=json")) {
 				PassThroughHttpResponse(
 					200,
 					"OK",
@@ -66,6 +66,7 @@ class `When saving a new playlist` {
 			TestUrl
 				.withSubsonicApi()
 				.addPath("createPlaylist")
+				.addParams("f=json")
 				.addParams( "name=Mollislibero Dapibuslitora", "songId=938" , "songId=519", "songId=328", "songId=515"),
 		)
 	}

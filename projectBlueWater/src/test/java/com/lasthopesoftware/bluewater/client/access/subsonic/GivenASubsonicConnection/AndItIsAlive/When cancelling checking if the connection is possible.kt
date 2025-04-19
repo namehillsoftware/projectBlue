@@ -4,6 +4,8 @@ import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.LiveSubsonicConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
@@ -12,7 +14,6 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.jupiter.api.Test
-import java.net.URL
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -39,7 +40,7 @@ class `When cancelling checking if the connection is possible` {
 				} answers {
 					val sc = firstArg<SubsonicConnectionDetails>()
 					mockk {
-						every { promiseResponse(URL(sc.baseUrl, "rest/ping.view")) } returns deferredResponse
+						every { promiseResponse(sc.baseUrl.addPath("rest/ping.view").addParams("f=json")) } returns deferredResponse
 					}
 				}
 			},
