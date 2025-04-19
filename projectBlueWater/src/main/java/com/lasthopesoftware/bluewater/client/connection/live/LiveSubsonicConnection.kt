@@ -136,7 +136,13 @@ class LiveSubsonicConnection(
 		else -> emptyList<IItem>().toPromise()
 	}
 
-	override fun promiseAudioPlaylistPaths(): Promise<List<String>> = Promise(emptyList())
+	override fun promiseAudioPlaylistPaths(): Promise<List<String>> = RootPlaylistsPromise()
+		.cancelBackThen { items, cancellationSignal ->
+			items.mapNotNull {
+				if (cancellationSignal.isCancelled) throw CancellationException("Cancelled while getting playlist paths.")
+				it.value
+			}
+		}
 
 	override fun promiseStoredPlaylist(playlistPath: String, playlist: List<ServiceFile>): Promise<*> =
 		promiseSubsonicResponse<Response>("createPlaylist", "name=$playlistPath", *playlist.map { "songId=${it.key}" }.toTypedArray())
