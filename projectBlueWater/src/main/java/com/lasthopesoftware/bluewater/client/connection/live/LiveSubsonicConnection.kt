@@ -190,7 +190,7 @@ class LiveSubsonicConnection(
 
 	override fun promiseFiles(): Promise<List<ServiceFile>> = Promise(emptyList())
 
-	override fun promiseFiles(query: String): Promise<List<ServiceFile>> = Promise(emptyList())
+	override fun promiseFiles(query: String): Promise<List<ServiceFile>> = SearchFilesPromise(query)
 
 	override fun promiseFiles(itemId: ItemId): Promise<List<ServiceFile>> = ItemFilesPromise(itemId)
 
@@ -462,6 +462,36 @@ class LiveSubsonicConnection(
 		private fun itemParsingCancelledException() = CancellationException("Item parsing was cancelled.")
 	}
 
+	private inner class SearchFilesPromise(query: String) :
+		Promise.Proxy<List<ServiceFile>>(),
+		PromisedResponse<Search2Response?, List<ServiceFile>>
+	{
+		init {
+			proxy(
+				promiseResponse(
+					"search2.view",
+					"query=$query",
+					"albumCount=0",
+					"songCount=1000"
+				)
+					.also(::doCancel)
+					.promiseSubsonicResponse<Search2Response>()
+					.also(::doCancel)
+					.eventually(this)
+			)
+		}
+
+		override fun promiseResponse(response: Search2Response?): Promise<List<ServiceFile>> = ThreadPools.compute.preparePromise { cs ->
+			response?.searchResult2?.song?.filter { !it.isDir }?.map {
+				if (cs.isCancelled) throw itemParsingCancelledException()
+
+				ServiceFile(it.id)
+			} ?: emptyList()
+		}
+
+		private fun itemParsingCancelledException() = CancellationException("Item parsing was cancelled.")
+	}
+
 	private inner class ConnectionPossiblePromise : Promise.Proxy<Boolean>() {
 		init {
 			proxy(
@@ -628,20 +658,32 @@ class LiveSubsonicConnection(
 	)
 
 	@Keep
-	class ErrorResponse(
+	@Suppress("unused")
+	private class ErrorResponse(
 		val code: Int,
 		val message: String,
 	)
 
 	@Keep
-	class UserDetailsResponse(
+	private class UserDetailsResponse(
 		val commentRole: Boolean,
 	)
 
 	@Keep
-	class UserResponse(
+	private class UserResponse(
 		val user: UserDetailsResponse,
 	)
 
-	class SubsonicServerException(val error: ErrorResponse?) : IOException("Server returned 'failed'.")
+	@Keep
+	private class Search2ResponseItems(
+		val song: List<NamedItem>,
+	)
+
+	@Keep
+	private class Search2Response(
+		val searchResult2: Search2ResponseItems,
+	)
+
+	@Suppress("unused")
+	private class SubsonicServerException(val error: ErrorResponse?) : IOException("Server returned 'failed'.")
 }
