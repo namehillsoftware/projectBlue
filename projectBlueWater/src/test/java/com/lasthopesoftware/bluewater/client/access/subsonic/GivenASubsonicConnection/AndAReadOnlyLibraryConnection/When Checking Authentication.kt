@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetail
 import com.lasthopesoftware.bluewater.client.connection.live.LiveSubsonicConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withSubsonicApi
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -14,21 +15,46 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-class WhenCheckingAuthentication {
+class `When Checking Authentication` {
 
 	private val isReadOnly by lazy {
 		val httpConnection = FakeHttpConnection().apply {
-			mapResponse(TestUrl.withSubsonicApi().addPath("getLicense")) {
+			mapResponse(TestUrl.withSubsonicApi().addPath("getUser").addParams("username=AL6G6m6ZvP")) {
 				PassThroughHttpResponse(
 					200,
 					"OK",
-					"""{"subsonic-response":{"status":"ok","version":"1.16.1","type":"navidrome","serverVersion":"0.53.3 (13af8ed4)","openSubsonic":true,"license":{"valid":false}}}""".toByteArray().inputStream()
+					"""{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "user": {
+      "folder": [
+          1,
+          3
+      ],
+      "username": "PaulJi",
+      "email": "MuhammedHuynh@Inceptosparturient.2d",
+      "scrobblingEnabled": "true",
+      "adminRole": "false",
+      "settingsRole": "true",
+      "downloadRole": "true",
+      "uploadRole": "false",
+      "playlistRole": "true",
+      "coverArtRole": "true",
+      "commentRole": "false",
+      "podcastRole": "true",
+      "streamRole": "true",
+      "jukeboxRole": "true",
+      "shareRole": "false"
+    }
+  }
+}""".trimIndent().toByteArray().inputStream()
 				)
 			}
 		}
 
 		val access = LiveSubsonicConnection(
-			SubsonicConnectionDetails(TestUrl, "cknMmFutuII", "2iVtb1b31"),
+			SubsonicConnectionDetails(TestUrl, "AL6G6m6ZvP", "2iVtb1b31"),
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
 			JsonEncoderDecoder,

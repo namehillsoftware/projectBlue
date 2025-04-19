@@ -140,7 +140,11 @@ class LiveSubsonicConnection(
 
 	override fun promiseStoredPlaylist(playlistPath: String, playlist: List<ServiceFile>): Promise<*> = Unit.toPromise()
 
-	override fun promiseIsReadOnly(): Promise<Boolean> = true.toPromise()
+	override fun promiseIsReadOnly(): Promise<Boolean> =
+		promiseSubsonicResponse<UserResponse>("getUser", "username=${subsonicConnectionDetails.userName}")
+			.cancelBackThen { response, _ ->
+				!(response?.user?.commentRole ?: false)
+			}
 
 	override fun promiseServerVersion(): Promise<SemanticVersion?> = ServerVersionPromise()
 
@@ -207,6 +211,11 @@ class LiveSubsonicConnection(
 		return httpClient.promiseResponse(url)
 	}
 
+	private inline fun <reified T> promiseSubsonicResponse(path: String, vararg params: String): Promise<T?> {
+		val url = subsonicApiUrl.addPath(path).addParams(*params)
+		return httpClient.promiseResponse(url).cancelBackEventually { it.promiseSubsonicResponse() }
+	}
+
 	private inline fun <reified T> Promise<HttpResponse>.promiseSubsonicResponse(): Promise<T?> = eventually { r ->
 		r.promiseSubsonicResponse<T>()
 	}
@@ -222,7 +231,7 @@ class LiveSubsonicConnection(
 			it.reader().use { r ->
 				val json = JsonParser.parseReader(r).asJsonObject.get("subsonic-response") ?: throw NonStandardResponseException()
 				if (json.asJsonObject.get("status")?.asString == "failed") {
-					throw SubsonicServerException(jsonTranslator.parseJson<SubsonicErrorResponse>(json))
+					throw SubsonicServerException(jsonTranslator.parseJson<ErrorResponse>(json))
 				}
 
 				return jsonTranslator.parseJson<T>(json)
@@ -272,7 +281,7 @@ class LiveSubsonicConnection(
 							"title=${props[KnownFileProperties.title]}"
 						)
 							.also(::doCancel)
-							.promiseSubsonicResponse<SubsonicLyricsResponse>()
+							.promiseSubsonicResponse<LyricsResponse>()
 							.also(::doCancel)
 							.then { l ->
 								props[NormalizedFileProperties.Lyrics] = l?.lyrics?.value ?: ""
@@ -295,36 +304,36 @@ class LiveSubsonicConnection(
 
 	private inner class RevisionPromise :
 		Promise.Proxy<Long?>(),
-		ImmediateResponse<SubsonicIndexesLastModifiedResponse?, Long?>
+		ImmediateResponse<IndexesLastModifiedResponse?, Long?>
 	{
 		init {
 			proxy(
 				promiseResponse("getIndexes")
 					.also(::doCancel)
-					.promiseSubsonicResponse<SubsonicIndexesLastModifiedResponse>()
+					.promiseSubsonicResponse<IndexesLastModifiedResponse>()
 					.also(::doCancel)
 					.then(this)
 			)
 		}
 
-		override fun respond(resolution: SubsonicIndexesLastModifiedResponse?): Long? = resolution?.indexes?.lastModified
+		override fun respond(resolution: IndexesLastModifiedResponse?): Long? = resolution?.indexes?.lastModified
 	}
 
 	private inner class RootIndexPromise :
 		Promise.Proxy<List<IItem>>(),
-		PromisedResponse<SubsonicIndexesResponse?, List<IItem>>
+		PromisedResponse<IndexesResponse?, List<IItem>>
 	{
 		init {
 			proxy(
 				promiseResponse("getIndexes")
 					.also(::doCancel)
-					.promiseSubsonicResponse<SubsonicIndexesResponse>()
+					.promiseSubsonicResponse<IndexesResponse>()
 					.also(::doCancel)
 					.eventually(this)
 			)
 		}
 
-		override fun promiseResponse(response: SubsonicIndexesResponse?): Promise<List<IItem>> = ThreadPools.compute.preparePromise { cs ->
+		override fun promiseResponse(response: IndexesResponse?): Promise<List<IItem>> = ThreadPools.compute.preparePromise { cs ->
 			response?.indexes?.index?.flatMap {
 				it.artist.map { artist ->
 					if (cs.isCancelled) throw itemParsingCancelledException()
@@ -339,7 +348,7 @@ class LiveSubsonicConnection(
 
 	private inner class ItemPromise(itemId: ItemId) :
 		Promise.Proxy<List<IItem>>(),
-		PromisedResponse<SubsonicDirectoryRoot?, List<IItem>>
+		PromisedResponse<DirectoryRoot?, List<IItem>>
 	{
 		init {
 			proxy(
@@ -348,13 +357,13 @@ class LiveSubsonicConnection(
 					"id=${itemId.id}"
 				)
 					.also(::doCancel)
-					.promiseSubsonicResponse<SubsonicDirectoryRoot>()
+					.promiseSubsonicResponse<DirectoryRoot>()
 					.also(::doCancel)
 					.eventually(this)
 			)
 		}
 
-		override fun promiseResponse(response: SubsonicDirectoryRoot?): Promise<List<IItem>> = ThreadPools.compute.preparePromise { cs ->
+		override fun promiseResponse(response: DirectoryRoot?): Promise<List<IItem>> = ThreadPools.compute.preparePromise { cs ->
 			response?.directory?.child?.filter { it.isDir }?.map {
 				if (cs.isCancelled) throw itemParsingCancelledException()
 
@@ -367,19 +376,19 @@ class LiveSubsonicConnection(
 
 	private inner class RootPlaylistsPromise :
 		Promise.Proxy<List<IItem>>(),
-		PromisedResponse<SubsonicPlaylistsResponse?, List<IItem>>
+		PromisedResponse<PlaylistsResponse?, List<IItem>>
 	{
 		init {
 			proxy(
 				promiseResponse("getPlaylists")
 					.also(::doCancel)
-					.promiseSubsonicResponse<SubsonicPlaylistsResponse>()
+					.promiseSubsonicResponse<PlaylistsResponse>()
 					.also(::doCancel)
 					.eventually(this)
 			)
 		}
 
-		override fun promiseResponse(response: SubsonicPlaylistsResponse?): Promise<List<IItem>> = ThreadPools.compute.preparePromise { cs ->
+		override fun promiseResponse(response: PlaylistsResponse?): Promise<List<IItem>> = ThreadPools.compute.preparePromise { cs ->
 			response?.playlists?.playlist?.map {
 				if (cs.isCancelled) throw itemParsingCancelledException()
 
@@ -392,7 +401,7 @@ class LiveSubsonicConnection(
 
 	private inner class ItemFilesPromise(itemId: ItemId) :
 		Promise.Proxy<List<ServiceFile>>(),
-		PromisedResponse<SubsonicDirectoryRoot?, List<ServiceFile>>
+		PromisedResponse<DirectoryRoot?, List<ServiceFile>>
 	{
 		init {
 			proxy(
@@ -401,13 +410,13 @@ class LiveSubsonicConnection(
 					"id=${itemId.id}"
 				)
 					.also(::doCancel)
-					.promiseSubsonicResponse<SubsonicDirectoryRoot>()
+					.promiseSubsonicResponse<DirectoryRoot>()
 					.also(::doCancel)
 					.eventually(this)
 			)
 		}
 
-		override fun promiseResponse(response: SubsonicDirectoryRoot?): Promise<List<ServiceFile>> = ThreadPools.compute.preparePromise { cs ->
+		override fun promiseResponse(response: DirectoryRoot?): Promise<List<ServiceFile>> = ThreadPools.compute.preparePromise { cs ->
 			response?.directory?.child?.filter { !it.isDir }?.map {
 				if (cs.isCancelled) throw itemParsingCancelledException()
 
@@ -420,7 +429,7 @@ class LiveSubsonicConnection(
 
 	private inner class PlaylistFilesPromise(playlistId: PlaylistId) :
 		Promise.Proxy<List<ServiceFile>>(),
-		PromisedResponse<SubsonicPlaylistResponse?, List<ServiceFile>>
+		PromisedResponse<PlaylistResponse?, List<ServiceFile>>
 	{
 		init {
 			proxy(
@@ -429,13 +438,13 @@ class LiveSubsonicConnection(
 					"id=${playlistId.id}"
 				)
 					.also(::doCancel)
-					.promiseSubsonicResponse<SubsonicPlaylistResponse>()
+					.promiseSubsonicResponse<PlaylistResponse>()
 					.also(::doCancel)
 					.eventually(this)
 			)
 		}
 
-		override fun promiseResponse(response: SubsonicPlaylistResponse?): Promise<List<ServiceFile>> = ThreadPools.compute.preparePromise { cs ->
+		override fun promiseResponse(response: PlaylistResponse?): Promise<List<ServiceFile>> = ThreadPools.compute.preparePromise { cs ->
 			response?.playlist?.entry?.filter { !it.isDir }?.map {
 				if (cs.isCancelled) throw itemParsingCancelledException()
 
@@ -475,7 +484,7 @@ class LiveSubsonicConnection(
 		}
 	}
 
-	private inner class PingViewPromise : Promise.Proxy<SubsonicResponse>(), PromisedResponse<HttpResponse, SubsonicResponse?> {
+	private inner class PingViewPromise : Promise.Proxy<Response>(), PromisedResponse<HttpResponse, Response?> {
 		init {
 			proxy(
 				httpClient
@@ -485,10 +494,10 @@ class LiveSubsonicConnection(
 			)
 		}
 
-		override fun promiseResponse(response: HttpResponse): Promise<SubsonicResponse?> {
+		override fun promiseResponse(response: HttpResponse): Promise<Response?> {
 			if (response.code != 200) throw InvalidResponseCodeException(response.code)
 
-			return response.promiseSubsonicResponse<SubsonicResponse>()
+			return response.promiseSubsonicResponse<Response>()
 		}
 	}
 
@@ -534,88 +543,98 @@ class LiveSubsonicConnection(
 	}
 
 	@Keep
-	private open class SubsonicResponse(
+	private open class Response(
 		val status: String,
 		val version: String,
 	)
 
 	@Keep
-	private class SubsonicNamedItem(
+	private class NamedItem(
 		val id: String,
 		val name: String,
 		val isDir: Boolean,
 	)
 
 	@Keep
-	private class SubsonicIndex(
-		val artist: List<SubsonicNamedItem>,
+	private class Index(
+		val artist: List<NamedItem>,
 	)
 
 	@Keep
-	private class SubsonicIndexResponse(
-		val index: List<SubsonicIndex>,
+	private class IndexResponse(
+		val index: List<Index>,
 	)
 
 	@Keep
-	private class SubsonicIndexesResponse(
-		val indexes: SubsonicIndexResponse
+	private class IndexesResponse(
+		val indexes: IndexResponse
 	)
 
 	@Keep
-	private class SubsonicPlaylistDirectoryResponse(
-		val playlist: List<SubsonicNamedItem>,
+	private class PlaylistDirectoryResponse(
+		val playlist: List<NamedItem>,
 	)
 
 	@Keep
-	private class SubsonicPlaylistsResponse(
-		val playlists: SubsonicPlaylistDirectoryResponse
+	private class PlaylistsResponse(
+		val playlists: PlaylistDirectoryResponse
 	)
 
 	@Keep
-	private class SubsonicLastModifiedResponse(
+	private class LastModifiedResponse(
 		val lastModified: Long,
 	)
 
 	@Keep
-	private class SubsonicIndexesLastModifiedResponse(
-		val indexes: SubsonicLastModifiedResponse
+	private class IndexesLastModifiedResponse(
+		val indexes: LastModifiedResponse
 	)
 
 	@Keep
-	private class SubsonicDirectory(
-		val child: List<SubsonicNamedItem>
+	private class Directory(
+		val child: List<NamedItem>
 	)
 
 	@Keep
-	private class SubsonicDirectoryRoot(
-		val directory: SubsonicDirectory
+	private class DirectoryRoot(
+		val directory: Directory
 	)
 
 	@Keep
-	private class SubsonicLyrics(
+	private class Lyrics(
 		val value: String,
 	)
 
 	@Keep
-	private class SubsonicLyricsResponse(
-		val lyrics: SubsonicLyrics,
+	private class LyricsResponse(
+		val lyrics: Lyrics,
 	)
 
 	@Keep
 	private class SubsonicPlaylist(
-		val entry: List<SubsonicNamedItem>,
+		val entry: List<NamedItem>,
 	)
 
 	@Keep
-	private class SubsonicPlaylistResponse(
+	private class PlaylistResponse(
 		val playlist: SubsonicPlaylist,
 	)
 
 	@Keep
-	class SubsonicErrorResponse(
+	class ErrorResponse(
 		val code: Int,
 		val message: String,
 	)
 
-	class SubsonicServerException(val error: SubsonicErrorResponse?) : IOException("Server returned 'failed'.")
+	@Keep
+	class UserDetailsResponse(
+		val commentRole: Boolean,
+	)
+
+	@Keep
+	class UserResponse(
+		val user: UserDetailsResponse,
+	)
+
+	class SubsonicServerException(val error: ErrorResponse?) : IOException("Server returned 'failed'.")
 }
