@@ -17,7 +17,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class `When saving a new playlist` {
+class `When updating a playlist` {
 
 	private val mut by lazy {
 		val httpConnection = FakeHttpConnection().apply {
@@ -36,6 +36,29 @@ class `When saving a new playlist` {
     "playlists": {
       "playlist": [
         {
+          "id": "3ad183c5-f87c-4632-a87e-cb784c694edd",
+          "name": "Nuncvarius",
+          "comment": "Recently played tracks",
+          "songCount": 1,
+          "duration": 147,
+          "public": false,
+          "owner": "navidrome",
+          "created": "2025-02-10T04:33:31.506347198Z",
+          "changed": "2025-04-15T02:27:28.667682041Z",
+          "coverArt": "pl-14f6b170-3eb1-4e17-995a-733cb23f5c9f_67a9824c"
+        },
+        {
+          "id": "37ff086d-a35b-4888-9cd5-73d6db7b5e7f",
+          "name": "VDEQ2gkeoUV",
+          "songCount": 2,
+          "duration": 226,
+          "public": true,
+          "owner": "navidrome",
+          "created": "2025-02-10T04:26:50.999472737Z",
+          "changed": "2025-02-10T04:27:23.88859635Z",
+          "coverArt": "pl-37ff086d-a35b-4888-9cd5-73d6db7b5e7f_67a9802b"
+        },
+        {
           "id": "adaf134b-a437-47be-9e3c-da6724c93964",
           "name": "Tt3fME4fr",
           "songCount": 2,
@@ -53,7 +76,7 @@ class `When saving a new playlist` {
 				)
 			}
 
-			mapResponse(TestUrl.withSubsonicApi().addPath("createPlaylist").addParams( "name=Mollislibero Dapibuslitora", "songId=938" , "songId=519", "songId=328", "songId=515").addParams("f=json")) {
+			mapResponse(TestUrl.withSubsonicApi().addPath("createPlaylist").addParams( "playlistId=3ad183c5-f87c-4632-a87e-cb784c694edd", "songId=134" , "songId=64", "songId=43", "songId=61", "songId=760").addParams("f=json")) {
 				PassThroughHttpResponse(
 					200,
 					"OK",
@@ -80,12 +103,13 @@ class `When saving a new playlist` {
 	fun act() {
 		mut.second
 			.promiseStoredPlaylist(
-				"Mollislibero Dapibuslitora",
+				"Nuncvarius",
 				listOf(
-					ServiceFile("938"),
-					ServiceFile("519"),
-					ServiceFile("328"),
-					ServiceFile("515"),
+					ServiceFile("134"),
+					ServiceFile("64"),
+					ServiceFile("43"),
+					ServiceFile("61"),
+					ServiceFile("760"),
 				)
 			)
 			.toExpiringFuture()
@@ -99,7 +123,7 @@ class `When saving a new playlist` {
 				.withSubsonicApi()
 				.addPath("createPlaylist")
 				.addParams("f=json")
-				.addParams( "name=Mollislibero Dapibuslitora", "songId=938" , "songId=519", "songId=328", "songId=515"),
+				.addParams( "playlistId=3ad183c5-f87c-4632-a87e-cb784c694edd", "songId=134" , "songId=64", "songId=43", "songId=61", "songId=760"),
 		)
 	}
 }
