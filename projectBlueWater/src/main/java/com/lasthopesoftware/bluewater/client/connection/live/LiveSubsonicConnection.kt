@@ -144,8 +144,15 @@ class LiveSubsonicConnection(
 			}
 		}
 
-	override fun promiseStoredPlaylist(playlistPath: String, playlist: List<ServiceFile>): Promise<*> =
-		promiseSubsonicResponse<Response>("createPlaylist", "name=$playlistPath", *playlist.map { "songId=${it.key}" }.toTypedArray())
+	override fun promiseStoredPlaylist(playlistPath: String, playlist: List<ServiceFile>): Promise<*> = RootPlaylistsPromise()
+		.cancelBackEventually { playlists ->
+			val existingPlaylistId = playlists.firstOrNull { it.value == playlistPath }?.itemId
+			promiseSubsonicResponse<Response>(
+				"createPlaylist",
+				existingPlaylistId?.id?.let { "playlistId=$it" } ?: "name=$playlistPath",
+				*playlist.map { "songId=${it.key}" }.toTypedArray()
+			)
+		}
 
 	override fun promiseIsReadOnly(): Promise<Boolean> =
 		promiseSubsonicResponse<UserResponse>("getUser", "username=${subsonicConnectionDetails.userName}")
