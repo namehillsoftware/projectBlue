@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.GivenAStandardNotificationManager.AndPlaybackHasStarted
 
 import android.media.MediaMetadata
+import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
@@ -12,13 +13,15 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.re
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.singleNowPlaying
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
-import com.lasthopesoftware.bluewater.shared.android.MediaSession.ControlMediaSession
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.lasthopesoftware.resources.bitmaps.ImmediateBitmapProducer
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
+import org.assertj.core.api.Assertions.assertThat
+import org.joda.time.Duration
+import org.junit.AfterClass
 import org.junit.Test
 
 class WhenTheFileChanges : AndroidContext() {
@@ -26,7 +29,15 @@ class WhenTheFileChanges : AndroidContext() {
 		private const val libraryId = 480
 		private const val serviceFileId = "303"
 
-		private val mediaSessionCompat = mockk<ControlMediaSession>(relaxUnitFun = true)
+		private var playbackStates: MutableList<PlaybackStateCompat>? = ArrayList()
+		private var mediaMetadata: MutableList<MediaMetadataCompat>? = ArrayList()
+
+		@AfterClass
+		@JvmStatic
+		fun after() {
+			playbackStates = null
+			mediaMetadata = null
+		}
 	}
 
 	override fun before() {
@@ -47,10 +58,15 @@ class WhenTheFileChanges : AndroidContext() {
 				every { promiseImageBytes(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns byteArrayOf((912).toByte(), (368).toByte(), (395).toByte()).toPromise()
 			},
 			ImmediateBitmapProducer,
-			mediaSessionCompat,
+			mockk {
+				every { setPlaybackState(any()) } answers { playbackStates?.add(firstArg()) }
+
+				every { setMetadata(any()) } answers { mediaMetadata?.add(firstArg()) }
+			},
 			recordingApplicationMessageBus
 		)
 		recordingApplicationMessageBus.sendMessage(PlaybackMessage.PlaybackStarted)
+		recordingApplicationMessageBus.sendMessage(TrackPositionUpdate(Duration.standardSeconds(614), Duration.standardSeconds(799)))
 		recordingApplicationMessageBus.sendMessage(
 			LibraryPlaybackMessage.TrackChanged(
 				LibraryId(libraryId),
@@ -61,19 +77,22 @@ class WhenTheFileChanges : AndroidContext() {
 
 	@Test
 	fun `then the state is set to playing`() {
-		verify { mediaSessionCompat.setPlaybackState(match { c -> c.state == PlaybackStateCompat.STATE_PLAYING }) }
+		assertThat(playbackStates).allMatch { c -> c.state == PlaybackStateCompat.STATE_PLAYING }
+	}
+
+	@Test
+	fun `then the state has the correct file positions`() {
+		assertThat(playbackStates?.map { it.position }).containsExactly(0, 614000, 0)
 	}
 
 	@Test
 	fun `then the metadata is correct`() {
-		verify {
-			mediaSessionCompat.setMetadata(match { m ->
-				m.description.title == "stiff" &&
-					m.getString(MediaMetadata.METADATA_KEY_ARTIST) == "shower" &&
-					m.getString(MediaMetadata.METADATA_KEY_ALBUM) == "however" &&
-					m.getLong(MediaMetadata.METADATA_KEY_DURATION) == 182280915L * 1000 &&
-					m.getLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER) == 921L
-			})
+		assertThat(mediaMetadata).anyMatch { m ->
+			m.description.title == "stiff" &&
+				m.getString(MediaMetadata.METADATA_KEY_ARTIST) == "shower" &&
+				m.getString(MediaMetadata.METADATA_KEY_ALBUM) == "however" &&
+				m.getLong(MediaMetadata.METADATA_KEY_DURATION) == 182280915L * 1000 &&
+				m.getLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER) == 921L
 		}
 	}
 }
