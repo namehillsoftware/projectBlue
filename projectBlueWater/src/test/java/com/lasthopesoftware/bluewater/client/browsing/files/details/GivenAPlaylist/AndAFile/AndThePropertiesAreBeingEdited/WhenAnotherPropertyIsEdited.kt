@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlayl
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
@@ -43,11 +44,11 @@ class WhenAnotherPropertyIsEdited {
 						ReadOnlyFileProperty(NormalizedFileProperties.Lyrics, "belief"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Comment, "pad"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Composer, "hotel"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Custom, "curl"),
+						EditableFileProperty(NormalizedFileProperties.Custom, "curl"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Publisher, "capital"),
 						ReadOnlyFileProperty(NormalizedFileProperties.TotalDiscs, "354"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Track, "882"),
-						ReadOnlyFileProperty(NormalizedFileProperties.AlbumArtist, "calm"),
+						EditableFileProperty(NormalizedFileProperties.AlbumArtist, "calm"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Album, "distant"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Date, "1355"),
 					)
