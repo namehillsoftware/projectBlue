@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlayl
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
@@ -41,7 +42,7 @@ class WhenTheLyricsPropertyIsEdited {
 						ReadOnlyFileProperty(NormalizedFileProperties.Name, "please"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Artist, "brown"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Genre, "subject"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Lyrics, "belief"),
+						EditableFileProperty(NormalizedFileProperties.Lyrics, "belief"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Comment, "pad"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Composer, "hotel"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Custom, "curl"),
