@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideEditableLibraryFileProperties
@@ -181,7 +182,7 @@ class FileDetailsViewModel(
 
 		val isEditing = mutableIsEditing.asInteractionState()
 		val isEditable by lazy(LazyThreadSafetyMode.PUBLICATION) {
-			!isConnectionReadOnly && editableFilePropertyDefinition != null
+			!isConnectionReadOnly && fileProperty is EditableFileProperty
 		}
 		val editableType by lazy(LazyThreadSafetyMode.PUBLICATION) { editableFilePropertyDefinition?.type }
 		val property = fileProperty.name
