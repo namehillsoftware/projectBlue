@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlayl
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -34,13 +34,13 @@ class WhenLoading {
 			mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
 					sequenceOf(
-						FileProperty(NormalizedFileProperties.Rating, "3"),
-						FileProperty("too", "prevent"),
-						FileProperty("shirt", "wind"),
-						FileProperty(NormalizedFileProperties.Name, "holiday"),
-						FileProperty(NormalizedFileProperties.Artist, "board"),
-						FileProperty(NormalizedFileProperties.Album, "virtue"),
-						FileProperty(NormalizedFileProperties.DateCreated, "1592510356")
+						ReadOnlyFileProperty(NormalizedFileProperties.Rating, "3"),
+						ReadOnlyFileProperty("too", "prevent"),
+						ReadOnlyFileProperty("shirt", "wind"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Name, "holiday"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Artist, "board"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Album, "virtue"),
+						ReadOnlyFileProperty(NormalizedFileProperties.DateCreated, "1592510356")
 					)
 				)
 			},

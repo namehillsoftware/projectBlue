@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.GivenAFileProperty.AndItHasXmlInTheText
 
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.getFormattedValue
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 
 class `When Getting the Formatted Value` {
 	private val fileProperty by lazy {
-		FileProperty(
+		ReadOnlyFileProperty(
 			"wosmPjL6",
 			"""
 Some valid text

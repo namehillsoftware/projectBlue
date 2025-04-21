@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlayl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.PassThroughUrlKeyProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -35,23 +35,23 @@ class WhenAnotherPropertyIsEdited {
 			mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
 					sequenceOf(
-						FileProperty(NormalizedFileProperties.Rating, "2"),
-						FileProperty("awkward", "prevent"),
-						FileProperty("feast", "wind"),
-						FileProperty(NormalizedFileProperties.Name, "please"),
-						FileProperty(NormalizedFileProperties.Artist, "brown"),
-						FileProperty(NormalizedFileProperties.Genre, "subject"),
-						FileProperty(NormalizedFileProperties.Lyrics, "belief"),
-						FileProperty(NormalizedFileProperties.Comment, "pad"),
-						FileProperty(NormalizedFileProperties.Composer, "hotel"),
-						FileProperty(NormalizedFileProperties.Custom, "curl"),
-						FileProperty(NormalizedFileProperties.Publisher, "capital"),
-						FileProperty(NormalizedFileProperties.TotalDiscs, "354"),
-						FileProperty(NormalizedFileProperties.Track, "882"),
-						FileProperty(NormalizedFileProperties.AlbumArtist, "calm"),
-						FileProperty(NormalizedFileProperties.Album, "distant"),
-						FileProperty(NormalizedFileProperties.Date, "1355"),
-						FileProperty(NormalizedFileProperties.Band, "stair"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Rating, "2"),
+						ReadOnlyFileProperty("awkward", "prevent"),
+						ReadOnlyFileProperty("feast", "wind"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Name, "please"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Artist, "brown"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Genre, "subject"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Lyrics, "belief"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Comment, "pad"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Composer, "hotel"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Custom, "curl"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Publisher, "capital"),
+						ReadOnlyFileProperty(NormalizedFileProperties.TotalDiscs, "354"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Track, "882"),
+						ReadOnlyFileProperty(NormalizedFileProperties.AlbumArtist, "calm"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Album, "distant"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Date, "1355"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Band, "stair"),
 					)
 				)
 			},

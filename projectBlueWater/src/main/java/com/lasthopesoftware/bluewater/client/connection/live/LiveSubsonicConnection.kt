@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
@@ -69,6 +70,8 @@ class LiveSubsonicConnection(
 
 		private val playlistsItem = ItemId(playlistsItemKey)
 		private val artistsItem = ItemId(artistsItemKey)
+
+		private val editableFilePropertyDefinitions by lazy { setOf(EditableFilePropertyDefinition.Rating).toPromise() }
 	}
 
 	private object KnownFileProperties {
@@ -178,6 +181,8 @@ class LiveSubsonicConnection(
 		.cancelBackThen { httpResponse, _ ->
 			httpResponse.body.use { it.readBytes() }
 		}
+
+	override fun promiseEditableFilePropertyDefinitions(): Promise<Set<EditableFilePropertyDefinition>> = editableFilePropertyDefinitions
 
 	override fun promiseFileStringList(itemId: ItemId?): Promise<String> = itemId
 		?.let(::promiseFiles)

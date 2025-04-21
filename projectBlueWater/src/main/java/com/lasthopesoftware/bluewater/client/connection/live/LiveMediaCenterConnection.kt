@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.FileResponses
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
@@ -69,6 +70,8 @@ class LiveMediaCenterConnection(
 		private const val searchFilesPath = "Files/Search"
 		private const val browseLibraryParameter = "Browse/Children"
 		private const val imageFormat = "jpg"
+
+		private val editableFilePropertyDefinitions by lazy { EditableFilePropertyDefinition.entries.toSet().toPromise() }
 	}
 
 	private val mcApiUrl by lazy { mediaCenterConnectionDetails.baseUrl.withMcApi() }
@@ -248,6 +251,8 @@ class LiveMediaCenterConnection(
 				}
 			}
 		}
+
+	override fun promiseEditableFilePropertyDefinitions(): Promise<Set<EditableFilePropertyDefinition>> = editableFilePropertyDefinitions
 
 	override fun promiseFileStringList(itemId: ItemId?): Promise<String> =
 		itemId

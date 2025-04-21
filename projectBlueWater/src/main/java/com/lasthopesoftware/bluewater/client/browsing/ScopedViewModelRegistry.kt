@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModelStoreOwner
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinitionProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
@@ -61,7 +62,10 @@ class ScopedViewModelRegistry(
 	override val fileDetailsViewModel by viewModelStoreOwner.buildViewModelLazily {
 		FileDetailsViewModel(
 			connectionPermissions = connectionAuthenticationChecker,
-			filePropertiesProvider = EditableLibraryFilePropertiesProvider(freshLibraryFileProperties),
+			filePropertiesProvider = EditableLibraryFilePropertiesProvider(
+				freshLibraryFileProperties,
+				EditableFilePropertyDefinitionProvider(libraryConnectionProvider),
+			),
 			updateFileProperties = filePropertiesStorage,
 			defaultImageProvider = defaultImageProvider,
 			imageProvider = imageBytesProvider,
