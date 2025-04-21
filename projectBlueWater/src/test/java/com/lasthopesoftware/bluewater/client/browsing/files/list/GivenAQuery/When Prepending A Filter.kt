@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAQuery
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
@@ -36,7 +36,7 @@ class `When Prepending A Filter` {
 	fun act() {
 		viewModel.setActiveLibraryId(LibraryId(libraryId))
 		viewModel.query.value = "T8Dtib8Rh"
-		viewModel.prependFilter(FileProperty("FhFuGYramwv", "YVUf8Q83"))
+		viewModel.prependFilter(ReadOnlyFileProperty("FhFuGYramwv", "YVUf8Q83"))
 		viewModel.findFiles().toExpiringFuture().get()
 	}
 

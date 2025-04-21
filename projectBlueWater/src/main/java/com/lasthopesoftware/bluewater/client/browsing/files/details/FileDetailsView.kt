@@ -73,9 +73,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.shared.NullBox
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePalette
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePaletteProvider
@@ -425,7 +425,7 @@ private fun FileDetailsEditor(
 								.navigable(
 									onClick = {
 										viewModel.activeLibraryId?.also {
-											navigateApplication.search(it, FileProperty(property, propertyValue))
+											navigateApplication.search(it, ReadOnlyFileProperty(property, propertyValue))
 										}
 									},
 									enabled = !isEditing
