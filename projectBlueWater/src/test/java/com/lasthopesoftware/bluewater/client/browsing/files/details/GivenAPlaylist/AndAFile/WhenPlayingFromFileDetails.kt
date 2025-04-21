@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlayl
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -37,13 +37,13 @@ class WhenPlayingFromFileDetails {
 			mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
 					sequenceOf(
-						FileProperty(NormalizedFileProperties.Name, "toward"),
-						FileProperty(NormalizedFileProperties.Artist, "load"),
-						FileProperty(NormalizedFileProperties.Album, "square"),
-						FileProperty(NormalizedFileProperties.Rating, "4"),
-						FileProperty("razor", "through"),
-						FileProperty("smile", "since"),
-						FileProperty("harvest", "old"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Name, "toward"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Artist, "load"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Album, "square"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Rating, "4"),
+						ReadOnlyFileProperty("razor", "through"),
+						ReadOnlyFileProperty("smile", "since"),
+						ReadOnlyFileProperty("harvest", "old"),
 					)
 				)
 			},

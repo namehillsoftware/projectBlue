@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlayl
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
@@ -37,23 +37,23 @@ class WhenTheFilePropertiesChange {
 				mockk {
 					every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
 						sequenceOf(
-							FileProperty(NormalizedFileProperties.Rating, "3"),
-							FileProperty("bread", "prevent"),
-							FileProperty("silence", "wind"),
-							FileProperty(NormalizedFileProperties.Name, "sorry"),
-							FileProperty(NormalizedFileProperties.Artist, "receive"),
-							FileProperty(NormalizedFileProperties.Album, "part"),
-							FileProperty(NormalizedFileProperties.StackView, "basic"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Rating, "3"),
+							ReadOnlyFileProperty("bread", "prevent"),
+							ReadOnlyFileProperty("silence", "wind"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Name, "sorry"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Artist, "receive"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Album, "part"),
+							ReadOnlyFileProperty(NormalizedFileProperties.StackView, "basic"),
 						)
 					) andThen Promise(
 						sequenceOf(
-							FileProperty(NormalizedFileProperties.Rating, "7"),
-							FileProperty("bread", "scenery"),
-							FileProperty("rush", "offense"),
-							FileProperty(NormalizedFileProperties.Name, "kiss"),
-							FileProperty(NormalizedFileProperties.Artist, "adoption"),
-							FileProperty(NormalizedFileProperties.Album, "motherly"),
-							FileProperty(NormalizedFileProperties.StackTop, "under"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Rating, "7"),
+							ReadOnlyFileProperty("bread", "scenery"),
+							ReadOnlyFileProperty("rush", "offense"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Name, "kiss"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Artist, "adoption"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Album, "motherly"),
+							ReadOnlyFileProperty(NormalizedFileProperties.StackTop, "under"),
 						)
 					)
 				},
