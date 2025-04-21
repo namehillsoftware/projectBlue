@@ -20,6 +20,8 @@ import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
+import com.namehillsoftware.handoff.promises.Promise
+import java.util.concurrent.atomic.AtomicLong
 
 private val logger by lazyLogger<MediaSessionBroadcaster>()
 private const val playbackSpeed = 1.0f
@@ -48,7 +50,7 @@ class MediaSessionBroadcaster(
 	private var playbackState = PlaybackStateCompat.STATE_STOPPED
 
 	@Volatile
-	private var trackPosition: Long = -1
+	private var trackPosition = AtomicLong(0)
 
 	@Volatile
 	private var mediaMetadata = MediaMetadataCompat.Builder().build()
@@ -72,7 +74,7 @@ class MediaSessionBroadcaster(
 		capabilities = PlaybackStateCompat.ACTION_PAUSE or standardCapabilities
 		builder.setActions(capabilities)
 		playbackState = PlaybackStateCompat.STATE_PLAYING
-		builder.setState(playbackState, trackPosition, playbackSpeed)
+		builder.setState(playbackState, trackPosition.get(), playbackSpeed)
 		mediaSession.setPlaybackState(builder.build())
 	}
 
@@ -82,7 +84,7 @@ class MediaSessionBroadcaster(
 		capabilities = PlaybackState.ACTION_PLAY or standardCapabilities
 		builder.setActions(capabilities)
 		playbackState = PlaybackState.STATE_PAUSED
-		builder.setState(playbackState, trackPosition, playbackSpeed)
+		builder.setState(playbackState, trackPosition.get(), playbackSpeed)
 		mediaSession.setPlaybackState(builder.build())
 	}
 
@@ -94,7 +96,7 @@ class MediaSessionBroadcaster(
 		playbackState = PlaybackState.STATE_STOPPED
 		builder.setState(
 			playbackState,
-			trackPosition,
+			trackPosition.get(),
 			playbackSpeed
 		)
 		mediaSession.setPlaybackState(builder.build())
@@ -105,22 +107,28 @@ class MediaSessionBroadcaster(
 	}
 
 	override fun notifyPlayingFileUpdated() {
-		nowPlayingState.promiseActiveNowPlaying().then { np ->
-			np?.playingFile?.serviceFile?.also { sf -> updateNowPlaying(np.libraryId, sf) }
-		}
+		updateTrackPosition(0)
+
+		nowPlayingState
+			.promiseActiveNowPlaying()
+			.then { np ->
+				np?.playingFile?.serviceFile?.also { sf -> updateNowPlaying(np.libraryId, sf) }
+			}
 	}
 
 	private fun updateTrackPosition(trackPosition: Long) {
-		val builder = PlaybackStateCompat.Builder()
-		builder.setActions(capabilities)
-		builder.setState(
-			playbackState,
-			trackPosition.also {
-				this.trackPosition = it
-			},
-			playbackSpeed
-		)
-		mediaSession.setPlaybackState(builder.build())
+		val oldPosition = this.trackPosition.getAndSet(trackPosition)
+
+		if (trackPosition != oldPosition && (trackPosition == 0L || oldPosition == 0L)) {
+			val builder = PlaybackStateCompat.Builder()
+			builder.setActions(capabilities)
+			builder.setState(
+				playbackState,
+				this.trackPosition.get(),
+				playbackSpeed
+			)
+			mediaSession.setPlaybackState(builder.build())
+		}
 	}
 
 	@Synchronized
@@ -134,12 +142,12 @@ class MediaSessionBroadcaster(
 		remoteClientBitmap = null
 	}
 
-	private fun updateNowPlaying(libraryId: LibraryId, serviceFile: ServiceFile) {
+	private fun updateNowPlaying(libraryId: LibraryId, serviceFile: ServiceFile): Promise<*> {
 		val promisedBitmap = imageProvider
 			.promiseImageBytes(libraryId, serviceFile)
 			.eventually(bitmapProducer::promiseBitmap)
 
-		filePropertiesProvider
+		return filePropertiesProvider
 			.promiseFileProperties(libraryId, serviceFile)
 			.eventually { fileProperties ->
 				val artist = fileProperties[KnownFileProperties.Artist]
