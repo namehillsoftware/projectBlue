@@ -78,7 +78,7 @@ class LibrarySettingsViewModel(
 		autoCloseables.manage(SubsonicConnectionSettingsViewModel())
 	}
 
-	private var savedConnectionSettingsViewModel = MutableInteractionState<ConnectionSettingsViewModel<*>?>(null)
+	private val mutableSavedConnectionSettingsViewModel = MutableInteractionState<ConnectionSettingsViewModel<*>?>(null)
 
 	private val libraryState = MutableInteractionState(defaultLibrarySettings.copy())
 	private val mutableIsLoading = MutableInteractionState(false)
@@ -95,7 +95,7 @@ class LibrarySettingsViewModel(
 			observeLibraryChanges(libraryName) { libraryName },
 			observeLibraryChanges(isUsingExistingFiles) { isUsingExistingFiles },
 			observeLibraryChanges(syncedFileLocation) { syncedFileLocation },
-			Observable.combineLatest(savedConnectionSettingsViewModel, connectionSettingsViewModel) { a, b -> a.value !== b.value },
+			Observable.combineLatest(mutableSavedConnectionSettingsViewModel, connectionSettingsViewModel) { a, b -> a.value !== b.value },
 			mediaCenterConnectionSettingsViewModel.isConnectionSettingsChanged,
 			subsonicConnectionSettingsViewModel.isConnectionSettingsChanged,
 		)
@@ -106,6 +106,7 @@ class LibrarySettingsViewModel(
 		))
 	}
 
+	val savedConnectionSettingsViewModel = mutableSavedConnectionSettingsViewModel.asInteractionState()
 	val connectionSettingsViewModel = MutableInteractionState<ConnectionSettingsViewModel<*>?>(null)
 	val libraryName = MutableInteractionState(defaultLibrarySettings.libraryName ?: "")
 	val isUsingExistingFiles = MutableInteractionState(defaultLibrarySettings.isUsingExistingFiles)
@@ -185,7 +186,7 @@ class LibrarySettingsViewModel(
 		libraryName.value = result?.libraryName ?: ""
 		syncedFileLocation.value = result?.syncedFileLocation ?: SyncedFileLocation.INTERNAL
 
-		savedConnectionSettingsViewModel.value = when (val parsedConnectionSettings = result?.connectionSettings) {
+		mutableSavedConnectionSettingsViewModel.value = when (val parsedConnectionSettings = result?.connectionSettings) {
 			is StoredMediaCenterConnectionSettings -> {
 				mediaCenterConnectionSettingsViewModel.assignConnectionSettings(parsedConnectionSettings)
 				mediaCenterConnectionSettingsViewModel
@@ -201,13 +202,13 @@ class LibrarySettingsViewModel(
 			}
 		}
 
-		connectionSettingsViewModel.value = savedConnectionSettingsViewModel.value
+		connectionSettingsViewModel.value = mutableSavedConnectionSettingsViewModel.value
 
 		libraryState.value = (result ?: defaultLibrarySettings).copy(
 			isUsingExistingFiles = isUsingExistingFiles.value,
 			libraryName = libraryName.value,
 			syncedFileLocation = syncedFileLocation.value,
-			connectionSettings = savedConnectionSettingsViewModel.value?.getCurrentConnectionSettings(),
+			connectionSettings = mutableSavedConnectionSettingsViewModel.value?.getCurrentConnectionSettings(),
 		)
 	}
 
@@ -224,7 +225,7 @@ class LibrarySettingsViewModel(
 			.then { it ->
 				libraryState.value = it
 
-				savedConnectionSettingsViewModel.value = when (val parsedConnectionSettings = it?.connectionSettings) {
+				mutableSavedConnectionSettingsViewModel.value = when (val parsedConnectionSettings = it?.connectionSettings) {
 					is StoredMediaCenterConnectionSettings -> {
 						mediaCenterConnectionSettingsViewModel.assignConnectionSettings(parsedConnectionSettings)
 						mediaCenterConnectionSettingsViewModel

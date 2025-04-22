@@ -683,12 +683,13 @@ private fun LibrarySettingsList(
 @Composable
 fun ServerTypeSelection(
 	librarySettingsViewModel: LibrarySettingsViewModel,
+	modifier: Modifier = Modifier,
 	onServerTypeSelectionFinished: () -> Unit = {},
 ) {
 	BackHandler { onServerTypeSelectionFinished() }
 
 	Box(
-		modifier = Modifier.fillMaxSize(),
+		modifier = Modifier.fillMaxSize().then(modifier),
 		contentAlignment = Alignment.Center,
 	) {
 		Column(
@@ -919,10 +920,11 @@ fun LibrarySettingsView(
 						if (isSelectingServerType) {
 							ServerTypeSelection(
 								librarySettingsViewModel = librarySettingsViewModel,
-								onServerTypeSelectionFinished = { isSelectingServerType = false }
+								onServerTypeSelectionFinished = { isSelectingServerType = false },
+								modifier = Modifier.weight(1f),
 							)
 						} else {
-							val connectionSettingsViewModelState by librarySettingsViewModel.connectionSettingsViewModel.subscribeAsState()
+							val connectionSettingsViewModelState by librarySettingsViewModel.savedConnectionSettingsViewModel.subscribeAsState()
 
 							when (val connectionSettingsViewModel = connectionSettingsViewModelState) {
 								is LibrarySettingsViewModel.MediaCenterConnectionSettingsViewModel -> LibrarySettingsList(
