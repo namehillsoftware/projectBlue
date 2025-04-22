@@ -141,10 +141,11 @@ class LiveMediaCenterConnection(
 				}
 			}
 
-	override fun promiseItems(itemId: KeyedIdentifier?): Promise<List<IItem>> = itemId
-		?.let { it as? ItemId }
-		?.let(::ItemFilePromise)
-		.keepPromise(emptyList())
+	override fun promiseItems(itemId: KeyedIdentifier?): Promise<List<IItem>> = when (itemId) {
+		is ItemId -> ItemFilePromise(itemId)
+		null -> ItemFilePromise(null)
+		else -> Promise(emptyList())
+	}
 
 	override fun promiseAudioPlaylistPaths(): Promise<List<String>> = Promise.Proxy { cp ->
 		promiseResponse("Playlists/List", "IncludeMediaTypes=1")
