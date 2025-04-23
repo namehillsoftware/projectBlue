@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
@@ -104,6 +105,7 @@ fun MenuIcon(
 			label = {
 				Text(
 					text = label,
+					textAlign = TextAlign.Center,
 					modifier = labelModifier,
 					maxLines = labelMaxLines,
 					color = labelColor,

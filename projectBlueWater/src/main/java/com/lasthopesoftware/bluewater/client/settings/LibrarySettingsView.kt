@@ -78,7 +78,7 @@ import kotlinx.coroutines.launch
 private val expandedTitleHeight = Dimensions.expandedTitleHeight
 private val expandedIconSize = menuHeight
 private val appBarHeight = Dimensions.appBarHeight
-private val boxHeight = expandedTitleHeight + appBarHeight
+private val boxHeight = expandedTitleHeight + appBarHeight + 40.dp
 private val innerGroupPadding = viewPaddingUnit * 2
 private const val inputRowMaxWidth = .8f
 
@@ -159,6 +159,7 @@ private fun RowScope.LabelledSaveAndConnectButton(
 		iconPainter = painterResource(id = R.drawable.arrow_right_24dp),
 		contentDescription = saveAndConnectText,
 		label = saveAndConnectText,
+		labelMaxLines = 2,
 		labelModifier = modifier,
 		focusRequester = focusRequester,
 	)
@@ -673,7 +674,10 @@ private fun LibrarySettingsList(
 				onClick = { saveLibrary() },
 				enabled = isSettingsChanged && !isSavingState,
 			) {
-				Text(text = if (!isSettingsChanged) stringResource(id = R.string.saved) else stringResource(id = R.string.save))
+				Text(text =
+					if (!isSettingsChanged) stringResource(id = R.string.saved)
+					else stringResource(id = R.string.save)
+				)
 			}
 		}
 	}
