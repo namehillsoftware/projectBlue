@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.playlist
 
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.SupplyQueuedPreparedFiles
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
@@ -42,18 +43,17 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 
 	override fun pause(): Promise<PositionedPlayableFile?> = synchronized(stateChangeSync) {
 		positionedPlayingFile
-			?.apply { cancel() }
-			?.eventually { ppf ->
-				ppf
-					?.let { playingFile ->
-						playingFile
-							.playingFile
-							.promisePause()
-							.then { p ->
-								PositionedPlayableFile(p, ppf.playableFileVolumeManager, ppf.asPositionedFile())
-							}
-					}
-					?: positionedPlayableFile.keepPromise()
+			?.run {
+				cancel()
+				eventually({ ppf ->
+					ppf
+						?.playingFile
+						?.promisePause()
+						?.then { p ->
+							PositionedPlayableFile(p, ppf.playableFileVolumeManager, ppf.asPositionedFile())
+						}
+						?: positionedPlayableFile.keepPromise()
+				})
 			}
 			?.also {
 				positionedPlayableFile = it
@@ -108,6 +108,9 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 				}
 			}, { e ->
 				isHalted = true
+
+				if (e is CancellationException) return@then
+				if (e is PreparationException && e.cause is CancellationException) return@then
 
 				logger.error(releasingMediaPlayerError, e)
 				reject(e)

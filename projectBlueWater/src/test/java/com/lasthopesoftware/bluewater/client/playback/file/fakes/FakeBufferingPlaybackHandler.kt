@@ -8,9 +8,10 @@ import com.lasthopesoftware.promises.extensions.ProgressedPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
+import java.util.concurrent.ConcurrentLinkedQueue
 
 open class FakeBufferingPlaybackHandler : BufferingPlaybackFile, PlayableFile, PlayingFile, PlayedFile {
-	private val playingStates = mutableListOf(false)
+	private val playingStates = ConcurrentLinkedQueue<Boolean>().apply { add(false) }
 
 	val recordedPlayingStates
 		get() = playingStates.toList()

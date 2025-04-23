@@ -29,6 +29,7 @@ import com.lasthopesoftware.promises.ContinuingResult
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.onEach
+import com.lasthopesoftware.promises.extensions.regardless
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.closables.PromisingCloseable
@@ -84,16 +85,21 @@ class PlaybackEngine(
 
 	private val positionedFileQueueProviders = positionedFileQueueProviders.associateBy({ it.isRepeating }, { it })
 
+	@Volatile
 	var isPlaying = false
 		private set
 
 	private val playingStateSync = Any()
+	private val engineActionPromiseSync = Any()
 
 	@Volatile
 	private var activeLibraryId = markerLibraryId
 
 	@Volatile
 	private var promisedPlayingState = Promise(defaultState)
+
+	@Volatile
+	private var promisedEngineAction: Promise<*> = Unit.toPromise()
 
 	private var playbackSubscription: Disposable? = null
 	private var activePlayer: ManagePlaylistPlayback? = null
@@ -160,15 +166,24 @@ class PlaybackEngine(
 
 	override fun startPlaylist(libraryId: LibraryId, playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
 		logger.info("Starting playback")
-		return updateLibraryState(libraryId) {
-			PlayingState(
-				it,
-				playlist.toMutableList(),
-				isRepeating,
-				playlistPosition,
-				StaticProgressedFile(filePosition.toPromise())
-			)
-		}.eventually { saveState() }.eventually { resumePlayback() }.unitResponse()
+		return updateEngineState {
+			Promise.Proxy { cp ->
+				updateLibraryState(libraryId) {
+					PlayingState(
+						it,
+						playlist.toMutableList(),
+						isRepeating,
+						playlistPosition,
+						StaticProgressedFile(filePosition.toPromise())
+					)
+				}.also(cp::doCancel)
+					.eventually { saveState() }
+					.also(cp::doCancel)
+					.eventually { resumePlayback() }
+					.also(cp::doCancel)
+					.unitResponse()
+			}
+		}
 	}
 
 	override fun skipToNext(): Promise<Pair<LibraryId, PositionedFile>> = withState {
@@ -250,8 +265,18 @@ class PlaybackEngine(
 	override fun pause(): Promise<Unit> =
 		pausePlayback().then { _ -> onPlaybackPaused?.onPlaybackPaused() }
 
-	override fun interrupt(): Promise<Unit> =
-		pausePlayback().then { _ -> onPlaybackInterrupted?.onPlaybackInterrupted() }
+	override fun interrupt(): Promise<Unit> = updateEngineState {
+		isPlaying = false
+
+		preparedPlaybackQueueResourceManagement.reset()
+		activePlayer
+			?.haltPlayback()
+			.keepPromise()
+			.eventually { saveState() }
+			.also {
+				activePlayer = null
+			}
+	}.then { _ -> onPlaybackInterrupted?.onPlaybackInterrupted() }
 
 	override fun setOnPlayingFileChanged(onPlayingFileChanged: OnPlayingFileChanged?): PlaybackEngine {
 		this.onPlayingFileChanged = onPlayingFileChanged
@@ -364,12 +389,13 @@ class PlaybackEngine(
 
 	private fun getActiveNowPlaying() = nowPlayingRepository.promiseNowPlaying(activeLibraryId).keepPromise()
 
-	private fun pausePlayback(): Promise<NowPlaying> {
-		val promisedPause = activePlayer?.pause() ?: Unit.toPromise()
-
+	private fun pausePlayback(): Promise<NowPlaying?> = updateEngineState {
 		isPlaying = false
 
-		return promisedPause.eventually { saveState() }
+		activePlayer
+			?.pause()
+			.keepPromise()
+			.eventually { saveState() }
 	}
 
 	private fun resumePlayback(): Promise<Unit> = withState {
@@ -503,6 +529,23 @@ class PlaybackEngine(
 				}
 			}.also { promisedPlayingState = it }
 		}
+
+	private inline fun <T> updateEngineState(crossinline continuation: () -> Promise<T>): Promise<T> = synchronized(engineActionPromiseSync) {
+		promisedEngineAction
+			.regardless(continuation)
+			.also {
+				promisedEngineAction.cancel()
+				promisedEngineAction = it
+			}
+	}
+
+	private data class PlayingEngineState(
+		val libraryId: LibraryId,
+		val isPlaying: Boolean,
+		val playlist: List<ServiceFile>,
+		val playlistPosition: Int,
+		val isRepeating: Boolean,
+	)
 
 	private class PlayingState(
 		val libraryId: LibraryId,
