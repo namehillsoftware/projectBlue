@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.engine
 
+import androidx.lifecycle.AtomicReference
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.IStartPlayback
@@ -24,6 +25,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.ManageN
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.playlist.ManagePlaylistPlayback
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.bluewater.shared.update
 import com.lasthopesoftware.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.promises.ContinuingResult
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
@@ -35,7 +37,6 @@ import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.closables.PromisingCloseable
 import com.namehillsoftware.handoff.errors.RejectionDropper
 import com.namehillsoftware.handoff.promises.Promise
-import io.reactivex.rxjava3.disposables.Disposable
 import org.jetbrains.annotations.Contract
 import org.joda.time.Duration
 import java.util.concurrent.CancellationException
@@ -69,39 +70,23 @@ class PlaybackEngine(
 		private val zeroProgressedFile by lazy {
 			StaticProgressedFile(Duration.ZERO.toPromise())
 		}
-
-		private val defaultState by lazy {
-			PlayingState(
-				markerLibraryId,
-				mutableListOf(),
-				false,
-				0,
-				zeroProgressedFile
-			)
-		}
 	}
 
 	private val saveStateRateLimit = PromisingRateLimiter<NowPlaying?>(1)
 
 	private val positionedFileQueueProviders = positionedFileQueueProviders.associateBy({ it.isRepeating }, { it })
 
-	@Volatile
-	var isPlaying = false
-		private set
+	private val playingState = PlayingState(
+		engineState = PlayingEngineState(
+			markerLibraryId,
+			false,
+			mutableListOf(),
+			0,
+			false,
+		),
+		zeroProgressedFile,
+	)
 
-	private val playingStateSync = Any()
-	private val engineActionPromiseSync = Any()
-
-	@Volatile
-	private var activeLibraryId = markerLibraryId
-
-	@Volatile
-	private var promisedPlayingState = Promise(defaultState)
-
-	@Volatile
-	private var promisedEngineAction: Promise<*> = Unit.toPromise()
-
-	private var playbackSubscription: Disposable? = null
 	private var activePlayer: ManagePlaylistPlayback? = null
 	private var onPlayingFileChanged: OnPlayingFileChanged? = null
 	private var onPlaylistError: OnPlaylistError? = null
@@ -111,91 +96,90 @@ class PlaybackEngine(
 	private var onPlaybackCompleted: OnPlaybackCompleted? = null
 	private var onPlaylistReset: OnPlaylistReset? = null
 
+	val isPlaying: Boolean
+		get() = playingState.engineState.get().isPlaying
+
 	override fun restoreFromSavedState(libraryId: LibraryId): Promise<Pair<LibraryId, PositionedProgressedFile?>> {
 		fun promiseState() = withState {
-			playlist
-				.getOrNull(playlistPosition)
-				?.let { serviceFile ->
-					fileProgress
-						.progress
-						.then { p ->
-							Pair(libraryId, PositionedProgressedFile(playlistPosition, serviceFile, p))
-						}
-				}
-				?: Pair(libraryId, null).toPromise()
-		}
-
-		return synchronized(playingStateSync) {
-			val currentActiveLibraryId = activeLibraryId
-
-			if (libraryId == currentActiveLibraryId) promiseState()
-			else {
-				val currentPromisedPlayingState = promisedPlayingState
-				pausePlayback()
-					.eventually {
-						if (activeLibraryId != currentActiveLibraryId) currentPromisedPlayingState
-						else currentPromisedPlayingState
-							.eventually { originalState ->
-								nowPlayingRepository
-									.promiseNowPlaying(libraryId)
-									.then(
-										{ nowPlaying ->
-											nowPlaying
-												.takeIf { activeLibraryId == originalState.libraryId }
-												?.run {
-													activeLibraryId = libraryId
-													PlayingState(
-														libraryId,
-														playlist.toMutableList(),
-														isRepeating,
-														playlistPosition,
-														StaticProgressedFile(Duration.millis(filePosition).toPromise())
-													)
-												}
-												?: originalState
-										},
-										{ originalState }
-									)
+			with (engineState.get()) {
+				playlist
+					.getOrNull(playlistPosition)
+					?.let { serviceFile ->
+						fileProgress
+							.progress
+							.then { p ->
+								Pair(libraryId, PositionedProgressedFile(playlistPosition, serviceFile, p))
 							}
 					}
-					.also { promisedPlayingState = it }
-					.eventually { promiseState() }
+					?: Pair(libraryId, null).toPromise()
 			}
+		}
+
+		return withState {
+			pausePlayback()
+				.eventually {
+					val originalState = engineState.get()
+					nowPlayingRepository
+						.promiseNowPlaying(libraryId)
+						.then { nowPlaying ->
+							nowPlaying
+								?.run {
+									val isUpdated = engineState.compareAndSet(
+										originalState,
+										PlayingEngineState(
+											libraryId,
+											isPlaying,
+											playlist,
+											playlistPosition,
+											isRepeating,
+										)
+									)
+
+									if (isUpdated)
+										fileProgress = StaticProgressedFile(Duration.millis(filePosition).toPromise())
+								}
+						}
+				}
+				.eventually {
+					promiseState()
+				}
 		}
 	}
 
 	override fun startPlaylist(libraryId: LibraryId, playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
 		logger.info("Starting playback")
-		return updateEngineState {
-			Promise.Proxy { cp ->
-				updateLibraryState(libraryId) {
-					PlayingState(
-						it,
-						playlist.toMutableList(),
-						isRepeating,
-						playlistPosition,
-						StaticProgressedFile(filePosition.toPromise())
-					)
-				}.also(cp::doCancel)
-					.eventually { saveState() }
-					.also(cp::doCancel)
-					.eventually { resumePlayback() }
-					.also(cp::doCancel)
-					.unitResponse()
+		return withState {
+			val expectedState = engineState.get().copy(
+				libraryId = libraryId,
+				playlist = playlist.toMutableList(),
+				playlistPosition = playlistPosition,
+				isPlaying = true,
+			)
+
+			fileProgress = StaticProgressedFile(filePosition.toPromise())
+			engineState.set(expectedState)
+			saveState().then { _ ->
+				engineState.get() == expectedState
 			}
+		}
+		.eventually { isUpdated ->
+			if (isUpdated) resumePlayback()
+			else Unit.toPromise()
 		}
 	}
 
 	override fun skipToNext(): Promise<Pair<LibraryId, PositionedFile>> = withState {
-		changePosition(
-			getNextPosition(playlistPosition, playlist),
-			Duration.ZERO
-		)
+		with (engineState.get()) {
+			changePosition(
+				getNextPosition(playlistPosition, playlist),
+				Duration.ZERO
+			)
+		}
 	}
 
 	override fun skipToPrevious(): Promise<Pair<LibraryId, PositionedFile>> = withState {
 		changePosition(
-			getPreviousPosition(playlistPosition),
+			getPreviousPosition(engineState.get().playlistPosition),
 			Duration.ZERO
 		)
 	}
@@ -204,69 +188,95 @@ class PlaybackEngine(
 		playlistPosition: Int,
 		filePosition: Duration
 	): Promise<Pair<LibraryId, PositionedFile>> {
-		playbackSubscription?.dispose()
 		activePlayer = null
 
 		return withState {
-			this.playlistPosition = playlistPosition
-			fileProgress = StaticProgressedFile(filePosition.toPromise())
+			updateEngineState {
+				Pair(copy(playlistPosition = playlistPosition), Unit).toPromise()
+			}.eventually { (o, n, _) ->
+				if (o != n) {
+					fileProgress = StaticProgressedFile(filePosition.toPromise())
+					with(saveState()) {
+						if (!isPlaying) then { np ->
+							with (engineState.get()) {
+								Pair(libraryId, PositionedFile(playlistPosition, playlist[playlistPosition]))
+							}
+						} else eventually {
+							with (engineState.get()) {
+								val queueProvider = positionedFileQueueProviders.getValue(isRepeating)
+								val preparedPlaybackQueue = preparedPlaybackQueueResourceManagement
+									.initializePreparedPlaybackQueue(
+										queueProvider.provideQueue(
+											libraryId,
+											playlist,
+											playlistPosition
+										)
+									)
 
-			with(saveState()) {
-				if (!isPlaying) then { _ ->
-					val serviceFile = playlist[playlistPosition]
-					Pair(libraryId, PositionedFile(playlistPosition, serviceFile))
-				} else eventually {
-					val queueProvider = positionedFileQueueProviders.getValue(isRepeating)
-					val preparedPlaybackQueue = preparedPlaybackQueueResourceManagement
-						.initializePreparedPlaybackQueue(
-							queueProvider.provideQueue(
-								libraryId,
-								playlist,
-								playlistPosition
-							)
-						)
-
-					startPlayback(preparedPlaybackQueue, filePosition)
-						.progress
-						.then { p ->
-							if (p is ContinuingResult) Pair(libraryId, p.current.asPositionedFile())
-							else Pair(libraryId, PositionedFile(playlistPosition, playlist[playlistPosition]))
+								startPlayback(preparedPlaybackQueue, filePosition)
+									.progress
+									.then { p ->
+										if (p is ContinuingResult) Pair(libraryId, p.current.asPositionedFile())
+										else Pair(
+											libraryId, PositionedFile(playlistPosition, playlist[playlistPosition])
+										)
+									}
+							}
 						}
+					}
+				} else {
+					with (engineState.get()) {
+						Pair(libraryId, PositionedFile(playlistPosition, playlist[playlistPosition])).toPromise()
+					}
 				}
 			}
 		}
 	}
 
 	override fun playRepeatedly(): Promise<Unit> = withState {
-		isRepeating = true
-		val promisedSave = saveState()
-		updatePreparedFileQueueUsingState()
-		promisedSave
-	}.unitResponse()
+		updateEngineState {
+			Pair(copy(isRepeating = true), Unit).toPromise()
+		}.eventually { (old, new, _) ->
+			if (old != new) {
+				val promisedSave = saveState()
+				updatePreparedFileQueueUsingState()
+				promisedSave.unitResponse()
+			} else {
+				Unit.toPromise()
+			}
+		}
+	}
 
 	override fun playToCompletion(): Promise<Unit> = withState {
-		isRepeating = false
-		val promisedSave = saveState()
-		updatePreparedFileQueueUsingState()
-		promisedSave
-	}.unitResponse()
+		updateEngineState {
+			Pair(copy(isRepeating = false), Unit).toPromise()
+		}.eventually { (old, new, _) ->
+			if (old != new) {
+				val promisedSave = saveState()
+				updatePreparedFileQueueUsingState()
+				promisedSave.unitResponse()
+			} else {
+				Unit.toPromise()
+			}
+		}
+	}
 
 	override fun resume(): Promise<Unit> {
 		return activePlayer
+			?.resume()
 			?.also {
-				isPlaying = true
+				playingState.engineState.update { it.copy(isPlaying = true) }
 				onPlaybackStarted?.onPlaybackStarted()
 			}
-			?.resume()
-			?.then { it -> onPlayingFileChanged?.onPlayingFileChanged(activeLibraryId, it) }
+			?.then { it -> onPlayingFileChanged?.onPlayingFileChanged(playingState.engineState.get().libraryId, it) }
 			?: resumePlayback()
 	}
 
 	override fun pause(): Promise<Unit> =
 		pausePlayback().then { _ -> onPlaybackPaused?.onPlaybackPaused() }
 
-	override fun interrupt(): Promise<Unit> = updateEngineState {
-		isPlaying = false
+	override fun interrupt(): Promise<Unit> = withState {
+		engineState.update { it.copy(isPlaying = false) }
 
 		preparedPlaybackQueueResourceManagement.reset()
 		activePlayer
@@ -276,7 +286,107 @@ class PlaybackEngine(
 			.also {
 				activePlayer = null
 			}
-	}.then { _ -> onPlaybackInterrupted?.onPlaybackInterrupted() }
+			.then { _ -> onPlaybackInterrupted?.onPlaybackInterrupted() }
+	}.unitResponse()
+
+	override fun addFile(serviceFile: ServiceFile): Promise<NowPlaying?> {
+		return withState {
+			engineState.update { it.copy(playlist = it.playlist + serviceFile) }
+			updatePreparedFileQueueUsingState()
+			saveState()
+		}
+	}
+
+	override fun removeFileAtPosition(position: Int): Promise<NowPlaying?> = withState {
+		var expectedState = engineState.get()
+		val promisedSkip = if (expectedState.playlistPosition == position) {
+			expectedState = expectedState.copy(playlistPosition = getNextPosition(position, expectedState.playlist))
+			skipToNext()
+		} else {
+			Promise.empty()
+		}
+
+		promisedSkip
+			.then { _ ->
+				val currentState = engineState.get()
+				if (expectedState == currentState) with (currentState) {
+					val newPlaylist = playlist.filterIndexed { index, _ -> index != position }
+
+					var newPosition = playlistPosition
+					if (playlistPosition > position)
+						newPosition -= 1
+
+					engineState.compareAndSet(currentState, copy(playlist = newPlaylist, playlistPosition = newPosition))
+				}
+			}
+			.eventually {
+				updatePreparedFileQueueUsingState()
+				saveState()
+			}
+	}
+
+	override fun moveFile(position: Int, newPosition: Int): Promise<NowPlaying?> {
+		if (position < 0 || newPosition < 0) return getActiveNowPlaying()
+
+		return withState {
+			val currentPlaylist = engineState.get().playlist
+			engineState.update {
+				if (it.playlist !== currentPlaylist || currentPlaylist.run { position >= size || newPosition >= size }) return getActiveNowPlaying()
+
+				val newPlaylist = currentPlaylist.toMutableList()
+				val removedFile = newPlaylist.removeAt(position)
+				newPlaylist.add(newPosition, removedFile)
+
+				val newPlaylistPosition = when (it.playlistPosition) {
+					position -> newPosition
+					in newPosition until position -> it.playlistPosition + 1
+					in position..newPosition -> it.playlistPosition - 1
+					else -> it.playlistPosition
+				}
+
+				it.copy(playlist = newPlaylist, playlistPosition = newPlaylistPosition)
+			}
+
+			updatePreparedFileQueueUsingState()
+			saveState()
+		}
+	}
+
+	override fun clearPlaylist(): Promise<NowPlaying?> {
+		preparedPlaybackQueueResourceManagement.reset()
+		val expectedState = playingState.engineState.get()
+		return activePlayer
+			?.haltPlayback()
+			.keepPromise()
+			.eventually {
+				withState {
+					with (engineState.get()) {
+						if (expectedState == this) {
+							activePlayer = null
+
+							val isUpdated = engineState.compareAndSet(
+								expectedState,
+								copy(
+									isPlaying = false,
+									playlist = emptyList(),
+									playlistPosition = 0
+								)
+							)
+
+							if (isUpdated)
+								fileProgress = zeroProgressedFile
+							updatePreparedFileQueueUsingState()
+							saveState()
+						} else getActiveNowPlaying()
+					}
+				}
+				.then { s ->
+					onPlaybackCompleted?.onPlaybackCompleted()
+					s
+				}
+				.keepPromise()
+			}
+	}
 
 	override fun setOnPlayingFileChanged(onPlayingFileChanged: OnPlayingFileChanged?): PlaybackEngine {
 		this.onPlayingFileChanged = onPlayingFileChanged
@@ -313,94 +423,28 @@ class PlaybackEngine(
 		return this
 	}
 
-	override fun addFile(serviceFile: ServiceFile): Promise<NowPlaying?> {
-		return withState {
-			playlist.add(serviceFile)
-			updatePreparedFileQueueUsingState()
-			saveState()
+	private fun getActiveNowPlaying() = nowPlayingRepository
+		.promiseNowPlaying(playingState.engineState.get().libraryId)
+		.keepPromise()
+
+	private fun pausePlayback(): Promise<NowPlaying?> = withState {
+		updateEngineState {
+			Pair(copy(isPlaying = false), Unit).toPromise()
+		}.eventually { (old, new, _) ->
+			activePlayer
+				?.takeIf { old != new }
+				?.pause()
+				.keepPromise()
+				.regardless { saveState() }
 		}
-	}
-
-	override fun removeFileAtPosition(position: Int): Promise<NowPlaying?> = withState {
-		val promisedSkip = if (playlistPosition == position) {
-			skipToNext()
-		} else {
-			Promise.empty()
-		}
-
-		promisedSkip
-			.eventually {
-				playlist.removeAt(position)
-
-				if (playlistPosition > position)
-					playlistPosition -= 1
-
-				updatePreparedFileQueueUsingState()
-				saveState()
-			}
-	}
-
-	override fun moveFile(position: Int, newPosition: Int): Promise<NowPlaying?> {
-		if (position < 0 || newPosition < 0) return getActiveNowPlaying()
-
-		return withState {
-			with(playlist) {
-				if (position >= size || newPosition >= size) return@withState getActiveNowPlaying()
-			}
-
-			val removedFile = playlist.removeAt(position)
-			playlist.add(newPosition, removedFile)
-
-			playlistPosition = when (playlistPosition) {
-				position -> newPosition
-				in newPosition until position -> playlistPosition + 1
-				in position..newPosition -> playlistPosition - 1
-				else -> playlistPosition
-			}
-
-			updatePreparedFileQueueUsingState()
-			saveState()
-		}
-	}
-
-	override fun clearPlaylist(): Promise<NowPlaying?> {
-		preparedPlaybackQueueResourceManagement.reset()
-		return activePlayer
-			?.haltPlayback()
-			.keepPromise()
-			.eventually {
-				isPlaying = false
-				playbackSubscription?.dispose()
-				activePlayer = null
-
-				withState {
-					playlist = ArrayList()
-					playlistPosition = 0
-					fileProgress = zeroProgressedFile
-					updatePreparedFileQueueUsingState()
-					saveState()
-				}
-			}
-			.then { it ->
-				onPlaybackCompleted?.onPlaybackCompleted()
-				it
-			}
-	}
-
-	private fun getActiveNowPlaying() = nowPlayingRepository.promiseNowPlaying(activeLibraryId).keepPromise()
-
-	private fun pausePlayback(): Promise<NowPlaying?> = updateEngineState {
-		isPlaying = false
-
-		activePlayer
-			?.pause()
-			.keepPromise()
-			.eventually { saveState() }
 	}
 
 	private fun resumePlayback(): Promise<Unit> = withState {
-		val positionedFileQueueProvider = positionedFileQueueProviders.getValue(isRepeating)
-		val fileQueue = positionedFileQueueProvider.provideQueue(libraryId, playlist, playlistPosition)
+		val fileQueue = with (engineState.updateAndGet { it.copy(isPlaying = true) }) {
+			val positionedFileQueueProvider = positionedFileQueueProviders.getValue(isRepeating)
+			positionedFileQueueProvider.provideQueue(libraryId, playlist, playlistPosition)
+		}
+
 		val preparedPlaybackQueue = preparedPlaybackQueueResourceManagement.initializePreparedPlaybackQueue(fileQueue)
 		fileProgress.progress.then { it -> startPlayback(preparedPlaybackQueue, it) }.unitResponse()
 	}
@@ -409,22 +453,22 @@ class PlaybackEngine(
 		val newPlayer = playbackBootstrapper.startPlayback(preparedPlaybackQueue, filePosition)
 		activePlayer = newPlayer
 
-		isPlaying = true
+		playingState.engineState.update { it.copy(isPlaying = true) }
 		onPlaybackStarted?.onPlaybackStarted()
 
 		val promisedPlayback = newPlayer.promisePlayedPlaylist()
 
 		promisedPlayback
 			.onEach { p ->
-				isPlaying = true
+				playingState.engineState.update { it.copy(isPlaying = true) }
 				withState {
-					playlistPosition = p.playlistPosition
+					engineState.update { it.copy(playlistPosition = p.playlistPosition) }
 					fileProgress = ProgressingFile(p)
 					saveState().then { np -> np?.run { onPlayingFileChanged?.onPlayingFileChanged(libraryId, p) } }
 				}
 			}
 			.then { _ ->
-				isPlaying = false
+				playingState.engineState.update { it.copy(isPlaying = false) }
 				activePlayer = null
 				changePosition(0, Duration.ZERO)
 					.then { (libraryId, positionedFile) ->
@@ -441,7 +485,7 @@ class PlaybackEngine(
 						}
 
 						withState {
-							playlistPosition = e.positionedFile.playlistPosition
+							engineState.update { it.copy(playlistPosition = e.positionedFile.playlistPosition) }
 							fileProgress = zeroProgressedFile
 							saveState()
 						}
@@ -453,7 +497,7 @@ class PlaybackEngine(
 				}
 
 				activePlayer?.haltPlayback()?.excuse(RejectionDropper.Instance.get())
-				isPlaying = false
+				playingState.engineState.update { it.copy(isPlaying = false) }
 				activePlayer = null
 
 				onPlaylistError?.onError(e)
@@ -464,13 +508,15 @@ class PlaybackEngine(
 
 	private fun updatePreparedFileQueueUsingState() {
 		withState {
-			preparedPlaybackQueueResourceManagement.tryUpdateQueue(
-				positionedFileQueueProviders.getValue(isRepeating).provideQueue(
-					libraryId,
-					playlist,
-					playlistPosition + 1
+			with (engineState.get()) {
+				preparedPlaybackQueueResourceManagement.tryUpdateQueue(
+					positionedFileQueueProviders.getValue(isRepeating).provideQueue(
+						libraryId,
+						playlist,
+						playlistPosition + 1
+					)
 				)
-			)
+			}
 
 			Unit.toPromise()
 		}
@@ -478,19 +524,21 @@ class PlaybackEngine(
 
 	@Suppress("UNCHECKED_CAST")
 	private fun saveState(): Promise<NowPlaying?> = withState {
-		if (libraryId.id > -1) saveStateRateLimit.limit {
-			fileProgress.progress.eventually {
-				nowPlayingRepository.updateNowPlaying(
-					NowPlaying(
-						libraryId,
-						playlist,
-						playlistPosition,
-						it.millis,
-						isRepeating,
-					)
-				) as Promise<NowPlaying?>
-			}
-		} else Promise.empty()
+		with (engineState.get()) {
+			if (libraryId.id > -1) saveStateRateLimit.limit {
+				fileProgress.progress.eventually {
+					nowPlayingRepository.updateNowPlaying(
+						NowPlaying(
+							libraryId,
+							playlist,
+							playlistPosition,
+							it.millis,
+							isRepeating,
+						)
+					) as Promise<NowPlaying?>
+				}
+			} else Promise.empty()
+		}
 	}
 
 	override fun promiseClose(): Promise<Unit> {
@@ -499,45 +547,28 @@ class PlaybackEngine(
 			?.haltPlayback()
 			.keepPromise()
 			.then { _ ->
-				isPlaying = false
+				playingState.engineState.update { it.copy(isPlaying = false) }
 				onPlaybackStarted = null
 				onPlayingFileChanged = null
 				onPlaylistError = null
+				onPlaybackInterrupted = null
+				onPlaylistReset = null
+				onPlaybackPaused = null
+				onPlaybackCompleted = null
 				activePlayer = null
-				playbackSubscription?.dispose()
 			}
 	}
 
-	private fun <T> withState(action: PlayingState.() -> Promise<T>): Promise<T> = synchronized(playingStateSync) {
-		promisedPlayingState.eventually { synchronized(it) { it.action() } }
-	}
-
-	private fun updateLibraryState(libraryId: LibraryId, updateFunc: PlayingState.(LibraryId) -> PlayingState?) =
-		synchronized(playingStateSync) {
-			val originalActiveLibraryId = activeLibraryId
-			promisedPlayingState.then { originalState ->
-				if (originalState.libraryId == originalActiveLibraryId) {
-					try {
-						activeLibraryId = libraryId
-						originalState.updateFunc(libraryId)
-					} catch (e: Throwable) {
-						logger.warn("There was an error updating the playing state, returning to original state", e)
-						originalState
-					}
-				} else {
-					originalState
+	private inline fun <Resolution> PlayingState.updateEngineState(action: PlayingEngineState.() -> Promise<Pair<PlayingEngineState, Resolution>>): Promise<Triple<PlayingEngineState, PlayingEngineState, Resolution>> =
+		engineState.get().let { currentState ->
+			action(currentState)
+				.then { (newState, resolution) ->
+					engineState.set(newState)
+					Triple(currentState, engineState.get(), resolution)
 				}
-			}.also { promisedPlayingState = it }
 		}
 
-	private inline fun <T> updateEngineState(crossinline continuation: () -> Promise<T>): Promise<T> = synchronized(engineActionPromiseSync) {
-		promisedEngineAction
-			.regardless(continuation)
-			.also {
-				promisedEngineAction.cancel()
-				promisedEngineAction = it
-			}
-	}
+	private inline fun <T> withState(action: PlayingState.() -> Promise<T>): Promise<T> = playingState.run(action)
 
 	private data class PlayingEngineState(
 		val libraryId: LibraryId,
@@ -548,20 +579,13 @@ class PlaybackEngine(
 	)
 
 	private class PlayingState(
-		val libraryId: LibraryId,
-
-		@Volatile
-		var playlist: MutableList<ServiceFile>,
-
-		@Volatile
-		var isRepeating: Boolean,
-
-		@Volatile
-		var playlistPosition: Int,
+		engineState: PlayingEngineState,
 
 		@Volatile
 		var fileProgress: ReadFileProgress
-	)
+	) {
+		val engineState = AtomicReference(engineState)
+	}
 
 	private class StaticProgressedFile(override val progress: Promise<Duration>) : ReadFileProgress
 

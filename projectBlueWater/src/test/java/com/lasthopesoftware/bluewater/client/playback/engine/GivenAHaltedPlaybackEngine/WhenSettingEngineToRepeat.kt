@@ -64,7 +64,7 @@ class WhenSettingEngineToRepeat {
 			listOf(CompletingFileQueueProvider(), CyclicalFileQueueProvider()),
 			repository,
 			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f)))
-		playbackEngine.restoreFromSavedState(library.libraryId)
+		playbackEngine.restoreFromSavedState(library.libraryId).toExpiringFuture().get()
 		playbackEngine.playRepeatedly().toExpiringFuture().get()
 		repository.promiseNowPlaying(library.libraryId).toExpiringFuture().get()
 	}

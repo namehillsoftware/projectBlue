@@ -8,6 +8,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.library
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
@@ -16,6 +18,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -57,10 +60,17 @@ class WhenResumingPlayback {
 	}
 
 	private var restoredState: Pair<LibraryId, PositionedProgressedFile?>? = null
+	private var playingFile: PositionedPlayingFile? = null
 
 	@BeforeAll
 	fun act() {
 		val (deferredNowPlaying, engine) = mut
+
+		val promisedPlayingFile = object : Promise<PositionedPlayingFile>() {
+			init {
+			    engine.setOnPlayingFileChanged { _, it -> resolve(it) }
+			}
+		}
 
 		val futureRestoredState = engine.restoreFromSavedState(LibraryId(libraryId)).toExpiringFuture()
 
@@ -70,10 +80,17 @@ class WhenResumingPlayback {
 
 		restoredState = futureRestoredState.get()
 		futureResume.get()
+
+		playingFile = promisedPlayingFile.toExpiringFuture().get()
 	}
 
 	@Test
 	fun `then the restored state is correct`() {
 		assertThat(restoredState).isEqualTo(Pair(LibraryId(libraryId), PositionedProgressedFile(0, ServiceFile("312"), Duration.millis(556))))
+	}
+
+	@Test
+	fun `then the playing file is the same as the restored file because the state was restored first`() {
+		assertThat(playingFile?.asPositionedFile()).isEqualTo(PositionedFile(0, ServiceFile("312")))
 	}
 }

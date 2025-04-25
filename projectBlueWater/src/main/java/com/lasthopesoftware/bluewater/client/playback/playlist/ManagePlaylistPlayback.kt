@@ -10,7 +10,7 @@ interface ManagePlaylistPlayback {
 	fun resume(): Promise<PositionedPlayingFile?>
 	fun setVolume(volume: Float): Promise<Unit>
 
-	fun haltPlayback(): Promise<*>
+	fun haltPlayback(): Promise<Unit>
 
 	fun promisePlayedPlaylist(): ProgressingPromise<PositionedPlayingFile, Unit>
 
