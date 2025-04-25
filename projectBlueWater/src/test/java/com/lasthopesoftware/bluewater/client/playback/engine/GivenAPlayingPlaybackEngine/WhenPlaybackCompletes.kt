@@ -17,12 +17,11 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 class WhenPlaybackCompletes {
 
@@ -70,30 +69,34 @@ class WhenPlaybackCompletes {
 			deferredResolution.resolve().resolve()
 		}
 
-		val countDownLatch = CountDownLatch(1)
-		playbackEngine
-			.setOnPlayingFileChanged { _, f ->
-				observedPlayingFile = f
-				f?.playingFile?.promisePlayedFile()?.then { _ ->
-					lastCompletedPlayedFile = observedPlayingFile?.asPositionedFile()
-				}
-			}
-			.setOnPlaylistReset { _, f -> resetPositionedFile = f }
-			.setOnPlaybackCompleted { countDownLatch.countDown() }
-			.startPlaylist(
-				LibraryId(libraryId),
-				listOf(
-					ServiceFile("1"),
-					ServiceFile("2"),
-					ServiceFile("3"),
-					ServiceFile("4"),
-					ServiceFile("5")
-				),
-				0,
-				Duration.ZERO
-			)
+		val promisedCompletedPlayback = object : Promise<Unit>() {
+			init {
 
-		countDownLatch.await(30, TimeUnit.SECONDS)
+				playbackEngine
+					.setOnPlayingFileChanged { _, f ->
+						observedPlayingFile = f
+						f?.playingFile?.promisePlayedFile()?.then { _ ->
+							lastCompletedPlayedFile = observedPlayingFile?.asPositionedFile()
+						}
+					}
+					.setOnPlaylistReset { _, f -> resetPositionedFile = f }
+					.setOnPlaybackCompleted { resolve(Unit) }
+					.startPlaylist(
+						LibraryId(libraryId),
+						listOf(
+							ServiceFile("1"),
+							ServiceFile("2"),
+							ServiceFile("3"),
+							ServiceFile("4"),
+							ServiceFile("5")
+						),
+						0,
+						Duration.ZERO
+					)
+			}
+		}
+
+		promisedCompletedPlayback.toExpiringFuture().get()
 		nowPlaying = nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()
 	}
 
