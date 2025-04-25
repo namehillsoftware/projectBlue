@@ -93,7 +93,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 			}.keepPromise(Unit)
 	}
 
-	override fun haltPlayback(): Promise<*> = synchronized(stateChangeSync) {
+	override fun haltPlayback(): Promise<Unit> = synchronized(stateChangeSync) {
 		pause()
 			.then({ p ->
 				if (!isHalted) {

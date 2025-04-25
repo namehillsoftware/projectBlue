@@ -6,6 +6,7 @@ import androidx.compose.runtime.produceState
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
 import com.namehillsoftware.handoff.cancellation.CancellationResponse
+import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
@@ -82,6 +83,7 @@ fun <T> Promise<T>?.keepPromise(): Promise<T?> = this as? Promise<T?> ?: Promise
 
 fun <T> Promise<T>?.keepPromise(default: T): Promise<T> = this ?: default.toPromise()
 
+fun <T> Promise<T>.cancelBackUnitResponse(): Promise<Unit> = this.cancelBackThen(UnitResponse.respond())
 fun <T> Promise<T>.unitResponse(): Promise<Unit> = this.then(UnitResponse.respond())
 
 fun <T> Promise<T>.guaranteedUnitResponse(): Promise<Unit> = this.then(
@@ -89,12 +91,14 @@ fun <T> Promise<T>.guaranteedUnitResponse(): Promise<Unit> = this.then(
 	UnitResponse.respond()
 )
 
-private class UnitResponse<Resolution> private constructor() : ImmediateResponse<Resolution, Unit> {
+private class UnitResponse<Resolution> private constructor() : ImmediateResponse<Resolution, Unit>, (Resolution, CancellationSignal) -> Unit {
 	override fun respond(resolution: Resolution) = Unit
 
-	companion object {
-		private val singleUnitResponse by lazy { UnitResponse<Any>() }
+	override fun invoke(p1: Resolution, p2: CancellationSignal) = Unit
 
+	companion object {
+
+		private val singleUnitResponse by lazy { UnitResponse<Any>() }
 		@Suppress("UNCHECKED_CAST")
 		fun <Resolution> respond(): UnitResponse<Resolution> = singleUnitResponse as UnitResponse<Resolution>
 	}

@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConne
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
@@ -38,7 +38,16 @@ class WhenResumingPlayback {
 			nowPlayingId = 3,
 		)
 
-		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
+		val fakePlaybackPreparerProvider = FakeMappedPlayableFilePreparationSourceProvider(
+			listOf(
+				ServiceFile("1"),
+				ServiceFile("2"),
+				ServiceFile("3"),
+				ServiceFile("4"),
+				ServiceFile("5"),
+				ServiceFile("701")
+			)
+		)
 		val libraryProvider = FakeLibraryRepository(storedLibrary)
 
 		val engine = PlaybackEngine(
@@ -85,13 +94,13 @@ class WhenResumingPlayback {
 			)
 			.toExpiringFuture()
 			.get()
-		provider.deferredResolution.resolve()
+		provider.deferredResolutions[ServiceFile("1")]?.resolve()
 		updatedNowPlayingAfterClearing = engine.clearPlaylist().toExpiringFuture()[1, TimeUnit.SECONDS]
 		playlistAfterClearing = updatedNowPlayingAfterClearing?.playlist?.toList()
 		isPlayingAfterPlaylistCleared = engine.isPlaying
 		engine.addFile(ServiceFile("701")).toExpiringFuture().get()
 		engine.resume().toExpiringFuture().get()
-		provider.deferredResolution.resolve()
+		provider.deferredResolutions[ServiceFile("701")]?.resolve()
 	}
 
 	@Test

@@ -16,7 +16,10 @@ inline fun <T> AtomicReference<T>.updateConditionally(test: (T) -> Boolean, fact
 }
 
 inline fun <T> AtomicReference<T>.update(factory: (T) -> T) {
-	do {
-		val prev = get()
-	} while (!compareAndSet(prev, factory(prev)))
+	while (!tryUpdate(factory)) {}
+}
+
+inline fun <T> AtomicReference<T>.tryUpdate(factory: (T) -> T): Boolean {
+	val prev = get()
+	return compareAndSet(prev, factory(prev))
 }
