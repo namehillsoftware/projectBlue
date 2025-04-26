@@ -76,16 +76,20 @@ class PlaybackEngine(
 
 	private val positionedFileQueueProviders = positionedFileQueueProviders.associateBy({ it.isRepeating }, { it })
 
+	private val engineState = AtomicReference(
+		PlayingEngineState(
+			markerLibraryId,
+			false,
+			mutableListOf(),
+			0,
+			false,
+		)
+	)
+
 	private val promisedPlayingState = AtomicReference(
 		Promise(
 			PlayingState(
-				engineState = PlayingEngineState(
-					markerLibraryId,
-					false,
-					mutableListOf(),
-					0,
-					false,
-				),
+				engineState,
 				zeroProgressedFile,
 			)
 		)
@@ -101,7 +105,7 @@ class PlaybackEngine(
 	private var onPlaylistReset: OnPlaylistReset? = null
 
 	val isPlaying: Boolean
-		get() = false
+		get() = engineState.get().isPlaying
 
 	override fun restoreFromSavedState(libraryId: LibraryId): Promise<Pair<LibraryId, PositionedProgressedFile?>> {
 		fun promiseState() = withPromisedState {
@@ -131,13 +135,16 @@ class PlaybackEngine(
 										nowPlaying
 											?.run {
 												PlayingState(
-													PlayingEngineState(
-														libraryId,
-														state.engineState.get().isPlaying,
-														playlist,
-														playlistPosition,
-														isRepeating,
-													),
+													state.engineState.apply {
+														update { s ->
+															s.copy(
+																libraryId = libraryId,
+																playlist = playlist,
+																playlistPosition = playlistPosition,
+																isRepeating = isRepeating,
+															)
+														}
+													},
 													StaticProgressedFile(Duration.millis(filePosition).toPromise())
 												)
 											} ?: state
@@ -588,13 +595,11 @@ class PlaybackEngine(
 	)
 
 	private class PlayingState(
-		engineState: PlayingEngineState,
+		val engineState: AtomicReference<PlayingEngineState>,
 
 		@Volatile
 		var fileProgress: ReadFileProgress
-	) {
-		val engineState = AtomicReference(engineState)
-	}
+	)
 
 	private class StaticProgressedFile(override val progress: Promise<Duration>) : ReadFileProgress
 
