@@ -234,7 +234,7 @@ class PlaybackEngine(
 	}
 
 	override fun playRepeatedly(): Promise<Unit> = withPromisedState {
-		engineState.update { it.copy(isRepeating = false) }
+		engineState.update { it.copy(isRepeating = true) }
 		val promisedSave = saveState()
 		updatePreparedFileQueueUsingState()
 		promisedSave.unitResponse()
