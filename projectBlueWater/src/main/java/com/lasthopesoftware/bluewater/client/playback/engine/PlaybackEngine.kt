@@ -25,6 +25,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.ManageN
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.playlist.ManagePlaylistPlayback
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.bluewater.shared.tryUpdate
 import com.lasthopesoftware.bluewater.shared.update
 import com.lasthopesoftware.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.promises.ContinuingResult
@@ -233,31 +234,17 @@ class PlaybackEngine(
 	}
 
 	override fun playRepeatedly(): Promise<Unit> = withPromisedState {
-		updateEngineState {
-			Pair(copy(isRepeating = true), Unit).toPromise()
-		}.eventually { (old, new, _) ->
-			if (old != new) {
-				val promisedSave = saveState()
-				updatePreparedFileQueueUsingState()
-				promisedSave.unitResponse()
-			} else {
-				Unit.toPromise()
-			}
-		}
+		engineState.update { it.copy(isRepeating = false) }
+		val promisedSave = saveState()
+		updatePreparedFileQueueUsingState()
+		promisedSave.unitResponse()
 	}
 
 	override fun playToCompletion(): Promise<Unit> = withPromisedState {
-		updateEngineState {
-			Pair(copy(isRepeating = false), Unit).toPromise()
-		}.eventually { (old, new, _) ->
-			if (old != new) {
-				val promisedSave = saveState()
-				updatePreparedFileQueueUsingState()
-				promisedSave.unitResponse()
-			} else {
-				Unit.toPromise()
-			}
-		}
+		engineState.update { it.copy(isRepeating = false) }
+		val promisedSave = saveState()
+		updatePreparedFileQueueUsingState()
+		promisedSave.unitResponse()
 	}
 
 	override fun resume(): Promise<Unit> {
@@ -438,15 +425,11 @@ class PlaybackEngine(
 	}
 
 	private fun pausePlayback(): Promise<NowPlaying?> = withPromisedState {
-		updateEngineState {
-			Pair(copy(isPlaying = false), Unit).toPromise()
-		}.eventually { (old, new, _) ->
-			activePlayer
-				?.takeIf { old != new }
-				?.pause()
-				.keepPromise()
-				.regardless { saveState() }
-		}
+		activePlayer
+			?.takeIf { engineState.tryUpdate { it.copy(isPlaying = false) } }
+			?.pause()
+			.keepPromise()
+			.regardless { saveState() }
 	}
 
 	private fun resumePlayback(): Promise<Unit> = withPromisedState {
@@ -572,19 +555,8 @@ class PlaybackEngine(
 			}
 	}
 
-	private inline fun <Resolution> PlayingState.updateEngineState(action: PlayingEngineState.() -> Promise<Pair<PlayingEngineState, Resolution>>): Promise<Triple<PlayingEngineState, PlayingEngineState, Resolution>> =
-		engineState.get().let { currentState ->
-			action(currentState)
-				.then { (newState, resolution) ->
-					engineState.set(newState)
-					Triple(currentState, engineState.get(), resolution)
-				}
-		}
-
 	private inline fun <T> withPromisedState(crossinline action: PlayingState.() -> Promise<T>): Promise<T> =
-		promisedPlayingState.get().eventually {
-			it.action()
-		}
+		promisedPlayingState.get().eventually { it.action() }
 
 	private data class PlayingEngineState(
 		val libraryId: LibraryId,
