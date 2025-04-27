@@ -160,24 +160,32 @@ class PlaybackEngine(
 
 	override fun startPlaylist(libraryId: LibraryId, playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
 		logger.info("Starting playback")
-		return withPromisedState {
-			val expectedState = engineState.get().copy(
-				libraryId = libraryId,
-				playlist = playlist.toMutableList(),
-				playlistPosition = playlistPosition,
-				isPlaying = true,
-			)
 
-			fileProgress = StaticProgressedFile(filePosition.toPromise())
-			engineState.set(expectedState)
-			saveState().then { _ ->
-				engineState.get() == expectedState
+		val expectedState = engineState.get().copy(
+			libraryId = libraryId,
+			playlist = playlist.toMutableList(),
+			playlistPosition = playlistPosition,
+			isPlaying = true,
+		)
+
+		return promisedPlayingState
+			.updateAndGet { promisedState ->
+				promisedState.then { state ->
+					state.apply {
+						fileProgress = StaticProgressedFile(filePosition.toPromise())
+						engineState.set(expectedState)
+					}
+				}
 			}
-		}
-		.eventually { isUpdated ->
-			if (isUpdated) resumePlayback()
-			else Unit.toPromise()
-		}
+			.eventually {
+				saveState().then { _ ->
+					engineState.get() == expectedState
+				}
+			}
+			.eventually { isUpdated ->
+				if (isUpdated) resumePlayback()
+				else Unit.toPromise()
+			}
 	}
 
 	override fun skipToNext(): Promise<Pair<LibraryId, PositionedFile>> = withPromisedState {
@@ -268,19 +276,8 @@ class PlaybackEngine(
 	override fun pause(): Promise<Unit> =
 		pausePlayback().then { _ -> onPlaybackPaused?.onPlaybackPaused() }
 
-	override fun interrupt(): Promise<Unit> = withPromisedState {
-		engineState.update { it.copy(isPlaying = false) }
-
-		preparedPlaybackQueueResourceManagement.reset()
-		activePlayer
-			?.haltPlayback()
-			.keepPromise()
-			.eventually { saveState() }
-			.also {
-				activePlayer = null
-			}
-			.then { _ -> onPlaybackInterrupted?.onPlaybackInterrupted() }
-	}.unitResponse()
+	override fun interrupt(): Promise<Unit> =
+		pausePlayback().then { _ -> onPlaybackInterrupted?.onPlaybackInterrupted() }
 
 	override fun addFile(serviceFile: ServiceFile): Promise<NowPlaying?> {
 		return withPromisedState {
@@ -425,11 +422,12 @@ class PlaybackEngine(
 	}
 
 	private fun pausePlayback(): Promise<NowPlaying?> = withPromisedState {
-		activePlayer
-			?.takeIf { engineState.tryUpdate { it.copy(isPlaying = false) } }
-			?.pause()
-			.keepPromise()
-			.regardless { saveState() }
+		val promisedPause = if (engineState.tryUpdate { it.copy(isPlaying = false) }) {
+			activePlayer?.pause().keepPromise()
+		} else {
+			Promise.empty()
+		}
+		promisedPause.regardless { saveState() }
 	}
 
 	private fun resumePlayback(): Promise<Unit> = withPromisedState {
