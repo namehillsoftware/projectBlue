@@ -303,7 +303,7 @@ class PlaybackEngine(
 			.then { _ ->
 				val currentState = engineState.get()
 				if (expectedState == currentState) with (currentState) {
-					val newPlaylist = playlist.filterIndexed { index, _ -> index != position }
+					val newPlaylist = playlist.take(position) + playlist.drop(position + 1)
 
 					var newPosition = playlistPosition
 					if (playlistPosition > position)
