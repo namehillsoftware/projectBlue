@@ -11,7 +11,12 @@ import kotlin.coroutines.cancellation.CancellationException
 class ResolvablePlaybackHandler : FakeBufferingPlaybackHandler() {
 	private var messenger: Messenger<PlayedFile>? = null
 
-	private val promise: ProgressedPromise<Duration, PlayedFile> = object : ProgressedPromise<Duration, PlayedFile>(MessengerOperator { messenger -> this.messenger = messenger }) {
+	private val promise: ProgressedPromise<Duration, PlayedFile> = object : ProgressedPromise<Duration, PlayedFile>(
+		MessengerOperator { messenger ->
+			messenger.awaitCancellation { messenger.sendRejection(CancellationException()) }
+			this.messenger = messenger
+		}
+	) {
 		override val progress
 			get() = this@ResolvablePlaybackHandler.progress
 	}

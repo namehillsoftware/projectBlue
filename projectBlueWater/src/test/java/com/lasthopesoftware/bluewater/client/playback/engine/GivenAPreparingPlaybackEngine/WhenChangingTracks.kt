@@ -1,33 +1,34 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.GivenAPlayingPlaybackEngine
+package com.lasthopesoftware.bluewater.client.playback.engine.GivenAPreparingPlaybackEngine
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
+import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.Collections
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-
-private const val libraryId = 265
 
 class WhenChangingTracks {
+
+	companion object {
+		private const val libraryId = 265
+	}
 
 	private val mut by lazy {
 		val fakePlaybackPreparerProvider = FakeMappedPlayableFilePreparationSourceProvider(
@@ -39,35 +40,48 @@ class WhenChangingTracks {
 				ServiceFile("5")
 			)
 		)
-		val library = Library(id = libraryId)
-		val libraryProvider = FakeLibraryRepository(library)
+
+		val deferredNowPlaying = DeferredPromise(nowPlaying)
 		val playbackEngine =
 			PlaybackEngine(
 				PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration()),
 				listOf(CompletingFileQueueProvider()),
-				NowPlayingRepository(
-					FakeSelectedLibraryProvider(),
-					libraryProvider,
-				),
+				mockk {
+					every { promiseNowPlaying(LibraryId(libraryId)) } answers {
+						nowPlaying.toPromise()
+					}
+
+					every { updateNowPlaying(any()) } answers {
+						nowPlaying = firstArg()
+						deferredNowPlaying
+					}
+				},
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)
-		Pair(fakePlaybackPreparerProvider, playbackEngine)
+		Triple(fakePlaybackPreparerProvider, deferredNowPlaying, playbackEngine)
 	}
+	private var nowPlaying = NowPlaying(
+		LibraryId(libraryId),
+		emptyList(),
+		0,
+		0,
+		false
+	)
 
 	private var nextSwitchedFile: PositionedFile? = null
 	private var latestFile: PositionedPlayingFile? = null
+	private var firstGuy: ResolvablePlaybackHandler? = null
+	private var secondGuy: ResolvablePlaybackHandler? = null
 	private val startedFiles = Collections.synchronizedList(ArrayList<PositionedPlayingFile?>())
 
 	@BeforeAll
 	fun act() {
-		val (fakePlaybackPreparerProvider, playbackEngine) = mut
+		val (fakePlaybackPreparerProvider, deferredNowPlaying, playbackEngine) = mut
 
-		val countDownLatch = CountDownLatch(2)
 		val promisedStart = playbackEngine
 			.setOnPlayingFileChanged { _, p ->
 				startedFiles.add(p)
 				latestFile = p
-				countDownLatch.countDown()
 			}
 			.startPlaylist(
 				LibraryId(libraryId),
@@ -82,46 +96,64 @@ class WhenChangingTracks {
 				Duration.ZERO
 			)
 
-		val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("1")]?.resolve()
+		val promisedPositionChange = playbackEngine.changePosition(2, Duration.ZERO)
+
+		deferredNowPlaying.resolve()
+
+		firstGuy = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("1")]?.resolve()
+		secondGuy = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("3")]?.resolve()
+
 		promisedStart.toExpiringFuture().get()
-
-		val futurePositionChange = playbackEngine.changePosition(3, Duration.ZERO).toExpiringFuture()
-		fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("4")]?.resolve()
-		playingPlaybackHandler?.resolve()
-
-		if (!countDownLatch.await(10, TimeUnit.SECONDS)) Assertions.fail<Unit>("Timed out waiting for file change")
-		nextSwitchedFile = futurePositionChange.get()?.second
+		nextSwitchedFile = promisedPositionChange.toExpiringFuture().get()?.second
 	}
 
 	@Test
-	fun `then the engine is playing`() {
-		assertThat(mut.second.isPlaying).isTrue
+	fun `then the playback state is playing`() {
+		assertThat(mut.third.isPlaying).isTrue
+	}
+
+	@Test
+	fun `then the first guy is not playing`() {
+		assertThat(firstGuy?.isPlaying).isFalse
+	}
+
+	@Test
+	fun `then the second guy is playing`() {
+		assertThat(secondGuy?.isPlaying).isTrue
 	}
 
 	@Test
 	fun `then the next file change is the switched to the correct track position`() {
-		assertThat(nextSwitchedFile?.playlistPosition).isEqualTo(3)
-	}
-
-	@Test
-	fun `then the latest observed file is at the correct track position`() {
-		assertThat(latestFile?.playlistPosition).isEqualTo(3)
-	}
-
-	@Test
-	fun `then the first started file is correct`() {
-		assertThat(startedFiles[0]?.asPositionedFile())
-			.isEqualTo(PositionedFile(0, ServiceFile("1")))
+		assertThat(nextSwitchedFile?.playlistPosition).isEqualTo(2)
 	}
 
 	@Test
 	fun `then the changed started file is correct`() {
-		assertThat(startedFiles[1]?.asPositionedFile())
-			.isEqualTo(PositionedFile(3, ServiceFile("4")))
+		assertThat(startedFiles[0]?.asPositionedFile())
+			.isEqualTo(PositionedFile(2, ServiceFile("3")))
 	}
 
 	@Test
-	fun `then the playlist is started twice`() {
-		assertThat(startedFiles).hasSize(2)
+	fun `then the playlist is started once`() {
+		assertThat(startedFiles).hasSize(1)
+	}
+
+	@Test
+	fun `then now playing is correct`() {
+		assertThat(nowPlaying).isEqualTo(
+			NowPlaying(
+				LibraryId(libraryId),
+				listOf(
+					ServiceFile("1"),
+					ServiceFile("2"),
+					ServiceFile("3"),
+					ServiceFile("4"),
+					ServiceFile("5")
+				),
+				2,
+				0,
+				false
+			)
+		)
 	}
 }

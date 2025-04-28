@@ -9,9 +9,7 @@ import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
-import com.namehillsoftware.handoff.promises.response.ImmediateCancellableResponse
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
-import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.CompletableObserver
 import io.reactivex.rxjava3.core.Observable
@@ -75,32 +73,6 @@ fun <T> T.toPromise(): Promise<T> = when (this) {
 	else -> Promise(this)
 }
 
-inline fun <T, P> Promise<T>.cancelBackThen(crossinline response: (T, CancellationSignal) -> P): Promise<P> =
-	object : Promise.Proxy<P>(), ImmediateCancellableResponse<T, P> {
-		init {
-			proxy(
-				this@cancelBackThen
-					.also(::doCancel)
-					.then(this)
-			)
-		}
-
-		override fun respond(resolution: T, c: CancellationSignal): P = response(resolution, c)
-	}
-
-inline fun <T, P> Promise<T>.cancelBackEventually(crossinline response: (T) -> Promise<P>): Promise<P> =
-	object : Promise.Proxy<P>(), PromisedResponse<T, P> {
-		init {
-			proxy(
-				this@cancelBackEventually
-					.also(::doCancel)
-					.eventually(this)
-			)
-		}
-
-		override fun promiseResponse(resolution: T): Promise<P> = response(resolution)
-	}
-
 private object TruePromise : Promise<Boolean>(true)
 private object FalsePromise: Promise<Boolean>(false)
 
@@ -111,6 +83,7 @@ fun <T> Promise<T>?.keepPromise(): Promise<T?> = this as? Promise<T?> ?: Promise
 
 fun <T> Promise<T>?.keepPromise(default: T): Promise<T> = this ?: default.toPromise()
 
+fun <T> Promise<T>.cancelBackUnitResponse(): Promise<Unit> = this.cancelBackThen(UnitResponse.respond())
 fun <T> Promise<T>.unitResponse(): Promise<Unit> = this.then(UnitResponse.respond())
 
 fun <T> Promise<T>.guaranteedUnitResponse(): Promise<Unit> = this.then(
@@ -118,12 +91,14 @@ fun <T> Promise<T>.guaranteedUnitResponse(): Promise<Unit> = this.then(
 	UnitResponse.respond()
 )
 
-private class UnitResponse<Resolution> private constructor() : ImmediateResponse<Resolution, Unit> {
+private class UnitResponse<Resolution> private constructor() : ImmediateResponse<Resolution, Unit>, (Resolution, CancellationSignal) -> Unit {
 	override fun respond(resolution: Resolution) = Unit
 
-	companion object {
-		private val singleUnitResponse by lazy { UnitResponse<Any>() }
+	override fun invoke(p1: Resolution, p2: CancellationSignal) = Unit
 
+	companion object {
+
+		private val singleUnitResponse by lazy { UnitResponse<Any>() }
 		@Suppress("UNCHECKED_CAST")
 		fun <Resolution> respond(): UnitResponse<Resolution> = singleUnitResponse as UnitResponse<Resolution>
 	}

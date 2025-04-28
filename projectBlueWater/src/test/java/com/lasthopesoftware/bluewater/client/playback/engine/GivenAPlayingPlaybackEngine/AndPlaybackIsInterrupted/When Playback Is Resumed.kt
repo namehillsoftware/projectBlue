@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.GivenAPlayingPlaybackEngine
+package com.lasthopesoftware.bluewater.client.playback.engine.GivenAPlayingPlaybackEngine.AndPlaybackIsInterrupted
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
@@ -21,9 +21,11 @@ import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-private const val libraryId = 852
+class `When Playback Is Resumed` {
 
-class WhenPlaybackIsInterrupted {
+	companion object {
+		private const val libraryId = 852
+	}
 
 	private val mut by lazy {
 		val fakePlaybackPreparerProvider = FakeMappedPlayableFilePreparationSourceProvider(
@@ -74,16 +76,17 @@ class WhenPlaybackIsInterrupted {
 		resolvablePlaybackHandler?.setCurrentPosition(30)
 		playbackEngine.interrupt().toExpiringFuture().get()
 		nowPlaying = nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()
+		playbackEngine.resume().toExpiringFuture().get()
 	}
 
 	@Test
-	fun `then the player is not playing`() {
-		assertThat(resolvablePlaybackHandler?.isPlaying).isFalse
+	fun `then the player is playing because interrupt is supposed to mean a momentarily INTERRUPTION of playback, not cancellation`() {
+		assertThat(resolvablePlaybackHandler?.isPlaying).isTrue
 	}
 
 	@Test
 	fun `then the playback state is not playing`() {
-		assertThat(mut.third.isPlaying).isFalse
+		assertThat(mut.third.isPlaying).isTrue
 	}
 
 	@Test
