@@ -53,10 +53,13 @@ private val iconPaddingDp = Dimensions.viewPaddingUnit * 4
 private val iconPadding = PaddingValues(start = iconPaddingDp, end = iconPaddingDp)
 private val hiddenMenuRowHeight = Dimensions.standardRowHeight
 
-context(BoxScope)
-fun Modifier.iconModifier() = align(Alignment.Center)
-	.padding(iconPadding)
-	.size(Dimensions.topMenuIconSize)
+fun Modifier.iconModifier(scope: BoxScope) = with (scope) {
+	then(
+		Modifier.align(Alignment.Center)
+			.padding(iconPadding)
+			.size(Dimensions.topMenuIconSize)
+	)
+}
 
 @Composable
 fun LibraryMenu(
@@ -200,7 +203,7 @@ fun LibraryMenu(
 					Icon(
 						painter = painterResource(id = R.drawable.ic_water),
 						contentDescription = stringResource(id = R.string.activeDownloads),
-						modifier = Modifier.iconModifier()
+						modifier = Modifier.iconModifier(this)
 					)
 				}
 
@@ -226,7 +229,7 @@ fun LibraryMenu(
 					Icon(
 						painter = painterResource(id = R.drawable.search_36dp),
 						contentDescription = stringResource(id = R.string.search),
-						modifier = Modifier.iconModifier()
+						modifier = Modifier.iconModifier(this)
 					)
 				}
 
@@ -252,7 +255,7 @@ fun LibraryMenu(
 					Icon(
 						painter = painterResource(id = R.drawable.ic_action_settings),
 						contentDescription = stringResource(id = R.string.settings),
-						modifier = Modifier.iconModifier()
+						modifier = Modifier.iconModifier(this)
 					)
 				}
 
