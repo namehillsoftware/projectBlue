@@ -125,7 +125,6 @@ android {
 tasks.withType(KotlinCompile).configureEach {
 	compilerOptions {
 		freeCompilerArgs.add("-opt-in=kotlin.RequiresOptIn")
-		freeCompilerArgs.add("-Xcontext-receivers")
 	}
 }
 
