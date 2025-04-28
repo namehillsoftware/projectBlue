@@ -124,11 +124,13 @@ class PlaybackEngine(
 			}
 		}
 
-		return promisedPlayingState
+		return if (engineState.get().libraryId == libraryId) promiseState()
+		else promisedPlayingState
 			.updateAndGet { promisedState ->
 				promisedState
 					.eventually { state ->
-						pausePlayback()
+						if (state.engineState.get().libraryId == libraryId) state.toPromise()
+						else pausePlayback()
 							.eventually {
 								nowPlayingRepository
 									.promiseNowPlaying(libraryId)
@@ -447,6 +449,7 @@ class PlaybackEngine(
 		withPromisedState {
 			engineState.update { it.copy(isPlaying = true) }.toPromise()
 		}
+
 		onPlaybackStarted?.onPlaybackStarted()
 
 		val promisedPlayback = newPlayer.promisePlayedPlaylist()

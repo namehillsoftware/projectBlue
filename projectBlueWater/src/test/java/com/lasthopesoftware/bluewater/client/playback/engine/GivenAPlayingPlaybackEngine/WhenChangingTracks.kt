@@ -94,6 +94,11 @@ class WhenChangingTracks {
 	}
 
 	@Test
+	fun `then the engine is playing`() {
+		assertThat(mut.second.isPlaying).isTrue
+	}
+
+	@Test
 	fun `then the next file change is the switched to the correct track position`() {
 		assertThat(nextSwitchedFile?.playlistPosition).isEqualTo(3)
 	}
