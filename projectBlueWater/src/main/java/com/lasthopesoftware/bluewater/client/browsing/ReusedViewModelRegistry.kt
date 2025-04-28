@@ -101,6 +101,7 @@ class ReusedViewModelRegistry(
 			DramaticConnectionInitializationController(
 				connectionSessions,
 			),
+			registerForApplicationMessages,
 		)
 	}
 

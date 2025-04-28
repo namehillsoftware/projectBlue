@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.initialization.C
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.lasthopesoftware.resources.strings.FakeStringResources
 import io.mockk.every
 import io.mockk.mockk
@@ -29,7 +30,8 @@ class `when ensuring a different connection is working` {
 				mockk {
 					every { promiseLibraryConnection(LibraryId(originalLibraryId)) } returns ProgressingPromise(mockk<LiveServerConnection>())
 					every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
-				}
+				},
+				RecordingApplicationMessageBus(),
 			)
 		)
 	}

@@ -722,6 +722,7 @@ fun NowPlayingTvApplication(
 				DramaticConnectionInitializationController(
 					connectionSessions,
 				),
+				registerForApplicationMessages,
 			)
 		}
 	}

@@ -77,6 +77,7 @@ import java.io.IOException
 			DramaticConnectionInitializationController(
 				localApplicationDependencies.connectionSessions,
             ),
+			localApplicationDependencies.registerForApplicationMessages,
 		)
 	}
 

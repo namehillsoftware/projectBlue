@@ -343,6 +343,7 @@ fun HandheldApplication(
 				DramaticConnectionInitializationController(
 					connectionSessions,
 				),
+				registerForApplicationMessages,
 			)
 		}
 	}

@@ -15,3 +15,10 @@ jobs:
     - uses: actions/checkout@v1
     - name: Build and test project blue
       run: sh build-github-pr.sh
+    - name: Upload artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        # Artifact name
+        name: project-blue.build
+        path: projectBlueWater/build/test-results

@@ -11,6 +11,9 @@ import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.SendingWakeSignal
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgressingLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
+import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
@@ -22,13 +25,13 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 class ConnectionStatusViewModel(
 	private val stringResources: GetStringResources,
-	private val libraryConnectionProvider: ProvideProgressingLibraryConnections
+	private val libraryConnectionProvider: ProvideProgressingLibraryConnections,
+	messages: RegisterForApplicationMessages,
 ) :
 	ViewModel(),
 	TrackConnectionStatus,
 	ProvideProgressingLibraryConnections
 {
-
 	@Volatile
 	private var promisedConnectionCheck = ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>(null as LiveServerConnection?)
 
@@ -38,6 +41,11 @@ class ConnectionStatusViewModel(
 	@Volatile
 	private var testedLibraryId: LibraryId? = null
 
+	private val connectionSettingsChangedSubscription = messages.registerReceiver { c: ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated ->
+		if (c.libraryId == testedLibraryId)
+			testedLibraryId = null
+	}
+
 	private val mutableIsGettingConnection = MutableInteractionState(false)
 	private val mutableConnectionStatus = MutableInteractionState("")
 
@@ -45,6 +53,10 @@ class ConnectionStatusViewModel(
 	val isGettingConnection = mutableIsGettingConnection.asInteractionState()
 	var isCancelled = false
 		private set
+
+	override fun onCleared() {
+		connectionSettingsChangedSubscription.close()
+	}
 
 	override fun initializeConnection(libraryId: LibraryId): Promise<Boolean> = Promise.Proxy { cp ->
 		promiseLibraryConnection(libraryId)
@@ -80,8 +92,8 @@ class ConnectionStatusViewModel(
 			override fun respond(connections: LiveServerConnection?) {
 				if (initializingLibraryId != libraryId) return
 
-				testedLibraryId = libraryId
 				val isConnected = connections != null
+				testedLibraryId = libraryId.takeIf { isConnected }
 				mutableConnectionStatus.value =
 					if (isConnected) stringResources.connected else stringResources.gettingLibraryFailed
 			}

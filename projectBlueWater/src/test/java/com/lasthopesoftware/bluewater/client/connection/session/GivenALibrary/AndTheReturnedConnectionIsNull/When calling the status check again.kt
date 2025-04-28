@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.AndTheConnectionIsInitialized.AndTheLibraryChanges
+package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.AndTheReturnedConnectionIsNull
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
@@ -7,7 +7,6 @@ import com.lasthopesoftware.bluewater.client.connection.session.initialization.C
 import com.lasthopesoftware.bluewater.shared.observables.toCloseable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.lasthopesoftware.resources.strings.FakeStringResources
 import io.mockk.every
@@ -18,13 +17,12 @@ import org.junit.jupiter.api.Test
 
 class `when calling the status check again` {
 	companion object {
-		private const val firstLibraryId = 355
-		private const val secondLibraryId = 423
+		private const val libraryId = 355
 	}
 
 	private val mut by lazy {
 		val firstDeferredProgressingPromise =
-            DeferredProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>()
+			DeferredProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>()
 
 		val secondDeferredProgressingPromise =
             DeferredProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>()
@@ -34,26 +32,26 @@ class `when calling the status check again` {
 			secondDeferredProgressingPromise,
             ConnectionStatusViewModel(
                 FakeStringResources(
-					gettingLibrary = "VgssfPlPnn1",
-					connectingToServerLibrary = "9M8CP4o3",
-					connected = "3DJCi8HY8",
+					gettingLibrary = "getting",
+					connectingToServerLibrary = "connecting",
+					connected = "connected",
+					errorConnectingTryAgain = "failed",
 				),
                 mockk {
-                    every { promiseLibraryConnection(LibraryId(firstLibraryId)) } returns firstDeferredProgressingPromise
-                    every { promiseLibraryConnection(LibraryId(secondLibraryId)) } returns secondDeferredProgressingPromise
+                    every { promiseLibraryConnection(LibraryId(libraryId)) } returns
+						firstDeferredProgressingPromise andThen
+						secondDeferredProgressingPromise
                 },
 				RecordingApplicationMessageBus(),
             )
 		)
 	}
-
 	private val isConnectingHistory = mutableListOf<Boolean>()
+
 	private val connectionStatuses = mutableListOf<String>()
 
-	private var firstPromisedLibraryConnection: ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>? = null
-	private var secondPromisedLibraryConnection: ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?>? = null
-
 	private var firstLibraryConnection: LiveServerConnection? = null
+
 	private var secondLibraryConnection: LiveServerConnection? = null
 
 	@BeforeAll
@@ -62,18 +60,24 @@ class `when calling the status check again` {
 
 		viewModel.connectionStatus.subscribe { status -> connectionStatuses.add(status.value) }.toCloseable().use {
 			viewModel.isGettingConnection.subscribe { isConnecting -> isConnectingHistory.add(isConnecting.value) }.toCloseable().use {
-				firstPromisedLibraryConnection = viewModel.promiseLibraryConnection(LibraryId(firstLibraryId))
+				val firstPromisedLibraryConnection = viewModel.promiseLibraryConnection(LibraryId(
+					libraryId
+				))
 
-				firstDeferredPromise.sendResolution(mockk())
+				firstDeferredPromise.sendProgressUpdate(BuildingConnectionStatus.GettingLibrary)
+				firstDeferredPromise.sendProgressUpdate(BuildingConnectionStatus.BuildingConnectionFailed)
+				firstDeferredPromise.sendResolution(null)
 
-				secondPromisedLibraryConnection = viewModel.promiseLibraryConnection(LibraryId(secondLibraryId))
+				firstLibraryConnection = firstPromisedLibraryConnection.toExpiringFuture().get()
 
-				secondDeferredPromise.sendProgressUpdate(BuildingConnectionStatus.BuildingConnection)
-				secondDeferredPromise.sendProgressUpdate(BuildingConnectionStatus.SendingWakeSignal)
+				val secondPromisedLibraryConnection = viewModel.promiseLibraryConnection(LibraryId(
+					libraryId
+				))
+
+				secondDeferredPromise.sendProgressUpdate(BuildingConnectionStatus.BuildingConnectionComplete)
 				secondDeferredPromise.sendResolution(mockk())
 
-				firstLibraryConnection = firstPromisedLibraryConnection?.toExpiringFuture()?.get()
-				secondLibraryConnection = secondPromisedLibraryConnection?.toExpiringFuture()?.get()
+				secondLibraryConnection = secondPromisedLibraryConnection.toExpiringFuture().get()
 			}
 		}
 	}
@@ -85,12 +89,12 @@ class `when calling the status check again` {
 
 	@Test
 	fun `then the connecting statuses are correct`() {
-		assertThat(connectionStatuses).containsExactly("", "3DJCi8HY8", "", "9M8CP4o3", "", "3DJCi8HY8")
+		assertThat(connectionStatuses).containsExactly("", "getting", "failed", "", "connected")
 	}
 
 	@Test
-	fun `then the correct connection is returned`() {
-		assertThat(firstLibraryConnection).isNotNull
+	fun `then the first connection is correct`() {
+		assertThat(firstLibraryConnection).isNull()
 	}
 
 	@Test

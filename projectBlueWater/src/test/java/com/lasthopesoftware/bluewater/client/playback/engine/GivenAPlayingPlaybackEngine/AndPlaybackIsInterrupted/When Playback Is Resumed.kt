@@ -75,8 +75,8 @@ class `When Playback Is Resumed` {
 		playingPlaybackHandler?.resolve()
 		resolvablePlaybackHandler?.setCurrentPosition(30)
 		playbackEngine.interrupt().toExpiringFuture().get()
-		nowPlaying = nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()
 		playbackEngine.resume().toExpiringFuture().get()
+		nowPlaying = nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()
 	}
 
 	@Test
