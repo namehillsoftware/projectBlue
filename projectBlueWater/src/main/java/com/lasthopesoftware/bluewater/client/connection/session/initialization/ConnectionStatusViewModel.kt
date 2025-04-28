@@ -92,8 +92,8 @@ class ConnectionStatusViewModel(
 			override fun respond(connections: LiveServerConnection?) {
 				if (initializingLibraryId != libraryId) return
 
-				testedLibraryId = libraryId
 				val isConnected = connections != null
+				testedLibraryId = libraryId.takeIf { isConnected }
 				mutableConnectionStatus.value =
 					if (isConnected) stringResources.connected else stringResources.gettingLibraryFailed
 			}
