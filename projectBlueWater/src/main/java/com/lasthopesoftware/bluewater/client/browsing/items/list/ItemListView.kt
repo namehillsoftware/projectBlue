@@ -86,17 +86,16 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.expande
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.menuHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.rowPadding
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.rowScrollPadding
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.topMenuIconSize
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.topRowOuterPadding
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-private val appBarHeight = Dimensions.appBarHeight
 private val minimumMenuWidth = (topMenuIconSize + viewPaddingUnit * 2) * 3
 
-private val expandedIconSize = Dimensions.menuHeight
 private val boxHeight = expandedTitleHeight + appBarHeight + menuHeight + expandedMenuVerticalPadding * 2
 
 @Composable
@@ -468,7 +467,6 @@ fun ItemListView(
 					else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 				}
 
-				val collapsedTopRowPadding = 2.dp
 				if (isHeaderTall) {
 					val heightValue by heightScaler.getValueState()
 					Box(
@@ -481,13 +479,13 @@ fun ItemListView(
 							applicationNavigation::navigateUp,
 							modifier = Modifier
 								.align(Alignment.TopStart)
-								.padding(Dimensions.topRowOuterPadding)
+								.padding(topRowOuterPadding)
 						)
 
 						val moreMenuModifier = Modifier
 							.align(Alignment.TopEnd)
 							.padding(
-								vertical = Dimensions.topRowOuterPadding,
+								vertical = topRowOuterPadding,
 								horizontal = viewPaddingUnit
 							)
 
@@ -520,10 +518,6 @@ fun ItemListView(
 								derivedStateOf {
 									(1 - headerCollapseProgress).pow(3).coerceIn(0f, 1f)
 								}
-							}
-
-							val acceleratedHeaderHidingProgress by remember {
-								derivedStateOf { 1 - acceleratedToolbarStateProgress }
 							}
 
 							ProvideTextStyle(MaterialTheme.typography.h5) {
@@ -644,7 +638,7 @@ fun ItemListView(
 					) {
 						BackButton(
 							applicationNavigation::navigateUp,
-							modifier = Modifier.padding(horizontal = Dimensions.topRowOuterPadding)
+							modifier = Modifier.padding(horizontal = topRowOuterPadding)
 						)
 
 						ProvideTextStyle(MaterialTheme.typography.h5) {
@@ -657,7 +651,7 @@ fun ItemListView(
 									.fillMaxWidth()
 									.padding(
 										start = Dimensions.topMenuIconSizeWithPadding,
-										end = Dimensions.viewPaddingUnit + minimumMenuWidth
+										end = viewPaddingUnit + minimumMenuWidth
 									),
 								isMarqueeEnabled = !lazyListState.isScrollInProgress
 							)
@@ -669,7 +663,7 @@ fun ItemListView(
 								Modifier
 									.align(Alignment.CenterEnd)
 									.padding(
-										horizontal = Dimensions.viewPaddingUnit
+										horizontal = viewPaddingUnit
 									)
 							) else MoreItemsOnlyOptionsMenu(
 								itemListViewModel,
@@ -677,7 +671,7 @@ fun ItemListView(
 								Modifier
 									.align(Alignment.CenterEnd)
 									.padding(
-										horizontal = Dimensions.viewPaddingUnit
+										horizontal = viewPaddingUnit
 									)
 							)
 
@@ -690,8 +684,8 @@ fun ItemListView(
 								playbackServiceController = playbackServiceController,
 								modifier = Modifier
 									.padding(
-										start = Dimensions.viewPaddingUnit * 2,
-										end = topMenuIconSize + Dimensions.viewPaddingUnit
+										start = viewPaddingUnit * 2,
+										end = topMenuIconSize + viewPaddingUnit
 									)
 									.width(menuWidth)
 									.align(Alignment.CenterEnd),
