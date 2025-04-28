@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectio
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.lasthopesoftware.resources.strings.FakeStringResources
 import io.mockk.every
 import io.mockk.mockk
@@ -29,6 +30,7 @@ class `when cancelling the status check` {
                 mockk {
                     every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
                 },
+				RecordingApplicationMessageBus(),
             )
 		)
 	}
