@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -96,7 +97,7 @@ import kotlin.math.roundToInt
 
 private val minimumMenuWidth = (topMenuIconSize + viewPaddingUnit * 2) * 3
 
-private val boxHeight = expandedTitleHeight + appBarHeight + menuHeight + expandedMenuVerticalPadding * 2
+private val boxHeight = expandedTitleHeight + appBarHeight
 
 @Composable
 fun ItemsCountHeader(itemsCount: Int) {
@@ -447,7 +448,7 @@ fun ItemListView(
 
 			val isItemsLoading by itemListViewModel.isLoading.subscribeAsState()
 
-			val collapsedHeight = appBarHeight + menuHeight + rowPadding
+			val collapsedHeight = appBarHeight
 
 			val expandedHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 			val collapsedHeightPx = LocalDensity.current.run { collapsedHeight.toPx() }
@@ -463,62 +464,47 @@ fun ItemListView(
 				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 					val isLoaded = !isItemsLoading && !isFilesLoading
 
-					if (isLoaded) LoadedItemListView(actualExpandedHeight)
+					if (isLoaded) LoadedItemListView(actualExpandedHeight + menuHeight + expandedMenuVerticalPadding * 2)
 					else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 				}
 
 				if (isHeaderTall) {
 					val heightValue by heightScaler.getValueState()
-					Box(
-						modifier = Modifier
-							.fillMaxWidth()
-							.background(MaterialTheme.colors.surface)
-							.height(LocalDensity.current.run { heightValue.toDp() })
-					) {
-						BackButton(
-							applicationNavigation::navigateUp,
-							modifier = Modifier
-								.align(Alignment.TopStart)
-								.padding(topRowOuterPadding)
-						)
 
-						val moreMenuModifier = Modifier
-							.align(Alignment.TopEnd)
-							.padding(
-								vertical = topRowOuterPadding,
-								horizontal = viewPaddingUnit
+					val headerCollapseProgress by heightScaler.getProgressState()
+
+					Column(
+						modifier = Modifier
+							.align(Alignment.TopCenter)
+							.background(MaterialTheme.colors.surface)
+					) headerColumn@{
+						Box(
+							modifier = Modifier
+								.fillMaxWidth()
+								.height(LocalDensity.current.run { heightValue.toDp() })
+						) {
+							BackButton(
+								applicationNavigation::navigateUp,
+								modifier = Modifier
+									.align(Alignment.TopStart)
+									.padding(topRowOuterPadding)
 							)
 
-						if (files.any()) MoreFileOptionsMenu(
-							fileListViewModel,
-							moreMenuModifier
-						) else MoreItemsOnlyOptionsMenu(
-							itemListViewModel,
-							applicationNavigation,
-							moreMenuModifier
-						)
-
-						val headerCollapseProgress by heightScaler.getProgressState()
-						val topPadding by remember { derivedStateOf { linearInterpolation(appBarHeight, 14.dp, headerCollapseProgress) } }
-						val endPadding by remember {
-							derivedStateOf {
-								linearInterpolation(
-									viewPaddingUnit * 2,
-									topMenuIconSize + viewPaddingUnit,
-									headerCollapseProgress
+							val moreMenuModifier = Modifier
+								.align(Alignment.TopEnd)
+								.padding(
+									vertical = topRowOuterPadding,
+									horizontal = viewPaddingUnit
 								)
-							}
-						}
-						BoxWithConstraints(
-							modifier = Modifier
-								.align(Alignment.TopCenter)
-								.padding(top = topPadding, end = endPadding),
-						) nestedBoxScope@{
-							val acceleratedToolbarStateProgress by remember {
-								derivedStateOf {
-									(1 - headerCollapseProgress).pow(3).coerceIn(0f, 1f)
-								}
-							}
+
+							if (files.any()) MoreFileOptionsMenu(
+								fileListViewModel,
+								moreMenuModifier
+							) else MoreItemsOnlyOptionsMenu(
+								itemListViewModel,
+								applicationNavigation,
+								moreMenuModifier
+							)
 
 							ProvideTextStyle(MaterialTheme.typography.h5) {
 								val startPadding by remember {
@@ -531,7 +517,17 @@ fun ItemListView(
 									}
 								}
 
-								val textEndPadding = viewPaddingUnit
+								val topPadding by remember { derivedStateOf { linearInterpolation(appBarHeight, 10.dp, headerCollapseProgress) } }
+								val endPadding by remember {
+									derivedStateOf {
+										linearInterpolation(
+											viewPaddingUnit * 2,
+											topMenuIconSize + viewPaddingUnit,
+											headerCollapseProgress
+										)
+									}
+								}
+
 								val maxLines by remember { derivedStateOf { (2 - headerCollapseProgress).roundToInt() } }
 								if (maxLines > 1) {
 									Text(
@@ -540,7 +536,7 @@ fun ItemListView(
 										overflow = TextOverflow.Ellipsis,
 										modifier = Modifier
 											.fillMaxWidth()
-											.padding(start = startPadding, end = textEndPadding),
+											.padding(start = startPadding, top = topPadding, end = endPadding),
 									)
 								} else {
 									MarqueeText(
@@ -550,42 +546,34 @@ fun ItemListView(
 										gradientEdgeColor = MaterialTheme.colors.surface,
 										modifier = Modifier
 											.fillMaxWidth()
-											.padding(start = startPadding, end = textEndPadding),
+											.padding(start = startPadding, top = topPadding, end = endPadding),
 										isMarqueeEnabled = !lazyListState.isScrollInProgress
 									)
 								}
 							}
+						}
 
-							if (isFilesLoading) return@nestedBoxScope
-
-							val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
-							val topRowPadding by remember {
-								derivedStateOf {
-									linearInterpolation(
-										expandedTopRowPadding,
-										appBarHeight + rowPadding,
-										headerCollapseProgress
-									)
-								}
+						if (isFilesLoading) return@headerColumn
+						val acceleratedToolbarStateProgress by remember {
+							derivedStateOf {
+								(1 - headerCollapseProgress).pow(3).coerceIn(0f, 1f)
 							}
+						}
 
+						if (acceleratedToolbarStateProgress > 0) {
 							Row(
 								modifier = Modifier
-									.padding(
-										top = topRowPadding,
-										bottom = rowPadding,
-										start = rowPadding,
-										end = rowPadding
-									)
-									.fillMaxWidth()
-									.align(Alignment.TopEnd),
+									.padding(rowPadding)
+									.fillMaxWidth(),
 								horizontalArrangement = Arrangement.SpaceEvenly,
 							) {
+
 								val textModifier by remember {
 									derivedStateOf {
 										Modifier.alpha(acceleratedToolbarStateProgress)
 									}
 								}
+
 								if (files.any()) {
 									LabelledPlayButton(
 										libraryState = itemListViewModel,
@@ -626,6 +614,16 @@ fun ItemListView(
 									)
 								}
 							}
+						} else {
+							CollapsedItemListMenu(
+								itemListViewModel = itemListViewModel,
+								fileListViewModel = fileListViewModel,
+								applicationNavigation = applicationNavigation,
+								playbackServiceController = playbackServiceController,
+								modifier = Modifier
+									.padding(rowPadding)
+									.fillMaxWidth(),
+							)
 						}
 					}
 				} else {
