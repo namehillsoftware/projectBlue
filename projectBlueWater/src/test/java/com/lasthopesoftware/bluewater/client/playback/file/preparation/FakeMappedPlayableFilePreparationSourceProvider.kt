@@ -10,7 +10,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 import kotlin.coroutines.cancellation.CancellationException
 
-class FakeMappedPlayableFilePreparationSourceProvider(private val queue: List<ServiceFile>) : IPlayableFilePreparationSourceProvider {
+class FakeMappedPlayableFilePreparationSourceProvider(queue: List<ServiceFile>) : IPlayableFilePreparationSourceProvider {
 	private var preparationSourceProvidedHandler: ((ServiceFile, DeferredPreparedPlayableFile) -> Unit)? = null
 	val deferredResolutions = queue.associateWith { DeferredPreparedPlayableFile() }.toMutableMap()
 
@@ -37,6 +37,7 @@ class FakeMappedPlayableFilePreparationSourceProvider(private val queue: List<Se
 	}
 
     class DeferredPreparedPlayableFile : Promise<PreparedPlayableFile>(), CancellationResponse {
+		@Volatile
 		var preparedAt: Duration = Duration.ZERO
 
 		init {

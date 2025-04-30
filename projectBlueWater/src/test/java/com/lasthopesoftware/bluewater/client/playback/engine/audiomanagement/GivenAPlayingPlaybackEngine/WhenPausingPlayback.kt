@@ -11,7 +11,6 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
@@ -22,7 +21,7 @@ class WhenPausingPlayback {
 
 	private val mut by lazy {
 		val innerPlaybackState = object : ChangePlaybackState {
-			override fun startPlaylist(libraryId: LibraryId, playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> =
+			override fun startPlaylist(libraryId: LibraryId, playlist: List<ServiceFile>, playlistPosition: Int): Promise<Unit> =
 				Unit.toPromise()
 
 			override fun resume(): Promise<Unit> = Unit.toPromise()

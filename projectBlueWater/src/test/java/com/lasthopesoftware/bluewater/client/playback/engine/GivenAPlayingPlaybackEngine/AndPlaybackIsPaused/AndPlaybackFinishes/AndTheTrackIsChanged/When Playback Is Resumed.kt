@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.GivenAPlayingPlaybackEngine
+package com.lasthopesoftware.bluewater.client.playback.engine.GivenAPlayingPlaybackEngine.AndPlaybackIsPaused.AndPlaybackFinishes.AndTheTrackIsChanged
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
-import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
@@ -18,38 +18,51 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
-import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-private const val libraryId = 678
+class `When Playback Is Resumed` {
 
-class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
+	companion object {
+		private const val libraryId = 499
+	}
 
 	private val mut by lazy {
 		val fakePlaybackPreparerProvider = FakeMappedPlayableFilePreparationSourceProvider(
-			listOf(
-				ServiceFile("1"),
-				ServiceFile("2"),
-				ServiceFile("3"),
-				ServiceFile("4"),
-				ServiceFile("5")
-			)
-		)
+            listOf(
+                ServiceFile("1"),
+                ServiceFile("2"),
+                ServiceFile("3"),
+                ServiceFile("4"),
+                ServiceFile("5")
+            )
+        )
 		val library = Library(id = libraryId)
 		val libraryProvider = FakeLibraryRepository(library)
 		val nowPlayingRepository =
-			NowPlayingRepository(
-				FakeSelectedLibraryProvider(),
-				libraryProvider,
-			)
+            NowPlayingRepository(
+                FakeSelectedLibraryProvider(),
+                libraryProvider,
+            )
+		val preparedPlaybackQueueResourceManagement =
+            PreparedPlaybackQueueResourceManagement(
+                fakePlaybackPreparerProvider,
+                FakePlaybackQueueConfiguration()
+            )
+		val playbackBootstrapper = ManagedPlaylistPlayer(
+            PlaylistVolumeManager(1.0f),
+            preparedPlaybackQueueResourceManagement,
+            nowPlayingRepository,
+            listOf(CompletingFileQueueProvider()),
+        )
 		val playbackEngine =
-			PlaybackEngine(
-				PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration()),
-				listOf(CompletingFileQueueProvider()),
-				nowPlayingRepository,
-				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
-			)
+            PlaybackEngine(
+                preparedPlaybackQueueResourceManagement,
+                listOf(CompletingFileQueueProvider()),
+                nowPlayingRepository,
+                playbackBootstrapper,
+                playbackBootstrapper,
+            )
 		Triple(fakePlaybackPreparerProvider, nowPlayingRepository, playbackEngine)
 	}
 
@@ -63,25 +76,22 @@ class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 		val promisedStart = playbackEngine
 			.setOnPlayingFileChanged { _, f -> positionedFiles.add(f) }
 			.startPlaylist(
-				LibraryId(libraryId),
+                LibraryId(libraryId),
 				fakePlaybackPreparerProvider.deferredResolutions.keys.toList(),
-				0,
-				Duration.ZERO
+				0
 			)
 		val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("1")]?.resolve()
 		fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("2")]?.resolve()
 		playingPlaybackHandler?.resolve()
 		promisedStart.toExpiringFuture().get()
 		playbackEngine.pause().toExpiringFuture().get()
-		nowPlaying =
-			playbackEngine
-				.skipToNext()
-				.eventually { playbackEngine.skipToNext() }
-				.then { _ -> playbackEngine.resume() }
-				.then { _ -> fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("4")]?.resolve() }
-				.eventually { nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)) }
-				.toExpiringFuture()
-				.get()
+		playbackEngine.skipToNext().toExpiringFuture().get()
+		playbackEngine.skipToNext().toExpiringFuture().get()
+		val futureResume = playbackEngine.resume().toExpiringFuture()
+		fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("4")]?.resolve()
+		futureResume.get()
+
+		nowPlaying = nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()
 	}
 
 	@Test
@@ -91,18 +101,18 @@ class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 
 	@Test
 	fun `then the saved playlist position is correct`() {
-		assertThat(nowPlaying!!.playlistPosition).isEqualTo(3)
+		assertThat(nowPlaying?.playlistPosition).isEqualTo(3)
 	}
 
 	@Test
 	fun `then the saved playlist is correct`() {
-		assertThat(nowPlaying!!.playlist)
+		assertThat(nowPlaying?.playlist)
 			.containsExactly(
-				ServiceFile("1"),
-				ServiceFile("2"),
-				ServiceFile("3"),
-				ServiceFile("4"),
-				ServiceFile("5")
+                ServiceFile("1"),
+                ServiceFile("2"),
+                ServiceFile("3"),
+                ServiceFile("4"),
+                ServiceFile("5")
 			)
 	}
 
@@ -114,16 +124,16 @@ class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 	@Test
 	fun `then the first skipped file is only observed once`() {
 		assertThat(
-			positionedFiles
-				.map { it?.asPositionedFile() })
+            positionedFiles
+                .map { it?.asPositionedFile() })
 			.containsOnlyOnce(PositionedFile(1, ServiceFile("2")))
 	}
 
 	@Test
 	fun `then the second skipped file is not observed`() {
 		assertThat(
-			positionedFiles
-				.map { it?.asPositionedFile() })
+            positionedFiles
+                .map { it?.asPositionedFile() })
 			.doesNotContain(PositionedFile(2, ServiceFile("3")))
 	}
 }

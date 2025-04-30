@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
-import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
@@ -16,7 +16,6 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
@@ -39,8 +38,21 @@ class WhenPlaybackIsInterrupted {
 
 		val deferredNowPlaying = DeferredPromise(nowPlaying)
 
+		val preparedPlaybackQueueResourceManagement =
+			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration())
+		val playbackBootstrapper = ManagedPlaylistPlayer(
+			PlaylistVolumeManager(1.0f),
+			preparedPlaybackQueueResourceManagement,
+			mockk {
+				every { promiseNowPlaying(LibraryId(libraryId)) } answers {
+					nowPlaying.toPromise()
+				}
+
+			},
+			listOf(CompletingFileQueueProvider()),
+		)
 		val playbackEngine = PlaybackEngine(
-			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration()),
+			preparedPlaybackQueueResourceManagement,
 			listOf(CompletingFileQueueProvider()),
 			mockk {
 				every { promiseNowPlaying(LibraryId(libraryId)) } answers {
@@ -52,7 +64,8 @@ class WhenPlaybackIsInterrupted {
 					deferredNowPlaying
 				}
 			},
-			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+			playbackBootstrapper,
+			playbackBootstrapper,
 		)
 
 		Triple(fakePlaybackPreparerProvider, deferredNowPlaying, playbackEngine)
@@ -77,12 +90,12 @@ class WhenPlaybackIsInterrupted {
 			.startPlaylist(
 				LibraryId(libraryId),
 				fakePlaybackPreparerProvider.deferredResolutions.keys.toList(),
-				0,
-				Duration.ZERO
+				0
 			)
 
 		playbackEngine.interrupt().also {
 			deferredNowPlaying.resolve()
+			fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("1184")]?.resolve()
 		}.toExpiringFuture().get()
 	}
 

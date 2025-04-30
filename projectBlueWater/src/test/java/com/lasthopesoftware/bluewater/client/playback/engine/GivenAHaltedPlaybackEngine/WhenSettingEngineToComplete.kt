@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.library
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
-import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
@@ -57,12 +57,21 @@ class WhenSettingEngineToComplete {
 				FakeSelectedLibraryProvider(),
 				libraryProvider,
 			)
+		val preparedPlaybackQueueResourceManagement =
+			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration())
+		val playbackBootstrapper = ManagedPlaylistPlayer(
+			PlaylistVolumeManager(1.0f),
+			preparedPlaybackQueueResourceManagement,
+			repository,
+			listOf(CompletingFileQueueProvider(), CyclicalFileQueueProvider()),
+		)
 		val playbackEngine =
 			PlaybackEngine(
-				PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration()),
+				preparedPlaybackQueueResourceManagement,
 				listOf(CompletingFileQueueProvider(), CyclicalFileQueueProvider()),
 				repository,
-				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+				playbackBootstrapper,
+				playbackBootstrapper,
 			)
 		playbackEngine.restoreFromSavedState(library.libraryId).toExpiringFuture().get()
 		playbackEngine.playToCompletion().toExpiringFuture().get()

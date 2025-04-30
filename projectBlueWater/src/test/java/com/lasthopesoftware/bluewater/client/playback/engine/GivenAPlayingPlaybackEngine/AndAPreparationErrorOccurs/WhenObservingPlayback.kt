@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
-import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
@@ -51,13 +51,22 @@ class WhenObservingPlayback {
 			libraryProvider,
 		)
 
-		val playbackEngine = PlaybackEngine(
-			PreparedPlaybackQueueResourceManagement(
-				fakePlaybackPreparerProvider,
-				fakePlaybackPreparerProvider
-			), listOf(CompletingFileQueueProvider()),
+		val preparedPlaybackQueueResourceManagement = PreparedPlaybackQueueResourceManagement(
+			fakePlaybackPreparerProvider,
+			fakePlaybackPreparerProvider
+		)
+		val playbackBootstrapper = ManagedPlaylistPlayer(
+			PlaylistVolumeManager(1.0f),
+			preparedPlaybackQueueResourceManagement,
 			nowPlayingRepository,
-			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+			listOf(CompletingFileQueueProvider()),
+		)
+		val playbackEngine = PlaybackEngine(
+			preparedPlaybackQueueResourceManagement,
+			listOf(CompletingFileQueueProvider()),
+			nowPlayingRepository,
+			playbackBootstrapper,
+			playbackBootstrapper,
 		)
 
 		Triple(deferredErrorPlaybackPreparer, nowPlayingRepository, playbackEngine)
@@ -70,10 +79,14 @@ class WhenObservingPlayback {
 	fun act() {
 		val (deferredErrorPlaybackPreparer, nowPlayingRepository, playbackEngine) = mut
 
+		val promisedError = Promise {
+			playbackEngine
+				.setOnPlaylistError { e ->
+					if (e is PreparationException) it.sendResolution(e)
+				}
+		}
+
 		playbackEngine
-			.setOnPlaylistError { e ->
-				if (e is PreparationException) error = e
-			}
 			.startPlaylist(
 				LibraryId(libraryId),
 				listOf(
@@ -83,13 +96,15 @@ class WhenObservingPlayback {
 					ServiceFile("4"),
 					ServiceFile("5")
 				),
-				0,
-				Duration.ZERO
+				0
 			)
 			.toExpiringFuture()
 			.get()
+
 		deferredErrorPlaybackPreparer.resolve().resolve()
 		deferredErrorPlaybackPreparer.reject()
+
+		error = promisedError.toExpiringFuture().get()
 		nowPlaying = nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()
 	}
 

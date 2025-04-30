@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
-import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
@@ -44,13 +44,24 @@ class WhenResumingPlayback {
 			)
 		)
 
+		val preparedPlaybackQueueResourceManagement =
+			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration())
+		val playbackBootstrapper = ManagedPlaylistPlayer(
+			PlaylistVolumeManager(1.0f),
+			preparedPlaybackQueueResourceManagement,
+			mockk {
+				every { promiseNowPlaying(library.libraryId) } returns deferredNowPlaying
+			},
+			listOf(CompletingFileQueueProvider(), CyclicalFileQueueProvider()),
+		)
 		val engine = PlaybackEngine(
-			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration()),
+			preparedPlaybackQueueResourceManagement,
 			listOf(CompletingFileQueueProvider(), CyclicalFileQueueProvider()),
 			mockk {
 				every { promiseNowPlaying(library.libraryId) } returns deferredNowPlaying
 			},
-			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+			playbackBootstrapper,
+			playbackBootstrapper,
 		)
 
 		Pair(deferredNowPlaying, engine)

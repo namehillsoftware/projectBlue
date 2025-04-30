@@ -17,7 +17,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 class PreparedPlayableFileQueue(
 	private val configuration: IPreparedPlaybackQueueConfiguration,
 	private val playbackPreparer: PlayableFilePreparationSource,
-	private var positionedFileQueue: PositionedFileQueue) : SupplyQueuedPreparedFiles, Closeable {
+	private var positionedFileQueue: PositionedFileQueue
+) : SupplyQueuedPreparedFiles, Closeable {
 
 	companion object {
 		private val logger by lazyLogger<PreparedPlayableFileQueue>()
