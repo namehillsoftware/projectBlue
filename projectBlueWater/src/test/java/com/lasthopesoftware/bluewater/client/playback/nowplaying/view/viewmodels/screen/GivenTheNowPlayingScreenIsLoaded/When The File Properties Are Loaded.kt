@@ -1,12 +1,13 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.screen.GivenTheNowPlayingScreenIsLoaded
 
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingMessage
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.StoreNowPlayingDisplaySettings
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.lasthopesoftware.resources.RecordingTypedMessageBus
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
+import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -18,7 +19,10 @@ class `When The File Properties Are Loaded` {
 		val vm = NowPlayingScreenViewModel(
 			RecordingApplicationMessageBus(),
 			nowPlayingMessageBus,
-			InMemoryNowPlayingDisplaySettings(),
+			object : StoreNowPlayingDisplaySettings {
+				override var isScreenOnDuringPlayback: Boolean = false
+				override val screenControlVisibilityTime: Duration = Duration.millis(500)
+			},
 			mockk(),
 		)
 
@@ -35,8 +39,8 @@ class `When The File Properties Are Loaded` {
 
 	@Test
 	@Timeout(10, unit = TimeUnit.SECONDS)
-	fun `then the controls are shown at least five seconds after the properties load`() {
+	fun `then the controls are shown for at least the correct amount of time after the properties load`() {
 		mut.second.isScreenControlsVisible.skipWhile { !it.value }.takeWhile { it.value }.blockingSubscribe()
-		assertThat(System.currentTimeMillis() - testStartTime).isGreaterThanOrEqualTo(5_000)
+		assertThat(System.currentTimeMillis() - testStartTime).isGreaterThanOrEqualTo(500)
 	}
 }
