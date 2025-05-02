@@ -8,6 +8,7 @@ import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
+import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
@@ -19,6 +20,13 @@ class `When polling the connection` {
 		LibraryConnectionPoller(
 			mockk {
 				every { promiseTestedLibraryConnection(LibraryId(libraryId)) } returns ProgressingPromise(mockk<LiveServerConnection>())
+			},
+			mockk {
+				every { getConnectionTimes() } returns sequence {
+					while (true) {
+						yield(Duration.ZERO)
+					}
+				}
 			}
 		)
 	}
