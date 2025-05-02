@@ -18,7 +18,6 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.rxjava3.core.Observable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.joda.time.Duration
 
 class NowPlayingScreenViewModel(
 	private val applicationMessages: RegisterForApplicationMessages,
@@ -27,10 +26,6 @@ class NowPlayingScreenViewModel(
 	private val playbackService: ControlPlaybackService,
 ) : ViewModel(), ControlDrawerState, ControlScreenOnState
 {
-	companion object {
-		private val screenControlVisibilityTime by lazy { Duration.standardSeconds(5) }
-	}
-
 	private val onPlaybackStartedSubscription = applicationMessages.registerReceiver { _: PlaybackMessage.PlaybackStarted ->
 		togglePlaying(true)
 	}
@@ -88,7 +83,7 @@ class NowPlayingScreenViewModel(
 		isScreenControlsVisibleState.value = true
 		controlsShownPromise = Promise.Proxy { cp ->
 			PromiseDelay
-				.delay<Any?>(screenControlVisibilityTime)
+				.delay<Any?>(nowPlayingDisplaySettings.screenControlVisibilityTime)
 				.also(cp::doCancel)
 				.then(
 					{ _, cs ->

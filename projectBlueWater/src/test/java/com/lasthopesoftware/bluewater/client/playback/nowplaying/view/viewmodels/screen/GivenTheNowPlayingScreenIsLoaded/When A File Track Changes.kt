@@ -4,8 +4,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingMessage
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.StoreNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -14,6 +14,7 @@ import com.lasthopesoftware.resources.RecordingTypedMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
+import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -31,7 +32,10 @@ class `When A File Track Changes` {
 		val vm = NowPlayingScreenViewModel(
 			applicationMessages,
 			nowPlayingMessageBus,
-			InMemoryNowPlayingDisplaySettings(),
+			object : StoreNowPlayingDisplaySettings {
+				override var isScreenOnDuringPlayback: Boolean = false
+				override val screenControlVisibilityTime: Duration = Duration.millis(500)
+			},
 			mockk {
 				every { promiseIsMarkedForPlay(libraryId) } returns false.toPromise()
 			},
@@ -59,8 +63,8 @@ class `When A File Track Changes` {
 
 	@Test
 	@Timeout(10, unit = TimeUnit.SECONDS)
-	fun `then the controls are shown at least five seconds after the properties load`() {
+	fun `then the controls are shown for at least the correct amount of time after the properties load`() {
 		mut.second.isScreenControlsVisible.skipWhile { !it.value }.takeWhile { it.value }.blockingSubscribe()
-		assertThat(System.currentTimeMillis() - testStartTime).isGreaterThanOrEqualTo(5_000)
+		assertThat(System.currentTimeMillis() - testStartTime).isGreaterThanOrEqualTo(500)
 	}
 }
