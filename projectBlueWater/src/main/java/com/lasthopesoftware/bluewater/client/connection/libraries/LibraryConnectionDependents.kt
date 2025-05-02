@@ -24,6 +24,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRev
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostRetryHandler
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPollTimes
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPollingSessions
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
@@ -99,7 +100,7 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 	override val playbackLibraryItems by lazy { ItemPlayback(itemStringListProvider, application.playbackServiceController) }
 
 	override val pollForConnections by lazy {
-		LibraryConnectionPollingSessions(LibraryConnectionPoller(application.connectionSessions))
+		LibraryConnectionPollingSessions(LibraryConnectionPoller(application.connectionSessions, ConnectionPollTimes))
 	}
 }
 
