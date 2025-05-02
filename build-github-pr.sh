@@ -4,5 +4,6 @@
 # running this on a local machine will leave artifacts that have root ownership.
 
 docker compose build && docker compose run --rm -v "$(pwd)":/src -w /src gradle \
+  :integrationTests:testReleaseUnitTest \
   :projectBlueWater:testReleaseUnitTest \
   :projectBlueWater:bundleRelease

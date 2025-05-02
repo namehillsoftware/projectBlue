@@ -9,6 +9,7 @@ BUILD_GROUP=$(stat -c "%g" "$(pwd)")
 docker compose build && docker compose run --rm \
   -v "$(pwd)":/src -w /src \
   -u "$BUILD_USER":"$BUILD_GROUP" gradle \
+  :integrationTests:testReleaseUnitTest \
   :projectBlueWater:testReleaseUnitTest \
   :projectBlueWater:assembleRelease \
   :projectBlueWater:bundleRelease
