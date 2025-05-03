@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -73,23 +74,47 @@ class `When Playback Is Resumed` {
 	fun before() {
 		val (fakePlaybackPreparerProvider, nowPlayingRepository, playbackEngine) = mut
 
-		val promisedStart = playbackEngine
-			.setOnPlayingFileChanged { _, f -> positionedFiles.add(f) }
+		fun promiseNextChange() = Promise {
+			playbackEngine.setOnPlayingFileChanged { _, f ->
+				positionedFiles.add(f)
+				it.sendResolution(Unit)
+			}
+		}
+
+		var promisedChange = promiseNextChange()
+
+		playbackEngine
 			.startPlaylist(
                 LibraryId(libraryId),
-				fakePlaybackPreparerProvider.deferredResolutions.keys.toList(),
+				fakePlaybackPreparerProvider.deferredResolutions.keys.sortedBy { it.key }.toList(),
 				0
 			)
+			.toExpiringFuture()
+			.get()
+
 		val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("1")]?.resolve()
 		fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("2")]?.resolve()
+
+		promisedChange.toExpiringFuture().get()
+
+		promisedChange = promiseNextChange()
+
 		playingPlaybackHandler?.resolve()
-		promisedStart.toExpiringFuture().get()
+
+		promisedChange.toExpiringFuture().get()
+
 		playbackEngine.pause().toExpiringFuture().get()
+
 		playbackEngine.skipToNext().toExpiringFuture().get()
 		playbackEngine.skipToNext().toExpiringFuture().get()
+
+		promisedChange = promiseNextChange()
+
 		val futureResume = playbackEngine.resume().toExpiringFuture()
 		fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("4")]?.resolve()
 		futureResume.get()
+
+		promisedChange.toExpiringFuture().get()
 
 		nowPlaying = nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()
 	}

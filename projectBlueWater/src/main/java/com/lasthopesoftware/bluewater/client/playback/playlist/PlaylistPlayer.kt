@@ -16,6 +16,7 @@ import org.joda.time.Duration
 import java.io.Closeable
 import java.io.IOException
 import java.util.concurrent.CancellationException
+import java.util.concurrent.atomic.AtomicBoolean
 
 class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPreparedFiles, private val preparedPosition: Duration) :
 	ManagePlaylistPlayback, Closeable, ProgressingPromise<PositionedPlayingFile, Unit>()
@@ -36,8 +37,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 	@Volatile
 	private var volume = 0f
 
-	@Volatile
-	private var isHalted = false
+	private val isHalted = AtomicBoolean()
 
 	override fun promisePlayedPlaylist(): ProgressingPromise<PositionedPlayingFile, Unit> = this
 
@@ -45,7 +45,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 		positionedPlayingFile
 			?.run {
 				cancel()
-				eventually({ ppf ->
+				eventually { ppf ->
 					ppf
 						?.playingFile
 						?.promisePause()
@@ -53,7 +53,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 							PositionedPlayableFile(p, ppf.playableFileVolumeManager, ppf.asPositionedFile())
 						}
 						?: positionedPlayableFile.keepPromise()
-				})
+				}
 			}
 			?.also {
 				positionedPlayableFile = it
@@ -94,10 +94,30 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 	}
 
 	override fun haltPlayback(): Promise<Unit> {
-		return pause()
+		val wasHalted = isHalted.getAndSet(true)
+		return synchronized(stateChangeSync) {
+			positionedPlayingFile
+				?.run {
+					cancel()
+					eventually { ppf ->
+						ppf
+							?.playingFile
+							?.promisePause()
+							?.then { p ->
+								PositionedPlayableFile(p, ppf.playableFileVolumeManager, ppf.asPositionedFile())
+							}
+							.keepPromise()
+					}
+				}
+				?.also {
+					positionedPlayableFile?.then { f -> f?.playableFile?.close() }
+					positionedPlayableFile = null
+					positionedPlayingFile = null
+				}
+		}
+			.keepPromise()
 			.then({ p ->
-				if (!isHalted) {
-					isHalted = true
+				if (!wasHalted) {
 					try {
 						p?.playableFile?.close()
 					} catch (e: Throwable) {
@@ -107,8 +127,6 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 					}
 				}
 			}, { e ->
-				isHalted = true
-
 				if (e is CancellationException) return@then
 				if (e is PreparationException && e.cause is CancellationException) return@then
 
@@ -154,8 +172,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 				}
 		}
 
-		return object : Promise<PositionedPlayingFile?>(), CancellationResponse {
-
+		return if (!isHalted.get()) object : Promise<PositionedPlayingFile?>(), CancellationResponse {
 			private val sync = Any()
 
 			@Volatile
@@ -177,10 +194,12 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 					preparedPlaybackFile
 						.then({ pf ->
 							synchronized(sync) {
-								if (!isCancelled) {
+								if (!isCancelled && !isHalted.get()) {
 									isStarting = true
 									startFilePlayback(pf).then(::resolve, ::reject)
-								} else resolve(null)
+								} else {
+									resolve(null)
+								}
 							}
 						}, { e ->
 							handlePlaybackException(e)
@@ -195,7 +214,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 				if (!isStarting)
 					resolve(null)
 			}
-		}
+		} else empty()
 	}
 
 	private fun handlePlaybackException(exception: Throwable) {

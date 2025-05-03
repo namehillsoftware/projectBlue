@@ -237,8 +237,7 @@ class PlaybackEngine(
 
 		return synchronized(promisedPlaybackSync) {
 			if (promisedPlayback == null) {
-				serializedPlayerUpdate()
-					.then { np -> np?.let(::startPlayback); Unit }
+				serializedPlayerUpdate().then { np -> np?.let(::startPlayback); Unit }
 			} else {
 				playlistPlayback
 					.resume()
