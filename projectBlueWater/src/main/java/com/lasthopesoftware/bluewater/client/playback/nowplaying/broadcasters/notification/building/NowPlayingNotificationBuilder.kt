@@ -2,7 +2,9 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.n
 
 import android.content.Context
 import android.graphics.Bitmap
+import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
+import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
@@ -18,10 +20,12 @@ import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
+import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 
 class NowPlayingNotificationBuilder(
 	private val context: Context,
+	private val stringResources: GetStringResources,
 	private val mediaStyleNotificationSetup: SetupMediaStyleNotifications,
 	private val urlKeyProvider: ProvideUrlKey,
 	private val filePropertiesProvider: ProvideLibraryFileProperties,
@@ -79,39 +83,40 @@ class NowPlayingNotificationBuilder(
 	private fun getPlayingLoadingNotification(libraryId: LibraryId): NotificationCompat.Builder {
 		return addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(libraryId), libraryId, true)
 			.setOngoing(true)
-			.setContentTitle(context.getString(R.string.lbl_loading))
+			.setContentTitle(stringResources.loading)
 	}
 
 	private fun getNotPlayingLoadingNotification(libraryId: LibraryId): NotificationCompat.Builder {
 		return addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(libraryId), libraryId, false)
 			.setOngoing(false)
-			.setContentTitle(context.getString(R.string.lbl_loading))
+			.setContentTitle(stringResources.loading)
 	}
 
+	@OptIn(UnstableApi::class)
 	private fun addButtons(builder: NotificationCompat.Builder, libraryId: LibraryId, isPlaying: Boolean): NotificationCompat.Builder =
 		builder
 			.addAction(
 				NotificationCompat.Action(
 					R.drawable.av_previous_white,
-					context.getString(R.string.btn_previous),
+					stringResources.previous,
 					pendingPreviousIntent(context, libraryId)
 				)
 			)
 			.addAction(
 				if (isPlaying) NotificationCompat.Action(
 					R.drawable.av_pause_white,
-					context.getString(R.string.btn_pause),
+					stringResources.pause,
 					pendingPauseIntent(context)
 				) else NotificationCompat.Action(
 					R.drawable.av_play_white,
-					context.getString(R.string.btn_play),
+					stringResources.play,
 					pendingPlayingIntent(context, libraryId)
 				)
 			)
 			.addAction(
 				NotificationCompat.Action(
 					R.drawable.av_next_white,
-					context.getString(R.string.btn_next),
+					stringResources.next,
 					pendingNextIntent(context, libraryId)
 				)
 			)

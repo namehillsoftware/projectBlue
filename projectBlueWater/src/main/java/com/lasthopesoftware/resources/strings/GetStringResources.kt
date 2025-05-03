@@ -1,6 +1,15 @@
 package com.lasthopesoftware.resources.strings
 
 interface GetStringResources {
+	val play: String
+		get() = ""
+
+	val pause: String
+		get() = ""
+
+	val previous: String
+		get() = ""
+
 	val permissionsNeededLaunchSettings: String
 		get() = ""
 	val permissionsNeeded: String
@@ -51,5 +60,8 @@ interface GetStringResources {
 		get() = ""
 
 	val set: String
+		get() = ""
+
+	val next: String
 		get() = ""
 }

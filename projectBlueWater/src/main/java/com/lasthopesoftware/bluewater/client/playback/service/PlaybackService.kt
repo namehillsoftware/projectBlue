@@ -426,6 +426,7 @@ import java.util.concurrent.TimeoutException
 				val notificationBuilder = promisingServiceCloseables.manage(
 					NowPlayingNotificationBuilder(
 						this@PlaybackService,
+						playbackServiceDependencies.stringResources,
 						mediaStyleNotificationSetup,
 						urlKeyProvider,
 						libraryFilePropertiesProvider,

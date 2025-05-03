@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.string.FakeStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions
 import org.junit.Test
@@ -34,6 +35,7 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 		val libraryId = LibraryId(605)
 		val npBuilder = NowPlayingNotificationBuilder(
             ApplicationProvider.getApplicationContext(),
+			FakeStringResources(),
             io.mockk.mockk {
                 io.mockk.every { getMediaStyleNotification(libraryId) } returns spiedBuilder
             },

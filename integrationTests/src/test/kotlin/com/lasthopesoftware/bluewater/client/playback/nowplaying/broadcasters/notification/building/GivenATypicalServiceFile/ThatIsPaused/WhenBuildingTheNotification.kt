@@ -1,12 +1,10 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.GivenATypicalServiceFile.ThatIsPaused
 
-import android.content.Context
 import android.graphics.Bitmap
 import androidx.core.app.NotificationCompat
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.TestUrl
-import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -15,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.no
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.bitmaps.ImmediateBitmapProducer
+import com.lasthopesoftware.resources.string.FakeStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -43,6 +42,11 @@ class WhenBuildingTheNotification : AndroidContext() {
 
 		val npBuilder = NowPlayingNotificationBuilder(
 			ApplicationProvider.getApplicationContext(),
+			FakeStringResources(
+				play = "1DWRvqqm",
+				previous = "ggZLlcLV",
+				next = "yoePnhCxKMQ",
+			),
 			mockk {
 				every { getMediaStyleNotification(libraryId) } returns spiedBuilder
 			},
@@ -67,18 +71,17 @@ class WhenBuildingTheNotification : AndroidContext() {
 
 	@Test
 	fun thenTheNotificationHasAPlayButton() {
-		assertThat(builder!!.mActions.map { a -> a.title }).containsOnlyOnce(ApplicationProvider.getApplicationContext<Context>().getString(R.string.btn_play))
+		assertThat(builder!!.mActions.map { a -> a.title }).containsOnlyOnce("1DWRvqqm")
 	}
 
 	@Test
 	fun thenTheNotificationHasAPreviousButton() {
-		assertThat(builder!!.mActions.map { a -> a.title }).containsOnlyOnce(ApplicationProvider.getApplicationContext<Context>()
-					.getString(R.string.btn_previous))
+		assertThat(builder!!.mActions.map { a -> a.title }).containsOnlyOnce("ggZLlcLV")
 	}
 
 	@Test
 	fun thenTheNotificationHasANextButton() {
-		assertThat(builder!!.mActions.map { a -> a.title }).containsOnlyOnce(ApplicationProvider.getApplicationContext<Context>().getString(R.string.btn_next))
+		assertThat(builder!!.mActions.map { a -> a.title }).containsOnlyOnce("yoePnhCxKMQ")
 	}
 
 	@Test

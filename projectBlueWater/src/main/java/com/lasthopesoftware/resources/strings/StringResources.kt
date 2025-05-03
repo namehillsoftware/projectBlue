@@ -30,6 +30,10 @@ class StringResources(private val context: Context): GetStringResources {
 	override val clear by lazyString(R.string.clear)
 	override val set by lazyString(R.string.set)
 	override val change by lazyString(R.string.change)
+	override val previous by lazyString(R.string.btn_previous)
+	override val pause by lazyString(R.string.btn_pause)
+	override val play by lazyString(R.string.btn_play)
+	override val next by lazyString(R.string.btn_next)
 
 	private fun lazyString(@StringRes stringResourceId: Int) = lazy { context.getString(stringResourceId) }
 }
