@@ -531,15 +531,15 @@ fun LibrarySettingsView(
 			) {
 				val heightValue by heightScaler.getValueState()
 
-				val headerHidingProgress by heightScaler.getProgressState()
-				val headerExpandingProgress by remember { derivedStateOf { 1 - headerHidingProgress } }
+				val headerCollapsingProgress by heightScaler.getProgressState()
+				val headerExpandingProgress by remember { derivedStateOf { 1 - headerCollapsingProgress } }
 
 				Box(modifier = Modifier.height(LocalDensity.current.run { heightValue.toDp() })) {
 					ProvideTextStyle(MaterialTheme.typography.h5) {
-						val topPadding by remember { derivedStateOf { (appBarHeight - 46.dp * headerHidingProgress) } }
+						val topPadding by remember { derivedStateOf { (appBarHeight - 46.dp * headerCollapsingProgress) } }
 						val startPadding by remember {
 							derivedStateOf {
-								linearInterpolation(viewPaddingUnit, topMenuIconSizeWithPadding, headerHidingProgress)
+								linearInterpolation(viewPaddingUnit, topMenuIconSizeWithPadding, headerCollapsingProgress)
 							}
 						}
 						val endPadding = viewPaddingUnit
@@ -565,7 +565,7 @@ fun LibrarySettingsView(
 
 				val menuHeight by remember {
 					derivedStateOf {
-						linearInterpolation(expandedIconSize, topMenuIconSize, headerHidingProgress)
+						linearInterpolation(expandedIconSize, topMenuIconSize, headerCollapsingProgress)
 					}
 				}
 
@@ -577,7 +577,7 @@ fun LibrarySettingsView(
 				) {
 					val textModifier = Modifier.alpha(headerExpandingProgress)
 
-					if (headerHidingProgress < 1) {
+					if (headerCollapsingProgress < 1) {
 						LabelledRemoveServerButton(
 							librarySettingsViewModel = librarySettingsViewModel,
 							stringResources = stringResources,
