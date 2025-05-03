@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -14,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -62,7 +62,6 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.UnlabelledRef
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
-import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
@@ -71,12 +70,10 @@ import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.suspend
 import kotlinx.coroutines.launch
 import java.io.IOException
-import kotlin.math.pow
 
 private val searchFieldPadding = Dimensions.topRowOuterPadding
 private val textFieldHeight = TextFieldDefaults.MinHeight + TextFieldDefaults.FocusedBorderThickness * 2
 private val topBarHeight = textFieldHeight + searchFieldPadding
-private val minimumMenuWidth = (3 * 32).dp
 
 private val expandedMenuVerticalPadding = searchFieldPadding * 2
 private val boxHeight = topBarHeight + Dimensions.menuHeight + expandedMenuVerticalPadding
@@ -178,7 +175,7 @@ fun SearchFilesView(
 		val isLoading by searchFilesViewModel.isLoading.subscribeAsState()
 
 		val heightScaler = LocalDensity.current.run {
-			memorableScrollConnectedScaler(max = boxHeight.toPx(), min = topBarHeight.toPx())
+			memorableScrollConnectedScaler(max = Dimensions.menuHeight.toPx(), min = Dimensions.topMenuIconSize.toPx() + Dimensions.rowPadding.toPx())
 		}
 
 		Box(
@@ -271,89 +268,17 @@ fun SearchFilesView(
 				}
 			}
 
-			val heightValue by heightScaler.getValueState()
-			val headerCollapsingProgress by heightScaler.getProgressState()
-			Box(
+			Column(
 				modifier = Modifier
 					.fillMaxWidth()
+					.align(Alignment.TopStart)
 					.background(MaterialTheme.colors.surface)
-					.padding(start = searchFieldPadding, end = searchFieldPadding)
-					.height(LocalDensity.current.run { heightValue.toDp() })
 			) {
-				val acceleratedHeaderCollapsingProgress by remember {
-					derivedStateOf {
-						headerCollapsingProgress.pow(
-							.2f
-						).coerceIn(0f, 1f)
-					}
-				}
-
-				val acceleratedToolbarExpandingProgress by remember {
-					derivedStateOf { 1 - acceleratedHeaderCollapsingProgress }
-				}
-
-				if (files.any()) {
-					BoxWithConstraints(
-						modifier = Modifier.fillMaxWidth()
-					) {
-						val iconSize = Dimensions.topMenuIconSize
-						val menuWidth by remember { derivedStateOf { linearInterpolation(maxWidth, minimumMenuWidth, acceleratedHeaderCollapsingProgress) } }
-						val expandedTopRowPadding = topBarHeight + expandedMenuVerticalPadding
-						val collapsedTopRowPadding = topBarHeight / 2 - iconSize / 2
-						val topRowPadding by remember { derivedStateOf { linearInterpolation(expandedTopRowPadding, collapsedTopRowPadding, headerCollapsingProgress) } }
-						Row(
-							modifier = Modifier
-								.padding(
-									top = topRowPadding
-								)
-								.width(menuWidth)
-								.align(Alignment.TopEnd)
-						) {
-							val textModifier = Modifier.alpha(acceleratedToolbarExpandingProgress)
-
-							if (acceleratedHeaderCollapsingProgress < 1) {
-								LabelledPlayButton(
-									libraryState = searchFilesViewModel,
-									playbackServiceController = playbackServiceController,
-									serviceFilesListState = searchFilesViewModel,
-									modifier = textModifier
-								)
-
-								LabelledShuffleButton(
-									libraryState = searchFilesViewModel,
-									playbackServiceController = playbackServiceController,
-									serviceFilesListState = searchFilesViewModel,
-									modifier = textModifier,
-								)
-
-								LabelledRefreshButton(
-									searchFilesViewModel,
-									modifier = textModifier,
-								)
-							} else {
-								UnlabelledPlayButton(
-									libraryState = searchFilesViewModel,
-									playbackServiceController = playbackServiceController,
-									serviceFilesListState = searchFilesViewModel
-								)
-
-								UnlabelledShuffleButton(
-									libraryState = searchFilesViewModel,
-									playbackServiceController = playbackServiceController,
-									serviceFilesListState = searchFilesViewModel,
-								)
-
-								UnlabelledRefreshButton(searchFilesViewModel)
-							}
-						}
-					}
-				}
-
 				Row(
 					modifier = Modifier
 						.fillMaxWidth()
-						.requiredHeight(topBarHeight)
-						.align(Alignment.TopStart),
+						.padding(start = searchFieldPadding, end = searchFieldPadding)
+						.requiredHeight(topBarHeight),
 					horizontalArrangement = Arrangement.Start,
 					verticalAlignment = Alignment.CenterVertically,
 				) {
@@ -361,8 +286,6 @@ fun SearchFilesView(
 						onBack = applicationNavigation::backOut,
 						modifier = Modifier.padding(end = Dimensions.topRowOuterPadding)
 					)
-
-					val endPadding by remember { derivedStateOf { Dimensions.viewPaddingUnit * 4 + (minimumMenuWidth + 12.dp) * acceleratedHeaderCollapsingProgress } }
 
 					var query by searchFilesViewModel.query.subscribeAsMutableState()
 					BackHandler(enabled = query.isNotEmpty()) {
@@ -399,12 +322,63 @@ fun SearchFilesView(
 									}
 								}
 							)
-					  	},
+						},
 						enabled = isLibraryIdActive && !isLoading,
-						modifier = Modifier
-							.padding(end = endPadding)
-							.weight(1f, fill = true)
+						modifier = Modifier.weight(1f, fill = true)
 					)
+				}
+
+				val heightValue by heightScaler.getValueState()
+				val headerCollapsingProgress by heightScaler.getProgressState()
+
+				val headerExpandingProgress by remember {
+					derivedStateOf { 1 - headerCollapsingProgress }
+				}
+
+				if (files.any()) {
+					Row(
+						modifier = Modifier
+							.padding(Dimensions.rowPadding)
+							.fillMaxWidth()
+							.height(LocalDensity.current.run { heightValue.toDp() })
+					) {
+						val textModifier = Modifier.alpha(headerExpandingProgress)
+
+						if (headerCollapsingProgress < 1) {
+							LabelledPlayButton(
+								libraryState = searchFilesViewModel,
+								playbackServiceController = playbackServiceController,
+								serviceFilesListState = searchFilesViewModel,
+								modifier = textModifier
+							)
+
+							LabelledShuffleButton(
+								libraryState = searchFilesViewModel,
+								playbackServiceController = playbackServiceController,
+								serviceFilesListState = searchFilesViewModel,
+								modifier = textModifier,
+							)
+
+							LabelledRefreshButton(
+								searchFilesViewModel,
+								modifier = textModifier,
+							)
+						} else {
+							UnlabelledPlayButton(
+								libraryState = searchFilesViewModel,
+								playbackServiceController = playbackServiceController,
+								serviceFilesListState = searchFilesViewModel
+							)
+
+							UnlabelledShuffleButton(
+								libraryState = searchFilesViewModel,
+								playbackServiceController = playbackServiceController,
+								serviceFilesListState = searchFilesViewModel,
+							)
+
+							UnlabelledRefreshButton(searchFilesViewModel)
+						}
+					}
 				}
 			}
 		}
