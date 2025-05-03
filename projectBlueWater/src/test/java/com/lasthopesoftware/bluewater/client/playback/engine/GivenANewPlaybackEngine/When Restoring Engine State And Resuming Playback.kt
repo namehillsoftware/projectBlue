@@ -5,24 +5,30 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.Fi
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
-import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CyclicalFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class WhenRestoringEngineStateAndResumingPlayback {
-	private var positionedPlayingFile: PositionedPlayingFile? = null
-	private val restoredState by lazy {
+class `When Restoring Engine State And Resuming Playback` {
+	companion object {
+		private val libraryId = 35
+	}
+
+	private val mutt by lazy {
 		val fakePlaybackPreparerProvider = FakeMappedPlayableFilePreparationSourceProvider(
 			listOf(
 				ServiceFile("32"),
@@ -32,8 +38,14 @@ class WhenRestoringEngineStateAndResumingPlayback {
 				ServiceFile("899")
 			)
 		)
+
+		fakePlaybackPreparerProvider.preparationSourceBeingProvided { serviceFile, deferredPreparedPlayableFile ->
+			if (serviceFile == ServiceFile("915"))
+				deferredPreparedPlayableFile.resolve()
+		}
+
 		val library = Library(
-			id = 35,
+			id = libraryId,
 			savedTracksString = FileStringListUtilities.promiseSerializedFileStringList(
 				fakePlaybackPreparerProvider.deferredResolutions.keys
 			).toExpiringFuture().get(),
@@ -48,20 +60,39 @@ class WhenRestoringEngineStateAndResumingPlayback {
 				FakeSelectedLibraryProvider(),
 				libraryProvider,
 			)
-		val playbackEngine = PlaybackEngine(
-			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration()),
+		val preparedPlaybackQueueResourceManagement =
+			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration())
+		val playbackBootstrapper = ManagedPlaylistPlayer(
+			PlaylistVolumeManager(1.0f),
+			preparedPlaybackQueueResourceManagement,
+			repository,
+			listOf(CompletingFileQueueProvider(), CyclicalFileQueueProvider()),
+		)
+
+		PlaybackEngine(
+			preparedPlaybackQueueResourceManagement,
 			listOf(CompletingFileQueueProvider(), CyclicalFileQueueProvider()),
 			repository,
-			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+			playbackBootstrapper,
+			playbackBootstrapper,
 		)
-		val restoredState = playbackEngine.restoreFromSavedState(library.libraryId).toExpiringFuture().get()
+	}
 
-		playbackEngine.setOnPlayingFileChanged { _, c -> positionedPlayingFile = c	}
+	private var restoredState: Pair<LibraryId, PositionedProgressedFile?>? = null
+	private var positionedPlayingFile: PositionedPlayingFile? = null
+
+	@BeforeAll
+	fun act() {
+		val playbackEngine = mutt
+		restoredState = playbackEngine.restoreFromSavedState(LibraryId(libraryId)).toExpiringFuture().get()
+
+		val promisedChangedFile = Promise {
+			playbackEngine.setOnPlayingFileChanged { _, c -> it.sendResolution(c) }
+		}
+
 		val promisedResumption = playbackEngine.resume()
-		fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("915")]?.resolve()
 		promisedResumption.toExpiringFuture().get()
-
-		restoredState
+		positionedPlayingFile = promisedChangedFile.toExpiringFuture().get()
 	}
 
 	@Test

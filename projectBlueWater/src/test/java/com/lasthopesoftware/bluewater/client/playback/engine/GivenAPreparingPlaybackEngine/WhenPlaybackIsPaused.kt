@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
-import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappe
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
-import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ResolvablePromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
@@ -41,10 +41,22 @@ class WhenPlaybackIsPaused {
 			)
 		)
 
-		val deferredNowPlaying = DeferredPromise(nowPlaying)
+		val deferredNowPlaying = ResolvablePromise<NowPlaying>()
 
+		val preparedPlaybackQueueResourceManagement =
+			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration())
+		val playbackBootstrapper = ManagedPlaylistPlayer(
+			PlaylistVolumeManager(1.0f),
+			preparedPlaybackQueueResourceManagement,
+			mockk {
+				every { promiseNowPlaying(LibraryId(libraryId)) } answers {
+					nowPlaying.toPromise()
+				}
+			},
+			listOf(CompletingFileQueueProvider()),
+		)
 		val playbackEngine = PlaybackEngine(
-			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration()),
+			preparedPlaybackQueueResourceManagement,
 			listOf(CompletingFileQueueProvider()),
 			mockk {
 				every { promiseNowPlaying(LibraryId(libraryId)) } answers {
@@ -56,7 +68,8 @@ class WhenPlaybackIsPaused {
 					deferredNowPlaying
 				}
 			},
-			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+			playbackBootstrapper,
+			playbackBootstrapper,
 		)
 
 		Triple(fakePlaybackPreparerProvider, deferredNowPlaying, playbackEngine)
@@ -84,18 +97,17 @@ class WhenPlaybackIsPaused {
 			.startPlaylist(
 				LibraryId(libraryId),
 				fakePlaybackPreparerProvider.deferredResolutions.keys.toList(),
-				0,
-				Duration.ZERO
+				0
 			)
 
 		val promisedPause = playbackEngine.pause()
 		val promisedChange = playbackEngine.changePosition(2, Duration.ZERO)
 		val promisedResume = playbackEngine.resume()
 
-		deferredNowPlaying.resolve()
+		deferredNowPlaying.sendResolution(nowPlaying)
 
 		firstGuy = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("1184")]?.resolve()
-		secondGuy =fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("1093")]?.resolve()
+		secondGuy = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("1093")]?.resolve()
 
 		try {
 			promisedPause.toExpiringFuture().get()

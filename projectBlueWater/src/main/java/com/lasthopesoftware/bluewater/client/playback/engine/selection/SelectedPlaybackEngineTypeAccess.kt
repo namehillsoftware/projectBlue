@@ -10,7 +10,7 @@ class SelectedPlaybackEngineTypeAccess
 	private val applicationSettings: HoldApplicationSettings,
 	private val defaultPlaybackEngineLookup: LookupDefaultPlaybackEngine
 ) : LookupSelectedPlaybackEngineType {
-	private val engineTypes by lazy { PlaybackEngineType.values() }
+	private val engineTypes by lazy { PlaybackEngineType.entries.toTypedArray() }
 
 	override fun promiseSelectedPlaybackEngineType(): Promise<PlaybackEngineType> =
 		applicationSettings

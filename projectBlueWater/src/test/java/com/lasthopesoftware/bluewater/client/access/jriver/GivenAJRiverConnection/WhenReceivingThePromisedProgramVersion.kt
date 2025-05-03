@@ -13,7 +13,6 @@ import com.lasthopesoftware.resources.PassThroughHttpResponse
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.util.concurrent.TimeUnit
 import kotlin.random.Random.Default.nextInt
 
 class WhenReceivingThePromisedProgramVersion {
@@ -45,7 +44,7 @@ class WhenReceivingThePromisedProgramVersion {
 			mockk(),
 		)
 
-		connection.promiseServerVersion().toExpiringFuture()[100, TimeUnit.MILLISECONDS]
+		connection.promiseServerVersion().toExpiringFuture().get()
 	}
 
 	@Test

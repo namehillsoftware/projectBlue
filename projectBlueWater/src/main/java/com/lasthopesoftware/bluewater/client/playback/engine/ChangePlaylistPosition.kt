@@ -6,7 +6,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 
 interface ChangePlaylistPosition {
-	fun changePosition(playlistPosition: Int, filePosition: Duration): Promise<Pair<LibraryId, PositionedFile>>
-	fun skipToNext(): Promise<Pair<LibraryId, PositionedFile>>
-	fun skipToPrevious(): Promise<Pair<LibraryId, PositionedFile>>
+	fun changePosition(playlistPosition: Int, filePosition: Duration): Promise<Pair<LibraryId, PositionedFile>?>
+	fun skipToNext(): Promise<Pair<LibraryId, PositionedFile>?>
+	fun skipToPrevious(): Promise<Pair<LibraryId, PositionedFile>?>
 }

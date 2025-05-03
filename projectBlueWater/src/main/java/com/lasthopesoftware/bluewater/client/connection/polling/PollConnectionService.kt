@@ -66,7 +66,7 @@ class PollConnectionService : LifecycleService() {
 
 	private val libraryConnectionPoller by lazy {
 		LibraryConnectionPollingSessions(
-			LibraryConnectionPoller(libraryConnectionProvider),
+			LibraryConnectionPoller(libraryConnectionProvider, ConnectionPollTimes),
 		)
 	}
 

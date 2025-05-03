@@ -16,13 +16,14 @@ open class FakeBufferingPlaybackHandler : BufferingPlaybackFile, PlayableFile, P
 	val recordedPlayingStates
 		get() = playingStates.toList()
 
-	val isPlaying
+	val isPlaying: Boolean
 		get() = playingStates.last()
 
 	var isClosed = false
 		private set
 
-	protected var backingCurrentPosition = 0
+	@Volatile
+	private var backingCurrentPosition = 0
 
 	fun setCurrentPosition(position: Int) {
 		backingCurrentPosition = position
@@ -52,7 +53,7 @@ open class FakeBufferingPlaybackHandler : BufferingPlaybackFile, PlayableFile, P
 	override fun promisePlayedFile(): ProgressedPromise<Duration, PlayedFile> {
 		return object : ProgressedPromise<Duration, PlayedFile>() {
 			override val progress: Promise<Duration>
-				get() = Duration.millis(backingCurrentPosition.toLong()).toPromise()
+				get() = this@FakeBufferingPlaybackHandler.progress
 
 			init {
 				resolve(this@FakeBufferingPlaybackHandler)

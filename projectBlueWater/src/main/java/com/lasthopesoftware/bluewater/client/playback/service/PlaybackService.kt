@@ -51,7 +51,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackState
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaylistFiles
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaylistPosition
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
-import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackCompleted
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackInterrupted
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackPaused
@@ -500,8 +500,6 @@ import java.util.concurrent.TimeoutException
 		)
 	}
 
-	private val playlistPlaybackBootstrapper by lazy { promisingServiceCloseables.manage(PlaylistPlaybackBootstrapper(playlistVolumeManager)) }
-
 	private val promisedPreparationSourceProvider by RetryOnRejectionLazyPromise {
 		playbackThread
 			.then { h -> Handler(h.looper) }
@@ -532,11 +530,21 @@ import java.util.concurrent.TimeoutException
 				)
 			}
 			.then { preparedPlaybackQueueResourceManagement ->
+				val managedPlaylistPlayer = promisingServiceCloseables.manage(
+					ManagedPlaylistPlayer(
+						playlistVolumeManager,
+						preparedPlaybackQueueResourceManagement,
+						playbackServiceDependencies.nowPlayingStateMaintenance,
+						QueueProviders.providers(),
+					)
+				)
+
 				val engine = PlaybackEngine(
 					preparedPlaybackQueueResourceManagement,
 					QueueProviders.providers(),
 					playbackServiceDependencies.nowPlayingStateMaintenance,
-					playlistPlaybackBootstrapper
+					managedPlaylistPlayer,
+					managedPlaylistPlayer,
 				)
 
 				engine
@@ -659,18 +667,18 @@ import java.util.concurrent.TimeoutException
 				is PlaybackEngineAction.Previous -> {
 					restorePlaybackServices(playbackEngineAction.libraryId)
 						.eventually { it.playlistPosition.skipToPrevious() }
-						.then { (l, p) -> broadcastChangedFile(l, p) }
+						.then { pair -> pair?.let { (l, p) -> broadcastChangedFile(l, p) } }
 				}
 				is PlaybackEngineAction.Next -> {
 					restorePlaybackServices(playbackEngineAction.libraryId)
 						.eventually { it.playlistPosition.skipToNext() }
-						.then { (l, p) -> broadcastChangedFile(l, p) }
+						.then { pair -> pair?.let { (l, p) -> broadcastChangedFile(l, p) } }
 				}
 				is PlaybackEngineAction.Seek -> {
 					val (libraryId, playlistPosition, filePosition) = playbackEngineAction
 					restorePlaybackServices(libraryId)
 						.eventually { it.playlistPosition.changePosition(playlistPosition, Duration.millis(filePosition.toLong())) }
-						.then { (l, p) -> broadcastChangedFile(l, p) }
+						.then { pair -> pair?.let { (l, p) -> broadcastChangedFile(l, p) } }
 				}
 				is PlaybackEngineAction.AddFileToPlaylist -> {
 					val (libraryId, serviceFile) = playbackEngineAction
@@ -842,8 +850,7 @@ import java.util.concurrent.TimeoutException
 					it.playbackState.startPlaylist(
 						libraryId,
 						playlist.toList(),
-						playlistPosition,
-						Duration.ZERO
+						playlistPosition
 					)
 				}
 			}

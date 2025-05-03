@@ -8,10 +8,10 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
-import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
@@ -22,31 +22,48 @@ import io.mockk.spyk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.util.concurrent.TimeUnit
 
 private const val libraryId = 411
 
 class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 
 	private val mut by lazy {
-		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
+		val fakePlaybackPreparerProvider = FakeMappedPlayableFilePreparationSourceProvider(
+			listOf(
+				ServiceFile("1"),
+				ServiceFile("2"),
+				ServiceFile("3"),
+				ServiceFile("4"),
+				ServiceFile("5")
+			)
+		)
 
 		val repository =
 			NowPlayingRepository(
 				FakeSelectedLibraryProvider(),
 				libraryProvider,
 			)
+		val preparedPlaybackQueueResourceManagement =
+			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration())
+		val queueProviders = listOf(spyk(CompletingFileQueueProvider()).apply {
+			every { provideQueue(any(), any(), any()) } answers {
+				queueStart = lastArg()
+				callOriginal()
+			}
+		})
+		val playbackBootstrapper = ManagedPlaylistPlayer(
+			PlaylistVolumeManager(1.0f),
+			preparedPlaybackQueueResourceManagement,
+			repository,
+			queueProviders,
+		)
 		val playbackEngine =
 			PlaybackEngine(
-				PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration()),
-				listOf(spyk(CompletingFileQueueProvider()).apply {
-					every { provideQueue(any(), any(), any()) } answers {
-						queueStart = lastArg()
-						callOriginal()
-					}
-				}),
+				preparedPlaybackQueueResourceManagement,
+				queueProviders,
 				repository,
-				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+				playbackBootstrapper,
+				playbackBootstrapper,
 			)
 		Triple(fakePlaybackPreparerProvider, repository, playbackEngine)
 	}
@@ -81,13 +98,13 @@ class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 			.resume()
 			.toExpiringFuture()
 			.also { future ->
-				val resolvablePlaybackHandler =	fakePlaybackPreparerProvider.deferredResolution.resolve()
+				val resolvablePlaybackHandler =	fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("3")]?.resolve()
 
 				future.get()
 
-				playbackEngine.removeFileAtPosition(0).toExpiringFuture()[1, TimeUnit.SECONDS]
+				playbackEngine.removeFileAtPosition(0).toExpiringFuture().get()
 
-				resolvablePlaybackHandler.setCurrentPosition(92)
+				resolvablePlaybackHandler?.setCurrentPosition(92)
 			}
 
 		playbackEngine.pause().toExpiringFuture().get()
@@ -107,7 +124,7 @@ class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 
 	@Test
 	fun `then the currently playing file still tracks file progress`() {
-		assertThat(nowPlaying!!.filePosition).isEqualTo(92)
+		assertThat(nowPlaying?.filePosition).isEqualTo(92)
 	}
 
 	@Test

@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
-import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
@@ -15,8 +15,8 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
-import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
@@ -50,22 +50,28 @@ class WhenResumingPlayback {
 		)
 		val libraryProvider = FakeLibraryRepository(storedLibrary)
 
-		val engine = PlaybackEngine(
-			PreparedPlaybackQueueResourceManagement(
-				fakePlaybackPreparerProvider,
-				fakePlaybackPreparerProvider
-			),
+		val preparedPlaybackQueueResourceManagement = PreparedPlaybackQueueResourceManagement(
+			fakePlaybackPreparerProvider,
+			fakePlaybackPreparerProvider
+		)
+		val repository = NowPlayingRepository(
+			FakeSelectedLibraryProvider(),
+			libraryProvider,
+		)
+		val playbackBootstrapper = ManagedPlaylistPlayer(
+			PlaylistVolumeManager(1.0f),
+			preparedPlaybackQueueResourceManagement,
+			repository,
 			listOf(CompletingFileQueueProvider()),
-			NowPlayingRepository(
-				FakeSelectedLibraryProvider(),
-				libraryProvider,
-			),
-			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 		)
 
-		engine
-			.setOnPlaybackCompleted { isPlaybackCompletionSignaled = true }
-			.setOnPlayingFileChanged { _, f -> playingFiles.add(f?.serviceFile) }
+		val engine = PlaybackEngine(
+			preparedPlaybackQueueResourceManagement,
+			listOf(CompletingFileQueueProvider()),
+			repository,
+			playbackBootstrapper,
+			playbackBootstrapper,
+		)
 
 		Pair(fakePlaybackPreparerProvider, engine)
 	}
@@ -79,6 +85,18 @@ class WhenResumingPlayback {
 	@BeforeAll
 	fun act() {
 		val (provider, engine) = mut
+
+		val promisedFirstFileStarted = Promise {
+			engine.setOnPlayingFileChanged { _, f ->
+				playingFiles.add(f?.serviceFile)
+				it.sendResolution(Unit)
+			}
+		}
+
+		val promisedCompleted = Promise {
+			engine.setOnPlaybackCompleted { it.sendResolution(true) }
+		}
+
 		engine
 			.startPlaylist(
 				LibraryId(1),
@@ -89,18 +107,32 @@ class WhenResumingPlayback {
 					ServiceFile("4"),
 					ServiceFile("5")
 				),
-				0,
-				Duration.standardMinutes(1)
+				0
 			)
 			.toExpiringFuture()
 			.get()
+
 		provider.deferredResolutions[ServiceFile("1")]?.resolve()
+
+		promisedFirstFileStarted.toExpiringFuture().get()
+
+		val promisedSecondFileStarted = Promise {
+			engine.setOnPlayingFileChanged { _, f ->
+				playingFiles.add(f?.serviceFile)
+				it.sendResolution(Unit)
+			}
+		}
+
 		updatedNowPlayingAfterClearing = engine.clearPlaylist().toExpiringFuture()[1, TimeUnit.SECONDS]
 		playlistAfterClearing = updatedNowPlayingAfterClearing?.playlist?.toList()
 		isPlayingAfterPlaylistCleared = engine.isPlaying
 		engine.addFile(ServiceFile("701")).toExpiringFuture().get()
 		engine.resume().toExpiringFuture().get()
 		provider.deferredResolutions[ServiceFile("701")]?.resolve()
+
+		promisedSecondFileStarted.toExpiringFuture().get()
+
+		isPlaybackCompletionSignaled = promisedCompleted.toExpiringFuture().get() ?: false
 	}
 
 	@Test

@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
-import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
@@ -51,14 +51,22 @@ class `When Playback is Resumed` {
 			libraryProvider,
 		)
 
+		val preparedPlaybackQueueResourceManagement = PreparedPlaybackQueueResourceManagement(
+			fakePlaybackPreparerProvider,
+			fakePlaybackPreparerProvider
+		)
+		val playbackBootstrapper = ManagedPlaylistPlayer(
+			PlaylistVolumeManager(1.0f),
+			preparedPlaybackQueueResourceManagement,
+			nowPlayingRepository,
+			listOf(CompletingFileQueueProvider()),
+		)
 		val playbackEngine = PlaybackEngine(
-			PreparedPlaybackQueueResourceManagement(
-				fakePlaybackPreparerProvider,
-				fakePlaybackPreparerProvider
-			),
+			preparedPlaybackQueueResourceManagement,
 			listOf(CompletingFileQueueProvider()),
 			nowPlayingRepository,
-			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+			playbackBootstrapper,
+			playbackBootstrapper,
 		)
 
 		Triple(deferredPlaybackPreparer, nowPlayingRepository, playbackEngine)
@@ -73,21 +81,16 @@ class `When Playback is Resumed` {
 	fun act() {
 		val (deferredErrorPlaybackPreparer, nowPlayingRepository, playbackEngine) = mut
 
-		val promisedError = object : Promise<PlaybackException>() {
-			init {
-			    playbackEngine
-					.setOnPlaylistError { e ->
-						if (e is PlaybackException) {
-							resolve(e)
-						}
+		val promisedError = Promise {
+			playbackEngine
+				.setOnPlaylistError { e ->
+					if (e is PlaybackException) {
+						it.sendResolution(e)
 					}
-			}
+				}
 		}
 
 		playbackEngine
-			.setOnPlayingFileChanged { _, pf ->
-				positionedPlayingFile = pf
-			}
 			.startPlaylist(
 				LibraryId(libraryId),
 				listOf(
@@ -97,8 +100,7 @@ class `When Playback is Resumed` {
 					ServiceFile("4"),
 					ServiceFile("5")
 				),
-				0,
-				Duration.ZERO
+				0
 			)
 			.toExpiringFuture()
 			.get()
@@ -115,8 +117,17 @@ class `When Playback is Resumed` {
 		nowPlaying = nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()
 		isPlayingBeforeResume = playbackEngine.isPlaying
 
+		val promisedFile = Promise {
+			playbackEngine
+				.setOnPlayingFileChanged { _, p ->
+					it.sendResolution(p)
+				}
+		}
+
 		playbackEngine.resume().toExpiringFuture().get()
 		finalPlaybackPreparer.resolve()
+
+		positionedPlayingFile = promisedFile.toExpiringFuture().get()
 	}
 
 	@Test

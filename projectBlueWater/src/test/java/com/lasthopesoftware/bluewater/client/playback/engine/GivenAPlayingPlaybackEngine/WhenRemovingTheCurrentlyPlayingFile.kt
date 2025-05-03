@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryNowPlayingValues
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
-import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
@@ -75,15 +75,25 @@ class WhenRemovingTheCurrentlyPlayingFile {
 			}
 		}
 
+		val preparedPlaybackQueueResourceManagement =
+			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration())
+		val nowPlayingRepository = NowPlayingRepository(
+			FakeSelectedLibraryProvider(),
+			savedLibrary.libraryStorage,
+		)
+		val playbackBootstrapper = ManagedPlaylistPlayer(
+			PlaylistVolumeManager(1.0f),
+			preparedPlaybackQueueResourceManagement,
+			nowPlayingRepository,
+			listOf(CompletingFileQueueProvider()),
+		)
 		val playbackEngine =
 			PlaybackEngine(
-				PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration()),
+				preparedPlaybackQueueResourceManagement,
 				listOf(CompletingFileQueueProvider()),
-				NowPlayingRepository(
-					FakeSelectedLibraryProvider(),
-					savedLibrary.libraryStorage,
-				),
-				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+				nowPlayingRepository,
+				playbackBootstrapper,
+				playbackBootstrapper,
 			)
 		Triple(fakePlaybackPreparerProvider, savedLibrary, playbackEngine)
 	}
@@ -99,7 +109,7 @@ class WhenRemovingTheCurrentlyPlayingFile {
 		val (fakePlaybackPreparerProvider, _, playbackEngine) = mut
 
 		initialState = playbackEngine.restoreFromSavedState(LibraryId(libraryId)).toExpiringFuture().get()?.second
-		playbackEngine.resume().toExpiringFuture()[1, TimeUnit.SECONDS]
+		playbackEngine.resume().toExpiringFuture().get()
 
 		fakePlaybackPreparerProvider.preparationSourceBeingProvided { _, deferredPreparedPlayableFile ->
 			deferredPreparedPlayableFile.resolve()

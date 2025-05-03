@@ -5,9 +5,10 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryNowPlayingValues
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
+import java.util.concurrent.ConcurrentHashMap
 
 open class FakeLibraryRepository(vararg libraries: Library) : ProvideLibraries, ManageLibraries {
-	val libraries = libraries.associateBy { l -> l.id }.toMutableMap()
+	val libraries = ConcurrentHashMap(libraries.associateBy { l -> l.id })
 
     override fun promiseLibrary(libraryId: LibraryId): Promise<Library?> = Promise(libraries[libraryId.id])
 

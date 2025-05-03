@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
-import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
@@ -25,9 +25,11 @@ import java.util.Collections
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-private const val libraryId = 265
-
 class WhenChangingTracks {
+
+	companion object {
+		private const val libraryId = 265
+	}
 
 	private val mut by lazy {
 		val fakePlaybackPreparerProvider = FakeMappedPlayableFilePreparationSourceProvider(
@@ -41,15 +43,25 @@ class WhenChangingTracks {
 		)
 		val library = Library(id = libraryId)
 		val libraryProvider = FakeLibraryRepository(library)
+		val preparedPlaybackQueueResourceManagement =
+			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration())
+		val repository = NowPlayingRepository(
+			FakeSelectedLibraryProvider(),
+			libraryProvider,
+		)
+		val playbackBootstrapper = ManagedPlaylistPlayer(
+			PlaylistVolumeManager(1.0f),
+			preparedPlaybackQueueResourceManagement,
+			repository,
+			listOf(CompletingFileQueueProvider()),
+		)
 		val playbackEngine =
 			PlaybackEngine(
-				PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration()),
+				preparedPlaybackQueueResourceManagement,
 				listOf(CompletingFileQueueProvider()),
-				NowPlayingRepository(
-					FakeSelectedLibraryProvider(),
-					libraryProvider,
-				),
-				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+				repository,
+				playbackBootstrapper,
+				playbackBootstrapper,
 			)
 		Pair(fakePlaybackPreparerProvider, playbackEngine)
 	}
@@ -78,8 +90,7 @@ class WhenChangingTracks {
 					ServiceFile("4"),
 					ServiceFile("5")
 				),
-				0,
-				Duration.ZERO
+				0
 			)
 
 		val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("1")]?.resolve()

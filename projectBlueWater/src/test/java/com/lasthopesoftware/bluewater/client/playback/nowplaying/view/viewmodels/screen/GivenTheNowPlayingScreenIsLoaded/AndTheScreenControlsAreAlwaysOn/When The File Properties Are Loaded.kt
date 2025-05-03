@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.screen.GivenTheNowPlayingScreenIsLoaded.AndTheScreenControlsAreAlwaysOn
 
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingMessage
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.StoreNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.PromiseDelay
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
@@ -19,7 +19,10 @@ class `When The File Properties Are Loaded` {
 		val vm = NowPlayingScreenViewModel(
 			RecordingApplicationMessageBus(),
 			nowPlayingMessageBus,
-			InMemoryNowPlayingDisplaySettings(),
+			object : StoreNowPlayingDisplaySettings {
+				override var isScreenOnDuringPlayback: Boolean = false
+				override val screenControlVisibilityTime: Duration = Duration.millis(500)
+			},
 			mockk(),
 		)
 
@@ -38,7 +41,7 @@ class `When The File Properties Are Loaded` {
 		vm.alwaysShowControls()
 		controlsShownAfterEnablingAlwaysShown = vm.isScreenControlsVisible.value
 		bus.sendMessage(NowPlayingMessage.FilePropertiesLoaded)
-		PromiseDelay.delay<Any?>(Duration.standardSeconds(6)).toExpiringFuture().get()
+		PromiseDelay.delay<Any?>(Duration.millis(700)).toExpiringFuture().get()
 		controlsShownAfterTimeout = vm.isScreenControlsVisible.value
 		vm.disableAlwaysShowingControls()
 		controlsShownAfterDisablingAlwaysShown = vm.isScreenControlsVisible.value

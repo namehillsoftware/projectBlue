@@ -6,12 +6,13 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
+import java.util.concurrent.ConcurrentHashMap
 
 class FakeNowPlayingRepository(var selectedLibraryId: LibraryId? = null, vararg initialRepository: NowPlaying) : ManageNowPlayingState {
 	constructor(vararg initialRepository: NowPlaying)
 		: this(initialRepository.firstOrNull()?.libraryId, *initialRepository)
 
-	private val repository = mutableMapOf(*initialRepository.map { Pair(it.libraryId, it) }.toTypedArray())
+	private val repository = ConcurrentHashMap(initialRepository.associateBy { it.libraryId })
 
 	override fun updateNowPlaying(nowPlaying: NowPlaying): Promise<NowPlaying> {
 		repository[nowPlaying.libraryId] = nowPlaying

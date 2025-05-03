@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
-import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
@@ -17,7 +17,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
-import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
@@ -44,11 +43,20 @@ class WhenPlaybackIsPausedAndRestarted {
 				FakeSelectedLibraryProvider(),
 				libraryProvider,
 			)
+		val preparedPlaybackQueueResourceManagement =
+			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration())
+		val playbackBootstrapper = ManagedPlaylistPlayer(
+			PlaylistVolumeManager(1.0f),
+			preparedPlaybackQueueResourceManagement,
+			nowPlayingRepository,
+			listOf(CompletingFileQueueProvider()),
+		)
 		val playbackEngine = PlaybackEngine(
-			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration()),
+			preparedPlaybackQueueResourceManagement,
 			listOf(CompletingFileQueueProvider()),
 			nowPlayingRepository,
-			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+			playbackBootstrapper,
+			playbackBootstrapper,
 		)
 
 		Triple(fakePlaybackPreparerProvider, nowPlayingRepository, playbackEngine)
@@ -70,8 +78,7 @@ class WhenPlaybackIsPausedAndRestarted {
 			.startPlaylist(
 				LibraryId(libraryId),
 				fakePlaybackPreparerProvider.deferredResolutions.keys.toList(),
-				0,
-				Duration.ZERO
+				0
 			)
 		val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("1")]?.resolve()
 		resolvablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("2")]?.resolve()

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.selection.GivenASavedMediaPlayerPlaybackEngineType
 
-import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
@@ -10,15 +9,15 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
-class WhenGettingThePlaybackEngineType : AndroidContext() {
-	companion object {
-		private val applicationSettings = FakeApplicationSettings()
-		private var playbackEngineType: PlaybackEngineType? = null
-	}
+class WhenGettingThePlaybackEngineType {
+	private val applicationSettings = FakeApplicationSettings()
+	private var playbackEngineType: PlaybackEngineType? = null
 
-    override fun before() {
+	@BeforeAll
+    fun act() {
 		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(applicationSettings,
 			mockk {
 				every { promiseDefaultEngineType() } returns Promise(PlaybackEngineType.ExoPlayer)
