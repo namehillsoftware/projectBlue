@@ -49,13 +49,14 @@ class ManagedPlaylistPlayer(
 				// Return new np, but create playlist player as a side-effect
 				np?.apply {
 					if (this != op) {
+						val positionedFileQueueProvider = positionedFileQueueProviders.getValue(isRepeating)
+						val queue =
+							positionedFileQueueProvider.provideQueue(libraryId, playlist, playlistPosition)
+						val preparedPlaybackQueue = playbackQueues.initializePreparedPlaybackQueue(queue)
+						val newPlayer = PlaylistPlayer(preparedPlaybackQueue, Duration.millis(filePosition))
+
 						synchronized(playerSync) {
 							playlistPlayer?.close()
-							val positionedFileQueueProvider = positionedFileQueueProviders.getValue(isRepeating)
-							val queue =
-								positionedFileQueueProvider.provideQueue(libraryId, playlist, playlistPosition)
-							val preparedPlaybackQueue = playbackQueues.initializePreparedPlaybackQueue(queue)
-							val newPlayer = PlaylistPlayer(preparedPlaybackQueue, Duration.millis(filePosition))
 
 							volumeManagement.managePlayer(newPlayer)
 							playlistPlayer = newPlayer

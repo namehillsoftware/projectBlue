@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -18,7 +19,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -60,16 +60,16 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.MenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
+import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.topMenuIconSize
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
-import kotlin.math.pow
 
-private const val expandedTitleHeight = 84
-private const val expandedIconSize = 44
-private const val expandedMenuVerticalPadding = 8
-private val appBarHeight = Dimensions.appBarHeight.value
+private val expandedTitleHeight = Dimensions.expandedTitleHeight
+private val appBarHeight = Dimensions.appBarHeight
+private val boxHeight = expandedTitleHeight + appBarHeight
 
 @Composable
 fun ActiveFileDownloadsView(
@@ -103,11 +103,8 @@ fun ActiveFileDownloadsView(
 	ControlSurface {
 		val isLoading by activeFileDownloadsViewModel.isLoading.subscribeAsState()
 
-		val boxHeight =
-			(expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight).dp
-
 		val heightScaler = LocalDensity.current.run {
-			memorableScrollConnectedScaler(max = boxHeight.toPx(), min = appBarHeight.dp.toPx())
+			memorableScrollConnectedScaler(max = boxHeight.toPx(), min = appBarHeight.toPx())
 		}
 
 		Box(
@@ -174,31 +171,22 @@ fun ActiveFileDownloadsView(
 				}
 			}
 
-			val heightValue by heightScaler.getValueState()
-			Box(
+			Column(
 				modifier = Modifier
 					.fillMaxWidth()
-					.height(LocalDensity.current.run { heightValue.toDp() })
-				) {
-				val topPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (appBarHeight - 46 * headerCollapsingProgress).dp } }
-
-				BoxWithConstraints(
+					.background(MaterialTheme.colors.surface),
+			) {
+				val heightValue by heightScaler.getValueState()
+				Box(
 					modifier = Modifier
-						.height(boxHeight)
-						.background(MaterialTheme.colors.surface)
-						.padding(top = topPadding)
+						.fillMaxWidth()
+						.height(LocalDensity.current.run { heightValue.toDp() })
 				) {
-					val minimumMenuWidth = Dimensions.listItemMenuIconSize
-					val headerExpandingProgress by remember { derivedStateOf { 1 - headerCollapsingProgress } }
-					val acceleratedProgress by remember {
-						derivedStateOf(structuralEqualityPolicy()) {
-							1 - headerExpandingProgress.pow(3).coerceIn(0f, 1f)
-						}
-					}
+					val topPadding by remember { derivedStateOf { linearInterpolation(appBarHeight, 10.dp, headerCollapsingProgress) } }
+
 					ProvideTextStyle(MaterialTheme.typography.h5) {
 						val iconClearance = 48
 						val startPadding by remember {  derivedStateOf(structuralEqualityPolicy()) { (4 + iconClearance * headerCollapsingProgress).dp } }
-						val endPadding by remember { derivedStateOf(structuralEqualityPolicy()) { 4.dp + minimumMenuWidth * acceleratedProgress } }
 						val header = stringResource(id = R.string.activeDownloads)
 						MarqueeText(
 							text = header,
@@ -207,87 +195,82 @@ fun ActiveFileDownloadsView(
 							gradientEdgeColor = MaterialTheme.colors.surface,
 							modifier = Modifier
 								.fillMaxWidth()
-								.padding(start = startPadding, end = endPadding),
+								.padding(start = startPadding, top = topPadding, end = Dimensions.viewPaddingUnit),
 						)
 					}
 
-					val menuWidth by remember { derivedStateOf(structuralEqualityPolicy()) { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedProgress) } }
-					val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
-					val collapsedTopRowPadding = 6
-					val topRowPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerCollapsingProgress).dp } }
-					Row(
-						modifier = Modifier
-							.padding(
-								top = topRowPadding,
-								bottom = expandedMenuVerticalPadding.dp,
-								start = 8.dp,
-								end = 8.dp
-							)
-							.width(menuWidth)
-							.align(Alignment.TopEnd)
-					) {
-						val isSyncing by activeFileDownloadsViewModel.isSyncing.collectAsState()
-						val label = stringResource(
-							if (isSyncing) R.string.stop_sync_button
-							else R.string.start_sync_button
-						)
-
-						val isSyncChangeEnabled by activeFileDownloadsViewModel.isSyncStateChangeEnabled.collectAsState()
-						MenuIcon(
-							onClick = { activeFileDownloadsViewModel.toggleSync() },
-							icon =  {
-								var modifier = Modifier.size(24.dp)
-
-								if (isSyncing) {
-									val infiniteTransition = rememberInfiniteTransition()
-									val angle by infiniteTransition.animateFloat(
-										initialValue = 360F,
-										targetValue = 0F,
-										animationSpec = infiniteRepeatable(
-											animation = tween(2000, easing = LinearEasing)
-										)
-									)
-
-									modifier = modifier.graphicsLayer {
-										rotationZ = angle
-									}
-								}
-
-								SyncIcon(
-									isActive = isSyncing,
-									modifier = modifier,
-									contentDescription = label,
+					// Always draw box to help the collapsing toolbar measure minimum size
+					Box(modifier = Modifier.height(appBarHeight)) {
+						BackButton(
+							applicationNavigation::backOut,
+							Modifier
+								.align(Alignment.CenterStart)
+								.clickable(
+									interactionSource = remember { MutableInteractionSource() },
+									indication = null,
+									onClick = applicationNavigation::backOut
 								)
-							},
-							modifier = Modifier
-								.fillMaxHeight()
-								.weight(1f),
-							label = {
-								if (acceleratedProgress < 1) {
-									val invertedProgress by remember { derivedStateOf { 1 - acceleratedProgress } }
-									Text(
-										text = label,
-										modifier = Modifier.alpha(invertedProgress),
-									)
-								}
-							},
-							enabled = isSyncChangeEnabled,
+								.padding(Dimensions.topRowOuterPadding)
 						)
 					}
 				}
 
-				// Always draw box to help the collapsing toolbar measure minimum size
-				Box(modifier = Modifier.height(appBarHeight.dp)) {
-					BackButton(
-						applicationNavigation::backOut,
-						Modifier
-							.align(Alignment.CenterStart)
-							.clickable(
-								interactionSource = remember { MutableInteractionSource() },
-								indication = null,
-								onClick = applicationNavigation::backOut
+				val menuHeight by remember {
+					derivedStateOf {
+						linearInterpolation(Dimensions.menuHeight, topMenuIconSize, headerCollapsingProgress)
+					}
+				}
+
+				Row(
+					modifier = Modifier
+						.padding(Dimensions.rowPadding)
+						.height(menuHeight)
+						.fillMaxWidth()
+				) {
+					val isSyncing by activeFileDownloadsViewModel.isSyncing.collectAsState()
+					val label = stringResource(
+						if (isSyncing) R.string.stop_sync_button
+						else R.string.start_sync_button
+					)
+
+					val isSyncChangeEnabled by activeFileDownloadsViewModel.isSyncStateChangeEnabled.collectAsState()
+					MenuIcon(
+						onClick = { activeFileDownloadsViewModel.toggleSync() },
+						icon =  {
+							var modifier = Modifier.size(topMenuIconSize)
+
+							if (isSyncing) {
+								val infiniteTransition = rememberInfiniteTransition()
+								val angle by infiniteTransition.animateFloat(
+									initialValue = 360F,
+									targetValue = 0F,
+									animationSpec = infiniteRepeatable(
+										animation = tween(2000, easing = LinearEasing)
+									)
+								)
+
+								modifier = modifier.graphicsLayer {
+									rotationZ = angle
+								}
+							}
+
+							SyncIcon(
+								isActive = isSyncing,
+								modifier = modifier,
+								contentDescription = label,
 							)
-							.padding(Dimensions.topRowOuterPadding)
+						},
+						modifier = Modifier.fillMaxHeight().weight(1f),
+						label = {
+							if (headerCollapsingProgress < 1) {
+								val invertedProgress by remember { derivedStateOf { 1 - headerCollapsingProgress } }
+								Text(
+									text = label,
+									modifier = Modifier.alpha(invertedProgress),
+								)
+							}
+						},
+						enabled = isSyncChangeEnabled,
 					)
 				}
 			}
