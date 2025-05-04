@@ -87,8 +87,17 @@ class StoredFileJobProcessor(
 												else outputStreamWrapper
 													.promiseCopyFrom(inputStream)
 													.also(cancellationProxy::doCancel)
-													.eventually { updateStoredFiles.markStoredFileAsDownloaded(storedFile) }
-													.then { sf -> StoredFileJobStatus(sf, StoredFileJobState.Downloaded) }
+													.eventually { downloadedBytes ->
+														if (downloadedBytes > 0) updateStoredFiles.markStoredFileAsDownloaded(storedFile)
+														else storedFile.toPromise()
+													}
+													.then { sf ->
+														StoredFileJobStatus(
+															sf,
+															if (sf.isDownloadComplete) StoredFileJobState.Downloaded
+															else StoredFileJobState.Queued
+														)
+													}
 											}
 									}
 							}

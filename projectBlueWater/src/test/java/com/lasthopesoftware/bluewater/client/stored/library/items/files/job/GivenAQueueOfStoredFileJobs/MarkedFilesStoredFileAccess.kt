@@ -10,7 +10,7 @@ open class MarkedFilesStoredFilesUpdater : UpdateStoredFiles {
 	val storedFilesMarkedAsDownloaded: MutableList<StoredFile> = ArrayList()
 
     override fun markStoredFileAsDownloaded(storedFile: StoredFile): Promise<StoredFile> {
-        storedFilesMarkedAsDownloaded.add(storedFile)
+        storedFilesMarkedAsDownloaded.add(storedFile.setIsDownloadComplete(true))
         return Promise(storedFile)
     }
 

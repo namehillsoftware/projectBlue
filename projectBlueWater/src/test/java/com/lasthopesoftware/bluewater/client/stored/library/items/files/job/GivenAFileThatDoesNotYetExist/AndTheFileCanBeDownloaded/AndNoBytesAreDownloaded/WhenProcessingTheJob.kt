@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAFileThatDoesNotYetExist.AndTheFileCanBeDownloaded
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAFileThatDoesNotYetExist.AndTheFileCanBeDownloaded.AndNoBytesAreDownloaded
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -6,36 +6,39 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.emptyByteArray
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
+import java.io.OutputStream
 import java.net.URI
 
 class WhenProcessingTheJob {
+
 	private val storedFile = StoredFile(LibraryId(5), ServiceFile("1"), URI("test-path"), true)
-	private val storedFileAccess = mockk<UpdateStoredFiles> {
-		every { markStoredFileAsDownloaded(any()) } answers { Promise(firstArg<StoredFile>().setIsDownloadComplete(true)) }
-	}
-	private var states: List<StoredFileJobState>? = null
+	private val states = ArrayList<StoredFileJobState>()
 
 	@BeforeAll
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
+				every { promiseOutputStream(any()) } returns Promise(OutputStream.nullOutputStream())
 			},
-			mockk { every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(byteArrayOf(907.toByte(), 403.toByte()))) },
-			storedFileAccess,
+			mockk {
+				every { promiseDownload(any(), any()) } returns Promise(
+					ByteArrayInputStream(emptyByteArray)
+				)
+			},
+			mockk {
+				every { markStoredFileAsDownloaded(storedFile) } returns storedFile.toPromise()
+			},
 		)
-		states = storedFileJobProcessor.observeStoredFileDownload(
+		storedFileJobProcessor.observeStoredFileDownload(
 			setOf(
 				StoredFileJob(
 					LibraryId(5),
@@ -45,20 +48,17 @@ class WhenProcessingTheJob {
 			)
 		)
 			.map { f -> f.storedFileJobState }
-			.toList().blockingGet()
+			.blockingSubscribe(
+				{ storedFileJobState -> states.add(storedFileJobState) },
+			)
 	}
 
 	@Test
-	fun `then the file is marked as downloaded`() {
-		verify(exactly = 1) { storedFileAccess.markStoredFileAsDownloaded(storedFile) }
-	}
-
-	@Test
-	fun `then the job states progress correctly`() {
+	fun thenTheStoredFileIsPutBackIntoQueuedState() {
 		assertThat(states).containsExactly(
 			StoredFileJobState.Queued,
 			StoredFileJobState.Downloading,
-			StoredFileJobState.Downloaded
+			StoredFileJobState.Queued
 		)
 	}
 }

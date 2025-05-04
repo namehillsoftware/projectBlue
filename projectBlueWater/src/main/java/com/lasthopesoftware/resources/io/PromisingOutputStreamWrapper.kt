@@ -26,13 +26,15 @@ class PromisingOutputStreamWrapper(private val outputStream: OutputStream) : Pro
 		val buffer = ByteArray(bufferSize)
 
 		if (ct.isCancelled) throw CancellationException("promiseCopyFrom was cancelled.")
+		var totalBytes = 0
 		var bytes = inputStream.read(buffer)
 		while (bytes >= 0) {
 			if (ct.isCancelled) throw CancellationException("promiseCopyFrom was cancelled.")
 			outputStream.write(buffer, 0, bytes)
 			if (ct.isCancelled) throw CancellationException("promiseCopyFrom was cancelled.")
+			totalBytes += bytes
 			bytes = inputStream.read(buffer)
 		}
-		this
+		totalBytes
 	}
 }

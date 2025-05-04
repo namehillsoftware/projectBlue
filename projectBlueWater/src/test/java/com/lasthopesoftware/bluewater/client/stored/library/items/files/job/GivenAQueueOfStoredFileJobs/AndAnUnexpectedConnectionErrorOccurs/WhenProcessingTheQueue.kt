@@ -75,7 +75,9 @@ class WhenProcessingTheQueue {
 				every { promiseOutputStream(match { !it.isDownloadComplete }) } returns ByteArrayOutputStream().toPromise()
 			},
 			mockk {
-				every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
+				every { promiseDownload(any(), any()) } answers {
+					ByteArrayInputStream(byteArrayOf(663.toByte(), 40)).toPromise()
+				}
 				every { promiseDownload(any(), match { it.serviceId == "4" }) } returns Promise(UnexpectedException())
 			},
 			storedFilesUpdater,

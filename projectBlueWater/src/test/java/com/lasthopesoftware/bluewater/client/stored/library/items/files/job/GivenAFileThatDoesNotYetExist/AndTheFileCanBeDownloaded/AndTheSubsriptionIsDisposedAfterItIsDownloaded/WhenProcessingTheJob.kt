@@ -18,24 +18,28 @@ import io.reactivex.rxjava3.disposables.Disposable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.net.URI
 
 class WhenProcessingTheJob {
 	private val storedFile = StoredFile(LibraryId(13), ServiceFile("1"), URI("test-path"), true)
 	private val updateStoredFiles = mockk<UpdateStoredFiles> {
-		every { markStoredFileAsDownloaded(any()) } answers { Promise(firstArg<StoredFile>()) }
+		every { markStoredFileAsDownloaded(any()) } answers { Promise(firstArg<StoredFile>().setIsDownloadComplete(true)) }
 	}
 	private val states: MutableList<StoredFileJobState> = ArrayList()
 
+	@OptIn(ExperimentalStdlibApi::class)
 	@BeforeAll
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
 				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
 			},
-			mockk { every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0))) },
+			mockk {
+				every { promiseDownload(any(), any()) } answers {
+					"590d88fbd4994ee0a7d03ed155e6c969".hexToByteArray().inputStream().toPromise()
+				}
+			},
 			updateStoredFiles,
 		)
 		storedFileJobProcessor

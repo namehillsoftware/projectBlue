@@ -15,7 +15,6 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 
@@ -76,7 +75,9 @@ class WhenProcessingTheQueue {
 				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
 			},
 			mockk {
-				every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
+				every { promiseDownload(any(), any()) } answers {
+					byteArrayOf((327 % 128).toByte(), (955 % 128).toByte()).inputStream().toPromise()
+				}
 				every { promiseDownload(any(), match { it.serviceId == "2" }) } returns Promise(IOException())
 			},
 			storedFilesUpdater,
