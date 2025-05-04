@@ -8,13 +8,11 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.promises.extensions.toPromise
-import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 
 class WhenProcessingTheQueue {
@@ -74,7 +72,9 @@ class WhenProcessingTheQueue {
 				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
 			},
 			mockk {
-				every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
+				every { promiseDownload(any(), any()) } answers {
+					byteArrayOf(978.toByte(), 373.toByte()).inputStream().toPromise()
+				}
 			},
 			storedFilesUpdater,
 		)

@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAFileThatDoesNotYetExist.AndTheFileCanBeDownloaded.AndTheDownloadFails
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
@@ -25,7 +23,6 @@ class WhenProcessingTheJob {
 	private val storedFile = StoredFile(LibraryId(5), ServiceFile("1"), URI("test-path"), true)
 	private val states = ArrayList<StoredFileJobState>()
 
-	@RequiresApi(api = Build.VERSION_CODES.N)
 	@BeforeAll
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(

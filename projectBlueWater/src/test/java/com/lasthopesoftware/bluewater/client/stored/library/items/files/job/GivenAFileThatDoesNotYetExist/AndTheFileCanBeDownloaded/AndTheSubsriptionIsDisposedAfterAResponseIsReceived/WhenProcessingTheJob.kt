@@ -22,7 +22,7 @@ import java.net.URI
 class WhenProcessingTheJob {
     private val storedFile = StoredFile(LibraryId(15), ServiceFile("1"), URI("test-path"), true)
 	private val updateStoredFiles = mockk<UpdateStoredFiles> {
-		every { markStoredFileAsDownloaded(any()) } answers { Promise(firstArg<StoredFile>()) }
+		every { markStoredFileAsDownloaded(any()) } answers { Promise(firstArg<StoredFile>().setIsDownloadComplete(true)) }
 	}
     private var states: List<StoredFileJobState>? = null
 
@@ -32,7 +32,7 @@ class WhenProcessingTheJob {
 			mockk {
 				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
 			},
-			mockk { every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0))) },
+			mockk { every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(byteArrayOf(120, (573 % 128).toByte()))) },
 			updateStoredFiles,
 		)
         states = storedFileJobProcessor.observeStoredFileDownload(

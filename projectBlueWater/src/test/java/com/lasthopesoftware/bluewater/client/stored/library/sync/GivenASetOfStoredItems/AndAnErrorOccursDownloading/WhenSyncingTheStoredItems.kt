@@ -19,7 +19,6 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.net.URI
@@ -74,11 +73,13 @@ class WhenSyncingTheStoredItems {
 					every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
 				},
 				mockk {
-					every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
+					every { promiseDownload(any(), any()) } answers {
+						byteArrayOf(211.toByte(), 210.toByte(), 170.toByte()).inputStream().toPromise()
+					}
 					every { promiseDownload(any(), match { it.serviceId == "2" }) } returns Promise(IOException())
 				},
 				mockk {
-					every { markStoredFileAsDownloaded(any()) } answers { Promise(firstArg<StoredFile>()) }
+					every { markStoredFileAsDownloaded(any()) } answers { Promise(firstArg<StoredFile>().setIsDownloadComplete(true)) }
 				},
 			)
 		)
