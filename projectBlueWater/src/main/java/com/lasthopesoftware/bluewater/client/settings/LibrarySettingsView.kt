@@ -54,11 +54,11 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelect
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.StandardTextField
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
+import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.topMenuIconSize
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.topMenuIconSizeWithPadding
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsMutableState
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
@@ -531,17 +531,14 @@ fun LibrarySettingsView(
 			) {
 				val heightValue by heightScaler.getValueState()
 
-				val headerCollapsingProgress by heightScaler.getProgressState()
-				val headerExpandingProgress by remember { derivedStateOf { 1 - headerCollapsingProgress } }
+				val headerCollapseProgress by heightScaler.getProgressState()
+				val headerExpandingProgress by remember { derivedStateOf { 1 - headerCollapseProgress } }
 
 				Box(modifier = Modifier.height(LocalDensity.current.run { heightValue.toDp() })) {
 					ProvideTextStyle(MaterialTheme.typography.h5) {
-						val topPadding by remember { derivedStateOf { (appBarHeight - 46.dp * headerCollapsingProgress) } }
-						val startPadding by remember {
-							derivedStateOf {
-								linearInterpolation(viewPaddingUnit, topMenuIconSizeWithPadding, headerCollapsingProgress)
-							}
-						}
+						val topPadding by remember { derivedStateOf { linearInterpolation(Dimensions.appBarHeight, 14.dp, headerCollapseProgress) } }
+
+						val startPadding by rememberTitleStartPadding(heightScaler.getProgressState())
 						val endPadding = viewPaddingUnit
 						val header = stringResource(id = R.string.settings)
 						MarqueeText(
@@ -565,7 +562,7 @@ fun LibrarySettingsView(
 
 				val menuHeight by remember {
 					derivedStateOf {
-						linearInterpolation(expandedIconSize, topMenuIconSize, headerCollapsingProgress)
+						linearInterpolation(expandedIconSize, topMenuIconSize, headerCollapseProgress)
 					}
 				}
 
@@ -577,7 +574,7 @@ fun LibrarySettingsView(
 				) {
 					val textModifier = Modifier.alpha(headerExpandingProgress)
 
-					if (headerCollapsingProgress < 1) {
+					if (headerCollapseProgress < 1) {
 						LabelledRemoveServerButton(
 							librarySettingsViewModel = librarySettingsViewModel,
 							stringResources = stringResources,

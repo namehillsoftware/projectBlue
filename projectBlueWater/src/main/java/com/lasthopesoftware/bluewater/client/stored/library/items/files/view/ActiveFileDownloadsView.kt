@@ -34,7 +34,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.referentialEqualityPolicy
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.structuralEqualityPolicy
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -59,6 +58,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
+import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
@@ -112,7 +112,7 @@ fun ActiveFileDownloadsView(
 				.fillMaxSize()
 				.nestedScroll(heightScaler)
 		) {
-			val headerCollapsingProgress by heightScaler.getProgressState()
+			val headerCollapseProgress by heightScaler.getProgressState()
 
 			if (isLoading) {
 				Box(modifier = Modifier.fillMaxSize()) {
@@ -182,11 +182,10 @@ fun ActiveFileDownloadsView(
 						.fillMaxWidth()
 						.height(LocalDensity.current.run { heightValue.toDp() })
 				) {
-					val topPadding by remember { derivedStateOf { linearInterpolation(appBarHeight, 10.dp, headerCollapsingProgress) } }
+					val topPadding by remember { derivedStateOf { linearInterpolation(Dimensions.appBarHeight, 14.dp, headerCollapseProgress) } }
 
 					ProvideTextStyle(MaterialTheme.typography.h5) {
-						val iconClearance = 48
-						val startPadding by remember {  derivedStateOf(structuralEqualityPolicy()) { (4 + iconClearance * headerCollapsingProgress).dp } }
+						val startPadding by rememberTitleStartPadding(heightScaler.getProgressState())
 						val header = stringResource(id = R.string.activeDownloads)
 						MarqueeText(
 							text = header,
@@ -217,7 +216,7 @@ fun ActiveFileDownloadsView(
 
 				val menuHeight by remember {
 					derivedStateOf {
-						linearInterpolation(Dimensions.menuHeight, topMenuIconSize, headerCollapsingProgress)
+						linearInterpolation(Dimensions.menuHeight, topMenuIconSize, headerCollapseProgress)
 					}
 				}
 
@@ -262,8 +261,8 @@ fun ActiveFileDownloadsView(
 						},
 						modifier = Modifier.fillMaxHeight().weight(1f),
 						label = {
-							if (headerCollapsingProgress < 1) {
-								val invertedProgress by remember { derivedStateOf { 1 - headerCollapsingProgress } }
+							if (headerCollapseProgress < 1) {
+								val invertedProgress by remember { derivedStateOf { 1 - headerCollapseProgress } }
 								Text(
 									text = label,
 									modifier = Modifier.alpha(invertedProgress),

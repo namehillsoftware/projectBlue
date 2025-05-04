@@ -76,6 +76,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
+import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
@@ -507,17 +508,9 @@ fun ItemListView(
 							)
 
 							ProvideTextStyle(MaterialTheme.typography.h5) {
-								val startPadding by remember {
-									derivedStateOf {
-										linearInterpolation(
-											viewPaddingUnit,
-											Dimensions.topMenuIconSizeWithPadding,
-											headerCollapseProgress
-										)
-									}
-								}
+								val startPadding by rememberTitleStartPadding(heightScaler.getProgressState())
 
-								val topPadding by remember { derivedStateOf { linearInterpolation(appBarHeight, 10.dp, headerCollapseProgress) } }
+								val topPadding by remember { derivedStateOf { linearInterpolation(appBarHeight, 14.dp, headerCollapseProgress) } }
 								val endPadding by remember {
 									derivedStateOf {
 										linearInterpolation(
