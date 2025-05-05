@@ -32,7 +32,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.referentialEqualityPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +49,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackTitleItemView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewFileItem
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListContentType
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
@@ -79,7 +79,7 @@ fun ActiveFileDownloadsView(
 ) {
 	@Composable
 	fun RenderTrackHeaderItem(storedFile: StoredFile) {
-		val downloadingFileId by activeFileDownloadsViewModel.downloadingFileId.collectAsState()
+		val downloadingFileId by activeFileDownloadsViewModel.downloadingFileId.subscribeAsState()
 		val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 
 		DisposableEffect(storedFile.serviceId) {
@@ -121,8 +121,7 @@ fun ActiveFileDownloadsView(
 			} else {
 				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 					val rowHeight = Dimensions.standardRowHeight
-					val fileMap by activeFileDownloadsViewModel.downloadingFiles.collectAsState()
-					val files by remember { derivedStateOf(referentialEqualityPolicy()) { fileMap.values.toList() } }
+					val files by activeFileDownloadsViewModel.downloadingFiles.subscribeAsState()
 					val lazyListState = rememberLazyListState()
 					val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
 
@@ -139,11 +138,70 @@ fun ActiveFileDownloadsView(
 								fixedKnobRatio = knobHeight,
 							),
 					) {
-						item {
-							Spacer(modifier = Modifier.fillMaxWidth().height(boxHeight))
+						item(contentType = ItemListContentType.Spacer) {
+							Spacer(modifier = Modifier
+								.fillMaxWidth()
+								.height(boxHeight))
 						}
 
-						item {
+						item(contentType = ItemListContentType.Menu) {
+							Row(
+								modifier = Modifier
+									.padding(Dimensions.rowPadding)
+									.height(Dimensions.menuHeight)
+									.fillMaxWidth()
+							) {
+								val isSyncing by activeFileDownloadsViewModel.isSyncing.subscribeAsState()
+								val label = stringResource(
+									if (isSyncing) R.string.stop_sync_button
+									else R.string.start_sync_button
+								)
+
+								val isSyncChangeEnabled by activeFileDownloadsViewModel.isSyncStateChangeEnabled.subscribeAsState()
+								MenuIcon(
+									onClick = { activeFileDownloadsViewModel.toggleSync() },
+									icon = {
+										var modifier = Modifier.size(topMenuIconSize)
+
+										if (isSyncing) {
+											val infiniteTransition = rememberInfiniteTransition()
+											val angle by infiniteTransition.animateFloat(
+												initialValue = 360F,
+												targetValue = 0F,
+												animationSpec = infiniteRepeatable(
+													animation = tween(2000, easing = LinearEasing)
+												)
+											)
+
+											modifier = modifier.graphicsLayer {
+												rotationZ = angle
+											}
+										}
+
+										SyncIcon(
+											isActive = isSyncing,
+											modifier = modifier,
+											contentDescription = label,
+										)
+									},
+									modifier = Modifier
+										.fillMaxHeight()
+										.weight(1f),
+									label = {
+										if (headerCollapseProgress < 1) {
+											val invertedProgress by remember { derivedStateOf { 1 - headerCollapseProgress } }
+											Text(
+												text = label,
+												modifier = Modifier.alpha(invertedProgress),
+											)
+										}
+									},
+									enabled = isSyncChangeEnabled,
+								)
+							}
+						}
+
+						item(contentType = ItemListContentType.Header) {
 							Box(
 								modifier = Modifier
 									.padding(4.dp)
@@ -161,7 +219,7 @@ fun ActiveFileDownloadsView(
 							}
 						}
 
-						itemsIndexed(files, { _, f -> f.id }) { i, f ->
+						itemsIndexed(files, { _, f -> f.id }, contentType = { _, _ -> ItemListContentType.File }) { i, f ->
 							RenderTrackHeaderItem(f)
 
 							if (i < files.lastIndex)
@@ -212,65 +270,6 @@ fun ActiveFileDownloadsView(
 								.padding(Dimensions.topRowOuterPadding)
 						)
 					}
-				}
-
-				val menuHeight by remember {
-					derivedStateOf {
-						linearInterpolation(Dimensions.menuHeight, topMenuIconSize, headerCollapseProgress)
-					}
-				}
-
-				Row(
-					modifier = Modifier
-						.padding(Dimensions.rowPadding)
-						.height(menuHeight)
-						.fillMaxWidth()
-				) {
-					val isSyncing by activeFileDownloadsViewModel.isSyncing.collectAsState()
-					val label = stringResource(
-						if (isSyncing) R.string.stop_sync_button
-						else R.string.start_sync_button
-					)
-
-					val isSyncChangeEnabled by activeFileDownloadsViewModel.isSyncStateChangeEnabled.collectAsState()
-					MenuIcon(
-						onClick = { activeFileDownloadsViewModel.toggleSync() },
-						icon =  {
-							var modifier = Modifier.size(topMenuIconSize)
-
-							if (isSyncing) {
-								val infiniteTransition = rememberInfiniteTransition()
-								val angle by infiniteTransition.animateFloat(
-									initialValue = 360F,
-									targetValue = 0F,
-									animationSpec = infiniteRepeatable(
-										animation = tween(2000, easing = LinearEasing)
-									)
-								)
-
-								modifier = modifier.graphicsLayer {
-									rotationZ = angle
-								}
-							}
-
-							SyncIcon(
-								isActive = isSyncing,
-								modifier = modifier,
-								contentDescription = label,
-							)
-						},
-						modifier = Modifier.fillMaxHeight().weight(1f),
-						label = {
-							if (headerCollapseProgress < 1) {
-								val invertedProgress by remember { derivedStateOf { 1 - headerCollapseProgress } }
-								Text(
-									text = label,
-									modifier = Modifier.alpha(invertedProgress),
-								)
-							}
-						},
-						enabled = isSyncChangeEnabled,
-					)
 				}
 			}
 		}

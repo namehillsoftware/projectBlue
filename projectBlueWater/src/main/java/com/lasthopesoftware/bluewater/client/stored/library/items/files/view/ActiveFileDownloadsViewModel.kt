@@ -10,10 +10,10 @@ import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileMessage
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncStateMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.observables.LiftedInteractionState
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
+import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
 import com.namehillsoftware.handoff.promises.Promise
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 class ActiveFileDownloadsViewModel(
 	private val storedFileAccess: AccessStoredFiles,
@@ -22,10 +22,10 @@ class ActiveFileDownloadsViewModel(
 ) : ViewModel(), TrackLoadedViewState {
 	private val mutableIsLoading = MutableInteractionState(false)
 
-	private val mutableIsSyncing = MutableStateFlow(false)
-	private val mutableIsSyncStateChangeEnabled = MutableStateFlow(false)
-	private val mutableDownloadingFiles = MutableStateFlow(emptyMap<Int, StoredFile>())
-	private val mutableDownloadingFileId = MutableStateFlow<Int?>(null)
+	private val mutableIsSyncing = MutableInteractionState(false)
+	private val mutableIsSyncStateChangeEnabled = MutableInteractionState(false)
+	private val mutableDownloadingFiles = MutableInteractionState(emptyMap<Int, StoredFile>())
+	private val mutableDownloadingFileId = MutableInteractionState<Int?>(null)
 	private val fileDownloadedRegistration = applicationMessages.registerReceiver { message: StoredFileMessage.FileDownloaded ->
 		mutableDownloadingFiles.value -= message.storedFileId
 	}
@@ -56,10 +56,13 @@ class ActiveFileDownloadsViewModel(
 	var activeLibraryId: LibraryId? = null
 		private set
 
-	val isSyncing = mutableIsSyncing.asStateFlow()
-	val isSyncStateChangeEnabled = mutableIsSyncStateChangeEnabled.asStateFlow()
-	val downloadingFiles = mutableDownloadingFiles.asStateFlow()
-	val downloadingFileId = mutableDownloadingFileId.asStateFlow()
+	val isSyncing = mutableIsSyncing.asInteractionState()
+	val isSyncStateChangeEnabled = mutableIsSyncStateChangeEnabled.asInteractionState()
+	val downloadingFiles = LiftedInteractionState(
+		mutableDownloadingFiles.mapNotNull().map { it.values.toList() },
+		emptyList()
+	)
+	val downloadingFileId = mutableDownloadingFileId.asInteractionState()
 	override val isLoading = mutableIsLoading.asInteractionState()
 
 	init {
