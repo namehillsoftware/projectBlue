@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -97,6 +97,7 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 private val minimumMenuWidth = (topMenuIconSize + viewPaddingUnit * 2) * 3
+private val maxHorizontalMenuWidth = 200.dp
 
 private val boxHeight = expandedTitleHeight + appBarHeight
 
@@ -455,7 +456,7 @@ fun ItemListView(
 			val collapsedHeightPx = LocalDensity.current.run { collapsedHeight.toPx() }
 			val heightScaler = memorableScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
 
-			val isHeaderTall by remember { derivedStateOf { boxHeight * 2 < maxHeight } }
+			val isHeaderTall by remember { derivedStateOf { (boxHeight + menuHeight) * 2 < maxHeight } }
 			val actualExpandedHeight by remember { derivedStateOf { if (isHeaderTall) boxHeight else collapsedHeight } }
 			Box(
 				modifier = Modifier
@@ -465,7 +466,7 @@ fun ItemListView(
 				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 					val isLoaded = !isItemsLoading && !isFilesLoading
 
-					if (isLoaded) LoadedItemListView(actualExpandedHeight + menuHeight + expandedMenuVerticalPadding * 2)
+					if (isLoaded) LoadedItemListView(if (isHeaderTall) actualExpandedHeight + menuHeight + expandedMenuVerticalPadding * 2 else 0.dp)
 					else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 				}
 
@@ -620,12 +621,12 @@ fun ItemListView(
 						}
 					}
 				} else {
-					Box(
+					Row(
 						modifier = Modifier
 							.fillMaxWidth()
 							.background(MaterialTheme.colors.surface)
 							.height(collapsedHeight),
-						contentAlignment = Alignment.CenterStart,
+						verticalAlignment = Alignment.CenterVertically,
 					) {
 						BackButton(
 							applicationNavigation::navigateUp,
@@ -640,46 +641,30 @@ fun ItemListView(
 								gradientEdgeColor = MaterialTheme.colors.surface,
 								modifier = Modifier
 									.fillMaxWidth()
-									.padding(
-										start = Dimensions.topMenuIconSizeWithPadding,
-										end = viewPaddingUnit + minimumMenuWidth
-									),
+									.padding(horizontal = viewPaddingUnit)
+									.weight(1f),
 								isMarqueeEnabled = !lazyListState.isScrollInProgress
 							)
 						}
 
+						CollapsedItemListMenu(
+							itemListViewModel = itemListViewModel,
+							fileListViewModel = fileListViewModel,
+							applicationNavigation = applicationNavigation,
+							playbackServiceController = playbackServiceController,
+							modifier = Modifier
+								.padding(horizontal = viewPaddingUnit * 2,)
+								.widthIn(minimumMenuWidth, maxHorizontalMenuWidth),
+						)
+
 						if (!isFilesLoading && !isItemsLoading) {
 							if (files.any()) MoreFileOptionsMenu(
 								fileListViewModel,
-								Modifier
-									.align(Alignment.CenterEnd)
-									.padding(
-										horizontal = viewPaddingUnit
-									)
+								Modifier.padding(horizontal = viewPaddingUnit)
 							) else MoreItemsOnlyOptionsMenu(
 								itemListViewModel,
 								applicationNavigation,
-								Modifier
-									.align(Alignment.CenterEnd)
-									.padding(
-										horizontal = viewPaddingUnit
-									)
-							)
-
-							val menuWidth = minimumMenuWidth
-
-							CollapsedItemListMenu(
-								itemListViewModel = itemListViewModel,
-								fileListViewModel = fileListViewModel,
-								applicationNavigation = applicationNavigation,
-								playbackServiceController = playbackServiceController,
-								modifier = Modifier
-									.padding(
-										start = viewPaddingUnit * 2,
-										end = topMenuIconSize + viewPaddingUnit
-									)
-									.width(menuWidth)
-									.align(Alignment.CenterEnd),
+								Modifier.padding(horizontal = viewPaddingUnit)
 							)
 						}
 					}
