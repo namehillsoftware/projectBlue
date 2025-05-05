@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -33,7 +32,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -53,8 +51,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewMod
 import com.lasthopesoftware.bluewater.client.browsing.files.list.LabelledPlayButton
 import com.lasthopesoftware.bluewater.client.browsing.files.list.LabelledShuffleButton
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackTitleItemView
-import com.lasthopesoftware.bluewater.client.browsing.files.list.UnlabelledPlayButton
-import com.lasthopesoftware.bluewater.client.browsing.files.list.UnlabelledShuffleButton
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -63,9 +59,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledR
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSearchButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.MoreFileOptionsMenu
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.MoreItemsOnlyOptionsMenu
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledActiveDownloadsButton
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledRefreshButton
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledSearchButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
@@ -83,7 +76,6 @@ import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.appBarHeight
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.expandedMenuVerticalPadding
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.expandedTitleHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.menuHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.rowPadding
@@ -93,11 +85,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.topRowO
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
-import kotlin.math.pow
 import kotlin.math.roundToInt
-
-private val minimumMenuWidth = (topMenuIconSize + viewPaddingUnit * 2) * 3
-private val maxHorizontalMenuWidth = 200.dp
 
 private val boxHeight = expandedTitleHeight + appBarHeight
 
@@ -135,46 +123,6 @@ fun FilesCountHeader(filesCount: Int) {
 					.padding(viewPaddingUnit)
 					.align(Alignment.CenterStart)
 			)
-		}
-	}
-}
-
-@Composable
-private fun CollapsedItemListMenu(
-	itemListViewModel: ItemListViewModel,
-	fileListViewModel: FileListViewModel,
-	applicationNavigation: NavigateApplication,
-	playbackServiceController: ControlPlaybackService,
-	modifier: Modifier = Modifier
-) {
-	Row(modifier = modifier) {
-		val files by fileListViewModel.files.subscribeAsState()
-		if (files.any()) {
-			UnlabelledPlayButton(
-				libraryState = itemListViewModel,
-				playbackServiceController = playbackServiceController,
-				serviceFilesListState = fileListViewModel
-			)
-
-			UnlabelledShuffleButton(
-				libraryState = itemListViewModel,
-				playbackServiceController = playbackServiceController,
-				serviceFilesListState = fileListViewModel
-			)
-
-			UnlabelledRefreshButton(itemListViewModel, fileListViewModel)
-		} else {
-			UnlabelledActiveDownloadsButton(
-				itemListViewModel = itemListViewModel,
-				applicationNavigation = applicationNavigation
-			)
-
-			UnlabelledSearchButton(
-				itemListViewModel = itemListViewModel,
-				applicationNavigation = applicationNavigation
-			)
-
-			UnlabelledRefreshButton(itemListViewModel, fileListViewModel)
 		}
 	}
 }
@@ -398,6 +346,49 @@ fun ItemListView(
 				)
 			}
 
+			item(contentType = ItemListContentType.Menu) {
+				Row(
+					modifier = Modifier
+						.padding(rowPadding)
+						.fillMaxWidth(),
+					horizontalArrangement = Arrangement.SpaceEvenly,
+				) {
+					if (files.any()) {
+						LabelledPlayButton(
+							libraryState = itemListViewModel,
+							playbackServiceController = playbackServiceController,
+							serviceFilesListState = fileListViewModel,
+						)
+
+						LabelledShuffleButton(
+							libraryState = itemListViewModel,
+							playbackServiceController = playbackServiceController,
+							serviceFilesListState = fileListViewModel,
+						)
+
+						LabelledRefreshButton(
+							itemListViewModel,
+							fileListViewModel,
+						)
+					} else {
+						LabelledActiveDownloadsButton(
+							itemListViewModel = itemListViewModel,
+							applicationNavigation = applicationNavigation,
+						)
+
+						LabelledSearchButton(
+							itemListViewModel = itemListViewModel,
+							applicationNavigation = applicationNavigation,
+						)
+
+						LabelledRefreshButton(
+							itemListViewModel,
+							fileListViewModel,
+						)
+					}
+				}
+			}
+
 			if (items.any()) {
 				item(contentType = ItemListContentType.Header) {
 					ItemsCountHeader(items.size)
@@ -466,20 +457,19 @@ fun ItemListView(
 				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 					val isLoaded = !isItemsLoading && !isFilesLoading
 
-					if (isLoaded) LoadedItemListView(if (isHeaderTall) actualExpandedHeight + menuHeight + expandedMenuVerticalPadding * 2 else 0.dp)
+					if (isLoaded) LoadedItemListView(actualExpandedHeight)
 					else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 				}
 
 				if (isHeaderTall) {
-					val heightValue by heightScaler.getValueState()
-
-					val headerCollapseProgress by heightScaler.getProgressState()
-
 					Column(
 						modifier = Modifier
 							.align(Alignment.TopCenter)
 							.background(MaterialTheme.colors.surface)
 					) headerColumn@{
+
+						val heightValue by heightScaler.getValueState()
+
 						Box(
 							modifier = Modifier
 								.fillMaxWidth()
@@ -511,7 +501,18 @@ fun ItemListView(
 							ProvideTextStyle(MaterialTheme.typography.h5) {
 								val startPadding by rememberTitleStartPadding(heightScaler.getProgressState())
 
-								val topPadding by remember { derivedStateOf { linearInterpolation(appBarHeight, 14.dp, headerCollapseProgress) } }
+								val headerCollapseProgress by heightScaler.getProgressState()
+
+								val topPadding by remember {
+									derivedStateOf {
+										linearInterpolation(
+											appBarHeight,
+											14.dp,
+											headerCollapseProgress
+										)
+									}
+								}
+
 								val endPadding by remember {
 									derivedStateOf {
 										linearInterpolation(
@@ -546,79 +547,6 @@ fun ItemListView(
 								}
 							}
 						}
-
-						if (isFilesLoading) return@headerColumn
-						val acceleratedToolbarStateProgress by remember {
-							derivedStateOf {
-								(1 - headerCollapseProgress).pow(3).coerceIn(0f, 1f)
-							}
-						}
-
-						if (acceleratedToolbarStateProgress > 0) {
-							Row(
-								modifier = Modifier
-									.padding(rowPadding)
-									.fillMaxWidth(),
-								horizontalArrangement = Arrangement.SpaceEvenly,
-							) {
-
-								val textModifier by remember {
-									derivedStateOf {
-										Modifier.alpha(acceleratedToolbarStateProgress)
-									}
-								}
-
-								if (files.any()) {
-									LabelledPlayButton(
-										libraryState = itemListViewModel,
-										playbackServiceController = playbackServiceController,
-										serviceFilesListState = fileListViewModel,
-										modifier = textModifier,
-									)
-
-									LabelledShuffleButton(
-										libraryState = itemListViewModel,
-										playbackServiceController = playbackServiceController,
-										serviceFilesListState = fileListViewModel,
-										modifier = textModifier
-									)
-
-									LabelledRefreshButton(
-										itemListViewModel,
-										fileListViewModel,
-										modifier = textModifier
-									)
-								} else {
-									LabelledActiveDownloadsButton(
-										itemListViewModel = itemListViewModel,
-										applicationNavigation = applicationNavigation,
-										modifier = textModifier
-									)
-
-									LabelledSearchButton(
-										itemListViewModel = itemListViewModel,
-										applicationNavigation = applicationNavigation,
-										modifier = textModifier
-									)
-
-									LabelledRefreshButton(
-										itemListViewModel,
-										fileListViewModel,
-										modifier = textModifier
-									)
-								}
-							}
-						} else {
-							CollapsedItemListMenu(
-								itemListViewModel = itemListViewModel,
-								fileListViewModel = fileListViewModel,
-								applicationNavigation = applicationNavigation,
-								playbackServiceController = playbackServiceController,
-								modifier = Modifier
-									.padding(rowPadding)
-									.fillMaxWidth(),
-							)
-						}
 					}
 				} else {
 					Row(
@@ -646,16 +574,6 @@ fun ItemListView(
 								isMarqueeEnabled = !lazyListState.isScrollInProgress
 							)
 						}
-
-						CollapsedItemListMenu(
-							itemListViewModel = itemListViewModel,
-							fileListViewModel = fileListViewModel,
-							applicationNavigation = applicationNavigation,
-							playbackServiceController = playbackServiceController,
-							modifier = Modifier
-								.padding(horizontal = viewPaddingUnit * 2,)
-								.widthIn(minimumMenuWidth, maxHorizontalMenuWidth),
-						)
 
 						if (!isFilesLoading && !isItemsLoading) {
 							if (files.any()) MoreFileOptionsMenu(

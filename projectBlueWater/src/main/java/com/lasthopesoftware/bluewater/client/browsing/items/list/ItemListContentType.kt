@@ -1,5 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 enum class ItemListContentType {
-	Header, Spacer, Item, File
+	Header, Spacer, Item, File, Menu
 }
