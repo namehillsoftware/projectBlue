@@ -294,7 +294,7 @@ fun SearchFilesView(
 					verticalAlignment = Alignment.CenterVertically,
 				) {
 					BackButton(
-						onBack = applicationNavigation::backOut,
+						onBack = applicationNavigation::navigateUp,
 						modifier = Modifier.padding(end = Dimensions.topRowOuterPadding)
 					)
 

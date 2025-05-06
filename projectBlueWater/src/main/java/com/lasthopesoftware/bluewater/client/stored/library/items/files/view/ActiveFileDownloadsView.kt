@@ -6,8 +6,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -259,14 +257,9 @@ fun ActiveFileDownloadsView(
 					// Always draw box to help the collapsing toolbar measure minimum size
 					Box(modifier = Modifier.height(appBarHeight)) {
 						BackButton(
-							applicationNavigation::backOut,
+							applicationNavigation::navigateUp,
 							Modifier
 								.align(Alignment.CenterStart)
-								.clickable(
-									interactionSource = remember { MutableInteractionSource() },
-									indication = null,
-									onClick = applicationNavigation::backOut
-								)
 								.padding(Dimensions.topRowOuterPadding)
 						)
 					}

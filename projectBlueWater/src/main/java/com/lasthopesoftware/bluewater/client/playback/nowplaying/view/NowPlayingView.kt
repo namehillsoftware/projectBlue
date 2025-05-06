@@ -677,7 +677,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 
 					isTopControlsShown -> {
 						BackButton(
-							onBack = applicationNavigation::backOut,
+							onBack = applicationNavigation::navigateUp,
 							modifier = Modifier
 								.padding(start = Dimensions.topRowOuterPadding)
 								.alpha(playlistControlAlpha)
@@ -882,7 +882,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 							.fillMaxWidth(),
 						horizontalArrangement = Arrangement.SpaceBetween
 					) {
-						BackButton(onBack = applicationNavigation::backOut)
+						BackButton(onBack = applicationNavigation::navigateUp)
 
 						NowPlayingRating(
 							nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,

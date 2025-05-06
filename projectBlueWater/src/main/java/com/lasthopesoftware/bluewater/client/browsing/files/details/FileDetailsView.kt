@@ -696,7 +696,7 @@ fun FileDetailsView(
 		}
 
 		BackButton(
-			onBack = navigateApplication::backOut,
+			onBack = navigateApplication::navigateUp,
 			modifier = Modifier
 				.padding(topRowOuterPadding)
 				.align(Alignment.TopStart)
@@ -799,7 +799,7 @@ fun FileDetailsView(
 			modifier = Modifier
 				.align(Alignment.TopEnd)
 				.padding(top = 12.dp, start = 8.dp, end = 8.dp, bottom = 8.dp)
-				.navigable(onClick = navigateApplication::backOut),
+				.navigable(onClick = navigateApplication::navigateUp),
 		)
 	}
 

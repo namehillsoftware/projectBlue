@@ -87,7 +87,7 @@ fun TvSearchFilesView(
 				verticalAlignment = Alignment.CenterVertically,
 			) {
 				BackButton(
-					onBack = applicationNavigation::backOut,
+					onBack = applicationNavigation::navigateUp,
 					modifier = Modifier.padding(Dimensions.topRowOuterPadding)
 				)
 
