@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -33,7 +34,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -58,7 +58,8 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberTitle
 import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.topMenuIconSize
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.menuHeight
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.topRowOuterPadding
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsMutableState
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
@@ -68,7 +69,7 @@ import com.lasthopesoftware.resources.strings.GetStringResources
 import kotlinx.coroutines.launch
 
 private val expandedTitleHeight = Dimensions.expandedTitleHeight
-private val expandedIconSize = Dimensions.menuHeight
+private val expandedIconSize = menuHeight
 private val expandedMenuVerticalPadding = viewPaddingUnit * 2
 private val appBarHeight = Dimensions.appBarHeight
 private val boxHeight = expandedTitleHeight + appBarHeight
@@ -104,19 +105,6 @@ private fun RowScope.LabelledRemoveServerButton(
 }
 
 @Composable
-private fun RowScope.UnlabelledRemoveServerButton(
-	librarySettingsViewModel: LibrarySettingsViewModel,
-	stringResources: GetStringResources,
-) {
-	ColumnMenuIcon(
-		onClick = librarySettingsViewModel::requestLibraryRemoval,
-		iconPainter = painterResource(id = R.drawable.ic_remove_item_36dp),
-		contentDescription = stringResources.removeServer,
-		label = null,
-	)
-}
-
-@Composable
 private fun RowScope.LabelledSaveAndConnectButton(
 	librarySettingsViewModel: LibrarySettingsViewModel,
 	navigateApplication: NavigateApplication,
@@ -148,39 +136,6 @@ private fun RowScope.LabelledSaveAndConnectButton(
 		contentDescription = saveAndConnectText,
 		label = saveAndConnectText,
 		labelModifier = modifier,
-	)
-}
-
-@Composable
-private fun RowScope.UnlabelledSaveAndConnectButton(
-	librarySettingsViewModel: LibrarySettingsViewModel,
-	navigateApplication: NavigateApplication,
-	stringResources: GetStringResources,
-) {
-	val isSettingsChanged by librarySettingsViewModel.isSettingsChanged.subscribeAsState()
-	val saveAndConnectText by remember {
-		derivedStateOf {
-			if (isSettingsChanged) stringResources.saveAndConnect
-			else stringResources.connect
-		}
-	}
-
-	val scope = rememberCoroutineScope()
-	ColumnMenuIcon(
-		onClick = {
-			if (isSettingsChanged) {
-				scope.launch {
-					val isSaved = librarySettingsViewModel.saveLibrary().suspend()
-					if (isSaved)
-						librarySettingsViewModel.activeLibraryId?.also(navigateApplication::viewLibrary)
-				}
-			} else {
-				librarySettingsViewModel.activeLibraryId?.also(navigateApplication::viewLibrary)
-			}
-		},
-		iconPainter = painterResource(id = R.drawable.arrow_right_24dp),
-		contentDescription = saveAndConnectText,
-		label = null,
 	)
 }
 
@@ -498,11 +453,13 @@ fun LibrarySettingsView(
 		val collapsedHeightPx = LocalDensity.current.run { appBarHeight.toPx() }
 		val heightScaler = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
 
-		Box(
+		BoxWithConstraints(
 			modifier = Modifier
 				.fillMaxSize()
 				.nestedScroll(heightScaler)
 		) {
+			val isHeaderTall by remember { derivedStateOf { (boxHeight + menuHeight) * 2 < maxHeight } }
+			val actualExpandedHeight by remember { derivedStateOf { if (isHeaderTall) boxHeight else appBarHeight } }
 
 			Column(
 				modifier = Modifier
@@ -512,9 +469,27 @@ fun LibrarySettingsView(
 			) {
 				Spacer(
 					modifier = Modifier
-						.requiredHeight(boxHeight)
+						.requiredHeight(actualExpandedHeight)
 						.fillMaxWidth()
 				)
+
+				Row(
+					modifier = Modifier
+						.padding(Dimensions.rowPadding)
+						.fillMaxWidth()
+						.height(expandedIconSize)
+				) {
+					LabelledRemoveServerButton(
+						librarySettingsViewModel = librarySettingsViewModel,
+						stringResources = stringResources,
+					)
+
+					LabelledSaveAndConnectButton(
+						librarySettingsViewModel = librarySettingsViewModel,
+						navigateApplication = navigateApplication,
+						stringResources = stringResources,
+					)
+				}
 
 				LibrarySettingsList(
 					librarySettingsViewModel = librarySettingsViewModel,
@@ -523,26 +498,24 @@ fun LibrarySettingsView(
 				)
 			}
 
-			Column(
-				modifier = Modifier
-					.fillMaxWidth()
-					.align(Alignment.TopStart)
-					.background(MaterialTheme.colors.surface)
-			) {
+			if (isHeaderTall) {
 				val heightValue by heightScaler.getValueState()
 
 				val headerCollapseProgress by heightScaler.getProgressState()
-				val headerExpandingProgress by remember { derivedStateOf { 1 - headerCollapseProgress } }
 
-				Box(modifier = Modifier.height(LocalDensity.current.run { heightValue.toDp() })) {
+				Box(modifier = Modifier
+					.height(LocalDensity.current.run { heightValue.toDp() })
+					.fillMaxWidth()
+					.align(Alignment.TopStart)
+					.background(MaterialTheme.colors.surface)
+				) {
 					ProvideTextStyle(MaterialTheme.typography.h5) {
 						val topPadding by remember { derivedStateOf { linearInterpolation(Dimensions.appBarHeight, 14.dp, headerCollapseProgress) } }
 
 						val startPadding by rememberTitleStartPadding(heightScaler.getProgressState())
 						val endPadding = viewPaddingUnit
-						val header = stringResource(id = R.string.settings)
 						MarqueeText(
-							text = header,
+							text = stringResource(id = R.string.settings),
 							overflow = TextOverflow.Ellipsis,
 							gradientSides = setOf(GradientSide.End),
 							gradientEdgeColor = MaterialTheme.colors.surface,
@@ -556,47 +529,32 @@ fun LibrarySettingsView(
 						navigateApplication::navigateUp,
 						modifier = Modifier
 							.align(Alignment.TopStart)
-							.padding(Dimensions.topRowOuterPadding)
+							.padding(topRowOuterPadding)
 					)
 				}
-
-				val menuHeight by remember {
-					derivedStateOf {
-						linearInterpolation(expandedIconSize, topMenuIconSize, headerCollapseProgress)
-					}
-				}
-
+			} else {
 				Row(
 					modifier = Modifier
-						.padding(Dimensions.rowPadding)
 						.fillMaxWidth()
-						.height(menuHeight)
+						.background(MaterialTheme.colors.surface)
+						.height(appBarHeight),
+					verticalAlignment = Alignment.CenterVertically,
 				) {
-					val textModifier = Modifier.alpha(headerExpandingProgress)
+					BackButton(
+						navigateApplication::navigateUp,
+						modifier = Modifier.padding(horizontal = topRowOuterPadding)
+					)
 
-					if (headerCollapseProgress < 1) {
-						LabelledRemoveServerButton(
-							librarySettingsViewModel = librarySettingsViewModel,
-							stringResources = stringResources,
-							modifier = textModifier
-						)
-
-						LabelledSaveAndConnectButton(
-							librarySettingsViewModel = librarySettingsViewModel,
-							navigateApplication = navigateApplication,
-							stringResources = stringResources,
-							modifier = textModifier
-						)
-					} else {
-						UnlabelledSaveAndConnectButton(
-							librarySettingsViewModel = librarySettingsViewModel,
-							navigateApplication = navigateApplication,
-							stringResources = stringResources,
-						)
-
-						UnlabelledRemoveServerButton(
-							librarySettingsViewModel = librarySettingsViewModel,
-							stringResources = stringResources
+					ProvideTextStyle(MaterialTheme.typography.h5) {
+						MarqueeText(
+							text = stringResource(id = R.string.settings),
+							overflow = TextOverflow.Ellipsis,
+							gradientSides = setOf(GradientSide.End),
+							gradientEdgeColor = MaterialTheme.colors.surface,
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(horizontal = viewPaddingUnit)
+								.weight(1f),
 						)
 					}
 				}
