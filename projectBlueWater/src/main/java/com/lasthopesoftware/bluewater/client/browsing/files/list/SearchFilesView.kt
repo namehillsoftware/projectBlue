@@ -31,7 +31,6 @@ import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,7 +38,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
@@ -58,7 +56,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabelledRefreshButton
-import com.lasthopesoftware.bluewater.shared.android.ui.components.UnlabelledRefreshButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
@@ -75,9 +72,6 @@ private val searchFieldPadding = Dimensions.topRowOuterPadding
 private val textFieldHeight = TextFieldDefaults.MinHeight + TextFieldDefaults.FocusedBorderThickness * 2
 private val topBarHeight = textFieldHeight + searchFieldPadding
 
-private val expandedMenuVerticalPadding = searchFieldPadding * 2
-private val boxHeight = topBarHeight + Dimensions.menuHeight + expandedMenuVerticalPadding
-
 @Composable
 fun RowScope.LabelledRefreshButton(
 	searchFilesViewModel: SearchFilesViewModel,
@@ -89,15 +83,6 @@ fun RowScope.LabelledRefreshButton(
 		},
 		modifier = modifier,
 	)
-}
-
-@Composable
-fun RowScope.UnlabelledRefreshButton(
-	searchFilesViewModel: SearchFilesViewModel,
-) {
-	UnlabelledRefreshButton {
-		searchFilesViewModel.promiseRefresh()
-	}
 }
 
 @Composable
@@ -223,8 +208,34 @@ fun SearchFilesView(
 						) {
 							item {
 								Spacer(modifier = Modifier
-									.requiredHeight(boxHeight)
+									.requiredHeight(topBarHeight)
 									.fillMaxWidth())
+							}
+
+							item {
+								if (files.any()) {
+									Row(
+										modifier = Modifier
+											.padding(Dimensions.rowPadding)
+											.fillMaxWidth()
+									) {
+										LabelledPlayButton(
+											libraryState = searchFilesViewModel,
+											playbackServiceController = playbackServiceController,
+											serviceFilesListState = searchFilesViewModel,
+										)
+
+										LabelledShuffleButton(
+											libraryState = searchFilesViewModel,
+											playbackServiceController = playbackServiceController,
+											serviceFilesListState = searchFilesViewModel,
+										)
+
+										LabelledRefreshButton(
+											searchFilesViewModel,
+										)
+									}
+								}
 							}
 
 							item {
@@ -326,59 +337,6 @@ fun SearchFilesView(
 						enabled = isLibraryIdActive && !isLoading,
 						modifier = Modifier.weight(1f, fill = true)
 					)
-				}
-
-				val heightValue by heightScaler.getValueState()
-				val headerCollapsingProgress by heightScaler.getProgressState()
-
-				val headerExpandingProgress by remember {
-					derivedStateOf { 1 - headerCollapsingProgress }
-				}
-
-				if (files.any()) {
-					Row(
-						modifier = Modifier
-							.padding(Dimensions.rowPadding)
-							.fillMaxWidth()
-							.height(LocalDensity.current.run { heightValue.toDp() })
-					) {
-						val textModifier = Modifier.alpha(headerExpandingProgress)
-
-						if (headerCollapsingProgress < 1) {
-							LabelledPlayButton(
-								libraryState = searchFilesViewModel,
-								playbackServiceController = playbackServiceController,
-								serviceFilesListState = searchFilesViewModel,
-								modifier = textModifier
-							)
-
-							LabelledShuffleButton(
-								libraryState = searchFilesViewModel,
-								playbackServiceController = playbackServiceController,
-								serviceFilesListState = searchFilesViewModel,
-								modifier = textModifier,
-							)
-
-							LabelledRefreshButton(
-								searchFilesViewModel,
-								modifier = textModifier,
-							)
-						} else {
-							UnlabelledPlayButton(
-								libraryState = searchFilesViewModel,
-								playbackServiceController = playbackServiceController,
-								serviceFilesListState = searchFilesViewModel
-							)
-
-							UnlabelledShuffleButton(
-								libraryState = searchFilesViewModel,
-								playbackServiceController = playbackServiceController,
-								serviceFilesListState = searchFilesViewModel,
-							)
-
-							UnlabelledRefreshButton(searchFilesViewModel)
-						}
-					}
 				}
 			}
 		}
