@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.bootstrap
 
+import androidx.lifecycle.AtomicReference
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.ManagePlaybackQueues
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
@@ -25,73 +26,66 @@ class ManagedPlaylistPlayer(
 	positionedFileQueueProviders: Iterable<ProvidePositionedFileQueue>,
 ) : BootstrapPlayback, ManagePlaylistPlayback, Closeable {
 
-	private val playerSync = Any()
 	private val positionedFileQueueProviders = positionedFileQueueProviders.associateBy({ it.isRepeating }, { it })
 
-	@Volatile
-	private var promisedPlayer: Promise<Pair<NowPlaying?, PlaylistPlayer?>> = Pair(null, null).toPromise()
+	private val promisedPlayer = AtomicReference(Promise(Pair<NowPlaying?, PlaylistPlayer?>(null, null)))
 
 	@Volatile
 	private var playlistPlayer: PlaylistPlayer? = null
 
-	override fun updateFromState(libraryId: LibraryId): Promise<NowPlaying?> = synchronized(playerSync) {
-		promisedPlayer
-			.eventually { (op, player) ->
-				nowPlayingState
-					.promiseNowPlaying(libraryId)
-					.eventually { np ->
-						when {
-							op == np -> Pair(np, player).toPromise()
-							np == null -> player
-								?.haltPlayback()
-								.keepPromise()
-								.then { _ -> Pair(null, null) }
-							else -> player
-								?.haltPlayback()
-								.keepPromise()
-								.then { _ ->
-									with (np) {
-										val positionedFileQueueProvider = positionedFileQueueProviders.getValue(isRepeating)
-										val queue =
-											positionedFileQueueProvider.provideQueue(libraryId, playlist, playlistPosition)
-										val preparedPlaybackQueue = playbackQueues.initializePreparedPlaybackQueue(queue)
-										val newPlayer = PlaylistPlayer(preparedPlaybackQueue, Duration.millis(filePosition))
-										volumeManagement.managePlayer(newPlayer)
-										Pair(np, newPlayer)
+	override fun updateFromState(libraryId: LibraryId): Promise<NowPlaying?> = promisedPlayer
+		.updateAndGet { originallyPromised ->
+			originallyPromised
+				.eventually { (op, player) ->
+					nowPlayingState
+						.promiseNowPlaying(libraryId)
+						.eventually { np ->
+							when {
+								op == np -> Pair(np, player).toPromise()
+								np == null -> player
+									?.haltPlayback()
+									.keepPromise()
+									.then { _ -> Pair(null, null) }
+								else -> player
+									?.haltPlayback()
+									.keepPromise()
+									.then { _ ->
+										with (np) {
+											val positionedFileQueueProvider = positionedFileQueueProviders.getValue(isRepeating)
+											val queue = positionedFileQueueProvider.provideQueue(libraryId, playlist, playlistPosition)
+											val preparedPlaybackQueue = playbackQueues.initializePreparedPlaybackQueue(queue)
+											val newPlayer = PlaylistPlayer(preparedPlaybackQueue, Duration.millis(filePosition))
+											volumeManagement.managePlayer(newPlayer)
+											Pair(np, newPlayer)
+										}
 									}
-								}
+							}
 						}
-					}
-			}.also { promisedPlayer = it }
+				}
 	}.then { (np, p) ->
 		playlistPlayer = p
 		np
 	}
 
-	override fun close(): Unit = synchronized(playerSync)  {
-		promisedPlayer.then { (_, p) -> p?.close() }
+	override fun close() {
+		promisedPlayer.get().then { (_, p) -> p?.close() }
 	}
 
-	override fun pause(): Promise<PositionedPlayableFile?> = synchronized(playerSync) {
-		promisedPlayer.eventually { (_, p) -> p?.pause().keepPromise() }
-	}
+	override fun pause(): Promise<PositionedPlayableFile?> = promisedPlayer.get()
+		.eventually { (_, p) -> p?.pause().keepPromise() }
 
-	override fun resume(): Promise<PositionedPlayingFile?> = synchronized(playerSync) {
-		promisedPlayer.eventually { (_, p) -> p?.resume().keepPromise() }
-	}
+	override fun resume(): Promise<PositionedPlayingFile?> = promisedPlayer.get()
+		.eventually { (_, p) -> p?.resume().keepPromise() }
 
-	override fun setVolume(volume: Float): Promise<Unit> = synchronized(playerSync) {
-		promisedPlayer.eventually { (_, p) -> p?.setVolume(volume).keepPromise(Unit) }
-	}
+	override fun setVolume(volume: Float): Promise<Unit> = promisedPlayer.get()
+		.eventually { (_, p) -> p?.setVolume(volume).keepPromise(Unit) }
 
-	override fun haltPlayback(): Promise<Unit> = synchronized(playerSync) {
-		promisedPlayer.eventually { (_, p) -> p?.haltPlayback().keepPromise(Unit) }
-	}
+	override fun haltPlayback(): Promise<Unit> = promisedPlayer.get()
+		.eventually { (_, p) -> p?.haltPlayback().keepPromise(Unit) }
 
-	override fun promisePlayedPlaylist(): ProgressingPromise<PositionedPlayingFile, Unit> = synchronized(playerSync) {
-		object : ProgressingPromiseProxy<PositionedPlayingFile, Unit>() {
+	override fun promisePlayedPlaylist(): ProgressingPromise<PositionedPlayingFile, Unit> =	object : ProgressingPromiseProxy<PositionedPlayingFile, Unit>() {
 			init {
-				promisedPlayer
+				promisedPlayer.get()
 					.then { (_, p) ->
 						val promisedPlaylist = p?.promisePlayedPlaylist()
 						if (promisedPlaylist != null) proxy(promisedPlaylist)
@@ -99,9 +93,7 @@ class ManagedPlaylistPlayer(
 					}
 			}
 		}
-	}
 
 	override val isPlaying: Boolean
 		get() = playlistPlayer?.isPlaying ?: false
-
 }
