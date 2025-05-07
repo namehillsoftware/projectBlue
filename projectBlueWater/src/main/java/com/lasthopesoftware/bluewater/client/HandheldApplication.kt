@@ -79,6 +79,8 @@ import com.namehillsoftware.handoff.promises.Promise
 import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.rememberNavController
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 
@@ -143,11 +145,6 @@ private class BottomSheetHidingNavigation(
 		return inner.navigateUp()
 	}
 
-	override fun backOut(): Promise<Boolean> {
-		return if (hideBottomSheet()) true.toPromise()
-		else inner.backOut()
-	}
-
 	private fun hideBottomSheet(): Boolean {
 		if (!bottomSheetState.isCollapsed) {
 			coroutineScope.launch { bottomSheetState.collapse() }
@@ -161,6 +158,7 @@ private class BottomSheetHidingNavigation(
 private val bottomAppBarHeight = Dimensions.appBarHeight
 private val bottomSheetElevation = 16.dp
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 private fun BrowserLibraryDestination.Navigate(
 	browserViewDependencies: ScopedViewModelDependencies,
@@ -168,6 +166,26 @@ private fun BrowserLibraryDestination.Navigate(
 	scaffoldState: BottomSheetScaffoldState,
 ) {
 	with(browserViewDependencies) {
+		val isBottomSheetCollapsed = scaffoldState.bottomSheetState.isCollapsed
+		val scope = rememberCoroutineScope()
+		DisposableEffect(isBottomSheetCollapsed) {
+			if (isBottomSheetCollapsed) {
+				onDispose {  }
+			} else {
+				val collapseAction = {
+					scope.async {
+						if (scaffoldState.bottomSheetState.isExpanded)
+							scaffoldState.bottomSheetState.collapse()
+						true
+					}.toPromise()
+				}
+
+				undoBackStackBuilder.addAction(collapseAction)
+
+				onDispose { undoBackStackBuilder.removeAction(collapseAction) }
+			}
+		}
+
 		val selectedLibraryId by selectedLibraryViewModel.selectedLibraryId.subscribeAsState()
 		val isSelectedLibrary by remember { derivedStateOf { selectedLibraryId == libraryId } }
 
