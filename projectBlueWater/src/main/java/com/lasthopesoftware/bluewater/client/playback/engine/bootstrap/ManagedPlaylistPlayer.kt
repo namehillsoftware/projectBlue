@@ -42,10 +42,13 @@ class ManagedPlaylistPlayer(
 						.eventually { np ->
 							when {
 								op == np -> Pair(np, player).toPromise()
-								np == null -> player
-									?.haltPlayback()
-									.keepPromise()
-									.then { _ -> Pair(null, null) }
+								np == null -> {
+									playbackQueues.reset()
+									player
+										?.haltPlayback()
+										.keepPromise()
+										.then { _ -> Pair(null, null) }
+								}
 								else -> {
 									with (np) {
 										val positionedFileQueueProvider = positionedFileQueueProviders.getValue(isRepeating)
