@@ -16,13 +16,15 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Co
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class WhenPlaybackIsResumed {
+class `When Playback Is Resumed` {
 
 	companion object {
 		private const val libraryId = 13
@@ -68,7 +70,7 @@ class WhenPlaybackIsResumed {
 	}
 
 	private var nowPlaying: NowPlaying? = null
-	private val positionedFiles: MutableList<PositionedPlayingFile?> = ArrayList()
+	private var positionedFiles: MutableList<PositionedPlayingFile?>? = null
 
 	@BeforeAll
 	fun before() {
@@ -79,8 +81,18 @@ class WhenPlaybackIsResumed {
 				deferredPreparedPlayableFile.resolve().setCurrentPosition(450)
 		}
 
+		val deferredResume = DeferredPromise(Unit)
+
+		val promisedCollectedFiles = Promise {
+			val collectedFiles = mutableListOf<PositionedPlayingFile?>()
+			playbackEngine.setOnPlayingFileChanged { _, f ->
+				collectedFiles.add(f)
+
+				deferredResume.then { _ -> it.sendResolution(collectedFiles) }
+			}
+		}
+
 		playbackEngine
-			.setOnPlayingFileChanged { _, f -> positionedFiles.add(f) }
 			.startPlaylist(
                 LibraryId(libraryId),
 				fakePlaybackPreparerProvider.deferredResolutions.keys.toList(),
@@ -96,6 +108,10 @@ class WhenPlaybackIsResumed {
 		fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("2")]?.resolve()
 
 		playbackEngine.resume().toExpiringFuture().get()
+
+		deferredResume.resolve()
+
+		positionedFiles = promisedCollectedFiles.toExpiringFuture().get()
 
 		nowPlaying = nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()
 	}
@@ -129,19 +145,19 @@ class WhenPlaybackIsResumed {
 
 	@Test
 	fun `then the observed file is correct`() {
-		assertThat(positionedFiles.last()?.playlistPosition).isEqualTo(1)
+		assertThat(positionedFiles?.last()?.playlistPosition).isEqualTo(1)
 	}
 
 	@Test
 	fun `then the observed file position is correct`() {
 		assertThat(
-            positionedFiles.last()?.playingFile?.progress?.toExpiringFuture()?.get()
+            positionedFiles?.last()?.playingFile?.progress?.toExpiringFuture()?.get()
         ).isEqualTo(Duration.ZERO)
 	}
 
 	@Test
 	fun `then the first skipped file is only observed once`() {
-		assertThat(positionedFiles.map { it?.asPositionedFile() })
+		assertThat(positionedFiles?.map { it?.asPositionedFile() })
 			.containsOnlyOnce(PositionedFile(1, ServiceFile("2")))
 	}
 }
