@@ -450,6 +450,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedVi
 										.height(Dimensions.appBarHeight),
 									playlistViewModel = nowPlayingPlaylistViewModel,
 									viewModelMessageBus = nowPlayingViewModelMessageBus,
+									undoBackStack = undoBackStackBuilder,
 								)
 
 								NowPlayingTvPlaylist(
@@ -843,14 +844,15 @@ fun NowPlayingTvApplication(
 				is NewConnectionSettingsScreen -> {
 					LocalViewModelStoreOwner.current
 						?.let { viewModelStoreOwner ->
-							LocalOnBackPressedDispatcherOwner.current?.let { backPressOwner ->
-								ScopedViewModelRegistry(
-									reusedViewModelDependencies,
-									permissionsDependencies,
-									viewModelStoreOwner,
-									backPressOwner,
-								)
-							}
+							LocalOnBackPressedDispatcherOwner.current
+								?.let { backPressOwner ->
+									ScopedViewModelRegistry(
+										reusedViewModelDependencies,
+										permissionsDependencies,
+										viewModelStoreOwner,
+										backPressOwner,
+									)
+								}
 						}
 						?.apply {
 							Box(

@@ -36,7 +36,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSettingsScreen
@@ -88,8 +87,7 @@ private val logger by lazy { LoggerFactory.getLogger("HandheldApplication") }
 private class BottomSheetHidingNavigation(
 	private val inner: NavigateApplication,
 	private val bottomSheetState: BottomSheetState,
-	private val coroutineScope: CoroutineScope,
-	private val itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler
+	private val coroutineScope: CoroutineScope
 ) : NavigateApplication by inner {
 
 	override fun launchSearch(libraryId: LibraryId): Promise<Unit> {
@@ -146,9 +144,7 @@ private class BottomSheetHidingNavigation(
 	}
 
 	override fun backOut(): Promise<Boolean> {
-		val isHidden = itemListMenuBackPressedHandler.hideAllMenus() or hideBottomSheet()
-
-		return if (isHidden) true.toPromise()
+		return if (hideBottomSheet()) true.toPromise()
 		else inner.backOut()
 	}
 
@@ -277,6 +273,7 @@ fun LibraryDestination.Navigate(
 					connectionWatcherViewModel = connectionWatcherViewModel,
 					viewModelMessageBus = nowPlayingViewModelMessageBus,
 					bitmapProducer = bitmapProducer,
+					undoBackStack = undoBackStackBuilder,
 				)
 
 				val context = LocalContext.current
@@ -332,8 +329,7 @@ fun HandheldApplication(
 				entryDependencies.itemListMenuBackPressedHandler
 			),
 			bottomSheetState,
-			coroutineScope,
-			entryDependencies.itemListMenuBackPressedHandler
+			coroutineScope
 		)
 	}
 
