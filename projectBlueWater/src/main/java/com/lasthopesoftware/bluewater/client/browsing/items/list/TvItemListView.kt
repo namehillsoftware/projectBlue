@@ -12,13 +12,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
@@ -35,6 +40,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.MoreItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.shared.android.BuildUndoBackStack
 import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
@@ -43,7 +49,11 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.expande
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.expandedTitleHeight
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.promises.extensions.toPromise
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun TvItemListView(
 	itemListViewModel: ItemListViewModel,
@@ -55,6 +65,7 @@ fun TvItemListView(
 	applicationNavigation: NavigateApplication,
 	playbackLibraryItems: PlaybackLibraryItems,
 	playbackServiceController: ControlPlaybackService,
+	undoBackStack: BuildUndoBackStack,
 ) {
 	val files by fileListViewModel.files.subscribeAsState()
 	val itemValue by itemListViewModel.itemValue.subscribeAsState()
@@ -62,6 +73,38 @@ fun TvItemListView(
 	@Composable
 	fun LoadedItemListView() {
 		val items by itemListViewModel.items.subscribeAsState()
+
+		val scope = rememberCoroutineScope()
+
+		val lazyListState = rememberLazyListState()
+
+		val scrollToTopAction = {
+			scope.async {
+				if (lazyListState.firstVisibleItemIndex <= 0) false
+				else {
+					lazyListState.scrollToItem(0)
+					true
+				}
+			}.toPromise()
+		}
+
+		val isAtTop by remember {
+			derivedStateOf {
+				lazyListState.firstVisibleItemIndex == 0 && lazyListState.firstVisibleItemScrollOffset == 0
+			}
+		}
+
+		DisposableEffect(key1 = isAtTop) {
+			if (isAtTop) {
+				onDispose { }
+			} else {
+				undoBackStack.addAction(scrollToTopAction)
+
+				onDispose {
+					undoBackStack.removeAction(scrollToTopAction)
+				}
+			}
+		}
 
 		LazyColumn(
 			modifier = Modifier.focusGroup(),
@@ -79,7 +122,8 @@ fun TvItemListView(
 						applicationNavigation,
 						childItemViewModelProvider,
 						itemListMenuBackPressedHandler,
-						playbackLibraryItems
+						playbackLibraryItems,
+						undoBackStack,
 					)
 
 					if (i < items.lastIndex)
@@ -102,7 +146,8 @@ fun TvItemListView(
 						applicationNavigation,
 						fileListViewModel,
 						itemListMenuBackPressedHandler,
-						playbackServiceController
+						playbackServiceController,
+						undoBackStack,
 					)
 
 					if (i < files.lastIndex)

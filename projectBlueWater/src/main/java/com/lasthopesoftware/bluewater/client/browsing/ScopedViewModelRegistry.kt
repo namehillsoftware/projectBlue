@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing
 
+import androidx.activity.OnBackPressedDispatcherOwner
 import androidx.lifecycle.ViewModelStoreOwner
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
@@ -9,12 +10,14 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewMod
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
+import com.lasthopesoftware.bluewater.shared.android.UndoStackApplicationNavigation
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 
 class ScopedViewModelRegistry(
 	reusedViewModelDependencies: ReusedViewModelDependencies,
 	permissionsDependencies: PermissionsDependencies,
-	viewModelStoreOwner: ViewModelStoreOwner
+	viewModelStoreOwner: ViewModelStoreOwner,
+	onBackPressedDispatcherOwner: OnBackPressedDispatcherOwner,
 ) :
 	ScopedViewModelDependencies,
 	ReusedViewModelDependencies by reusedViewModelDependencies
@@ -67,4 +70,14 @@ class ScopedViewModelRegistry(
 			urlKeyProvider = urlKeyProvider,
 		)
 	}
+
+	override val undoBackStackBuilder by viewModelStoreOwner.buildViewModelLazily {
+		UndoStackApplicationNavigation(
+			reusedViewModelDependencies.applicationNavigation,
+			onBackPressedDispatcherOwner.onBackPressedDispatcher
+		)
+	}
+
+	override val applicationNavigation
+		get() = undoBackStackBuilder
 }

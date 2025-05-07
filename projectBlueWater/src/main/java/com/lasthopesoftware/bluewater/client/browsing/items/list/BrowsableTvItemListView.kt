@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionF
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.shared.android.BuildUndoBackStack
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.ViewModelInitAction
 import com.lasthopesoftware.promises.extensions.suspend
@@ -27,18 +28,19 @@ import java.io.IOException
 fun LoadedTvItemListView(viewModelDependencies: ScopedViewModelDependencies, libraryId: LibraryId, item: Item?) {
 	with (viewModelDependencies) {
         LoadedTvItemListView(
-            libraryId,
-            item,
-            itemListViewModel = itemListViewModel,
-            fileListViewModel = fileListViewModel,
-            nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
-            itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-            reusablePlaylistFileItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
-            childItemViewModelProvider = reusableChildItemViewModelProvider,
-            applicationNavigation = applicationNavigation,
-            playbackLibraryItems = playbackLibraryItems,
-            playbackServiceController = playbackServiceController,
-            connectionStatusViewModel = connectionStatusViewModel,
+			libraryId,
+			item,
+			itemListViewModel = itemListViewModel,
+			fileListViewModel = fileListViewModel,
+			nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
+			itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+			reusablePlaylistFileItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+			childItemViewModelProvider = reusableChildItemViewModelProvider,
+			applicationNavigation = applicationNavigation,
+			playbackLibraryItems = playbackLibraryItems,
+			playbackServiceController = playbackServiceController,
+			connectionStatusViewModel = connectionStatusViewModel,
+			undoBackStack = undoBackStackBuilder,
         )
 	}
 }
@@ -57,6 +59,7 @@ private fun LoadedTvItemListView(
 	playbackLibraryItems: PlaybackLibraryItems,
 	playbackServiceController: ControlPlaybackService,
 	connectionStatusViewModel: ConnectionStatusViewModel,
+	undoBackStack: BuildUndoBackStack,
 ) {
 	var isConnectionLost by remember { mutableStateOf(false) }
 	var reinitializeConnection by remember { mutableStateOf(false) }
@@ -79,6 +82,7 @@ private fun LoadedTvItemListView(
 			applicationNavigation,
 			playbackLibraryItems,
 			playbackServiceController,
+			undoBackStack,
 		)
 	}
 

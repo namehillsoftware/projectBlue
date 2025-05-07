@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -433,17 +434,20 @@ fun HandheldApplication(
 					}
 				}
 				is LibraryDestination -> {
-					LocalViewModelStoreOwner.current?.also {
-						destination.Navigate(
-							systemUiController,
-							ScopedViewModelRegistry(
-								reusedViewModelDependencies,
-								permissionsDependencies,
-								it
-							),
-							libraryConnectionDependencies,
-							scaffoldState
-						)
+					LocalViewModelStoreOwner.current?.also { viewModelStoreOwner ->
+						LocalOnBackPressedDispatcherOwner.current?.also { backPressOwner ->
+							destination.Navigate(
+								systemUiController,
+								ScopedViewModelRegistry(
+									reusedViewModelDependencies,
+									permissionsDependencies,
+									viewModelStoreOwner,
+									backPressOwner,
+								),
+								libraryConnectionDependencies,
+								scaffoldState
+							)
+						}
 					}
 				}
 				is ApplicationSettingsScreen -> {
@@ -471,12 +475,16 @@ fun HandheldApplication(
 					systemUiController.setNavigationBarColor(Color.Black)
 
 					LocalViewModelStoreOwner.current
-						?.let {
-							ScopedViewModelRegistry(
-								reusedViewModelDependencies,
-								permissionsDependencies,
-								it
-							)
+						?.let { viewModelStoreOwner ->
+							LocalOnBackPressedDispatcherOwner.current
+								?.let { backPressedOwner ->
+									ScopedViewModelRegistry(
+										reusedViewModelDependencies,
+										permissionsDependencies,
+										viewModelStoreOwner,
+										backPressedOwner,
+									)
+								}
 						}
 						?.apply {
 							Box(

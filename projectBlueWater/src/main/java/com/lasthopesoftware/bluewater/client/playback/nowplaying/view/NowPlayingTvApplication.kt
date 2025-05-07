@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -813,10 +814,17 @@ fun NowPlayingTvApplication(
 					}
 				}
 				is LibraryDestination -> {
-					LocalViewModelStoreOwner.current?.also {
-						destination.Navigate(
-							ScopedViewModelRegistry(reusedViewModelDependencies, permissionsDependencies, it)
-						)
+					LocalViewModelStoreOwner.current?.also { viewModelStoreOwner ->
+						LocalOnBackPressedDispatcherOwner.current?.also { backPressOwner ->
+							destination.Navigate(
+								ScopedViewModelRegistry(
+									reusedViewModelDependencies,
+									permissionsDependencies,
+									viewModelStoreOwner,
+									backPressOwner
+								)
+							)
+						}
 					}
 				}
 				is ApplicationSettingsScreen -> {
@@ -834,8 +842,15 @@ fun NowPlayingTvApplication(
 				}
 				is NewConnectionSettingsScreen -> {
 					LocalViewModelStoreOwner.current
-						?.let {
-							ScopedViewModelRegistry(reusedViewModelDependencies, permissionsDependencies, it)
+						?.let { viewModelStoreOwner ->
+							LocalOnBackPressedDispatcherOwner.current?.let { backPressOwner ->
+								ScopedViewModelRegistry(
+									reusedViewModelDependencies,
+									permissionsDependencies,
+									viewModelStoreOwner,
+									backPressOwner,
+								)
+							}
 						}
 						?.apply {
 							Box(

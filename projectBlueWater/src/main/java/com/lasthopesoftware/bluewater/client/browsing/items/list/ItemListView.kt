@@ -29,6 +29,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -63,6 +64,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
+import com.lasthopesoftware.bluewater.shared.android.BuildUndoBackStack
 import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ListItemIcon
@@ -85,6 +87,9 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.topRowO
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.promises.extensions.toPromise
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlin.math.roundToInt
 
 private val boxHeight = expandedTitleHeight + appBarHeight
@@ -138,6 +143,7 @@ fun RenderTrackTitleItem(
 	fileListViewModel: FileListViewModel,
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	playbackServiceController: ControlPlaybackService,
+	undoBackStack: BuildUndoBackStack,
 ) {
 	val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 
@@ -173,6 +179,10 @@ fun RenderTrackTitleItem(
 		onHiddenMenuClick = {
 			itemListMenuBackPressedHandler.hideAllMenus()
 			fileItemViewModel.showMenu()
+
+			undoBackStack.addAction {
+				fileItemViewModel.hideMenu().toPromise()
+			}
 		},
 		onAddToNowPlayingClick = {
 			itemListViewModel.loadedLibraryId?.also {
@@ -198,6 +208,7 @@ fun ChildItem(
 	childItemViewModelProvider: PooledCloseablesViewModel<ReusableChildItemViewModel>,
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	playbackLibraryItems: PlaybackLibraryItems,
+	backStack: BuildUndoBackStack,
 ) {
 	val rowHeight = Dimensions.standardRowHeight
 	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
@@ -228,6 +239,10 @@ fun ChildItem(
 					itemListMenuBackPressedHandler.hideAllMenus()
 
 					childItemViewModel.showMenu()
+
+					backStack.addAction {
+						childItemViewModel.hideMenu().toPromise()
+					}
 				},
 				onClickLabel = stringResource(id = R.string.btn_view_song_details),
 				onClick = {
@@ -301,6 +316,7 @@ fun ChildItem(
 	}
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun ItemListView(
     itemListViewModel: ItemListViewModel,
@@ -312,12 +328,43 @@ fun ItemListView(
     applicationNavigation: NavigateApplication,
     playbackLibraryItems: PlaybackLibraryItems,
     playbackServiceController: ControlPlaybackService,
+	undoBackStack: BuildUndoBackStack,
 ) {
 	val files by fileListViewModel.files.subscribeAsState()
 	val rowHeight = Dimensions.standardRowHeight
 	val itemValue by itemListViewModel.itemValue.subscribeAsState()
 
 	val lazyListState = rememberLazyListState()
+
+	val isAtTop by remember {
+		derivedStateOf {
+			lazyListState.firstVisibleItemIndex == 0 && lazyListState.firstVisibleItemScrollOffset == 0
+		}
+	}
+
+	val scope = rememberCoroutineScope()
+
+	val scrollToTopAction = {
+		scope.async {
+			if (lazyListState.firstVisibleItemIndex <= 0) false
+			else {
+				lazyListState.scrollToItem(0)
+				true
+			}
+		}.toPromise()
+	}
+
+	DisposableEffect(key1 = isAtTop) {
+		if (isAtTop) {
+			onDispose { }
+		} else {
+			undoBackStack.addAction(scrollToTopAction)
+
+			onDispose {
+				undoBackStack.removeAction(scrollToTopAction)
+			}
+		}
+	}
 
 	@Composable
 	fun BoxWithConstraintsScope.LoadedItemListView(headerHeight: Dp) {
@@ -401,7 +448,8 @@ fun ItemListView(
 						applicationNavigation,
 						childItemViewModelProvider,
 						itemListMenuBackPressedHandler,
-						playbackLibraryItems
+						playbackLibraryItems,
+						undoBackStack,
 					)
 
 					if (i < items.lastIndex)
@@ -425,7 +473,8 @@ fun ItemListView(
 					applicationNavigation,
 					fileListViewModel,
 					itemListMenuBackPressedHandler,
-					playbackServiceController
+					playbackServiceController,
+					undoBackStack,
 				)
 
 				if (i < files.lastIndex)
