@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -86,6 +85,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.NewConnectionSe
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.RoutedNavigationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SelectedLibraryReRouter
+import com.lasthopesoftware.bluewater.client.browsing.registerBackNav
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.client.connection.libraries.RateLimitedFilePropertiesDependencies
@@ -309,8 +309,6 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedVi
 								nowPlayingScreenViewModel.disableAlwaysShowingControls()
 							}
 						}
-
-						BackHandler(itemListMenuBackPressedHandler.hideAllMenus()) {}
 
 						val isPlaylistOpen by remember {
 							derivedStateOf {
@@ -594,10 +592,6 @@ fun NowPlayingTvPlaylist(
 	}
 
 	val isEditing by playlistViewModel.isEditingPlaylist.subscribeAsState()
-	BackHandler(enabled = isEditing) {
-		if (isEditing)
-			playlistViewModel.finishPlaylistEdit()
-	}
 
 	@Composable
 	fun NowPlayingFileView(positionedFile: PositionedFile) {
@@ -767,7 +761,7 @@ fun NowPlayingTvApplication(
 		}
 	}
 
-	BackHandler { routedNavigationDependencies.applicationNavigation.backOut() }
+	routedNavigationDependencies.registerBackNav()
 
 	ControlSurface {
 		NavHost(navController) { destination ->
@@ -815,18 +809,16 @@ fun NowPlayingTvApplication(
 					}
 				}
 				is LibraryDestination -> {
-					LocalViewModelStoreOwner.current?.also { viewModelStoreOwner ->
-						LocalOnBackPressedDispatcherOwner.current?.also { backPressOwner ->
-							destination.Navigate(
-								ScopedViewModelRegistry(
-									reusedViewModelDependencies,
-									permissionsDependencies,
-									viewModelStoreOwner,
-									backPressOwner
-								)
+					LocalViewModelStoreOwner.current
+						?.let { viewModelStoreOwner ->
+							ScopedViewModelRegistry(
+								reusedViewModelDependencies,
+								permissionsDependencies,
+								viewModelStoreOwner,
 							)
 						}
-					}
+						?.registerBackNav()
+						?.also { registry -> destination.Navigate(registry) }
 				}
 				is ApplicationSettingsScreen -> {
 					Box(
@@ -844,16 +836,13 @@ fun NowPlayingTvApplication(
 				is NewConnectionSettingsScreen -> {
 					LocalViewModelStoreOwner.current
 						?.let { viewModelStoreOwner ->
-							LocalOnBackPressedDispatcherOwner.current
-								?.let { backPressOwner ->
-									ScopedViewModelRegistry(
-										reusedViewModelDependencies,
-										permissionsDependencies,
-										viewModelStoreOwner,
-										backPressOwner,
-									)
-								}
+							ScopedViewModelRegistry(
+								reusedViewModelDependencies,
+								permissionsDependencies,
+								viewModelStoreOwner,
+							)
 						}
+						?.registerBackNav()
 						?.apply {
 							Box(
 								modifier = Modifier.fillMaxSize()

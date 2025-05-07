@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.runtime.Composable
 import com.lasthopesoftware.bluewater.ApplicationDependencies
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModelProvider
@@ -31,3 +33,11 @@ interface EntryDependencies : ApplicationDependencies {
 	val userSslCertificateProvider: ProvideUserSslCertificates
 }
 
+@Composable
+fun <T: EntryDependencies> T.registerBackNav() : T {
+	BackHandler {
+		applicationNavigation.backOut()
+	}
+
+	return this
+}

@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client
 
-import androidx.activity.compose.BackHandler
-import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -46,6 +44,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.NewConnectionSe
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.RoutedNavigationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SelectedLibraryReRouter
+import com.lasthopesoftware.bluewater.client.browsing.registerBackNav
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionDependents
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
@@ -316,7 +315,7 @@ fun HandheldApplication(
 		}
 	}
 
-	BackHandler { routedNavigationDependencies.applicationNavigation.backOut() }
+	routedNavigationDependencies.registerBackNav()
 
 	val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 
@@ -366,20 +365,22 @@ fun HandheldApplication(
 					}
 				}
 				is LibraryDestination -> {
-					LocalViewModelStoreOwner.current?.also { viewModelStoreOwner ->
-						LocalOnBackPressedDispatcherOwner.current?.also { backPressOwner ->
+					LocalViewModelStoreOwner.current
+						?.let { viewModelStoreOwner ->
+							ScopedViewModelRegistry(
+								reusedViewModelDependencies,
+								permissionsDependencies,
+								viewModelStoreOwner,
+							)
+						}
+						?.registerBackNav()
+						?.also { registry ->
 							destination.Navigate(
 								systemUiController,
-								ScopedViewModelRegistry(
-									reusedViewModelDependencies,
-									permissionsDependencies,
-									viewModelStoreOwner,
-									backPressOwner,
-								),
+								registry,
 								libraryConnectionDependencies
 							)
 						}
-					}
 				}
 				is ApplicationSettingsScreen -> {
 					systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
@@ -407,16 +408,13 @@ fun HandheldApplication(
 
 					LocalViewModelStoreOwner.current
 						?.let { viewModelStoreOwner ->
-							LocalOnBackPressedDispatcherOwner.current
-								?.let { backPressedOwner ->
-									ScopedViewModelRegistry(
-										reusedViewModelDependencies,
-										permissionsDependencies,
-										viewModelStoreOwner,
-										backPressedOwner,
-									)
-								}
+							ScopedViewModelRegistry(
+								reusedViewModelDependencies,
+								permissionsDependencies,
+								viewModelStoreOwner,
+							)
 						}
+						?.registerBackNav()
 						?.apply {
 							Box(
 								modifier = Modifier
