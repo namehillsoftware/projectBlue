@@ -34,9 +34,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -468,7 +470,8 @@ fun ItemListView(
 				}
 			}
 
-			DisposableEffect(key1 = isAtTop) {
+			val inputMode = LocalInputModeManager.current
+			DisposableEffect(isAtTop, inputMode, heightScaler, lazyListState) {
 				if (isAtTop) {
 					onDispose { }
 				} else {
@@ -478,7 +481,8 @@ fun ItemListView(
 							else {
 								heightScaler.goToMax()
 								lazyListState.scrollToItem(0)
-								refreshButtonFocus.requestFocus()
+								if (inputMode.inputMode == InputMode.Keyboard)
+									refreshButtonFocus.requestFocus()
 								true
 							}
 						}.toPromise()
