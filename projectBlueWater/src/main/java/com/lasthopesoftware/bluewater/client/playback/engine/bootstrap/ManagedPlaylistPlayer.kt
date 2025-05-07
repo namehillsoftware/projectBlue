@@ -46,19 +46,22 @@ class ManagedPlaylistPlayer(
 									?.haltPlayback()
 									.keepPromise()
 									.then { _ -> Pair(null, null) }
-								else -> player
-									?.haltPlayback()
-									.keepPromise()
-									.then { _ ->
-										with (np) {
-											val positionedFileQueueProvider = positionedFileQueueProviders.getValue(isRepeating)
-											val queue = positionedFileQueueProvider.provideQueue(libraryId, playlist, playlistPosition)
-											val preparedPlaybackQueue = playbackQueues.initializePreparedPlaybackQueue(queue)
-											val newPlayer = PlaylistPlayer(preparedPlaybackQueue, Duration.millis(filePosition))
-											volumeManagement.managePlayer(newPlayer)
-											Pair(np, newPlayer)
-										}
+								else -> {
+									with (np) {
+										val positionedFileQueueProvider = positionedFileQueueProviders.getValue(isRepeating)
+										val queue = positionedFileQueueProvider.provideQueue(libraryId, playlist, playlistPosition)
+										val preparedPlaybackQueue = playbackQueues.initializePreparedPlaybackQueue(queue)
+
+										player
+											?.haltPlayback()
+											.keepPromise()
+											.then { _ ->
+												val newPlayer = PlaylistPlayer(preparedPlaybackQueue, Duration.millis(filePosition))
+												volumeManagement.managePlayer(newPlayer)
+												Pair(np, newPlayer)
+											}
 									}
+								}
 							}
 						}
 				}
