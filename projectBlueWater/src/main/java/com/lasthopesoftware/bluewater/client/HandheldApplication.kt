@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material.BottomSheetScaffold
-import androidx.compose.material.BottomSheetScaffoldState
-import androidx.compose.material.BottomSheetState
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
@@ -27,15 +25,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ReusedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelRegistry
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
-import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSettingsScreen
@@ -78,82 +72,11 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.rememberNavController
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 
 private val logger by lazy { LoggerFactory.getLogger("HandheldApplication") }
-
-private class BottomSheetHidingNavigation(
-	private val inner: NavigateApplication,
-	private val bottomSheetState: BottomSheetState,
-	private val coroutineScope: CoroutineScope
-) : NavigateApplication by inner {
-
-	override fun launchSearch(libraryId: LibraryId): Promise<Unit> {
-		hideBottomSheet()
-
-		return inner.launchSearch(libraryId)
-	}
-
-	override fun search(libraryId: LibraryId, filePropertyFilter: FileProperty): Promise<Unit> {
-		hideBottomSheet()
-
-		return inner.search(libraryId, filePropertyFilter)
-	}
-
-	override fun viewServerSettings(libraryId: LibraryId): Promise<Unit> {
-		hideBottomSheet()
-
-		return inner.viewServerSettings(libraryId)
-	}
-
-	override fun viewActiveDownloads(libraryId: LibraryId): Promise<Unit> {
-		hideBottomSheet()
-
-		return inner.viewActiveDownloads(libraryId)
-	}
-
-	override fun viewLibrary(libraryId: LibraryId): Promise<Unit> {
-		hideBottomSheet()
-
-		return inner.viewLibrary(libraryId)
-	}
-
-	override fun viewItem(libraryId: LibraryId, item: IItem): Promise<Unit> {
-		hideBottomSheet()
-
-		return inner.viewItem(libraryId, item)
-	}
-
-	override fun viewFileDetails(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int): Promise<Unit> {
-		hideBottomSheet()
-		return inner.viewFileDetails(libraryId, playlist, position)
-	}
-
-	override fun viewNowPlaying(libraryId: LibraryId): Promise<Unit> {
-		hideBottomSheet()
-
-		return inner.viewNowPlaying(libraryId)
-	}
-
-	override fun navigateUp(): Promise<Boolean> {
-		hideBottomSheet()
-
-		return inner.navigateUp()
-	}
-
-	private fun hideBottomSheet(): Boolean {
-		if (!bottomSheetState.isCollapsed) {
-			coroutineScope.launch { bottomSheetState.collapse() }
-			return true
-		}
-
-		return false
-	}
-}
 
 private val bottomAppBarHeight = Dimensions.appBarHeight
 private val bottomSheetElevation = 16.dp
@@ -163,9 +86,10 @@ private val bottomSheetElevation = 16.dp
 private fun BrowserLibraryDestination.Navigate(
 	browserViewDependencies: ScopedViewModelDependencies,
 	libraryConnectionDependencies: LibraryConnectionDependents,
-	scaffoldState: BottomSheetScaffoldState,
 ) {
 	with(browserViewDependencies) {
+		val scaffoldState = rememberBottomSheetScaffoldState()
+
 		val isBottomSheetCollapsed = scaffoldState.bottomSheetState.isCollapsed
 		val scope = rememberCoroutineScope()
 		DisposableEffect(isBottomSheetCollapsed) {
@@ -174,9 +98,11 @@ private fun BrowserLibraryDestination.Navigate(
 			} else {
 				val collapseAction = {
 					scope.async {
-						if (scaffoldState.bottomSheetState.isExpanded)
+						if (scaffoldState.bottomSheetState.isCollapsed) false
+						else {
 							scaffoldState.bottomSheetState.collapse()
-						true
+							true
+						}
 					}.toPromise()
 				}
 
@@ -237,7 +163,6 @@ fun LibraryDestination.Navigate(
 	systemUiController: SystemUiController,
 	browserViewDependencies: ScopedViewModelDependencies,
 	libraryConnectionDependencies: LibraryConnectionDependents,
-	scaffoldState: BottomSheetScaffoldState,
 ) {
 	with(browserViewDependencies) {
 		when (this@Navigate) {
@@ -248,7 +173,6 @@ fun LibraryDestination.Navigate(
 				Navigate(
 					browserViewDependencies = browserViewDependencies,
 					libraryConnectionDependencies = libraryConnectionDependencies,
-					scaffoldState = scaffoldState,
 				)
 			}
 
@@ -334,20 +258,14 @@ fun HandheldApplication(
 		if (initialDestination == null) listOf(ApplicationSettingsScreen, SelectedLibraryReRouter)
 		else listOf(ApplicationSettingsScreen)
 	)
-	val scaffoldState = rememberBottomSheetScaffoldState()
-	val coroutineScope = rememberCoroutineScope()
 
-	val bottomSheetState = scaffoldState.bottomSheetState
-	val destinationGraphNavigation = remember(navController, coroutineScope, bottomSheetState) {
-		BottomSheetHidingNavigation(
-			DestinationGraphNavigation(
-				entryDependencies.applicationNavigation,
-				navController,
-				coroutineScope,
-				entryDependencies.itemListMenuBackPressedHandler
-			),
-			bottomSheetState,
-			coroutineScope
+	val coroutineScope = rememberCoroutineScope()
+	val destinationGraphNavigation = remember(navController, coroutineScope) {
+		DestinationGraphNavigation(
+			entryDependencies.applicationNavigation,
+			navController,
+			coroutineScope,
+			entryDependencies.itemListMenuBackPressedHandler
 		)
 	}
 
@@ -458,8 +376,7 @@ fun HandheldApplication(
 									viewModelStoreOwner,
 									backPressOwner,
 								),
-								libraryConnectionDependencies,
-								scaffoldState
+								libraryConnectionDependencies
 							)
 						}
 					}
