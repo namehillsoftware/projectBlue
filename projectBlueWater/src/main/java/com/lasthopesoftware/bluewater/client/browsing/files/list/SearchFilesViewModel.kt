@@ -54,9 +54,23 @@ class SearchFilesViewModel(
 			.must { _ -> mutableIsLoading.value = false }
 	}
 
-	fun clearResults() {
-		query.value = ""
-		lockedInQuery = ""
-		mutableFiles.value = emptyList()
+	fun clearResults(): Boolean {
+		var isChanged = false
+		if (query.value.isNotEmpty()) {
+			query.value = ""
+			isChanged = true
+		}
+
+		if (lockedInQuery.isNotEmpty()) {
+			lockedInQuery = ""
+			isChanged = true
+		}
+
+		if (mutableFiles.value.isNotEmpty()) {
+			mutableFiles.value = emptyList()
+			isChanged = true
+		}
+
+		return isChanged
 	}
 }

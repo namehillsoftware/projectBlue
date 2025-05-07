@@ -8,7 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
-import com.lasthopesoftware.bluewater.client.browsing.files.list.TvSearchFilesView
+import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.DownloadsScreen
@@ -57,13 +57,14 @@ fun BrowserLibraryDestination.NavigateToTvLibraryDestination(browserViewDependen
 						}
 					)
 				} else {
-					TvSearchFilesView(
+					SearchFilesView(
 						searchFilesViewModel = searchFilesViewModel,
 						nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
 						trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
 						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 						applicationNavigation = applicationNavigation,
 						playbackServiceController = playbackServiceController,
+						backStackBuilder = undoBackStackBuilder,
 					)
 				}
 
