@@ -9,12 +9,10 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -33,6 +31,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -43,7 +42,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
@@ -336,38 +334,10 @@ fun ItemListView(
 
 	val lazyListState = rememberLazyListState()
 
-	val isAtTop by remember {
-		derivedStateOf {
-			lazyListState.firstVisibleItemIndex == 0 && lazyListState.firstVisibleItemScrollOffset == 0
-		}
-	}
-
-	val scope = rememberCoroutineScope()
-
-	val scrollToTopAction = {
-		scope.async {
-			if (lazyListState.firstVisibleItemIndex <= 0) false
-			else {
-				lazyListState.scrollToItem(0)
-				true
-			}
-		}.toPromise()
-	}
-
-	DisposableEffect(key1 = isAtTop) {
-		if (isAtTop) {
-			onDispose { }
-		} else {
-			undoBackStack.addAction(scrollToTopAction)
-
-			onDispose {
-				undoBackStack.removeAction(scrollToTopAction)
-			}
-		}
-	}
+	val refreshButtonFocus = remember { FocusRequester() }
 
 	@Composable
-	fun BoxWithConstraintsScope.LoadedItemListView(headerHeight: Dp) {
+	fun BoxWithConstraintsScope.LoadedItemListView() {
 		val items by itemListViewModel.items.subscribeAsState()
 
 		val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
@@ -385,19 +355,12 @@ fun ItemListView(
 					fixedKnobRatio = knobHeight,
 				),
 		) {
-			item(contentType = ItemListContentType.Spacer) {
-				Spacer(
-					modifier = Modifier
-						.requiredHeight(headerHeight)
-						.fillMaxWidth()
-				)
-			}
-
 			item(contentType = ItemListContentType.Menu) {
 				Row(
 					modifier = Modifier
 						.padding(rowPadding)
-						.fillMaxWidth(),
+						.fillMaxWidth()
+						.focusGroup(),
 					horizontalArrangement = Arrangement.SpaceEvenly,
 				) {
 					if (files.any()) {
@@ -416,6 +379,7 @@ fun ItemListView(
 						LabelledRefreshButton(
 							itemListViewModel,
 							fileListViewModel,
+							focusRequester = refreshButtonFocus,
 						)
 					} else {
 						LabelledActiveDownloadsButton(
@@ -431,6 +395,7 @@ fun ItemListView(
 						LabelledRefreshButton(
 							itemListViewModel,
 							fileListViewModel,
+							focusRequester = refreshButtonFocus,
 						)
 					}
 				}
@@ -485,9 +450,8 @@ fun ItemListView(
 
 	val isFilesLoading by fileListViewModel.isLoading.subscribeAsState()
 
-	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+	BoxWithConstraints(modifier = Modifier.fillMaxSize().focusGroup()) {
 		ControlSurface {
-
 			val isItemsLoading by itemListViewModel.isLoading.subscribeAsState()
 
 			val collapsedHeight = appBarHeight
@@ -496,25 +460,47 @@ fun ItemListView(
 			val collapsedHeightPx = LocalDensity.current.run { collapsedHeight.toPx() }
 			val heightScaler = memorableScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
 
+			val scope = rememberCoroutineScope()
+
+			val isAtTop by remember {
+				derivedStateOf {
+					lazyListState.firstVisibleItemIndex == 0 && lazyListState.firstVisibleItemScrollOffset == 0
+				}
+			}
+
+			DisposableEffect(key1 = isAtTop) {
+				if (isAtTop) {
+					onDispose { }
+				} else {
+					val scrollToTopAction = {
+						scope.async {
+							if (lazyListState.firstVisibleItemIndex <= 0) false
+							else {
+								heightScaler.goToMax()
+								lazyListState.scrollToItem(0)
+								refreshButtonFocus.requestFocus()
+								true
+							}
+						}.toPromise()
+					}
+
+					undoBackStack.addAction(scrollToTopAction)
+
+					onDispose {
+						undoBackStack.removeAction(scrollToTopAction)
+					}
+				}
+			}
+
 			val isHeaderTall by remember { derivedStateOf { (boxHeight + menuHeight) * 2 < maxHeight } }
-			val actualExpandedHeight by remember { derivedStateOf { if (isHeaderTall) boxHeight else collapsedHeight } }
-			Box(
+			Column(
 				modifier = Modifier
 					.fillMaxSize()
 					.nestedScroll(heightScaler)
 			) {
-				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-					val isLoaded = !isItemsLoading && !isFilesLoading
-
-					if (isLoaded) LoadedItemListView(actualExpandedHeight)
-					else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-				}
-
 				if (isHeaderTall) {
 					Column(
-						modifier = Modifier
-							.align(Alignment.TopCenter)
-							.background(MaterialTheme.colors.surface)
+						modifier = Modifier.background(MaterialTheme.colors.surface)
 					) headerColumn@{
 
 						val heightValue by heightScaler.getValueState()
@@ -635,6 +621,13 @@ fun ItemListView(
 							)
 						}
 					}
+				}
+
+				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+					val isLoaded = !isItemsLoading && !isFilesLoading
+
+					if (isLoaded) LoadedItemListView()
+					else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 				}
 			}
 		}
