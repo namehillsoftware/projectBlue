@@ -79,7 +79,7 @@ class ApplicationSettingsViewModel(
 					}
 				)
 			}
-			.then { it -> mutableLibraries.value = it.toList() }
+			.then { it -> mutableLibraries.value = it.sortedBy { it.first.id }.toList() }
 
 		return Promise
 			.whenAll(promisedSimpleValuesUpdate, promisedEngineTypeUpdate, promisedLibrariesUpdate)
