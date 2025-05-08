@@ -97,7 +97,11 @@ class LibrarySettingsAccess(
 	private fun LibrarySettings.toNewLibrary() = Library(
 		libraryName = libraryName,
 		isUsingExistingFiles = isUsingExistingFiles,
-		serverType = Library.ServerType.MediaCenter,
+		serverType = when (connectionSettings) {
+			is StoredMediaCenterConnectionSettings -> Library.ServerType.MediaCenter
+			is StoredSubsonicConnectionSettings -> Library.ServerType.Subsonic
+			null -> null
+		},
 		syncedFileLocation = syncedFileLocation,
 		connectionSettings = connectionSettings?.let(jsonTranslator::toJson),
 	)
