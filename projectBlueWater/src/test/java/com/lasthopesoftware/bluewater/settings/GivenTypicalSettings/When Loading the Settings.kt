@@ -84,12 +84,12 @@ class `When Loading the Settings` {
 	}
 
 	@Test
-	fun `then the libraries are correct`() {
+	fun `then the libraries are returned and sorted correctly`() {
 		assertThat(mutt.libraries.value).isEqualTo(
 			listOf(
-				Pair(LibraryId(504), "RJvwnHp8"),
-				Pair(LibraryId(395), "sJF83GATo"),
 				Pair(LibraryId(304), "dNiotMiP"),
+				Pair(LibraryId(395), "sJF83GATo"),
+				Pair(LibraryId(504), "RJvwnHp8"),
 				Pair(LibraryId(661), "Adutlms5vK7"),
 			)
 		)
