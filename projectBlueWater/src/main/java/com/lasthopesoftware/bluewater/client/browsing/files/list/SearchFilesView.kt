@@ -1,11 +1,11 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -39,10 +38,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -52,55 +51,45 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListContentType
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.shared.android.BuildUndoBackStack
 import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabelledRefreshButton
-import com.lasthopesoftware.bluewater.shared.android.ui.components.UnlabelledRefreshButton
-import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
-import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsMutableState
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.suspend
+import com.lasthopesoftware.promises.extensions.toPromise
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.io.IOException
-import kotlin.math.pow
 
 private val searchFieldPadding = Dimensions.topRowOuterPadding
 private val textFieldHeight = TextFieldDefaults.MinHeight + TextFieldDefaults.FocusedBorderThickness * 2
 private val topBarHeight = textFieldHeight + searchFieldPadding
-private val minimumMenuWidth = (3 * 32).dp
-
-private val expandedMenuVerticalPadding = searchFieldPadding * 2
-private val boxHeight = topBarHeight + Dimensions.menuHeight + expandedMenuVerticalPadding
 
 @Composable
 fun RowScope.LabelledRefreshButton(
 	searchFilesViewModel: SearchFilesViewModel,
 	modifier: Modifier = Modifier,
+	focusRequester: FocusRequester? = null,
 ) {
 	LabelledRefreshButton(
 		onClick = {
 			searchFilesViewModel.promiseRefresh()
 		},
 		modifier = modifier,
+		focusRequester,
 	)
-}
-
-@Composable
-fun RowScope.UnlabelledRefreshButton(
-	searchFilesViewModel: SearchFilesViewModel,
-) {
-	UnlabelledRefreshButton {
-		searchFilesViewModel.promiseRefresh()
-	}
 }
 
 @Composable
@@ -161,6 +150,7 @@ fun RenderTrackTitleItem(
 	)
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun SearchFilesView(
 	searchFilesViewModel: SearchFilesViewModel,
@@ -169,6 +159,7 @@ fun SearchFilesView(
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	applicationNavigation: NavigateApplication,
 	playbackServiceController: ControlPlaybackService,
+	backStackBuilder: BuildUndoBackStack
 ) {
 	val files by searchFilesViewModel.files.subscribeAsState()
 	var isConnectionLost by remember { mutableStateOf(false) }
@@ -177,203 +168,40 @@ fun SearchFilesView(
 	ControlSurface {
 		val isLoading by searchFilesViewModel.isLoading.subscribeAsState()
 
-		val heightScaler = LocalDensity.current.run {
-			memorableScrollConnectedScaler(max = boxHeight.toPx(), min = topBarHeight.toPx())
-		}
-
-		Box(
-			modifier = Modifier
-				.fillMaxSize()
-				.nestedScroll(heightScaler)
+		Column(
+			modifier = Modifier.fillMaxSize()
 		) {
-			when {
-				isLoading -> {
-					Box(modifier = Modifier.fillMaxSize()) {
-						CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-					}
-				}
-				isConnectionLost -> {
-					ConnectionLostView(
-						onCancel = { isConnectionLost = false },
-						onRetry = {
-							scope.launch {
-								try {
-									searchFilesViewModel.findFiles().suspend()
-								} catch (e: IOException) {
-									isConnectionLost = ConnectionLostExceptionFilter.isConnectionLostException(e)
-								}
-							}
-						}
-					)
-				}
-				files.any() -> {
-					BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-						val rowHeight = Dimensions.standardRowHeight
-						val lazyListState = rememberLazyListState()
-						val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
-						LazyColumn(
-							state = lazyListState,
-							modifier = Modifier
-								.scrollbar(
-									lazyListState,
-									horizontal = false,
-									knobColor = MaterialTheme.colors.onSurface,
-									trackColor = Color.Transparent,
-									visibleAlpha = .4f,
-									knobCornerRadius = 1.dp,
-									fixedKnobRatio = knobHeight,
-								),
-						) {
-							item {
-								Spacer(modifier = Modifier
-									.requiredHeight(boxHeight)
-									.fillMaxWidth())
-							}
-
-							item {
-								Box(
-									modifier = Modifier
-										.padding(Dimensions.viewPaddingUnit)
-										.height(Dimensions.viewPaddingUnit * 12)
-								) {
-									ProvideTextStyle(MaterialTheme.typography.h5) {
-										Text(
-											text = stringResource(R.string.file_count_label, files.size),
-											fontWeight = FontWeight.Bold,
-											modifier = Modifier
-												.padding(Dimensions.viewPaddingUnit)
-												.align(Alignment.CenterStart)
-										)
-									}
-								}
-							}
-
-							itemsIndexed(files) { i, f ->
-								RenderTrackTitleItem(
-									position = i,
-									serviceFile = f,
-									trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
-									searchFilesViewModel = searchFilesViewModel,
-									applicationNavigation = applicationNavigation,
-									nowPlayingViewModel = nowPlayingViewModel,
-									itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-									playbackServiceController = playbackServiceController,
-								)
-
-								if (i < files.lastIndex)
-									Divider()
-							}
-						}
-					}
-				}
-				else -> {
-					Spacer(modifier = Modifier.fillMaxSize())
-				}
-			}
-
-			val heightValue by heightScaler.getValueState()
-			val headerCollapsingProgress by heightScaler.getProgressState()
-			Box(
+			Column(
 				modifier = Modifier
 					.fillMaxWidth()
 					.background(MaterialTheme.colors.surface)
-					.padding(start = searchFieldPadding, end = searchFieldPadding)
-					.height(LocalDensity.current.run { heightValue.toDp() })
 			) {
-				val acceleratedHeaderCollapsingProgress by remember {
-					derivedStateOf {
-						headerCollapsingProgress.pow(
-							.2f
-						).coerceIn(0f, 1f)
-					}
-				}
-
-				val acceleratedToolbarExpandingProgress by remember {
-					derivedStateOf { 1 - acceleratedHeaderCollapsingProgress }
-				}
-
-				if (files.any()) {
-					BoxWithConstraints(
-						modifier = Modifier.fillMaxWidth()
-					) {
-						val iconSize = Dimensions.topMenuIconSize
-						val menuWidth by remember { derivedStateOf { linearInterpolation(maxWidth, minimumMenuWidth, acceleratedHeaderCollapsingProgress) } }
-						val expandedTopRowPadding = topBarHeight + expandedMenuVerticalPadding
-						val collapsedTopRowPadding = topBarHeight / 2 - iconSize / 2
-						val topRowPadding by remember { derivedStateOf { linearInterpolation(expandedTopRowPadding, collapsedTopRowPadding, headerCollapsingProgress) } }
-						Row(
-							modifier = Modifier
-								.padding(
-									top = topRowPadding
-								)
-								.width(menuWidth)
-								.align(Alignment.TopEnd)
-						) {
-							val textModifier = Modifier.alpha(acceleratedToolbarExpandingProgress)
-
-							if (acceleratedHeaderCollapsingProgress < 1) {
-								LabelledPlayButton(
-									libraryState = searchFilesViewModel,
-									playbackServiceController = playbackServiceController,
-									serviceFilesListState = searchFilesViewModel,
-									modifier = textModifier
-								)
-
-								LabelledShuffleButton(
-									libraryState = searchFilesViewModel,
-									playbackServiceController = playbackServiceController,
-									serviceFilesListState = searchFilesViewModel,
-									modifier = textModifier,
-								)
-
-								LabelledRefreshButton(
-									searchFilesViewModel,
-									modifier = textModifier,
-								)
-							} else {
-								UnlabelledPlayButton(
-									libraryState = searchFilesViewModel,
-									playbackServiceController = playbackServiceController,
-									serviceFilesListState = searchFilesViewModel
-								)
-
-								UnlabelledShuffleButton(
-									libraryState = searchFilesViewModel,
-									playbackServiceController = playbackServiceController,
-									serviceFilesListState = searchFilesViewModel,
-								)
-
-								UnlabelledRefreshButton(searchFilesViewModel)
-							}
-						}
-					}
-				}
-
 				Row(
 					modifier = Modifier
 						.fillMaxWidth()
-						.requiredHeight(topBarHeight)
-						.align(Alignment.TopStart),
+						.padding(start = searchFieldPadding, end = searchFieldPadding)
+						.requiredHeight(topBarHeight),
 					horizontalArrangement = Arrangement.Start,
 					verticalAlignment = Alignment.CenterVertically,
 				) {
 					BackButton(
-						onBack = applicationNavigation::backOut,
+						onBack = applicationNavigation::navigateUp,
 						modifier = Modifier.padding(end = Dimensions.topRowOuterPadding)
 					)
 
-					val endPadding by remember { derivedStateOf { Dimensions.viewPaddingUnit * 4 + (minimumMenuWidth + 12.dp) * acceleratedHeaderCollapsingProgress } }
-
 					var query by searchFilesViewModel.query.subscribeAsMutableState()
-					BackHandler(enabled = query.isNotEmpty()) {
-						searchFilesViewModel.clearResults()
-					}
-
 					val isLibraryIdActive by searchFilesViewModel.isLibraryIdActive.subscribeAsState()
 					TextField(
 						value = query,
 						placeholder = { stringResource(id = R.string.lbl_search_hint) },
-						onValueChange = { query = it },
+						onValueChange = {
+							query = it
+							if (query.isNotEmpty()) {
+								backStackBuilder.addAction {
+									searchFilesViewModel.clearResults().toPromise()
+								}
+							}
+						},
 						singleLine = true,
 						keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
 						keyboardActions = KeyboardActions(onSearch = {
@@ -399,12 +227,149 @@ fun SearchFilesView(
 									}
 								}
 							)
-					  	},
+						},
 						enabled = isLibraryIdActive && !isLoading,
-						modifier = Modifier
-							.padding(end = endPadding)
-							.weight(1f, fill = true)
+						modifier = Modifier.weight(1f, fill = true)
 					)
+				}
+			}
+
+			when {
+				isLoading -> {
+					Box(modifier = Modifier.fillMaxSize()) {
+						CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+					}
+				}
+				isConnectionLost -> {
+					ConnectionLostView(
+						onCancel = { isConnectionLost = false },
+						onRetry = {
+							scope.launch {
+								try {
+									searchFilesViewModel.findFiles().suspend()
+								} catch (e: IOException) {
+									isConnectionLost = ConnectionLostExceptionFilter.isConnectionLostException(e)
+								}
+							}
+						}
+					)
+				}
+				files.any() -> {
+					BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+						val rowHeight = Dimensions.standardRowHeight
+						val lazyListState = rememberLazyListState()
+
+						val isAtTop by remember {
+							derivedStateOf {
+								lazyListState.firstVisibleItemIndex == 0 && lazyListState.firstVisibleItemScrollOffset == 0
+							}
+						}
+
+						val refreshButtonFocus = remember { FocusRequester() }
+						val inputMode = LocalInputModeManager.current
+						DisposableEffect(isAtTop, inputMode, lazyListState) {
+							if (isAtTop) {
+								onDispose { }
+							} else {
+								val scrollToTopAction = {
+									scope.async {
+										if (lazyListState.firstVisibleItemIndex <= 0) false
+										else {
+											lazyListState.scrollToItem(0)
+											if (inputMode.inputMode == InputMode.Keyboard)
+												refreshButtonFocus.requestFocus()
+											true
+										}
+									}.toPromise()
+								}
+
+								backStackBuilder.addAction(scrollToTopAction)
+
+								onDispose {
+									backStackBuilder.removeAction(scrollToTopAction)
+								}
+							}
+						}
+
+						val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
+						LazyColumn(
+							state = lazyListState,
+							modifier = Modifier
+								.scrollbar(
+									lazyListState,
+									horizontal = false,
+									knobColor = MaterialTheme.colors.onSurface,
+									trackColor = Color.Transparent,
+									visibleAlpha = .4f,
+									knobCornerRadius = 1.dp,
+									fixedKnobRatio = knobHeight,
+								),
+						) {
+							item(contentType = ItemListContentType.Menu) {
+								if (files.any()) {
+									Row(
+										modifier = Modifier
+											.padding(Dimensions.rowPadding)
+											.fillMaxWidth()
+									) {
+										LabelledPlayButton(
+											libraryState = searchFilesViewModel,
+											playbackServiceController = playbackServiceController,
+											serviceFilesListState = searchFilesViewModel,
+										)
+
+										LabelledShuffleButton(
+											libraryState = searchFilesViewModel,
+											playbackServiceController = playbackServiceController,
+											serviceFilesListState = searchFilesViewModel,
+										)
+
+										LabelledRefreshButton(
+											searchFilesViewModel,
+											focusRequester = refreshButtonFocus
+										)
+									}
+								}
+							}
+
+							item(contentType = ItemListContentType.Header) {
+								Box(
+									modifier = Modifier
+										.padding(Dimensions.viewPaddingUnit)
+										.height(Dimensions.viewPaddingUnit * 12)
+								) {
+									ProvideTextStyle(MaterialTheme.typography.h5) {
+										Text(
+											text = stringResource(R.string.file_count_label, files.size),
+											fontWeight = FontWeight.Bold,
+											modifier = Modifier
+												.padding(Dimensions.viewPaddingUnit)
+												.align(Alignment.CenterStart)
+										)
+									}
+								}
+							}
+
+							itemsIndexed(files, contentType = { _, _ -> ItemListContentType.Item }) { i, f ->
+								RenderTrackTitleItem(
+									position = i,
+									serviceFile = f,
+									trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
+									searchFilesViewModel = searchFilesViewModel,
+									applicationNavigation = applicationNavigation,
+									nowPlayingViewModel = nowPlayingViewModel,
+									itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+									playbackServiceController = playbackServiceController,
+								)
+
+								if (i < files.lastIndex)
+									Divider()
+							}
+						}
+					}
+				}
+				else -> {
+					Spacer(modifier = Modifier.fillMaxSize())
 				}
 			}
 		}

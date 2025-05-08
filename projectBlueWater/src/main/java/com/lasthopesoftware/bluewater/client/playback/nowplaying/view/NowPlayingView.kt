@@ -95,6 +95,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.shared.android.BuildUndoBackStack
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.ui.SlideOutState
 import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
@@ -114,8 +115,11 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseables
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.toState
 import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 val controlRowHeight = 72.dp
@@ -213,6 +217,7 @@ fun PlaylistControls(
 	modifier: Modifier = Modifier,
 	playlistViewModel: NowPlayingPlaylistViewModel,
 	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
+	undoBackStack: BuildUndoBackStack,
 ) {
 	Row(
 		modifier = modifier,
@@ -231,7 +236,11 @@ fun PlaylistControls(
 			Image(
 				painter = painterResource(id = R.drawable.pencil),
 				contentDescription = stringResource(id = R.string.edit_now_playing_list),
-				modifier = Modifier.navigable(onClick = playlistViewModel::editPlaylist),
+				modifier = Modifier
+					.navigable(onClick = {
+						playlistViewModel.editPlaylist()
+						undoBackStack.addAction { playlistViewModel.finishPlaylistEdit().toPromise() }
+					}),
 				alpha = playlistControlAlpha,
 			)
 		}
@@ -406,6 +415,7 @@ fun NowPlayingPlaylist(
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	playlistViewModel: NowPlayingPlaylistViewModel,
 	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
+	undoBackStack: BuildUndoBackStack,
 	modifier: Modifier = Modifier,
 ) {
 	val nowPlayingFiles by playlistViewModel.nowPlayingList.subscribeAsState()
@@ -497,6 +507,7 @@ fun NowPlayingPlaylist(
 				if (!isEditingPlaylist) {
 					itemListMenuBackPressedHandler.hideAllMenus()
 					fileItemViewModel.showMenu()
+					undoBackStack.addAction { fileItemViewModel.hideMenu().toPromise() }
 				}
 			},
 			onRemoveFromNowPlayingClick = {
@@ -529,7 +540,7 @@ private val collapsedControlsHeight = ProgressIndicatorDefaults.StrokeWidth + Di
 private val expandedControlsHeight = controlRowHeight + collapsedControlsHeight
 
 @Composable
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalCoroutinesApi::class)
 fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
 	nowPlayingScreenViewModel: NowPlayingScreenViewModel,
@@ -538,10 +549,9 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
 	applicationNavigation: NavigateApplication,
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>
+	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
+	undoBackStack: BuildUndoBackStack,
 ) {
-	val isEditingPlaylist by playlistViewModel.isEditingPlaylist.subscribeAsState()
-
 	val isScreenControlsVisible by nowPlayingScreenViewModel.isScreenControlsVisible.subscribeAsState()
 
 	val filePropertiesHeight = maxHeight - expandedControlsHeight
@@ -598,25 +608,34 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 
 	val isSettledOnFirstPage by remember { derivedStateOf { playlistOpenProgress == 0f } }
 
-	DisposableEffect(isSettledOnFirstPage) {
-		if (isSettledOnFirstPage) playlistViewModel.hidePlaylist()
-		else playlistViewModel.showPlaylist()
-
-		onDispose {  }
-	}
-	val isPlaylistShown by playlistViewModel.isPlaylistShown.subscribeAsState()
-
 	suspend fun hidePlaylist() {
 		playlistViewModel.finishPlaylistEdit()
 		playlistDrawerState.animateTo(SlideOutState.Closed)
 	}
 
+	val isPlaylistShown by playlistViewModel.isPlaylistShown.subscribeAsState()
 	val scope = rememberCoroutineScope()
-	BackHandler(isPlaylistShown) {
-		when {
-			itemListMenuBackPressedHandler.hideAllMenus() -> {}
-			isEditingPlaylist -> playlistViewModel.finishPlaylistEdit()
-			isPlaylistShown -> scope.launch { hidePlaylist() }
+	DisposableEffect(isSettledOnFirstPage) {
+		if (isSettledOnFirstPage) {
+			playlistViewModel.hidePlaylist()
+			onDispose {  }
+		} else {
+			playlistViewModel.showPlaylist()
+			val hidePlaylistAcion = {
+				scope.async {
+					if (!playlistViewModel.isPlaylistShown.value) false
+					else {
+						hidePlaylist()
+						true
+					}
+				}.toPromise()
+			}
+
+			undoBackStack.addAction(hidePlaylistAcion)
+
+			onDispose {
+				undoBackStack.removeAction(hidePlaylistAcion)
+			}
 		}
 	}
 
@@ -672,12 +691,13 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 								.weight(1f),
 							playlistViewModel = playlistViewModel,
 							viewModelMessageBus = viewModelMessageBus,
+							undoBackStack = undoBackStack,
 						)
 					}
 
 					isTopControlsShown -> {
 						BackButton(
-							onBack = applicationNavigation::backOut,
+							onBack = applicationNavigation::navigateUp,
 							modifier = Modifier
 								.padding(start = Dimensions.topRowOuterPadding)
 								.alpha(playlistControlAlpha)
@@ -760,6 +780,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 					itemListMenuBackPressedHandler,
 					playlistViewModel,
 					viewModelMessageBus,
+					undoBackStack,
 					modifier = Modifier
 						.height(playlistHeight)
 						.background(SharedColors.overlayDark)
@@ -792,12 +813,8 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 	applicationNavigation: NavigateApplication,
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
+	undoBackStack: BuildUndoBackStack
 ) {
-	val isEditingPlaylist by playlistViewModel.isEditingPlaylist.subscribeAsState()
-	BackHandler(itemListMenuBackPressedHandler.hideAllMenus() || isEditingPlaylist) {
-		if (isEditingPlaylist) playlistViewModel.finishPlaylistEdit()
-	}
-
 	val playlistWidth = screenHeight.coerceIn(minimumMenuWidth, maxWidth / 2)
 	val playlistWidthPx = LocalDensity.current.run { playlistWidth.toPx() }
 	val draggableState = with (LocalDensity.current) {
@@ -882,7 +899,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 							.fillMaxWidth(),
 						horizontalArrangement = Arrangement.SpaceBetween
 					) {
-						BackButton(onBack = applicationNavigation::backOut)
+						BackButton(onBack = applicationNavigation::navigateUp)
 
 						NowPlayingRating(
 							nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
@@ -963,6 +980,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 						.height(Dimensions.appBarHeight),
 					playlistViewModel = playlistViewModel,
 					viewModelMessageBus = viewModelMessageBus,
+					undoBackStack = undoBackStack,
 				)
 
 				NowPlayingPlaylist(
@@ -973,6 +991,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 					itemListMenuBackPressedHandler,
 					playlistViewModel,
 					viewModelMessageBus = viewModelMessageBus,
+					undoBackStack = undoBackStack,
 					modifier = Modifier
 						.fillMaxHeight()
 						.onFocusChanged { f ->
@@ -999,6 +1018,7 @@ fun NowPlayingView(
 	connectionWatcherViewModel: ConnectionWatcherViewModel,
 	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
 	bitmapProducer: ProduceBitmaps,
+	undoBackStack: BuildUndoBackStack,
 ) {
 	val systemUiController = rememberSystemUiController()
 	DisposableEffect(systemUiController) {
@@ -1060,6 +1080,7 @@ fun NowPlayingView(
 									applicationNavigation = applicationNavigation,
 									itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 									viewModelMessageBus = viewModelMessageBus,
+									undoBackStack = undoBackStack,
 								)
 							} else {
 								NowPlayingWideView(
@@ -1071,6 +1092,7 @@ fun NowPlayingView(
 									applicationNavigation = applicationNavigation,
 									itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 									viewModelMessageBus = viewModelMessageBus,
+									undoBackStack = undoBackStack
 								)
 							}
 						}

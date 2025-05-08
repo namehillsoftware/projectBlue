@@ -32,7 +32,8 @@ fun BrowserLibraryDestination.NavigateToLibraryDestination(browserViewDependenci
 				ActiveFileDownloadsView(
 					activeFileDownloadsViewModel = activeFileDownloadsViewModel,
 					trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
-					applicationNavigation,
+					applicationNavigation = applicationNavigation,
+					undoBackStack = undoBackStackBuilder,
 				)
 
 				activeFileDownloadsViewModel.loadActiveDownloads(libraryId)
@@ -59,6 +60,7 @@ fun BrowserLibraryDestination.NavigateToLibraryDestination(browserViewDependenci
 						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 						applicationNavigation = applicationNavigation,
 						playbackServiceController = playbackServiceController,
+						backStackBuilder = undoBackStackBuilder,
 					)
 				}
 

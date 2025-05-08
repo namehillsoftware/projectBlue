@@ -75,13 +75,22 @@ class PreparedPlayableFileQueue(
 	}
 
 	override fun close() {
-		currentPreparingPlaybackHandlerPromise?.preparedPlaybackFilePromise?.cancel()
+		try {
+			currentPreparingPlaybackHandlerPromise?.preparedPlaybackFilePromise?.cancel()
+		} catch (e: PreparationException) {
+			logger.warn("An error occurred while cancelling the promised prepared file.", e)
+		}
 
 		val writeLock = queueUpdateLock.writeLock()
 		writeLock.lock()
 		try {
-			for (positionedPreparingFile in bufferingMediaPlayerPromises.drainQueue())
-				positionedPreparingFile.preparedPlaybackFilePromise.cancel()
+			for (positionedPreparingFile in bufferingMediaPlayerPromises.drainQueue()) {
+				try {
+					positionedPreparingFile.preparedPlaybackFilePromise.cancel()
+				} catch (e: PreparationException) {
+					logger.warn("An error occurred while cancelling the promised prepared file.", e)
+				}
+			}
 		} finally {
 			writeLock.unlock()
 		}
