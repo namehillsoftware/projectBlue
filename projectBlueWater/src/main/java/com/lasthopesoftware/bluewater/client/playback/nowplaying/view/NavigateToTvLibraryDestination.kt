@@ -37,7 +37,8 @@ fun BrowserLibraryDestination.NavigateToTvLibraryDestination(browserViewDependen
 				ActiveFileDownloadsView(
                     activeFileDownloadsViewModel = activeFileDownloadsViewModel,
                     trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
-                    applicationNavigation,
+					applicationNavigation = applicationNavigation,
+					undoBackStack = undoBackStackBuilder,
                 )
 
 				activeFileDownloadsViewModel.loadActiveDownloads(libraryId)

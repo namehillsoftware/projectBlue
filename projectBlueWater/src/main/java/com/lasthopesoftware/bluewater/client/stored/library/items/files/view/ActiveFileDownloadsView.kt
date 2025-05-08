@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,13 +30,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -50,6 +52,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListContentType
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
+import com.lasthopesoftware.bluewater.shared.android.BuildUndoBackStack
 import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
@@ -64,16 +67,21 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.topMenuIconSize
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.promises.extensions.toPromise
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 
 private val expandedTitleHeight = Dimensions.expandedTitleHeight
 private val appBarHeight = Dimensions.appBarHeight
 private val boxHeight = expandedTitleHeight + appBarHeight
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun ActiveFileDownloadsView(
 	activeFileDownloadsViewModel: ActiveFileDownloadsViewModel,
 	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewFileItem>,
 	applicationNavigation: NavigateApplication,
+	undoBackStack: BuildUndoBackStack,
 ) {
 	@Composable
 	fun RenderTrackHeaderItem(storedFile: StoredFile) {
@@ -105,12 +113,50 @@ fun ActiveFileDownloadsView(
 			memorableScrollConnectedScaler(max = boxHeight.toPx(), min = appBarHeight.toPx())
 		}
 
-		Box(
+		Column(
 			modifier = Modifier
 				.fillMaxSize()
 				.nestedScroll(heightScaler)
 		) {
-			val headerCollapseProgress by heightScaler.getProgressState()
+			Column(
+				modifier = Modifier
+					.fillMaxWidth()
+					.background(MaterialTheme.colors.surface),
+			) {
+				val heightValue by heightScaler.getValueState()
+				val headerCollapseProgress by heightScaler.getProgressState()
+				Box(
+					modifier = Modifier
+						.fillMaxWidth()
+						.height(LocalDensity.current.run { heightValue.toDp() })
+				) {
+					val topPadding by remember { derivedStateOf { linearInterpolation(Dimensions.appBarHeight, 14.dp, headerCollapseProgress) } }
+
+					ProvideTextStyle(MaterialTheme.typography.h5) {
+						val startPadding by rememberTitleStartPadding(heightScaler.getProgressState())
+						val header = stringResource(id = R.string.activeDownloads)
+						MarqueeText(
+							text = header,
+							overflow = TextOverflow.Ellipsis,
+							gradientSides = setOf(GradientSide.End),
+							gradientEdgeColor = MaterialTheme.colors.surface,
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(start = startPadding, top = topPadding, end = Dimensions.viewPaddingUnit),
+						)
+					}
+
+					// Always draw box to help the collapsing toolbar measure minimum size
+					Box(modifier = Modifier.height(appBarHeight)) {
+						BackButton(
+							applicationNavigation::navigateUp,
+							Modifier
+								.align(Alignment.CenterStart)
+								.padding(Dimensions.topRowOuterPadding)
+						)
+					}
+				}
+			}
 
 			if (isLoading) {
 				Box(modifier = Modifier.fillMaxSize()) {
@@ -122,6 +168,43 @@ fun ActiveFileDownloadsView(
 					val files by activeFileDownloadsViewModel.downloadingFiles.subscribeAsState()
 					val lazyListState = rememberLazyListState()
 					val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
+
+
+
+					val scope = rememberCoroutineScope()
+
+					val isAtTop by remember {
+						derivedStateOf {
+							lazyListState.firstVisibleItemIndex == 0 && lazyListState.firstVisibleItemScrollOffset == 0
+						}
+					}
+
+					val syncButtonFocus = remember { FocusRequester() }
+					val inputMode = LocalInputModeManager.current
+					DisposableEffect(isAtTop, inputMode, heightScaler, lazyListState) {
+						if (isAtTop) {
+							onDispose { }
+						} else {
+							val scrollToTopAction = {
+								scope.async {
+									if (lazyListState.firstVisibleItemIndex <= 0) false
+									else {
+										heightScaler.goToMax()
+										lazyListState.scrollToItem(0)
+										if (inputMode.inputMode == InputMode.Keyboard)
+											syncButtonFocus.requestFocus()
+										true
+									}
+								}.toPromise()
+							}
+
+							undoBackStack.addAction(scrollToTopAction)
+
+							onDispose {
+								undoBackStack.removeAction(scrollToTopAction)
+							}
+						}
+					}
 
 					LazyColumn(
 						state = lazyListState,
@@ -136,12 +219,6 @@ fun ActiveFileDownloadsView(
 								fixedKnobRatio = knobHeight,
 							),
 					) {
-						item(contentType = ItemListContentType.Spacer) {
-							Spacer(modifier = Modifier
-								.fillMaxWidth()
-								.height(boxHeight))
-						}
-
 						item(contentType = ItemListContentType.Menu) {
 							Row(
 								modifier = Modifier
@@ -185,16 +262,9 @@ fun ActiveFileDownloadsView(
 									modifier = Modifier
 										.fillMaxHeight()
 										.weight(1f),
-									label = {
-										if (headerCollapseProgress < 1) {
-											val invertedProgress by remember { derivedStateOf { 1 - headerCollapseProgress } }
-											Text(
-												text = label,
-												modifier = Modifier.alpha(invertedProgress),
-											)
-										}
-									},
+									label = { Text(text = label) },
 									enabled = isSyncChangeEnabled,
+									focusRequester = syncButtonFocus,
 								)
 							}
 						}
@@ -223,45 +293,6 @@ fun ActiveFileDownloadsView(
 							if (i < files.lastIndex)
 								Divider()
 						}
-					}
-				}
-			}
-
-			Column(
-				modifier = Modifier
-					.fillMaxWidth()
-					.background(MaterialTheme.colors.surface),
-			) {
-				val heightValue by heightScaler.getValueState()
-				Box(
-					modifier = Modifier
-						.fillMaxWidth()
-						.height(LocalDensity.current.run { heightValue.toDp() })
-				) {
-					val topPadding by remember { derivedStateOf { linearInterpolation(Dimensions.appBarHeight, 14.dp, headerCollapseProgress) } }
-
-					ProvideTextStyle(MaterialTheme.typography.h5) {
-						val startPadding by rememberTitleStartPadding(heightScaler.getProgressState())
-						val header = stringResource(id = R.string.activeDownloads)
-						MarqueeText(
-							text = header,
-							overflow = TextOverflow.Ellipsis,
-							gradientSides = setOf(GradientSide.End),
-							gradientEdgeColor = MaterialTheme.colors.surface,
-							modifier = Modifier
-								.fillMaxWidth()
-								.padding(start = startPadding, top = topPadding, end = Dimensions.viewPaddingUnit),
-						)
-					}
-
-					// Always draw box to help the collapsing toolbar measure minimum size
-					Box(modifier = Modifier.height(appBarHeight)) {
-						BackButton(
-							applicationNavigation::navigateUp,
-							Modifier
-								.align(Alignment.CenterStart)
-								.padding(Dimensions.topRowOuterPadding)
-						)
 					}
 				}
 			}
