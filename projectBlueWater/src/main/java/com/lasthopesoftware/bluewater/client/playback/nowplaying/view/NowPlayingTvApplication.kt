@@ -98,8 +98,8 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.components
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
-import com.lasthopesoftware.bluewater.client.settings.TvLibrarySettingsView
 import com.lasthopesoftware.bluewater.settings.TvApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
@@ -531,11 +531,12 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedViewModel
 						.fillMaxSize()
 						.padding(systemBarsPadding)
 				) {
-					TvLibrarySettingsView(
+					LibrarySettingsView(
 						librarySettingsViewModel = viewModel,
 						navigateApplication = applicationNavigation,
 						stringResources = stringResources,
 						userSslCertificates = userSslCertificateProvider,
+						undoBackStack = undoBackStackBuilder,
 					)
 				}
 
@@ -847,11 +848,12 @@ fun NowPlayingTvApplication(
 							Box(
 								modifier = Modifier.fillMaxSize()
 							) {
-								TvLibrarySettingsView(
+								LibrarySettingsView(
 									librarySettingsViewModel = librarySettingsViewModel,
 									navigateApplication = applicationNavigation,
 									stringResources = stringResources,
 									userSslCertificates = userSslCertificateProvider,
+									undoBackStack = undoBackStackBuilder,
 								)
 							}
 						}

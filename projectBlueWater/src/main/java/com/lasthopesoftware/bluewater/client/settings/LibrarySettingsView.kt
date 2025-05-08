@@ -33,6 +33,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInputModeManager
@@ -74,7 +76,6 @@ import kotlinx.coroutines.launch
 
 private val expandedTitleHeight = Dimensions.expandedTitleHeight
 private val expandedIconSize = menuHeight
-private val expandedMenuVerticalPadding = viewPaddingUnit * 2
 private val appBarHeight = Dimensions.appBarHeight
 private val boxHeight = expandedTitleHeight + appBarHeight
 private val innerGroupPadding = viewPaddingUnit * 2
@@ -114,6 +115,7 @@ private fun RowScope.LabelledSaveAndConnectButton(
 	navigateApplication: NavigateApplication,
 	stringResources: GetStringResources,
 	modifier: Modifier = Modifier,
+	focusRequester: FocusRequester? = null
 ) {
 	val isSettingsChanged by librarySettingsViewModel.isSettingsChanged.subscribeAsState()
 	val saveAndConnectText by remember {
@@ -140,6 +142,7 @@ private fun RowScope.LabelledSaveAndConnectButton(
 		contentDescription = saveAndConnectText,
 		label = saveAndConnectText,
 		labelModifier = modifier,
+		focusRequester = focusRequester,
 	)
 }
 
@@ -478,6 +481,7 @@ fun LibrarySettingsView(
 						derivedStateOf { scrollState.value < expandedIconSize.toPx() }
 					}
 				}
+				val connectFocusRequester = remember { FocusRequester() }
 
 				val inputMode = LocalInputModeManager.current
 				DisposableEffect(isIconsVisible, inputMode, heightScaler) {
@@ -488,6 +492,8 @@ fun LibrarySettingsView(
 							scope.async {
 								heightScaler.goToMax()
 								scrollState.scrollTo(0)
+								if (inputMode.inputMode == InputMode.Keyboard)
+									connectFocusRequester.requestFocus()
 								true
 							}.toPromise()
 						}
@@ -587,6 +593,7 @@ fun LibrarySettingsView(
 							librarySettingsViewModel = librarySettingsViewModel,
 							navigateApplication = navigateApplication,
 							stringResources = stringResources,
+							focusRequester = connectFocusRequester,
 						)
 					}
 
@@ -596,79 +603,6 @@ fun LibrarySettingsView(
 						userSslCertificates = userSslCertificates,
 					)
 				}
-			}
-		}
-	}
-}
-
-@Composable
-fun TvLibrarySettingsView(
-	librarySettingsViewModel: LibrarySettingsViewModel,
-	navigateApplication: NavigateApplication,
-	stringResources: GetStringResources,
-	userSslCertificates: ProvideUserSslCertificates,
-) {
-	ControlSurface {
-		RemoveServerConfirmationDialog(
-			librarySettingsViewModel = librarySettingsViewModel,
-			navigateApplication = navigateApplication
-		)
-
-		Column(modifier = Modifier.fillMaxSize()) {
-			Column {
-				Box(modifier = Modifier.height(expandedTitleHeight)) {
-					ProvideTextStyle(MaterialTheme.typography.h5) {
-						val startPadding = viewPaddingUnit
-						val endPadding = viewPaddingUnit
-						val maxLines = 2
-						Text(
-							text = stringResource(id = R.string.settings),
-							maxLines = maxLines,
-							overflow = TextOverflow.Ellipsis,
-							modifier = Modifier
-								.fillMaxWidth()
-								.padding(start = startPadding, end = endPadding),
-						)
-					}
-
-					BackButton(navigateApplication::navigateUp, modifier = Modifier.align(Alignment.TopStart))
-				}
-
-				Row(
-					modifier = Modifier
-						.padding(
-							top = expandedMenuVerticalPadding,
-							bottom = expandedMenuVerticalPadding,
-							start = viewPaddingUnit * 2,
-							end = viewPaddingUnit * 2
-						)
-						.fillMaxWidth(),
-					horizontalArrangement = Arrangement.SpaceEvenly,
-				) {
-					LabelledRemoveServerButton(
-						librarySettingsViewModel = librarySettingsViewModel,
-						stringResources = stringResources,
-					)
-
-					LabelledSaveAndConnectButton(
-						librarySettingsViewModel = librarySettingsViewModel,
-						navigateApplication = navigateApplication,
-						stringResources = stringResources,
-					)
-				}
-			}
-
-			Column(
-				modifier = Modifier
-					.fillMaxSize()
-					.verticalScroll(rememberScrollState()),
-				horizontalAlignment = Alignment.CenterHorizontally,
-			) {
-				LibrarySettingsList(
-					librarySettingsViewModel = librarySettingsViewModel,
-					stringResources = stringResources,
-					userSslCertificates = userSslCertificates,
-				)
 			}
 		}
 	}
