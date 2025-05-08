@@ -7,13 +7,11 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
@@ -26,6 +24,7 @@ import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -47,6 +47,7 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.connection.trust.ProvideUserSslCertificates
+import com.lasthopesoftware.bluewater.shared.android.BuildUndoBackStack
 import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
@@ -64,8 +65,11 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.viewPad
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsMutableState
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.suspend
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.emptyByteArray
 import com.lasthopesoftware.resources.strings.GetStringResources
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 private val expandedTitleHeight = Dimensions.expandedTitleHeight
@@ -436,12 +440,14 @@ private fun LibrarySettingsList(
 	}
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun LibrarySettingsView(
 	librarySettingsViewModel: LibrarySettingsViewModel,
 	navigateApplication: NavigateApplication,
 	stringResources: GetStringResources,
 	userSslCertificates: ProvideUserSslCertificates,
+	undoBackStack: BuildUndoBackStack,
 ) {
 	ControlSurface {
 		RemoveServerConfirmationDialog(
@@ -453,110 +459,142 @@ fun LibrarySettingsView(
 		val collapsedHeightPx = LocalDensity.current.run { appBarHeight.toPx() }
 		val heightScaler = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
 
-		BoxWithConstraints(
-			modifier = Modifier
-				.fillMaxSize()
-				.nestedScroll(heightScaler)
-		) {
+		BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 			val isHeaderTall by remember { derivedStateOf { (boxHeight + menuHeight) * 2 < maxHeight } }
-			val actualExpandedHeight by remember { derivedStateOf { if (isHeaderTall) boxHeight else appBarHeight } }
 
 			Column(
 				modifier = Modifier
 					.fillMaxSize()
-					.verticalScroll(rememberScrollState()),
-				horizontalAlignment = Alignment.CenterHorizontally,
+					.nestedScroll(heightScaler)
 			) {
-				Spacer(
-					modifier = Modifier
-						.requiredHeight(actualExpandedHeight)
-						.fillMaxWidth()
-				)
+				val scrollState = rememberScrollState()
 
-				Row(
-					modifier = Modifier
-						.padding(Dimensions.rowPadding)
-						.fillMaxWidth()
-						.height(expandedIconSize)
-				) {
-					LabelledRemoveServerButton(
-						librarySettingsViewModel = librarySettingsViewModel,
-						stringResources = stringResources,
-					)
-
-					LabelledSaveAndConnectButton(
-						librarySettingsViewModel = librarySettingsViewModel,
-						navigateApplication = navigateApplication,
-						stringResources = stringResources,
-					)
-				}
-
-				LibrarySettingsList(
-					librarySettingsViewModel = librarySettingsViewModel,
-					stringResources = stringResources,
-					userSslCertificates = userSslCertificates,
-				)
-			}
-
-			if (isHeaderTall) {
-				val heightValue by heightScaler.getValueState()
+				val scope = rememberCoroutineScope()
 
 				val headerCollapseProgress by heightScaler.getProgressState()
 
-				Box(modifier = Modifier
-					.height(LocalDensity.current.run { heightValue.toDp() })
-					.fillMaxWidth()
-					.align(Alignment.TopStart)
-					.background(MaterialTheme.colors.surface)
-				) {
-					ProvideTextStyle(MaterialTheme.typography.h5) {
-						val topPadding by remember { derivedStateOf { linearInterpolation(Dimensions.appBarHeight, 14.dp, headerCollapseProgress) } }
-
-						val startPadding by rememberTitleStartPadding(heightScaler.getProgressState())
-						val endPadding = viewPaddingUnit
-						MarqueeText(
-							text = stringResource(id = R.string.settings),
-							overflow = TextOverflow.Ellipsis,
-							gradientSides = setOf(GradientSide.End),
-							gradientEdgeColor = MaterialTheme.colors.surface,
-							modifier = Modifier
-								.fillMaxWidth()
-								.padding(start = startPadding, end = endPadding, top = topPadding),
-						)
+				val isIconsVisible by LocalDensity.current.run {
+					remember {
+						derivedStateOf { scrollState.value < expandedIconSize.toPx() }
 					}
-
-					BackButton(
-						navigateApplication::navigateUp,
-						modifier = Modifier
-							.align(Alignment.TopStart)
-							.padding(topRowOuterPadding)
-					)
 				}
-			} else {
-				Row(
-					modifier = Modifier
-						.fillMaxWidth()
-						.background(MaterialTheme.colors.surface)
-						.height(appBarHeight),
-					verticalAlignment = Alignment.CenterVertically,
-				) {
-					BackButton(
-						navigateApplication::navigateUp,
-						modifier = Modifier.padding(horizontal = topRowOuterPadding)
-					)
 
-					ProvideTextStyle(MaterialTheme.typography.h5) {
-						MarqueeText(
-							text = stringResource(id = R.string.settings),
-							overflow = TextOverflow.Ellipsis,
-							gradientSides = setOf(GradientSide.End),
-							gradientEdgeColor = MaterialTheme.colors.surface,
+				val inputMode = LocalInputModeManager.current
+				DisposableEffect(isIconsVisible, inputMode, heightScaler) {
+					if (isIconsVisible) {
+						onDispose { }
+					} else {
+						val scrollToTopAction = {
+							scope.async {
+								heightScaler.goToMax()
+								scrollState.scrollTo(0)
+								true
+							}.toPromise()
+						}
+
+						undoBackStack.addAction(scrollToTopAction)
+
+						onDispose {
+							undoBackStack.removeAction(scrollToTopAction)
+						}
+					}
+				}
+
+				if (isHeaderTall) {
+					val heightValue by heightScaler.getValueState()
+
+					Box(
+						modifier = Modifier
+							.height(LocalDensity.current.run { heightValue.toDp() })
+							.fillMaxWidth()
+							.background(MaterialTheme.colors.surface)
+					) {
+						ProvideTextStyle(MaterialTheme.typography.h5) {
+							val topPadding by remember {
+								derivedStateOf {
+									linearInterpolation(
+										Dimensions.appBarHeight,
+										14.dp,
+										headerCollapseProgress
+									)
+								}
+							}
+
+							val startPadding by rememberTitleStartPadding(heightScaler.getProgressState())
+							val endPadding = viewPaddingUnit
+							MarqueeText(
+								text = stringResource(id = R.string.settings),
+								overflow = TextOverflow.Ellipsis,
+								gradientSides = setOf(GradientSide.End),
+								gradientEdgeColor = MaterialTheme.colors.surface,
+								modifier = Modifier
+									.fillMaxWidth()
+									.padding(start = startPadding, end = endPadding, top = topPadding),
+							)
+						}
+
+						BackButton(
+							navigateApplication::navigateUp,
 							modifier = Modifier
-								.fillMaxWidth()
-								.padding(horizontal = viewPaddingUnit)
-								.weight(1f),
+								.align(Alignment.TopStart)
+								.padding(topRowOuterPadding)
 						)
 					}
+				} else {
+					Row(
+						modifier = Modifier
+							.fillMaxWidth()
+							.background(MaterialTheme.colors.surface)
+							.height(appBarHeight),
+						verticalAlignment = Alignment.CenterVertically,
+					) {
+						BackButton(
+							navigateApplication::navigateUp,
+							modifier = Modifier.padding(horizontal = topRowOuterPadding)
+						)
+
+						ProvideTextStyle(MaterialTheme.typography.h5) {
+							MarqueeText(
+								text = stringResource(id = R.string.settings),
+								overflow = TextOverflow.Ellipsis,
+								gradientSides = setOf(GradientSide.End),
+								gradientEdgeColor = MaterialTheme.colors.surface,
+								modifier = Modifier
+									.fillMaxWidth()
+									.padding(horizontal = viewPaddingUnit)
+									.weight(1f),
+							)
+						}
+					}
+				}
+
+				Column(
+					modifier = Modifier.verticalScroll(scrollState),
+					horizontalAlignment = Alignment.CenterHorizontally,
+				) {
+					Row(
+						modifier = Modifier
+							.padding(Dimensions.rowPadding)
+							.fillMaxWidth()
+							.height(expandedIconSize)
+					) {
+						LabelledRemoveServerButton(
+							librarySettingsViewModel = librarySettingsViewModel,
+							stringResources = stringResources,
+						)
+
+						LabelledSaveAndConnectButton(
+							librarySettingsViewModel = librarySettingsViewModel,
+							navigateApplication = navigateApplication,
+							stringResources = stringResources,
+						)
+					}
+
+					LibrarySettingsList(
+						librarySettingsViewModel = librarySettingsViewModel,
+						stringResources = stringResources,
+						userSslCertificates = userSslCertificates,
+					)
 				}
 			}
 		}

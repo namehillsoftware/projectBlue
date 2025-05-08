@@ -503,10 +503,7 @@ fun ItemListView(
 					.nestedScroll(heightScaler)
 			) {
 				if (isHeaderTall) {
-					Column(
-						modifier = Modifier.background(MaterialTheme.colors.surface)
-					) headerColumn@{
-
+					Column(modifier = Modifier.background(MaterialTheme.colors.surface)) headerColumn@{
 						val heightValue by heightScaler.getValueState()
 
 						Box(

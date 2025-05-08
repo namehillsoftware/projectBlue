@@ -195,6 +195,7 @@ fun LibraryDestination.Navigate(
 						navigateApplication = applicationNavigation,
 						stringResources = stringResources,
 						userSslCertificates = userSslCertificateProvider,
+						undoBackStack = undoBackStackBuilder,
 					)
 				}
 
@@ -426,6 +427,7 @@ fun HandheldApplication(
 									navigateApplication = applicationNavigation,
 									stringResources = stringResources,
 									userSslCertificates = userSslCertificateProvider,
+									undoBackStack = undoBackStackBuilder,
 								)
 							}
 						}
