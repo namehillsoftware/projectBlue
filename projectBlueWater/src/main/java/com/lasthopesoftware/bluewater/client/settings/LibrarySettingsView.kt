@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.settings
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,8 +57,8 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelect
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.StandardTextField
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
-import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberTitleStartPadding
+import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.menuHeight
@@ -78,7 +77,7 @@ import kotlinx.coroutines.launch
 private val expandedTitleHeight = Dimensions.expandedTitleHeight
 private val expandedIconSize = menuHeight
 private val appBarHeight = Dimensions.appBarHeight
-private val boxHeight = expandedTitleHeight + appBarHeight + 40.dp
+private val boxHeight = expandedTitleHeight + appBarHeight
 private val innerGroupPadding = viewPaddingUnit * 2
 private const val inputRowMaxWidth = .8f
 
@@ -108,6 +107,7 @@ private fun RowScope.LabelledChangeServerTypeButton(
 		contentDescription = stringResources.changeServerType,
 		label = stringResources.changeServerType,
 		labelModifier = modifier,
+		labelMaxLines = 2,
 	)
 }
 
@@ -687,13 +687,17 @@ private fun LibrarySettingsList(
 @Composable
 fun ServerTypeSelection(
 	librarySettingsViewModel: LibrarySettingsViewModel,
+	undoBackStack: BuildUndoBackStack,
 	modifier: Modifier = Modifier,
 	onServerTypeSelectionFinished: () -> Unit = {},
 ) {
-	BackHandler { onServerTypeSelectionFinished() }
+	val backAction = { onServerTypeSelectionFinished(); true.toPromise() }
+	undoBackStack.addAction(backAction)
 
 	Box(
-		modifier = Modifier.fillMaxSize().then(modifier),
+		modifier = Modifier
+			.fillMaxSize()
+			.then(modifier),
 		contentAlignment = Alignment.Center,
 	) {
 		Column(
@@ -738,6 +742,7 @@ fun ServerTypeSelection(
 				Button(
 					onClick = {
 						scope.launch {
+							undoBackStack.removeAction(backAction)
 							librarySettingsViewModel.saveLibrary().suspend()
 							onServerTypeSelectionFinished()
 						}
@@ -748,7 +753,10 @@ fun ServerTypeSelection(
 				}
 
 				Button(
-					onClick = onServerTypeSelectionFinished,
+					onClick = {
+						undoBackStack.removeAction(backAction)
+						onServerTypeSelectionFinished()
+					},
 				) {
 					Text(text = stringResource(id = R.string.btn_cancel))
 				}
@@ -783,11 +791,7 @@ fun LibrarySettingsView(
 		BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 			val isHeaderTall by remember { derivedStateOf { (boxHeight + menuHeight) * 2 < maxHeight } }
 
-			Column(
-				modifier = Modifier
-					.fillMaxSize()
-					.nestedScroll(heightScaler)
-			) {
+			Column(modifier = Modifier.nestedScroll(heightScaler)) {
 				val scrollState = rememberScrollState()
 
 				val scope = rememberCoroutineScope()
@@ -899,8 +903,7 @@ fun LibrarySettingsView(
 					Row(
 						modifier = Modifier
 							.padding(Dimensions.rowPadding)
-							.fillMaxWidth()
-							.height(expandedIconSize)
+							.fillMaxWidth(),
 					) {
 						LabelledChangeServerTypeButton(
 							stringResources = stringResources,
@@ -924,8 +927,9 @@ fun LibrarySettingsView(
 						if (isSelectingServerType) {
 							ServerTypeSelection(
 								librarySettingsViewModel = librarySettingsViewModel,
+								undoBackStack = undoBackStack,
 								onServerTypeSelectionFinished = { isSelectingServerType = false },
-								modifier = Modifier.weight(1f),
+								modifier = Modifier.height(this@BoxWithConstraints.maxHeight - (expandedIconSize + boxHeight) * 2)
 							)
 						} else {
 							val connectionSettingsViewModelState by librarySettingsViewModel.savedConnectionSettingsViewModel.subscribeAsState()
@@ -947,7 +951,9 @@ fun LibrarySettingsView(
 
 								null -> ServerTypeSelection(
 									librarySettingsViewModel = librarySettingsViewModel,
-									onServerTypeSelectionFinished = { isSelectingServerType = false }
+									undoBackStack = undoBackStack,
+									onServerTypeSelectionFinished = { isSelectingServerType = false },
+									modifier = Modifier.height(this@BoxWithConstraints.maxHeight - (expandedIconSize + boxHeight) * 2)
 								)
 							}
 						}
