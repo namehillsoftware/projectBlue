@@ -10,16 +10,19 @@ import com.lasthopesoftware.promises.ForwardedResponse.Companion.thenForward
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
+import com.lasthopesoftware.resources.closables.PromisingCloseable
 import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
-import java.io.Closeable
 import java.io.IOException
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 
-class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPreparedFiles, private val preparedPosition: Duration) :
-	ManagePlaylistPlayback, Closeable, ProgressingPromise<PositionedPlayingFile, Unit>()
+class PlaylistPlayer(
+	private val preparedPlaybackFileProvider: SupplyQueuedPreparedFiles,
+	private val preparedPosition: Duration
+) :
+	ManagePlaylistPlayback, PromisingCloseable, ProgressingPromise<PositionedPlayingFile, Unit>()
 {
 	companion object {
 		private val logger by lazyLogger<PlaylistPlayer>()
@@ -93,6 +96,8 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 			}.keepPromise(Unit)
 	}
 
+	override fun promiseClose(): Promise<Unit> = haltPlayback()
+
 	override fun haltPlayback(): Promise<Unit> {
 		val wasHalted = isHalted.getAndSet(true)
 		return synchronized(stateChangeSync) {
@@ -109,7 +114,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 							.keepPromise()
 					}
 				}
-				?.also {
+				.also {
 					positionedPlayableFile?.then { f -> f?.playableFile?.close() }
 					positionedPlayableFile = null
 					positionedPlayingFile = null
@@ -221,10 +226,6 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 		if (exception is CancellationException || exception.cause is CancellationException) return
 
 		reject(exception)
-		haltPlayback()
-	}
-
-	override fun close() {
 		haltPlayback()
 	}
 

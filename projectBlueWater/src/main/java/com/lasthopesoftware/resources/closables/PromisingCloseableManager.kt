@@ -1,15 +1,20 @@
 package com.lasthopesoftware.resources.closables
 
-import com.lasthopesoftware.bluewater.BuildConfig
-import com.lasthopesoftware.promises.extensions.keepPromise
-import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.compilation.DebugFlag
+import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
+import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.regardless
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
-open class PromisingCloseableManager : ManagePromisingCloseables {
+open class PromisingCloseableManager : ManagePromisingCloseables, ImmediateResponse<Throwable, Unit> {
 
 	companion object {
 		private val logger by lazyLogger<PromisingCloseableManager>()
+		private const val closingMessage = "Closing {}."
+		private const val closedMessage = "{} closed."
 	}
 
 	private val closeablesStack = LinkedNodeStack()
@@ -34,18 +39,22 @@ open class PromisingCloseableManager : ManagePromisingCloseables {
 			?.promiseClose()
 			?: closeablesStack
 				.pop()
-				?.also {
-					if (BuildConfig.DEBUG)
-						logger.debug("Closing {}.", it)
-				}
-				?.promiseClose())
-				?.eventually(
-					{ promiseClose() },
-					{ e ->
-						logger.warn("There was an error closing a resource", e)
-						promiseClose()
-					})
+				?.let { resource ->
+					if (DebugFlag.isDebugCompilation && resource !is AutoCloseableWrapper)
+						logger.debug(closingMessage, resource)
+
+					resource
+						.promiseClose()
+						.then(if (!DebugFlag.isDebugCompilation || resource is AutoCloseableWrapper) forward() else ImmediateResponse{
+							logger.debug(closedMessage, resource)
+						}, this)
+				})
+			?.regardless { promiseClose() }
 			.keepPromise(Unit)
+
+	override fun respond(resolution: Throwable?) {
+		logger.warn("There was an error closing a resource", resolution)
+	}
 
 	private fun stack(closeable: PromisingCloseable) {
 		if (!isSelf(closeable))
@@ -54,7 +63,7 @@ open class PromisingCloseableManager : ManagePromisingCloseables {
 
 	private fun isSelf(closeable: PromisingCloseable): Boolean {
 		if (closeable === this) {
-			if (BuildConfig.DEBUG)
+			if (DebugFlag.isDebugCompilation)
 				logger.debug("Attempted to manage self! Returning.")
 			return true
 		}
@@ -64,10 +73,14 @@ open class PromisingCloseableManager : ManagePromisingCloseables {
 
 	private class AutoCloseableWrapper(private val closeable: AutoCloseable) : PromisingCloseable {
 		override fun promiseClose(): Promise<Unit> {
-			if (BuildConfig.DEBUG)
-				logger.debug("Closing {}.", closeable)
+			if (DebugFlag.isDebugCompilation)
+				logger.debug(closingMessage, closeable)
 
 			closeable.close()
+
+			if (DebugFlag.isDebugCompilation)
+				logger.debug(closedMessage, closeable)
+
 			return Unit.toPromise()
 		}
 	}
@@ -81,7 +94,7 @@ open class PromisingCloseableManager : ManagePromisingCloseables {
 
 		fun push(closeable: PromisingCloseable): LinkedNode = LinkedNode(closeable)
 
-		fun pop(): PromisingCloseable? = head?.remove()
+		fun pop(): PromisingCloseable? = synchronized(stackSync) { head?.remove() }
 
 		inner class LinkedNode(private val closeable: PromisingCloseable) {
 
