@@ -52,7 +52,8 @@ inline fun <reified TService : Service> Context.promiseBoundService(extras: Bund
 					replaceExtras(extras)
 				}
 
-				bindService(intent, this, Context.BIND_AUTO_CREATE)
+				if (!cancellationToken.isCancelled)
+					bindService(intent, this, Context.BIND_AUTO_CREATE)
 			} catch (err: Throwable) {
 				reject(err)
 			}

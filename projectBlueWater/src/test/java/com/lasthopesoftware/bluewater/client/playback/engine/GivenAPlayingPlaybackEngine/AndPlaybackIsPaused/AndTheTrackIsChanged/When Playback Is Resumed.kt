@@ -69,6 +69,7 @@ class `When Playback Is Resumed` {
 		Triple(fakePlaybackPreparerProvider, nowPlayingRepository, playbackEngine)
 	}
 
+	private var preparedAt: Duration? = null
 	private var nowPlaying: NowPlaying? = null
 	private var positionedFiles: MutableList<PositionedPlayingFile?>? = null
 
@@ -79,6 +80,9 @@ class `When Playback Is Resumed` {
 		fakePlaybackPreparerProvider.preparationSourceBeingProvided { serviceFile, deferredPreparedPlayableFile ->
 			if (serviceFile == ServiceFile("1"))
 				deferredPreparedPlayableFile.resolve().setCurrentPosition(450)
+
+			if (serviceFile == ServiceFile("2"))
+				preparedAt = deferredPreparedPlayableFile.preparedAt
 		}
 
 		val deferredResume = DeferredPromise(Unit)
@@ -146,6 +150,11 @@ class `When Playback Is Resumed` {
 	@Test
 	fun `then the observed file is correct`() {
 		assertThat(positionedFiles?.last()?.playlistPosition).isEqualTo(1)
+	}
+
+	@Test
+	fun `then the file is prepared at the correct position`() {
+		assertThat(preparedAt).isEqualTo(Duration.ZERO)
 	}
 
 	@Test

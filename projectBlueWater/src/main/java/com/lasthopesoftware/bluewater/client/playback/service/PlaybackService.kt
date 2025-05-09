@@ -109,6 +109,7 @@ import com.lasthopesoftware.bluewater.shared.resilience.TimedCountdownLatch
 import com.lasthopesoftware.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.promises.PromiseDelay.Companion.delay
+import com.lasthopesoftware.promises.extensions.cancelBackThen
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
@@ -340,15 +341,18 @@ import java.util.concurrent.TimeoutException
 
 	private val lazyMediaSessionService by promisingServiceCloseables.manage(
 		RetryOnRejectionLazyPromise {
-			promiseBoundService<MediaSessionService>().then(promisingServiceCloseables::manage)
+			promiseBoundService<MediaSessionService>()
+				.cancelBackThen { boundService, _ ->
+					promisingServiceCloseables.manage(boundService)
+				}
 		}
 	)
 
-	private val promisedMediaSession by RetryOnRejectionLazyPromise {
+	private val promisedMediaSession by promisingServiceCloseables.manage(RetryOnRejectionLazyPromise {
 		lazyMediaSessionService.then { c -> c.service.mediaSession }
-	}
+	})
 
-	private val mediaStyleNotificationSetup by RetryOnRejectionLazyPromise {
+	private val mediaStyleNotificationSetup by promisingServiceCloseables.manage(RetryOnRejectionLazyPromise {
 		promisedMediaSession.then { mediaSession ->
 			MediaStyleNotificationSetup(
 				this,
@@ -358,7 +362,7 @@ import java.util.concurrent.TimeoutException
 				playbackServiceDependencies.intentBuilder,
 			)
 		}
-	}
+	})
 
 	private val mainLoopHandlerExecutor by lazy { HandlerExecutor(Handler(mainLooper)) }
 
@@ -368,7 +372,7 @@ import java.util.concurrent.TimeoutException
 				"Playback",
 				Process.THREAD_PRIORITY_AUDIO
 			)
-			.then(promisingServiceCloseables::manage)
+			.cancelBackThen { thread, _ -> promisingServiceCloseables.manage(thread) }
 	})
 
 	private val playbackStartingNotificationBuilder by lazy {
@@ -421,7 +425,7 @@ import java.util.concurrent.TimeoutException
 	}
 
 	private	val promisedMediaNotificationSetup by promisingServiceCloseables.manage(RetryOnRejectionLazyPromise {
-		mediaStyleNotificationSetup.then { mediaStyleNotificationSetup ->
+		mediaStyleNotificationSetup.then { mediaStyleNotificationSetup, cs ->
 			with (libraryConnectionDependencies) {
 				val notificationBuilder = promisingServiceCloseables.manage(
 					NowPlayingNotificationBuilder(
@@ -475,10 +479,10 @@ import java.util.concurrent.TimeoutException
 		)
 	}
 
+	// Manage this resource separately, it needs to be cleaned up after everything else is cleaned up.
 	private val updatePlayStatsOnPlaybackCompletedReceiver = lazy {
-		promisingServiceCloseables.manage(
-			UpdatePlayStatsOnPlaybackCompletedReceiver(
-				libraryConnectionDependencies.run {
+		UpdatePlayStatsOnPlaybackCompletedReceiver(
+			libraryConnectionDependencies.run {
 					LibraryPlaystatsUpdateSelector(
 						LibraryServerVersionProvider(libraryConnectionProvider),
 						PlayedFilePlayStatsUpdater(libraryConnectionProvider),
@@ -488,8 +492,7 @@ import java.util.concurrent.TimeoutException
 						),
 					)
 				},
-				this,
-			)
+			this,
 		)
 	}
 
@@ -500,7 +503,7 @@ import java.util.concurrent.TimeoutException
 		)
 	}
 
-	private val promisedPreparationSourceProvider by RetryOnRejectionLazyPromise {
+	private val promisedPreparationSourceProvider by promisingServiceCloseables.manage(RetryOnRejectionLazyPromise {
 		playbackThread
 			.then { h -> Handler(h.looper) }
 			.then { playbackHandler ->
@@ -515,9 +518,9 @@ import java.util.concurrent.TimeoutException
 					maxFileVolumeProvider
 				)
 			}
-	}
+	})
 
-	private val promisedPlaybackServices = RetryOnRejectionLazyPromise {
+	private val promisedPlaybackServices = promisingServiceCloseables.manage(RetryOnRejectionLazyPromise {
 		// Call the value to initialize the lazy promise
 		val hotPromisedMediaNotificationSetup = promisedMediaNotificationSetup
 
@@ -581,7 +584,7 @@ import java.util.concurrent.TimeoutException
 					.promiseClose()
 					.then { _ -> throw e }
 			}
-	}
+	})
 
 	private val unhandledRejectionHandler = ImmediateResponse<Throwable, Unit>(::uncaughtExceptionHandler)
 
@@ -1059,6 +1062,10 @@ import java.util.concurrent.TimeoutException
 				.inevitably { promisingServiceCloseables.promiseClose() }
 				.toFuture()
 				.getSafely()
+
+			// As mentioned at creation, clean this up last and separately from the other dependencies.
+			if (updatePlayStatsOnPlaybackCompletedReceiver.isInitialized())
+				updatePlayStatsOnPlaybackCompletedReceiver.value.promiseClose().toFuture().getSafely()
 		} catch (e: Throwable) {
 			logger.error("An error occurred closing resources", e)
 		}

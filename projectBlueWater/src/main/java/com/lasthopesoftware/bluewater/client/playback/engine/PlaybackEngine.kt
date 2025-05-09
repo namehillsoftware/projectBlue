@@ -30,7 +30,6 @@ import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.onEach
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
-import com.lasthopesoftware.resources.closables.PromisingCloseable
 import com.namehillsoftware.handoff.errors.RejectionDropper
 import com.namehillsoftware.handoff.promises.Promise
 import org.jetbrains.annotations.Contract
@@ -51,7 +50,7 @@ class PlaybackEngine(
 	ChangePlaybackContinuity,
 	ChangePlaylistFiles,
 	RegisterPlaybackEngineEvents,
-	PromisingCloseable
+	AutoCloseable
 {
 	companion object {
 		private val logger by lazyLogger<PlaybackEngine>()
@@ -362,19 +361,14 @@ class PlaybackEngine(
 		return this
 	}
 
-	override fun promiseClose(): Promise<Unit> {
-		preparedPlaybackQueueResourceManagement.reset()
-		return playlistPlayback
-			.haltPlayback()
-			.then { _ ->
-				onPlaybackStarted = null
-				onPlayingFileChanged = null
-				onPlaylistError = null
-				onPlaybackInterrupted = null
-				onPlaylistReset = null
-				onPlaybackPaused = null
-				onPlaybackCompleted = null
-			}
+	override fun close() {
+		onPlaybackStarted = null
+		onPlayingFileChanged = null
+		onPlaylistError = null
+		onPlaybackInterrupted = null
+		onPlaylistReset = null
+		onPlaybackPaused = null
+		onPlaybackCompleted = null
 	}
 
 	private fun pausePlayback(): Promise<NowPlaying?> {
