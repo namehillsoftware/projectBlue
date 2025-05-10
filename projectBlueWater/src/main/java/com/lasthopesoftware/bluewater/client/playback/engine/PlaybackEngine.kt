@@ -406,7 +406,8 @@ class PlaybackEngine(
 					.progress
 					.eventually { progress ->
 						saveState(attachedLibraryId) {
-							copy(
+							if (!newPromisedPlayback.isSameAsCurrentPlayback()) this
+							else copy(
 								playlistPosition = p.playlistPosition,
 								filePosition = progress.millis
 							)
