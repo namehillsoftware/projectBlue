@@ -397,11 +397,8 @@ class PlaybackEngine(
 
 		newPromisedPlayback
 			?.onEachEventually { p ->
-				if (!newPromisedPlayback.isSameAsCurrentPlayback()) return@onEachEventually Unit.toPromise()
-
-				isPlaying = true
-
-				p.playingFile
+				if (!newPromisedPlayback.isSameAsCurrentPlayback()) Unit.toPromise()
+				else p.playingFile
 					.progress
 					.eventually { progress ->
 						saveState(attachedLibraryId) {
