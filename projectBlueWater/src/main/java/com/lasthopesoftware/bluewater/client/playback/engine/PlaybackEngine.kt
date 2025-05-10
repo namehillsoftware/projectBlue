@@ -187,35 +187,34 @@ class PlaybackEngine(
 	): Promise<Pair<LibraryId, PositionedFile>?> {
 		val startingLibraryId = activeLibraryId.get()
 		return saveState(startingLibraryId, playlistPosition = playlistPosition, filePosition = filePosition.millis)
-			.run {
-				if (!isPlaying) {
-					promisedPlayback.set(null)
-					then { np ->
-						np?.run {
-							Pair(
-								libraryId,
-								playingFile ?: PositionedFile(playlistPosition, playlist[playlistPosition])
-							)
-						}
+			.eventually { serializedPlayerUpdate() }
+			.eventually { np ->
+				when {
+					np == null || activeLibraryId.get() != startingLibraryId -> Promise.empty()
+					np.playlistPosition != playlistPosition || np.filePosition != filePosition.millis -> Promise.empty()
+					!isPlaying -> {
+						promisedPlayback.set(null)
+						Pair(
+							startingLibraryId,
+							np.playingFile ?: PositionedFile(playlistPosition, np.playlist[playlistPosition])
+						).toPromise()
 					}
-				} else eventually {
-					serializedPlayerUpdate()
-				}.eventually { maybeNp ->
-					maybeNp
-						?.takeIf {
-							activeLibraryId.get() == startingLibraryId &&
-								it.playlistPosition == playlistPosition &&
-								it.filePosition == filePosition.millis
-						}
-						?.let { np ->
-							startPlayback(np)
-								.then { p ->
-									p?.asPositionedFile()?.let { Pair(np.libraryId, it) } ?: Pair(
-										np.libraryId,
-										PositionedFile(playlistPosition, np.playlist[playlistPosition])
-									)
+					else -> {
+						startPlayback(np)
+							.then({ p ->
+								p?.asPositionedFile()?.let { Pair(np.libraryId, it) } ?: Pair(
+									np.libraryId,
+									PositionedFile(playlistPosition, np.playlist[playlistPosition])
+								)
+							}, { e ->
+								if (e is CancellationException || e is PreparationException && e.cause is CancellationException) {
+									logger.info("Playback was cancelled, returning null.", e)
+									null
+								} else {
+									throw e
 								}
-						}.keepPromise()
+							})
+					}
 				}
 			}
 	}

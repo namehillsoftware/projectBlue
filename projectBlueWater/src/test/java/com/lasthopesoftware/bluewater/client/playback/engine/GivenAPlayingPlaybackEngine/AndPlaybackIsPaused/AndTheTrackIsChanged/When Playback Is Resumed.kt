@@ -78,8 +78,9 @@ class `When Playback Is Resumed` {
 		val (fakePlaybackPreparerProvider, nowPlayingRepository, playbackEngine) = mut
 
 		fakePlaybackPreparerProvider.preparationSourceBeingProvided { serviceFile, deferredPreparedPlayableFile ->
+			val playbackHandler = deferredPreparedPlayableFile.resolve()
 			if (serviceFile == ServiceFile("1"))
-				deferredPreparedPlayableFile.resolve().setCurrentPosition(450)
+				playbackHandler.setCurrentPosition(450)
 
 			if (serviceFile == ServiceFile("2"))
 				preparedAt = deferredPreparedPlayableFile.preparedAt
@@ -108,8 +109,6 @@ class `When Playback Is Resumed` {
 		playbackEngine.pause().toExpiringFuture().get()
 
 		playbackEngine.skipToNext().toExpiringFuture().get()
-
-		fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("2")]?.resolve()
 
 		playbackEngine.resume().toExpiringFuture().get()
 

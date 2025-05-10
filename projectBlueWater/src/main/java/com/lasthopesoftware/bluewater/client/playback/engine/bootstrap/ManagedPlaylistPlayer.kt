@@ -56,7 +56,7 @@ class ManagedPlaylistPlayer(
 										val preparedPlaybackQueue = playbackQueues.initializePreparedPlaybackQueue(queue)
 
 										player
-											?.haltPlayback()
+											?.promiseClose()
 											.keepPromise()
 											.then { _ ->
 												val newPlayer = PlaylistPlayer(preparedPlaybackQueue, Duration.millis(filePosition))
