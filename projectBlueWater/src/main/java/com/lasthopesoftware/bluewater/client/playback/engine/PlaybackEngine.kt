@@ -413,10 +413,12 @@ class PlaybackEngine(
 							)
 						}.then { maybeNp ->
 							maybeNp
-								?.takeIf { newPromisedPlayback.isSameAsCurrentPlayback() }
-								?.takeIf { attachedLibraryId == activeLibraryId.get() }
-								?.takeIf { it.playlistPosition == p.playlistPosition }
-								?.takeIf { it.filePosition == progress.millis }
+								?.takeIf {
+									newPromisedPlayback.isSameAsCurrentPlayback() &&
+									attachedLibraryId == activeLibraryId.get() &&
+									it.playlistPosition == p.playlistPosition &&
+									it.filePosition == progress.millis
+								}
 								?.run { onPlayingFileChanged?.onPlayingFileChanged(libraryId, p) }
 						}
 					}
