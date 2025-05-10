@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedF
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.LockingNowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
@@ -53,11 +54,12 @@ class WhenStateIsRestoredWithADifferentLibraryId {
 		)
 
 		val libraryProvider = FakeLibraryRepository(library, restoringLibrary)
-		val nowPlayingRepository =
-            NowPlayingRepository(
-                FakeSelectedLibraryProvider(),
-                libraryProvider,
-            )
+		val nowPlayingRepository = LockingNowPlayingRepository(
+			NowPlayingRepository(
+				FakeSelectedLibraryProvider(),
+				libraryProvider,
+			)
+		)
 		val preparedPlaybackQueueResourceManagement = PreparedPlaybackQueueResourceManagement(
 			fakePlaybackPreparerProvider,
 			FakePlaybackQueueConfiguration()
@@ -100,11 +102,14 @@ class WhenStateIsRestoredWithADifferentLibraryId {
 		resolvablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("2")]?.resolve()
 		resolvablePlaybackHandler?.setCurrentPosition(30)
 
+		nowPlayingRepository.open()
+
 		promisedStart.toExpiringFuture().get()
 
 		val promisedChange = Promise {
-			playbackEngine.setOnPlayingFileChanged { _, _ ->
-				it.sendResolution(Unit)
+			playbackEngine.setOnPlayingFileChanged { _, p ->
+				if (p?.playlistPosition == 1)
+					it.sendResolution(Unit)
 			}
 		}
 
@@ -112,7 +117,14 @@ class WhenStateIsRestoredWithADifferentLibraryId {
 
 		promisedChange.toExpiringFuture().get()
 
-		val restoredState = playbackEngine.restoreFromSavedState(LibraryId(restoringLibraryId)).toExpiringFuture().get()
+		nowPlayingRepository.close()
+
+		val promisedRestoredState = playbackEngine.restoreFromSavedState(LibraryId(restoringLibraryId))
+
+		nowPlayingRepository.open()
+
+		val restoredState = promisedRestoredState.toExpiringFuture().get()
+
 		restoredLibraryId = restoredState?.first
 		restoredFile = restoredState?.second
 		nowPlaying = nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()
