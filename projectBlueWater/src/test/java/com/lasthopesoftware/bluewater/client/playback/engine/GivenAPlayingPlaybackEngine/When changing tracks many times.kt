@@ -100,14 +100,15 @@ class `When changing tracks many times` {
 			playbackEngine.changePosition(4, Duration.ZERO),
 		)
 
-		// Resolve the final track first so that nextSwitchedFile returns.
+		// Resolve the skipped tracks as well to ensure that they aren't the last switched track
+		fakePlaybackPreparerProvider.deferredResolutions[playlist[2]]?.resolve()
+
 		val finalPreparableFile = fakePlaybackPreparerProvider.deferredResolutions[playlist[4]]
 		finalPreparableFile?.resolve()
 
 		nextSwitchedFile = promisedChanges.toExpiringFuture().get()?.lastOrNull()?.second
 
-		// Resolve the skipped tracks as well to ensure that they aren't the last switched track
-		fakePlaybackPreparerProvider.deferredResolutions[playlist[2]]?.resolve()
+		// Resolve the first skipped tracks afterward to ensure a cancellation is tested.
 		fakePlaybackPreparerProvider.deferredResolutions[playlist[0]]?.resolve()
 
 		playingPlaybackHandler?.resolve()
