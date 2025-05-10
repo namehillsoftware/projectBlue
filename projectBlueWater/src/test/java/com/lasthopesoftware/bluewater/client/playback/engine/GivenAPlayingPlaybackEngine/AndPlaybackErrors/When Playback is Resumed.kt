@@ -157,6 +157,7 @@ class `When Playback is Resumed` {
 
 	private open class DeferredPlaybackPreparer : PlayableFilePreparationSource {
 		private var messenger: Messenger<PreparedPlayableFile?>? = null
+
 		fun resolve(): ResolvablePlaybackHandler {
 			val playbackHandler = ResolvablePlaybackHandler()
 			messenger?.sendResolution(FakePreparedPlayableFile(playbackHandler))

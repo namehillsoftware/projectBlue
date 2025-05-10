@@ -462,17 +462,21 @@ class PlaybackEngine(
 					else -> Promise.empty()
 				}
 
-				if (attachedLibraryId != activeLibraryId.get()) return@then
+				if (!newPromisedPlayback.isSameAsCurrentPlayback()) return@then
 
-				promisedPlayback.set(null)
 				isPlaying = false
 
 				playlistPlayback.haltPlayback().excuse(RejectionDropper.Instance.get())
 
-				promisedSave.then { _ ->
-					if (attachedLibraryId == activeLibraryId.get())
-						onPlaylistError?.onError(e)
-				}
+				promisedSave
+					.then { _ ->
+						if (newPromisedPlayback.isSameAsCurrentPlayback())
+							onPlaylistError?.onError(e)
+					}
+					.must { _ ->
+						if (newPromisedPlayback.isSameAsCurrentPlayback())
+							promisedPlayback.set(null)
+					}
 			})
 
 		return playlistPlayback.resume()
