@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedF
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.AlwaysOpenNowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.LockingNowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
@@ -54,10 +55,12 @@ class WhenStateIsRestoredWithADifferentLibraryId {
 		)
 
 		val libraryProvider = FakeLibraryRepository(library, restoringLibrary)
-		val nowPlayingRepository = LockingNowPlayingRepository(
-			NowPlayingRepository(
-				FakeSelectedLibraryProvider(),
-				libraryProvider,
+		val nowPlayingRepository = AlwaysOpenNowPlayingRepository(
+			LockingNowPlayingRepository(
+				NowPlayingRepository(
+					FakeSelectedLibraryProvider(),
+					libraryProvider,
+				)
 			)
 		)
 		val preparedPlaybackQueueResourceManagement = PreparedPlaybackQueueResourceManagement(

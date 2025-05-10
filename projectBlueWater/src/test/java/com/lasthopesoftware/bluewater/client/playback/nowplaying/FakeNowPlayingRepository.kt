@@ -34,15 +34,20 @@ open class FakeNowPlayingRepository(
 	}
 }
 
-class LockingNowPlayingRepository(private val inner: ManageNowPlayingState) : ManageNowPlayingState {
+interface Gate {
+	fun open()
+	fun close()
+}
+
+class LockingNowPlayingRepository(private val inner: ManageNowPlayingState) : ManageNowPlayingState, Gate {
 
 	private val latch = AtomicReference(DeferredPromise(Unit))
 
-	fun open() {
+	override fun open() {
 		latch.get().resolve()
 	}
 
-	fun close() {
+	override fun close() {
 		latch.tryUpdate {
 			it.resolve()
 			DeferredPromise(Unit)
@@ -60,5 +65,12 @@ class LockingNowPlayingRepository(private val inner: ManageNowPlayingState) : Ma
 	override fun promiseNowPlaying(libraryId: LibraryId): Promise<NowPlaying?> = latch.get().eventually {
 		inner.promiseNowPlaying(libraryId)
 	}
+}
 
+class AlwaysOpenNowPlayingRepository<T>(inner: T) : ManageNowPlayingState by inner, Gate where T : ManageNowPlayingState, T : Gate {
+	init { inner.open() }
+
+	override fun open() {}
+
+	override fun close() {}
 }
