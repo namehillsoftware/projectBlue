@@ -18,6 +18,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -100,7 +101,16 @@ class WhenStateIsRestoredWithADifferentLibraryId {
 		resolvablePlaybackHandler?.setCurrentPosition(30)
 
 		promisedStart.toExpiringFuture().get()
+
+		val promisedChange = Promise {
+			playbackEngine.setOnPlayingFileChanged { _, _ ->
+				it.sendResolution(Unit)
+			}
+		}
+
 		playingPlaybackHandler?.resolve()
+
+		promisedChange.toExpiringFuture().get()
 
 		val restoredState = playbackEngine.restoreFromSavedState(LibraryId(restoringLibraryId)).toExpiringFuture().get()
 		restoredLibraryId = restoredState?.first
@@ -129,24 +139,21 @@ class WhenStateIsRestoredWithADifferentLibraryId {
 	}
 
 	@Test
-	fun `then the saved file position is correct`() {
-		assertThat(nowPlaying!!.filePosition).isEqualTo(30)
-	}
-
-	@Test
-	fun `then the saved playlist position is correct`() {
-		assertThat(nowPlaying!!.playlistPosition).isEqualTo(1)
-	}
-
-	@Test
-	fun `then the saved playlist is correct`() {
-		assertThat(nowPlaying!!.playlist)
-			.containsExactly(
-                ServiceFile("1"),
-                ServiceFile("2"),
-                ServiceFile("3"),
-                ServiceFile("4"),
-                ServiceFile("5")
+	fun `then the original now playing is correct`() {
+		assertThat(nowPlaying).isEqualTo(
+			NowPlaying(
+				libraryId = LibraryId(libraryId),
+				playlistPosition = 1,
+				filePosition = 30,
+				playlist = listOf(
+					ServiceFile("1"),
+					ServiceFile("2"),
+					ServiceFile("3"),
+					ServiceFile("4"),
+					ServiceFile("5")
+				),
+				isRepeating = false
 			)
+		)
 	}
 }

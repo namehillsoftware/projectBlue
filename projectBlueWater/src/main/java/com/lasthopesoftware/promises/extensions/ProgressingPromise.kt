@@ -8,6 +8,7 @@ import com.lasthopesoftware.promises.HaltedResult
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
+import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import java.util.concurrent.atomic.AtomicReference
 
 open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<ContinuableResult<Progress>, Resolution> {
@@ -67,5 +68,29 @@ inline fun <Progress, Resolution> ProgressedPromise<ContinuableResult<Progress>,
 	progress.then(progressResponse)
 
 	return this
+}
+
+inline fun <Progress, Resolution> ProgressingPromise<Progress, Resolution>.onEachEventually(crossinline action: (Progress) -> Promise<Unit>): ProgressedPromise<ContinuableResult<Progress>, Resolution> {
+	val progressResponse = object : PromisedResponse<ContinuableResult<Progress>, Unit> {
+		override fun promiseResponse(resolution: ContinuableResult<Progress>?): Promise<Unit> =
+			if (resolution is ContinuingResult) {
+				action(resolution.current)
+					.eventually {
+						resolution.next.eventually(this)
+					}
+			} else {
+				Unit.toPromise()
+			}
+	}
+
+	val parent = this
+	return object : ProgressingPromiseProxy<Progress, Resolution>(), PromisedResponse<Unit, Resolution> {
+		init {
+			proxyProgress(parent)
+			proxy(parent.progress.eventually(progressResponse).eventually(this))
+		}
+
+		override fun promiseResponse(resolution: Unit?): Promise<Resolution> = parent
+	}
 }
 

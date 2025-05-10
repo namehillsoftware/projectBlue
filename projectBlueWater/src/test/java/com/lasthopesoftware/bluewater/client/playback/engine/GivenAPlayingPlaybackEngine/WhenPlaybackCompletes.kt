@@ -79,7 +79,6 @@ class WhenPlaybackCompletes {
 
 		val promisedCompletedPlayback = object : Promise<Unit>() {
 			init {
-
 				playbackEngine
 					.setOnPlayingFileChanged { _, f ->
 						observedPlayingFile = f
@@ -114,13 +113,13 @@ class WhenPlaybackCompletes {
 
 	@Test
 	fun `then the observed file position is correct`() {
-		assertThat(observedPlayingFile!!.asPositionedFile())
+		assertThat(observedPlayingFile?.asPositionedFile())
 			.isEqualTo(PositionedFile(4, ServiceFile("5")))
 	}
 
 	@Test
 	fun `then the completed played file is correct`() {
-		assertThat(lastCompletedPlayedFile!!).isEqualTo(PositionedFile(4, ServiceFile("5")))
+		assertThat(lastCompletedPlayedFile).isEqualTo(PositionedFile(4, ServiceFile("5")))
 	}
 
 	@Test

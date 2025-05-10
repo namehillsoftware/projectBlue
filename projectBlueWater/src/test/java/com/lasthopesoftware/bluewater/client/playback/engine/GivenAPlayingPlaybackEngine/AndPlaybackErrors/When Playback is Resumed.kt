@@ -132,7 +132,7 @@ class `When Playback is Resumed` {
 
 	@Test
 	fun `then the error is broadcast`() {
-		assertThat(error).isNotNull
+		assertThat(error?.playbackHandler?.progress?.toExpiringFuture()?.get()?.millis).isEqualTo(164)
 	}
 
 	@Test
