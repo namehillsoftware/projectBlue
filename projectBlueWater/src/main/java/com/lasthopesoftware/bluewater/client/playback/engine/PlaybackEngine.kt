@@ -27,7 +27,7 @@ import com.lasthopesoftware.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.promises.ContinuingResult
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.keepPromise
-import com.lasthopesoftware.promises.extensions.onEach
+import com.lasthopesoftware.promises.extensions.onEachEventually
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.errors.RejectionDropper
@@ -71,10 +71,7 @@ class PlaybackEngine(
 
 	private val nowPlayingStateSync = PromisingRateLimiter<NowPlaying?>(1)
 
-	private val promisedPlaybackSync = Any()
-
-	@Volatile
-	private var promisedPlayback: ProgressingPromise<PositionedPlayingFile, Unit>? = null
+	private val promisedPlayback = AtomicReference<ProgressingPromise<PositionedPlayingFile, Unit>?>(null)
 
 	private var onPlayingFileChanged: OnPlayingFileChanged? = null
 	private var onPlaylistError: OnPlaylistError? = null
@@ -116,7 +113,7 @@ class PlaybackEngine(
 			promiseActiveNowPlaying()
 				.then { maybeNp -> maybeNp?.toState() }
 
-		fun promiseState(): Promise<Pair<LibraryId, PositionedProgressedFile?>> = promisedPlayback
+		fun promiseState(): Promise<Pair<LibraryId, PositionedProgressedFile?>> = promisedPlayback.get()
 			?.progress
 			?.eventually { playlistProgress ->
 				playlistProgress
@@ -133,9 +130,9 @@ class PlaybackEngine(
 
 		val originalLibraryId = activeLibraryId.getAndSet(libraryId)
 		return if (originalLibraryId == libraryId) promiseState()
-		else synchronized(promisedPlaybackSync) {
+		else {
 			isPlaying = false
-			promisedPlayback = null
+			promisedPlayback.set(null)
 
 			pauseAndSaveLibraryState(originalLibraryId)
 				.eventually {
@@ -190,35 +187,34 @@ class PlaybackEngine(
 	): Promise<Pair<LibraryId, PositionedFile>?> {
 		val startingLibraryId = activeLibraryId.get()
 		return saveState(startingLibraryId, playlistPosition = playlistPosition, filePosition = filePosition.millis)
-			.run {
-				if (!isPlaying) {
-					synchronized(promisedPlaybackSync) { promisedPlayback = null }
-					then { np ->
-						np?.run {
-							Pair(
-								libraryId,
-								playingFile ?: PositionedFile(playlistPosition, playlist[playlistPosition])
-							)
-						}
+			.eventually { serializedPlayerUpdate() }
+			.eventually { np ->
+				when {
+					np == null || activeLibraryId.get() != startingLibraryId -> Promise.empty()
+					np.playlistPosition != playlistPosition || np.filePosition != filePosition.millis -> Promise.empty()
+					!isPlaying -> {
+						promisedPlayback.set(null)
+						Pair(
+							startingLibraryId,
+							np.playingFile ?: PositionedFile(playlistPosition, np.playlist[playlistPosition])
+						).toPromise()
 					}
-				} else eventually {
-					serializedPlayerUpdate()
-				}.eventually { maybeNp ->
-					maybeNp
-						?.takeIf {
-							activeLibraryId.get() == startingLibraryId &&
-								it.playlistPosition == playlistPosition &&
-								it.filePosition == filePosition.millis
-						}
-						?.let { np ->
-							startPlayback(np)
-								.then { p ->
-									p?.asPositionedFile()?.let { Pair(np.libraryId, it) } ?: Pair(
-										np.libraryId,
-										PositionedFile(playlistPosition, np.playlist[playlistPosition])
-									)
+					else -> {
+						startPlayback(np)
+							.then({ p ->
+								p?.asPositionedFile()?.let { Pair(np.libraryId, it) } ?: Pair(
+									np.libraryId,
+									PositionedFile(playlistPosition, np.playlist[playlistPosition])
+								)
+							}, { e ->
+								if (e is CancellationException || e is PreparationException && e.cause is CancellationException) {
+									logger.info("Playback was cancelled, returning null.", e)
+									null
+								} else {
+									throw e
 								}
-						}.keepPromise()
+							})
+					}
 				}
 			}
 	}
@@ -234,19 +230,17 @@ class PlaybackEngine(
 	override fun resume(): Promise<Unit> {
 		isPlaying = true
 
-		return synchronized(promisedPlaybackSync) {
-			if (promisedPlayback == null) {
-				serializedPlayerUpdate().then { np -> np?.let(::startPlayback); Unit }
-			} else {
-				playlistPlayback
-					.resume()
-					.also {
-						onPlaybackStarted?.onPlaybackStarted()
-					}
-					.then { file ->
-						onPlayingFileChanged?.onPlayingFileChanged(activeLibraryId.get(), file)
-					}
-			}
+		return if (promisedPlayback.get() == null) {
+			serializedPlayerUpdate().then { np -> np?.let(::startPlayback); Unit }
+		} else {
+			playlistPlayback
+				.resume()
+				.also {
+					onPlaybackStarted?.onPlaybackStarted()
+				}
+				.then { file ->
+					onPlayingFileChanged?.onPlayingFileChanged(activeLibraryId.get(), file)
+				}
 		}
 	}
 
@@ -311,10 +305,10 @@ class PlaybackEngine(
 			.then(::updatePreparedFileQueueUsingState)
 	}
 
-	override fun clearPlaylist(): Promise<NowPlaying?> = synchronized(promisedPlaybackSync) {
+	override fun clearPlaylist(): Promise<NowPlaying?> {
 		isPlaying = false
 		preparedPlaybackQueueResourceManagement.reset()
-		promisedPlayback = null
+		promisedPlayback.set(null)
 		return saveState(activeLibraryId.get(), playlist = emptyList())
 			.eventually { np ->
 				playlistPlayback
@@ -397,97 +391,94 @@ class PlaybackEngine(
 	private fun startPlayback(activeNp: NowPlaying): Promise<PositionedPlayingFile?> {
 		onPlaybackStarted?.onPlaybackStarted()
 
-		return synchronized(promisedPlaybackSync) {
-			val attachedLibraryId = activeNp.libraryId
-			var attachedNowPlaying = activeNp
+		val attachedLibraryId = activeNp.libraryId
 
-			fun NowPlaying.isExpectedNowPlaying() = playlistPosition == attachedNowPlaying.playlistPosition
+		val newPromisedPlayback = promisedPlayback.updateAndGet { playlistPlayback.promisePlayedPlaylist() }
 
-			val newPromisedPlayback = playlistPlayback.promisePlayedPlaylist()
-			promisedPlayback = newPromisedPlayback
-
-			newPromisedPlayback
-				.onEach { p ->
-					if (attachedLibraryId == activeLibraryId.get())
-						isPlaying = true
-
-					p.playingFile
-						.progress
-						.eventually { progress ->
-							saveState(attachedLibraryId) {
-								if (!isExpectedNowPlaying()) this
-								else copy(
-									playlistPosition = p.playlistPosition,
-									filePosition = progress.millis
-								)
-							}.then { maybeNp ->
-								maybeNp
-									?.takeIf { attachedLibraryId == activeLibraryId.get() }
-									?.takeIf { it.playlistPosition == p.playlistPosition }
-									?.takeIf { it.filePosition == progress.millis }
-									?.also { attachedNowPlaying = it }
-									?.run { onPlayingFileChanged?.onPlayingFileChanged(libraryId, p) }
-							}
-						}
-				}
-				.then({ _ ->
-					if (attachedLibraryId != activeLibraryId.get()) return@then
-
-					promisedPlayback = null
-					isPlaying = false
-					changePosition(0, Duration.ZERO)
-						.then { p ->
-							if (attachedLibraryId == activeLibraryId.get()) {
-								p?.also { (libraryId, positionedFile) ->
-									onPlaylistReset?.onPlaylistReset(libraryId, positionedFile)
+		newPromisedPlayback
+			?.onEachEventually { p ->
+				if (!newPromisedPlayback.isSameAsCurrentPlayback()) Unit.toPromise()
+				else p.playingFile
+					.progress
+					.eventually { progress ->
+						saveState(attachedLibraryId) {
+							if (!newPromisedPlayback.isSameAsCurrentPlayback()) this
+							else copy(
+								playlistPosition = p.playlistPosition,
+								filePosition = progress.millis
+							)
+						}.then { maybeNp ->
+							maybeNp
+								?.takeIf {
+									newPromisedPlayback.isSameAsCurrentPlayback() &&
+									attachedLibraryId == activeLibraryId.get() &&
+									it.playlistPosition == p.playlistPosition &&
+									it.filePosition == progress.millis
 								}
-								onPlaybackCompleted?.onPlaybackCompleted()
-							}
+								?.run { onPlayingFileChanged?.onPlayingFileChanged(libraryId, p) }
 						}
-				}, { e ->
-					val promisedSave = when (e) {
-						is PreparationException -> {
-							if (e.cause is CancellationException) {
-								logger.debug(
-									"Preparation was cancelled, expecting cancellation caller to handle resource clean-up.",
-									e
-								)
-								return@then
-							}
+					}
+			}
+			?.then({ _ ->
+				if (!newPromisedPlayback.isSameAsCurrentPlayback()) return@then
 
+				isPlaying = false
+				changePosition(0, Duration.ZERO)
+					.then { p ->
+						if (attachedLibraryId == activeLibraryId.get()) {
+							p?.also { (libraryId, positionedFile) ->
+								onPlaylistReset?.onPlaylistReset(libraryId, positionedFile)
+							}
+							onPlaybackCompleted?.onPlaybackCompleted()
+						}
+					}
+			}, { e ->
+				val promisedSave = when (e) {
+					is PreparationException -> {
+						if (e.cause is CancellationException) {
+							logger.debug(
+								"Preparation was cancelled, expecting cancellation caller to handle resource clean-up.",
+								e
+							)
+							return@then
+						}
+
+						saveState(attachedLibraryId) {
+							if (newPromisedPlayback.isSameAsCurrentPlayback()) copy(playlistPosition = e.positionedFile.playlistPosition)
+							else this
+						}
+					}
+
+					is PlaybackException -> {
+						e.playbackHandler.progress.eventually { p ->
 							saveState(attachedLibraryId) {
-								if (isExpectedNowPlaying()) copy(playlistPosition = e.positionedFile.playlistPosition)
+								if (newPromisedPlayback.isSameAsCurrentPlayback()) copy(filePosition = p.millis)
 								else this
 							}
 						}
-
-						is PlaybackException -> {
-							e.playbackHandler.progress.eventually { p ->
-								saveState(attachedLibraryId) {
-									if (isExpectedNowPlaying()) copy(filePosition = p.millis)
-									else this
-								}
-							}
-						}
-
-						else -> Promise.empty()
 					}
 
-					if (attachedLibraryId != activeLibraryId.get()) return@then
+					else -> Promise.empty()
+				}
 
-					promisedPlayback = null
-					isPlaying = false
+				if (!newPromisedPlayback.isSameAsCurrentPlayback()) return@then
 
-					playlistPlayback.haltPlayback().excuse(RejectionDropper.Instance.get())
+				isPlaying = false
 
-					promisedSave.then { _ ->
-						if (attachedLibraryId == activeLibraryId.get())
+				playlistPlayback.haltPlayback().excuse(RejectionDropper.Instance.get())
+
+				promisedSave
+					.then { _ ->
+						if (newPromisedPlayback.isSameAsCurrentPlayback())
 							onPlaylistError?.onError(e)
 					}
-				})
+					.must { _ ->
+						if (newPromisedPlayback.isSameAsCurrentPlayback())
+							promisedPlayback.set(null)
+					}
+			})
 
-			playlistPlayback.resume()
-		}
+		return playlistPlayback.resume()
 	}
 
 	private fun serializedPlayerUpdate() = nowPlayingStateSync.limit {
@@ -512,6 +503,8 @@ class PlaybackEngine(
 			isRepeating = isRepeating ?: this.isRepeating
 		)
 	}
+
+	private fun ProgressingPromise<PositionedPlayingFile, Unit>.isSameAsCurrentPlayback() = this === promisedPlayback.get()
 
 	private inline fun saveState(
 		libraryId: LibraryId,

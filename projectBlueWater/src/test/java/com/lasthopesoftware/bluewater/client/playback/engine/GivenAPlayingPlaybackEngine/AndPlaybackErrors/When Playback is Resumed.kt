@@ -132,7 +132,7 @@ class `When Playback is Resumed` {
 
 	@Test
 	fun `then the error is broadcast`() {
-		assertThat(error).isNotNull
+		assertThat(error?.playbackHandler?.progress?.toExpiringFuture()?.get()?.millis).isEqualTo(164)
 	}
 
 	@Test
@@ -157,6 +157,7 @@ class `When Playback is Resumed` {
 
 	private open class DeferredPlaybackPreparer : PlayableFilePreparationSource {
 		private var messenger: Messenger<PreparedPlayableFile?>? = null
+
 		fun resolve(): ResolvablePlaybackHandler {
 			val playbackHandler = ResolvablePlaybackHandler()
 			messenger?.sendResolution(FakePreparedPlayableFile(playbackHandler))

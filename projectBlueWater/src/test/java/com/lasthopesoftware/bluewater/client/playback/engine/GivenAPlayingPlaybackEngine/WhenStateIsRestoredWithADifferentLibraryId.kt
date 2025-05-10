@@ -14,10 +14,13 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedF
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.AlwaysOpenNowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.LockingNowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -52,11 +55,14 @@ class WhenStateIsRestoredWithADifferentLibraryId {
 		)
 
 		val libraryProvider = FakeLibraryRepository(library, restoringLibrary)
-		val nowPlayingRepository =
-            NowPlayingRepository(
-                FakeSelectedLibraryProvider(),
-                libraryProvider,
-            )
+		val nowPlayingRepository = AlwaysOpenNowPlayingRepository(
+			LockingNowPlayingRepository(
+				NowPlayingRepository(
+					FakeSelectedLibraryProvider(),
+					libraryProvider,
+				)
+			)
+		)
 		val preparedPlaybackQueueResourceManagement = PreparedPlaybackQueueResourceManagement(
 			fakePlaybackPreparerProvider,
 			FakePlaybackQueueConfiguration()
@@ -99,10 +105,29 @@ class WhenStateIsRestoredWithADifferentLibraryId {
 		resolvablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("2")]?.resolve()
 		resolvablePlaybackHandler?.setCurrentPosition(30)
 
+		nowPlayingRepository.open()
+
 		promisedStart.toExpiringFuture().get()
+
+		val promisedChange = Promise {
+			playbackEngine.setOnPlayingFileChanged { _, p ->
+				if (p?.playlistPosition == 1)
+					it.sendResolution(Unit)
+			}
+		}
+
 		playingPlaybackHandler?.resolve()
 
-		val restoredState = playbackEngine.restoreFromSavedState(LibraryId(restoringLibraryId)).toExpiringFuture().get()
+		promisedChange.toExpiringFuture().get()
+
+		nowPlayingRepository.close()
+
+		val promisedRestoredState = playbackEngine.restoreFromSavedState(LibraryId(restoringLibraryId))
+
+		nowPlayingRepository.open()
+
+		val restoredState = promisedRestoredState.toExpiringFuture().get()
+
 		restoredLibraryId = restoredState?.first
 		restoredFile = restoredState?.second
 		nowPlaying = nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()
@@ -129,24 +154,21 @@ class WhenStateIsRestoredWithADifferentLibraryId {
 	}
 
 	@Test
-	fun `then the saved file position is correct`() {
-		assertThat(nowPlaying!!.filePosition).isEqualTo(30)
-	}
-
-	@Test
-	fun `then the saved playlist position is correct`() {
-		assertThat(nowPlaying!!.playlistPosition).isEqualTo(1)
-	}
-
-	@Test
-	fun `then the saved playlist is correct`() {
-		assertThat(nowPlaying!!.playlist)
-			.containsExactly(
-                ServiceFile("1"),
-                ServiceFile("2"),
-                ServiceFile("3"),
-                ServiceFile("4"),
-                ServiceFile("5")
+	fun `then the original now playing is correct`() {
+		assertThat(nowPlaying).isEqualTo(
+			NowPlaying(
+				libraryId = LibraryId(libraryId),
+				playlistPosition = 1,
+				filePosition = 30,
+				playlist = listOf(
+					ServiceFile("1"),
+					ServiceFile("2"),
+					ServiceFile("3"),
+					ServiceFile("4"),
+					ServiceFile("5")
+				),
+				isRepeating = false
 			)
+		)
 	}
 }
