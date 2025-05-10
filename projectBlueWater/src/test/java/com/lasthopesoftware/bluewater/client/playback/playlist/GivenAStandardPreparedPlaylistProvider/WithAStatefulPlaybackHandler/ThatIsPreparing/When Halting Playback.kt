@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.SupplyQueuedPreparedFiles
 import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
@@ -27,6 +28,8 @@ class `When Halting Playback` {
 		)
 	)
 
+	private var playingFile: PositionedPlayingFile? = null
+
 	@BeforeAll
 	fun act() {
 		val preparedPlaybackFileQueue = mockk<SupplyQueuedPreparedFiles> {
@@ -37,6 +40,7 @@ class `When Halting Playback` {
 		val futureHalt = playlistPlayback.haltPlayback()
 		preparingPlaybackHandler.resolve()
 		futureHalt.toExpiringFuture().get()
+		playingFile = playlistPlayback.resume().toExpiringFuture().get()
 	}
 
 	@Test
@@ -47,5 +51,10 @@ class `When Halting Playback` {
 	@Test
 	fun `then playback is never started`() {
 		assertThat(playbackHandler.recordedPlayingStates).containsOnly(false)
+	}
+
+	@Test
+	fun `then the playing file from the second resume is null because the player is no longer active`() {
+		assertThat(playingFile).isNull()
 	}
 }

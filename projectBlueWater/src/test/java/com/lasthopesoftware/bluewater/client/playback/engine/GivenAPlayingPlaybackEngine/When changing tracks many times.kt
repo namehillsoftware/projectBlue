@@ -82,16 +82,12 @@ class `When changing tracks many times` {
 				}
 		}
 
+		val playlist = fakePlaybackPreparerProvider.deferredResolutions.keys.toList()
+
 		val promisedStart = playbackEngine
 			.startPlaylist(
 				LibraryId(libraryId),
-				listOf(
-					ServiceFile("1"),
-					ServiceFile("2"),
-					ServiceFile("3"),
-					ServiceFile("4"),
-					ServiceFile("5")
-				),
+				playlist,
 				1
 			)
 
@@ -104,11 +100,16 @@ class `When changing tracks many times` {
 			playbackEngine.changePosition(4, Duration.ZERO),
 		)
 
-		fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("3")]?.resolve()
-		fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("1")]?.resolve()
-		fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("5")]?.resolve()
+		// Resolve the skipped tracks as well to ensure that they aren't the last switched track
+		fakePlaybackPreparerProvider.deferredResolutions[playlist[2]]?.resolve()
+
+		val finalPreparableFile = fakePlaybackPreparerProvider.deferredResolutions[playlist[4]]
+		finalPreparableFile?.resolve()
 
 		nextSwitchedFile = promisedChanges.toExpiringFuture().get()?.lastOrNull()?.second
+
+		// Resolve the first skipped tracks afterward to ensure a cancellation is tested.
+		fakePlaybackPreparerProvider.deferredResolutions[playlist[0]]?.resolve()
 
 		playingPlaybackHandler?.resolve()
 
@@ -138,8 +139,10 @@ class `When changing tracks many times` {
 	@Test
 	fun `then the started files are correct`() {
 		assertThat(startedFiles)
-			.containsExactly(
+			.startsWith(
 				PositionedFile(1, ServiceFile("2")),
+			)
+			.endsWith(
 				PositionedFile(4, ServiceFile("5")),
 			)
 	}

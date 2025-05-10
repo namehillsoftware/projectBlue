@@ -64,7 +64,7 @@ class WhenPlaybackIsPaused {
 	private var resolvablePlaybackHandler: ResolvablePlaybackHandler? = null
 
 	@BeforeAll
-	fun before() {
+	fun act() {
 		val (fakePlaybackPreparerProvider, nowPlayingRepository, playbackEngine) = mut
 
 		val promisedPlaybackStart = playbackEngine

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.resources.executors
 
-import com.google.common.util.concurrent.MoreExecutors
 import com.lasthopesoftware.bluewater.repository.Entity
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -26,14 +25,18 @@ object ThreadPools {
 
 	val exceptionsLogger: Executor by lazy { CachedSingleThreadExecutor("exceptionsLogger") }
 
-	val database: Executor by lazy { MoreExecutors.newSequentialExecutor(io) }
+	val database: Executor by lazy {
+		ForkJoinPool(1, namedThreadPoolFactory("db"), null, true)
+	}
 
 	private val databaseThreadCacheSync = Any()
 
 	private val databaseThreadCache = HashMap<Class<*>, Executor>()
 
 	fun <T : Entity> databaseTableExecutor(cls: Class<T>) = databaseThreadCache[cls] ?: synchronized(databaseThreadCacheSync) {
-		databaseThreadCache.getOrPut(cls) { MoreExecutors.newSequentialExecutor(io) }
+		databaseThreadCache.getOrPut(cls) {
+			ForkJoinPool(1, namedThreadPoolFactory("db-${cls.simpleName}"), null, true)
+		}
 	}
 
 	inline fun <T, reified Table : Entity> promiseTableMessage(messageWriter: CancellableMessageWriter<T>): Promise<T> =

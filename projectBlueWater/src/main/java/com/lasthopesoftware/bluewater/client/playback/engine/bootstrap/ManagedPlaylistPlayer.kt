@@ -15,16 +15,16 @@ import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.closables.PromisingCloseable
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
-import java.io.Closeable
 
 class ManagedPlaylistPlayer(
 	private val volumeManagement: PlaylistVolumeManager,
 	private val playbackQueues: ManagePlaybackQueues,
 	private val nowPlayingState: GetNowPlayingState,
 	positionedFileQueueProviders: Iterable<ProvidePositionedFileQueue>,
-) : BootstrapPlayback, ManagePlaylistPlayback, Closeable {
+) : BootstrapPlayback, ManagePlaylistPlayback, PromisingCloseable {
 
 	private val positionedFileQueueProviders = positionedFileQueueProviders.associateBy({ it.isRepeating }, { it })
 
@@ -56,7 +56,7 @@ class ManagedPlaylistPlayer(
 										val preparedPlaybackQueue = playbackQueues.initializePreparedPlaybackQueue(queue)
 
 										player
-											?.haltPlayback()
+											?.promiseClose()
 											.keepPromise()
 											.then { _ ->
 												val newPlayer = PlaylistPlayer(preparedPlaybackQueue, Duration.millis(filePosition))
@@ -73,9 +73,10 @@ class ManagedPlaylistPlayer(
 		np
 	}
 
-	override fun close() {
-		promisedPlayer.get().then { (_, p) -> p?.close() }
-	}
+	override fun promiseClose(): Promise<Unit> =
+		promisedPlayer
+			.get()
+			.then { (_, p) -> p?.promiseClose() }
 
 	override fun pause(): Promise<PositionedPlayableFile?> = promisedPlayer.get()
 		.eventually { (_, p) -> p?.pause().keepPromise() }
