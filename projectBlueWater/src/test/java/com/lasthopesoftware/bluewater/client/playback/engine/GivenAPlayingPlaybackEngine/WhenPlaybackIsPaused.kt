@@ -12,10 +12,13 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.AlwaysOpenNowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.LockingNowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -36,11 +39,14 @@ class WhenPlaybackIsPaused {
 		)
 		val library = Library(id = libraryId)
 		val libraryProvider = FakeLibraryRepository(library)
-		val nowPlayingRepository =
-			NowPlayingRepository(
-				FakeSelectedLibraryProvider(),
-				libraryProvider,
+		val nowPlayingRepository = AlwaysOpenNowPlayingRepository(
+			LockingNowPlayingRepository(
+				NowPlayingRepository(
+					FakeSelectedLibraryProvider(),
+					libraryProvider,
+				)
 			)
+		)
 		val preparedPlaybackQueueResourceManagement =
 			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration())
 		val playbackBootstrapper = ManagedPlaylistPlayer(
@@ -79,14 +85,31 @@ class WhenPlaybackIsPaused {
 				),
 				0
 			)
+
+		val promisedFirstFileStart = Promise {
+			playbackEngine.setOnPlayingFileChanged { _, p ->
+				if (p?.serviceFile == ServiceFile("1"))
+					it.sendResolution(Unit)
+			}
+		}
+
 		val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("1")]?.resolve()
-		promisedPlaybackStart.toExpiringFuture().get()
+
+		nowPlayingRepository.open().use {
+			promisedPlaybackStart.toExpiringFuture().get()
+			promisedFirstFileStart.toExpiringFuture().get()
+		}
+
 		playingPlaybackHandler?.resolve()
 
 		resolvablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("2")]?.resolve()
 		resolvablePlaybackHandler?.setCurrentPosition(30)
 
-		playbackEngine.pause().toExpiringFuture().get()
+		val promisedPause = playbackEngine.pause()
+
+		nowPlayingRepository.open()
+
+		promisedPause.toExpiringFuture().get()
 
 		nowPlaying = nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()
 	}

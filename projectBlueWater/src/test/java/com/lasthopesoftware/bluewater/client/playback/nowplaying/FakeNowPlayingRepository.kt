@@ -1,11 +1,10 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying
 
-import androidx.lifecycle.AtomicReference
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.ManageNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
-import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
-import com.lasthopesoftware.bluewater.shared.tryUpdate
+import com.lasthopesoftware.bluewater.shared.Gate
+import com.lasthopesoftware.bluewater.shared.promises.extensions.PromiseLatch
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -34,43 +33,32 @@ open class FakeNowPlayingRepository(
 	}
 }
 
-interface Gate {
-	fun open()
-	fun close()
-}
+class LockingNowPlayingRepository(private val inner: ManageNowPlayingState) : ManageNowPlayingState, Gate, AutoCloseable {
 
-class LockingNowPlayingRepository(private val inner: ManageNowPlayingState) : ManageNowPlayingState, Gate {
+	private val latch = PromiseLatch()
 
-	private val latch = AtomicReference(DeferredPromise(Unit))
+	override fun open(): AutoCloseable = latch.open()
 
-	override fun open() {
-		latch.get().resolve()
-	}
+	override fun close() = latch.close()
 
-	override fun close() {
-		latch.tryUpdate {
-			it.resolve()
-			DeferredPromise(Unit)
-		}
-	}
-
-	override fun updateNowPlaying(nowPlaying: NowPlaying): Promise<NowPlaying> = latch.get().eventually {
+	override fun updateNowPlaying(nowPlaying: NowPlaying): Promise<NowPlaying> = latch.eventually {
 		inner.updateNowPlaying(nowPlaying)
 	}
 
-	override fun promiseActiveNowPlaying(): Promise<NowPlaying?> = latch.get().eventually {
+	override fun promiseActiveNowPlaying(): Promise<NowPlaying?> = latch.eventually {
 		inner.promiseActiveNowPlaying()
 	}
 
-	override fun promiseNowPlaying(libraryId: LibraryId): Promise<NowPlaying?> = latch.get().eventually {
+	override fun promiseNowPlaying(libraryId: LibraryId): Promise<NowPlaying?> = latch.eventually {
 		inner.promiseNowPlaying(libraryId)
 	}
 }
 
-class AlwaysOpenNowPlayingRepository<T>(inner: T) : ManageNowPlayingState by inner, Gate where T : ManageNowPlayingState, T : Gate {
+class AlwaysOpenNowPlayingRepository<T>(inner: T) : ManageNowPlayingState by inner, AutoCloseable,
+	Gate where T : ManageNowPlayingState, T : Gate {
 	init { inner.open() }
 
-	override fun open() {}
+	override fun open() = this
 
 	override fun close() {}
 }

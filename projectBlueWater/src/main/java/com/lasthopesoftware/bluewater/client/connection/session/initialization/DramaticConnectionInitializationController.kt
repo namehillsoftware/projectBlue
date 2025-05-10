@@ -26,41 +26,42 @@ class DramaticConnectionInitializationController(
 	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, LiveServerConnection?> =
 		object : ProgressingPromiseProxy<BuildingConnectionStatus, LiveServerConnection?>() {
 			init {
-				manageConnectionSessions
-					.promiseIsConnectionActive(libraryId)
-					.eventually { isConnectionAlreadyActive ->
-						if (isConnectionAlreadyActive) {
-							logger.debug("Connection for {} already active.", libraryId)
-							manageConnectionSessions.promiseLibraryConnection(libraryId)
-						} else {
-							logger.debug("Connection for {} not active, creating.", libraryId)
-							val promisedConnection = manageConnectionSessions.promiseTestedLibraryConnection(libraryId)
-							proxyProgress(promisedConnection)
-							doCancel(promisedConnection)
-							promisedConnection
-								.inevitably {
-									PromiseDelay
-										.delay<Any?>(dramaticPause)
-										.also(::doCancel)
-								}
+				proxy(
+					manageConnectionSessions
+						.promiseIsConnectionActive(libraryId)
+						.eventually { isConnectionAlreadyActive ->
+							if (isConnectionAlreadyActive) {
+								logger.debug("Connection for {} already active.", libraryId)
+								manageConnectionSessions.promiseLibraryConnection(libraryId)
+							} else {
+								logger.debug("Connection for {} not active, creating.", libraryId)
+								val promisedConnection = manageConnectionSessions.promiseTestedLibraryConnection(libraryId)
+								proxyProgress(promisedConnection)
+								doCancel(promisedConnection)
+								promisedConnection
+									.inevitably {
+										PromiseDelay
+											.delay<Any?>(dramaticPause)
+											.also(::doCancel)
+									}
+							}
 						}
-					}
-					.then(
-						{ c ->
-							if (c == null)
-								manageConnectionSessions.removeConnection(libraryId)
+						.then(
+							{ c ->
+								if (c == null)
+									manageConnectionSessions.removeConnection(libraryId)
 
-							c
-						},
-						{  e ->
-							logger.error("An error occurred getting the connection for library ID ${libraryId.id}.", e)
+								c
+							},
+							{  e ->
+								logger.error("An error occurred getting the connection for library ID ${libraryId.id}.", e)
 
-							if (e !is CancellationException) manageConnectionSessions.removeConnection(libraryId)
+								if (e !is CancellationException) manageConnectionSessions.removeConnection(libraryId)
 
-							null
-						}
-					)
-					.then(::resolve, ::reject)
+								null
+							}
+						)
+				)
 			}
 		}
 }
