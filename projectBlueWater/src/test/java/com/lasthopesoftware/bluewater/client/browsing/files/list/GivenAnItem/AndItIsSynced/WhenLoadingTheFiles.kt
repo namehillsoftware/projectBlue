@@ -1,8 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAnItem.AndItIsSynced
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -18,22 +16,20 @@ import org.junit.jupiter.api.Test
 
 class WhenLoadingTheFiles {
 	private val viewModel by lazy {
-		val itemProvider = mockk<ProvideItemFiles>().apply {
-			every { promiseFiles(LibraryId(516), ItemId("585"), FileListParameters.Options.None) } returns listOf(
-				ServiceFile("471"),
-				ServiceFile("469"),
-				ServiceFile("102"),
-				ServiceFile("890"),
-			).toPromise()
-		}
-
 		val storedItemAccess = mockk<AccessStoredItems>().apply {
 			every { isItemMarkedForSync(any(), any<Item>()) } returns false.toPromise()
 			every { isItemMarkedForSync(LibraryId(516), Item("585", "king")) } returns true.toPromise()
 		}
 
 		FileListViewModel(
-            itemProvider,
+			mockk {
+				every { promiseFiles(LibraryId(516), ItemId("585")) } returns listOf(
+					ServiceFile("471"),
+					ServiceFile("469"),
+					ServiceFile("102"),
+					ServiceFile("890"),
+				).toPromise()
+			},
             storedItemAccess,
 		)
 	}

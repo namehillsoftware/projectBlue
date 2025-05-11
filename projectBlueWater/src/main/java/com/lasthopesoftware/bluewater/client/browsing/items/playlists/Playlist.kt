@@ -1,11 +1,13 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.playlists
 
+import android.os.Parcelable
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
-import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue
+import kotlinx.parcelize.IgnoredOnParcel
+import kotlinx.parcelize.Parcelize
 
-class Playlist : AbstractIntKeyStringValue, IItem {
-    constructor() : super()
-    constructor(key: String) {
-        this.key = key
-    }
+@Parcelize
+data class Playlist(override val key: String, override val value: String? = null) :  IItem, Parcelable {
+
+	@IgnoredOnParcel
+	override val itemId = PlaylistId(key)
 }

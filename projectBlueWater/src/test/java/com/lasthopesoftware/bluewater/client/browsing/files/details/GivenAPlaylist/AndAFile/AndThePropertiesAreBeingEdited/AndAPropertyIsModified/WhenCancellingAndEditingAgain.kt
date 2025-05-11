@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlayl
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.PassThroughUrlKeyProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -33,27 +33,27 @@ class WhenCancellingAndEditingAgain {
 			mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
 					sequenceOf(
-						FileProperty(KnownFileProperties.Rating, "68"),
-						FileProperty("awkward", "prevent"),
-						FileProperty("feast", "wind"),
-						FileProperty(KnownFileProperties.Name, "please"),
-						FileProperty(KnownFileProperties.Artist, "brown"),
-						FileProperty(KnownFileProperties.Genre, "subject"),
-						FileProperty(KnownFileProperties.Lyrics, "belief"),
-						FileProperty(KnownFileProperties.Comment, "pad"),
-						FileProperty(KnownFileProperties.Composer, "hotel"),
-						FileProperty(KnownFileProperties.Custom, "curl"),
-						FileProperty(KnownFileProperties.Publisher, "capital"),
-						FileProperty(KnownFileProperties.TotalDiscs, "354"),
-						FileProperty(KnownFileProperties.Track, "703"),
-						FileProperty(KnownFileProperties.AlbumArtist, "calm"),
-						FileProperty(KnownFileProperties.Album, "distant"),
-						FileProperty(KnownFileProperties.Date, "1355"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Rating, "68"),
+						ReadOnlyFileProperty("awkward", "prevent"),
+						ReadOnlyFileProperty("feast", "wind"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Name, "please"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Artist, "brown"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Genre, "subject"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Lyrics, "belief"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Comment, "pad"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Composer, "hotel"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Custom, "curl"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Publisher, "capital"),
+						ReadOnlyFileProperty(NormalizedFileProperties.TotalDiscs, "354"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Track, "703"),
+						ReadOnlyFileProperty(NormalizedFileProperties.AlbumArtist, "calm"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Album, "distant"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Date, "1355"),
 					)
 				)
 			},
 			mockk {
-				every { promiseFileUpdate(LibraryId(libraryId), ServiceFile(serviceFileId), KnownFileProperties.Track, any(), false) } answers {
+				every { promiseFileUpdate(LibraryId(libraryId), ServiceFile(serviceFileId), NormalizedFileProperties.Track, any(), false) } answers {
 					persistedTrackNumber = arg(2)
 					Unit.toPromise()
 				}
@@ -74,7 +74,7 @@ class WhenCancellingAndEditingAgain {
 	fun act() {
 		viewModel.apply {
 			loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
-			fileProperties.value.first { it.property == KnownFileProperties.Date }.apply {
+			fileProperties.value.first { it.property == NormalizedFileProperties.Date }.apply {
 				highlight()
 				edit()
 				cancel()
@@ -86,6 +86,6 @@ class WhenCancellingAndEditingAgain {
 
 	@Test
 	fun `then the property is highlighted`() {
-		assertThat(viewModel.highlightedProperty.value).isEqualTo(viewModel.fileProperties.value.first { it.property == KnownFileProperties.Date })
+		assertThat(viewModel.highlightedProperty.value).isEqualTo(viewModel.fileProperties.value.first { it.property == NormalizedFileProperties.Date })
 	}
 }

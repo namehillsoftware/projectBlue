@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.settings
 
-import kotlinx.serialization.Serializable
+import androidx.annotation.Keep
 
-@Serializable
+@Keep
 data class StoredMediaCenterConnectionSettings(
     val accessCode: String? = null,
     val userName: String? = null,
@@ -12,4 +12,4 @@ data class StoredMediaCenterConnectionSettings(
     val isWakeOnLanEnabled: Boolean = false,
     val sslCertificateFingerprint: String? = null,
     val macAddress: String? = null,
-)
+) : StoredConnectionSettings

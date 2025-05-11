@@ -4,5 +4,5 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 interface CheckRevisions {
-	fun promiseRevision(libraryId: LibraryId): Promise<Int>
+	fun promiseRevision(libraryId: LibraryId): Promise<Long>
 }

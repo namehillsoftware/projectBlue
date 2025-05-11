@@ -6,34 +6,22 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredSubsonicConnectionSettings
 import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.lasthopesoftware.resources.strings.TranslateJson
+import com.lasthopesoftware.resources.strings.parseJson
 import com.namehillsoftware.handoff.promises.Promise
-import kotlinx.serialization.json.Json
 import kotlin.coroutines.cancellation.CancellationException
 
-class LibrarySettingsAccess(private val libraryManager: ManageLibraries) : ProvideLibrarySettings, StoreLibrarySettings {
+class LibrarySettingsAccess(
+	private val libraryManager: ManageLibraries,
+	private val jsonTranslator: TranslateJson
+) : ProvideLibrarySettings, StoreLibrarySettings {
 	companion object {
 		private fun librarySettingsAccessCancelled() = CancellationException("Cancelled while accessing Library Settings.")
-
-		private fun LibrarySettings.toNewLibrary() = Library(
-			libraryName = libraryName,
-			isUsingExistingFiles = isUsingExistingFiles,
-			serverType = Library.ServerType.MediaCenter,
-			syncedFileLocation = syncedFileLocation,
-			connectionSettings = connectionSettings?.let(Json::encodeToString),
-		)
-
-		private fun Library.toLibrarySettings() = LibrarySettings(
-			libraryId = libraryId,
-			isUsingExistingFiles = isUsingExistingFiles,
-			libraryName = libraryName,
-			syncedFileLocation = syncedFileLocation,
-			connectionSettings = connectionSettings
-				?.let { Json.decodeFromString<StoredMediaCenterConnectionSettings>(it) }
-		)
 	}
 
 	override fun promiseAllLibrarySettings(): Promise<Collection<LibrarySettings>> =
@@ -78,12 +66,12 @@ class LibrarySettingsAccess(private val libraryManager: ManageLibraries) : Provi
 							l.libraryName = librarySettings.libraryName
 							l.isUsingExistingFiles = librarySettings.isUsingExistingFiles
 							l.syncedFileLocation = librarySettings.syncedFileLocation
-
-							l.serverType =
-								if (librarySettings.connectionSettings != null) Library.ServerType.MediaCenter
-								else null
-
-							l.connectionSettings = librarySettings.connectionSettings?.let(Json::encodeToString)
+							l.serverType = when (librarySettings.connectionSettings) {
+								is StoredMediaCenterConnectionSettings -> Library.ServerType.MediaCenter
+								is StoredSubsonicConnectionSettings -> Library.ServerType.Subsonic
+								null -> null
+							}
+							l.connectionSettings = librarySettings.connectionSettings?.let(jsonTranslator::toJson)
 							l
 						}
 					}
@@ -104,4 +92,32 @@ class LibrarySettingsAccess(private val libraryManager: ManageLibraries) : Provi
 					it.toLibrarySettings()
 				}
 			}
+
+
+	private fun LibrarySettings.toNewLibrary() = Library(
+		libraryName = libraryName,
+		isUsingExistingFiles = isUsingExistingFiles,
+		serverType = when (connectionSettings) {
+			is StoredMediaCenterConnectionSettings -> Library.ServerType.MediaCenter
+			is StoredSubsonicConnectionSettings -> Library.ServerType.Subsonic
+			null -> null
+		},
+		syncedFileLocation = syncedFileLocation,
+		connectionSettings = connectionSettings?.let(jsonTranslator::toJson),
+	)
+
+	private fun Library.toLibrarySettings() = LibrarySettings(
+		libraryId = libraryId,
+		isUsingExistingFiles = isUsingExistingFiles,
+		libraryName = libraryName,
+		syncedFileLocation = syncedFileLocation,
+		connectionSettings = connectionSettings
+			?.let {
+				when (serverType) {
+					Library.ServerType.MediaCenter -> jsonTranslator.parseJson<StoredMediaCenterConnectionSettings>(it)
+					Library.ServerType.Subsonic -> jsonTranslator.parseJson<StoredSubsonicConnectionSettings>(it)
+					null -> null
+				}
+			}
+	)
 }

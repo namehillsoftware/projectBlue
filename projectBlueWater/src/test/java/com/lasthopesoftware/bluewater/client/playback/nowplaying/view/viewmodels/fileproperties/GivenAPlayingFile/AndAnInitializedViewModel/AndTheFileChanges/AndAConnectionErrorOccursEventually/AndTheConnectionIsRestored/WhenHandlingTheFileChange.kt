@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.fileproperties.GivenAPlayingFile.AndAnInitializedViewModel.AndTheFileChanges.AndAConnectionErrorOccursEventually.AndTheConnectionIsRestored
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.session.LibraryConnectionChangedMessage
@@ -83,9 +83,9 @@ class WhenHandlingTheFileChange {
 					Promise(EOFException("Oof")),
 					Promise(EOFException("Uff")),
 					mapOf(
-						Pair(KnownFileProperties.Artist, "cow"),
-						Pair(KnownFileProperties.Name, "spill"),
-						Pair(KnownFileProperties.Rating, "591"),
+						Pair(NormalizedFileProperties.Artist, "cow"),
+						Pair(NormalizedFileProperties.Name, "spill"),
+						Pair(NormalizedFileProperties.Rating, "591"),
 					).toPromise(),
 				)
             },

@@ -20,7 +20,7 @@ class PlaylistItemFinder(private val itemProvider: ProvideItems) : FindPlaylistI
 	private fun recursivelySearchForPlaylist(libraryId: LibraryId, rootItem: IItem, playlist: Playlist): Promise<Item?> =
 		itemProvider.promiseItems(libraryId, ItemId(rootItem.key))
 			.eventually { items ->
-				val possiblePlaylistItem = items.firstOrNull { it.playlistId?.id == playlist.key }
+				val possiblePlaylistItem = items.filterIsInstance<Item>().firstOrNull { it.playlistId?.id == playlist.key }
 				possiblePlaylistItem?.toPromise()
 					?: Promise.whenAll(items.map { recursivelySearchForPlaylist(libraryId, it, playlist) })
 						.then { aggregatedItems -> aggregatedItems.firstOrNull { it != null } }

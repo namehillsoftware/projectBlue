@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.GivenAHaltedPlayba
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.IFilePropertiesContainerRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
@@ -54,7 +54,7 @@ class WhenChangingToThePreviousTrack {
 		val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()
 		every {
 			filePropertiesContainerRepository.getFilePropertiesContainer(UrlKeyHolder(TestUrl,	ServiceFile("4")))
-		} returns FilePropertiesContainer(1, mapOf(Pair(KnownFileProperties.Duration, "100")))
+		} returns FilePropertiesContainer(1, mapOf(Pair(NormalizedFileProperties.Duration, "100")))
 
 		val preparedPlaybackQueueResourceManagement = PreparedPlaybackQueueResourceManagement(
 			fakePlaybackPreparerProvider,

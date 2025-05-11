@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilesPropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
@@ -24,10 +24,10 @@ class WhenGettingTheStoredFilePath {
 			ServiceFile("340"),
 			LibraryId(550),
 			mapOf(
-				Pair(KnownFileProperties.Artist, "liar"),
-				Pair(KnownFileProperties.Album, "whenever"),
-				Pair(KnownFileProperties.Track, "670"),
-				Pair(KnownFileProperties.Filename, "wish somebody.mp3")
+				Pair(NormalizedFileProperties.Artist, "liar"),
+				Pair(NormalizedFileProperties.Album, "whenever"),
+				Pair(NormalizedFileProperties.Track, "670"),
+				Pair(NormalizedFileProperties.Filename, "wish somebody.mp3")
 			)
 		)
 

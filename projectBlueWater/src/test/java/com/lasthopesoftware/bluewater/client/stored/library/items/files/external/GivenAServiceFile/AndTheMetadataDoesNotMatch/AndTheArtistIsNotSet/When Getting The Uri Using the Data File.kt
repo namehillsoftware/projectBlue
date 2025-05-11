@@ -6,7 +6,7 @@ import android.net.Uri
 import android.provider.MediaStore
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.DataFileUriProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -34,11 +34,11 @@ class `When Getting The Uri Using the Data File` : AndroidContext() {
                     } returns Promise(
                         mapOf(
                             Pair(
-                                KnownFileProperties.Filename,
+                                NormalizedFileProperties.Filename,
                                 "C:\\some-windows-path\\10 - .aTBlMNcKtO"
                             ),
-                            Pair(KnownFileProperties.Album, "zVo6LjeB"),
-                            Pair(KnownFileProperties.AlbumArtist, "Aeneanvenenatis"),
+                            Pair(NormalizedFileProperties.Album, "zVo6LjeB"),
+                            Pair(NormalizedFileProperties.AlbumArtist, "Aeneanvenenatis"),
                         )
                     )
                 },

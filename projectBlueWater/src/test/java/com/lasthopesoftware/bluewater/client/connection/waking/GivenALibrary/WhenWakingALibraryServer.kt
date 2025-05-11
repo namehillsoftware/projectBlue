@@ -32,7 +32,7 @@ class WhenWakingALibraryServer {
 				ServerInfo(
 					5001,
 					5002,
-					"remote-address",
+					setOf("remote-address"),
 					setOf("local-address", "second-local-address"),
 					setOf("AB-E0-9F-24-F5", "99-53-7F-2C-A1"),
 					ByteArray(0)

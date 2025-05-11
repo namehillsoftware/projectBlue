@@ -10,7 +10,7 @@ data class MediaCenterConnectionSettings(
 	val isWakeOnLanEnabled: Boolean = false,
 	val sslCertificateFingerprint: ByteArray = emptyByteArray,
 	val macAddress: String? = null,
-) {
+) : ConnectionSettings {
 	override fun equals(other: Any?): Boolean {
 		if (this === other) return true
 		if (javaClass != other?.javaClass) return false

@@ -1,18 +1,24 @@
 package com.lasthopesoftware.bluewater.client.connection.live
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
+import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupValidConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.SubsonicConnectionSettings
 import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.network.LookupActiveNetwork
 import com.lasthopesoftware.resources.strings.EncodeToBase64
+import com.lasthopesoftware.resources.strings.GetStringResources
+import com.lasthopesoftware.resources.strings.TranslateJson
 import com.namehillsoftware.handoff.promises.Promise
+import java.net.URL
 import java.util.LinkedList
+import java.util.UUID
 
 class LiveServerConnectionProvider(
 	private val activeNetwork: LookupActiveNetwork,
@@ -21,15 +27,19 @@ class LiveServerConnectionProvider(
 	private val connectionSettingsLookup: LookupValidConnectionSettings,
 	private val httpClients: ProvideHttpPromiseClients,
 	private val okHttpClients: ProvideOkHttpClients,
+	private val jsonTranslator: TranslateJson,
+	private val stringResources: GetStringResources,
 ) : ProvideLiveServerConnection {
 	override fun promiseLiveServerConnection(libraryId: LibraryId): Promise<LiveServerConnection?> =
 		if (activeNetwork.isNetworkActive) {
 			connectionSettingsLookup
 				.promiseConnectionSettings(libraryId)
 				.cancelBackEventually { connectionSettings ->
-					connectionSettings
-						?.let { settings -> promiseTestedServerConnection(libraryId, settings) }
-						?: Promise(MissingConnectionSettingsException(libraryId))
+					when (connectionSettings) {
+						is MediaCenterConnectionSettings -> promiseTestedServerConnection(libraryId, connectionSettings)
+						is SubsonicConnectionSettings -> promiseTestedServerConnection(libraryId, connectionSettings)
+						null -> Promise(MissingConnectionSettingsException(libraryId))
+					}
 				}
 		} else Promise.empty()
 
@@ -43,13 +53,13 @@ class LiveServerConnectionProvider(
 			.promiseServerInformation(libraryId)
 			.also(cp::doCancel)
 			.eventually {
-				it?.let { (httpPort, httpsPort, remoteIp, localIps, _, certificateFingerprint) ->
-					val serverConnections = LinkedList<ServerConnection>()
+				it?.let { (httpPort, httpsPort, remoteIps, localIps, _, certificateFingerprint) ->
+					val mediaCenterConnectionDetails = LinkedList<MediaCenterConnectionDetails>()
 
 					fun testUrls(): Promise<LiveServerConnection?> {
 						if (cp.isCancelled) return Promise.empty()
-						val serverConnection = serverConnections.poll() ?: return Promise.empty()
-						val potentialConnection = MediaCenterConnection(serverConnection, httpClients, okHttpClients)
+						val serverConnection = mediaCenterConnectionDetails.poll() ?: return Promise.empty()
+						val potentialConnection = LiveMediaCenterConnection(serverConnection, httpClients, okHttpClients)
 						return potentialConnection
 							.promiseIsConnectionPossible()
 							.also(cp::doCancel)
@@ -58,34 +68,110 @@ class LiveServerConnectionProvider(
 
 					if (!settings.isLocalOnly) {
 						if (httpsPort != null) {
-							serverConnections.offer(
-								ServerConnection(
-									authKey,
-									remoteIp,
-									httpsPort,
-									certificateFingerprint
+							for (ip in remoteIps) {
+								mediaCenterConnectionDetails.offer(
+									MediaCenterConnectionDetails(
+										authKey,
+										ip,
+										httpsPort,
+										certificateFingerprint
+									)
 								)
-							)
+							}
 						}
 
 						if (httpPort != null) {
-							serverConnections.offer(
-								ServerConnection(
+							for (ip in remoteIps) {
+								mediaCenterConnectionDetails.offer(
+									MediaCenterConnectionDetails(
+										authKey,
+										ip,
+										httpPort,
+									)
+								)
+							}
+						}
+					}
+
+					if (httpPort != null) {
+						for (ip in localIps) {
+							mediaCenterConnectionDetails.offer(
+								MediaCenterConnectionDetails(
 									authKey,
-									remoteIp,
+									ip,
 									httpPort,
 								)
 							)
 						}
 					}
 
+					testUrls()
+				}.keepPromise()
+			}
+	}
+
+	private fun promiseTestedServerConnection(libraryId: LibraryId, settings: SubsonicConnectionSettings): Promise<LiveServerConnection?> = Promise.Proxy { cp ->
+		if (cp.isCancelled) Promise.empty()
+		else serverLookup
+			.promiseServerInformation(libraryId)
+			.also(cp::doCancel)
+			.eventually {
+				it?.let { (httpPort, httpsPort, remoteIps, localIps, _, certificateFingerprint) ->
+					val salt = UUID.randomUUID().toString()
+
+					val subsonicConnectionDetails = LinkedList<SubsonicConnectionDetails>()
+
+					fun testUrls(): Promise<LiveServerConnection?> {
+						if (cp.isCancelled) return Promise.empty()
+						val serverConnection = subsonicConnectionDetails.poll() ?: return Promise.empty()
+						val potentialConnection = LiveSubsonicConnection(
+							serverConnection,
+							httpClients,
+							okHttpClients,
+							jsonTranslator,
+							stringResources,
+						)
+						return potentialConnection
+							.promiseIsConnectionPossible()
+							.also(cp::doCancel)
+							.eventually { result -> if (result) Promise(potentialConnection) else testUrls() }
+					}
+
+					if (httpsPort != null) {
+						for (ip in remoteIps) {
+							subsonicConnectionDetails.offer(
+								SubsonicConnectionDetails(
+									URL("https://$ip:$httpsPort"),
+									settings.userName,
+									settings.password,
+									salt,
+									certificateFingerprint
+								)
+							)
+						}
+					}
+
 					if (httpPort != null) {
+						for (ip in remoteIps) {
+							subsonicConnectionDetails.offer(
+								SubsonicConnectionDetails(
+									URL("http://$ip:$httpPort"),
+									settings.userName,
+									settings.password,
+									salt,
+									certificateFingerprint
+								)
+							)
+						}
+
 						for (ip in localIps) {
-							serverConnections.offer(
-								ServerConnection(
-									authKey,
-									ip,
-									httpPort,
+							subsonicConnectionDetails.offer(
+								SubsonicConnectionDetails(
+									URL("http://$ip:$httpPort"),
+									settings.userName,
+									settings.password,
+									salt,
+									certificateFingerprint
 								)
 							)
 						}

@@ -2,11 +2,14 @@ package com.lasthopesoftware.bluewater.client.settings
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LookupLibraryName
 import com.lasthopesoftware.bluewater.client.browsing.library.access.RemoveLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredConnectionSettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredSubsonicConnectionSettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.ProvideLibrarySettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.StoreLibrarySettings
 import com.lasthopesoftware.bluewater.permissions.RequestApplicationPermissions
@@ -19,18 +22,20 @@ import com.lasthopesoftware.bluewater.shared.observables.toCloseable
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
+import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import io.reactivex.rxjava3.core.Observable
 
-@OptIn(ExperimentalStdlibApi::class)
 class LibrarySettingsViewModel(
+	private val libraryNameLookup: LookupLibraryName,
 	private val librarySettingsProvider: ProvideLibrarySettings,
 	private val librarySettingsStorage: StoreLibrarySettings,
 	private val libraryRemoval: RemoveLibraries,
 	private val applicationPermissions: RequestApplicationPermissions,
+	private val stringResources: GetStringResources,
 ) :
 	ViewModel(),
 	TrackLoadedViewState,
@@ -38,10 +43,17 @@ class LibrarySettingsViewModel(
 	ImmediateResponse<LibrarySettings?, Unit>,
 	ImmediateAction
 {
-
 	companion object {
 
-		private val defaultConnectionSettings = StoredMediaCenterConnectionSettings(
+		private val defaultSubsonicConnectionSettings = StoredSubsonicConnectionSettings(
+			url = "",
+			userName = "",
+			password = "",
+			macAddress = "",
+			sslCertificateFingerprint = "",
+		)
+
+		private val defaultMediaCenterConnectionSettings = StoredMediaCenterConnectionSettings(
 			accessCode = "",
 			userName = "",
 			password = "",
@@ -52,37 +64,40 @@ class LibrarySettingsViewModel(
 
 		private val defaultLibrarySettings = LibrarySettings(
 			libraryName = "",
-			connectionSettings = defaultConnectionSettings,
 			syncedFileLocation = SyncedFileLocation.INTERNAL,
 		)
 	}
 
 	private val autoCloseables = AutoCloseableManager()
+
+	private val mediaCenterConnectionSettingsViewModel by lazy {
+		autoCloseables.manage(MediaCenterConnectionSettingsViewModel())
+	}
+
+	private val subsonicConnectionSettingsViewModel by lazy {
+		autoCloseables.manage(SubsonicConnectionSettingsViewModel())
+	}
+
+	private val mutableSavedConnectionSettingsViewModel = MutableInteractionState<ConnectionSettingsViewModel<*>?>(null)
+
 	private val libraryState = MutableInteractionState(defaultLibrarySettings.copy())
 	private val mutableIsLoading = MutableInteractionState(false)
 	private val mutableIsSaving = MutableInteractionState(false)
 	private val mutableIsPermissionsNeeded = MutableInteractionState(false)
 	private val mutableIsRemovalRequested = MutableInteractionState(false)
+	private val mutableSavedLibraryName = MutableInteractionState("")
 
-	private val isSettingsChangedObserver = lazy {
+	private val isSettingsChangedObserver by lazy {
 		fun <T> observeLibraryChanges(observable: Observable<NullBox<T>>, libraryValue: LibrarySettings.() -> T?) =
-			Observable.combineLatest(libraryState, observable) { l, o -> l.value.run(libraryValue) != o.value }
-
-		fun <T> observeConnectionSettingsChanges(observable: Observable<NullBox<T>>, connectionValue: StoredMediaCenterConnectionSettings.() -> T?) =
-			Observable.combineLatest(libraryState, observable) { l, o -> l.value.connectionSettings?.run(connectionValue) != o.value }
+			Observable.combineLatest(libraryState, observable) { l, o -> l.value.run(libraryValue) != o.value }.distinctUntilChanged()
 
 		val changeTrackers = arrayOf(
 			observeLibraryChanges(libraryName) { libraryName },
 			observeLibraryChanges(isUsingExistingFiles) { isUsingExistingFiles },
 			observeLibraryChanges(syncedFileLocation) { syncedFileLocation },
-			observeConnectionSettingsChanges(accessCode) { accessCode },
-			observeConnectionSettingsChanges(userName) { userName },
-			observeConnectionSettingsChanges(password) { password },
-			observeConnectionSettingsChanges(isLocalOnly) { isLocalOnly },
-			observeConnectionSettingsChanges(isWakeOnLanEnabled) { isWakeOnLanEnabled },
-			observeConnectionSettingsChanges(isSyncLocalConnectionsOnly) { isSyncLocalConnectionsOnly },
-			observeConnectionSettingsChanges(mutableSslStringCertificate) { sslCertificateFingerprint },
-			observeConnectionSettingsChanges(macAddress) { macAddress },
+			Observable.combineLatest(mutableSavedConnectionSettingsViewModel, connectionSettingsViewModel) { a, b -> a.value !== b.value },
+			mediaCenterConnectionSettingsViewModel.isConnectionSettingsChanged,
+			subsonicConnectionSettingsViewModel.isConnectionSettingsChanged,
 		)
 
 		autoCloseables.manage(LiftedInteractionState(
@@ -91,47 +106,29 @@ class LibrarySettingsViewModel(
 		))
 	}
 
-	private val mutableSslStringCertificate = MutableInteractionState(defaultConnectionSettings.sslCertificateFingerprint ?: "")
-
-	private val hasSslCertificateObserver = lazy {
-		autoCloseables.manage(LiftedInteractionState(sslCertificateFingerprint.map { it.value.any() }, false))
-	}
-
+	val savedConnectionSettingsViewModel = mutableSavedConnectionSettingsViewModel.asInteractionState()
+	val connectionSettingsViewModel = MutableInteractionState<ConnectionSettingsViewModel<*>?>(null)
 	val libraryName = MutableInteractionState(defaultLibrarySettings.libraryName ?: "")
 	val isUsingExistingFiles = MutableInteractionState(defaultLibrarySettings.isUsingExistingFiles)
 	val syncedFileLocation = MutableInteractionState(defaultLibrarySettings.syncedFileLocation ?: SyncedFileLocation.INTERNAL)
-	val accessCode = MutableInteractionState(defaultConnectionSettings.accessCode ?: "")
-	val userName = MutableInteractionState(defaultConnectionSettings.userName ?: "")
-	val password = MutableInteractionState(defaultConnectionSettings.password ?: "")
-	val isLocalOnly = MutableInteractionState(defaultConnectionSettings.isLocalOnly)
-	val isWakeOnLanEnabled = MutableInteractionState(defaultConnectionSettings.isWakeOnLanEnabled)
-	val isSyncLocalConnectionsOnly = MutableInteractionState(defaultConnectionSettings.isSyncLocalConnectionsOnly)
-	val sslCertificateFingerprint = MutableInteractionState(mutableSslStringCertificate.value.hexToByteArray())
-	val macAddress = MutableInteractionState(defaultConnectionSettings.macAddress ?: "")
-	val hasSslCertificate
-		get() = hasSslCertificateObserver.value as InteractionState<Boolean>
 
 	override val isLoading = mutableIsLoading.asInteractionState()
+
 	val isSaving = mutableIsSaving as InteractionState<Boolean>
 	val isStoragePermissionsNeeded = mutableIsPermissionsNeeded as InteractionState<Boolean>
 	val isRemovalRequested = mutableIsRemovalRequested as InteractionState<Boolean>
 	val isSettingsChanged
-		get() = isSettingsChangedObserver.value as InteractionState<Boolean>
+		get() = isSettingsChangedObserver as InteractionState<Boolean>
 
 	val activeLibraryId
 		get() = libraryState.value.libraryId?.takeIf { it.id > -1 }
 
-	init {
-		autoCloseables.manage(
-			sslCertificateFingerprint.mapNotNull().subscribe { c ->
-				mutableSslStringCertificate.value = c.toHexString()
-			}.toCloseable()
-		)
+	val savedLibraryName = mutableSavedLibraryName.asInteractionState()
 
-		autoCloseables.manage(
-			mutableSslStringCertificate.mapNotNull().subscribe { s ->
-				sslCertificateFingerprint.value = s.hexToByteArray()
-			}.toCloseable()
+	val availableConnectionSettings by lazy {
+		setOf(
+			mediaCenterConnectionSettingsViewModel,
+			subsonicConnectionSettingsViewModel,
 		)
 	}
 
@@ -142,33 +139,27 @@ class LibrarySettingsViewModel(
 	fun loadLibrary(libraryId: LibraryId): Promise<*> {
 		mutableIsLoading.value = true
 
-		return librarySettingsProvider
-			.promiseLibrarySettings(libraryId)
-			.then(this)
-			.must(this)
+		return Promise
+			.whenAll(
+				librarySettingsProvider
+					.promiseLibrarySettings(libraryId)
+					.then(this),
+				libraryNameLookup
+					.promiseLibraryName(libraryId)
+					.then { n -> mutableSavedLibraryName.value = n ?: "" }
+			).must(this)
 	}
 
 	fun saveLibrary(): Promise<Boolean> {
 		mutableIsSaving.value = true
 		val localLibrary = libraryState.value
 
-		val localConnectionSettings = StoredMediaCenterConnectionSettings(
-			accessCode = accessCode.value,
-			userName = userName.value,
-			password = password.value,
-			isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly.value,
-			isLocalOnly = isLocalOnly.value,
-			isWakeOnLanEnabled = isWakeOnLanEnabled.value,
-			sslCertificateFingerprint = mutableSslStringCertificate.value,
-			macAddress = macAddress.value,
-		)
-
 		libraryState.value = localLibrary
 			.copy(
 				isUsingExistingFiles = isUsingExistingFiles.value,
 				libraryName = libraryName.value,
 				syncedFileLocation = syncedFileLocation.value,
-				connectionSettings = localConnectionSettings
+				connectionSettings = connectionSettingsViewModel.value?.getCurrentConnectionSettings(),
 			)
 
 		return applicationPermissions
@@ -195,30 +186,29 @@ class LibrarySettingsViewModel(
 		libraryName.value = result?.libraryName ?: ""
 		syncedFileLocation.value = result?.syncedFileLocation ?: SyncedFileLocation.INTERNAL
 
-		val parsedConnectionSettings = result?.connectionSettings ?: defaultConnectionSettings.copy()
-		isWakeOnLanEnabled.value = parsedConnectionSettings.isWakeOnLanEnabled
-		isSyncLocalConnectionsOnly.value = parsedConnectionSettings.isSyncLocalConnectionsOnly
-		accessCode.value = parsedConnectionSettings.accessCode ?: ""
-		userName.value = parsedConnectionSettings.userName ?: ""
-		password.value = parsedConnectionSettings.password ?: ""
-		isLocalOnly.value = parsedConnectionSettings.isLocalOnly
-		macAddress.value = parsedConnectionSettings.macAddress ?: ""
-		mutableSslStringCertificate.value = parsedConnectionSettings.sslCertificateFingerprint ?: ""
+		mutableSavedConnectionSettingsViewModel.value = when (val parsedConnectionSettings = result?.connectionSettings) {
+			is StoredMediaCenterConnectionSettings -> {
+				mediaCenterConnectionSettingsViewModel.assignConnectionSettings(parsedConnectionSettings)
+				mediaCenterConnectionSettingsViewModel
+			}
+
+			is StoredSubsonicConnectionSettings -> {
+				subsonicConnectionSettingsViewModel.assignConnectionSettings(parsedConnectionSettings)
+				subsonicConnectionSettingsViewModel
+			}
+
+			null -> {
+				null
+			}
+		}
+
+		connectionSettingsViewModel.value = mutableSavedConnectionSettingsViewModel.value
 
 		libraryState.value = (result ?: defaultLibrarySettings).copy(
 			isUsingExistingFiles = isUsingExistingFiles.value,
 			libraryName = libraryName.value,
 			syncedFileLocation = syncedFileLocation.value,
-			connectionSettings = StoredMediaCenterConnectionSettings(
-				isWakeOnLanEnabled = isWakeOnLanEnabled.value,
-				isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly.value,
-				accessCode = accessCode.value,
-				userName = userName.value,
-				password = password.value,
-				isLocalOnly = isLocalOnly.value,
-				macAddress = macAddress.value,
-				sslCertificateFingerprint = mutableSslStringCertificate.value,
-			)
+			connectionSettings = mutableSavedConnectionSettingsViewModel.value?.getCurrentConnectionSettings(),
 		)
 	}
 
@@ -234,6 +224,23 @@ class LibrarySettingsViewModel(
 			.promiseSavedLibrarySettings(localLibrary)
 			.then { it ->
 				libraryState.value = it
+
+				mutableSavedConnectionSettingsViewModel.value = when (val parsedConnectionSettings = it?.connectionSettings) {
+					is StoredMediaCenterConnectionSettings -> {
+						mediaCenterConnectionSettingsViewModel.assignConnectionSettings(parsedConnectionSettings)
+						mediaCenterConnectionSettingsViewModel
+					}
+
+					is StoredSubsonicConnectionSettings -> {
+						subsonicConnectionSettingsViewModel.assignConnectionSettings(parsedConnectionSettings)
+						subsonicConnectionSettingsViewModel
+					}
+
+					null -> {
+						null
+					}
+				}
+
 				true
 			}
 	}
@@ -241,5 +248,179 @@ class LibrarySettingsViewModel(
 	override fun act() {
 		mutableIsLoading.value = false
 		mutableIsSaving.value = false
+	}
+
+	private inline fun <reified C : StoredConnectionSettings, T> observeConnectionSettingsChanges(observable: Observable<NullBox<T>>, crossinline connectionValue: C.() -> T?) =
+		Observable.combineLatest(libraryState, observable) { s, o ->
+			s.value.connectionSettings?.let { it as? C }?.run(connectionValue)?.let { it != o.value } ?: false
+		}.distinctUntilChanged()
+
+	interface ConnectionSettingsViewModel<ConnectionSettings : StoredConnectionSettings> : AutoCloseable {
+		val connectionTypeName: String
+		val isConnectionSettingsChanged: Observable<Boolean>
+		fun getCurrentConnectionSettings(): StoredConnectionSettings
+		fun assignConnectionSettings(connectionSettings: ConnectionSettings)
+	}
+
+	@OptIn(ExperimentalStdlibApi::class)
+	inner class MediaCenterConnectionSettingsViewModel :
+		ConnectionSettingsViewModel<StoredMediaCenterConnectionSettings>
+	{
+		private val autoCloseables = AutoCloseableManager()
+
+		override val connectionTypeName: String
+			get() = stringResources.mediaCenter
+
+		override val isConnectionSettingsChanged: Observable<Boolean> by lazy {
+			val changeTrackers = arrayOf(
+				observeConnectionSettingsChanges(accessCode) { accessCode },
+				observeConnectionSettingsChanges(userName) { userName },
+				observeConnectionSettingsChanges(password) { password },
+				observeConnectionSettingsChanges(isLocalOnly) { isLocalOnly },
+				observeConnectionSettingsChanges(isWakeOnLanEnabled) { isWakeOnLanEnabled },
+				observeConnectionSettingsChanges(isSyncLocalConnectionsOnly) { isSyncLocalConnectionsOnly },
+				observeConnectionSettingsChanges(mutableSslStringCertificate) { sslCertificateFingerprint },
+				observeConnectionSettingsChanges(macAddress) { macAddress },
+			)
+
+			Observable.combineLatest(changeTrackers.asIterable()) { values -> values.any { it as Boolean } }
+		}
+
+		private val mutableSslStringCertificate =
+			MutableInteractionState(defaultMediaCenterConnectionSettings.sslCertificateFingerprint ?: "")
+
+		private val hasSslCertificateObserver = lazy {
+			autoCloseables.manage(LiftedInteractionState(sslCertificateFingerprint.map { it.value.any() }, false))
+		}
+
+		val accessCode = MutableInteractionState(defaultMediaCenterConnectionSettings.accessCode ?: "")
+		val userName = MutableInteractionState(defaultMediaCenterConnectionSettings.userName ?: "")
+		val password = MutableInteractionState(defaultMediaCenterConnectionSettings.password ?: "")
+		val isLocalOnly = MutableInteractionState(defaultMediaCenterConnectionSettings.isLocalOnly)
+		val isWakeOnLanEnabled = MutableInteractionState(defaultMediaCenterConnectionSettings.isWakeOnLanEnabled)
+		val isSyncLocalConnectionsOnly = MutableInteractionState(defaultMediaCenterConnectionSettings.isSyncLocalConnectionsOnly)
+		val sslCertificateFingerprint = MutableInteractionState(mutableSslStringCertificate.value.hexToByteArray())
+		val macAddress = MutableInteractionState(defaultMediaCenterConnectionSettings.macAddress ?: "")
+		val hasSslCertificate
+			get() = hasSslCertificateObserver.value as InteractionState<Boolean>
+
+		init {
+			autoCloseables.manage(
+				sslCertificateFingerprint.mapNotNull().subscribe { c ->
+					mutableSslStringCertificate.value = c.toHexString()
+				}.toCloseable()
+			)
+
+			autoCloseables.manage(
+				mutableSslStringCertificate.mapNotNull().subscribe { s ->
+					sslCertificateFingerprint.value = s.hexToByteArray()
+				}.toCloseable()
+			)
+		}
+
+		override fun close() {
+			autoCloseables.close()
+		}
+
+		private inline fun <T> observeConnectionSettingsChanges(observable: Observable<NullBox<T>>, crossinline connectionValue: StoredMediaCenterConnectionSettings.() -> T?) =
+			observeConnectionSettingsChanges<StoredMediaCenterConnectionSettings, T>(observable, connectionValue)
+
+		override fun assignConnectionSettings(connectionSettings: StoredMediaCenterConnectionSettings) {
+			isWakeOnLanEnabled.value = connectionSettings.isWakeOnLanEnabled
+			isSyncLocalConnectionsOnly.value = connectionSettings.isSyncLocalConnectionsOnly
+			accessCode.value = connectionSettings.accessCode ?: ""
+			userName.value = connectionSettings.userName ?: ""
+			password.value = connectionSettings.password ?: ""
+			isLocalOnly.value = connectionSettings.isLocalOnly
+			macAddress.value = connectionSettings.macAddress ?: ""
+			mutableSslStringCertificate.value = connectionSettings.sslCertificateFingerprint ?: ""
+		}
+
+		override fun getCurrentConnectionSettings() = StoredMediaCenterConnectionSettings(
+			isWakeOnLanEnabled = isWakeOnLanEnabled.value,
+			isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly.value,
+			accessCode = accessCode.value,
+			userName = userName.value,
+			password = password.value,
+			isLocalOnly = isLocalOnly.value,
+			macAddress = macAddress.value,
+			sslCertificateFingerprint = mutableSslStringCertificate.value,
+		)
+	}
+
+	@OptIn(ExperimentalStdlibApi::class)
+	inner class SubsonicConnectionSettingsViewModel : ConnectionSettingsViewModel<StoredSubsonicConnectionSettings> {
+		private val autoCloseables = AutoCloseableManager()
+
+		override val connectionTypeName: String
+			get() = stringResources.subsonic
+
+		override val isConnectionSettingsChanged: Observable<Boolean> by lazy {
+			val changeTrackers = arrayOf(
+				observeConnectionSettingsChanges(url) { url },
+				observeConnectionSettingsChanges(userName) { userName },
+				observeConnectionSettingsChanges(password) { password },
+				observeConnectionSettingsChanges(isWakeOnLanEnabled) { isWakeOnLanEnabled },
+				observeConnectionSettingsChanges(mutableSslStringCertificate) { sslCertificateFingerprint },
+				observeConnectionSettingsChanges(macAddress) { macAddress },
+			)
+
+			Observable.combineLatest(changeTrackers.asIterable()) { values -> values.any { it as Boolean } }
+		}
+
+		private val mutableSslStringCertificate =
+			MutableInteractionState(defaultSubsonicConnectionSettings.sslCertificateFingerprint ?: "")
+
+		private val hasSslCertificateObserver = lazy {
+			autoCloseables.manage(LiftedInteractionState(sslCertificateFingerprint.map { it.value.any() }, false))
+		}
+
+		val url = MutableInteractionState(defaultSubsonicConnectionSettings.url ?: "")
+		val userName = MutableInteractionState(defaultSubsonicConnectionSettings.userName ?: "")
+		val password = MutableInteractionState(defaultSubsonicConnectionSettings.password ?: "")
+		val isWakeOnLanEnabled = MutableInteractionState(defaultSubsonicConnectionSettings.isWakeOnLanEnabled)
+		val sslCertificateFingerprint = MutableInteractionState(mutableSslStringCertificate.value.hexToByteArray())
+		val macAddress = MutableInteractionState(defaultSubsonicConnectionSettings.macAddress ?: "")
+		val hasSslCertificate
+			get() = hasSslCertificateObserver.value as InteractionState<Boolean>
+
+		init {
+			autoCloseables.manage(
+				sslCertificateFingerprint.mapNotNull().subscribe { c ->
+					mutableSslStringCertificate.value = c.toHexString()
+				}.toCloseable()
+			)
+
+			autoCloseables.manage(
+				mutableSslStringCertificate.mapNotNull().subscribe { s ->
+					sslCertificateFingerprint.value = s.hexToByteArray()
+				}.toCloseable()
+			)
+		}
+
+		override fun close() {
+			autoCloseables.close()
+		}
+
+		private inline fun <T> observeConnectionSettingsChanges(observable: Observable<NullBox<T>>, crossinline connectionValue: StoredSubsonicConnectionSettings.() -> T?) =
+			observeConnectionSettingsChanges<StoredSubsonicConnectionSettings, T>(observable, connectionValue)
+
+		override fun assignConnectionSettings(connectionSettings: StoredSubsonicConnectionSettings) {
+			isWakeOnLanEnabled.value = connectionSettings.isWakeOnLanEnabled
+			url.value = connectionSettings.url ?: ""
+			userName.value = connectionSettings.userName ?: ""
+			password.value = connectionSettings.password ?: ""
+			macAddress.value = connectionSettings.macAddress ?: ""
+			mutableSslStringCertificate.value = connectionSettings.sslCertificateFingerprint ?: ""
+		}
+
+		override fun getCurrentConnectionSettings() = StoredSubsonicConnectionSettings(
+			isWakeOnLanEnabled = isWakeOnLanEnabled.value,
+			url = url.value,
+			userName = userName.value,
+			password = password.value,
+			macAddress = macAddress.value,
+			sslCertificateFingerprint = mutableSslStringCertificate.value,
+		)
 	}
 }

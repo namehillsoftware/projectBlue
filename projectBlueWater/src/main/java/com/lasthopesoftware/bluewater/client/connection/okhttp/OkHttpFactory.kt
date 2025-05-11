@@ -3,13 +3,16 @@ package com.lasthopesoftware.bluewater.client.connection.okhttp
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.connection.ServerConnection
+import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
+import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpPromiseClient
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
 import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager
+import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.resources.executors.ThreadPools
@@ -29,6 +32,7 @@ import java.net.URL
 import java.security.KeyManagementException
 import java.security.KeyStore
 import java.security.KeyStoreException
+import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.HostnameVerifier
@@ -38,6 +42,7 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import kotlin.text.Charsets.UTF_8
 
 class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, ProvideOkHttpClients {
 	companion object {
@@ -65,21 +70,24 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 			.build()
 	}
 
-	override fun getServerClient(serverConnection: ServerConnection): HttpPromiseClient =
-		OkHttpPromiseClient(getOkHttpClient(serverConnection))
+	override fun getServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails): HttpPromiseClient =
+		OkHttpPromiseClient(getOkHttpClient(mediaCenterConnectionDetails))
+
+	override fun getServerClient(subsonicConnectionDetails: SubsonicConnectionDetails): HttpPromiseClient =
+		OkHttpPromiseClient(getOkHttpClient(subsonicConnectionDetails))
 
 	override fun getClient(): HttpPromiseClient = OkHttpPromiseClient(getOkHttpClient())
 
-	override fun getOkHttpClient(serverConnection: ServerConnection): OkHttpClient {
-		val authHeaderValue = serverConnection.authCode.takeUnless { it.isNullOrEmpty() }?.let { "basic $it" }
+	override fun getOkHttpClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails): OkHttpClient {
+		val authHeaderValue = mediaCenterConnectionDetails.authCode.takeUnless { it.isNullOrEmpty() }?.let { "basic $it" }
 
 		val builder = commonClient
 			.newBuilder()
 			.sslSocketFactory(
-				getSslSocketFactory(serverConnection),
-				getTrustManager(serverConnection)
+				getSslSocketFactory(mediaCenterConnectionDetails),
+				getTrustManager(mediaCenterConnectionDetails)
 			)
-			.hostnameVerifier(getHostnameVerifier(serverConnection))
+			.hostnameVerifier(getHostnameVerifier(mediaCenterConnectionDetails))
 
 		return if (authHeaderValue.isNullOrEmpty()) builder.build()
 		else builder
@@ -91,13 +99,42 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 			.build()
 	}
 
+	@OptIn(ExperimentalStdlibApi::class)
+	override fun getOkHttpClient(subsonicConnectionDetails: SubsonicConnectionDetails): OkHttpClient {
+		val addedParams = with(subsonicConnectionDetails) {
+			arrayOf(
+				"u=$userName",
+				"v=1.4.0",
+				"t=" + "$password$salt".hashString("MD5").toHexString(),
+				"s=$salt",
+				"c=" + BuildConfig.APPLICATION_ID,
+			)
+		}
+
+		return commonClient
+			.newBuilder()
+			.addNetworkInterceptor { chain ->
+				val requestBuilder = chain.request().newBuilder()
+
+				requestBuilder.url(chain.request().url.toUrl().addParams(*addedParams))
+
+				chain.proceed(requestBuilder.build())
+			}
+			.sslSocketFactory(
+				getSslSocketFactory(subsonicConnectionDetails),
+				getTrustManager(subsonicConnectionDetails)
+			)
+			.hostnameVerifier(getHostnameVerifier(subsonicConnectionDetails))
+			.build()
+	}
+
 	private fun getOkHttpClient(): OkHttpClient =
 		commonClient
 			.newBuilder()
 			.connectTimeout(buildConnectionTime.millis, TimeUnit.MILLISECONDS)
 			.build()
 
-	private fun getSslSocketFactory(serverConnection: ServerConnection): SSLSocketFactory {
+	private fun getSslSocketFactory(mediaCenterConnectionDetails: MediaCenterConnectionDetails): SSLSocketFactory {
 		val sslContext = try {
 			SSLContext.getInstance("TLS")
 		} catch (e: NoSuchAlgorithmException) {
@@ -105,7 +142,7 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 		}
 
 		try {
-			sslContext.init(null, arrayOf<TrustManager>(getTrustManager(serverConnection)), null)
+			sslContext.init(null, arrayOf<TrustManager>(getTrustManager(mediaCenterConnectionDetails)), null)
 		} catch (e: KeyManagementException) {
 			throw RuntimeException(e)
 		}
@@ -113,7 +150,7 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 		return sslContext.socketFactory
 	}
 
-	private fun getTrustManager(serverConnection: ServerConnection): X509TrustManager {
+	private fun getTrustManager(mediaCenterConnectionDetails: MediaCenterConnectionDetails): X509TrustManager {
 		val trustManagerFactory = try {
 			TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
 		} catch (e: NoSuchAlgorithmException) {
@@ -132,23 +169,79 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 		}
 
 		val trustManager = trustManagers[0] as X509TrustManager
-		return serverConnection.certificateFingerprint
+		return mediaCenterConnectionDetails.certificateFingerprint
 			.takeIf { it.isNotEmpty() }
 			?.let { fingerprint -> SelfSignedTrustManager(fingerprint, trustManager) }
 			?: trustManager
 	}
 
-	private fun getHostnameVerifier(serverConnection: ServerConnection): HostnameVerifier {
+	private fun getHostnameVerifier(mediaCenterConnectionDetails: MediaCenterConnectionDetails): HostnameVerifier {
 		val defaultHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier()
-		return serverConnection.certificateFingerprint
+		return mediaCenterConnectionDetails.certificateFingerprint
 			.takeIf { it.isNotEmpty() }
 			?.let {
-				serverConnection.baseUrl.host?.let { host ->
+				mediaCenterConnectionDetails.baseUrl.host?.let { host ->
 					AdditionalHostnameVerifier(host, defaultHostnameVerifier)
 				}
 			}
 			?: defaultHostnameVerifier
 	}
+
+	private fun getSslSocketFactory(subsonicConnectionDetails: SubsonicConnectionDetails): SSLSocketFactory {
+		val sslContext = try {
+			SSLContext.getInstance("TLS")
+		} catch (e: NoSuchAlgorithmException) {
+			throw RuntimeException(e)
+		}
+
+		try {
+			sslContext.init(null, arrayOf<TrustManager>(getTrustManager(subsonicConnectionDetails)), null)
+		} catch (e: KeyManagementException) {
+			throw RuntimeException(e)
+		}
+
+		return sslContext.socketFactory
+	}
+
+	private fun getTrustManager(subsonicConnectionDetails: SubsonicConnectionDetails): X509TrustManager {
+		val trustManagerFactory = try {
+			TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+		} catch (e: NoSuchAlgorithmException) {
+			throw RuntimeException(e)
+		}
+
+		try {
+			trustManagerFactory.init(null as KeyStore?)
+		} catch (e: KeyStoreException) {
+			throw RuntimeException(e)
+		}
+
+		val trustManagers = trustManagerFactory.trustManagers
+		check(!(trustManagers.size != 1 || trustManagers[0] !is X509TrustManager)) {
+			("Unexpected default trust managers:" + trustManagers.contentToString())
+		}
+
+		val trustManager = trustManagers[0] as X509TrustManager
+		return subsonicConnectionDetails.certificateFingerprint
+			.takeIf { it.isNotEmpty() }
+			?.let { fingerprint -> SelfSignedTrustManager(fingerprint, trustManager) }
+			?: trustManager
+	}
+
+	private fun getHostnameVerifier(subsonicConnectionDetails: SubsonicConnectionDetails): HostnameVerifier {
+		val defaultHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier()
+		return subsonicConnectionDetails.certificateFingerprint
+			.takeIf { it.isNotEmpty() }
+			?.let {
+				subsonicConnectionDetails.baseUrl.host?.let { host ->
+					AdditionalHostnameVerifier(host, defaultHostnameVerifier)
+				}
+			}
+			?: defaultHostnameVerifier
+	}
+
+	private fun String.hashString(algorithm: String): ByteArray =
+		MessageDigest.getInstance(algorithm).digest(toByteArray(UTF_8))
 
 	private fun getUserAgent(): String {
 		val versionName = try {
@@ -160,7 +253,7 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients, P
 		}
 
 		val applicationName = context.getString(R.string.app_name)
-		return ("$applicationName/$versionName (Linux;Android ${Build.VERSION.RELEASE})")
+		return "$applicationName/$versionName (Linux;Android ${Build.VERSION.RELEASE})"
 	}
 
 	private class OkHttpResponse(private val response: Response) : HttpResponse {
