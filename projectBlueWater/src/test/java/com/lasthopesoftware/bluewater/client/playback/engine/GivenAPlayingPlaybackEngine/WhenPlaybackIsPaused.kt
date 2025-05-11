@@ -94,12 +94,11 @@ class WhenPlaybackIsPaused {
 		}
 
 		val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("1")]?.resolve()
-		nowPlayingRepository.open()
 
-		promisedPlaybackStart.toExpiringFuture().get()
-		promisedFirstFileStart.toExpiringFuture().get()
-
-		nowPlayingRepository.close()
+		nowPlayingRepository.open().use {
+			promisedPlaybackStart.toExpiringFuture().get()
+			promisedFirstFileStart.toExpiringFuture().get()
+		}
 
 		playingPlaybackHandler?.resolve()
 
