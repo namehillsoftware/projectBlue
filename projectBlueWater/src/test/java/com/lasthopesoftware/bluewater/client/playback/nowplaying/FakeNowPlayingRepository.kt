@@ -35,22 +35,20 @@ open class FakeNowPlayingRepository(
 }
 
 interface Gate {
-	fun open()
-	fun close()
+	fun open(): AutoCloseable
 }
 
 class LockingNowPlayingRepository(private val inner: ManageNowPlayingState) : ManageNowPlayingState, Gate {
 
 	private val latch = AtomicReference(DeferredPromise(Unit))
 
-	override fun open() {
+	override fun open(): AutoCloseable {
 		latch.get().resolve()
-	}
-
-	override fun close() {
-		latch.tryUpdate {
-			it.resolve()
-			DeferredPromise(Unit)
+		return AutoCloseable {
+			latch.tryUpdate {
+				it.resolve()
+				DeferredPromise(Unit)
+			}
 		}
 	}
 
@@ -70,7 +68,5 @@ class LockingNowPlayingRepository(private val inner: ManageNowPlayingState) : Ma
 class AlwaysOpenNowPlayingRepository<T>(inner: T) : ManageNowPlayingState by inner, Gate where T : ManageNowPlayingState, T : Gate {
 	init { inner.open() }
 
-	override fun open() {}
-
-	override fun close() {}
+	override fun open() = AutoCloseable {  }
 }
