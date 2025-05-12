@@ -185,6 +185,10 @@ class NowPlayingFilePropertiesViewModel(
 							}
 					} ?: run {
 						logger.debug("No file is playing")
+						synchronized(cachedPromiseSync) {
+							cachedPromises?.close()
+							cachedPromises = null
+						}
 						artistState.value = ""
 						titleState.value = stringResources.nothingPlaying
 						filePositionState.value = filePosition.toInt()
