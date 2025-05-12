@@ -85,7 +85,7 @@ class `When saving the library settings` {
 				id = libraryId.id,
 				libraryName = "jPStogpyW4",
 				isUsingExistingFiles = false,
-				serverType = Library.ServerType.MediaCenter,
+				serverType = Library.ServerType.MediaCenter.name,
 				nowPlayingId = 322,
 				nowPlayingProgress = 234,
 				savedTracksString = "DSJaIU9",

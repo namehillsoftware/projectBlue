@@ -191,7 +191,7 @@ object LibraryEntityUpdater : IEntityUpdater {
 				nowPlayingId = nowPlayingId,
 				nowPlayingProgress = nowPlayingProgress,
 				savedTracksString = savedTracksString,
-				serverType = ServerType.MediaCenter,
+				serverType = ServerType.MediaCenter.name,
 				syncedFileLocation = when (syncedFileLocation) {
 					SyncedFileLocation.CUSTOM, SyncedFileLocation.EXTERNAL -> com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation.EXTERNAL
 					SyncedFileLocation.INTERNAL -> com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation.INTERNAL
@@ -244,7 +244,7 @@ object LibraryEntityUpdater : IEntityUpdater {
 				nowPlayingProgress = nowPlayingProgress,
 				savedTracksString = savedTracksString,
 				isUsingExistingFiles = isUsingExistingFiles,
-				serverType = ServerType.MediaCenter,
+				serverType = ServerType.MediaCenter.name,
 				syncedFileLocation = syncedFileLocation,
 				connectionSettings = Json.encodeToString(
 					StoredMediaCenterConnectionSettings(
@@ -285,7 +285,7 @@ object LibraryEntityUpdater : IEntityUpdater {
 				nowPlayingProgress = nowPlayingProgress,
 				savedTracksString = savedTracksString,
 				isUsingExistingFiles = isUsingExistingFiles,
-				serverType = serverType,
+				serverType = serverType?.name,
 				syncedFileLocation = connectionSettings?.syncedFileLocation,
 				connectionSettings = Json.encodeToString(
 					StoredMediaCenterConnectionSettings(

@@ -26,7 +26,7 @@ class `When getting all library settings` {
 						id = 566,
 						libraryName = "WBJ9Ay87S",
 						isUsingExistingFiles = false,
-						serverType = Library.ServerType.MediaCenter,
+						serverType = Library.ServerType.MediaCenter.name,
 						nowPlayingId = 828,
 						nowPlayingProgress = 870,
 						savedTracksString = "xqZ3RYqDhyY",
@@ -48,7 +48,7 @@ class `When getting all library settings` {
 						id = 425,
 						libraryName = "XGBiOmj4GcU",
 						isUsingExistingFiles = true,
-						serverType = Library.ServerType.MediaCenter,
+						serverType = Library.ServerType.MediaCenter.name,
 						nowPlayingId = 101,
 						nowPlayingProgress = 371,
 						savedTracksString = "VPiOKYtkSOV",
@@ -65,7 +65,22 @@ class `When getting all library settings` {
 								isSyncLocalConnectionsOnly = true,
 							)
 						)
-					)
+					),
+					Library(
+						id = 293,
+						libraryName = "01oouYaE",
+						isUsingExistingFiles = false,
+						serverType = "Accumsanconubia",
+						nowPlayingId = 865,
+						nowPlayingProgress = 823,
+						savedTracksString = "VPiOKYtkSOV",
+						syncedFileLocation = SyncedFileLocation.EXTERNAL,
+						connectionSettings = """
+							{
+							   "randomAccess": "YKYjYwo"
+							}
+						""".trimIndent()
+					),
 				).toPromise()
 			},
 		)
@@ -112,6 +127,13 @@ class `When getting all library settings` {
 					sslCertificateFingerprint = "D4hQF8cMazI",
 					isSyncLocalConnectionsOnly = true,
 				)
+			),
+			LibrarySettings(
+				libraryId = LibraryId(293),
+				libraryName = "01oouYaE",
+				isUsingExistingFiles = false,
+				syncedFileLocation = SyncedFileLocation.EXTERNAL,
+				connectionSettings = null
 			),
 		)
 	}
