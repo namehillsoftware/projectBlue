@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.GivenANewPlaybackEngine.AndAnEmptyPlaylist
+package com.lasthopesoftware.bluewater.client.playback.engine.GivenANewPlaybackEngine.AndANewLibrary
 
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
@@ -24,11 +24,7 @@ private const val libraryId = 55
 class WhenRestoringEngineStateAndResumingPlayback {
 	private val mut by lazy {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-		val library = Library(
-			id = libraryId,
-			nowPlayingId = 586,
-			nowPlayingProgress = 543
-		)
+		val library = Library(id = libraryId)
 
 		val libraryProvider = FakeLibraryRepository(library)
 
