@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.bootstrap
 
-import androidx.lifecycle.AtomicReference
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.ManagePlaybackQueues
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
@@ -18,6 +17,7 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.closables.PromisingCloseable
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
+import java.util.concurrent.atomic.AtomicReference
 
 class ManagedPlaylistPlayer(
 	private val volumeManagement: PlaylistVolumeManager,

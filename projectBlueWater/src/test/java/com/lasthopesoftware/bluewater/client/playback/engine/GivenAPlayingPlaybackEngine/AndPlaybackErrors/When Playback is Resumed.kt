@@ -20,6 +20,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -35,12 +36,28 @@ class `When Playback is Resumed` {
 	private val finalPlaybackPreparer = FinalPlaybackPreparer()
 
 	private val mut by lazy {
-		val deferredPlaybackPreparer = DeferredPlaybackPreparer()
-
 		val fakePlaybackPreparerProvider = mockk<IPlayableFilePreparationSourceProvider> {
-			every { providePlayableFilePreparationSource() } returns deferredPlaybackPreparer andThen finalPlaybackPreparer
+			every { providePlayableFilePreparationSource() } returns mockk {
+				every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile("1"), Duration.ZERO) } returns
+					FakePreparedPlayableFile(
+						ResolvablePlaybackHandler().apply { resolve() }
+					).toPromise()
 
-			every { maxQueueSize } returns 1
+				every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile("2"), Duration.ZERO) } returns
+					FakePreparedPlayableFile(
+						ResolvablePlaybackHandler().apply { resolve() }
+					).toPromise()
+
+				every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile("3"), Duration.ZERO) } returns
+					FakePreparedPlayableFile(
+						ResolvablePlaybackHandler().apply {
+							setCurrentPosition(164)
+							reject(Exception("f"))
+						}
+					).toPromise()
+			} andThen finalPlaybackPreparer
+
+			every { maxQueueSize } returns 0
 		}
 
 		val library = Library(id = libraryId)
@@ -69,7 +86,7 @@ class `When Playback is Resumed` {
 			playbackBootstrapper,
 		)
 
-		Triple(deferredPlaybackPreparer, nowPlayingRepository, playbackEngine)
+		Pair(nowPlayingRepository, playbackEngine)
 	}
 
 	private var error: PlaybackException? = null
@@ -79,13 +96,15 @@ class `When Playback is Resumed` {
 
 	@BeforeAll
 	fun act() {
-		val (deferredErrorPlaybackPreparer, nowPlayingRepository, playbackEngine) = mut
+		val (nowPlayingRepository, playbackEngine) = mut
 
 		val promisedError = Promise {
 			playbackEngine
 				.setOnPlaylistError { e ->
 					if (e is PlaybackException) {
 						it.sendResolution(e)
+					} else {
+						it.sendRejection(e)
 					}
 				}
 		}
@@ -105,14 +124,6 @@ class `When Playback is Resumed` {
 			.toExpiringFuture()
 			.get()
 
-		deferredErrorPlaybackPreparer.resolve().resolve()
-
-		deferredErrorPlaybackPreparer.resolve().resolve()
-		with (deferredErrorPlaybackPreparer.resolve()) {
-			setCurrentPosition(164)
-			reject(Exception("f"))
-		}
-
 		error = promisedError.toExpiringFuture().get()
 		nowPlaying = nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()
 		isPlayingBeforeResume = playbackEngine.isPlaying
@@ -122,10 +133,10 @@ class `When Playback is Resumed` {
 				.setOnPlayingFileChanged { _, p ->
 					it.sendResolution(p)
 				}
-		}
 
-		playbackEngine.resume().toExpiringFuture().get()
-		finalPlaybackPreparer.resolve()
+			playbackEngine.resume().toExpiringFuture().get()
+			finalPlaybackPreparer.resolve()
+		}
 
 		positionedPlayingFile = promisedFile.toExpiringFuture().get()
 	}
@@ -153,23 +164,6 @@ class `When Playback is Resumed` {
 	@Test
 	fun `then the playback engine is not playing`() {
 		assertThat(isPlayingBeforeResume).isFalse()
-	}
-
-	private open class DeferredPlaybackPreparer : PlayableFilePreparationSource {
-		private var messenger: Messenger<PreparedPlayableFile?>? = null
-
-		fun resolve(): ResolvablePlaybackHandler {
-			val playbackHandler = ResolvablePlaybackHandler()
-			messenger?.sendResolution(FakePreparedPlayableFile(playbackHandler))
-			return playbackHandler
-		}
-
-		override fun promisePreparedPlaybackFile(
-			libraryId: LibraryId,
-			serviceFile: ServiceFile,
-			preparedAt: Duration): Promise<PreparedPlayableFile?> = Promise { messenger ->
-				this.messenger = messenger
-			}
 	}
 
 	private class FinalPlaybackPreparer : PlayableFilePreparationSource {

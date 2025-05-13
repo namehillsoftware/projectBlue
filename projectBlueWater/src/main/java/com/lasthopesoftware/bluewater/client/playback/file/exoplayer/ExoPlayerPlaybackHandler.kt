@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer
 
 import androidx.annotation.OptIn
-import androidx.lifecycle.AtomicReference
 import androidx.media3.common.ParserException
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -24,6 +23,7 @@ import org.joda.time.Duration
 import org.joda.time.format.PeriodFormatterBuilder
 import java.io.EOFException
 import java.net.ProtocolException
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.cancellation.CancellationException
 
 class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
