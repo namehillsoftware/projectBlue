@@ -50,7 +50,7 @@ class `When Playback Is Resumed` {
 		val preparedPlaybackQueueResourceManagement =
             PreparedPlaybackQueueResourceManagement(
                 fakePlaybackPreparerProvider,
-                FakePlaybackQueueConfiguration()
+                FakePlaybackQueueConfiguration(maxQueueSize = 0)
             )
 		val playbackBootstrapper = ManagedPlaylistPlayer(
             PlaylistVolumeManager(1.0f),
@@ -77,16 +77,18 @@ class `When Playback Is Resumed` {
 	fun before() {
 		val (fakePlaybackPreparerProvider, nowPlayingRepository, playbackEngine) = mut
 
+		val deferredResume = DeferredPromise(Unit)
+
 		fakePlaybackPreparerProvider.preparationSourceBeingProvided { serviceFile, deferredPreparedPlayableFile ->
 			val playbackHandler = deferredPreparedPlayableFile.resolve()
 			if (serviceFile == ServiceFile("1"))
 				playbackHandler.setCurrentPosition(450)
 
-			if (serviceFile == ServiceFile("2"))
+			if (serviceFile == ServiceFile("2")) {
 				preparedAt = deferredPreparedPlayableFile.preparedAt
+				deferredResume.resolve()
+			}
 		}
-
-		val deferredResume = DeferredPromise(Unit)
 
 		val promisedCollectedFiles = Promise {
 			val collectedFiles = mutableListOf<PositionedPlayingFile?>()
@@ -111,8 +113,6 @@ class `When Playback Is Resumed` {
 		playbackEngine.skipToNext().toExpiringFuture().get()
 
 		playbackEngine.resume().toExpiringFuture().get()
-
-		deferredResume.resolve()
 
 		positionedFiles = promisedCollectedFiles.toExpiringFuture().get()
 
@@ -161,6 +161,11 @@ class `When Playback Is Resumed` {
 		assertThat(
             positionedFiles?.last()?.playingFile?.progress?.toExpiringFuture()?.get()
         ).isEqualTo(Duration.ZERO)
+	}
+
+	@Test
+	fun `then the observed playlist position is correct`() {
+		assertThat(positionedFiles?.last()?.playlistPosition).isEqualTo(1)
 	}
 
 	@Test
