@@ -103,20 +103,17 @@ class LibraryRepository(private val context: Context) : ManageLibraries, Provide
 			if (cancellationSignal.isCancelled) throw CancellationException("Cancelled while saving library")
 
 			return RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
-					val isLibraryExists = library.id > -1
+				val isLibraryExists = library.id > -1
 
-					val returnLibrary =
-						if (isLibraryExists) repositoryAccessHelper.update(tableName, library)
-						else repositoryAccessHelper.insert(tableName, library)
+				val returnLibrary =
+					if (isLibraryExists) repositoryAccessHelper.update(tableName, library)
+					else repositoryAccessHelper.insert(tableName, library)
 
-					if (BuildConfig.DEBUG) {
-						logger.debug("Library saved.")
-					}
-
-					closeableTransaction.setTransactionSuccessful()
-					returnLibrary
+				if (BuildConfig.DEBUG) {
+					logger.debug("Library saved.")
 				}
+
+				returnLibrary
 			}
 		}
 	}
@@ -137,18 +134,14 @@ class LibraryRepository(private val context: Context) : ManageLibraries, Provide
 			if (libraryInt < 0) return
 
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
-					val result = SqLiteAssistants.updateValue(repositoryAccessHelper.writableDatabase, tableName, values)
+				val result = SqLiteAssistants.updateValue(repositoryAccessHelper.writableDatabase, tableName, values)
 
-					if (result == 0L) {
-						throw IOException("Updating $tableName for id ${values.id} returned 0 rows.")
-					}
+				if (result == 0L) {
+					throw IOException("Updating $tableName for id ${values.id} returned 0 rows.")
+				}
 
-					if (BuildConfig.DEBUG) {
-						logger.debug("Now Playing updated for library {}.", libraryInt)
-					}
-
-					closeableTransaction.setTransactionSuccessful()
+				if (BuildConfig.DEBUG) {
+					logger.debug("Now Playing updated for library {}.", libraryInt)
 				}
 			}
 		}
