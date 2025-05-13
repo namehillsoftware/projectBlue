@@ -469,13 +469,11 @@ class PlaybackEngine(
 				playlistPlayback.haltPlayback().excuse(RejectionDropper.Instance.get())
 
 				promisedSave
-					.then { _ ->
-						if (newPromisedPlayback.isSameAsCurrentPlayback())
-							onPlaylistError?.onError(e)
-					}
 					.must { _ ->
-						if (newPromisedPlayback.isSameAsCurrentPlayback())
+						if (newPromisedPlayback.isSameAsCurrentPlayback()) {
 							promisedPlayback.set(null)
+							onPlaylistError?.onError(e)
+						}
 					}
 			})
 

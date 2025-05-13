@@ -14,14 +14,12 @@ import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackExcepti
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakePreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
-import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -33,11 +31,13 @@ import org.junit.jupiter.api.Test
 private const val libraryId = 362
 
 class `When Playback is Resumed` {
-	private val finalPlaybackPreparer = FinalPlaybackPreparer()
+	private val expectedPlaybackHandler = ResolvablePlaybackHandler()
 
 	private val mut by lazy {
 		val fakePlaybackPreparerProvider = mockk<IPlayableFilePreparationSourceProvider> {
 			every { providePlayableFilePreparationSource() } returns mockk {
+				every { promisePreparedPlaybackFile(LibraryId(libraryId), any(), any()) } returns Promise.empty()
+
 				every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile("1"), Duration.ZERO) } returns
 					FakePreparedPlayableFile(
 						ResolvablePlaybackHandler().apply { resolve() }
@@ -55,7 +55,13 @@ class `When Playback is Resumed` {
 							reject(Exception("f"))
 						}
 					).toPromise()
-			} andThen finalPlaybackPreparer
+			} andThen mockk<PlayableFilePreparationSource> {
+				every { promisePreparedPlaybackFile(LibraryId(libraryId), any(), any()) } returns FakePreparedPlayableFile(ResolvablePlaybackHandler()).toPromise()
+
+				every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile("3"), Duration.millis(164)) } returns FakePreparedPlayableFile(
+					expectedPlaybackHandler.apply { resolve() }
+				).toPromise()
+			}
 
 			every { maxQueueSize } returns 0
 		}
@@ -130,12 +136,14 @@ class `When Playback is Resumed` {
 
 		val promisedFile = Promise {
 			playbackEngine
+				.setOnPlaylistError { e ->
+					it.sendRejection(e)
+				}
 				.setOnPlayingFileChanged { _, p ->
 					it.sendResolution(p)
 				}
 
 			playbackEngine.resume().toExpiringFuture().get()
-			finalPlaybackPreparer.resolve()
 		}
 
 		positionedPlayingFile = promisedFile.toExpiringFuture().get()
@@ -158,32 +166,11 @@ class `When Playback is Resumed` {
 
 	@Test
 	fun `then the resumed playback player is correct`() {
-		assertThat(positionedPlayingFile?.playingFile).isEqualTo(finalPlaybackPreparer.preparedPlayableFile.playbackHandler)
+		assertThat(positionedPlayingFile?.playingFile).isEqualTo(expectedPlaybackHandler)
 	}
 
 	@Test
 	fun `then the playback engine is not playing`() {
 		assertThat(isPlayingBeforeResume).isFalse()
-	}
-
-	private class FinalPlaybackPreparer : PlayableFilePreparationSource {
-
-		val playbackHandler = ResolvablePlaybackHandler()
-
-		val preparedPlayableFile = FakePreparedPlayableFile(playbackHandler)
-
-		private var messenger: Messenger<PreparedPlayableFile?>? = null
-
-		fun resolve(): ResolvablePlaybackHandler {
-			messenger?.sendResolution(preparedPlayableFile)
-			return playbackHandler
-		}
-
-		override fun promisePreparedPlaybackFile(
-			libraryId: LibraryId,
-			serviceFile: ServiceFile,
-			preparedAt: Duration): Promise<PreparedPlayableFile?> = Promise { messenger ->
-			this.messenger = messenger
-		}
 	}
 }
