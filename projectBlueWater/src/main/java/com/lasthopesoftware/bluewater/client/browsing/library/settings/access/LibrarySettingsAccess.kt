@@ -16,12 +16,14 @@ import kotlin.coroutines.cancellation.CancellationException
 
 class LibrarySettingsAccess(private val libraryManager: ManageLibraries) : ProvideLibrarySettings, StoreLibrarySettings {
 	companion object {
+		private val serverTypeNames by lazy { Library.ServerType.entries.map { it.name } }
+
 		private fun librarySettingsAccessCancelled() = CancellationException("Cancelled while accessing Library Settings.")
 
 		private fun LibrarySettings.toNewLibrary() = Library(
 			libraryName = libraryName,
 			isUsingExistingFiles = isUsingExistingFiles,
-			serverType = Library.ServerType.MediaCenter,
+			serverType = Library.ServerType.MediaCenter.name,
 			syncedFileLocation = syncedFileLocation,
 			connectionSettings = connectionSettings?.let(Json::encodeToString),
 		)
@@ -32,6 +34,7 @@ class LibrarySettingsAccess(private val libraryManager: ManageLibraries) : Provi
 			libraryName = libraryName,
 			syncedFileLocation = syncedFileLocation,
 			connectionSettings = connectionSettings
+				?.takeIf { serverTypeNames.contains(serverType) }
 				?.let { Json.decodeFromString<StoredMediaCenterConnectionSettings>(it) }
 		)
 	}
@@ -80,7 +83,7 @@ class LibrarySettingsAccess(private val libraryManager: ManageLibraries) : Provi
 							l.syncedFileLocation = librarySettings.syncedFileLocation
 
 							l.serverType =
-								if (librarySettings.connectionSettings != null) Library.ServerType.MediaCenter
+								if (librarySettings.connectionSettings != null) Library.ServerType.MediaCenter.name
 								else null
 
 							l.connectionSettings = librarySettings.connectionSettings?.let(Json::encodeToString)

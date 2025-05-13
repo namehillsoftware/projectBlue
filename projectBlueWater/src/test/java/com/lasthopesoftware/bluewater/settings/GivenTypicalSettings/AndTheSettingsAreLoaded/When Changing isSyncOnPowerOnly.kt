@@ -45,15 +45,15 @@ class `When Changing isSyncOnPowerOnly` {
 				every { promiseAllLibrarySettings() } returns Promise(
 					listOf(
 						LibrarySettings(libraryId = LibraryId(585)),
-						LibrarySettings(libraryId = LibraryId(893)),
-						LibrarySettings(libraryId = LibraryId(72)),
+						LibrarySettings(libraryId = LibraryId(686)),
+						LibrarySettings(libraryId = LibraryId(797)),
 					)
 				)
 			},
 			mockk {
 				every { promiseLibraryName(LibraryId(585)) } returns "R9yt8fKe".toPromise()
-				every { promiseLibraryName(LibraryId(893)) } returns "7aqNFmn".toPromise()
-				every { promiseLibraryName(LibraryId(72)) } returns "MHcdrd3nR".toPromise()
+				every { promiseLibraryName(LibraryId(686)) } returns "7aqNFmn".toPromise()
+				every { promiseLibraryName(LibraryId(797)) } returns "MHcdrd3nR".toPromise()
 			},
 			RecordingApplicationMessageBus(),
 			mockk {
@@ -109,8 +109,8 @@ class `When Changing isSyncOnPowerOnly` {
 		assertThat(mutt.libraries.value).isEqualTo(
 			listOf(
 				Pair(LibraryId(585), "R9yt8fKe"),
-				Pair(LibraryId(893), "7aqNFmn"),
-				Pair(LibraryId(72), "MHcdrd3nR"),
+				Pair(LibraryId(686), "7aqNFmn"),
+				Pair(LibraryId(797), "MHcdrd3nR"),
 			)
 		)
 	}

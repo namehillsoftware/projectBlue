@@ -97,9 +97,9 @@ class `When Changing isVolumeLevelingEnabled` {
 	fun `then the libraries are correct`() {
 		assertThat(mutt.libraries.value).isEqualTo(
 			listOf(
+				Pair(LibraryId(72), "MHcdrd3nR"),
 				Pair(LibraryId(585), "R9yt8fKe"),
 				Pair(LibraryId(893), "7aqNFmn"),
-				Pair(LibraryId(72), "MHcdrd3nR"),
 			)
 		)
 	}

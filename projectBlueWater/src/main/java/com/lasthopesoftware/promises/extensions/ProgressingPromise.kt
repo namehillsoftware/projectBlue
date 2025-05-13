@@ -74,10 +74,7 @@ inline fun <Progress, Resolution> ProgressingPromise<Progress, Resolution>.onEac
 	val progressResponse = object : PromisedResponse<ContinuableResult<Progress>, Unit> {
 		override fun promiseResponse(resolution: ContinuableResult<Progress>?): Promise<Unit> =
 			if (resolution is ContinuingResult) {
-				action(resolution.current)
-					.eventually {
-						resolution.next.eventually(this)
-					}
+				action(resolution.current).eventually { resolution.next.eventually(this) }
 			} else {
 				Unit.toPromise()
 			}

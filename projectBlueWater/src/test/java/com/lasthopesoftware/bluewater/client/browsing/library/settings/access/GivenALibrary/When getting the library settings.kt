@@ -26,7 +26,7 @@ class `When getting the library settings` {
 					id = libraryId.id,
 					libraryName = "cdtX4lVz",
 					isUsingExistingFiles = true,
-					serverType = Library.ServerType.MediaCenter,
+					serverType = Library.ServerType.MediaCenter.name,
 					nowPlayingId = 499,
 					nowPlayingProgress = 401,
 					savedTracksString = "MN2zlU8F1w6",

@@ -105,22 +105,20 @@ class WhenStateIsRestoredWithADifferentLibraryId {
 		resolvablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("2")]?.resolve()
 		resolvablePlaybackHandler?.setCurrentPosition(30)
 
-		nowPlayingRepository.open()
+		nowPlayingRepository.open().use {
+			promisedStart.toExpiringFuture().get()
 
-		promisedStart.toExpiringFuture().get()
-
-		val promisedChange = Promise {
-			playbackEngine.setOnPlayingFileChanged { _, p ->
-				if (p?.playlistPosition == 1)
-					it.sendResolution(Unit)
+			val promisedChange = Promise {
+				playbackEngine.setOnPlayingFileChanged { _, p ->
+					if (p?.playlistPosition == 1)
+						it.sendResolution(Unit)
+				}
 			}
+
+			playingPlaybackHandler?.resolve()
+
+			promisedChange.toExpiringFuture().get()
 		}
-
-		playingPlaybackHandler?.resolve()
-
-		promisedChange.toExpiringFuture().get()
-
-		nowPlayingRepository.close()
 
 		val promisedRestoredState = playbackEngine.restoreFromSavedState(LibraryId(restoringLibraryId))
 

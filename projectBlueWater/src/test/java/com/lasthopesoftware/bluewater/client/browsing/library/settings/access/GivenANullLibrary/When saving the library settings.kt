@@ -64,7 +64,7 @@ class `When saving the library settings` {
 				id = 940,
 				libraryName = "3YzKTfvRGcq",
 				isUsingExistingFiles = false,
-				serverType = Library.ServerType.MediaCenter,
+				serverType = Library.ServerType.MediaCenter.name,
 				syncedFileLocation = SyncedFileLocation.EXTERNAL,
 				connectionSettings = Json.encodeToString(
 					StoredMediaCenterConnectionSettings(

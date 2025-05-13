@@ -6,6 +6,8 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 internal object QueueSplicers {
     fun getTruncatedList(playlist: List<ServiceFile>, startingAt: Int): MutableList<PositionedFile> {
         val positionedFiles: MutableList<PositionedFile> = ArrayList(playlist.size)
+		if (startingAt < 0) return positionedFiles
+
         for (i in startingAt until playlist.size) positionedFiles.add(
             PositionedFile(
                 i,
