@@ -2,15 +2,17 @@
 
 ![project blue](./design/project-blue-logo-circular.png)
 
-### An alternative, open source streaming music client for [JRiver Media Center](http://jriver.com/).
+### An alternative, open source streaming music client
 
-project blue is a streaming audio client for JRiver Media Center (http://jriver.com/). Stream your favorite music and audio from your JRiver Media Center wherever you are!
+project blue is a streaming audio client for various servers. Stream your favorite music and audio from your server wherever you are!
 
 Its features include:
 
-* Reliable streaming from your home server running JRiver Media Center via an intuitive layout.
+* Reliable streaming from your home server via an intuitive layout.
+  * [JRiver Media Center](http://jriver.com/)
+  * Subsonic (alpha - tested with [Navidrome](https://www.navidrome.org/) only)
 * Caching of audio files during playback.
-* Synchronize audio from JRMC server to device.
+* Synchronize audio from server to device.
 * Play local files when present and metadata match.
 * Updates server with playback statistics.
 * Edit and update playlists through Now Playing.
@@ -20,8 +22,6 @@ Its features include:
 * Interfaces with apps that implement the Scrobble Droid interface (Simple Last.fm Scrobbler is my scrobbler of choice) for scrobbling to Last.fm or Libre.fm
 
 Download on the [Google Play Store](https://play.google.com/store/apps/details?id=com.lasthopesoftware.bluewater)
-
-*Requires [JRiver Media Center](http://jriver.com/) running on your home server*
 
 # Development
 
@@ -106,6 +106,7 @@ file for details.
 ## Acknowledgments
 
 - [JRiver Media Center](https://jriver.com/)
+- [Navidrome](https://www.navidrome.org/)
 - [ExoPlayer](https://github.com/google/ExoPlayer)
 - [Lightweight Stream API](https://github.com/aNNiMON/Lightweight-Stream-API)
 - [RxJava](https://github.com/ReactiveX/RxJava)
