@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.engine
 
-import androidx.lifecycle.AtomicReference
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.BootstrapPlayback
@@ -35,6 +34,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.jetbrains.annotations.Contract
 import org.joda.time.Duration
 import java.util.concurrent.CancellationException
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
 
 class PlaybackEngine(
