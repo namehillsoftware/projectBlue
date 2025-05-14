@@ -12,20 +12,24 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-class WhenGettingALibraryThatDoesSyncsOnAnyMediaCenterConnectionDetails {
+class `When getting a library that syncs on local only media center connections` {
 	private val library by lazy {
 		val syncLibraryProvider = SyncLibraryConnectionSettings(
 			mockk {
-				every { promiseLibrarySettings(LibraryId(4)) } returns LibrarySettings(
-					connectionSettings = StoredMediaCenterConnectionSettings(accessCode = "2OoO9Vefrb")
+				every { promiseLibrarySettings(LibraryId(8)) } returns LibrarySettings(
+					connectionSettings = StoredMediaCenterConnectionSettings(
+						accessCode = "9d8dIQP0",
+						isSyncLocalConnectionsOnly = true,
+                	)
 				).toPromise()
 			}
 		)
-		syncLibraryProvider.promiseConnectionSettings(LibraryId(4)).toExpiringFuture().get() as? MediaCenterConnectionSettings
+
+		syncLibraryProvider.promiseConnectionSettings(LibraryId(8)).toExpiringFuture().get() as? MediaCenterConnectionSettings
 	}
 
-    @Test
-    fun `then the library is not local only`() {
-        assertThat(library?.isLocalOnly).isFalse
-    }
+	@Test
+	fun `then the library is local only`() {
+		assertThat(library?.isLocalOnly).isTrue
+	}
 }
