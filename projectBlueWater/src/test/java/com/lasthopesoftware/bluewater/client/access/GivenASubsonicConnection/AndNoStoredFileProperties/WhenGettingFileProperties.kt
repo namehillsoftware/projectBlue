@@ -68,6 +68,11 @@ class WhenGettingFileProperties {
 	}
 
 	@Test
+	fun `then the replay gain is correct`() {
+		assertThat(fileProperties!![NormalizedFileProperties.VolumeLevelReplayGain]).isEqualTo("-2.34")
+	}
+
+	@Test
 	fun `then lyric files property is retrieved`() {
 		assertThat(fileProperties!![NormalizedFileProperties.Lyrics]).isEqualToIgnoringWhitespace("""And they took me around
   They showed me the Seven Wonders

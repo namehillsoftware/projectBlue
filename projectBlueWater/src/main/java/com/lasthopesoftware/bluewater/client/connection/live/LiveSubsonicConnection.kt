@@ -79,6 +79,8 @@ class LiveSubsonicConnection(
 		const val title = "title"
 		const val id = "id"
 		const val artist = "artist"
+		const val replayGain = "replayGain"
+		const val trackGain = "trackGain"
 	}
 
 	private val promisedRootItem by lazy {
@@ -281,17 +283,27 @@ class LiveSubsonicConnection(
 
 									val song = subsonicResponse?.asJsonObject?.get("song")
 
-									song
+									val elements = song?.asJsonObject?.asMap() ?: emptyMap()
+
+									val rating = elements[KnownFileProperties.replayGain]
 										?.asJsonObject
-										?.asMap()
-										?.mapNotNull { (k, v) -> if (v.isJsonPrimitive) Pair(k, v.asString) else null }
-										?.toMap()
-										?.toSortedMap(String.CASE_INSENSITIVE_ORDER)
-										?.also {
+										?.get(KnownFileProperties.trackGain)
+										?.asString
+
+									val returnElements = elements
+										.mapNotNull { (k, v) -> if (v.isJsonPrimitive) Pair(k, v.asString) else null }
+										.toMap()
+										.toSortedMap(String.CASE_INSENSITIVE_ORDER)
+										.also {
 											it[NormalizedFileProperties.Key] = it[KnownFileProperties.id]
 											it[NormalizedFileProperties.Name] = it[KnownFileProperties.title]
 										}
-										?: mutableMapOf()
+										.toMutableMap()
+
+									if (rating != null)
+										returnElements[NormalizedFileProperties.VolumeLevelReplayGain] = rating
+
+									returnElements
 								}
 							}
 						}
@@ -488,8 +500,7 @@ class LiveSubsonicConnection(
 					"search2.view",
 					"query=$query",
 					"albumCount=0",
-					"songCount=1000"
-				)
+					"songCount=1000")
 					.also(::doCancel)
 					.promiseSubsonicResponse<Search2Response>()
 					.also(::doCancel)
