@@ -22,11 +22,11 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.ManageN
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.playlist.ManagePlaylistPlayback
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.promises.ContinuingResult
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.onEachEventually
+import com.lasthopesoftware.promises.extensions.regardless
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.errors.RejectionDropper
@@ -69,7 +69,10 @@ class PlaybackEngine(
 
 	private val activeLibraryId = AtomicReference(markerLibraryId)
 
-	private val nowPlayingStateSync = PromisingRateLimiter<NowPlaying?>(1)
+	private val promisedNowPlayingStateSync = Any()
+
+	@Volatile
+	private var promisedNowPlayingState = Promise.empty<NowPlaying?>()
 
 	private val promisedPlayback = AtomicReference<ProgressingPromise<PositionedPlayingFile, Unit>?>(null)
 
@@ -480,13 +483,9 @@ class PlaybackEngine(
 		return playlistPlayback.resume()
 	}
 
-	private fun serializedPlayerUpdate() = nowPlayingStateSync.limit {
-		playbackBootstrapper.updateFromState(activeLibraryId.get())
-	}
+	private fun serializedPlayerUpdate() = updateStateSynchronously { playbackBootstrapper.updateFromState(activeLibraryId.get()) }
 
-	private fun promiseActiveNowPlaying() = nowPlayingStateSync.limit {
-		nowPlayingRepository.promiseNowPlaying(activeLibraryId.get())
-	}
+	private fun promiseActiveNowPlaying() = updateStateSynchronously { nowPlayingRepository.promiseNowPlaying(activeLibraryId.get()) }
 
 	private fun saveState(
 		libraryId: LibraryId,
@@ -508,7 +507,7 @@ class PlaybackEngine(
 	private inline fun saveState(
 		libraryId: LibraryId,
 		crossinline updateFunc: NowPlaying.() -> NowPlaying
-	): Promise<NowPlaying?> = nowPlayingStateSync.limit {
+	): Promise<NowPlaying?> = updateStateSynchronously {
 		nowPlayingRepository.promiseNowPlaying(libraryId).eventually {
 			it?.let { np ->
 				val updatedNowPlaying = updateFunc(np)
@@ -519,7 +518,25 @@ class PlaybackEngine(
 	}
 
 	@Suppress("UNCHECKED_CAST")
-	private fun saveState(nowPlaying: NowPlaying): Promise<NowPlaying?> = nowPlayingStateSync.limit {
+	private fun saveState(nowPlaying: NowPlaying): Promise<NowPlaying?> = updateStateSynchronously {
 		nowPlayingRepository.updateNowPlaying(nowPlaying) as Promise<NowPlaying?>
+	}
+
+	/**
+     * Updates the `promisedNowPlayingState` with the result of the provided `updateFunc`.
+     *
+     * This function ensures that the `promisedNowPlayingState` is updated synchronously.
+     * Each new update is chained to the previous promise, guaranteeing that state
+     * updates are applied in the order they are initiated.
+     *
+     * @param updateFunc A function that returns a [Promise] for a nullable [NowPlaying] state.
+     *   This function is responsible for fetching or modifying the state.
+     * @return A [Promise] that resolves with the current [NowPlaying] state after the update
+     *   function has been scheduled. To wait for the update to complete, chain to the returned promise.
+     */
+    private inline fun updateStateSynchronously(crossinline updateFunc: () -> Promise<NowPlaying?>): Promise<NowPlaying?> = synchronized(promisedNowPlayingStateSync) {
+		promisedNowPlayingState
+			.regardless { updateFunc() }
+			.also { promisedNowPlayingState = it }
 	}
 }
