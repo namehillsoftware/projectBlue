@@ -107,6 +107,7 @@ import com.lasthopesoftware.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.promises.extensions.cancelBackThen
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
@@ -1048,12 +1049,16 @@ import java.util.concurrent.TimeoutException
 		try {
 			pausePlayback()
 				.inevitably { promisingServiceCloseables.promiseClose() }
+				.inevitably {
+					// As mentioned at creation, clean this up last and separately from the other dependencies.
+					updatePlayStatsOnPlaybackCompletedReceiver
+						.takeIf { it.isInitialized() }
+						?.value
+						?.promiseClose()
+						.keepPromise(Unit)
+				}
 				.toFuture()
 				.getSafely()
-
-			// As mentioned at creation, clean this up last and separately from the other dependencies.
-			if (updatePlayStatsOnPlaybackCompletedReceiver.isInitialized())
-				updatePlayStatsOnPlaybackCompletedReceiver.value.promiseClose().toFuture().getSafely()
 		} catch (e: Throwable) {
 			logger.error("An error occurred closing resources", e)
 		}
