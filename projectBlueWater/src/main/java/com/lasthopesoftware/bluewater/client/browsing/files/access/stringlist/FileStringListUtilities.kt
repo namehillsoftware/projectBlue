@@ -42,6 +42,9 @@ object FileStringListUtilities {
 	fun promiseSerializedFileStringList(serviceFiles: Collection<ServiceFile>): Promise<String> =
 		ThreadPools.compute.preparePromise { serializeFileStringList(serviceFiles, it) }
 
+	fun promiseShuffledSerializedFileStringList(serviceFiles: Collection<ServiceFile>): Promise<String> =
+		ThreadPools.compute.preparePromise { serializeFileStringList(serviceFiles.shuffled(), it) }
+
 	private fun serializeFileStringList(serviceFiles: Collection<ServiceFile>, cancellationSignal: CancellationSignal): String {
 		if (cancellationSignal.isCancelled) throw serializingCancelledException()
 

@@ -141,4 +141,10 @@
     <string name="optional_mac_address">Optional MAC Address</string>
     <string name="refresh">Refresh</string>
     <string name="view_more_options">View More Options</string>
+    <string name="subsonic">Subsonic</string>
+    <string name="change_server_type">Change Server Type</string>
+    <string name="media_center">JRiver Media Center</string>
+    <string name="url">URL</string>
+    <string name="artists">Artists</string>
+    <string name="playlists">Playlists</string>
 </resources>

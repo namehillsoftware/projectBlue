@@ -11,19 +11,19 @@ import com.namehillsoftware.handoff.promises.response.PromisedResponse
 
 class LibraryRevisionProvider(private val libraryAccess: ProvideLibraryConnections) :
 	CheckRevisions,
-	ImmediateResponse<Throwable, Int>
+	ImmediateResponse<Throwable, Long>
 {
 	companion object {
-		private const val badRevision = -1
+		private const val badRevision = -1L
 	}
 
-	override fun promiseRevision(libraryId: LibraryId): Promise<Int> = RevisionPromise(libraryId)
+	override fun promiseRevision(libraryId: LibraryId): Promise<Long> = RevisionPromise(libraryId)
 
-	override fun respond(resolution: Throwable?): Int = badRevision
+	override fun respond(resolution: Throwable?): Long = badRevision
 
 	private inner class RevisionPromise(libraryId: LibraryId) :
-		Promise.Proxy<Int>(),
-		PromisedResponse<LiveServerConnection?, Int>
+		Promise.Proxy<Long>(),
+		PromisedResponse<LiveServerConnection?, Long>
 	{
 		init {
 			proxy(
@@ -35,7 +35,7 @@ class LibraryRevisionProvider(private val libraryAccess: ProvideLibraryConnectio
 			)
 		}
 
-		override fun promiseResponse(connection: LiveServerConnection?): Promise<Int> =
+		override fun promiseResponse(connection: LiveServerConnection?): Promise<Long> =
 			connection
 				?.dataAccess
 				?.promiseRevision()
@@ -44,7 +44,7 @@ class LibraryRevisionProvider(private val libraryAccess: ProvideLibraryConnectio
 				.then(NullIntFallbackResponse)
 	}
 
-	private object NullIntFallbackResponse : ImmediateResponse<Int?, Int> {
-		override fun respond(resolution: Int?): Int = resolution ?: badRevision
+	private object NullIntFallbackResponse : ImmediateResponse<Long?, Long> {
+		override fun respond(resolution: Long?): Long = resolution ?: badRevision
 	}
 }

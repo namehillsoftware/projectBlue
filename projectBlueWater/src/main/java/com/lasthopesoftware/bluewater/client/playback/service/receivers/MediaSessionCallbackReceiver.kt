@@ -5,7 +5,6 @@ import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ProvideFileStringListForItem
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
@@ -62,8 +61,7 @@ class MediaSessionCallbackReceiver(
 		val itemId = ids.firstOrNull() ?: return
 
 		withSelectedLibraryId { libraryId ->
-			val promisedFileStringList = fileStringListProvider
-				.promiseFileStringList(libraryId, ItemId(itemId), FileListParameters.Options.None)
+			val promisedFileStringList = fileStringListProvider.promiseFileStringList(libraryId, ItemId(itemId))
 
 			if (ids.size < 2) {
 				promisedFileStringList.then { sl -> controlPlaybackService.startPlaylist(libraryId, sl) }

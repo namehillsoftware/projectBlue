@@ -12,8 +12,7 @@ class StringResources(private val context: Context): GetStringResources {
 	override val defaultNowPlayingArtist by lazyString(R.string.lbl_song_artist)
 	override val nothingPlaying: String by lazyString(R.string.nothing_playing)
 	override val aboutTitle by lazy { context
-		.getString(R.string.title_activity_about)
-		.format(context.getString(R.string.app_name)) }
+		.getString(R.string.title_activity_about).format(context.getString(R.string.app_name)) }
 	override val connecting by lazyString(R.string.lbl_connecting)
 	override val gettingLibrary by lazyString(R.string.lbl_getting_library_details)
 	override val gettingLibraryFailed by lazyString(R.string.lbl_please_connect_to_valid_server)
@@ -30,6 +29,11 @@ class StringResources(private val context: Context): GetStringResources {
 	override val clear by lazyString(R.string.clear)
 	override val set by lazyString(R.string.set)
 	override val change by lazyString(R.string.change)
+	override val subsonic by lazyString(R.string.subsonic)
+	override val mediaCenter by lazyString(R.string.media_center)
+	override val changeServerType by lazyString(R.string.change_server_type)
+	override val artists by lazyString(R.string.artists)
+	override val playlists by lazyString(R.string.playlists)
 
 	private fun lazyString(@StringRes stringResourceId: Int) = lazy { context.getString(stringResourceId) }
 }

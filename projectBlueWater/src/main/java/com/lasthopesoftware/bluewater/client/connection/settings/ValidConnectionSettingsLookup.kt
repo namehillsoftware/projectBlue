@@ -4,13 +4,22 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 class ValidConnectionSettingsLookup(private val connectionSettings: LookupConnectionSettings) : LookupValidConnectionSettings {
-	@OptIn(ExperimentalStdlibApi::class)
-	override fun promiseConnectionSettings(libraryId: LibraryId): Promise<MediaCenterConnectionSettings?> =
+	override fun promiseConnectionSettings(libraryId: LibraryId): Promise<ConnectionSettings?> =
 		connectionSettings
 			.promiseConnectionSettings(libraryId)
 			.then { it ->
-				it?.apply {
-					if (accessCode.isBlank()) throw MissingAccessCodeException(libraryId)
+				it?.also {
+					when (it) {
+						is MediaCenterConnectionSettings -> {
+							if (it.accessCode.isBlank()) throw MissingAccessCodeException(libraryId)
+						}
+
+						is SubsonicConnectionSettings -> {
+							if (it.url.isBlank()) throw MissingAccessCodeException(libraryId)
+							if (it.userName.isBlank()) throw MissingAccessCodeException(libraryId)
+							if (it.password.isBlank()) throw MissingAccessCodeException(libraryId)
+						}
+					}
 				}
 			}
 }

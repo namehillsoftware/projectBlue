@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.browsing.navigation
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.promises.extensions.suspend
@@ -72,8 +71,7 @@ class DestinationGraphNavigation(
 	}.toPromise()
 
 	override fun viewItem(libraryId: LibraryId, item: IItem) = coroutineScope.launch {
-		if (item is Item)
-			navController.navigate(ItemScreen(libraryId, item))
+		navController.navigate(ItemScreen(libraryId, item))
 	}.toPromise()
 
 	override fun viewNowPlaying(libraryId: LibraryId) = coroutineScope.launch {

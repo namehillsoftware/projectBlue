@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list.AndItHasChildItems
 
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ProvideFileStringListForItem
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemPlayback
@@ -25,7 +24,7 @@ class WhenPlayingAChildItem {
 
 	private val mut by lazy {
 		val itemStringListProvider = mockk<ProvideFileStringListForItem>().apply {
-			every { promiseFileStringList(LibraryId(libraryId), ItemId(itemId), FileListParameters.Options.None) } returns Promise(
+			every { promiseFileStringList(LibraryId(libraryId), ItemId(itemId)) } returns Promise(
 				"2;-1;959;191;559;815;165;"
 			)
 		}

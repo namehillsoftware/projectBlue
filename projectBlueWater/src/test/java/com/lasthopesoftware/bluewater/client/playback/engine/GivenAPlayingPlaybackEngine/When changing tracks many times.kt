@@ -11,12 +11,20 @@ import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPl
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakePreparedPlayableFile
+import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.ForwardedResponse.Companion.thenForward
+import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.PromiseDelay
+import com.lasthopesoftware.promises.toFuture
 import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
@@ -30,19 +38,29 @@ class `When changing tracks many times` {
 	}
 
 	private val mut by lazy {
-		val fakePlaybackPreparerProvider = FakeMappedPlayableFilePreparationSourceProvider(
-			listOf(
-				ServiceFile("1"),
-				ServiceFile("2"),
-				ServiceFile("3"),
-				ServiceFile("4"),
-				ServiceFile("5")
-			)
-		)
+		val deferredPlaybackHandlers = listOf(
+			ServiceFile("1"),
+			ServiceFile("2"),
+			ServiceFile("3"),
+			ServiceFile("4"),
+			ServiceFile("5")
+		).associateWith {
+			val playbackHandler = ResolvablePlaybackHandler()
+			Pair(playbackHandler, DeferredPromise(FakePreparedPlayableFile(playbackHandler)))
+		}
+
 		val library = Library(id = libraryId)
 		val libraryProvider = FakeLibraryRepository(library)
-		val preparedPlaybackQueueResourceManagement =
-			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration())
+		val preparedPlaybackQueueResourceManagement = PreparedPlaybackQueueResourceManagement(
+			mockk {
+				every { providePlayableFilePreparationSource() } returns mockk {
+					every { promisePreparedPlaybackFile(LibraryId(libraryId), any(), any()) }  answers {
+						deferredPlaybackHandlers[secondArg()]?.second.keepPromise().thenForward()
+					}
+				}
+			},
+			FakePlaybackQueueConfiguration()
+		)
 		val repository = NowPlayingRepository(
 			FakeSelectedLibraryProvider(),
 			libraryProvider,
@@ -61,7 +79,7 @@ class `When changing tracks many times` {
 				playbackBootstrapper,
 				playbackBootstrapper,
 			)
-		Pair(fakePlaybackPreparerProvider, playbackEngine)
+		Pair(deferredPlaybackHandlers, playbackEngine)
 	}
 
 	private var nextSwitchedFile: PositionedFile? = null
@@ -70,7 +88,7 @@ class `When changing tracks many times` {
 
 	@BeforeAll
 	fun act() {
-		val (fakePlaybackPreparerProvider, playbackEngine) = mut
+		val (preparedFiles, playbackEngine) = mut
 
 		val promisedFinalFile = Promise {
 			playbackEngine
@@ -82,7 +100,7 @@ class `When changing tracks many times` {
 				}
 		}
 
-		val playlist = fakePlaybackPreparerProvider.deferredResolutions.keys.toList()
+		val playlist = preparedFiles.keys.toList()
 
 		val promisedStart = playbackEngine
 			.startPlaylist(
@@ -91,7 +109,8 @@ class `When changing tracks many times` {
 				1
 			)
 
-		val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("2")]?.resolve()
+		val (playingPlaybackHandler, resolvablePlaybackHandler) = preparedFiles.getValue(ServiceFile("2"))
+		resolvablePlaybackHandler.resolve()
 		promisedStart.toExpiringFuture().get()
 
 		val promisedChanges = Promise.whenAll(
@@ -101,19 +120,22 @@ class `When changing tracks many times` {
 		)
 
 		// Resolve the skipped tracks as well to ensure that they aren't the last switched track
-		fakePlaybackPreparerProvider.deferredResolutions[playlist[2]]?.resolve()
+		preparedFiles[playlist[2]]?.second?.resolve()
 
-		val finalPreparableFile = fakePlaybackPreparerProvider.deferredResolutions[playlist[4]]
-		finalPreparableFile?.resolve()
+		val finalPreparableFile = preparedFiles[playlist[4]]
+		finalPreparableFile?.second?.resolve()
 
 		nextSwitchedFile = promisedChanges.toExpiringFuture().get()?.lastOrNull()?.second
 
-		// Resolve the first skipped tracks afterward to ensure a cancellation is tested.
-		fakePlaybackPreparerProvider.deferredResolutions[playlist[0]]?.resolve()
+		// Resolve the first skipped track afterward to ensure a cancellation is tested.
+		preparedFiles[playlist[0]]?.second?.resolve()
 
-		playingPlaybackHandler?.resolve()
+		playingPlaybackHandler.resolve()
 
-		latestFile = promisedFinalFile.toExpiringFuture().get()
+		latestFile = Promise.whenAny(
+			promisedFinalFile,
+			PromiseDelay.delay(Duration.standardSeconds(10))
+		).toFuture().get()
 	}
 
 	@Test

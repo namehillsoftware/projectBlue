@@ -1,11 +1,9 @@
 package com.lasthopesoftware.bluewater.client.connection.libraries
 
 import com.lasthopesoftware.bluewater.ApplicationDependencies
-import com.lasthopesoftware.bluewater.client.browsing.files.access.CachedItemFileProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.DelegatingItemFileProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.ItemFileProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.access.DelegatingLibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
+import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ProvideFileStringListForItem
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
@@ -21,6 +19,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemPlayback
 import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRevisions
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.DelegatingLibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostRetryHandler
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
@@ -28,17 +27,21 @@ import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPollTi
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPollingSessions
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
+import com.lasthopesoftware.policies.caching.CachePromiseFunctions
+import com.lasthopesoftware.policies.caching.CachingPolicyFactory
+import com.lasthopesoftware.policies.caching.LruPromiseCache
+import com.lasthopesoftware.policies.caching.TimedExpirationPromiseCache
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
 import com.lasthopesoftware.policies.retries.RecursivePromiseRetryHandler
 import com.lasthopesoftware.policies.retries.RetryExecutionPolicy
+import org.joda.time.Duration
 
 interface LibraryConnectionDependents {
 	val urlKeyProvider: UrlKeyProvider
 	val revisionProvider: CheckRevisions
 	val filePropertiesStorage: FilePropertyStorage
 	val itemProvider: ProvideItems
-	val itemFileProvider: ProvideItemFiles
-	val libraryFilesProvider: LibraryFileProvider
+	val libraryFilesProvider: ProvideLibraryFiles
 	val playbackLibraryItems: PlaybackLibraryItems
 	val pollForConnections: PollForLibraryConnections
 	val libraryFilePropertiesProvider: CachedFilePropertiesProvider
@@ -48,6 +51,11 @@ interface LibraryConnectionDependents {
 }
 
 class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryConnectionDependents {
+	companion object {
+		private val revisionExpirationTime by lazy { Duration.standardSeconds(30) }
+		private const val maxLibraryFiles = 10
+	}
+
 	private val guaranteedLibraryConnectionProvider by lazy { GuaranteedLibraryConnectionProvider(application.libraryConnectionProvider) }
 
 	override val connectionAuthenticationChecker by lazy { ConnectionAuthenticationChecker(application.libraryConnectionProvider) }
@@ -66,7 +74,15 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 
 	override val urlKeyProvider by lazy { UrlKeyProvider(application.libraryConnectionProvider) }
 
-	override val revisionProvider by lazy { LibraryRevisionProvider(application.libraryConnectionProvider) }
+	override val revisionProvider by lazy {
+		DelegatingLibraryRevisionProvider(
+			LibraryRevisionProvider(application.libraryConnectionProvider),
+			object : CachingPolicyFactory() {
+				override fun <Input : Any, Output> getCache(): CachePromiseFunctions<Input, Output> =
+					TimedExpirationPromiseCache(revisionExpirationTime)
+			}
+		)
+	}
 
 	override val filePropertiesStorage by lazy {
 		FilePropertyStorage(
@@ -88,14 +104,15 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 
 	override val itemStringListProvider by lazy { ItemStringListProvider(application.libraryConnectionProvider) }
 
-	override val itemFileProvider: ProvideItemFiles by lazy {
-		CachedItemFileProvider(
-			ItemFileProvider(itemStringListProvider),
-			revisionProvider
+	override val libraryFilesProvider by lazy {
+		DelegatingLibraryFileProvider(
+			LibraryFileProvider(application.libraryConnectionProvider),
+			object : CachingPolicyFactory() {
+				override fun <Input : Any, Output> getCache(): CachePromiseFunctions<Input, Output> =
+					LruPromiseCache(maxLibraryFiles)
+			}
 		)
 	}
-
-	override val libraryFilesProvider by lazy { LibraryFileProvider(application.libraryConnectionProvider) }
 
 	override val playbackLibraryItems by lazy { ItemPlayback(itemStringListProvider, application.playbackServiceController) }
 
@@ -116,13 +133,6 @@ class RetryingLibraryConnectionRegistry(inner: LibraryConnectionDependents) : Li
 		)
 	}
 
-	override val itemFileProvider by lazy {
-		DelegatingItemFileProvider(
-			inner.itemFileProvider,
-			connectionLostRetryPolicy,
-		)
-	}
-
 	override val freshLibraryFileProperties by lazy {
 		DelegatingFilePropertiesProvider(
 			inner.freshLibraryFileProperties,
@@ -135,6 +145,13 @@ class RetryingLibraryConnectionRegistry(inner: LibraryConnectionDependents) : Li
 			urlKeyProvider,
 			FilePropertyCache,
 			freshLibraryFileProperties,
+		)
+	}
+
+	override val libraryFilesProvider by lazy {
+		DelegatingLibraryFileProvider(
+			inner.libraryFilesProvider,
+			connectionLostRetryPolicy,
 		)
 	}
 }

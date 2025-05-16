@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlayl
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -37,13 +37,13 @@ class WhenPlayingFromFileDetails {
 			mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
 					sequenceOf(
-						FileProperty(KnownFileProperties.Name, "toward"),
-						FileProperty(KnownFileProperties.Artist, "load"),
-						FileProperty(KnownFileProperties.Album, "square"),
-						FileProperty(KnownFileProperties.Rating, "4"),
-						FileProperty("razor", "through"),
-						FileProperty("smile", "since"),
-						FileProperty("harvest", "old"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Name, "toward"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Artist, "load"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Album, "square"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Rating, "4"),
+						ReadOnlyFileProperty("razor", "through"),
+						ReadOnlyFileProperty("smile", "since"),
+						ReadOnlyFileProperty("harvest", "old"),
 					)
 				)
 			},
@@ -132,10 +132,10 @@ class WhenPlayingFromFileDetails {
 	@Test
 	fun `then the file properties are correct`() {
 		assertThat(mut.fileProperties.value.map { Pair(it.property, it.committedValue.value) }).containsExactlyInAnyOrder(
-			Pair(KnownFileProperties.Name, "toward"),
-			Pair(KnownFileProperties.Artist, "load"),
-			Pair(KnownFileProperties.Album, "square"),
-			Pair(KnownFileProperties.Rating, "4"),
+			Pair(NormalizedFileProperties.Name, "toward"),
+			Pair(NormalizedFileProperties.Artist, "load"),
+			Pair(NormalizedFileProperties.Album, "square"),
+			Pair(NormalizedFileProperties.Rating, "4"),
 			Pair("razor", "through"),
 			Pair("smile", "since"),
 			Pair("harvest", "old"),

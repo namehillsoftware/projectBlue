@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlayl
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -31,22 +31,22 @@ class WhenHighlightingTheProperty {
 			mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
 					sequenceOf(
-						FileProperty(KnownFileProperties.Rating, "412"),
-						FileProperty("simple", "middle"),
-						FileProperty("aside", "vessel"),
-						FileProperty(KnownFileProperties.Name, "skin"),
-						FileProperty(KnownFileProperties.Artist, "afford"),
-						FileProperty(KnownFileProperties.Genre, "avenue"),
-						FileProperty(KnownFileProperties.Lyrics, "regret"),
-						FileProperty(KnownFileProperties.Comment, "dream"),
-						FileProperty(KnownFileProperties.Composer, "risk"),
-						FileProperty(KnownFileProperties.Custom, "fate"),
-						FileProperty(KnownFileProperties.Publisher, "crash"),
-						FileProperty(KnownFileProperties.TotalDiscs, "bone"),
-						FileProperty(KnownFileProperties.Track, "passage"),
-						FileProperty(KnownFileProperties.AlbumArtist, "enclose"),
-						FileProperty(KnownFileProperties.Album, "amuse"),
-						FileProperty(KnownFileProperties.Date, "9357"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Rating, "412"),
+						ReadOnlyFileProperty("simple", "middle"),
+						ReadOnlyFileProperty("aside", "vessel"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Name, "skin"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Artist, "afford"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Genre, "avenue"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Lyrics, "regret"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Comment, "dream"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Composer, "risk"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Custom, "fate"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Publisher, "crash"),
+						ReadOnlyFileProperty(NormalizedFileProperties.TotalDiscs, "bone"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Track, "passage"),
+						ReadOnlyFileProperty(NormalizedFileProperties.AlbumArtist, "enclose"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Album, "amuse"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Date, "9357"),
 					)
 				)
 			},
@@ -69,7 +69,7 @@ class WhenHighlightingTheProperty {
 	fun act() {
 		viewModel.apply {
 			loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
-			fileProperties.value.first { it.property == KnownFileProperties.Date }.apply {
+			fileProperties.value.first { it.property == NormalizedFileProperties.Date }.apply {
 				highlight()
 				cancel()
 			}

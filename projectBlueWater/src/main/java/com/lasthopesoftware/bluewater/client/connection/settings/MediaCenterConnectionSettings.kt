@@ -1,7 +1,9 @@
 package com.lasthopesoftware.bluewater.client.connection.settings
 
+import androidx.annotation.Keep
 import com.lasthopesoftware.resources.emptyByteArray
 
+@Keep
 data class MediaCenterConnectionSettings(
 	val accessCode: String,
 	val userName: String? = null,
@@ -10,7 +12,7 @@ data class MediaCenterConnectionSettings(
 	val isWakeOnLanEnabled: Boolean = false,
 	val sslCertificateFingerprint: ByteArray = emptyByteArray,
 	val macAddress: String? = null,
-) {
+) : ConnectionSettings {
 	override fun equals(other: Any?): Boolean {
 		if (this === other) return true
 		if (javaClass != other?.javaClass) return false

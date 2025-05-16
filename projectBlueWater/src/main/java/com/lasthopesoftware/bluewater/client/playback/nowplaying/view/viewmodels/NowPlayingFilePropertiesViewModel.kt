@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodel
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFreshLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateFileProperties
@@ -154,7 +154,7 @@ class NowPlayingFilePropertiesViewModel(
 			.promiseFileUpdate(
 				libraryId,
 				serviceFile,
-				KnownFileProperties.Rating,
+				NormalizedFileProperties.Rating,
 				rating.roundToInt().toString(),
 				false)
 			.must { _ -> activeSongRatingUpdates = activeSongRatingUpdates.dec().coerceAtLeast(0) }
@@ -317,14 +317,14 @@ class NowPlayingFilePropertiesViewModel(
 	}
 
 	private fun setFileProperties(fileProperties: Map<String, String>, isReadOnly: Boolean) {
-		artistState.value = fileProperties[KnownFileProperties.Artist] ?: stringResources.defaultNowPlayingArtist
-		titleState.value = fileProperties[KnownFileProperties.Name] ?: stringResources.defaultNowPlayingTrackTitle
+		artistState.value = fileProperties[NormalizedFileProperties.Artist] ?: stringResources.defaultNowPlayingArtist
+		titleState.value = fileProperties[NormalizedFileProperties.Name] ?: stringResources.defaultNowPlayingTrackTitle
 
 		val duration = fileProperties.durationInMs ?: Int.MAX_VALUE
 		setTrackDuration(duration)
 
 		if (activeSongRatingUpdates == 0) {
-			val stringRating = fileProperties[KnownFileProperties.Rating]
+			val stringRating = fileProperties[NormalizedFileProperties.Rating]
 			val fileRating = stringRating?.toFloatOrNull() ?: 0f
 			songRatingState.value = fileRating
 		}

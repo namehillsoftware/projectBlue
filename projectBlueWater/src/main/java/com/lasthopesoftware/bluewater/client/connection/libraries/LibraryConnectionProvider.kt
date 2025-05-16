@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.live.ProvideLiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupValidConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.client.connection.waking.WakeLibraryServer
 import com.lasthopesoftware.promises.PromiseDelay
@@ -44,7 +45,7 @@ class LibraryConnectionProvider(
 								resolve(null)
 								empty()
 							}
-							settings.isWakeOnLanEnabled -> wakeAndBuildConnection()
+							settings is MediaCenterConnectionSettings && settings.isWakeOnLanEnabled -> wakeAndBuildConnection()
 							else -> buildConnection()
 						}
 					}, {

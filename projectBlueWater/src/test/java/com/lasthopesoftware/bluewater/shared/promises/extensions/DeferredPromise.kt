@@ -4,8 +4,9 @@ import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.promises.Promise
 
 open class DeferredPromise<Resolution> : Promise<Resolution>, CancellationResponse {
-    private val resolution: Resolution?
-    private val error: Throwable?
+    val resolution: Resolution?
+    val error: Throwable?
+
 	var isCancelled = false
 		private set
 

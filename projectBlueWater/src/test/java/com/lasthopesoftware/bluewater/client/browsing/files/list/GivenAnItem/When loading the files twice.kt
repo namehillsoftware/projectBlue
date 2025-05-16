@@ -1,8 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAnItem
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -33,22 +31,20 @@ class `When loading the files twice` {
 	private val mut by lazy {
 		val deferredFiles = DeferredPromise(expectedFiles)
 
-		val itemProvider = mockk<ProvideItemFiles> {
-			every { promiseFiles(LibraryId(libraryId), ItemId(itemId), FileListParameters.Options.None) } returns listOf(
-				ServiceFile("278"),
-				ServiceFile("145"),
-				ServiceFile("382"),
-				ServiceFile("561"),
-				ServiceFile("529"),
-			).toPromise() andThen deferredFiles
-		}
-
 		val storedItemAccess = mockk<AccessStoredItems> {
 			every { isItemMarkedForSync(any(), any<Item>()) } returns false.toPromise()
 		}
 
 		Pair(deferredFiles, FileListViewModel(
-            itemProvider,
+			mockk {
+				every { promiseFiles(LibraryId(libraryId), ItemId(itemId)) } returns listOf(
+					ServiceFile("278"),
+					ServiceFile("145"),
+					ServiceFile("382"),
+					ServiceFile("561"),
+					ServiceFile("529"),
+				).toPromise() andThen deferredFiles
+			},
             storedItemAccess,
 		))
 	}

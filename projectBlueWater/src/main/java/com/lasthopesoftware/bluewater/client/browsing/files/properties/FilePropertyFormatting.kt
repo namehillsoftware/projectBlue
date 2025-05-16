@@ -48,17 +48,17 @@ private val excelEpoch by lazy { DateTime(1899, 12, 30, 0, 0) }
 
 private val dateTimeProperties by lazy {
 	setOf(
-		KnownFileProperties.LastPlayed,
-		KnownFileProperties.LastPlayedAlbum,
-		KnownFileProperties.LastLyricsLookup,
-		KnownFileProperties.LastSkipped,
-		KnownFileProperties.DateCreated,
-		KnownFileProperties.DateImported,
-		KnownFileProperties.DateModified,
-		KnownFileProperties.DateTagged,
-		KnownFileProperties.DateFirstRated,
-		KnownFileProperties.DateLastRated,
-		KnownFileProperties.DateLastOpened
+		NormalizedFileProperties.LastPlayed,
+		NormalizedFileProperties.LastPlayedAlbum,
+		NormalizedFileProperties.LastLyricsLookup,
+		NormalizedFileProperties.LastSkipped,
+		NormalizedFileProperties.DateCreated,
+		NormalizedFileProperties.DateImported,
+		NormalizedFileProperties.DateModified,
+		NormalizedFileProperties.DateTagged,
+		NormalizedFileProperties.DateFirstRated,
+		NormalizedFileProperties.DateLastRated,
+		NormalizedFileProperties.DateLastOpened
 	)
 }
 
@@ -73,7 +73,7 @@ fun FileProperty.getFormattedValue(): String {
 		val dateTime = DateTime((value.toDouble() * 1000).toLong())
 		dateTime.toString(dateTimeFormatter)
 	} else when (name) {
-		KnownFileProperties.Date -> {
+		NormalizedFileProperties.Date -> {
 			var daysValue = value
 			val periodPos = daysValue.indexOf('.')
 			if (periodPos > -1) daysValue = daysValue.substring(0, periodPos)
@@ -83,11 +83,11 @@ fun FileProperty.getFormattedValue(): String {
 				if (returnDate.monthOfYear == 1 && returnDate.dayOfMonth == 1) yearFormatter
 				else dateFormatter)
 		}
-		KnownFileProperties.FileSize -> {
+		NormalizedFileProperties.FileSize -> {
 			val fileSizeBytes = ceil(value.toLong().toDouble() / 1024 / 1024 * 100) / 100
 			"$fileSizeBytes MB"
 		}
-		KnownFileProperties.Duration -> {
+		NormalizedFileProperties.Duration -> {
 			Duration.standardSeconds(value.toDouble().toLong()).toPeriod().toString(minutesAndSecondsFormatter)
 		}
 		else -> {

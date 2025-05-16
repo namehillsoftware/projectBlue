@@ -17,7 +17,7 @@ class ServerAlarm(
 		serverLookup.promiseServerInformation(libraryId)
 			.also(cp::doCancel)
 			.eventually { serverInfo ->
-				val addresses = serverInfo?.remoteHost?.let { serverInfo.localIps.plus(it) } ?: emptySet()
+				val addresses = serverInfo?.remoteHosts?.let { serverInfo.localHosts.plus(it) } ?: emptySet()
 
 				val broadcastAddresses = mutableSetOf<String>()
 				if (activeNetwork.isLocalNetworkActive) {

@@ -7,7 +7,17 @@ import java.net.URLEncoder
 object UrlBuilder {
 	fun URL.withMcApi() = addPath("/MCWS/v1/")
 
-	fun URL.addPath(path: String) = URL(this, path)
+	fun URL.withSubsonicApi() = addPath("/rest")
+
+	fun URL.addPath(path: String): URL {
+		val currentPath = this.path
+		if (currentPath.isEmpty()) {
+			return URL(this, path)
+		}
+
+		val newPath = currentPath.trimEnd('/') + "/" + path.trimStart('/')
+		return URL(this, newPath + if (this.query == null) "" else "?" + this.query)
+	}
 
 	fun URL.addParams(vararg params: String): URL {
 		val urlBuilder = StringBuilder(toString())

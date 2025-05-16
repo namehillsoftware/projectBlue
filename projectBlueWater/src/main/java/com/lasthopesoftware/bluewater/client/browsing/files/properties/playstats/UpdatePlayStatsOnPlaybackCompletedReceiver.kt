@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats
 
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.factory.LibraryPlaystatsUpdateSelector
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlayingFileChanged
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
@@ -13,7 +12,7 @@ import com.namehillsoftware.handoff.promises.Promise
 private val logger by lazyLogger<UpdatePlayStatsOnPlaybackCompletedReceiver>()
 
 class UpdatePlayStatsOnPlaybackCompletedReceiver(
-	private val libraryPlaystatsUpdateSelector: LibraryPlaystatsUpdateSelector,
+	private val updatePlaystats: UpdatePlaystats,
 	private val inner: OnPlayingFileChanged
 ) : OnPlayingFileChanged by inner, PromisingCloseable {
 
@@ -29,7 +28,7 @@ class UpdatePlayStatsOnPlaybackCompletedReceiver(
 		promiseTracker.track(
 			playingFile.promisePlayedFile().eventually {
 				val serviceFile = positionedPlayingFile.serviceFile
-				val promisedUpdate = libraryPlaystatsUpdateSelector.promisePlaystatsUpdate(libraryId, serviceFile)
+				val promisedUpdate = updatePlaystats.promisePlaystatsUpdate(libraryId, serviceFile)
 
 				promisedUpdate
 					.excuse { e ->

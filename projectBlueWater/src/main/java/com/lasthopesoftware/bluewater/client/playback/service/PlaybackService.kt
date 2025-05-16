@@ -30,8 +30,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlayStatsOnPlaybackCompletedReceiver
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.factory.LibraryPlaystatsUpdateSelector
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.BestMatchUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.RemoteFileUriProvider
@@ -83,7 +81,6 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messa
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.AudioBecomingNoisyReceiver
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
-import com.lasthopesoftware.bluewater.client.servers.version.LibraryServerVersionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.CompatibleMediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.uri.StoredFileUriProvider
@@ -110,6 +107,7 @@ import com.lasthopesoftware.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.promises.extensions.cancelBackThen
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
@@ -482,16 +480,7 @@ import java.util.concurrent.TimeoutException
 	// Manage this resource separately, it needs to be cleaned up after everything else is cleaned up.
 	private val updatePlayStatsOnPlaybackCompletedReceiver = lazy {
 		UpdatePlayStatsOnPlaybackCompletedReceiver(
-			libraryConnectionDependencies.run {
-					LibraryPlaystatsUpdateSelector(
-						LibraryServerVersionProvider(libraryConnectionProvider),
-						PlayedFilePlayStatsUpdater(libraryConnectionProvider),
-						FilePropertiesPlayStatsUpdater(
-							freshLibraryFileProperties,
-							filePropertiesStorage,
-						),
-					)
-				},
+			PlayedFilePlayStatsUpdater(libraryConnectionProvider),
 			this,
 		)
 	}
@@ -1060,12 +1049,16 @@ import java.util.concurrent.TimeoutException
 		try {
 			pausePlayback()
 				.inevitably { promisingServiceCloseables.promiseClose() }
+				.inevitably {
+					// As mentioned at creation, clean this up last and separately from the other dependencies.
+					updatePlayStatsOnPlaybackCompletedReceiver
+						.takeIf { it.isInitialized() }
+						?.value
+						?.promiseClose()
+						.keepPromise(Unit)
+				}
 				.toFuture()
 				.getSafely()
-
-			// As mentioned at creation, clean this up last and separately from the other dependencies.
-			if (updatePlayStatsOnPlaybackCompletedReceiver.isInitialized())
-				updatePlayStatsOnPlaybackCompletedReceiver.value.promiseClose().toFuture().getSafely()
 		} catch (e: Throwable) {
 			logger.error("An error occurred closing resources", e)
 		}

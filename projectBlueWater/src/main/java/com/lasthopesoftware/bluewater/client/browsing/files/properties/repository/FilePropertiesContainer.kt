@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.properties.reposito
 
 import java.util.Collections
 
-class FilePropertiesContainer(override val revision: Int, properties: Map<String, String>) : ContainVersionedFileProperties {
+class FilePropertiesContainer(override val revision: Long, properties: Map<String, String>) : ContainVersionedFileProperties {
 	private val sync = Any()
 
 	@Volatile

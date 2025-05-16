@@ -6,13 +6,21 @@ import com.namehillsoftware.handoff.promises.Promise
 import java.io.IOException
 import java.net.URL
 
-class FakeHttpConnection : HttpPromiseClient {
+class FakeHttpConnection(
+	vararg responses: Pair<URL, (URL) -> PassThroughHttpResponse>
+) : HttpPromiseClient {
 	private val requests = ArrayList<URL>()
 
-	private val mappedResponses = HashMap<URL, (URL) -> PassThroughHttpResponse>()
+	private val mappedResponses = HashMap<UrlParts, (URL) -> PassThroughHttpResponse>()
 
 	val recordedRequests: List<URL>
 		get() = requests
+
+	init {
+	    for (response in responses) {
+			mapResponse(response.first, response.second)
+		}
+	}
 
 	fun setupFile(url: URL, serviceFile: ServiceFile, fileProperties: Map<String, String>) {
 		mapResponse(
@@ -48,7 +56,7 @@ class FakeHttpConnection : HttpPromiseClient {
 	}
 
 	fun mapResponse(url: URL, response: (URL) -> PassThroughHttpResponse) {
-		mappedResponses[url] = response
+		mappedResponses[UrlParts(url)] = response
 	}
 
 	override fun promiseResponse(url: URL): Promise<HttpResponse> {
@@ -64,17 +72,12 @@ class FakeHttpConnection : HttpPromiseClient {
 	}
 
 	private fun getResponse(url: URL): HttpResponse {
-		val mappedResponse = mappedResponses[url]
-//		if (mappedResponse == null) {
-//			val optionalResponse = mappedResponses.keys
-//				.find { set -> set.all { sp -> params.any { p -> p.matches(Regex(sp)) } } }
-//			if (optionalResponse != null) mappedResponse = mappedResponses[optionalResponse]
-//		}
-		if (mappedResponse == null) return PassThroughHttpResponse(
-			code = 404,
-			message = "Not Found",
-			"Not found".toByteArray().inputStream()
-		)
+		val mappedResponse = mappedResponses[UrlParts(url)]
+			?: return PassThroughHttpResponse(
+				code = 404,
+				message = "Not Found",
+				"Not found".toByteArray().inputStream()
+			)
 		try {
 			val result = mappedResponse(url)
 			return result
@@ -83,5 +86,28 @@ class FakeHttpConnection : HttpPromiseClient {
 		} catch (error: Throwable) {
 			throw RuntimeException(error)
 		}
+	}
+
+	private data class UrlParts(
+		val scheme: String,
+		val host: String,
+		val port: Int,
+		val path: String = "",
+		val query: Map<String, String> = emptyMap(),
+		val fragment: String? = null
+	) {
+		constructor(url: URL) : this(
+			url.protocol,
+			url.host,
+			url.port,
+			url.path,
+			url.query
+				?.split("&")
+				?.associate {
+					it.split("=").let { kv -> kv[0] to kv.getOrElse(1, { "" }) }
+				}
+				?: emptyMap(),
+			url.ref
+		)
 	}
 }

@@ -5,7 +5,7 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.FakeNowPlayingRepository
@@ -46,12 +46,12 @@ class WhenTheFileChanges : AndroidContext() {
 			FakeNowPlayingRepository(singleNowPlaying(LibraryId(libraryId), ServiceFile(serviceFileId))),
             mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns mapOf(
-					Pair(KnownFileProperties.Name, "stiff"),
-					Pair(KnownFileProperties.Rating, "72"),
-					Pair(KnownFileProperties.Artist, "shower"),
-					Pair(KnownFileProperties.Album, "however"),
-					Pair(KnownFileProperties.Duration, "182280915"),
-					Pair(KnownFileProperties.Track, "921"),
+					Pair(NormalizedFileProperties.Name, "stiff"),
+					Pair(NormalizedFileProperties.Rating, "72"),
+					Pair(NormalizedFileProperties.Artist, "shower"),
+					Pair(NormalizedFileProperties.Album, "however"),
+					Pair(NormalizedFileProperties.Duration, "182280915"),
+					Pair(NormalizedFileProperties.Track, "921"),
 				).toPromise()
 			},
 			mockk {

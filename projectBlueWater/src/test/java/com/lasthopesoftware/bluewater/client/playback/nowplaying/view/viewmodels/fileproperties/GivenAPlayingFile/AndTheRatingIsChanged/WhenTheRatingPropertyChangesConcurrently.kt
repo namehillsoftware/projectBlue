@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.fileproperties.GivenAPlayingFile.AndTheRatingIsChanged
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFreshLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -62,14 +62,14 @@ class WhenTheRatingPropertyChangesConcurrently {
 		val filePropertiesProvider = mockk<ProvideFreshLibraryFileProperties> {
 			every { promiseFileProperties(LibraryId(libraryId), serviceFile) } returnsMany listOf(
 				mapOf(
-					Pair(KnownFileProperties.Artist, "within"),
-					Pair(KnownFileProperties.Name, "descent"),
-					Pair(KnownFileProperties.Rating, "633"),
+					Pair(NormalizedFileProperties.Artist, "within"),
+					Pair(NormalizedFileProperties.Name, "descent"),
+					Pair(NormalizedFileProperties.Rating, "633"),
 				).toPromise(),
 				mapOf(
-					Pair(KnownFileProperties.Artist, "want"),
-					Pair(KnownFileProperties.Name, "toward"),
-					Pair(KnownFileProperties.Rating, "899"),
+					Pair(NormalizedFileProperties.Artist, "want"),
+					Pair(NormalizedFileProperties.Name, "toward"),
+					Pair(NormalizedFileProperties.Rating, "899"),
 				).toPromise(),
 			)
 		}
@@ -94,7 +94,7 @@ class WhenTheRatingPropertyChangesConcurrently {
                 )
             },
             mockk {
-				every { promiseFileUpdate(LibraryId(libraryId), serviceFile, KnownFileProperties.Rating, any(), any()) } returns deferredFilePropertiesPromise
+				every { promiseFileUpdate(LibraryId(libraryId), serviceFile, NormalizedFileProperties.Rating, any(), any()) } returns deferredFilePropertiesPromise
 			},
             checkAuthentication,
             playbackService,

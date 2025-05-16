@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.live.ConfiguredActiveNetwork
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.jupiter.api.Test
@@ -17,6 +18,8 @@ class `When Getting The Live Connection` {
 			mockk(),
 			mockk(),
 			mockk(),
+			mockk(),
+			JsonEncoderDecoder,
 			mockk(),
 		)
 		liveUrlProvider.promiseLiveServerConnection(LibraryId(23)).toExpiringFuture().get()

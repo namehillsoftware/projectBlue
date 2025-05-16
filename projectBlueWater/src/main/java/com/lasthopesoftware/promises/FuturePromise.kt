@@ -1,5 +1,6 @@
 package com.lasthopesoftware.promises
 
+import androidx.lifecycle.AtomicReference
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import java.util.concurrent.CountDownLatch
@@ -16,38 +17,29 @@ fun <Resolution> Future<Resolution>.getSafely(): Resolution? = get(3, TimeUnit.S
 private class FuturePromise<Resolution>(promise: Promise<Resolution>) : Future<Resolution?> {
 	private val cancellationProxy = CancellationProxy()
 	private val countDownLatch = CountDownLatch(1)
-
-	private var resolution: Resolution? = null
-	private var rejection: Throwable? = null
-	private var isCompleted = false
+	private val message = AtomicReference<Pair<Resolution?, Throwable?>?>()
 
 	init {
 		cancellationProxy.doCancel(promise)
 		promise
 			.then({ r ->
-				resolution = r
-				isCompleted = true
-				countDownLatch.countDown()
+				if (message.compareAndSet(null, Pair(r, null)))
+					countDownLatch.countDown()
 			}, { e ->
-				rejection = e
-				isCompleted = true
-				countDownLatch.countDown()
+				if (message.compareAndSet(null, Pair(null, e)))
+					countDownLatch.countDown()
 			})
 	}
 
 	override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
-		if (isCompleted) return false
+		if (isDone) return false
 		cancellationProxy.cancellationRequested()
 		return true
 	}
 
-	override fun isCancelled(): Boolean {
-		return cancellationProxy.isCancelled
-	}
+	override fun isCancelled(): Boolean = cancellationProxy.isCancelled
 
-	override fun isDone(): Boolean {
-		return isCompleted
-	}
+	override fun isDone(): Boolean = message.get() != null
 
 	override fun get(): Resolution? {
 		countDownLatch.await()
@@ -56,11 +48,12 @@ private class FuturePromise<Resolution>(promise: Promise<Resolution>) : Future<R
 
 	override fun get(timeout: Long, unit: TimeUnit): Resolution? {
 		if (countDownLatch.await(timeout, unit)) return getResolution()
-		throw TimeoutException("Timed out waiting for promise to resolve")
+		throw TimeoutException("Timed out waiting $timeout $unit for promise to resolve")
 	}
 
-	private fun getResolution(): Resolution? {
-		rejection?.also { throw ExecutionException(it) }
-		return resolution
+	private fun getResolution(): Resolution? = message.get()?.let { (resolution, rejection) ->
+		if (rejection != null)
+			throw ExecutionException(rejection)
+		resolution
 	}
 }

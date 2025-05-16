@@ -2,8 +2,9 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideEditableLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.editableFilePropertyDefinition
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.getFormattedValue
@@ -43,15 +44,15 @@ class FileDetailsViewModel(
 
 	companion object {
 		private val propertiesToSkip = setOf(
-			KnownFileProperties.AudioAnalysisInfo,
-			KnownFileProperties.GetCoverArtInfo,
-			KnownFileProperties.ImageFile,
-			KnownFileProperties.Key,
-			KnownFileProperties.StackFiles,
-			KnownFileProperties.StackTop,
-			KnownFileProperties.StackView,
-			KnownFileProperties.Waveform,
-			KnownFileProperties.LengthInPcmBlocks
+			NormalizedFileProperties.AudioAnalysisInfo,
+			NormalizedFileProperties.GetCoverArtInfo,
+			NormalizedFileProperties.ImageFile,
+			NormalizedFileProperties.Key,
+			NormalizedFileProperties.StackFiles,
+			NormalizedFileProperties.StackTop,
+			NormalizedFileProperties.StackView,
+			NormalizedFileProperties.Waveform,
+			NormalizedFileProperties.LengthInPcmBlocks
 		)
 	}
 
@@ -152,10 +153,10 @@ class FileDetailsViewModel(
 				val filePropertiesList = fileProperties.toList()
 				val filePropertiesMap = filePropertiesList.associateBy { it.name }
 
-				mutableFileName.value = filePropertiesMap[KnownFileProperties.Name]?.value ?: ""
-				mutableArtist.value = filePropertiesMap[KnownFileProperties.Artist]?.value ?: ""
-				mutableAlbum.value = filePropertiesMap[KnownFileProperties.Album]?.value ?: ""
-				mutableRating.value = filePropertiesMap[KnownFileProperties.Rating]?.value?.toIntOrNull() ?: 0
+				mutableFileName.value = filePropertiesMap[NormalizedFileProperties.Name]?.value ?: ""
+				mutableArtist.value = filePropertiesMap[NormalizedFileProperties.Artist]?.value ?: ""
+				mutableAlbum.value = filePropertiesMap[NormalizedFileProperties.Album]?.value ?: ""
+				mutableRating.value = filePropertiesMap[NormalizedFileProperties.Rating]?.value?.toIntOrNull() ?: 0
 
 				mutableFileProperties.value = filePropertiesList
 					.filterNot { e -> propertiesToSkip.contains(e.name) }
@@ -166,8 +167,10 @@ class FileDetailsViewModel(
 
 	inner class FilePropertyViewModel(fileProperty: FileProperty) {
 
-		private val formattedValue by lazy(LazyThreadSafetyMode.NONE) { fileProperty.getFormattedValue() }
-		private val editableFilePropertyDefinition by lazy(LazyThreadSafetyMode.NONE) { fileProperty.editableFilePropertyDefinition }
+		private val formattedValue by lazy(LazyThreadSafetyMode.PUBLICATION) { fileProperty.getFormattedValue() }
+		private val editableFilePropertyDefinition by lazy(LazyThreadSafetyMode.PUBLICATION) {
+			fileProperty.editableFilePropertyDefinition
+		}
 		private val mutableCommittedValue by lazy { MutableInteractionState(formattedValue) }
 		private val mutableUncommittedValue by lazy { MutableInteractionState(formattedValue) }
 		private val mutableIsEditing = MutableInteractionState(false)
@@ -178,9 +181,10 @@ class FileDetailsViewModel(
 			get() = mutableUncommittedValue.asInteractionState()
 
 		val isEditing = mutableIsEditing.asInteractionState()
-		val isEditable
-			get() = !isConnectionReadOnly && editableFilePropertyDefinition != null
-		val editableType by lazy(LazyThreadSafetyMode.NONE) { editableFilePropertyDefinition?.type }
+		val isEditable by lazy(LazyThreadSafetyMode.PUBLICATION) {
+			!isConnectionReadOnly && fileProperty is EditableFileProperty
+		}
+		val editableType by lazy(LazyThreadSafetyMode.PUBLICATION) { editableFilePropertyDefinition?.type }
 		val property = fileProperty.name
 
 		fun highlight() {

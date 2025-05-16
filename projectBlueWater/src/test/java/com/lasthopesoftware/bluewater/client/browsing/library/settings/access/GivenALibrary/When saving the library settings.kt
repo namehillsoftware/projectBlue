@@ -5,12 +5,14 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredSubsonicConnectionSettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.LibrarySettingsAccess
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.gson
+import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -30,7 +32,7 @@ class `When saving the library settings` {
 					nowPlayingProgress = 234,
 					savedTracksString = "DSJaIU9",
 					syncedFileLocation = SyncedFileLocation.INTERNAL,
-					connectionSettings = Json.encodeToString(
+					connectionSettings = gson.toJson(
 						StoredMediaCenterConnectionSettings(
 							accessCode = "8rl200k",
 							password = "kKLGulh",
@@ -50,6 +52,7 @@ class `When saving the library settings` {
 					library.toPromise()
 				}
 			},
+			JsonEncoderDecoder,
 		)
 	}
 
@@ -64,12 +67,10 @@ class `When saving the library settings` {
 				libraryName = "jPStogpyW4",
 				isUsingExistingFiles = false,
 				syncedFileLocation = SyncedFileLocation.EXTERNAL,
-				connectionSettings = StoredMediaCenterConnectionSettings(
-					accessCode = "94NI0r9XP6x",
+				connectionSettings = StoredSubsonicConnectionSettings(
+					url = "94NI0r9XP6x",
 					macAddress = "aRm4Zqh9O",
-					isLocalOnly = true,
 					isWakeOnLanEnabled = true,
-					isSyncLocalConnectionsOnly = false,
 					userName = "RsZ6mNFK",
 					password = "RZ5c4MGRC",
 					sslCertificateFingerprint = "KLSYONYutn"
@@ -85,18 +86,16 @@ class `When saving the library settings` {
 				id = libraryId.id,
 				libraryName = "jPStogpyW4",
 				isUsingExistingFiles = false,
-				serverType = Library.ServerType.MediaCenter.name,
+				serverType = Library.ServerType.Subsonic.name,
 				nowPlayingId = 322,
 				nowPlayingProgress = 234,
 				savedTracksString = "DSJaIU9",
 				syncedFileLocation = SyncedFileLocation.EXTERNAL,
-				connectionSettings = Json.encodeToString(
-					StoredMediaCenterConnectionSettings(
-						accessCode = "94NI0r9XP6x",
+				connectionSettings = gson.toJson(
+					StoredSubsonicConnectionSettings(
+						url = "94NI0r9XP6x",
 						macAddress = "aRm4Zqh9O",
-						isLocalOnly = true,
 						isWakeOnLanEnabled = true,
-						isSyncLocalConnectionsOnly = false,
 						userName = "RsZ6mNFK",
 						password = "RZ5c4MGRC",
 						sslCertificateFingerprint = "KLSYONYutn"
@@ -114,12 +113,10 @@ class `When saving the library settings` {
 				libraryName = "jPStogpyW4",
 				isUsingExistingFiles = false,
 				syncedFileLocation = SyncedFileLocation.EXTERNAL,
-				connectionSettings = StoredMediaCenterConnectionSettings(
-					accessCode = "94NI0r9XP6x",
+				connectionSettings = StoredSubsonicConnectionSettings(
+					url = "94NI0r9XP6x",
 					macAddress = "aRm4Zqh9O",
-					isLocalOnly = true,
 					isWakeOnLanEnabled = true,
-					isSyncLocalConnectionsOnly = false,
 					userName = "RsZ6mNFK",
 					password = "RZ5c4MGRC",
 					sslCertificateFingerprint = "KLSYONYutn"
