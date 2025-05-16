@@ -7,7 +7,6 @@ import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.bouncycastle.util.encoders.Hex
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.io.ByteArrayInputStream
 import java.security.cert.CertificateException
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
@@ -44,9 +43,8 @@ class WhenValidatingTheClient {
 	@BeforeAll
 	fun act() {
 		val cf = CertificateFactory.getInstance("X.509")
-		val cert =
-			ByteArrayInputStream(certificate.toByteArray(Charsets.UTF_8))
-				.use { caInput -> cf.generateCertificate(caInput) as X509Certificate }
+		val cert = certificate.trim().toByteArray(Charsets.UTF_8).inputStream()
+			.use { caInput -> cf.generateCertificate(caInput) as X509Certificate }
 		val certBytes = Hex.decode("1b6fae967b4a13192d3b65bba33cf7fc510df456")
 		val selfSignedTrustManager = SelfSignedTrustManager(certBytes, fallbackTrustManager)
 		try {
