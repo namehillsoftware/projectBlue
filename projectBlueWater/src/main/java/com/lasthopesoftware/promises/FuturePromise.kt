@@ -1,6 +1,5 @@
 package com.lasthopesoftware.promises
 
-import androidx.lifecycle.AtomicReference
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import java.util.concurrent.CountDownLatch
@@ -8,6 +7,7 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicReference
 
 fun <Resolution> Promise<Resolution>.toFuture(): Future<Resolution?> = FuturePromise(this)
 
