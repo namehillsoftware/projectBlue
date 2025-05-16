@@ -67,7 +67,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
-import com.lasthopesoftware.bluewater.shared.android.BuildUndoBackStack
+import com.lasthopesoftware.bluewater.shared.android.UndoStack
 import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ListItemIcon
@@ -137,16 +137,16 @@ fun FilesCountHeader(filesCount: Int) {
 
 @Composable
 fun RenderTrackTitleItem(
-	position: Int,
-	serviceFile: ServiceFile,
-	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
-	itemListViewModel: ItemListViewModel,
-	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-	applicationNavigation: NavigateApplication,
-	fileListViewModel: FileListViewModel,
-	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	playbackServiceController: ControlPlaybackService,
-	undoBackStack: BuildUndoBackStack,
+    position: Int,
+    serviceFile: ServiceFile,
+    trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+    itemListViewModel: ItemListViewModel,
+    nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
+    applicationNavigation: NavigateApplication,
+    fileListViewModel: FileListViewModel,
+    itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+    playbackServiceController: ControlPlaybackService,
+    undoBackStack: UndoStack,
 ) {
 	val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 
@@ -205,13 +205,13 @@ fun RenderTrackTitleItem(
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ChildItem(
-	item: IItem,
-	itemListViewModel: ItemListViewModel,
-	applicationNavigation: NavigateApplication,
-	childItemViewModelProvider: PooledCloseablesViewModel<ReusableChildItemViewModel>,
-	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	playbackLibraryItems: PlaybackLibraryItems,
-	backStack: BuildUndoBackStack,
+    item: IItem,
+    itemListViewModel: ItemListViewModel,
+    applicationNavigation: NavigateApplication,
+    childItemViewModelProvider: PooledCloseablesViewModel<ReusableChildItemViewModel>,
+    itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+    playbackLibraryItems: PlaybackLibraryItems,
+    backStack: UndoStack,
 ) {
 	val rowHeight = Dimensions.standardRowHeight
 	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
@@ -337,7 +337,7 @@ fun ItemListView(
     applicationNavigation: NavigateApplication,
     playbackLibraryItems: PlaybackLibraryItems,
     playbackServiceController: ControlPlaybackService,
-	undoBackStack: BuildUndoBackStack,
+    undoBackStack: UndoStack,
 ) {
 	val files by fileListViewModel.files.subscribeAsState()
 	val rowHeight = Dimensions.standardRowHeight

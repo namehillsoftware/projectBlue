@@ -95,7 +95,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
-import com.lasthopesoftware.bluewater.shared.android.BuildUndoBackStack
+import com.lasthopesoftware.bluewater.shared.android.UndoStack
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.ui.SlideOutState
 import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
@@ -214,10 +214,10 @@ fun NowPlayingHeadline(modifier: Modifier = Modifier, nowPlayingFilePropertiesVi
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun PlaylistControls(
-	modifier: Modifier = Modifier,
-	playlistViewModel: NowPlayingPlaylistViewModel,
-	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
-	undoBackStack: BuildUndoBackStack,
+    modifier: Modifier = Modifier,
+    playlistViewModel: NowPlayingPlaylistViewModel,
+    viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
+    undoBackStack: UndoStack,
 ) {
 	Row(
 		modifier = modifier,
@@ -408,15 +408,15 @@ suspend fun LazyListState.scrollToFileIfNotScrolling(file: PositionedFile) {
 
 @Composable
 fun NowPlayingPlaylist(
-	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
-	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
-	applicationNavigation: NavigateApplication,
-	playbackServiceController: ControlPlaybackService,
-	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	playlistViewModel: NowPlayingPlaylistViewModel,
-	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
-	undoBackStack: BuildUndoBackStack,
-	modifier: Modifier = Modifier,
+    childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+    nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
+    applicationNavigation: NavigateApplication,
+    playbackServiceController: ControlPlaybackService,
+    itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+    playlistViewModel: NowPlayingPlaylistViewModel,
+    viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
+    undoBackStack: UndoStack,
+    modifier: Modifier = Modifier,
 ) {
 	val nowPlayingFiles by playlistViewModel.nowPlayingList.subscribeAsState()
 	val playlist by remember { derivedStateOf { nowPlayingFiles.map { p -> p.serviceFile } } }
@@ -542,15 +542,15 @@ private val expandedControlsHeight = controlRowHeight + collapsedControlsHeight
 @Composable
 @OptIn(ExperimentalFoundationApi::class, ExperimentalCoroutinesApi::class)
 fun BoxWithConstraintsScope.NowPlayingNarrowView(
-	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
-	nowPlayingScreenViewModel: NowPlayingScreenViewModel,
-	playbackServiceController: ControlPlaybackService,
-	playlistViewModel: NowPlayingPlaylistViewModel,
-	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
-	applicationNavigation: NavigateApplication,
-	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
-	undoBackStack: BuildUndoBackStack,
+    nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
+    nowPlayingScreenViewModel: NowPlayingScreenViewModel,
+    playbackServiceController: ControlPlaybackService,
+    playlistViewModel: NowPlayingPlaylistViewModel,
+    childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+    applicationNavigation: NavigateApplication,
+    itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+    viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
+    undoBackStack: UndoStack,
 ) {
 	val isScreenControlsVisible by nowPlayingScreenViewModel.isScreenControlsVisible.subscribeAsState()
 
@@ -813,7 +813,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 	applicationNavigation: NavigateApplication,
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
-	undoBackStack: BuildUndoBackStack
+	undoBackStack: UndoStack
 ) {
 	val playlistWidth = screenHeight.coerceIn(minimumMenuWidth, maxWidth / 2)
 	val playlistWidthPx = LocalDensity.current.run { playlistWidth.toPx() }
@@ -1007,18 +1007,18 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 @ExperimentalFoundationApi
 @Composable
 fun NowPlayingView(
-	nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel,
-	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
-	nowPlayingScreenViewModel: NowPlayingScreenViewModel,
-	playbackServiceController: ControlPlaybackService,
-	playlistViewModel: NowPlayingPlaylistViewModel,
-	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
-	applicationNavigation: NavigateApplication,
-	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	connectionWatcherViewModel: ConnectionWatcherViewModel,
-	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
-	bitmapProducer: ProduceBitmaps,
-	undoBackStack: BuildUndoBackStack,
+    nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel,
+    nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
+    nowPlayingScreenViewModel: NowPlayingScreenViewModel,
+    playbackServiceController: ControlPlaybackService,
+    playlistViewModel: NowPlayingPlaylistViewModel,
+    childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+    applicationNavigation: NavigateApplication,
+    itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+    connectionWatcherViewModel: ConnectionWatcherViewModel,
+    viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
+    bitmapProducer: ProduceBitmaps,
+    undoBackStack: UndoStack,
 ) {
 	val systemUiController = rememberSystemUiController()
 	DisposableEffect(systemUiController) {

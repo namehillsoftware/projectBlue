@@ -49,7 +49,7 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.connection.trust.ProvideUserSslCertificates
-import com.lasthopesoftware.bluewater.shared.android.BuildUndoBackStack
+import com.lasthopesoftware.bluewater.shared.android.UndoStack
 import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
@@ -686,10 +686,10 @@ private fun LibrarySettingsList(
 
 @Composable
 fun ServerTypeSelection(
-	librarySettingsViewModel: LibrarySettingsViewModel,
-	undoBackStack: BuildUndoBackStack,
-	modifier: Modifier = Modifier,
-	onServerTypeSelectionFinished: () -> Unit = {},
+    librarySettingsViewModel: LibrarySettingsViewModel,
+    undoBackStack: UndoStack,
+    modifier: Modifier = Modifier,
+    onServerTypeSelectionFinished: () -> Unit = {},
 ) {
 	val backAction = { onServerTypeSelectionFinished(); true.toPromise() }
 	undoBackStack.addAction(backAction)
@@ -769,11 +769,11 @@ fun ServerTypeSelection(
 @OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun LibrarySettingsView(
-	librarySettingsViewModel: LibrarySettingsViewModel,
-	navigateApplication: NavigateApplication,
-	stringResources: GetStringResources,
-	userSslCertificates: ProvideUserSslCertificates,
-	undoBackStack: BuildUndoBackStack,
+    librarySettingsViewModel: LibrarySettingsViewModel,
+    navigateApplication: NavigateApplication,
+    stringResources: GetStringResources,
+    userSslCertificates: ProvideUserSslCertificates,
+    undoBackStack: UndoStack,
 ) {
 	ControlSurface {
 		RemoveServerConfirmationDialog(

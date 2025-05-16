@@ -52,7 +52,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListContentType
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
-import com.lasthopesoftware.bluewater.shared.android.BuildUndoBackStack
+import com.lasthopesoftware.bluewater.shared.android.UndoStack
 import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
@@ -78,10 +78,10 @@ private val boxHeight = expandedTitleHeight + appBarHeight
 @OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun ActiveFileDownloadsView(
-	activeFileDownloadsViewModel: ActiveFileDownloadsViewModel,
-	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewFileItem>,
-	applicationNavigation: NavigateApplication,
-	undoBackStack: BuildUndoBackStack,
+    activeFileDownloadsViewModel: ActiveFileDownloadsViewModel,
+    trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewFileItem>,
+    applicationNavigation: NavigateApplication,
+    undoBackStack: UndoStack,
 ) {
 	@Composable
 	fun RenderTrackHeaderItem(storedFile: StoredFile) {

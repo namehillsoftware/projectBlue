@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
-import com.lasthopesoftware.bluewater.shared.android.BuildUndoBackStack
+import com.lasthopesoftware.bluewater.shared.android.UndoStack
 
 /**
  * View Models that work best when declared with a local ViewModelOwner
@@ -18,5 +18,5 @@ interface ScopedViewModelDependencies : ReusedViewModelDependencies {
 	val searchFilesViewModel: SearchFilesViewModel
 	val librarySettingsViewModel: LibrarySettingsViewModel
 	val fileDetailsViewModel: FileDetailsViewModel
-	val undoBackStackBuilder: BuildUndoBackStack
+	val undoBackStackBuilder: UndoStack
 }
