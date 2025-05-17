@@ -20,7 +20,7 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionF
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
-import com.lasthopesoftware.bluewater.shared.android.BuildUndoBackStack
+import com.lasthopesoftware.bluewater.shared.android.UndoStack
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.ViewModelInitAction
 import com.lasthopesoftware.promises.extensions.suspend
@@ -50,19 +50,19 @@ fun LoadedItemListView(viewModelDependencies: ScopedViewModelDependencies, libra
 
 @Composable
 private fun LoadedItemListView(
-	libraryId: LibraryId,
-	item: IItem?,
-	itemListViewModel: ItemListViewModel,
-	fileListViewModel: FileListViewModel,
-	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider,
-	childItemViewModelProvider: PooledCloseablesViewModel<ReusableChildItemViewModel>,
-	applicationNavigation: NavigateApplication,
-	playbackLibraryItems: PlaybackLibraryItems,
-	playbackServiceController: ControlPlaybackService,
-	connectionStatusViewModel: ConnectionStatusViewModel,
-	undoBackStack: BuildUndoBackStack,
+    libraryId: LibraryId,
+    item: IItem?,
+    itemListViewModel: ItemListViewModel,
+    fileListViewModel: FileListViewModel,
+    nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
+    itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+    reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider,
+    childItemViewModelProvider: PooledCloseablesViewModel<ReusableChildItemViewModel>,
+    applicationNavigation: NavigateApplication,
+    playbackLibraryItems: PlaybackLibraryItems,
+    playbackServiceController: ControlPlaybackService,
+    connectionStatusViewModel: ConnectionStatusViewModel,
+    undoBackStack: UndoStack,
 ) {
 	var isConnectionLost by remember { mutableStateOf(false) }
 	var initializeConnection by remember { mutableStateOf(false) }

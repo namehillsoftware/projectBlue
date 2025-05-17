@@ -56,7 +56,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
-import com.lasthopesoftware.bluewater.shared.android.BuildUndoBackStack
+import com.lasthopesoftware.bluewater.shared.android.UndoStack
 import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
@@ -159,7 +159,7 @@ fun SearchFilesView(
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	applicationNavigation: NavigateApplication,
 	playbackServiceController: ControlPlaybackService,
-	backStackBuilder: BuildUndoBackStack
+	backStackBuilder: UndoStack
 ) {
 	val files by searchFilesViewModel.files.subscribeAsState()
 	var isConnectionLost by remember { mutableStateOf(false) }
