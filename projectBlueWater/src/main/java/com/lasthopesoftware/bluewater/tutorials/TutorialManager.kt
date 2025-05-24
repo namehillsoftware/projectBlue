@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.tutorials
 
 import android.content.Context
-import com.lasthopesoftware.bluewater.repository.InsertBuilder
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.repository.fetchFirst
 import com.lasthopesoftware.bluewater.tutorials.DisplayedTutorialEntityInformation.tableName
@@ -9,6 +8,7 @@ import com.lasthopesoftware.bluewater.tutorials.DisplayedTutorialEntityInformati
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.querydroid.SqLiteAssistants
 
 class TutorialManager(private val context: Context, private val tutorialCache: CacheTutorialInformation = TutorialInformationCache) : ManageTutorials {
 	object KnownTutorials {
@@ -18,9 +18,9 @@ class TutorialManager(private val context: Context, private val tutorialCache: C
 
 	companion object {
 		private val insertQuery by lazy {
-			InsertBuilder.fromTable(tableName)
+			SqLiteAssistants.InsertBuilder.fromTable(tableName)
 				.addColumn(tutorialKeyColumn)
-				.build()
+				.buildQuery()
 		}
 	}
 

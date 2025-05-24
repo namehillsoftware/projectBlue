@@ -18,9 +18,9 @@ import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
 import com.lasthopesoftware.policies.retries.CloseableRetryOnRejectionLazyPromise
+import com.lasthopesoftware.promises.extensions.getSafely
 import com.lasthopesoftware.promises.extensions.keepPromise
-import com.lasthopesoftware.promises.getSafely
-import com.lasthopesoftware.promises.toFuture
+import com.lasthopesoftware.promises.extensions.toFuture
 import com.lasthopesoftware.resources.PackageValidator
 import kotlin.math.max
 

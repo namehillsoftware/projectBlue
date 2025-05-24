@@ -5,8 +5,8 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.FileResponses
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
@@ -563,5 +563,17 @@ class LiveMediaCenterConnection(
 		}
 
 		override fun toString(): String = byteStream.toString()
+	}
+
+	private object FileResponses : PromisedResponse<String, Collection<ServiceFile>>, ImmediateResponse<Collection<ServiceFile>, List<ServiceFile>> {
+		private val emptyListPromise by lazy { Promise<Collection<ServiceFile>>(emptyList()) }
+
+		override fun promiseResponse(stringList: String?): Promise<Collection<ServiceFile>> {
+			return stringList?.let(FileStringListUtilities::promiseParsedFileStringList) ?: emptyListPromise
+		}
+
+		override fun respond(serviceFiles: Collection<ServiceFile>): List<ServiceFile> {
+			return if (serviceFiles is List<*>) serviceFiles as List<ServiceFile> else serviceFiles.toList()
+		}
 	}
 }
