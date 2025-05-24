@@ -5,8 +5,8 @@ import androidx.annotation.Keep
 import com.lasthopesoftware.bluewater.IdentifiableEntity
 import com.lasthopesoftware.bluewater.repository.IEntityCreator
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
-import com.lasthopesoftware.bluewater.repository.InsertBuilder
 import com.lasthopesoftware.bluewater.repository.fetch
+import com.namehillsoftware.querydroid.SqLiteAssistants
 import com.namehillsoftware.querydroid.SqLiteCommand
 
 @Keep
@@ -88,12 +88,12 @@ class StoredItem : IdentifiableEntity, IEntityCreator, IEntityUpdater {
 		const val itemTypeColumnName = "itemType"
 		private const val createTableSql = "CREATE TABLE IF NOT EXISTS `StoredItems` (`id` INTEGER PRIMARY KEY AUTOINCREMENT , `itemType` VARCHAR , `libraryId` INTEGER , `serviceId` VARCHAR , UNIQUE (`itemType`,`libraryId`,`serviceId`) ) "
 
-		private fun storedItemsInsertStatement(tableName: String) = InsertBuilder
+		private fun storedItemsInsertStatement(tableName: String) = SqLiteAssistants.InsertBuilder
 			.fromTable(tableName)
 			.addColumn("id")
 			.addColumn(itemTypeColumnName)
 			.addColumn(libraryIdColumnName)
 			.addColumn(serviceIdColumnName)
-			.build()
+			.buildQuery()
 	}
 }

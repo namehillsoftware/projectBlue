@@ -5,9 +5,9 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.preference.PreferenceManager
 import com.lasthopesoftware.bluewater.repository.IEntityCreator
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
-import com.lasthopesoftware.bluewater.repository.InsertBuilder
 import com.lasthopesoftware.bluewater.tutorials.DisplayedTutorialEntityInformation.tableName
 import com.lasthopesoftware.bluewater.tutorials.DisplayedTutorialEntityInformation.tutorialKeyColumn
+import com.namehillsoftware.querydroid.SqLiteAssistants
 import com.namehillsoftware.querydroid.SqLiteCommand
 
 class TutorialMigrator(private val context: Context) : IEntityCreator, IEntityUpdater {
@@ -39,9 +39,9 @@ class TutorialMigrator(private val context: Context) : IEntityCreator, IEntityUp
 			`$tutorialKeyColumn` VARCHAR UNIQUE
 			)""")
 
-		val insertQuery = InsertBuilder.fromTable(tableName)
+		val insertQuery = SqLiteAssistants.InsertBuilder.fromTable(tableName)
 			.addColumn(tutorialKeyColumn)
-			.build()
+			.buildQuery()
 
 		val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 		val insertArtSql = SqLiteCommand(db, insertQuery)

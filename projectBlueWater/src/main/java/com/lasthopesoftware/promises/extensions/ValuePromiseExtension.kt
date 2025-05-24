@@ -8,6 +8,7 @@ import com.google.common.util.concurrent.SettableFuture
 import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import io.reactivex.rxjava3.core.Completable
@@ -21,8 +22,13 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executor
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -33,6 +39,13 @@ infix fun <Resolution, Response> Promise<Resolution>.excuse(response: ImmediateR
 	this.excuse(response)
 
 fun <Resolution> Executor.preparePromise(messageWriter: CancellableMessageWriter<Resolution>) = QueuedCancellablePromise(messageWriter, this)
+
+// ListenableFuture has unique cancellation characteristics in that it overrides cancellation handling of the underlying
+// setting function, which is not a good idea. So this uses a custom, simpler FuturePromise implementation.
+fun <Resolution> Promise<Resolution>.toFuture(): Future<Resolution?> = FuturePromise(this)
+
+// Get the result in less time than the Application Not Responding error from Android
+fun <Resolution> Future<Resolution>.getSafely(): Resolution? = get(3, TimeUnit.SECONDS)
 
 @Composable
 fun <T> Promise<T>.toState(initialValue: T): State<T> = produceState(initialValue) {
@@ -56,8 +69,8 @@ fun <T : Any> Observable<T>.promiseFirstResult(): Promise<T> = ObserverPromise(t
 
 fun <T> ListenableFuture<T>.toPromise(executor: Executor): Promise<T> = PromisedListenableFuture(this, executor)
 
-fun <T> Promise<T>.toListenableFuture(): ListenableFuture<T> = SettableFuture.create<T>().apply {
-	then(::set, ::setException)
+fun <T> Promise<T>.toListenableFuture(): ListenableFuture<T> = SettableFuture.create<T>().also {
+	then(SettableFutureResolvedResponse(it), SettableFutureRejectedResponse(it))
 }
 
 fun Job.toPromise(): Promise<Unit> = PromiseJob(this)
@@ -85,7 +98,6 @@ fun <T> Promise<T>?.keepPromise(): Promise<T?> = this as? Promise<T?> ?: Promise
 
 fun <T> Promise<T>?.keepPromise(default: T): Promise<T> = this ?: default.toPromise()
 
-fun <T> Promise<T>.cancelBackUnitResponse(): Promise<Unit> = this.cancelBackThen(UnitResponse.respond())
 fun <T> Promise<T>.unitResponse(): Promise<Unit> = this.then(UnitResponse.respond())
 
 fun <T> Promise<T>.guaranteedUnitResponse(): Promise<Unit> = this.then(
@@ -208,5 +220,62 @@ private class PromiseDeferred<T>(private val deferred: Deferred<T>) : Promise<T>
 	override fun invoke(cause: Throwable?) {
 		if (cause == null) resolve(deferred.getCompleted())
 		else reject(cause)
+	}
+}
+
+private class FuturePromise<Resolution>(promise: Promise<Resolution>) : Future<Resolution?> {
+	private val cancellationProxy = CancellationProxy()
+	private val countDownLatch = CountDownLatch(1)
+	private val message = AtomicReference<Pair<Resolution?, Throwable?>?>()
+
+	init {
+		cancellationProxy.doCancel(promise)
+		promise
+			.then({ r ->
+				if (message.compareAndSet(null, Pair(r, null)))
+					countDownLatch.countDown()
+			}, { e ->
+				if (message.compareAndSet(null, Pair(null, e)))
+					countDownLatch.countDown()
+			})
+	}
+
+	override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
+		if (isDone) return false
+		cancellationProxy.cancellationRequested()
+		return true
+	}
+
+	override fun isCancelled(): Boolean = cancellationProxy.isCancelled
+
+	override fun isDone(): Boolean = message.get() != null
+
+	override fun get(): Resolution? {
+		countDownLatch.await()
+		return getResolution()
+	}
+
+	override fun get(timeout: Long, unit: TimeUnit): Resolution? {
+		if (countDownLatch.await(timeout, unit)) return getResolution()
+		throw TimeoutException("Timed out waiting $timeout $unit for promise to resolve")
+	}
+
+	private fun getResolution(): Resolution? = message.get()?.let { (resolution, rejection) ->
+		if (rejection != null)
+			throw ExecutionException(rejection)
+		resolution
+	}
+}
+
+private class SettableFutureResolvedResponse<Resolution>(private val future: SettableFuture<Resolution>): ImmediateResponse<Resolution, Unit> {
+	@Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
+	override fun respond(resolution: Resolution) {
+		future.set(resolution)
+	}
+}
+
+private class SettableFutureRejectedResponse<Resolution>(private val future: SettableFuture<Resolution>): ImmediateResponse<Throwable, Unit> {
+	override fun respond(rejection: Throwable) {
+		future.setException(rejection)
 	}
 }

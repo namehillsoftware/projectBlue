@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.shared.promises.extensions
 
-import com.lasthopesoftware.promises.toFuture
+import com.lasthopesoftware.promises.extensions.toFuture
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 import java.util.concurrent.Future

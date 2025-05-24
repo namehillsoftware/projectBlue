@@ -4,11 +4,11 @@
 
 ### An alternative, open source streaming music client
 
-project blue is a streaming audio client for various servers. Stream your favorite music and audio from your server wherever you are!
+project blue is a streaming audio client for your home media server. Stream your favorite music and audio from your server wherever you are!
 
 Its features include:
 
-* Reliable streaming from your home server via an intuitive layout.
+* Reliable streaming from your home server via an intuitive layout. Supported servers:
   * [JRiver Media Center](http://jriver.com/)
   * Subsonic (alpha - tested with [Navidrome](https://www.navidrome.org/) only)
 * Caching of audio files during playback.

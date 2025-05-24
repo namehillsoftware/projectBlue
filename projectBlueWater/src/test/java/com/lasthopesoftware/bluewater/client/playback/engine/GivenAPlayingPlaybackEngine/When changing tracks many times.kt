@@ -19,9 +19,9 @@ import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManag
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.ForwardedResponse.Companion.thenForward
-import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.PromiseDelay
-import com.lasthopesoftware.promises.toFuture
+import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.toFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk

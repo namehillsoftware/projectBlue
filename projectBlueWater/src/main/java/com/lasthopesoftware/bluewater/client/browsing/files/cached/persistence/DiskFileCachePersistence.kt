@@ -15,11 +15,11 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.Ca
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile.Companion.UNIQUE_KEY
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile.Companion.tableName
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.querydroid.SqLiteAssistants
 import java.io.File
 import java.io.IOException
 
@@ -33,7 +33,7 @@ class DiskFileCachePersistence(
 	companion object {
 		private val logger by lazyLogger<DiskFileCachePersistence>()
 		private val cachedFileSqlInsert by lazy {
-			fromTable(tableName)
+			SqLiteAssistants.InsertBuilder.fromTable(tableName)
 				.addColumn(CACHE_NAME)
 				.addColumn(FILE_NAME)
 				.addColumn(FILE_SIZE)
@@ -42,7 +42,7 @@ class DiskFileCachePersistence(
 				.addColumn(CREATED_TIME)
 				.addColumn(LAST_ACCESSED_TIME)
 				.withReplacement()
-				.build()
+				.buildQuery()
 		}
 	}
 

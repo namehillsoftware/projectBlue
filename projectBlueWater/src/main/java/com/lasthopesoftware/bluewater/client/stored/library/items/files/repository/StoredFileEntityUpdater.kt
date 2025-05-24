@@ -6,7 +6,6 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.annotation.Keep
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation.tableName
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
-import com.lasthopesoftware.bluewater.repository.InsertBuilder
 import com.lasthopesoftware.bluewater.repository.fetch
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.resources.uri.MediaCollections
@@ -135,7 +134,7 @@ object StoredFileEntityUpdater : IEntityUpdater {
 			.setUri(uri)
 	}
 
-	private fun storedFilesInsertStatement(tableName: String) = InsertBuilder
+	private fun storedFilesInsertStatement(tableName: String) = SqLiteAssistants.InsertBuilder
 		.fromTable(tableName)
 		.addColumn("id")
 		.addColumn(StoredFileEntityInformation.libraryIdColumnName)
@@ -143,5 +142,5 @@ object StoredFileEntityUpdater : IEntityUpdater {
 		.addColumn(StoredFileEntityInformation.uriColumnName)
 		.addColumn(StoredFileEntityInformation.isDownloadCompleteColumnName)
 		.addColumn(StoredFileEntityInformation.isOwnerColumnName)
-		.build()
+		.buildQuery()
 }

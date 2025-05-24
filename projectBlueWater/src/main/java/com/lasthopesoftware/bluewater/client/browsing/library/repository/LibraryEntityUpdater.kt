@@ -19,10 +19,10 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.tableName
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
-import com.lasthopesoftware.bluewater.repository.InsertBuilder
 import com.lasthopesoftware.bluewater.repository.fetch
 import com.lasthopesoftware.resources.emptyByteArray
 import com.lasthopesoftware.resources.io.fromJson
+import com.namehillsoftware.querydroid.SqLiteAssistants
 import com.namehillsoftware.querydroid.SqLiteCommand
 
 @OptIn(ExperimentalStdlibApi::class)
@@ -318,7 +318,7 @@ object LibraryEntityUpdater : IEntityUpdater {
 		)
 	}
 
-	private fun libraryInsertStatement(tableName: String) = InsertBuilder
+	private fun libraryInsertStatement(tableName: String) = SqLiteAssistants.InsertBuilder
 		.fromTable(tableName)
 		.addColumn("id")
 		.addColumn(isRepeatingColumn)
@@ -330,5 +330,5 @@ object LibraryEntityUpdater : IEntityUpdater {
 		.addColumn(savedTracksStringColumn)
 		.addColumn(serverTypeColumn)
 		.addColumn(connectionSettingsColumn)
-		.build()
+		.buildQuery()
 }

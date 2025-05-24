@@ -54,7 +54,6 @@ import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 
 private val optionsPadding = PaddingValues(start = 32.dp, end = 32.dp)
 
-@OptIn(ExperimentalFoundationApi::class)
 private fun LazyListScope.settingsList(
 	standardRowModifier: Modifier,
 	rowFontSize: TextUnit,
@@ -229,7 +228,6 @@ private fun LazyListScope.settingsList(
 	}
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ApplicationSettingsViewVertical(
 	applicationSettingsViewModel: ApplicationSettingsViewModel,

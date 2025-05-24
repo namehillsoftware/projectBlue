@@ -8,12 +8,12 @@ import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem.ItemType
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemHelpers.storedItemType
-import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.repository.fetch
 import com.lasthopesoftware.bluewater.repository.fetchFirst
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.querydroid.SqLiteAssistants
 
 class StoredItemAccess(private val context: Context) : AccessStoredItems {
 	override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier): Promise<Boolean> =
@@ -158,11 +158,11 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 
 	companion object {
 		private val storedItemInsertSql by lazy {
-			fromTable(StoredItem.tableName)
+			SqLiteAssistants.InsertBuilder.fromTable(StoredItem.tableName)
 				.addColumn(StoredItem.libraryIdColumnName)
 				.addColumn(StoredItem.serviceIdColumnName)
 				.addColumn(StoredItem.itemTypeColumnName)
-				.build()
+				.buildQuery()
 		}
 
 		private fun isItemMarkedForSync(helper: RepositoryAccessHelper, libraryId: LibraryId, item: IItem, itemType: ItemType): Boolean =

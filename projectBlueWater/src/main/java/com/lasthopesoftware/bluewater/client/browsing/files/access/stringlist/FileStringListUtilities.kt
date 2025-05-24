@@ -5,6 +5,7 @@ import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
+import org.jsoup.internal.StringUtil
 import kotlin.coroutines.cancellation.CancellationException
 
 object FileStringListUtilities {
@@ -51,15 +52,19 @@ object FileStringListUtilities {
 		val fileSize = serviceFiles.size
 		// Take a guess that most keys will not be greater than 8 characters and add some more
 		// for the first characters
-		val sb = StringBuilder(fileSize * 9 + 8)
-		sb.append("2;").append(fileSize).append(";-1;")
+		val sb = StringUtil.borrowBuilder()
+		try {
+			sb.append("2;").append(fileSize).append(";-1;")
 
-		for (serviceFile in serviceFiles) {
-			if (cancellationSignal.isCancelled) throw serializingCancelledException()
-			sb.append(serviceFile.key).append(";")
+			for (serviceFile in serviceFiles) {
+				if (cancellationSignal.isCancelled) throw serializingCancelledException()
+				sb.append(serviceFile.key).append(";")
+			}
+
+			return sb.toString()
+		} finally {
+		    StringUtil.releaseBuilder(sb)
 		}
-
-		return sb.toString()
 	}
 
 	private fun parsingCancelledException() = CancellationException("Parsing cancelled.")

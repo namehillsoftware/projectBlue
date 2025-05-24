@@ -5,11 +5,11 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation
-import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.lazyj.Lazy
+import com.namehillsoftware.querydroid.SqLiteAssistants.InsertBuilder.fromTable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.AfterClass
 import org.junit.Test
@@ -25,7 +25,7 @@ class WhenCollectingTheStoredFiles {
 				.addColumn(StoredFileEntityInformation.serviceIdColumnName)
 				.addColumn(StoredFileEntityInformation.libraryIdColumnName)
 				.addColumn(StoredFileEntityInformation.isOwnerColumnName)
-				.build()
+				.buildQuery()
 
 			promiseTableMessage<Unit, StoredFile> {
 				RepositoryAccessHelper(ApplicationProvider.getApplicationContext()).use { repositoryAccessHelper ->
