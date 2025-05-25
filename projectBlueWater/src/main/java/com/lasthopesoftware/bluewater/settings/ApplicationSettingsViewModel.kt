@@ -49,6 +49,10 @@ class ApplicationSettingsViewModel(
 		libraryChosenSubscription.close()
 	}
 
+	override fun act() {
+		mutableIsLoading.value = false
+	}
+
 	fun loadSettings(): Promise<*> {
 		mutableIsLoading.value = true
 
@@ -79,7 +83,7 @@ class ApplicationSettingsViewModel(
 					}
 				)
 			}
-			.then { it -> mutableLibraries.value = it.sortedBy { it.first.id }.toList() }
+			.then { it -> mutableLibraries.value = it.sortedBy { it.first.id } }
 
 		return Promise
 			.whenAll(promisedSimpleValuesUpdate, promisedEngineTypeUpdate, promisedLibrariesUpdate)
@@ -118,8 +122,4 @@ class ApplicationSettingsViewModel(
 					chosenLibraryId = chosenLibraryId.value.id
 				)
 			)
-
-	override fun act() {
-		mutableIsLoading.value = false
-	}
 }
