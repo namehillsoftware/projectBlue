@@ -11,14 +11,18 @@ import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPl
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeMappedPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakePreparedPlayableFile
+import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
@@ -31,15 +35,14 @@ class `When Playback Is Resumed` {
 	}
 
 	private val mut by lazy {
-		val fakePlaybackPreparerProvider = FakeMappedPlayableFilePreparationSourceProvider(
-            listOf(
-                ServiceFile("1"),
-                ServiceFile("2"),
-                ServiceFile("3"),
-                ServiceFile("4"),
-                ServiceFile("5")
-            )
-        )
+		val playlist = listOf(
+			ServiceFile("1"),
+			ServiceFile("2"),
+			ServiceFile("3"),
+			ServiceFile("4"),
+			ServiceFile("5")
+		)
+
 		val library = Library(id = libraryId)
 		val libraryProvider = FakeLibraryRepository(library)
 		val nowPlayingRepository =
@@ -49,7 +52,22 @@ class `When Playback Is Resumed` {
             )
 		val preparedPlaybackQueueResourceManagement =
             PreparedPlaybackQueueResourceManagement(
-                fakePlaybackPreparerProvider,
+                mockk {
+					every { providePlayableFilePreparationSource() } returns mockk {
+						every { promisePreparedPlaybackFile(LibraryId(libraryId), any(), any()) } answers {
+							val prepareAt = thirdArg<Duration>()
+							preparedAt = prepareAt
+							val playbackHandler = ResolvablePlaybackHandler()
+							playbackHandler.setCurrentPosition(prepareAt.millis.toInt())
+
+							FakePreparedPlayableFile(playbackHandler).toPromise()
+						}
+
+						val firstPlaybackHandler = ResolvablePlaybackHandler()
+						firstPlaybackHandler.setCurrentPosition(450)
+						every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile("1"), Duration.ZERO) } returns FakePreparedPlayableFile(firstPlaybackHandler).toPromise()
+					}
+				},
                 FakePlaybackQueueConfiguration(maxQueueSize = 0)
             )
 		val playbackBootstrapper = ManagedPlaylistPlayer(
@@ -66,7 +84,7 @@ class `When Playback Is Resumed` {
                 playbackBootstrapper,
                 playbackBootstrapper,
             )
-		Triple(fakePlaybackPreparerProvider, nowPlayingRepository, playbackEngine)
+		Triple(playlist, nowPlayingRepository, playbackEngine)
 	}
 
 	private var preparedAt: Duration? = null
@@ -75,34 +93,18 @@ class `When Playback Is Resumed` {
 
 	@BeforeAll
 	fun before() {
-		val (fakePlaybackPreparerProvider, nowPlayingRepository, playbackEngine) = mut
+		val (playlist, nowPlayingRepository, playbackEngine) = mut
 
-		val deferredResume = DeferredPromise(Unit)
+		val collectedFiles = mutableListOf<PositionedPlayingFile?>()
 
-		fakePlaybackPreparerProvider.preparationSourceBeingProvided { serviceFile, deferredPreparedPlayableFile ->
-			val playbackHandler = deferredPreparedPlayableFile.resolve()
-			if (serviceFile == ServiceFile("1"))
-				playbackHandler.setCurrentPosition(450)
-
-			if (serviceFile == ServiceFile("2")) {
-				preparedAt = deferredPreparedPlayableFile.preparedAt
-				deferredResume.resolve()
-			}
-		}
-
-		val promisedCollectedFiles = Promise {
-			val collectedFiles = mutableListOf<PositionedPlayingFile?>()
-			playbackEngine.setOnPlayingFileChanged { _, f ->
-				collectedFiles.add(f)
-
-				deferredResume.then { _ -> it.sendResolution(collectedFiles) }
-			}
+		playbackEngine.setOnPlayingFileChanged { _, f ->
+			collectedFiles.add(f)
 		}
 
 		playbackEngine
 			.startPlaylist(
                 LibraryId(libraryId),
-				fakePlaybackPreparerProvider.deferredResolutions.keys.toList(),
+				playlist,
 				0
 			)
 			.toExpiringFuture()
@@ -112,7 +114,17 @@ class `When Playback Is Resumed` {
 
 		playbackEngine.skipToNext().toExpiringFuture().get()
 
+		val deferredResume = DeferredPromise(Unit)
+		val promisedCollectedFiles = Promise {
+			playbackEngine.setOnPlayingFileChanged { _, f ->
+				collectedFiles.add(f)
+
+				deferredResume.then { _ -> it.sendResolution(collectedFiles) }
+			}
+		}
+
 		playbackEngine.resume().toExpiringFuture().get()
+		deferredResume.resolve()
 
 		positionedFiles = promisedCollectedFiles.toExpiringFuture().get()
 
