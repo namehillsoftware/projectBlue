@@ -166,10 +166,9 @@ private fun LazyListScope.settingsList(
 		}
 	}
 
-	items(libraries) { (libraryId, name) ->
+	items(libraries, key = { (l, _) -> l }) { (libraryId, name) ->
 		Row(
-			modifier = standardRowModifier
-				.clickable { applicationNavigation.viewServerSettings(libraryId) },
+			modifier = standardRowModifier.clickable { applicationNavigation.viewServerSettings(libraryId) },
 			verticalAlignment = Alignment.CenterVertically,
 		) {
 			Text(
