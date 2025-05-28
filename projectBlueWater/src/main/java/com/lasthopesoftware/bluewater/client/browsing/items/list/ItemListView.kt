@@ -51,16 +51,16 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.LabelledPlayButton
 import com.lasthopesoftware.bluewater.client.browsing.files.list.LabelledShuffleButton
+import com.lasthopesoftware.bluewater.client.browsing.files.list.LabelledSyncButton
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackTitleItemView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledActiveDownloadsButton
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSearchButton
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.MoreFileOptionsMenu
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.MoreItemsOnlyOptionsMenu
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSettingsButton
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledRefreshButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
@@ -381,16 +381,12 @@ fun ItemListView(
 							serviceFilesListState = fileListViewModel,
 						)
 
+						LabelledSyncButton(fileListViewModel)
+
 						LabelledShuffleButton(
 							libraryState = itemListViewModel,
 							playbackServiceController = playbackServiceController,
 							serviceFilesListState = fileListViewModel,
-						)
-
-						LabelledRefreshButton(
-							itemListViewModel,
-							fileListViewModel,
-							focusRequester = refreshButtonFocus,
 						)
 					} else {
 						LabelledActiveDownloadsButton(
@@ -398,15 +394,14 @@ fun ItemListView(
 							applicationNavigation = applicationNavigation,
 						)
 
+						LabelledSettingsButton(
+							itemListViewModel,
+							applicationNavigation
+						)
+
 						LabelledSearchButton(
 							itemListViewModel = itemListViewModel,
 							applicationNavigation = applicationNavigation,
-						)
-
-						LabelledRefreshButton(
-							itemListViewModel,
-							fileListViewModel,
-							focusRequester = refreshButtonFocus,
 						)
 					}
 				}
@@ -527,20 +522,16 @@ fun ItemListView(
 									.padding(topRowOuterPadding)
 							)
 
-							val moreMenuModifier = Modifier
-								.align(Alignment.TopEnd)
-								.padding(
-									vertical = topRowOuterPadding,
-									horizontal = viewPaddingUnit
-								)
-
-							if (files.any()) MoreFileOptionsMenu(
-								fileListViewModel,
-								moreMenuModifier
-							) else MoreItemsOnlyOptionsMenu(
+							UnlabelledRefreshButton(
 								itemListViewModel,
-								applicationNavigation,
-								moreMenuModifier
+								fileListViewModel,
+								Modifier
+									.align(Alignment.TopEnd)
+									.padding(
+										vertical = topRowOuterPadding,
+										horizontal = viewPaddingUnit * 2
+									),
+								refreshButtonFocus
 							)
 
 							ProvideTextStyle(MaterialTheme.typography.h5) {
@@ -562,7 +553,7 @@ fun ItemListView(
 									derivedStateOf {
 										linearInterpolation(
 											viewPaddingUnit * 2,
-											topMenuIconSize + viewPaddingUnit,
+											topMenuIconSize + viewPaddingUnit * 4,
 											headerCollapseProgress
 										)
 									}
@@ -621,12 +612,9 @@ fun ItemListView(
 						}
 
 						if (!isFilesLoading && !isItemsLoading) {
-							if (files.any()) MoreFileOptionsMenu(
-								fileListViewModel,
-								Modifier.padding(horizontal = viewPaddingUnit)
-							) else MoreItemsOnlyOptionsMenu(
+							UnlabelledRefreshButton(
 								itemListViewModel,
-								applicationNavigation,
+								fileListViewModel,
 								Modifier.padding(horizontal = viewPaddingUnit)
 							)
 						}

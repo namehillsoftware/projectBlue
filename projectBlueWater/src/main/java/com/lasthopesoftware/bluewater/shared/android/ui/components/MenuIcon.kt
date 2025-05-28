@@ -42,14 +42,8 @@ fun RowScope.ColumnMenuIcon(
 ) {
 	MenuIcon(
 		onClick = onClick,
-		icon = {
-			Icon(
-				painter = iconPainter,
-				contentDescription = contentDescription,
-				modifier = Modifier.size(Dimensions.topMenuIconSize),
-				tint = LocalControlColor.current
-			)
-		},
+		iconPainter = iconPainter,
+		contentDescription = contentDescription,
 		modifier = Modifier
 			.weight(1f)
 			.then(modifier),
@@ -82,6 +76,39 @@ fun RowScope.ColumnMenuIcon(
 		labelColor = labelColor,
 		labelModifier = labelModifier,
 		labelMaxLines = labelMaxLines,
+	)
+}
+
+@Composable
+fun MenuIcon(
+	onClick: () -> Unit,
+	iconPainter: Painter,
+	contentDescription: String,
+	modifier: Modifier = Modifier,
+	label: String? = null,
+	labelColor: Color = LocalContentColor.current,
+	labelModifier: Modifier = Modifier,
+	labelMaxLines: Int = 1,
+	isDefault: Boolean = false,
+	focusRequester: FocusRequester? = null,
+) {
+	MenuIcon(
+		onClick = onClick,
+		icon = {
+			Icon(
+				painter = iconPainter,
+				contentDescription = contentDescription,
+				modifier = Modifier.size(Dimensions.topMenuIconSize),
+				tint = LocalControlColor.current
+			)
+		},
+		modifier = modifier,
+		label = label,
+		labelColor = labelColor,
+		labelModifier = labelModifier,
+		labelMaxLines = labelMaxLines,
+		isDefault = isDefault,
+		focusRequester = focusRequester,
 	)
 }
 
@@ -172,6 +199,22 @@ fun RowScope.LabelledRefreshButton(
 		label = refreshButtonLabel,
 		labelModifier = modifier,
 		labelMaxLines = 1,
+		focusRequester = focusRequester,
+	)
+}
+
+@Composable
+fun UnlabelledRefreshButton(
+	onClick: () -> Unit,
+	modifier: Modifier = Modifier,
+	focusRequester: FocusRequester? = null,
+) {
+	MenuIcon(
+		onClick = onClick,
+		iconPainter = painterResource(id = R.drawable.refresh_36),
+		contentDescription = stringResource(id = R.string.refresh),
+		label = null,
+		modifier = modifier,
 		focusRequester = focusRequester,
 	)
 }
