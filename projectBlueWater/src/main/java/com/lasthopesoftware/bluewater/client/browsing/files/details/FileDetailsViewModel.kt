@@ -62,12 +62,7 @@ class FileDetailsViewModel(
 	private var associatedPlaylist = emptyList<ServiceFile>()
 	private var activePositionedFile: PositionedFile? = null
 	private val propertyUpdateRegistrations = registerForApplicationMessages.registerReceiver { message: FilePropertiesUpdatedMessage ->
-		if (message.urlServiceKey == associatedUrlKey)
-			activeLibraryId?.also { l ->
-				activePositionedFile?.serviceFile?.also {  sf ->
-					loadFileProperties(l, sf)
-				}
-			}
+		if (message.urlServiceKey == associatedUrlKey) reloadFileProperties()
 	}
 
 	private val mutableFileName = MutableInteractionState("")
@@ -133,6 +128,15 @@ class FileDetailsViewModel(
 			.must(ImmediateAction{ mutableIsLoading.value = false })
 			.unitResponse()
 	}
+
+	fun reloadFileProperties(): Promise<Unit> =
+		activeLibraryId
+			?.let { l ->
+				activePositionedFile?.serviceFile?.let {  sf ->
+					loadFileProperties(l, sf)
+				}
+			}
+			.keepPromise(Unit)
 
 	fun addToNowPlaying() {
 		val serviceFile = activePositionedFile?.serviceFile ?: return

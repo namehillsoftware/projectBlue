@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details
 
 import android.graphics.Bitmap
 import androidx.activity.compose.LocalActivity
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -84,17 +83,19 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIco
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
+import com.lasthopesoftware.bluewater.shared.android.ui.components.UnlabelledRefreshButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberSystemUiController
 import com.lasthopesoftware.bluewater.shared.android.ui.indicateFocus
+import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.appBarHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.menuHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.rowPadding
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.topMenuIconSize
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.topRowOuterPadding
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.suspend
@@ -102,7 +103,7 @@ import com.lasthopesoftware.promises.extensions.toState
 import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
 import kotlinx.coroutines.launch
 
-private val viewPadding = Dimensions.viewPaddingUnit
+private val viewPadding = viewPaddingUnit
 
 @Composable
 private fun StaticFileMenu(viewModel: FileDetailsViewModel, mediaStylePalette: MediaStylePalette) {
@@ -322,7 +323,7 @@ private fun FileDetailsEditor(
 				contentColor = palette.primaryTextColor,
 			) {
 				Column(
-					modifier = Modifier.padding(Dimensions.viewPaddingUnit * 2),
+					modifier = Modifier.padding(viewPaddingUnit * 2),
 				) {
 					Row(
 						modifier = Modifier
@@ -470,7 +471,7 @@ private fun FileDetailsEditor(
 }
 
 @Composable
-@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class)
 fun FileDetailsView(
 	viewModel: FileDetailsViewModel,
 	navigateApplication: NavigateApplication,
@@ -504,7 +505,7 @@ fun FileDetailsView(
 		val expandedTitlePadding = coverArtContainerHeight + coverArtBottomPadding
 		val titleFontSize = MaterialTheme.typography.h5.fontSize
 		val subTitleFontSize = MaterialTheme.typography.h6.fontSize
-		val guessedRowSpacing = Dimensions.viewPaddingUnit
+		val guessedRowSpacing = viewPaddingUnit
 		val titleHeight =
 			LocalDensity.current.run { titleFontSize.toDp() + subTitleFontSize.toDp() } + guessedRowSpacing * 3
 		val boxHeight = expandedTitlePadding + titleHeight
@@ -670,18 +671,26 @@ fun FileDetailsView(
 							}
 					}
 
-					val headerExpandProgress by remember { derivedStateOf { 1 - headerCollapseProgress } }
-					val topTitlePadding by remember { derivedStateOf { expandedTitlePadding * headerExpandProgress } }
+					val topTitlePadding by remember {
+						derivedStateOf {
+							linearInterpolation(expandedTitlePadding, viewPaddingUnit, headerCollapseProgress)
+						}
+					}
 					Box(
 						modifier = Modifier
 							.padding(top = topTitlePadding)
 							.fillMaxWidth()
 					) {
 						val startPadding by remember { derivedStateOf { viewPadding + 48.dp * headerCollapseProgress } }
+						val endPadding by remember {
+							derivedStateOf {
+								linearInterpolation(viewPadding, topMenuIconSize + viewPaddingUnit * 4, headerCollapseProgress)
+							}
+						}
 						FilePropertyHeader(
 							viewModel,
 							coverArtColorState,
-							modifier = Modifier.padding(start = startPadding, end = viewPadding),
+							modifier = Modifier.padding(start = startPadding, end = endPadding),
 							titleFontSize = titleFontSize,
 							isMarqueeEnabled = !lazyListState.isScrollInProgress
 						)
@@ -700,6 +709,18 @@ fun FileDetailsView(
 			modifier = Modifier
 				.padding(topRowOuterPadding)
 				.align(Alignment.TopStart)
+		)
+
+		UnlabelledRefreshButton(
+			onClick = {
+				viewModel.reloadFileProperties()
+			},
+			modifier = Modifier
+				.padding(
+					vertical = topRowOuterPadding,
+					horizontal = viewPaddingUnit * 2
+				)
+				.align(Alignment.TopEnd)
 		)
 	}
 
@@ -773,7 +794,7 @@ fun FileDetailsView(
 									start = viewPadding,
 									top = viewPadding,
 									bottom = viewPadding,
-									end = Dimensions.viewPaddingUnit * 10 + viewPadding
+									end = viewPaddingUnit * 10 + viewPadding
 								)
 								.fillMaxWidth(),
 							isMarqueeEnabled = !lazyListState.isScrollInProgress
