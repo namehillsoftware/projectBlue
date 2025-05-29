@@ -713,7 +713,7 @@ fun FileDetailsView(
 
 		UnlabelledRefreshButton(
 			onClick = {
-				viewModel.reloadFileProperties()
+				viewModel.promiseLoadedActiveFile()
 			},
 			modifier = Modifier
 				.padding(
@@ -781,28 +781,46 @@ fun FileDetailsView(
 					StaticFileMenu(viewModel, coverArtColorState)
 				}
 
-				val fileProperties by viewModel.fileProperties.subscribeAsState()
-				val lazyListState = rememberLazyListState()
-				LazyColumn(modifier = Modifier.fillMaxWidth(), state = lazyListState) {
-					stickyHeader {
+				Column(modifier = Modifier.fillMaxWidth()) {
+					val fileProperties by viewModel.fileProperties.subscribeAsState()
+					val lazyListState = rememberLazyListState()
+
+					Row(
+						verticalAlignment = Alignment.CenterVertically,
+						modifier = Modifier.height(appBarHeight),
+					) {
 						FilePropertyHeader(
 							viewModel,
 							coverArtColorState,
 							modifier = Modifier
 								.background(coverArtColorState.backgroundColor)
-								.padding(
-									start = viewPadding,
-									top = viewPadding,
-									bottom = viewPadding,
-									end = viewPaddingUnit * 10 + viewPadding
-								)
-								.fillMaxWidth(),
+								.padding(horizontal = viewPaddingUnit)
+								.fillMaxWidth()
+								.weight(1f),
 							isMarqueeEnabled = !lazyListState.isScrollInProgress
+						)
+
+						UnlabelledRefreshButton(
+							onClick = {
+								viewModel.promiseLoadedActiveFile()
+							},
+							modifier = Modifier.padding(horizontal = viewPaddingUnit * 2)
+						)
+
+						Image(
+							painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+							contentDescription = "Close",
+							colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+							modifier = Modifier
+								.padding(horizontal = viewPaddingUnit * 2)
+								.navigable(onClick = navigateApplication::navigateUp),
 						)
 					}
 
-					items(fileProperties) {
-						FilePropertyRow(viewModel, it, coverArtColorState)
+					LazyColumn(modifier = Modifier.weight(1f), state = lazyListState) {
+						items(fileProperties) {
+							FilePropertyRow(viewModel, it, coverArtColorState)
+						}
 					}
 				}
 			}
@@ -812,16 +830,6 @@ fun FileDetailsView(
 				modifier = Modifier.align(Alignment.Center)
 			)
 		}
-
-		Image(
-			painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
-			contentDescription = "Close",
-			colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-			modifier = Modifier
-				.align(Alignment.TopEnd)
-				.padding(top = 12.dp, start = 8.dp, end = 8.dp, bottom = 8.dp)
-				.navigable(onClick = navigateApplication::navigateUp),
-		)
 	}
 
 	Column(modifier = Modifier.fillMaxSize()) {

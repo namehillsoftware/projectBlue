@@ -40,7 +40,7 @@ class FileDetailsViewModel(
 	private val controlPlayback: ControlPlaybackService,
 	registerForApplicationMessages: RegisterForApplicationMessages,
 	private val urlKeyProvider: ProvideUrlKey,
-) : ViewModel() {
+) : ViewModel(), ImmediateAction {
 
 	companion object {
 		private val propertiesToSkip = setOf(
@@ -104,32 +104,40 @@ class FileDetailsViewModel(
 		activePositionedFile = PositionedFile(position, serviceFile)
 		associatedPlaylist = playlist
 
-		mutableIsLoading.value = true
-		val isReadOnlyPromise = connectionPermissions
-			.promiseIsReadOnly(libraryId)
-			.then { r -> isConnectionReadOnly = r }
-
-		val filePropertiesSetPromise = loadFileProperties(libraryId, serviceFile)
-
-		val urlKeyPromise = urlKeyProvider
-			.promiseUrlKey(libraryId, serviceFile)
-			.then { u -> associatedUrlKey = u }
-
-		val bitmapSetPromise = promisedDefaultCoverArt
-			.eventually { default ->
-				mutableCoverArt.value = default
-				imageProvider
-					.promiseImageBytes(libraryId, serviceFile)
-					.then { bytes -> mutableCoverArt.value = bytes.takeIf { it.isNotEmpty() } ?: default }
-			}
-
-		return Promise
-			.whenAll(filePropertiesSetPromise, bitmapSetPromise, urlKeyPromise, isReadOnlyPromise)
-			.must(ImmediateAction{ mutableIsLoading.value = false })
-			.unitResponse()
+		return promiseLoadedActiveFile()
 	}
 
-	fun reloadFileProperties(): Promise<Unit> =
+	fun promiseLoadedActiveFile(): Promise<Unit> = activeLibraryId
+		?.let { libraryId ->
+			activePositionedFile?.serviceFile?.let {  serviceFile ->
+				mutableIsLoading.value = true
+				val isReadOnlyPromise = connectionPermissions
+					.promiseIsReadOnly(libraryId)
+					.then { r -> isConnectionReadOnly = r }
+
+				val filePropertiesSetPromise = loadFileProperties(libraryId, serviceFile)
+
+				val urlKeyPromise = urlKeyProvider
+					.promiseUrlKey(libraryId, serviceFile)
+					.then { u -> associatedUrlKey = u }
+
+				val bitmapSetPromise = promisedDefaultCoverArt
+					.eventually { default ->
+						mutableCoverArt.value = default
+						imageProvider
+							.promiseImageBytes(libraryId, serviceFile)
+							.then { bytes -> mutableCoverArt.value = bytes.takeIf { it.isNotEmpty() } ?: default }
+					}
+
+				Promise
+					.whenAll(filePropertiesSetPromise, bitmapSetPromise, urlKeyPromise, isReadOnlyPromise)
+					.must(this)
+					.unitResponse()
+			}
+		}
+		.keepPromise(Unit)
+
+	private fun reloadFileProperties(): Promise<Unit> =
 		activeLibraryId
 			?.let { l ->
 				activePositionedFile?.serviceFile?.let {  sf ->
@@ -148,6 +156,10 @@ class FileDetailsViewModel(
 		val positionedFile = activePositionedFile ?: return
 		val libraryId = activeLibraryId ?: return
 		controlPlayback.startPlaylist(libraryId, associatedPlaylist, positionedFile.playlistPosition)
+	}
+
+	override fun act() {
+		mutableIsLoading.value = false
 	}
 
 	private fun loadFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Unit> =
