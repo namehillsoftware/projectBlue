@@ -49,16 +49,7 @@ class PlaybackNotificationBroadcaster(
 		super.close()
 	}
 
-	override fun notifyPlaying() {
-		isPlaying = true
-
-		libraryId?.also { libraryId ->
-			serviceFile?.also { serviceFile ->
-				updateNowPlaying(libraryId, serviceFile)
-				return
-			}
-		}
-
+	override fun notifyStarting() {
 		nowPlayingState
 			.promiseActiveNowPlaying()
 			.then { np ->
@@ -76,6 +67,19 @@ class PlaybackNotificationBroadcaster(
 						}
 				}
 			}
+	}
+
+	override fun notifyPlaying() {
+		isPlaying = true
+
+		libraryId?.also { libraryId ->
+			serviceFile?.also { serviceFile ->
+				updateNowPlaying(libraryId, serviceFile)
+				return
+			}
+		}
+
+		notifyStarting()
 	}
 
 	override fun notifyPaused() {
