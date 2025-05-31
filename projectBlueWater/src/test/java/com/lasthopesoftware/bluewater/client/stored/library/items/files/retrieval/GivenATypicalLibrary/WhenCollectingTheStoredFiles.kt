@@ -27,7 +27,7 @@ class WhenCollectingTheStoredFiles {
 				.addColumn(StoredFileEntityInformation.isOwnerColumnName)
 				.buildQuery()
 
-			promiseTableMessage<Unit, StoredFile> {
+			promiseTableMessage<Unit> {
 				RepositoryAccessHelper(ApplicationProvider.getApplicationContext()).use { repositoryAccessHelper ->
 					repositoryAccessHelper.beginTransaction().use {
 						for (i in 1..9) {

@@ -26,22 +26,22 @@ import kotlin.coroutines.cancellation.CancellationException
 
 class LibraryRepository(private val context: Context) : ManageLibraries, ProvideLibraries {
 	override fun promiseLibrary(libraryId: LibraryId): Promise<Library?> =
-		promiseTableMessage<Library?, Library>(GetLibraryWriter(context, libraryId))
+		promiseTableMessage<Library?>(GetLibraryWriter(context, libraryId))
 
 	override fun promiseAllLibraries(): Promise<Collection<Library>> =
-		promiseTableMessage<Collection<Library>, Library>(GetAllLibrariesWriter(context))
+		promiseTableMessage<Collection<Library>>(GetAllLibrariesWriter(context))
 
 	override fun saveLibrary(library: Library): Promise<Library> =
-		promiseTableMessage<Library, Library>(SaveLibraryWriter(context, library))
+		promiseTableMessage<Library>(SaveLibraryWriter(context, library))
 
 	override fun updateNowPlaying(values: LibraryNowPlayingValues): Promise<Unit> =
-		promiseTableMessage<Unit, Library>(UpdateNowPlayingLibraryWriter(context, values))
+		promiseTableMessage<Unit>(UpdateNowPlayingLibraryWriter(context, values))
 
 	override fun promiseNowPlayingValues(libraryId: LibraryId): Promise<LibraryNowPlayingValues?> =
-		promiseTableMessage<LibraryNowPlayingValues?, Library>(GetNowPlayingValuesWriter(context, libraryId))
+		promiseTableMessage<LibraryNowPlayingValues?>(GetNowPlayingValuesWriter(context, libraryId))
 
 	override fun removeLibrary(libraryId: LibraryId): Promise<Unit> =
-		promiseTableMessage<Unit, Library>(RemoveLibraryWriter(context, libraryId))
+		promiseTableMessage<Unit>(RemoveLibraryWriter(context, libraryId))
 
 	private class GetAllLibrariesWriter(private val context: Context) : CancellableMessageWriter<Collection<Library>> {
 		override fun prepareMessage(cancellationSignal: CancellationSignal): Collection<Library> {

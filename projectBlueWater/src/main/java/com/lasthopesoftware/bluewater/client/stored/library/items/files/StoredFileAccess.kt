@@ -22,7 +22,7 @@ import com.namehillsoftware.handoff.promises.Promise
 class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 
 	override fun promiseStoredFile(storedFileId: Int): Promise<StoredFile?> =
-		promiseTableMessage<StoredFile?, StoredFile> {
+		promiseTableMessage<StoredFile?> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				getStoredFile(repositoryAccessHelper, storedFileId)
 			}
@@ -32,7 +32,7 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 		getStoredFileTask(libraryId, serviceFile)
 
 	override fun promiseAllStoredFiles(libraryId: LibraryId): Promise<Collection<StoredFile>> =
-		promiseTableMessage<Collection<StoredFile>, StoredFile> {
+		promiseTableMessage<Collection<StoredFile>> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginNonExclusiveTransaction().use {
 					repositoryAccessHelper
@@ -44,7 +44,7 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 		}
 
 	override fun promiseDanglingFiles(): Promise<Collection<StoredFile>> =
-		promiseTableMessage<Collection<StoredFile>, StoredFile> {
+		promiseTableMessage<Collection<StoredFile>> {
 			RepositoryAccessHelper(context).use { helper ->
 				helper
 					.mapSql(
@@ -58,19 +58,19 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 		}
 
 	override fun promiseNewStoredFile(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile> =
-		promiseTableMessage<StoredFile, StoredFile> {
+		promiseTableMessage<StoredFile> {
 			RepositoryAccessHelper(context).use {
 				it.createStoredFile(libraryId, serviceFile)
 			}
 		}
 
 	override fun promiseUpdatedStoredFile(storedFile: StoredFile): Promise<StoredFile> =
-		promiseTableMessage<StoredFile, StoredFile> {
+		promiseTableMessage<StoredFile> {
 			RepositoryAccessHelper(context).use { it.update(tableName, storedFile) }
 		}
 
 	private fun getStoredFileTask(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> =
-		promiseTableMessage<StoredFile?, StoredFile> {
+		promiseTableMessage<StoredFile?> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.getStoredFile(
 					libraryId,
@@ -80,7 +80,7 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 		}
 
 	override fun promiseDownloadingFiles(): Promise<List<StoredFile>> =
-		promiseTableMessage<List<StoredFile>, StoredFile> {
+		promiseTableMessage<List<StoredFile>> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper
 					.mapSql(
@@ -111,7 +111,7 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 		insert(tableName, StoredFile(libraryId, serviceFile, null, true))
 
 	override fun deleteStoredFile(storedFile: StoredFile): Promise<Unit> =
-		promiseTableMessage<Unit, StoredFile> {
+		promiseTableMessage<Unit> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				try {
 					repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
