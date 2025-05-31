@@ -126,7 +126,7 @@ class DiskFileCache(
 	}
 
 	private fun deleteCachedFile(cachedFileId: Long): Promise<Long> =
-		promiseTableMessage<Long, CachedFile> {
+		promiseTableMessage<Long> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				try {
 					repositoryAccessHelper.beginTransaction().use { closeableTransaction ->

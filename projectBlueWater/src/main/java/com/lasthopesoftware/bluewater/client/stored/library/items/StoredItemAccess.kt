@@ -35,7 +35,7 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 	}
 
 	override fun isItemMarkedForSync(libraryId: LibraryId, itemId: KeyedIdentifier): Promise<Boolean> =
-		promiseTableMessage<Boolean, StoredItem> {
+		promiseTableMessage {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				isItemMarkedForSync(
 					repositoryAccessHelper,
@@ -47,7 +47,7 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 		}
 
 	override fun isItemMarkedForSync(libraryId: LibraryId, item: IItem): Promise<Boolean> =
-		promiseTableMessage<Boolean, StoredItem> {
+		promiseTableMessage {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				val inferredItem = inferItem(item)
 				isItemMarkedForSync(
@@ -60,7 +60,7 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 		}
 
 	override fun disableAllLibraryItems(libraryId: LibraryId): Promise<Unit> =
-		promiseTableMessage<Unit, StoredItem> {
+		promiseTableMessage {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					repositoryAccessHelper
@@ -73,7 +73,7 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 		}
 
 	private fun enableItemSync(libraryId: LibraryId, item: IItem, itemType: ItemType) =
-		promiseTableMessage<Unit, StoredItem> {
+		promiseTableMessage<Unit> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				if (!isItemMarkedForSync(repositoryAccessHelper, libraryId, item, itemType))
 					repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
@@ -89,7 +89,7 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 		}
 
 	private fun enableItemSync(libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType) =
-		promiseTableMessage<Unit, StoredItem> {
+		promiseTableMessage<Unit> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				if (!isItemMarkedForSync(repositoryAccessHelper, libraryId, item, itemType))
 					repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
@@ -105,7 +105,7 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 		}
 
 	private fun disableItemSync(libraryId: LibraryId, item: IItem, itemType: ItemType) =
-		promiseTableMessage<Unit, StoredItem> {
+		promiseTableMessage<Unit> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					repositoryAccessHelper
@@ -126,7 +126,7 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 		}
 
 	private fun disableItemSync(libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType) =
-		promiseTableMessage<Unit, StoredItem> {
+		promiseTableMessage<Unit> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					repositoryAccessHelper
@@ -147,7 +147,7 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 		}
 
 	override fun promiseStoredItems(libraryId: LibraryId): Promise<Collection<StoredItem>> =
-		promiseTableMessage<Collection<StoredItem>, StoredItem> {
+		promiseTableMessage {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper
 					.mapSql("SELECT * FROM ${StoredItem.tableName} WHERE ${StoredItem.libraryIdColumnName} = @${StoredItem.libraryIdColumnName}")
