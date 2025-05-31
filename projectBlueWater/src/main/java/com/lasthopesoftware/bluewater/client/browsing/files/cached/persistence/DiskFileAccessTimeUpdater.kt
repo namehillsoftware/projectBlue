@@ -15,7 +15,7 @@ class DiskFileAccessTimeUpdater(private val context: Context) : UpdateDiskFileAc
 		private val logger by lazyLogger<DiskFileAccessTimeUpdater>()
 	}
 
-	override fun promiseFileAccessedUpdate(cachedFile: CachedFile): Promise<CachedFile> = promiseTableMessage<CachedFile, CachedFile> {
+	override fun promiseFileAccessedUpdate(cachedFile: CachedFile): Promise<CachedFile> = promiseTableMessage<CachedFile> {
 		doFileAccessedUpdate(cachedFile.id)
 		cachedFile
 	}

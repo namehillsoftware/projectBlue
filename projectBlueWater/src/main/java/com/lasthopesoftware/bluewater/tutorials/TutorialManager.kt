@@ -35,7 +35,7 @@ class TutorialManager(private val context: Context, private val tutorialCache: C
 	override fun promiseTutorialMarked(tutorialKey: String): Promise<Unit> =
 		promiseWasTutorialShown(tutorialKey).eventually { wasShown ->
 			if (wasShown) Unit.toPromise()
-			else promiseTableMessage<Unit, DisplayedTutorial> {
+			else promiseTableMessage<Unit> {
 				RepositoryAccessHelper(context).use { h ->
 					h.beginTransaction().use {
 						h.mapSql(insertQuery)
@@ -50,7 +50,7 @@ class TutorialManager(private val context: Context, private val tutorialCache: C
 		}
 
 	private fun promiseTutorial(tutorialKey: String): Promise<DisplayedTutorial?> =
-		promiseTableMessage<DisplayedTutorial?, DisplayedTutorial> {
+		promiseTableMessage<DisplayedTutorial?> {
 			RepositoryAccessHelper(context).use { h ->
 				h.beginNonExclusiveTransaction().use {
 					h.mapSql("SELECT * FROM $tableName WHERE $tutorialKeyColumn = @$tutorialKeyColumn")
