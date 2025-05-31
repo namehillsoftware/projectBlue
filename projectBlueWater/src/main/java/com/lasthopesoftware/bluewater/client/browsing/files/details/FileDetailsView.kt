@@ -514,14 +514,14 @@ fun FileDetailsView(
 		val heightScaler =
 			memorableScrollConnectedScaler(max = boxHeightPx, min = LocalDensity.current.run { collapsedHeight.toPx() })
 
+		val lazyListState = rememberLazyListState()
+
 		if (!isLoading) {
 			Box(
 				modifier = Modifier
 					.fillMaxSize()
 					.nestedScroll(heightScaler)
 			) {
-				val lazyListState = rememberLazyListState()
-
 				val headerCollapseProgress by heightScaler.getProgressState()
 
 				LazyColumn(modifier = Modifier.fillMaxSize(), state = lazyListState) {
