@@ -13,6 +13,8 @@ interface PlaybackMessage : ApplicationMessage {
 
 	object PlaybackStopped : PlaybackMessage
 
+	object PlaybackStarting : PlaybackMessage
+
 	object PlaybackStarted : PlaybackMessage
 }
 

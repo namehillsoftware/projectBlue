@@ -68,7 +68,9 @@ class MediaSessionBroadcaster(
 		super.close()
 	}
 
-    override fun notifyPlaying() {
+	override fun notifyStarting() = notifyPlaying()
+
+	override fun notifyPlaying() {
 		isPlaying = true
 		val builder = PlaybackStateCompat.Builder()
 		capabilities = PlaybackStateCompat.ACTION_PAUSE or standardCapabilities

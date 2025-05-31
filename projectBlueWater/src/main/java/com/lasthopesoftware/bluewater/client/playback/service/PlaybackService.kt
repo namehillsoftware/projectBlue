@@ -585,26 +585,6 @@ import java.util.concurrent.TimeoutException
 	private var startId = 0
 	private var isDestroyed = false
 
-	private fun stopNotificationIfNotPlaying() {
-		if (!isMarkedForPlay) notificationController.removeNotification(playingNotificationId)
-	}
-
-	@SuppressLint("WakelockTimeout", "Unknown media playback time")
-	private fun registerListeners() {
-		wakeLock = (getSystemService(POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ON_AFTER_RELEASE, javaClass.name)
-		wakeLock?.acquire()
-		registerReceiver(lazyAudioBecomingNoisyReceiver.value, IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
-		areListenersRegistered = true
-	}
-
-	private fun unregisterListeners() {
-		wakeLock?.apply { if (isHeld) release() }
-		wakeLock = null
-
-		if (lazyAudioBecomingNoisyReceiver.isInitialized()) unregisterReceiver(lazyAudioBecomingNoisyReceiver.value)
-		areListenersRegistered = false
-	}
-
 	/* Begin Event Handlers */
 	override fun onCreate() {
 		super.onCreate()
@@ -828,17 +808,35 @@ import java.util.concurrent.TimeoutException
 			throw UnsupportedOperationException("Cannot create PlaybackService after onDestroy is called")
 	}
 
+	@SuppressLint("WakelockTimeout", "Unknown media playback time")
+	private fun registerListeners() {
+		wakeLock = (getSystemService(POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ON_AFTER_RELEASE, javaClass.name)
+		wakeLock?.acquire()
+		registerReceiver(lazyAudioBecomingNoisyReceiver.value, IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
+		areListenersRegistered = true
+	}
+
+	private fun unregisterListeners() {
+		wakeLock?.apply { if (isHeld) release() }
+		wakeLock = null
+
+		if (lazyAudioBecomingNoisyReceiver.isInitialized()) unregisterReceiver(lazyAudioBecomingNoisyReceiver.value)
+		areListenersRegistered = false
+	}
+
 	private fun startNewPlaylist(libraryId: LibraryId, playlistString: String, playlistPosition: Int): Promise<Unit> {
 		activeLibraryId = libraryId
-		val playbackState = promisedPlaybackServices
+		val playbackState = promisedPlaybackServices.value
 
 		isMarkedForPlay = true
+		applicationMessageBus.sendMessage(PlaybackMessage.PlaybackStarting)
+
 		return FileStringListUtilities
 			.promiseParsedFileStringList(playlistString)
 			.eventually { playlist ->
 				if (!areListenersRegistered) registerListeners()
 
-				playbackState.value.eventually {
+				playbackState.eventually {
 					it.playbackState.startPlaylist(
 						libraryId,
 						playlist.toList(),
@@ -854,6 +852,8 @@ import java.util.concurrent.TimeoutException
 
 	private fun resumePlayback(libraryId: LibraryId): Promise<Unit> {
 		isMarkedForPlay = true
+		applicationMessageBus.sendMessage(PlaybackMessage.PlaybackStarting)
+
 		if (!areListenersRegistered) registerListeners()
 		return restorePlaybackServices(libraryId).eventually { it.playbackState.resume() }
 	}
@@ -1032,6 +1032,10 @@ import java.util.concurrent.TimeoutException
 
 	private fun broadcastChangedFile(libraryId: LibraryId, positionedFile: PositionedFile) {
 		applicationMessageBus.sendMessage(LibraryPlaybackMessage.TrackChanged(libraryId, positionedFile))
+	}
+
+	private fun stopNotificationIfNotPlaying() {
+		if (!isMarkedForPlay) notificationController.removeNotification(playingNotificationId)
 	}
 
 	private fun haltService() = stopSelf()

@@ -26,7 +26,12 @@ abstract class PlaybackNotificationRouter(
 		manage(registerApplicationMessages.registerReceiver<PlaybackMessage.PlaybackStopped> {
 			notifyStopped()
 		})
+		manage(registerApplicationMessages.registerReceiver<PlaybackMessage.PlaybackStarting> {
+			notifyStarting()
+		})
 	}
+
+	protected abstract fun notifyStarting()
 
 	protected abstract fun notifyPlaying()
 
