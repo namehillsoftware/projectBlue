@@ -5,7 +5,6 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
@@ -277,13 +276,13 @@ class LiveMediaCenterConnection(
 		promiseFilesAtPath(browseFilesPath, "Version=2")
 
 	override fun promiseFiles(query: String): Promise<List<ServiceFile>> =
-		promiseFilesAtPath(searchFilesPath, "Query=$query")
+		promiseFilesAtPath(searchFilesPath, "Query=[Media Type]=[Audio] $query")
 
 	override fun promiseFiles(itemId: ItemId): Promise<List<ServiceFile>> =
 		promiseFilesAtPath(browseFilesPath, "ID=${itemId.id}", "Version=2")
 
 	override fun promiseFiles(playlistId: PlaylistId): Promise<List<ServiceFile>> =
-		promiseFilesAtPath(playlistFilesPath, "Playlist=${playlistId.id}")
+		promiseFilesAtPath(playlistFilesPath, "Playlist=${playlistId.id}", "ResetCache=1")
 
 	override fun promisePlaystatsUpdate(serviceFile: ServiceFile): Promise<*> = Promise.Proxy { cp ->
 		promiseServerVersion()
@@ -577,6 +576,21 @@ class LiveMediaCenterConnection(
 
 		override fun respond(serviceFiles: Collection<ServiceFile>): List<ServiceFile> {
 			return if (serviceFiles is List<*>) serviceFiles as List<ServiceFile> else serviceFiles.toList()
+		}
+	}
+
+	private object FileListParameters {
+		enum class Options {
+			None, Shuffled
+		}
+
+		object Helpers {
+			fun processParams(option: Options, vararg params: String): Array<String> {
+				val newParams = mutableListOf(*params)
+				newParams.add("Action=Serialize")
+				if (option == Options.Shuffled) newParams.add("Shuffle=1")
+				return newParams.toTypedArray()
+			}
 		}
 	}
 }
