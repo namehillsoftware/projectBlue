@@ -142,8 +142,8 @@ class LiveMediaCenterConnection(
 			}
 
 	override fun promiseItems(itemId: KeyedIdentifier?): Promise<List<IItem>> = when (itemId) {
-		is ItemId -> ItemFilePromise(itemId)
-		null -> ItemFilePromise(null)
+		is ItemId -> ItemListPromise(itemId)
+		null -> ItemListPromise(null)
 		else -> Promise(emptyList())
 	}
 
@@ -411,7 +411,7 @@ class LiveMediaCenterConnection(
 			CancellationException("Getting file properties cancelled for $serviceFile.")
 	}
 
-	private inner class ItemFilePromise(
+	private inner class ItemListPromise(
 		itemId: ItemId?,
 	) : Promise.Proxy<List<IItem>>(), PromisedResponse<Document, List<IItem>> {
 		init {
@@ -449,7 +449,10 @@ class LiveMediaCenterConnection(
 				.getElementsByTag("Item")
 				.map { el ->
 					if (cs.isCancelled) throw itemParsingCancelledException()
-					Item(el.wholeOwnText(), el.attr("Name"))
+
+					val maybePlaylistId = el.attr("PlaylistID").takeIf { it.isNotEmpty() }?.let(::PlaylistId)
+
+					Item(el.wholeOwnText(), el.attr("Name"), maybePlaylistId)
 				}
 		}
 
