@@ -29,5 +29,5 @@ class LibraryFileProvider(private val libraryConnections: ProvideLibraryConnecti
 	override fun promiseAudioFiles(libraryId: LibraryId, query: String): Promise<List<ServiceFile>> =
 		libraryConnections
 			.promiseLibraryConnection(libraryId)
-			.eventuallyFromDataAccess { it?.promiseFiles("[Media Type]=[Audio] $query").keepPromise(emptyList()) }
+			.eventuallyFromDataAccess { it?.promiseFiles(query).keepPromise(emptyList()) }
 }

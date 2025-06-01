@@ -5,7 +5,6 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
@@ -68,8 +67,11 @@ class LiveMediaCenterConnection(
 		private const val browseFilesPath = "Browse/Files"
 		private const val playlistFilesPath = "Playlist/Files"
 		private const val searchFilesPath = "Files/Search"
-		private const val browseLibraryParameter = "Browse/Children"
+		private const val browseLibraryPath = "Browse/Children"
 		private const val imageFormat = "jpg"
+		private const val serializedFileListParameter = "Action=Serialize"
+		private const val shuffleFileListParameter = "Shuffle=1"
+		private const val resetCacheParameter = "ResetCache=1"
 
 		private val editableFilePropertyDefinitions by lazy { EditableFilePropertyDefinition.entries.toSet().toPromise() }
 	}
@@ -258,29 +260,30 @@ class LiveMediaCenterConnection(
 	override fun promiseFileStringList(itemId: ItemId?): Promise<String> =
 		itemId
 			?.run {
-				promiseFileStringList(FileListParameters.Options.None, browseFilesPath, "ID=$id", "Version=2")
+				promiseFileStringList(browseFilesPath, "ID=$id")
 			}
-			?: promiseFileStringList(FileListParameters.Options.None, browseFilesPath, "Version=2")
+			?: promiseFileStringList(browseFilesPath)
 
-	override fun promiseFileStringList(playlistId: PlaylistId): Promise<String> = "".toPromise()
+	override fun promiseFileStringList(playlistId: PlaylistId): Promise<String> =
+		promiseFileStringList(playlistFilesPath, "Playlist=${playlistId.id}")
 
 	override fun promiseShuffledFileStringList(itemId: ItemId?): Promise<String> =
 		itemId
 			?.run {
-				promiseFileStringList(FileListParameters.Options.Shuffled, browseFilesPath, "ID=$id", "Version=2")
+				promiseFileStringList(browseFilesPath, "ID=$id", shuffleFileListParameter)
 			}
-			?: promiseFileStringList(FileListParameters.Options.Shuffled, browseFilesPath, "Version=2")
+			?: promiseFileStringList(browseFilesPath, shuffleFileListParameter)
 
 	override fun promiseShuffledFileStringList(playlistId: PlaylistId): Promise<String> = "".toPromise()
 
 	override fun promiseFiles(): Promise<List<ServiceFile>> =
-		promiseFilesAtPath(browseFilesPath, "Version=2")
+		promiseFilesAtPath(browseFilesPath)
 
 	override fun promiseFiles(query: String): Promise<List<ServiceFile>> =
-		promiseFilesAtPath(searchFilesPath, "Query=$query")
+		promiseFilesAtPath(searchFilesPath, "Query=[Media Type]=[Audio] $query")
 
 	override fun promiseFiles(itemId: ItemId): Promise<List<ServiceFile>> =
-		promiseFilesAtPath(browseFilesPath, "ID=${itemId.id}", "Version=2")
+		promiseFilesAtPath(browseFilesPath, "ID=${itemId.id}")
 
 	override fun promiseFiles(playlistId: PlaylistId): Promise<List<ServiceFile>> =
 		promiseFilesAtPath(playlistFilesPath, "Playlist=${playlistId.id}")
@@ -316,21 +319,20 @@ class LiveMediaCenterConnection(
 
 	private fun promiseFilesAtPath(path: String, vararg params: String): Promise<List<ServiceFile>> =
 		Promise.Proxy { cp ->
-			promiseFileStringList(FileListParameters.Options.None, path, *params)
+			promiseFileStringList(path, *params)
 				.also(cp::doCancel)
 				.eventually(FileResponses)
 				.also(cp::doCancel)
 				.then(FileResponses)
 		}
 
-	private fun promiseFileStringList(option: FileListParameters.Options, path: String, vararg params: String): Promise<String> =
+	private fun promiseFileStringList(path: String, vararg params: String): Promise<String> =
 		Promise.Proxy { cp ->
 			promiseResponse(
 				path,
-				*FileListParameters.Helpers.processParams(
-					option,
-					*params
-				)
+				*params,
+				serializedFileListParameter,
+				resetCacheParameter,
 			).also(cp::doCancel).promiseStringBody()
 		}
 
@@ -418,13 +420,13 @@ class LiveMediaCenterConnection(
 			val promisedResponse = itemId
 				?.run {
 					promiseResponse(
-						browseLibraryParameter,
+						browseLibraryPath,
 						"ID=$id",
 						"Version=2",
 						"ErrorOnMissing=1"
 					)
 				}
-				?: promiseResponse(browseLibraryParameter, "Version=2", "ErrorOnMissing=1")
+				?: promiseResponse(browseLibraryPath, "Version=2", "ErrorOnMissing=1")
 
 			proxy(
 				promisedResponse
