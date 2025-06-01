@@ -5,6 +5,7 @@ import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.LiveMediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
@@ -44,6 +45,7 @@ class WhenGettingTheItems {
 						<Item Name="Hurray For The Riff Raff">1973</Item>
 						<Item Name="Shakey Graves">2221</Item>
 						<Item Name="The Shins">2222</Item>
+						<Item Name="Task -- No images" Type="3" PlaylistID="921167006">1025</Item>
 						</Response>
 					""".encodeToByteArray().inputStream()
 				)
@@ -78,6 +80,7 @@ class WhenGettingTheItems {
 			Item(key="1973", value="Hurray For The Riff Raff", playlistId=null),
 			Item(key="2221", value="Shakey Graves", playlistId=null),
 			Item(key="2222", value="The Shins", playlistId=null),
+			Item(key="1025", value="Task -- No images", playlistId= PlaylistId("921167006")),
 		)
 	}
 }
