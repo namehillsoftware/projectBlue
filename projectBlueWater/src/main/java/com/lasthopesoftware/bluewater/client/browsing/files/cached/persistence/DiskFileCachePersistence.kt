@@ -62,7 +62,7 @@ class DiskFileCachePersistence(
 						if (it.fileName == canonicalFilePath) diskFileAccessTimeUpdater.promiseFileAccessedUpdate(it)
 						else promiseFilePathUpdate(it).eventually(diskFileAccessTimeUpdater::promiseFileAccessedUpdate)
 					}
-					?: promiseTableMessage<Unit, CachedFile> {
+					?: promiseTableMessage<Unit> {
 						logger.info("File with unique key $uniqueKey doesn't exist. Creating...")
 						try {
 							RepositoryAccessHelper(context).use { repositoryAccessHelper ->
@@ -93,7 +93,7 @@ class DiskFileCachePersistence(
 			}
 	}
 
-	private fun promiseFilePathUpdate(cachedFile: CachedFile): Promise<CachedFile> = promiseTableMessage<CachedFile, CachedFile> {
+	private fun promiseFilePathUpdate(cachedFile: CachedFile): Promise<CachedFile> = promiseTableMessage<CachedFile> {
 		val cachedFileId = cachedFile.id
 		val cachedFilePath = cachedFile.fileName
 		RepositoryAccessHelper(context).use { repositoryAccessHelper ->

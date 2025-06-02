@@ -33,7 +33,7 @@ class ApplicationSettingsRepository(private val context: Context, private val me
 	}
 
 	override fun promiseApplicationSettings(): Promise<ApplicationSettings> =
-		promiseTableMessage<ApplicationSettings, ApplicationSettings> {
+		promiseTableMessage<ApplicationSettings> {
 			RepositoryAccessHelper(context).use { helper ->
 				helper.beginNonExclusiveTransaction().use {
 					helper.mapSql("SELECT * FROM $tableName").fetchFirst()
@@ -42,7 +42,7 @@ class ApplicationSettingsRepository(private val context: Context, private val me
 		}
 
 	override fun promiseUpdatedSettings(applicationSettings: ApplicationSettings): Promise<ApplicationSettings> =
-		promiseTableMessage<Unit, ApplicationSettings> {
+		promiseTableMessage<Unit> {
 			RepositoryAccessHelper(context).use { helper ->
 				helper.beginTransaction().use {
 					helper.mapSql(updateStatement)

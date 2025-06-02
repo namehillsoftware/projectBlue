@@ -44,7 +44,7 @@ object CacheFlushing {
 		diskFileCacheConfiguration: DiskFileCacheConfiguration,
 		targetSize: Long
 	): Promise<*> =
-		promiseTableMessage<Unit, CachedFile>(
+		promiseTableMessage<Unit>(
 			CacheFlusherTask(
 				context,
 				diskCacheDirectory,
