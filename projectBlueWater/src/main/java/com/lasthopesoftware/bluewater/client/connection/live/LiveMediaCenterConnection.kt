@@ -67,8 +67,10 @@ class LiveMediaCenterConnection(
 		private const val browseFilesPath = "Browse/Files"
 		private const val playlistFilesPath = "Playlist/Files"
 		private const val searchFilesPath = "Files/Search"
-		private const val browseLibraryParameter = "Browse/Children"
+		private const val browseLibraryPath = "Browse/Children"
 		private const val imageFormat = "jpg"
+		private const val serializedFileListParameter = "Action=Serialize"
+		private const val shuffleFileListParameter = "Shuffle=1"
 
 		private val editableFilePropertyDefinitions by lazy { EditableFilePropertyDefinition.entries.toSet().toPromise() }
 	}
@@ -257,18 +259,18 @@ class LiveMediaCenterConnection(
 	override fun promiseFileStringList(itemId: ItemId?): Promise<String> =
 		itemId
 			?.run {
-				promiseFileStringList(FileListParameters.Options.None, browseFilesPath, "ID=$id", "Version=2")
+				promiseFileStringList(browseFilesPath, "ID=$id", "Version=2")
 			}
-			?: promiseFileStringList(FileListParameters.Options.None, browseFilesPath, "Version=2")
+			?: promiseFileStringList(browseFilesPath, "Version=2")
 
 	override fun promiseFileStringList(playlistId: PlaylistId): Promise<String> = "".toPromise()
 
 	override fun promiseShuffledFileStringList(itemId: ItemId?): Promise<String> =
 		itemId
 			?.run {
-				promiseFileStringList(FileListParameters.Options.Shuffled, browseFilesPath, "ID=$id", "Version=2")
+				promiseFileStringList(browseFilesPath, "ID=$id", "Version=2", shuffleFileListParameter)
 			}
-			?: promiseFileStringList(FileListParameters.Options.Shuffled, browseFilesPath, "Version=2")
+			?: promiseFileStringList(browseFilesPath, "Version=2", shuffleFileListParameter)
 
 	override fun promiseShuffledFileStringList(playlistId: PlaylistId): Promise<String> = "".toPromise()
 
@@ -315,21 +317,19 @@ class LiveMediaCenterConnection(
 
 	private fun promiseFilesAtPath(path: String, vararg params: String): Promise<List<ServiceFile>> =
 		Promise.Proxy { cp ->
-			promiseFileStringList(FileListParameters.Options.None, path, *params)
+			promiseFileStringList(path, *params)
 				.also(cp::doCancel)
 				.eventually(FileResponses)
 				.also(cp::doCancel)
 				.then(FileResponses)
 		}
 
-	private fun promiseFileStringList(option: FileListParameters.Options, path: String, vararg params: String): Promise<String> =
+	private fun promiseFileStringList(path: String, vararg params: String): Promise<String> =
 		Promise.Proxy { cp ->
 			promiseResponse(
 				path,
-				*FileListParameters.Helpers.processParams(
-					option,
-					*params
-				)
+				*params,
+				serializedFileListParameter,
 			).also(cp::doCancel).promiseStringBody()
 		}
 
@@ -417,13 +417,13 @@ class LiveMediaCenterConnection(
 			val promisedResponse = itemId
 				?.run {
 					promiseResponse(
-						browseLibraryParameter,
+						browseLibraryPath,
 						"ID=$id",
 						"Version=2",
 						"ErrorOnMissing=1"
 					)
 				}
-				?: promiseResponse(browseLibraryParameter, "Version=2", "ErrorOnMissing=1")
+				?: promiseResponse(browseLibraryPath, "Version=2", "ErrorOnMissing=1")
 
 			proxy(
 				promisedResponse
@@ -576,21 +576,6 @@ class LiveMediaCenterConnection(
 
 		override fun respond(serviceFiles: Collection<ServiceFile>): List<ServiceFile> {
 			return if (serviceFiles is List<*>) serviceFiles as List<ServiceFile> else serviceFiles.toList()
-		}
-	}
-
-	private object FileListParameters {
-		enum class Options {
-			None, Shuffled
-		}
-
-		object Helpers {
-			fun processParams(option: Options, vararg params: String): Array<String> {
-				val newParams = mutableListOf(*params)
-				newParams.add("Action=Serialize")
-				if (option == Options.Shuffled) newParams.add("Shuffle=1")
-				return newParams.toTypedArray()
-			}
 		}
 	}
 }
