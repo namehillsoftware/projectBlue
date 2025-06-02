@@ -264,7 +264,8 @@ class LiveMediaCenterConnection(
 			}
 			?: promiseFileStringList(browseFilesPath)
 
-	override fun promiseFileStringList(playlistId: PlaylistId): Promise<String> = "".toPromise()
+	override fun promiseFileStringList(playlistId: PlaylistId): Promise<String> =
+		promiseFileStringList(playlistFilesPath, "Playlist=${playlistId.id}")
 
 	override fun promiseShuffledFileStringList(itemId: ItemId?): Promise<String> =
 		itemId
@@ -276,13 +277,13 @@ class LiveMediaCenterConnection(
 	override fun promiseShuffledFileStringList(playlistId: PlaylistId): Promise<String> = "".toPromise()
 
 	override fun promiseFiles(): Promise<List<ServiceFile>> =
-		promiseFilesAtPath(browseFilesPath, "Version=2")
+		promiseFilesAtPath(browseFilesPath)
 
 	override fun promiseFiles(query: String): Promise<List<ServiceFile>> =
 		promiseFilesAtPath(searchFilesPath, "Query=[Media Type]=[Audio] $query")
 
 	override fun promiseFiles(itemId: ItemId): Promise<List<ServiceFile>> =
-		promiseFilesAtPath(browseFilesPath, "ID=${itemId.id}", "Version=2")
+		promiseFilesAtPath(browseFilesPath, "ID=${itemId.id}")
 
 	override fun promiseFiles(playlistId: PlaylistId): Promise<List<ServiceFile>> =
 		promiseFilesAtPath(playlistFilesPath, "Playlist=${playlistId.id}")
