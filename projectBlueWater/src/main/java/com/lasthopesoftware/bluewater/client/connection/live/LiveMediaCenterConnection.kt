@@ -71,6 +71,7 @@ class LiveMediaCenterConnection(
 		private const val imageFormat = "jpg"
 		private const val serializedFileListParameter = "Action=Serialize"
 		private const val shuffleFileListParameter = "Shuffle=1"
+		private const val resetCacheParameter = "ResetCache=1"
 
 		private val editableFilePropertyDefinitions by lazy { EditableFilePropertyDefinition.entries.toSet().toPromise() }
 	}
@@ -259,18 +260,18 @@ class LiveMediaCenterConnection(
 	override fun promiseFileStringList(itemId: ItemId?): Promise<String> =
 		itemId
 			?.run {
-				promiseFileStringList(browseFilesPath, "ID=$id", "Version=2")
+				promiseFileStringList(browseFilesPath, "ID=$id")
 			}
-			?: promiseFileStringList(browseFilesPath, "Version=2")
+			?: promiseFileStringList(browseFilesPath)
 
 	override fun promiseFileStringList(playlistId: PlaylistId): Promise<String> = "".toPromise()
 
 	override fun promiseShuffledFileStringList(itemId: ItemId?): Promise<String> =
 		itemId
 			?.run {
-				promiseFileStringList(browseFilesPath, "ID=$id", "Version=2", shuffleFileListParameter)
+				promiseFileStringList(browseFilesPath, "ID=$id", shuffleFileListParameter)
 			}
-			?: promiseFileStringList(browseFilesPath, "Version=2", shuffleFileListParameter)
+			?: promiseFileStringList(browseFilesPath, shuffleFileListParameter)
 
 	override fun promiseShuffledFileStringList(playlistId: PlaylistId): Promise<String> = "".toPromise()
 
@@ -284,7 +285,7 @@ class LiveMediaCenterConnection(
 		promiseFilesAtPath(browseFilesPath, "ID=${itemId.id}", "Version=2")
 
 	override fun promiseFiles(playlistId: PlaylistId): Promise<List<ServiceFile>> =
-		promiseFilesAtPath(playlistFilesPath, "Playlist=${playlistId.id}", "ResetCache=1")
+		promiseFilesAtPath(playlistFilesPath, "Playlist=${playlistId.id}")
 
 	override fun promisePlaystatsUpdate(serviceFile: ServiceFile): Promise<*> = Promise.Proxy { cp ->
 		promiseServerVersion()
@@ -330,6 +331,7 @@ class LiveMediaCenterConnection(
 				path,
 				*params,
 				serializedFileListParameter,
+				resetCacheParameter,
 			).also(cp::doCancel).promiseStringBody()
 		}
 
