@@ -2,9 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.SplineBasedFloatDecayAnimationSpec
-import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.generateDecayAnimationSpec
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -14,6 +12,7 @@ import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.animateTo
+import androidx.compose.foundation.gestures.animateToWithDecay
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,10 +54,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -561,34 +558,22 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 ) {
 	val isScreenControlsVisible by nowPlayingScreenViewModel.isScreenControlsVisible.subscribeAsState()
 
-	val filePropertiesHeight = maxHeight - expandedControlsHeight
+	val filePropertiesHeight = remember(maxHeight) { maxHeight - expandedControlsHeight }
 
 	val filePropertiesHeightPx = LocalDensity.current.run { filePropertiesHeight.toPx() }
 
 	val halfScreenHeight = filePropertiesHeight / 2
 	val halfScreenHeightPx = LocalDensity.current.run { halfScreenHeight.toPx() }
 
-	var playlistDragValue by remember { mutableStateOf(SlideOutState.Closed) }
-
-	val playlistDrawerState = with(LocalDensity.current) {
-		remember(LocalDensity.current) {
-			AnchoredDraggableState(
-				initialValue = playlistDragValue,
-				anchors = DraggableAnchors {
-					SlideOutState.Closed at filePropertiesHeightPx
-					SlideOutState.PartiallyOpen at halfScreenHeightPx
-					SlideOutState.Open at 0f
-				},
-				positionalThreshold = { d -> d * .5f },
-				velocityThreshold = { 100.dp.toPx() },
-				snapAnimationSpec = tween(),
-				decayAnimationSpec = SplineBasedFloatDecayAnimationSpec(this).generateDecayAnimationSpec(),
-				confirmValueChange = { newValue ->
-					playlistDragValue = newValue
-					true
-				}
-			)
-		}
+	val playlistDrawerState = remember {
+		AnchoredDraggableState(
+			initialValue = SlideOutState.Closed,
+			anchors = DraggableAnchors {
+				SlideOutState.Closed at filePropertiesHeightPx
+				SlideOutState.PartiallyOpen at halfScreenHeightPx
+				SlideOutState.Open at 0f
+			}
+		)
 	}
 
 	DisposableEffect(filePropertiesHeightPx, halfScreenHeightPx) {
@@ -615,9 +600,17 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 
 	val isSettledOnFirstPage by remember { derivedStateOf { playlistOpenProgress == 0f } }
 
+	val decaySpec = LocalDensity.current.let { d ->
+		remember(d) {
+			SplineBasedFloatDecayAnimationSpec(d).generateDecayAnimationSpec<Float>()
+		}
+	}
+
+	val velocity = LocalDensity.current.run { remember(this) { 100.dp.toPx() } }
+
 	suspend fun hidePlaylist() {
 		playlistViewModel.finishPlaylistEdit()
-		playlistDrawerState.animateTo(SlideOutState.Closed)
+		playlistDrawerState.animateToWithDecay(SlideOutState.Closed, velocity, decayAnimationSpec = decaySpec)
 	}
 
 	val isPlaylistShown by playlistViewModel.isPlaylistShown.subscribeAsState()
@@ -649,7 +642,10 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	Box(
 		modifier = Modifier
 			.fillMaxSize()
-			.anchoredDraggable(playlistDrawerState, orientation = Orientation.Vertical)
+			.anchoredDraggable(
+				playlistDrawerState,
+				orientation = Orientation.Vertical,
+			)
 			.clickable(
 				interactionSource = remember { MutableInteractionSource() },
 				indication = null,
@@ -735,8 +731,12 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 							.clickable(
 								onClick = {
 									scope.launch {
-										if (playlistDragValue != SlideOutState.Closed) hidePlaylist()
-										else playlistDrawerState.animateTo(SlideOutState.PartiallyOpen)
+										if (playlistDrawerState.currentValue != SlideOutState.Closed) hidePlaylist()
+										else playlistDrawerState.animateToWithDecay(
+											SlideOutState.PartiallyOpen,
+											velocity,
+											decayAnimationSpec = decaySpec
+										)
 									}
 								},
 								indication = null,
@@ -844,20 +844,14 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 ) {
 	val playlistWidth = screenHeight.coerceIn(minimumMenuWidth, maxWidth / 2)
 	val playlistWidthPx = LocalDensity.current.run { playlistWidth.toPx() }
-	val draggableState = with(LocalDensity.current) {
-		remember {
-			AnchoredDraggableState(
-				initialValue = SlideOutState.Open,
-				anchors = DraggableAnchors {
-					SlideOutState.Closed at 0f
-					SlideOutState.Open at playlistWidthPx
-				},
-				positionalThreshold = { d -> d * .5f },
-				velocityThreshold = { 100.dp.toPx() },
-				snapAnimationSpec = tween(),
-				decayAnimationSpec = exponentialDecay(),
-			)
-		}
+	val draggableState = remember {
+		AnchoredDraggableState(
+			initialValue = SlideOutState.Open,
+			anchors = DraggableAnchors {
+				SlideOutState.Closed at 0f
+				SlideOutState.Open at playlistWidthPx
+			}
+		)
 	}
 
 	DisposableEffect(playlistWidthPx) {
