@@ -31,6 +31,9 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
+import com.lasthopesoftware.bluewater.android.ui.theme.DetermineWindowControlColors
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ReusedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
@@ -66,8 +69,6 @@ import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.exceptions.UncaughtExceptionHandlerLogger
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
@@ -93,9 +94,11 @@ private fun BrowserLibraryDestination.Navigate(
 	libraryConnectionDependencies: LibraryConnectionDependents,
 ) {
 	with(browserViewDependencies) {
-		Box(modifier = Modifier
-			.fillMaxSize()
-			.background(Color.Black)) {
+		Box(
+			modifier = Modifier
+				.fillMaxSize()
+				.background(Color.Black)
+		) {
 			val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 			val layoutDirection = LocalLayoutDirection.current
 			Column(

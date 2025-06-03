@@ -75,29 +75,30 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.android.ui.components.BackButton
+import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
+import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
+import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
+import com.lasthopesoftware.bluewater.android.ui.components.RatingBar
+import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledRefreshButton
+import com.lasthopesoftware.bluewater.android.ui.components.memorableScrollConnectedScaler
+import com.lasthopesoftware.bluewater.android.ui.indicateFocus
+import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
+import com.lasthopesoftware.bluewater.android.ui.navigable
+import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
+import com.lasthopesoftware.bluewater.android.ui.theme.DetermineWindowControlColors
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.appBarHeight
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.menuHeight
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topRowOuterPadding
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.shared.NullBox
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePalette
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePaletteProvider
-import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
-import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
-import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
-import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
-import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
-import com.lasthopesoftware.bluewater.shared.android.ui.components.UnlabelledRefreshButton
-import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
-import com.lasthopesoftware.bluewater.shared.android.ui.indicateFocus
-import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
-import com.lasthopesoftware.bluewater.shared.android.ui.navigable
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.appBarHeight
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.menuHeight
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.rowPadding
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.topMenuIconSize
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.topRowOuterPadding
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.suspend
@@ -428,7 +429,10 @@ private fun FileDetailsEditor(
 								.navigable(
 									onClick = {
 										viewModel.activeLibraryId?.also {
-											navigateApplication.search(it, ReadOnlyFileProperty(property, propertyValue))
+											navigateApplication.search(
+												it,
+												ReadOnlyFileProperty(property, propertyValue)
+											)
 										}
 									},
 									enabled = !isEditing
@@ -683,7 +687,11 @@ fun FileDetailsView(
 						val startPadding by remember { derivedStateOf { viewPadding + 48.dp * headerCollapseProgress } }
 						val endPadding by remember {
 							derivedStateOf {
-								linearInterpolation(viewPadding, topMenuIconSize + viewPaddingUnit * 4, headerCollapseProgress)
+								linearInterpolation(
+									viewPadding,
+									topMenuIconSize + viewPaddingUnit * 4,
+									headerCollapseProgress
+								)
 							}
 						}
 						FilePropertyHeader(

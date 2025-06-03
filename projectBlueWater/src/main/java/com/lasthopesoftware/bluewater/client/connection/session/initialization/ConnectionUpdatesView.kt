@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
+import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 
 @Composable

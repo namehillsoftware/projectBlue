@@ -8,10 +8,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
+import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledRefreshButton
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
-import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
-import com.lasthopesoftware.bluewater.shared.android.ui.components.UnlabelledRefreshButton
 
 @Composable
 fun RowScope.LabelledActiveDownloadsButton(

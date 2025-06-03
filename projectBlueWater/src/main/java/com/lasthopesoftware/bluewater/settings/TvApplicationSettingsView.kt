@@ -37,14 +37,14 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.android.ui.components.ApplicationInfoText
+import com.lasthopesoftware.bluewater.android.ui.components.ApplicationLogo
+import com.lasthopesoftware.bluewater.android.ui.components.LabeledSelection
+import com.lasthopesoftware.bluewater.android.ui.navigable
+import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
-import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationInfoText
-import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationLogo
-import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection
-import com.lasthopesoftware.bluewater.shared.android.ui.navigable
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 
 private val optionsPadding = PaddingValues(start = 32.dp, end = 32.dp)

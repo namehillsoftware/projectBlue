@@ -9,10 +9,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
-import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 
 @Composable
 fun RowScope.LabelledShuffleButton(

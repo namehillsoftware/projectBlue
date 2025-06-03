@@ -12,6 +12,7 @@ import androidx.core.view.WindowCompat
 import com.lasthopesoftware.bluewater.ActivityDependencies
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
+import com.lasthopesoftware.bluewater.android.ui.ProjectBlueComposableApplication
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingTvApplication
@@ -21,7 +22,6 @@ import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermission
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
-import com.lasthopesoftware.bluewater.shared.android.ui.ProjectBlueComposableApplication
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.registerResultActivityLauncher
