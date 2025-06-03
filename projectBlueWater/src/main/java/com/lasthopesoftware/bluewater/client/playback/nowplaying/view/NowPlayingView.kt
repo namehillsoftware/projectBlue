@@ -1054,10 +1054,7 @@ fun NowPlayingView(
 	val isScreenOn by nowPlayingScreenViewModel.isScreenOn.collectAsState()
 	KeepScreenOn(isScreenOn)
 
-	findWindow()?.also {
-		WindowCompat.getInsetsController(it, it.decorView)
-			.isAppearanceLightStatusBars = false
-	}
+	findWindow()?.isStatusBarLight = false
 
 	ControlSurface(
 		color = Color.Transparent,

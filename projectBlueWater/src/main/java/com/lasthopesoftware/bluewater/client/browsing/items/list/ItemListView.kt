@@ -459,6 +459,7 @@ fun ItemListView(
 
 	BoxWithConstraints(modifier = Modifier.fillMaxSize().focusGroup()) {
 		ControlSurface {
+			DetermineWindowControlColors()
 			val isItemsLoading by itemListViewModel.isLoading.subscribeAsState()
 
 			val collapsedHeight = appBarHeight

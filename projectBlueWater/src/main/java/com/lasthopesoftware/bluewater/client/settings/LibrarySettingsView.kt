@@ -878,7 +878,6 @@ fun LibrarySettingsView(
 										derivedStateOf {
 											linearInterpolation(
 												Dimensions.appBarHeight,
-
 												14.dp,
 												headerCollapseProgress
 											)

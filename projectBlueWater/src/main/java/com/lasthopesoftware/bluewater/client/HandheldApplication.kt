@@ -334,6 +334,8 @@ fun HandheldApplication(
 	routedNavigationDependencies.registerBackNav()
 
 	ControlSurface {
+		DetermineWindowControlColors()
+
 		NavHost(navController) { destination ->
 			when (destination) {
 				is SelectedLibraryReRouter -> {

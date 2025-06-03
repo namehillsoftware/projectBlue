@@ -839,38 +839,37 @@ fun FileDetailsView(
 		}
 	}
 
-	Box(modifier = Modifier
-		.fillMaxSize()
-		.background(coverArtColorState.actionBarColor)
+	Box(
+		modifier = Modifier
+			.fillMaxSize()
+			.background(coverArtColorState.actionBarColor)
 	) {
-		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
-		val layoutDirection = LocalLayoutDirection.current
-		Column(
-			modifier = Modifier
-				.padding(
-					start = systemBarsPadding.calculateStartPadding(layoutDirection),
-					end = systemBarsPadding.calculateEndPadding(layoutDirection),
-					bottom = systemBarsPadding.calculateBottomPadding(),
-				)
-				.fillMaxSize()
+		ControlSurface(
+			color = coverArtColorState.backgroundColor,
+			contentColor = coverArtColorState.primaryTextColor,
+			controlColor = coverArtColorState.secondaryTextColor,
 		) {
-			Spacer(
+			DetermineWindowControlColors()
+
+			val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
+			val layoutDirection = LocalLayoutDirection.current
+			Column(
 				modifier = Modifier
-					.windowInsetsTopHeight(WindowInsets.statusBars)
-					.fillMaxWidth()
-					.background(coverArtColorState.actionBarColor)
-			)
-
-			ControlSurface(
-				color = coverArtColorState.backgroundColor,
-				contentColor = coverArtColorState.primaryTextColor,
-				controlColor = coverArtColorState.secondaryTextColor,
-			modifier = Modifier.weight(1f)) {
-				BoxWithConstraints(
+					.padding(
+						start = systemBarsPadding.calculateStartPadding(layoutDirection),
+						end = systemBarsPadding.calculateEndPadding(layoutDirection),
+						bottom = systemBarsPadding.calculateBottomPadding(),
+					)
+					.fillMaxSize()
+			) {
+				Spacer(
 					modifier = Modifier
-						.fillMaxSize()
+						.windowInsetsTopHeight(WindowInsets.statusBars)
+						.fillMaxWidth()
+						.background(coverArtColorState.actionBarColor)
+				)
 
-				) {
+				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 					when {
 						maxWidth >= 450.dp -> fileDetailsTwoColumn()
 						else -> fileDetailsSingleColumn()
