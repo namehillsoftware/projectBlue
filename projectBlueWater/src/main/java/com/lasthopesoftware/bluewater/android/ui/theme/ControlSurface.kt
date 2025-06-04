@@ -48,8 +48,8 @@ fun ControlSurface(
 }
 
 @Composable
-fun DetermineWindowControlColors() {
-	findWindow()?.isStatusBarLight = LocalSurfaceColor.current.luminance() > .5f
+fun DetermineWindowControlColors(backgroundColor: Color = LocalSurfaceColor.current) {
+	findWindow()?.isStatusBarLight = backgroundColor.luminance() > .5f
 }
 
 var Window.isStatusBarLight: Boolean

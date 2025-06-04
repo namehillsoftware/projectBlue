@@ -16,21 +16,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -64,11 +59,9 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -82,6 +75,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledRefreshButton
 import com.lasthopesoftware.bluewater.android.ui.components.memorableScrollConnectedScaler
+import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.indicateFocus
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.navigable
@@ -500,7 +494,7 @@ fun FileDetailsView(
 	val isLoading by viewModel.isLoading.subscribeAsState()
 
 	@Composable
-	fun BoxWithConstraintsScope.fileDetailsSingleColumn() {
+	fun fileDetailsSingleColumn() {
 		val fileProperties by viewModel.fileProperties.subscribeAsState()
 
 		val coverArtContainerHeight = 300.dp
@@ -514,26 +508,59 @@ fun FileDetailsView(
 		val boxHeight = expandedTitlePadding + titleHeight
 		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 		val collapsedHeight = appBarHeight + rowPadding
-		val heightScaler =
-			memorableScrollConnectedScaler(max = boxHeightPx, min = LocalDensity.current.run { collapsedHeight.toPx() })
+		val heightScaler = memorableScrollConnectedScaler(max = boxHeightPx, min = LocalDensity.current.run { collapsedHeight.toPx() })
 
 		val lazyListState = rememberLazyListState()
 
-		if (!isLoading) {
-			Box(
-				modifier = Modifier
-					.fillMaxSize()
-					.nestedScroll(heightScaler)
-			) {
-				val headerCollapseProgress by heightScaler.getProgressState()
+		Box(
+			modifier = Modifier
+				.fillMaxSize()
+				.nestedScroll(heightScaler)
+		) {
+			val headerCollapseProgress by heightScaler.getProgressState()
 
+			if (!isLoading) {
 				LazyColumn(modifier = Modifier.fillMaxSize(), state = lazyListState) {
 					item {
-						Spacer(
+						val coverArtTopPadding = viewPadding + appBarHeight
+
+						Box(
 							modifier = Modifier
-								.requiredHeight(boxHeight - appBarHeight)
+								.requiredHeight(coverArtContainerHeight)
+								.padding(
+									top = coverArtTopPadding,
+									start = viewPadding * 11,
+									end = viewPadding * 11,
+									bottom = coverArtBottomPadding
+								)
 								.fillMaxWidth()
-						)
+						) {
+							val coverArtState by remember { derivedStateOf { coverArtBitmap?.asImageBitmap() } }
+
+							coverArtState
+								?.also {
+									val album by viewModel.album.subscribeAsState()
+									val artist by viewModel.artist.subscribeAsState()
+									Image(
+										bitmap = it,
+										contentDescription = stringResource(
+											id = R.string.lbl_cover_art,
+											album,
+											artist
+										),
+										contentScale = ContentScale.FillHeight,
+										modifier = Modifier
+											.clip(RoundedCornerShape(5.dp))
+											.border(
+												1.dp,
+												shape = RoundedCornerShape(5.dp),
+												color = coverArtColorState.secondaryTextColor
+											)
+											.fillMaxHeight()
+											.align(Alignment.Center),
+									)
+								}
+						}
 					}
 
 					stickyHeader {
@@ -624,111 +651,73 @@ fun FileDetailsView(
 						FilePropertyRow(viewModel, it, coverArtColorState)
 					}
 				}
+			} else {
+				CircularProgressIndicator(
+					color = coverArtColorState.primaryTextColor,
+					modifier = Modifier.align(Alignment.Center)
+				)
+			}
 
-				val heightValue by heightScaler.getValueState()
-				Box(
+			Box(
+				modifier = Modifier
+					.height(appBarHeight)
+					.fillMaxWidth()
+					.align(Alignment.TopStart)
+					.background(coverArtColorState.backgroundColor),
+			) {
+				BackButton(
+					onBack = navigateApplication::navigateUp,
 					modifier = Modifier
-						.fillMaxWidth()
-						.align(Alignment.TopStart)
-						.background(coverArtColorState.backgroundColor)
-						.height(LocalDensity.current.run { heightValue.toDp() })
-				) {
-					val coverArtTopPadding = viewPadding + appBarHeight
+						.padding(topRowOuterPadding)
+						.align(Alignment.CenterStart)
+				)
 
-					val coverArtScrollOffset by remember { derivedStateOf { -coverArtContainerHeight * headerCollapseProgress } }
-					Box(
-						modifier = Modifier
-							.requiredHeight(coverArtContainerHeight)
-							.padding(
-								top = coverArtTopPadding,
-								start = viewPadding * 11,
-								end = viewPadding * 11,
-							)
-							.offset { IntOffset(x = 0, y = coverArtScrollOffset.roundToPx()) }
-							.fillMaxWidth()
-					) {
-						val coverArtState by remember { derivedStateOf { coverArtBitmap?.asImageBitmap() } }
-
-						coverArtState
-							?.let {
-								val album by viewModel.album.subscribeAsState()
-								val artist by viewModel.artist.subscribeAsState()
-								Image(
-									bitmap = it,
-									contentDescription = stringResource(
-										id = R.string.lbl_cover_art,
-										album,
-										artist
-									),
-									contentScale = ContentScale.FillHeight,
-									modifier = Modifier
-										.clip(RoundedCornerShape(5.dp))
-										.border(
-											1.dp,
-											shape = RoundedCornerShape(5.dp),
-											color = coverArtColorState.secondaryTextColor
-										)
-										.fillMaxHeight()
-										.align(Alignment.Center),
-								)
-							}
-					}
-
-					val topTitlePadding by remember {
-						derivedStateOf {
-							linearInterpolation(expandedTitlePadding, viewPaddingUnit, headerCollapseProgress)
-						}
-					}
-					Box(
-						modifier = Modifier
-							.padding(top = topTitlePadding)
-							.fillMaxWidth()
-					) {
-						val startPadding by remember { derivedStateOf { viewPadding + 48.dp * headerCollapseProgress } }
-						val endPadding by remember {
-							derivedStateOf {
-								linearInterpolation(
-									viewPadding,
-									topMenuIconSize + viewPaddingUnit * 4,
-									headerCollapseProgress
-								)
-							}
-						}
-						FilePropertyHeader(
-							viewModel,
-							coverArtColorState,
-							modifier = Modifier.padding(start = startPadding, end = endPadding),
-							titleFontSize = titleFontSize,
-							isMarqueeEnabled = !lazyListState.isScrollInProgress
+				UnlabelledRefreshButton(
+					onClick = {
+						viewModel.promiseLoadedActiveFile()
+					},
+					modifier = Modifier
+						.padding(
+							vertical = topRowOuterPadding,
+							horizontal = viewPaddingUnit * 2
 						)
+						.align(Alignment.CenterEnd)
+				)
+			}
+
+			if (!isLoading) {
+				val topTitlePadding by remember {
+					derivedStateOf {
+						linearInterpolation(expandedTitlePadding, 0.dp, headerCollapseProgress)
 					}
 				}
+				Box(
+					modifier = Modifier
+						.padding(top = topTitlePadding)
+						.requiredHeight(appBarHeight)
+						.fillMaxWidth(),
+					contentAlignment = Alignment.CenterStart,
+				) {
+					val startPadding by rememberTitleStartPadding(heightScaler.getProgressState())
+					val endPadding by remember {
+						derivedStateOf {
+							linearInterpolation(
+								viewPadding,
+								topMenuIconSize + viewPaddingUnit * 4,
+								headerCollapseProgress
+							)
+						}
+					}
+					FilePropertyHeader(
+						viewModel,
+						coverArtColorState,
+						modifier = Modifier.padding(start = startPadding, end = endPadding),
+						titleFontSize = titleFontSize,
+						isMarqueeEnabled = !lazyListState.isScrollInProgress
+					)
+				}
 			}
-		} else {
-			CircularProgressIndicator(
-				color = coverArtColorState.primaryTextColor,
-				modifier = Modifier.align(Alignment.Center)
-			)
 		}
-
-		BackButton(
-			onBack = navigateApplication::navigateUp,
-			modifier = Modifier
-				.padding(topRowOuterPadding)
-				.align(Alignment.TopStart)
-		)
-
-		UnlabelledRefreshButton(
-			onClick = {
-				viewModel.promiseLoadedActiveFile()
-			},
-			modifier = Modifier
-				.padding(
-					vertical = topRowOuterPadding,
-					horizontal = viewPaddingUnit * 2
-				)
-				.align(Alignment.TopEnd)
-		)
 	}
 
 	@Composable
@@ -839,41 +828,24 @@ fun FileDetailsView(
 		}
 	}
 
-	Box(
-		modifier = Modifier
-			.fillMaxSize()
-			.background(coverArtColorState.actionBarColor)
+	DetermineWindowControlColors(coverArtColorState.backgroundColor)
+
+	Box(modifier = Modifier
+		.fillMaxSize()
+		.background(coverArtColorState.actionBarColor)
 	) {
+		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
+
 		ControlSurface(
 			color = coverArtColorState.backgroundColor,
 			contentColor = coverArtColorState.primaryTextColor,
 			controlColor = coverArtColorState.secondaryTextColor,
+			modifier = Modifier.padding(systemBarsPadding)
 		) {
-			DetermineWindowControlColors()
-
-			val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
-			val layoutDirection = LocalLayoutDirection.current
-			Column(
-				modifier = Modifier
-					.padding(
-						start = systemBarsPadding.calculateStartPadding(layoutDirection),
-						end = systemBarsPadding.calculateEndPadding(layoutDirection),
-						bottom = systemBarsPadding.calculateBottomPadding(),
-					)
-					.fillMaxSize()
-			) {
-				Spacer(
-					modifier = Modifier
-						.windowInsetsTopHeight(WindowInsets.statusBars)
-						.fillMaxWidth()
-						.background(coverArtColorState.actionBarColor)
-				)
-
-				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-					when {
-						maxWidth >= 450.dp -> fileDetailsTwoColumn()
-						else -> fileDetailsSingleColumn()
-					}
+			BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+				when {
+					maxWidth >= 450.dp -> fileDetailsTwoColumn()
+					else -> fileDetailsSingleColumn()
 				}
 			}
 		}
