@@ -5,6 +5,7 @@ import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.startup.AppInitializer
 import com.lasthopesoftware.bluewater.android.intents.IntentBuilder
+import com.lasthopesoftware.bluewater.android.ui.ScreenDimensions
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.DiskFileCache
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.access.CachedFilesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.configuration.AudioCacheConfiguration
@@ -46,7 +47,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAcce
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncSchedulerInitializer
 import com.lasthopesoftware.bluewater.settings.repository.access.ApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.android.ui.ScreenDimensions
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus

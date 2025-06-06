@@ -1,13 +1,13 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist
 
 import androidx.lifecycle.ViewModel
+import com.lasthopesoftware.bluewater.android.ui.components.dragging.move
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.StorePlaylists
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
-import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.move
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.LiftedInteractionState

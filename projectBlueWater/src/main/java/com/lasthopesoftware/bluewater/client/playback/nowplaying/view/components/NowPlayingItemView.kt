@@ -25,10 +25,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.shared.android.ui.components.ListItemIcon
-import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.DragDropItemScope
-import com.lasthopesoftware.bluewater.shared.android.ui.navigable
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
+import com.lasthopesoftware.bluewater.android.ui.components.dragging.DragDropItemScope
+import com.lasthopesoftware.bluewater.android.ui.navigable
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 
 private val rowHeight = Dimensions.twoLineRowHeight
 

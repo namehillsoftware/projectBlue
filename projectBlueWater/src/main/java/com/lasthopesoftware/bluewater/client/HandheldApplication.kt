@@ -1,12 +1,19 @@
 package com.lasthopesoftware.bluewater.client
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.material.BottomSheetScaffold
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.rememberBottomSheetScaffoldState
@@ -20,9 +27,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
+import com.lasthopesoftware.bluewater.android.ui.theme.DetermineWindowControlColors
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ReusedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
@@ -58,10 +69,6 @@ import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
-import com.lasthopesoftware.bluewater.shared.android.ui.components.SystemUiController
-import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberSystemUiController
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.exceptions.UncaughtExceptionHandlerLogger
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
@@ -87,71 +94,96 @@ private fun BrowserLibraryDestination.Navigate(
 	libraryConnectionDependencies: LibraryConnectionDependents,
 ) {
 	with(browserViewDependencies) {
-		val scaffoldState = rememberBottomSheetScaffoldState()
-
-		val isBottomSheetCollapsed = scaffoldState.bottomSheetState.isCollapsed
-		val scope = rememberCoroutineScope()
-		DisposableEffect(isBottomSheetCollapsed) {
-			if (isBottomSheetCollapsed) {
-				onDispose {  }
-			} else {
-				val collapseAction = {
-					scope.async {
-						if (scaffoldState.bottomSheetState.isCollapsed) false
-						else {
-							scaffoldState.bottomSheetState.collapse()
-							true
-						}
-					}.toPromise()
-				}
-
-				undoBackStackBuilder.addAction(collapseAction)
-
-				onDispose { undoBackStackBuilder.removeAction(collapseAction) }
-			}
-		}
-
-		val selectedLibraryId by selectedLibraryViewModel.selectedLibraryId.subscribeAsState()
-		val isSelectedLibrary by remember { derivedStateOf { selectedLibraryId == libraryId } }
-
-		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
-		BottomSheetScaffold(
+		Box(
 			modifier = Modifier
 				.fillMaxSize()
-				.padding(systemBarsPadding),
-			scaffoldState = scaffoldState,
-			sheetPeekHeight = if (isSelectedLibrary) bottomAppBarHeight else 0.dp,
-			sheetElevation = bottomSheetElevation,
-			sheetContent = {
-				if (isSelectedLibrary) {
-					LibraryMenu(
-						applicationNavigation = applicationNavigation,
-						nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-						playbackServiceController = playbackServiceController,
-						bottomSheetState = scaffoldState.bottomSheetState,
-						libraryId = libraryId,
+				.background(Color.Black)
+		) {
+			val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
+			val layoutDirection = LocalLayoutDirection.current
+			Column(
+				modifier = Modifier
+					.padding(
+						start = systemBarsPadding.calculateStartPadding(layoutDirection),
+						end = systemBarsPadding.calculateEndPadding(layoutDirection),
+						bottom = systemBarsPadding.calculateBottomPadding(),
 					)
+					.fillMaxSize()
+			) {
+				Spacer(
+					modifier = Modifier
+						.windowInsetsTopHeight(WindowInsets.systemBars)
+						.fillMaxWidth()
+						.background(MaterialTheme.colors.surface)
+				)
 
-					val context = LocalContext.current
-					LaunchedEffect(key1 = libraryId, key2 = context) {
-						try {
-							nowPlayingFilePropertiesViewModel.initializeViewModel(libraryId).suspend()
-						} catch (e: Throwable) {
-							when {
-								ConnectionLostExceptionFilter.isConnectionLostException(e) -> {
-									libraryConnectionDependencies.pollForConnections.pollConnection(libraryId)
+				val scaffoldState = rememberBottomSheetScaffoldState()
+
+				val isBottomSheetCollapsed = scaffoldState.bottomSheetState.isCollapsed
+				val scope = rememberCoroutineScope()
+				DisposableEffect(isBottomSheetCollapsed) {
+					if (isBottomSheetCollapsed) {
+						onDispose { }
+					} else {
+						val collapseAction = {
+							scope.async {
+								if (scaffoldState.bottomSheetState.isCollapsed) false
+								else {
+									scaffoldState.bottomSheetState.collapse()
+									true
 								}
+							}.toPromise()
+						}
 
-								UncaughtExceptionHandlerLogger.uncaughtException(e) -> {
-									UnexpectedExceptionToaster.announce(context, e)
+						undoBackStackBuilder.addAction(collapseAction)
+
+						onDispose { undoBackStackBuilder.removeAction(collapseAction) }
+					}
+				}
+				val selectedLibraryId by selectedLibraryViewModel.selectedLibraryId.subscribeAsState()
+				val isSelectedLibrary by remember { derivedStateOf { selectedLibraryId == libraryId } }
+
+				BottomSheetScaffold(
+					modifier = Modifier.weight(1f),
+					scaffoldState = scaffoldState,
+					sheetPeekHeight = if (isSelectedLibrary) bottomAppBarHeight else 0.dp,
+					sheetElevation = bottomSheetElevation,
+					sheetContent = {
+						if (isSelectedLibrary) {
+							LibraryMenu(
+								applicationNavigation = applicationNavigation,
+								nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+								playbackServiceController = playbackServiceController,
+								bottomSheetState = scaffoldState.bottomSheetState,
+								libraryId = libraryId,
+							)
+
+							val context = LocalContext.current
+							LaunchedEffect(key1 = libraryId, key2 = context) {
+								try {
+									nowPlayingFilePropertiesViewModel.initializeViewModel(libraryId).suspend()
+								} catch (e: Throwable) {
+									when {
+										ConnectionLostExceptionFilter.isConnectionLostException(e) -> {
+											libraryConnectionDependencies.pollForConnections.pollConnection(libraryId)
+										}
+
+										UncaughtExceptionHandlerLogger.uncaughtException(e) -> {
+											UnexpectedExceptionToaster.announce(context, e)
+										}
+									}
 								}
 							}
 						}
 					}
+				) { paddingValues ->
+					Box(modifier = Modifier.padding(paddingValues)) {
+						NavigateToLibraryDestination(
+							browserViewDependencies
+						)
+					}
 				}
 			}
-		) { paddingValues ->
-			Box(modifier = Modifier.padding(paddingValues)) { NavigateToLibraryDestination(browserViewDependencies) }
 		}
 	}
 }
@@ -159,16 +191,12 @@ private fun BrowserLibraryDestination.Navigate(
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
 fun LibraryDestination.Navigate(
-	systemUiController: SystemUiController,
 	browserViewDependencies: ScopedViewModelDependencies,
 	libraryConnectionDependencies: LibraryConnectionDependents,
 ) {
 	with(browserViewDependencies) {
 		when (this@Navigate) {
 			is BrowserLibraryDestination -> {
-				systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
-				systemUiController.setNavigationBarColor(Color.Black)
-
 				Navigate(
 					browserViewDependencies = browserViewDependencies,
 					libraryConnectionDependencies = libraryConnectionDependencies,
@@ -178,26 +206,15 @@ fun LibraryDestination.Navigate(
 			is FileDetailsScreen -> {}
 
 			is ConnectionSettingsScreen -> {
-				systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
-				systemUiController.setNavigationBarColor(Color.Black)
-
 				val viewModel = librarySettingsViewModel
 
-				val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
-
-				Box(
-					modifier = Modifier
-						.fillMaxSize()
-						.padding(systemBarsPadding)
-				) {
-					LibrarySettingsView(
-						librarySettingsViewModel = viewModel,
-						navigateApplication = applicationNavigation,
-						stringResources = stringResources,
-						userSslCertificates = userSslCertificateProvider,
-						undoBackStack = undoBackStackBuilder,
-					)
-				}
+				LibrarySettingsView(
+					librarySettingsViewModel = viewModel,
+					navigateApplication = applicationNavigation,
+					stringResources = stringResources,
+					userSslCertificates = userSslCertificateProvider,
+					undoBackStack = undoBackStackBuilder,
+				)
 
 				viewModel.loadLibrary(libraryId)
 			}
@@ -252,8 +269,6 @@ fun HandheldApplication(
 	permissionsDependencies: PermissionsDependencies,
 	initialDestination: Destination?
 ) {
-	val systemUiController = rememberSystemUiController()
-
 	val navController = rememberNavController(
 		if (initialDestination == null) listOf(ApplicationSettingsScreen, SelectedLibraryReRouter)
 		else listOf(ApplicationSettingsScreen)
@@ -270,7 +285,7 @@ fun HandheldApplication(
 	}
 
 	val connectionStatusViewModel = viewModel {
-		with (entryDependencies) {
+		with(entryDependencies) {
 			ConnectionStatusViewModel(
 				stringResources,
 				DramaticConnectionInitializationController(
@@ -295,7 +310,7 @@ fun HandheldApplication(
 		RateLimitedFilePropertiesDependencies(
 			RateLimitingExecutionPolicy(1),
 			RetryingLibraryConnectionRegistry(
-                LibraryConnectionRegistry(routedNavigationDependencies),
+				LibraryConnectionRegistry(routedNavigationDependencies),
 			),
 		)
 	}
@@ -318,9 +333,9 @@ fun HandheldApplication(
 
 	routedNavigationDependencies.registerBackNav()
 
-	val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
-
 	ControlSurface {
+		DetermineWindowControlColors()
+
 		NavHost(navController) { destination ->
 			when (destination) {
 				is SelectedLibraryReRouter -> {
@@ -342,10 +357,8 @@ fun HandheldApplication(
 						}
 					}
 				}
-				is ActiveLibraryDownloadsScreen -> {
-					systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
-					systemUiController.setNavigationBarColor(Color.Black)
 
+				is ActiveLibraryDownloadsScreen -> {
 					routedNavigationDependencies.apply {
 						LaunchedEffect(key1 = Unit) {
 							try {
@@ -365,6 +378,7 @@ fun HandheldApplication(
 						}
 					}
 				}
+
 				is LibraryDestination -> {
 					LocalViewModelStoreOwner.current
 						?.let { viewModelStoreOwner ->
@@ -377,36 +391,25 @@ fun HandheldApplication(
 						?.registerBackNav()
 						?.also { registry ->
 							destination.Navigate(
-								systemUiController,
 								registry,
 								libraryConnectionDependencies
 							)
 						}
 				}
-				is ApplicationSettingsScreen -> {
-					systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
-					systemUiController.setNavigationBarColor(Color.Black)
 
+				is ApplicationSettingsScreen -> {
 					routedNavigationDependencies.apply {
-						Box(
-							modifier = Modifier
-								.fillMaxSize()
-								.padding(systemBarsPadding)
-						) {
-							ApplicationSettingsView(
-								applicationSettingsViewModel = applicationSettingsViewModel,
-								applicationNavigation = applicationNavigation,
-								playbackService = playbackServiceController,
-							)
-						}
+						ApplicationSettingsView(
+							applicationSettingsViewModel = applicationSettingsViewModel,
+							applicationNavigation = applicationNavigation,
+							playbackService = playbackServiceController,
+						)
 
 						applicationSettingsViewModel.loadSettings()
 					}
 				}
-				is NewConnectionSettingsScreen -> {
-					systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
-					systemUiController.setNavigationBarColor(Color.Black)
 
+				is NewConnectionSettingsScreen -> {
 					LocalViewModelStoreOwner.current
 						?.let { viewModelStoreOwner ->
 							ScopedViewModelRegistry(
@@ -417,25 +420,17 @@ fun HandheldApplication(
 						}
 						?.registerBackNav()
 						?.apply {
-							Box(
-								modifier = Modifier
-									.fillMaxSize()
-									.padding(systemBarsPadding)
-							) {
-								LibrarySettingsView(
-									librarySettingsViewModel = librarySettingsViewModel,
-									navigateApplication = applicationNavigation,
-									stringResources = stringResources,
-									userSslCertificates = userSslCertificateProvider,
-									undoBackStack = undoBackStackBuilder,
-								)
-							}
+							LibrarySettingsView(
+								librarySettingsViewModel = librarySettingsViewModel,
+								navigateApplication = applicationNavigation,
+								stringResources = stringResources,
+								userSslCertificates = userSslCertificateProvider,
+								undoBackStack = undoBackStackBuilder,
+							)
 						}
 				}
-				is HiddenSettingsScreen -> {
-					systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
-					systemUiController.setNavigationBarColor(Color.Black)
 
+				is HiddenSettingsScreen -> {
 					HiddenSettingsView(routedNavigationDependencies.hiddenSettingsViewModel)
 
 					routedNavigationDependencies.hiddenSettingsViewModel.loadApplicationSettings()
@@ -446,9 +441,7 @@ fun HandheldApplication(
 		val isCheckingConnection by connectionStatusViewModel.isGettingConnection.subscribeAsState()
 		if (isCheckingConnection) {
 			Box(
-				modifier = Modifier
-					.fillMaxSize()
-					.padding(systemBarsPadding)
+				modifier = Modifier.fillMaxSize()
 			) {
 				ConnectionUpdatesView(connectionViewModel = connectionStatusViewModel)
 			}

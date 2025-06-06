@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater
 
 import com.lasthopesoftware.bluewater.android.intents.BuildIntents
+import com.lasthopesoftware.bluewater.android.ui.ProvideScreenDimensions
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.DiskFileCache
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.UpdateDiskFileAccessTime
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.DiskFileCacheStreamSupplier
@@ -22,7 +23,6 @@ import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackSer
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.client.stored.sync.ScheduleSyncs
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
-import com.lasthopesoftware.bluewater.shared.android.ui.ProvideScreenDimensions
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
