@@ -14,8 +14,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.util.concurrent.CancellationException
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 
 class `When Halting Playback` {
 
@@ -35,7 +36,7 @@ class `When Halting Playback` {
 	}
 
 	private var isCompleted = false
-	private var exception: Throwable? = null
+	private var exception: CancellationException? = null
 
 	@BeforeAll
 	fun act() {
@@ -46,10 +47,8 @@ class `When Halting Playback` {
 		try {
 			promisedPlayback.get(3, TimeUnit.SECONDS)
 			isCompleted = false
-		} catch (e: TimeoutException) {
-			// ignore
-		} catch (e: Throwable) {
-			exception = e
+		} catch (e: ExecutionException) {
+			exception = e.cause as? CancellationException
 		}
 	}
 
@@ -64,7 +63,7 @@ class `When Halting Playback` {
 	}
 
 	@Test
-	fun `then the closed resource exception is ignored`() {
-		assertThat(exception).isNull()
+	fun `then playback resolves with a cancellation exception`() {
+		assertThat(exception).isNotNull()
 	}
 }

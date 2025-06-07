@@ -139,6 +139,7 @@ class PlaylistPlayer(
 				reject(e)
 				throw e
 			})
+			.then { _ -> reject(CancellationException("PlaylistPlayer halted.")) }
 	}
 
 	private fun playNextFile(preparedPosition: Duration = Duration.ZERO): Promise<PositionedPlayingFile?> {

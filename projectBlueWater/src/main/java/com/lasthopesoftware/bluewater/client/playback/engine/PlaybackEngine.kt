@@ -382,14 +382,14 @@ class PlaybackEngine(
 	}
 
 	private fun updatePreparedFileQueueUsingState(maybeNp: NowPlaying?) = maybeNp?.apply {
-			preparedPlaybackQueueResourceManagement.tryUpdateQueue(
-				positionedFileQueueProviders.getValue(isRepeating).provideQueue(
-					libraryId,
-					playlist,
-					playlistPosition + 1
-				)
+		preparedPlaybackQueueResourceManagement.tryUpdateQueue(
+			positionedFileQueueProviders.getValue(isRepeating).provideQueue(
+				libraryId,
+				playlist,
+				playlistPosition + 1
 			)
-		}
+		)
+	}
 
 	private fun startPlayback(activeNp: NowPlaying): Promise<PositionedPlayingFile?> {
 		onPlaybackStarted?.onPlaybackStarted()
@@ -437,11 +437,13 @@ class PlaybackEngine(
 						}
 					}
 			}, { e ->
+				if (e is CancellationException) return@then
+
 				val promisedSave = when (e) {
 					is PreparationException -> {
 						if (e.cause is CancellationException) {
 							logger.debug(
-								"Preparation was cancelled, expecting cancellation caller to handle resource clean-up.",
+								"Preparation was cancelled, expecting cancellation caller to handle state clean-up.",
 								e
 							)
 							return@then
@@ -483,6 +485,8 @@ class PlaybackEngine(
 		return playlistPlayback.resume()
 	}
 
+	private fun ProgressingPromise<PositionedPlayingFile, Unit>.isSameAsCurrentPlayback() = this === promisedPlayback.get()
+
 	private fun serializedPlayerUpdate() = updateStateSynchronously { playbackBootstrapper.updateFromState(activeLibraryId.get()) }
 
 	private fun promiseActiveNowPlaying() = updateStateSynchronously { nowPlayingRepository.promiseNowPlaying(activeLibraryId.get()) }
@@ -501,8 +505,6 @@ class PlaybackEngine(
 			isRepeating = isRepeating ?: this.isRepeating
 		)
 	}
-
-	private fun ProgressingPromise<PositionedPlayingFile, Unit>.isSameAsCurrentPlayback() = this === promisedPlayback.get()
 
 	private inline fun saveState(
 		libraryId: LibraryId,

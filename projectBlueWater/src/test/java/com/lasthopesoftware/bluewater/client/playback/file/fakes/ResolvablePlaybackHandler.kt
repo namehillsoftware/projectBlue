@@ -8,7 +8,7 @@ import com.namehillsoftware.handoff.promises.MessengerOperator
 import org.joda.time.Duration
 import kotlin.coroutines.cancellation.CancellationException
 
-class ResolvablePlaybackHandler : FakeBufferingPlaybackHandler() {
+open class ResolvablePlaybackHandler : FakeBufferingPlaybackHandler() {
 	private var messenger: Messenger<PlayedFile>? = null
 
 	private val promise: ProgressedPromise<Duration, PlayedFile> = object : ProgressedPromise<Duration, PlayedFile>(
