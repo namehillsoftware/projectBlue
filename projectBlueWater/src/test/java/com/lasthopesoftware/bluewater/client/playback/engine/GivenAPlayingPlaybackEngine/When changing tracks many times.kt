@@ -6,8 +6,10 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybac
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
+import com.lasthopesoftware.bluewater.client.playback.engine.LinkedOnPlayingFileChangedListener
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
+import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlayingFileChanged
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
@@ -90,19 +92,26 @@ class `When changing tracks many times` {
 	fun act() {
 		val (preparedFiles, playbackEngine) = mut
 
-		val promisedFinalFile = Promise {
-			playbackEngine
-				.setOnPlayingFileChanged { _, p ->
-					startedFiles.add(p?.asPositionedFile())
+		var onPlayingFileChanged = OnPlayingFileChanged { _, p -> startedFiles.add(p?.asPositionedFile()) }
 
-					if (p?.playlistPosition == 4)
-						it.sendResolution(p)
-				}
+		val promisedFirstFile = Promise {
+			onPlayingFileChanged = LinkedOnPlayingFileChangedListener(onPlayingFileChanged) { _, p ->
+				if (p?.playlistPosition == 1)
+					it.sendResolution(p)
+			}
+		}
+
+		val promisedFinalFile = Promise {
+			onPlayingFileChanged = LinkedOnPlayingFileChangedListener(onPlayingFileChanged) { _, p ->
+				if (p?.playlistPosition == 4)
+					it.sendResolution(p)
+			}
 		}
 
 		val playlist = preparedFiles.keys.toList()
 
 		val promisedStart = playbackEngine
+			.setOnPlayingFileChanged(onPlayingFileChanged)
 			.startPlaylist(
 				LibraryId(libraryId),
 				playlist,
@@ -112,6 +121,7 @@ class `When changing tracks many times` {
 		val (playingPlaybackHandler, resolvablePlaybackHandler) = preparedFiles.getValue(ServiceFile("2"))
 		resolvablePlaybackHandler.resolve()
 		promisedStart.toExpiringFuture().get()
+		promisedFirstFile.toExpiringFuture().get()
 
 		val promisedChanges = Promise.whenAll(
 			playbackEngine.changePosition(0, Duration.ZERO),

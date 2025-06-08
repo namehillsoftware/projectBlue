@@ -34,6 +34,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.jetbrains.annotations.Contract
 import org.joda.time.Duration
 import java.util.concurrent.CancellationException
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
 
@@ -74,7 +75,8 @@ class PlaybackEngine(
 	@Volatile
 	private var promisedNowPlayingState = Promise.empty<NowPlaying?>()
 
-	private val promisedPlayback = AtomicReference<ProgressingPromise<PositionedPlayingFile, Unit>?>(null)
+	private val playerConcurrencyId = AtomicInteger()
+	private val promisedPlayback = AtomicReference(null as ProgressingPromise<PositionedPlayingFile, Unit>?)
 
 	private var onPlayingFileChanged: OnPlayingFileChanged? = null
 	private var onPlaylistError: OnPlaylistError? = null
@@ -134,6 +136,7 @@ class PlaybackEngine(
 		val originalLibraryId = activeLibraryId.getAndSet(libraryId)
 		return if (originalLibraryId == libraryId) promiseState()
 		else {
+			playerConcurrencyId.incrementAndGet()
 			isPlaying = false
 			promisedPlayback.set(null)
 
@@ -149,6 +152,7 @@ class PlaybackEngine(
 
 		activeLibraryId.set(libraryId)
 		isPlaying = true
+		val playerId = playerConcurrencyId.incrementAndGet()
 
 		return saveState(
 			libraryId,
@@ -161,26 +165,20 @@ class PlaybackEngine(
 				else serializedPlayerUpdate()
 					.then { updated ->
 						if (updated != null && saved == updated && isPlaying)
-							startPlayback(updated)
+							startPlayback(playerId, updated)
 					}
 			}
 	}
 
 	override fun skipToNext(): Promise<Pair<LibraryId, PositionedFile>?> = promiseActiveNowPlaying().eventually {
 		it?.run {
-			changePosition(
-				getNextPosition(playlistPosition, playlist),
-				Duration.ZERO
-			)
+			changePosition(getNextPosition(playlistPosition, playlist), Duration.ZERO)
 		}
 	}
 
 	override fun skipToPrevious(): Promise<Pair<LibraryId, PositionedFile>?> = promiseActiveNowPlaying().eventually {
 		it?.run {
-			changePosition(
-				getPreviousPosition(playlistPosition),
-				Duration.ZERO
-			)
+			changePosition(getPreviousPosition(playlistPosition), Duration.ZERO)
 		}
 	}
 
@@ -189,10 +187,11 @@ class PlaybackEngine(
 		filePosition: Duration
 	): Promise<Pair<LibraryId, PositionedFile>?> {
 		val startingLibraryId = activeLibraryId.get()
+		val newPlayerId = playerConcurrencyId.incrementAndGet()
 		return saveStateAndUpdatePlayer(startingLibraryId, playlistPosition = playlistPosition, filePosition = filePosition.millis)
 			.eventually { np ->
 				when {
-					np == null || activeLibraryId.get() != startingLibraryId -> Promise.empty()
+					np == null || activeLibraryId.get() != startingLibraryId || newPlayerId != playerConcurrencyId.get() -> Promise.empty()
 					np.playlistPosition != playlistPosition || np.filePosition != filePosition.millis -> Promise.empty()
 					!isPlaying -> {
 						promisedPlayback.set(null)
@@ -202,7 +201,7 @@ class PlaybackEngine(
 						).toPromise()
 					}
 					else -> {
-						startPlayback(np)
+						startPlayback(newPlayerId, np)
 							.then({ p ->
 								p?.asPositionedFile()?.let { Pair(np.libraryId, it) } ?: Pair(
 									np.libraryId,
@@ -233,7 +232,8 @@ class PlaybackEngine(
 		isPlaying = true
 
 		return if (promisedPlayback.get() == null) {
-			serializedPlayerUpdate().then { np -> np?.let(::startPlayback); Unit }
+			val currentPlayerId = playerConcurrencyId.get()
+			serializedPlayerUpdate().then { np -> np?.let { startPlayback(currentPlayerId, it) }; Unit }
 		} else {
 			playlistPlayback
 				.resume()
@@ -390,7 +390,9 @@ class PlaybackEngine(
 		)
 	}
 
-	private fun startPlayback(activeNp: NowPlaying): Promise<PositionedPlayingFile?> {
+	private fun startPlayback(playerId: Int, activeNp: NowPlaying): Promise<PositionedPlayingFile?> {
+		if (!playerId.isCurrentPlayerId()) return Promise.empty()
+
 		onPlaybackStarted?.onPlaybackStarted()
 
 		val attachedLibraryId = activeNp.libraryId
@@ -399,13 +401,13 @@ class PlaybackEngine(
 
 		newPromisedPlayback
 			?.onEachEventually { p ->
-				if (!newPromisedPlayback.isSameAsCurrentPlayback()) Unit.toPromise()
+				if (!newPromisedPlayback.isSameAsCurrentPlayback() || !playerId.isCurrentPlayerId()) Unit.toPromise()
 				else p.playingFile
 					.progress
 					.eventually { progress ->
-						if (!newPromisedPlayback.isSameAsCurrentPlayback()) Unit.toPromise()
+						if (!newPromisedPlayback.isSameAsCurrentPlayback() || !playerId.isCurrentPlayerId()) Unit.toPromise()
 						else saveState(attachedLibraryId) {
-							if (!newPromisedPlayback.isSameAsCurrentPlayback()) this
+							if (!newPromisedPlayback.isSameAsCurrentPlayback() || !playerId.isCurrentPlayerId()) this
 							else copy(
 								playlistPosition = p.playlistPosition,
 								filePosition = progress.millis
@@ -414,16 +416,17 @@ class PlaybackEngine(
 							maybeNp
 								?.takeIf {
 									newPromisedPlayback.isSameAsCurrentPlayback() &&
-									attachedLibraryId == activeLibraryId.get() &&
-									it.playlistPosition == p.playlistPosition &&
-									it.filePosition == progress.millis
+										playerId.isCurrentPlayerId() &&
+										attachedLibraryId == activeLibraryId.get() &&
+										it.playlistPosition == p.playlistPosition &&
+										it.filePosition == progress.millis
 								}
 								?.run { onPlayingFileChanged?.onPlayingFileChanged(libraryId, p) }
 						}
 					}
 			}
 			?.then({ _ ->
-				if (!newPromisedPlayback.isSameAsCurrentPlayback()) return@then
+				if (!newPromisedPlayback.isSameAsCurrentPlayback() || !playerId.isCurrentPlayerId()) return@then
 
 				isPlaying = false
 				changePosition(0, Duration.ZERO)
@@ -449,7 +452,7 @@ class PlaybackEngine(
 						}
 
 						saveState(attachedLibraryId) {
-							if (newPromisedPlayback.isSameAsCurrentPlayback()) copy(playlistPosition = e.positionedFile.playlistPosition)
+							if (newPromisedPlayback.isSameAsCurrentPlayback() && playerId.isCurrentPlayerId()) copy(playlistPosition = e.positionedFile.playlistPosition)
 							else this
 						}
 					}
@@ -457,7 +460,7 @@ class PlaybackEngine(
 					is PlaybackException -> {
 						e.playbackHandler.progress.eventually { p ->
 							saveState(attachedLibraryId) {
-								if (newPromisedPlayback.isSameAsCurrentPlayback()) copy(filePosition = p.millis)
+								if (newPromisedPlayback.isSameAsCurrentPlayback() && playerId.isCurrentPlayerId()) copy(filePosition = p.millis)
 								else this
 							}
 						}
@@ -466,7 +469,7 @@ class PlaybackEngine(
 					else -> Promise.empty()
 				}
 
-				if (!newPromisedPlayback.isSameAsCurrentPlayback()) return@then
+				if (!newPromisedPlayback.isSameAsCurrentPlayback() || !playerId.isCurrentPlayerId()) return@then
 
 				isPlaying = false
 
@@ -474,7 +477,7 @@ class PlaybackEngine(
 
 				promisedSave
 					.must { _ ->
-						if (newPromisedPlayback.isSameAsCurrentPlayback()) {
+						if (newPromisedPlayback.isSameAsCurrentPlayback() && playerId.isCurrentPlayerId()) {
 							promisedPlayback.set(null)
 							onPlaylistError?.onError(e)
 						}
@@ -485,6 +488,8 @@ class PlaybackEngine(
 	}
 
 	private fun ProgressingPromise<PositionedPlayingFile, Unit>.isSameAsCurrentPlayback() = this === promisedPlayback.get()
+
+	private fun Int.isCurrentPlayerId() = this == playerConcurrencyId.get()
 
 	private fun serializedPlayerUpdate() = updateStateSynchronously { playbackBootstrapper.updateFromState(activeLibraryId.get()) }
 
