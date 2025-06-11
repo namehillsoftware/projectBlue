@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayab
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException
+import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakePreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
@@ -31,7 +32,7 @@ import org.junit.jupiter.api.Test
 private const val libraryId = 362
 
 class `When Playback is Resumed` {
-	private val expectedPlaybackHandler = ResolvablePlaybackHandler()
+	private val expectedPlaybackHandler = FakeBufferingPlaybackHandler()
 
 	private val mut by lazy {
 		val fakePlaybackPreparerProvider = mockk<IPlayableFilePreparationSourceProvider> {
@@ -40,12 +41,12 @@ class `When Playback is Resumed` {
 
 				every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile("1"), Duration.ZERO) } returns
 					FakePreparedPlayableFile(
-						ResolvablePlaybackHandler().apply { resolve() }
+						FakeBufferingPlaybackHandler()
 					).toPromise()
 
 				every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile("2"), Duration.ZERO) } returns
 					FakePreparedPlayableFile(
-						ResolvablePlaybackHandler().apply { resolve() }
+						FakeBufferingPlaybackHandler()
 					).toPromise()
 
 				every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile("3"), Duration.ZERO) } returns
@@ -59,7 +60,7 @@ class `When Playback is Resumed` {
 				every { promisePreparedPlaybackFile(LibraryId(libraryId), any(), any()) } returns FakePreparedPlayableFile(ResolvablePlaybackHandler()).toPromise()
 
 				every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile("3"), Duration.millis(164)) } returns FakePreparedPlayableFile(
-					expectedPlaybackHandler.apply { resolve() }
+					expectedPlaybackHandler
 				).toPromise()
 			}
 
