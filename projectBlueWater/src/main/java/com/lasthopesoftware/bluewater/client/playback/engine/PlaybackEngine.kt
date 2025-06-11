@@ -70,10 +70,7 @@ class PlaybackEngine(
 
 	private val activeLibraryId = AtomicReference(markerLibraryId)
 
-	private val promisedNowPlayingStateSync = Any()
-
-	@Volatile
-	private var promisedNowPlayingState = Promise.empty<NowPlaying?>()
+	private val promisedNowPlayingState = AtomicReference(Promise.empty<NowPlaying?>())
 
 	private val playerConcurrencyId = AtomicInteger()
 	private val promisedPlayback = AtomicReference(null as ProgressingPromise<PositionedPlayingFile, Unit>?)
@@ -565,9 +562,6 @@ class PlaybackEngine(
      * @return A [Promise] that resolves with the current [NowPlaying] state after the update
      *   function has been scheduled. To wait for the update to complete, chain to the returned promise.
      */
-    private inline fun updateStateSynchronously(crossinline updateFunc: () -> Promise<NowPlaying?>): Promise<NowPlaying?> = synchronized(promisedNowPlayingStateSync) {
-		promisedNowPlayingState
-			.regardless { updateFunc() }
-			.also { promisedNowPlayingState = it }
-	}
+    private inline fun updateStateSynchronously(crossinline updateFunc: () -> Promise<NowPlaying?>): Promise<NowPlaying?> =
+		promisedNowPlayingState.updateAndGet { it.regardless { updateFunc() } }
 }
