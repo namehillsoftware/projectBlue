@@ -255,59 +255,51 @@ class PlaybackEngine(
 	override fun interrupt(): Promise<Unit> =
 		pausePlayback().then { _ -> onPlaybackInterrupted?.onPlaybackInterrupted() }
 
-	override fun addFile(serviceFile: ServiceFile): Promise<NowPlaying?> = promiseActiveNowPlaying()
-		.eventually { it?.run { copy(playlist = playlist + serviceFile) }?.let(::saveState).keepPromise() }
-		.then(::updatePreparedFileQueueUsingState)
+	override fun addFile(serviceFile: ServiceFile): Promise<NowPlaying?> = saveState(activeLibraryId.get()) {
+		copy(playlist = playlist + serviceFile)
+	}.then(::updatePreparedFileQueueUsingState)
 
 	override fun removeFileAtPosition(position: Int): Promise<NowPlaying?> {
 		return promiseActiveNowPlaying()
 			.eventually {
-				if (it?.playlistPosition == position) skipToNext()
-				else Promise.empty()
+				if (it?.playlistPosition == position) skipToNext().then { p -> p?.first }
+				else it?.libraryId.toPromise()
 			}
-			.eventually { promiseActiveNowPlaying() }
-			.eventually { nowPlaying ->
-				nowPlaying
-					?.run {
+			.eventually {
+				it?.let { id ->
+					saveState(id) {
 						val newPlaylist = playlist.take(position) + playlist.drop(position + 1)
 
 						var newPosition = playlistPosition
 						if (playlistPosition > position)
 							newPosition -= 1
 
-						saveState(copy(playlist = newPlaylist, playlistPosition = newPosition))
+						copy(playlist = newPlaylist, playlistPosition = newPosition)
 					}
-					.keepPromise()
+				}
 			}
 			.then(::updatePreparedFileQueueUsingState)
 	}
 
 	override fun moveFile(position: Int, newPosition: Int): Promise<NowPlaying?> {
-		val promiseNowPlaying = promiseActiveNowPlaying()
 		if (position < 0 || newPosition < 0) return promiseActiveNowPlaying()
 
-		return promiseNowPlaying
-			.then { maybeNp ->
-				maybeNp
-					?.let {
-						if (it.playlist.run { position >= size || newPosition >= size }) return@then it
+		return saveState(activeLibraryId.get()) {
+			if (playlist.run { position >= size || newPosition >= size }) return@saveState this
 
-						val newPlaylist = it.playlist.toMutableList()
-						val removedFile = newPlaylist.removeAt(position)
-						newPlaylist.add(newPosition, removedFile)
+			val newPlaylist = playlist.toMutableList()
+			val removedFile = newPlaylist.removeAt(position)
+			newPlaylist.add(newPosition, removedFile)
 
-						val newPlaylistPosition = when (it.playlistPosition) {
-							position -> newPosition
-							in newPosition until position -> it.playlistPosition + 1
-							in position..newPosition -> it.playlistPosition - 1
-							else -> it.playlistPosition
-						}
-
-						it.copy(playlist = newPlaylist, playlistPosition = newPlaylistPosition)
-					}
+			val newPlaylistPosition = when (playlistPosition) {
+				position -> newPosition
+				in newPosition until position -> playlistPosition + 1
+				in position..newPosition -> playlistPosition - 1
+				else -> playlistPosition
 			}
-			.eventually { maybeNp -> maybeNp?.let(::saveState).keepPromise() }
-			.then(::updatePreparedFileQueueUsingState)
+
+			copy(playlist = newPlaylist, playlistPosition = newPlaylistPosition)
+		}.then(::updatePreparedFileQueueUsingState)
 	}
 
 	override fun clearPlaylist(): Promise<NowPlaying?> {
@@ -525,11 +517,6 @@ class PlaybackEngine(
 				else np.toPromise()
 			}.keepPromise()
 		}
-	}
-
-	@Suppress("UNCHECKED_CAST")
-	private fun saveState(nowPlaying: NowPlaying): Promise<NowPlaying?> = updateStateSynchronously {
-		nowPlayingRepository.updateNowPlaying(nowPlaying) as Promise<NowPlaying?>
 	}
 
 	private inline fun updateStateSynchronously(crossinline updateFunc: () -> Promise<NowPlaying?>): Promise<NowPlaying?> =
