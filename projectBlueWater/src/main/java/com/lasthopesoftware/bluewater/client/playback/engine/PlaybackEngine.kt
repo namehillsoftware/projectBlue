@@ -26,6 +26,7 @@ import com.lasthopesoftware.promises.ContinuingResult
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.onEachEventually
+import com.lasthopesoftware.promises.extensions.regardless
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.errors.RejectionDropper
@@ -67,8 +68,9 @@ class PlaybackEngine(
 
 	private val positionedFileQueueProviders = positionedFileQueueProviders.associateBy({ it.isRepeating }, { it })
 
+	private val promisedNowPlayingState = AtomicReference(Promise.empty<NowPlaying?>())
 	private val activeLibraryId = AtomicReference(markerLibraryId)
-	private val playerConcurrencyId = AtomicInteger()
+	private val playerConcurrencyId = AtomicInteger(Int.MIN_VALUE)
 	private val promisedPlayback = AtomicReference(null as ProgressingPromise<PositionedPlayingFile, Unit>?)
 
 	private var onPlayingFileChanged: OnPlayingFileChanged? = null
@@ -135,7 +137,7 @@ class PlaybackEngine(
 
 			pauseAndSaveLibraryState(originalLibraryId)
 				.eventually {
-					serializedPlayerUpdate().then { maybeNp -> maybeNp?.toState() ?: Pair(libraryId, null) }
+					updatePlayerFromState().then { maybeNp -> maybeNp?.toState() ?: Pair(libraryId, null) }
 				}
 		}
 	}
@@ -155,7 +157,7 @@ class PlaybackEngine(
 			)
 			.eventually { saved ->
 				if (activeLibraryId.get() != libraryId) Unit.toPromise()
-				else serializedPlayerUpdate()
+				else updatePlayerFromState()
 					.then { updated ->
 						if (updated != null && saved == updated && isPlaying)
 							startPlayback(playerId, updated)
@@ -181,11 +183,19 @@ class PlaybackEngine(
 	): Promise<Pair<LibraryId, PositionedFile>?> {
 		val startingLibraryId = activeLibraryId.get()
 		val newPlayerId = playerConcurrencyId.incrementAndGet()
-		return saveStateAndUpdatePlayer(startingLibraryId, playlistPosition = playlistPosition, filePosition = filePosition.millis)
+		return saveState(startingLibraryId) {
+			if (!newPlayerId.isCurrentPlayerId()) this
+			else copy(playlistPosition = playlistPosition, filePosition = filePosition.millis)
+		}
+			.eventually {
+				if (!newPlayerId.isCurrentPlayerId() || activeLibraryId.get() != startingLibraryId) Promise.empty()
+				else updatePlayerFromState()
+			}
 			.eventually { np ->
 				when {
-					np == null || activeLibraryId.get() != startingLibraryId || newPlayerId != playerConcurrencyId.get() -> Promise.empty()
-					np.playlistPosition != playlistPosition || np.filePosition != filePosition.millis -> Promise.empty()
+					activeLibraryId.get() != startingLibraryId -> Promise.empty()
+					newPlayerId != playerConcurrencyId.get() -> Promise.empty()
+					np?.playlistPosition != playlistPosition || np.filePosition != filePosition.millis -> Promise.empty()
 					!isPlaying -> {
 						promisedPlayback.set(null)
 						Pair(
@@ -226,7 +236,7 @@ class PlaybackEngine(
 
 		return if (promisedPlayback.get() == null) {
 			val currentPlayerId = playerConcurrencyId.get()
-			serializedPlayerUpdate().then { np -> np?.let { startPlayback(currentPlayerId, it) }; Unit }
+			updatePlayerFromState().then { np -> np?.let { startPlayback(currentPlayerId, it) }; Unit }
 		} else {
 			playlistPlayback
 				.resume()
@@ -485,32 +495,9 @@ class PlaybackEngine(
 
 	private fun Int.isCurrentPlayerId() = this == playerConcurrencyId.get()
 
-	private fun serializedPlayerUpdate() = playbackBootstrapper.updateFromState(activeLibraryId.get())
+	private fun updatePlayerFromState() = playbackBootstrapper.updateFromState(activeLibraryId.get())
 
 	private fun promiseActiveNowPlaying() = nowPlayingRepository.promiseNowPlaying(activeLibraryId.get())
-
-	private fun saveStateAndUpdatePlayer(
-		libraryId: LibraryId,
-		playlist: List<ServiceFile>? = null,
-		playlistPosition: Int? = null,
-		filePosition: Long? = null,
-		isRepeating: Boolean? = null
-	): Promise<NowPlaying?> =
-		nowPlayingRepository
-			.promiseNowPlaying(libraryId)
-			.eventually {
-				it?.let { np ->
-					val updatedNowPlaying = np.copy(
-						playlist = playlist ?: np.playlist,
-						playlistPosition = playlistPosition ?: np.playlistPosition,
-						filePosition = filePosition ?: np.filePosition,
-						isRepeating = isRepeating ?: np.isRepeating
-					)
-					if (updatedNowPlaying !== np) nowPlayingRepository.updateNowPlaying(updatedNowPlaying)
-					else np.toPromise()
-				}.keepPromise()
-			}
-			.eventually { playbackBootstrapper.updateFromState(libraryId) }
 
 	private fun saveState(
 		libraryId: LibraryId,
@@ -530,7 +517,7 @@ class PlaybackEngine(
 	private inline fun saveState(
 		libraryId: LibraryId,
 		crossinline updateFunc: NowPlaying.() -> NowPlaying
-	): Promise<NowPlaying?> =
+	): Promise<NowPlaying?> = updateStateSynchronously {
 		nowPlayingRepository.promiseNowPlaying(libraryId).eventually {
 			it?.let { np ->
 				val updatedNowPlaying = updateFunc(np)
@@ -538,8 +525,13 @@ class PlaybackEngine(
 				else np.toPromise()
 			}.keepPromise()
 		}
+	}
 
 	@Suppress("UNCHECKED_CAST")
-	private fun saveState(nowPlaying: NowPlaying): Promise<NowPlaying?> =
+	private fun saveState(nowPlaying: NowPlaying): Promise<NowPlaying?> = updateStateSynchronously {
 		nowPlayingRepository.updateNowPlaying(nowPlaying) as Promise<NowPlaying?>
+	}
+
+	private inline fun updateStateSynchronously(crossinline updateFunc: () -> Promise<NowPlaying?>): Promise<NowPlaying?> =
+		promisedNowPlayingState.updateAndGet { it.regardless { updateFunc() } }
 }
