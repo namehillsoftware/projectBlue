@@ -6,14 +6,17 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybac
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
+import com.lasthopesoftware.bluewater.client.playback.engine.LinkedOnPlayingFileChangedListener
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
+import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlayingFileChanged
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakePreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.LockingNowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
@@ -61,10 +64,13 @@ class `When changing tracks many times` {
 			},
 			FakePlaybackQueueConfiguration()
 		)
-		val repository = NowPlayingRepository(
-			FakeSelectedLibraryProvider(),
-			libraryProvider,
+		val repository = LockingNowPlayingRepository(
+			NowPlayingRepository(
+				FakeSelectedLibraryProvider(),
+				libraryProvider,
+			)
 		)
+		repository.open()
 		val playbackBootstrapper = ManagedPlaylistPlayer(
 			PlaylistVolumeManager(1.0f),
 			preparedPlaybackQueueResourceManagement,
@@ -79,7 +85,7 @@ class `When changing tracks many times` {
 				playbackBootstrapper,
 				playbackBootstrapper,
 			)
-		Pair(deferredPlaybackHandlers, playbackEngine)
+		Triple(deferredPlaybackHandlers, repository, playbackEngine)
 	}
 
 	private var nextSwitchedFile: PositionedFile? = null
@@ -88,21 +94,28 @@ class `When changing tracks many times` {
 
 	@BeforeAll
 	fun act() {
-		val (preparedFiles, playbackEngine) = mut
+		val (preparedFiles, repository, playbackEngine) = mut
+
+		var onPlayingFileChanged = OnPlayingFileChanged { _, p -> startedFiles.add(p?.asPositionedFile()) }
+
+		val promisedFirstFile = Promise {
+			onPlayingFileChanged = LinkedOnPlayingFileChangedListener(onPlayingFileChanged) { _, p ->
+				if (p?.playlistPosition == 1)
+					it.sendResolution(p)
+			}
+		}
 
 		val promisedFinalFile = Promise {
-			playbackEngine
-				.setOnPlayingFileChanged { _, p ->
-					startedFiles.add(p?.asPositionedFile())
-
-					if (p?.playlistPosition == 4)
-						it.sendResolution(p)
-				}
+			onPlayingFileChanged = LinkedOnPlayingFileChangedListener(onPlayingFileChanged) { _, p ->
+				if (p?.playlistPosition == 4)
+					it.sendResolution(p)
+			}
 		}
 
 		val playlist = preparedFiles.keys.toList()
 
 		val promisedStart = playbackEngine
+			.setOnPlayingFileChanged(onPlayingFileChanged)
 			.startPlaylist(
 				LibraryId(libraryId),
 				playlist,
@@ -112,6 +125,9 @@ class `When changing tracks many times` {
 		val (playingPlaybackHandler, resolvablePlaybackHandler) = preparedFiles.getValue(ServiceFile("2"))
 		resolvablePlaybackHandler.resolve()
 		promisedStart.toExpiringFuture().get()
+		promisedFirstFile.toExpiringFuture().get()
+
+		repository.close()
 
 		val promisedChanges = Promise.whenAll(
 			playbackEngine.changePosition(0, Duration.ZERO),
@@ -124,6 +140,8 @@ class `When changing tracks many times` {
 
 		val finalPreparableFile = preparedFiles[playlist[4]]
 		finalPreparableFile?.second?.resolve()
+
+		repository.open()
 
 		nextSwitchedFile = promisedChanges.toExpiringFuture().get()?.lastOrNull()?.second
 
@@ -140,7 +158,7 @@ class `When changing tracks many times` {
 
 	@Test
 	fun `then the engine is playing`() {
-		assertThat(mut.second.isPlaying).isTrue
+		assertThat(mut.third.isPlaying).isTrue
 	}
 
 	@Test
