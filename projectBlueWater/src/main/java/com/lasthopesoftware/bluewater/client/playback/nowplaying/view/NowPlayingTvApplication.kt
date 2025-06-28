@@ -253,7 +253,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedVi
 		if (isBrowserOpen) {
 			Box(
 				modifier = Modifier
-					.offset(x = browserDrawerOffset)
+					.offset { IntOffset(x = browserDrawerOffset.roundToPx(), y = 0) }
 					.width(halfWidth)
 					.fillMaxHeight()
 					.focusGroup()
@@ -429,7 +429,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedVi
 								modifier = Modifier
 									.fillMaxHeight()
 									.width(halfWidth)
-									.offset(x = playlistDrawerOffset)
+									.offset { IntOffset(x = playlistDrawerOffset.roundToPx(), y = 0) }
 									.background(SharedColors.overlayDark)
 									.onFocusChanged { state ->
 										if (state.hasFocus)
