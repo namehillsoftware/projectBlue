@@ -26,7 +26,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
@@ -67,10 +66,9 @@ import com.lasthopesoftware.bluewater.client.connection.session.initialization.D
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingView
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
+import com.lasthopesoftware.bluewater.exceptions.UncaughtExceptionHandlerLogger
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
-import com.lasthopesoftware.bluewater.shared.exceptions.UncaughtExceptionHandlerLogger
-import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
 import com.lasthopesoftware.promises.extensions.suspend
@@ -158,8 +156,7 @@ private fun BrowserLibraryDestination.Navigate(
 								libraryId = libraryId,
 							)
 
-							val context = LocalContext.current
-							LaunchedEffect(key1 = libraryId, key2 = context) {
+							LaunchedEffect(key1 = libraryId) {
 								try {
 									nowPlayingFilePropertiesViewModel.initializeViewModel(libraryId).suspend()
 								} catch (e: Throwable) {
@@ -169,7 +166,7 @@ private fun BrowserLibraryDestination.Navigate(
 										}
 
 										UncaughtExceptionHandlerLogger.uncaughtException(e) -> {
-											UnexpectedExceptionToaster.announce(context, e)
+											exceptionAnnouncer.announce(e)
 										}
 									}
 								}
@@ -235,8 +232,7 @@ fun LibraryDestination.Navigate(
 					undoBackStack = undoBackStackBuilder,
 				)
 
-				val context = LocalContext.current
-				LaunchedEffect(key1 = libraryId, key2 = context) {
+				LaunchedEffect(key1 = libraryId) {
 					try {
 						if (connectionWatcherViewModel.watchLibraryConnection(libraryId).suspend()) {
 							Promise.whenAll(
@@ -253,7 +249,7 @@ fun LibraryDestination.Navigate(
 							}
 
 							UncaughtExceptionHandlerLogger.uncaughtException(e) -> {
-								UnexpectedExceptionToaster.announce(context, e)
+								exceptionAnnouncer.announce(e)
 							}
 						}
 					}

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.exceptions
+package com.lasthopesoftware.bluewater.exceptions
 
 import java.io.IOException
 

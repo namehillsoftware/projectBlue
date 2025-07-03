@@ -1,10 +1,10 @@
-package com.lasthopesoftware.bluewater.shared.exceptions
+package com.lasthopesoftware.bluewater.exceptions
 
 import android.content.Context
 import android.widget.Toast
 
-object UnexpectedExceptionToaster {
-    fun announce(context: Context?, error: Throwable) {
+class UnexpectedExceptionToaster(private val context: Context) : AnnounceExceptions {
+    override fun announce(error: Throwable) {
         Toast.makeText(
             context,
             "An unexpected error occurred! The error was " + error.javaClass.name,
