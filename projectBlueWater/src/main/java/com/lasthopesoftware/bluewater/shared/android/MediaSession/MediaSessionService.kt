@@ -5,11 +5,11 @@ import android.content.Intent
 import android.support.v4.media.session.MediaSessionCompat
 import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
+import com.lasthopesoftware.bluewater.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver
-import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.promises.extensions.toFuture
 import java.util.concurrent.TimeUnit
 

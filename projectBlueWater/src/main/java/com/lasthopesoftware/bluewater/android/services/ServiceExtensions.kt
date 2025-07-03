@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.android.services
+package com.lasthopesoftware.bluewater.android.services
 
 import android.app.Service
 import android.content.ComponentName

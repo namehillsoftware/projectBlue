@@ -1,6 +1,6 @@
 package com.lasthopesoftware.resources.executors
 
-import com.lasthopesoftware.bluewater.shared.exceptions.UncaughtExceptionHandlerLogger
+import com.lasthopesoftware.bluewater.exceptions.UncaughtExceptionHandlerLogger
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter

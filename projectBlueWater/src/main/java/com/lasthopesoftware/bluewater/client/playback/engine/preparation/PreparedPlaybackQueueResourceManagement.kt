@@ -7,8 +7,10 @@ class PreparedPlaybackQueueResourceManagement(
     private val playbackPreparerProvider: IPlayableFilePreparationSourceProvider,
     private val preparedPlaybackQueueConfiguration: IPreparedPlaybackQueueConfiguration
 ) : ManagePlaybackQueues, ResettableCloseable {
+	@Volatile
     private var preparedPlaybackQueue: PreparedPlayableFileQueue? = null
 
+	@Synchronized
     override fun initializePreparedPlaybackQueue(positionedFileQueue: PositionedFileQueue): PreparedPlayableFileQueue {
         reset()
         return PreparedPlayableFileQueue(
@@ -18,9 +20,8 @@ class PreparedPlaybackQueueResourceManagement(
         ).also { preparedPlaybackQueue = it }
     }
 
-    override fun tryUpdateQueue(positionedFileQueue: PositionedFileQueue): Boolean {
-		return preparedPlaybackQueue?.updateQueue(positionedFileQueue) != null
-    }
+    override fun tryUpdateQueue(positionedFileQueue: PositionedFileQueue): Boolean =
+		preparedPlaybackQueue?.updateQueue(positionedFileQueue) != null
 
 	override fun reset() {
 		preparedPlaybackQueue?.close()

@@ -22,6 +22,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.client.stored.sync.ScheduleSyncs
+import com.lasthopesoftware.bluewater.exceptions.AnnounceExceptions
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
@@ -59,5 +60,6 @@ interface ApplicationDependencies {
     val audioCacheStreamSupplier: DiskFileCacheStreamSupplier
 	val okHttpClients: OkHttpFactory
 	val libraryNameLookup: LibraryNameLookup
+	val exceptionAnnouncer: AnnounceExceptions
 }
 

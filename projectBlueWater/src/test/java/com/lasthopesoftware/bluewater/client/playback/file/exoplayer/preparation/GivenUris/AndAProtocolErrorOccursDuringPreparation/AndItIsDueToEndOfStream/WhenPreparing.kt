@@ -8,12 +8,8 @@ import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.source.BaseMediaSource
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
-import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideExoPlayers
-import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlaybackPreparer
-import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -21,22 +17,22 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.ProtocolException
+import java.util.concurrent.ExecutionException
 
 private const val libraryId = 470
 
 class WhenPreparing {
 
-	private val preparedPlayer by lazy {
-		var listener: Player.Listener? = null
-
-		val preparer = ExoPlayerPlaybackPreparer(
+	private val preparingExoPlayer by lazy {
+		ExoPlayerPlaybackPreparer(
 			{ _, _ ->
 				mockk<BaseMediaSource>(relaxUnitFun = true).toPromise()
 			},
-			mockk<ProvideExoPlayers>().apply {
-				every { getExoPlayer() } returns mockk<PromisingExoPlayer>().apply {
+			mockk {
+				every { getExoPlayer() } returns mockk {
 					val selfPromise = this.toPromise()
 					every { addListener(any()) } answers {
 						listener = firstArg()
@@ -62,8 +58,14 @@ class WhenPreparing {
 				every { promiseUri(LibraryId(libraryId), ServiceFile("1")) } returns Promise(mockk<Uri>())
 			}
 		)
+	}
 
-		val futurePreparation = preparer.promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile("1"), Duration.ZERO).toExpiringFuture()
+	private var listener: Player.Listener? = null
+	private var exception: PlaybackException? = null
+
+	@BeforeAll
+	fun act() {
+		val futurePreparation = preparingExoPlayer.promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile("1"), Duration.ZERO).toExpiringFuture()
 
 		listener?.onPlayerError(
 			PlaybackException(
@@ -78,11 +80,15 @@ class WhenPreparing {
 			)
 		)
 
-		futurePreparation.get()
+		try {
+			futurePreparation.get()
+		} catch (e: ExecutionException) {
+			exception = e.cause as? PlaybackException
+		}
 	}
 
 	@Test
-	fun `then an empty player is returned`() {
-		assertThat(preparedPlayer?.playbackHandler).isInstanceOf(cls<EmptyPlaybackHandler>())
+	fun `then the exception is propagated`() {
+		assertThat(exception?.message).isEqualTo("oh no")
 	}
 }

@@ -51,8 +51,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
 		cacheWriter?.clear()
 		cacheWriter = CacheWriter(
 			cacheStreamSupplier.promiseCachedFileOutputStream(libraryId, key)
-				.then(forward()) {
-					logger.warn("There was an error opening the cache output stream for key $key", it)
+				.then(forward()) { e ->
+					logger.warn("There was an error opening the cache output stream for key $key", e)
 					null
 				})
 

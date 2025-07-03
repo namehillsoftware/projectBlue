@@ -144,7 +144,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 				}
 			}
 			is ParserException -> {
-				if (cause.message?.startsWith("Searched too many bytes.") == true) {
+				if (cause.message.startsWith("Searched too many bytes.")) {
 					logger.warn("The stream was corrupted, completing playback", error)
 					resolve(this)
 					return

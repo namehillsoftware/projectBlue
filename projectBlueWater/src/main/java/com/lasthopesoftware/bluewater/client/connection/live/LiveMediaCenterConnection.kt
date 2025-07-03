@@ -24,8 +24,8 @@ import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withMcApi
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
+import com.lasthopesoftware.bluewater.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.StandardResponse.Companion.toStandardResponse
-import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.exceptions.isOkHttpCanceled
 import com.lasthopesoftware.policies.retries.RetryOnRejectionLazyPromise

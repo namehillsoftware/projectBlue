@@ -6,13 +6,13 @@ import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.errors.PlaybackResourceNotAvailableInTimeException
 import com.lasthopesoftware.bluewater.client.playback.volume.IVolumeManagement
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.ControlAudioFocus
 import com.lasthopesoftware.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
-import java.util.concurrent.TimeoutException
 
 class AudioManagingPlaybackStateChanger(
 	private val innerPlaybackState: ChangePlaybackState,
@@ -24,6 +24,10 @@ class AudioManagingPlaybackStateChanger(
 	AutoCloseable,
 	AudioManager.OnAudioFocusChangeListener
 {
+	companion object {
+		private val audioFocusTimeout by lazy { Duration.standardSeconds(10) }
+	}
+
 	private val lazyAudioRequest = lazy {
 		AudioFocusRequestCompat
 			.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN)
@@ -106,9 +110,9 @@ class AudioManagingPlaybackStateChanger(
 		val promisedAudioFocus = audioFocus.promiseAudioFocus(lazyAudioRequest.value)
 		return Promise.whenAny(
 			promisedAudioFocus,
-			delay<Any?>(Duration.standardSeconds(10)).then { _ ->
+			delay<Any?>(audioFocusTimeout).then { _ ->
 				promisedAudioFocus.cancel()
-				throw TimeoutException("Unable to gain audio focus in 10s")
+				throw PlaybackResourceNotAvailableInTimeException("audio focus", audioFocusTimeout)
 			})
 	}
 

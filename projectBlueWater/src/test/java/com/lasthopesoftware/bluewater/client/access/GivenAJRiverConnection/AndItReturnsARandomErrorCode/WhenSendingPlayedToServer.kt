@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnect
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withMcApi
-import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
+import com.lasthopesoftware.bluewater.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.PassThroughHttpResponse

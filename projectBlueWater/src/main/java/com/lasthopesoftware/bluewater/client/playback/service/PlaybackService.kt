@@ -18,14 +18,15 @@ import android.os.Process
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.HttpDataSource
-import androidx.media3.exoplayer.ExoPlaybackException
 import com.lasthopesoftware.bluewater.ApplicationDependencies
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.intents.getIntent
 import com.lasthopesoftware.bluewater.android.intents.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
+import com.lasthopesoftware.bluewater.android.services.ControlService
+import com.lasthopesoftware.bluewater.android.services.GenericBinder
+import com.lasthopesoftware.bluewater.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
@@ -34,11 +35,11 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.BestMatchUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.RemoteFileUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
-import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.playback.caching.uri.CachedAudioFileUriProvider
@@ -55,14 +56,13 @@ import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackIn
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackPaused
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackStarted
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlayingFileChanged
+import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaylistError
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaylistReset
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
-import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.MediaSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.RemoteDataSourceFactoryProvider
@@ -94,15 +94,11 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.control.Notif
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
-import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
-import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
-import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
-import com.lasthopesoftware.bluewater.shared.resilience.TimedCountdownLatch
 import com.lasthopesoftware.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.promises.PromiseDelay.Companion.delay
@@ -118,14 +114,12 @@ import com.lasthopesoftware.resources.executors.HandlerExecutor
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.internal.schedulers.ExecutorScheduler
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.joda.time.Duration
-import java.io.IOException
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -137,19 +131,16 @@ import java.util.concurrent.TimeoutException
 	OnPlaybackStarted,
 	OnPlayingFileChanged,
 	OnPlaybackCompleted,
-	OnPlaylistReset
+	OnPlaylistReset,
+	ControlService,
+	ResetPlaybackService,
+	ProvideSelectedLibraryId
 {
 	companion object {
 		private val logger by lazyLogger<PlaybackService>()
 
 		private const val playingNotificationId = 42
 		private const val connectingNotificationId = 70
-
-		private const val numberOfDisconnects = 3
-		private val disconnectResetDuration = Duration.standardMinutes(1)
-
-		private const val numberOfErrors = 5
-		private val errorLatchResetDuration = Duration.standardSeconds(3)
 
 		private val playbackStartTimeout = Duration.standardMinutes(2)
 
@@ -396,20 +387,8 @@ import java.util.concurrent.TimeoutException
 	private val notificationController by lazy {
 		promisingServiceCloseables.manage(NotificationsController(this, notificationManager))
 	}
-	private val disconnectionLatch by lazy { TimedCountdownLatch(numberOfDisconnects, disconnectResetDuration) }
-	private val errorLatch by lazy { TimedCountdownLatch(numberOfErrors, errorLatchResetDuration) }
 
 	private val pollConnectionServiceProxy by lazy { PollConnectionServiceProxy(this) }
-	private val connectionRegainedListener by lazy { ImmediateResponse<LiveServerConnection, Unit> { resetPlaylistManager() } }
-
-	private val onPollingCancelledListener by lazy {
-		ImmediateResponse<Throwable?, Unit> { e ->
-			if (e is CancellationException) {
-				unregisterListeners()
-				stopSelf(startId)
-			}
-		}
-	}
 
 	private val libraryFilePropertiesProvider by lazy {
 		libraryConnectionDependencies.libraryFilePropertiesProvider
@@ -423,7 +402,7 @@ import java.util.concurrent.TimeoutException
 	}
 
 	private	val promisedMediaNotificationSetup by promisingServiceCloseables.manage(RetryOnRejectionLazyPromise {
-		mediaStyleNotificationSetup.then { mediaStyleNotificationSetup, cs ->
+		mediaStyleNotificationSetup.then { mediaStyleNotificationSetup ->
 			with (libraryConnectionDependencies) {
 				val notificationBuilder = promisingServiceCloseables.manage(
 					NowPlayingNotificationBuilder(
@@ -539,29 +518,42 @@ import java.util.concurrent.TimeoutException
 					managedPlaylistPlayer,
 				)
 
+				val playbackStateChanger = promisingPlaybackEngineCloseables.manage(
+					AudioManagingPlaybackStateChanger(
+						engine,
+						engine,
+						AudioFocusManagement(audioManager),
+						playlistVolumeManager
+					)
+				)
+
+				val errorHandler = PlaybackErrorHandler(
+					this,
+					pollConnectionServiceProxy,
+					engine,
+					playbackStateChanger,
+					this,
+					this,
+					playbackServiceDependencies.exceptionAnnouncer,
+				)
+
 				engine
 					.setOnPlaybackStarted(this)
 					.setOnPlaybackPaused(this)
 					.setOnPlaybackInterrupted(this)
 					.setOnPlayingFileChanged(updatePlayStatsOnPlaybackCompletedReceiver.value)
-					.setOnPlaylistError(::uncaughtExceptionHandler)
+					.setOnPlaylistError(errorHandler)
 					.setOnPlaybackCompleted(this)
 					.setOnPlaylistReset(this)
 					.let(promisingPlaybackEngineCloseables::manage)
 					.let {
 						PlaybackServices(
-							playbackState = promisingPlaybackEngineCloseables.manage(
-								AudioManagingPlaybackStateChanger(
-									engine,
-									engine,
-									AudioFocusManagement(audioManager),
-									playlistVolumeManager
-								)
-							),
+							playbackState = playbackStateChanger,
 							systemPlaybackState = it,
 							playlistFiles = it,
 							playbackContinuity = it,
 							playlistPosition = it,
+							errorHandler = errorHandler,
 						)
 					}
 			}
@@ -574,8 +566,6 @@ import java.util.concurrent.TimeoutException
 					.then { _ -> throw e }
 			}
 	})
-
-	private val unhandledRejectionHandler = ImmediateResponse<Throwable, Unit>(::uncaughtExceptionHandler)
 
 	private var activeLibraryId: LibraryId? = null
 	private var isMarkedForPlay = false
@@ -705,7 +695,7 @@ import java.util.concurrent.TimeoutException
 
 			val timeoutResponse =
 				promisedTimeout.then(
-					{ throw TimeoutException("Timed out after $playbackStartTimeout") },
+					{ throw PlaybackStartingTimeoutException(playbackStartTimeout) },
 					{ it ->
 						// avoid logging cancellation exceptions
 						if (it !is CancellationException)
@@ -716,7 +706,12 @@ import java.util.concurrent.TimeoutException
 			val promisedIntentHandling = handlePlaybackEngineAction(playbackEngineAction)
 				.must { _ -> promisedTimeout.cancel() }
 
-			Promise.whenAny(promisedIntentHandling, timeoutResponse).excuse(unhandledRejectionHandler)
+			Promise
+				.whenAny(promisedIntentHandling, timeoutResponse)
+				.excuse { e ->
+					// Kill the service if it doesn't start in time.
+					if (e is PlaybackStartingTimeoutException) stop()
+				}
 		}
 
 		fun processPlaybackServiceAction(playbackServiceAction: PlaybackServiceAction?): Int {
@@ -754,6 +749,20 @@ import java.util.concurrent.TimeoutException
 		logger.debug("onStartCommand({}, {}, {})", intent, flags, startId)
 
 		return processPlaybackServiceAction(parcelableAction)
+	}
+
+	override fun stop() {
+		stopSelf(startId)
+	}
+
+	override fun promiseSelectedLibraryId(): Promise<LibraryId?> = activeLibraryId.toPromise()
+
+	override fun resetPlaylistManager() {
+		val libraryId = activeLibraryId ?: return
+		promisedPlaybackServices
+			.value
+			.eventually { engine -> engine.systemPlaybackState.interrupt() }
+			.eventually { if (isMarkedForPlay) resumePlayback(libraryId) else Unit.toPromise() }
 	}
 
 	override fun onPlaybackPaused() {
@@ -837,16 +846,20 @@ import java.util.concurrent.TimeoutException
 				if (!areListenersRegistered) registerListeners()
 
 				playbackState.eventually {
-					it.playbackState.startPlaylist(
-						libraryId,
-						playlist.toList(),
-						playlistPosition
-					)
+					it.playbackState
+						.startPlaylist(
+							libraryId,
+							playlist.toList(),
+							playlistPosition
+						)
+						.then(
+							{ _ ->
+								startActivity(playbackServiceDependencies.intentBuilder.buildNowPlayingIntent(libraryId))
+								applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
+							},
+							{ e -> it.errorHandler.onError(e) }
+						)
 				}
-			}
-			.then { _ ->
-				startActivity(playbackServiceDependencies.intentBuilder.buildNowPlayingIntent(libraryId))
-				applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
 			}
 	}
 
@@ -855,7 +868,9 @@ import java.util.concurrent.TimeoutException
 		applicationMessageBus.sendMessage(PlaybackMessage.PlaybackStarting)
 
 		if (!areListenersRegistered) registerListeners()
-		return restorePlaybackServices(libraryId).eventually { it.playbackState.resume() }
+		return restorePlaybackServices(libraryId).eventually {
+			it.playbackState.resume().then(forward()) { e -> it.errorHandler.onError(e) }
+		}
 	}
 
 	private fun pausePlayback(): Promise<Unit> {
@@ -883,120 +898,6 @@ import java.util.concurrent.TimeoutException
 						services
 					}
 			}
-	}
-
-	private fun uncaughtExceptionHandler(exception: Throwable?) {
-		fun handleDisconnection() {
-			if (disconnectionLatch.trigger()) {
-				logger.error("Unable to re-connect after $numberOfDisconnects in less than $disconnectResetDuration, stopping the playback service.")
-
-				if (exception != null)
-					UnexpectedExceptionToaster.announce(this, exception)
-
-				stopSelf(startId)
-				return
-			}
-
-			logger.warn("Number of disconnections has not surpassed $numberOfDisconnects in less than $disconnectResetDuration. Checking for disconnections.")
-
-			activeLibraryId?.also {
-				pollConnectionServiceProxy
-					.pollConnection(it)
-					.then(connectionRegainedListener, onPollingCancelledListener)
-			}
-		}
-
-		fun handlePlaybackEngineInitializationException(exception: PlaybackEngineInitializationException) {
-			logger.error("There was an error initializing the playback engine", exception)
-			stopSelf(startId)
-		}
-
-		fun handlePreparationException(preparationException: PreparationException) {
-			logger.error("An error occurred during file preparation for file " + preparationException.positionedFile.serviceFile, preparationException)
-			uncaughtExceptionHandler(preparationException.cause)
-		}
-
-		fun handleExoPlaybackException(exception: ExoPlaybackException) {
-			logger.error("An ExoPlaybackException occurred")
-
-			when (val cause = exception.cause) {
-				is IllegalStateException -> {
-					logger.error("The ExoPlayer player ended up in an illegal state, closing and restarting the player", cause)
-					resetPlaylistManager(exception)
-				}
-				is NoSuchElementException -> {
-					logger.error("The ExoPlayer player was unable to deque data, closing and restarting the player", cause)
-					resetPlaylistManager(exception)
-				}
-				null -> stopSelf(startId)
-				else -> uncaughtExceptionHandler(exception.cause)
-			}
-		}
-
-		fun handleIoException(exception: IOException?) {
-			if (exception is HttpDataSource.InvalidResponseCodeException && exception.responseCode == 416) {
-				logger.warn("Received an error code of " + exception.responseCode + ", will attempt restarting the player", exception)
-				resetPlaylistManager(exception)
-				return
-			}
-
-			logger.error("An IO exception occurred during playback", exception)
-			handleDisconnection()
-		}
-
-		fun handlePlaybackException(exception: PlaybackException) {
-			when (val cause = exception.cause) {
-				is ExoPlaybackException -> handleExoPlaybackException(cause)
-				is IllegalStateException -> {
-					logger.error("The player ended up in an illegal state - closing and restarting the player", exception)
-					resetPlaylistManager(exception)
-				}
-				is IOException -> handleIoException(cause)
-				null -> logger.error("An unexpected playback exception occurred", exception)
-				else -> uncaughtExceptionHandler(cause)
-			}
-		}
-
-		fun handleTimeoutException(exception: TimeoutException) {
-			logger.warn("A timeout occurred during playback, will attempt restarting the player", exception)
-			resetPlaylistManager(exception)
-		}
-
-		when (exception) {
-			is CancellationException -> return
-			is PlaybackEngineInitializationException -> handlePlaybackEngineInitializationException(exception)
-			is PreparationException -> handlePreparationException(exception)
-			is IOException -> handleIoException(exception)
-			is ExoPlaybackException -> handleExoPlaybackException(exception)
-			is PlaybackException -> handlePlaybackException(exception)
-			is TimeoutException -> handleTimeoutException(exception)
-			else -> {
-				logger.error("An unexpected error has occurred!", exception)
-				if (exception != null)
-					UnexpectedExceptionToaster.announce(this, exception)
-				stopSelf(startId)
-			}
-		}
-	}
-
-	private fun resetPlaylistManager(error: Throwable) {
-		if (errorLatch.trigger()) {
-			logger.error("$numberOfErrors occurred within $errorLatchResetDuration, stopping the playback service. Last error: ${error.message}", error)
-			UnexpectedExceptionToaster.announce(this, error)
-			stopSelf(startId)
-			return
-		}
-
-		resetPlaylistManager()
-	}
-
-	private fun resetPlaylistManager() {
-		val libraryId = activeLibraryId ?: return
-		promisedPlaybackServices
-			.value
-			.eventually { engine -> engine.systemPlaybackState.interrupt() }
-			.eventually { if (isMarkedForPlay) resumePlayback(libraryId) else Unit.toPromise() }
-			.excuse(unhandledRejectionHandler)
 	}
 
 	private fun changePositionedPlaybackFile(libraryId: LibraryId, positionedPlayingFile: PositionedPlayingFile?) {
@@ -1102,7 +1003,10 @@ import java.util.concurrent.TimeoutException
 		val playbackState: ChangePlaybackState,
 		val systemPlaybackState: ChangePlaybackStateForSystem,
 		val playlistPosition: ChangePlaylistPosition,
+		val errorHandler: OnPlaylistError,
 	)
+
+	private class PlaybackStartingTimeoutException(duration: Duration) : TimeoutException("Timed out after $duration")
 
 	/* End Binder Code */
 
