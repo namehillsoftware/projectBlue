@@ -1,6 +1,6 @@
 app-id: com.lasthopesoftware.projectblue
 runtime: org.gnome.Platform
-runtime-version: '47'
+runtime-version: '48'
 sdk: org.gnome.Platform
 base: io.gitlab.android_translation_layer.BaseApp
 base-version: stable
@@ -25,14 +25,14 @@ modules:
   - name: projectblue
     buildsystem: simple
     build-commands:
-      - install -D project-blue-5.5.0-SNAPSHOT-release.apk /app/share/project-blue.apk
+      - install -D project-blue-5.9.1-SNAPSHOT-release.apk /app/share/project-blue.apk
       - install -D projectblue.sh /app/bin/projectblue.sh
       - install -D com.lasthopesoftware.projectblue.desktop /app/share/applications/com.lasthopesoftware.projectblue.desktop
       - install -D project-blue-logo.svg /app/share/icons/hicolor/scalable/apps/com.lasthopesoftware.projectblue.svg
 #      - install -D net.newpipe.NewPipe.metainfo.xml /app/share/metainfo/net.newpipe.NewPipe.metainfo.xml
     sources:
       - type: file
-        path: ../_artifacts/outputs/apk/release/project-blue-5.5.0-SNAPSHOT-release.apk
+        path: ../_artifacts/outputs/apk/release/project-blue-5.9.1-SNAPSHOT-release.apk
 #        sha256: d196fe395a9e487271b737d4de3696cb683284f3bcff5baaffbb71bba1aa53c8
       - type: file
         path: ../design/project-blue-logo.svg
