@@ -68,7 +68,7 @@ class WhenResumingPlayback {
 
 	@Test
 	fun `then a timeout occurs internal to the method`() {
-		assertThat(timeoutException?.message).isEqualTo("Unable to gain audio focus in 10s")
+		assertThat(timeoutException?.message).isEqualTo("Resource \"audio focus\" was not available in PT10S.")
 	}
 
 	@Test

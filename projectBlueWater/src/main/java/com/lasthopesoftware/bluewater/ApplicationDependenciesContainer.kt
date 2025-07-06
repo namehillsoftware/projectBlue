@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater
 
+import android.annotation.SuppressLint
 import android.content.Context
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
@@ -45,6 +46,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncSchedulerInitializer
+import com.lasthopesoftware.bluewater.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.settings.repository.access.ApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.cls
@@ -65,6 +67,7 @@ object ApplicationDependenciesContainer {
 
 	private val sync = Any()
 
+	@SuppressLint("StaticFieldLeak")
 	@Volatile
 	@OptIn(UnstableApi::class)
 	private var attachedDependencies: AttachedDependencies? = null
@@ -166,6 +169,8 @@ object ApplicationDependenciesContainer {
 			get() = librarySettingsProvider
 
 		override val libraryNameLookup by lazy { LibraryNameLookup(librarySettingsProvider) }
+
+		override val exceptionAnnouncer by lazy { UnexpectedExceptionToaster(context) }
 
 		override val storedItemAccess by lazy { StoredItemAccess(context) }
 

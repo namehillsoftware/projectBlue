@@ -50,7 +50,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -105,12 +104,11 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
+import com.lasthopesoftware.bluewater.exceptions.UncaughtExceptionHandlerLogger
 import com.lasthopesoftware.bluewater.settings.TvApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
-import com.lasthopesoftware.bluewater.shared.exceptions.UncaughtExceptionHandlerLogger
-import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
@@ -130,9 +128,7 @@ private val logger by lazy { LoggerFactory.getLogger("NowPlayingTvApplication") 
 @ExperimentalFoundationApi
 @Composable
 fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedViewModelDependencies) {
-	val context = LocalContext.current
-
-	LaunchedEffect(key1 = libraryId, key2 = context) {
+	LaunchedEffect(key1 = libraryId) {
 		with (browserViewDependencies) {
 			try {
 				val isConnectionActive = connectionWatcherViewModel.watchLibraryConnection(libraryId).suspend()
@@ -152,7 +148,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedVi
 					}
 
 					UncaughtExceptionHandlerLogger.uncaughtException(e) -> {
-						UnexpectedExceptionToaster.announce(context, e)
+						exceptionAnnouncer.announce(e)
 					}
 				}
 			}
@@ -253,7 +249,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedVi
 		if (isBrowserOpen) {
 			Box(
 				modifier = Modifier
-					.offset(x = browserDrawerOffset)
+					.offset { IntOffset(x = browserDrawerOffset.roundToPx(), y = 0) }
 					.width(halfWidth)
 					.fillMaxHeight()
 					.focusGroup()
@@ -429,7 +425,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedVi
 								modifier = Modifier
 									.fillMaxHeight()
 									.width(halfWidth)
-									.offset(x = playlistDrawerOffset)
+									.offset { IntOffset(x = playlistDrawerOffset.roundToPx(), y = 0) }
 									.background(SharedColors.overlayDark)
 									.onFocusChanged { state ->
 										if (state.hasFocus)

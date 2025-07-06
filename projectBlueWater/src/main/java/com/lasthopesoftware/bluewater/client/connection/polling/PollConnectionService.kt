@@ -11,6 +11,8 @@ import androidx.lifecycle.LifecycleService
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.intents.getIntent
 import com.lasthopesoftware.bluewater.android.intents.makePendingIntentImmutable
+import com.lasthopesoftware.bluewater.android.services.GenericBinder
+import com.lasthopesoftware.bluewater.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
@@ -20,18 +22,16 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelAc
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
-import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
-import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
-import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.namehillsoftware.handoff.promises.Promise
 
 class PollConnectionService : LifecycleService() {
 
 	companion object {
-		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<PollConnectionService>()) }
+		private val stopWaitingForConnectionAction by lazy {
+			MagicPropertyBuilder.buildMagicPropertyName<PollConnectionService>("stopWaitingForConnection")
+		}
 
-		private val stopWaitingForConnectionAction by lazy { magicPropertyBuilder.buildProperty("stopWaitingForConnection") }
 		fun pollSessionConnection(context: Context, libraryId: LibraryId): Promise<LiveServerConnection> = Promise.Proxy { cp ->
 			context.promiseBoundService<PollConnectionService>()
 				.also(cp::doCancel)
