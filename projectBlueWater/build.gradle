@@ -26,11 +26,11 @@ if (!hasAndroidStorePassword()) {
 def isSignedExternally = { hasKeyStorePassword() && hasAndroidStorePassword() }
 
 android {
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 35
+        targetSdkVersion 36
 		versionName gitVersion()
 		archivesBaseName = "project-blue-" + gitVersion()
 	}
