@@ -40,7 +40,7 @@ class WhenUpdatingFileProperties {
 				every { promiseIsReadOnly(LibraryId(libraryId)) } returns true.toPromise()
 			},
 			mockk {
-				every { promiseRevision(LibraryId(libraryId)) } returns 836.toPromise()
+				every { promiseRevision(LibraryId(libraryId)) } returns 836L.toPromise()
 			},
 			filePropertiesContainer,
 			recordingApplicationMessageBus,

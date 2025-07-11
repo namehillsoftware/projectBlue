@@ -25,18 +25,18 @@
 -keep class android.arch.lifecycle.** {*;}
 
 # okhttp rules
--dontwarn okhttp3.**
--dontwarn okio.**
--dontwarn javax.annotation.**
+#-dontwarn okhttp3.**
+#-dontwarn okio.**
+#-dontwarn javax.annotation.**
 # A resource is loaded with a relative path so the package of this class must be preserved.
--keepnames class okhttp3.internal.publicsuffix.PublicSuffixDatabase
+#-keepnames class okhttp3.internal.publicsuffix.PublicSuffixDatabase
 
 -keep class * implements android.os.Parcelable {
     public static final ** CREATOR;
 }
 
 -keepclassmembers class ch.qos.logback.core.rolling.helper.* { <init>(); }
- -keepclassmembers class ch.qos.logback.classic.pattern.* { <init>(); }
+-keepclassmembers class ch.qos.logback.classic.pattern.* { <init>(); }
 
 # -printseeds /home/david/sandbox/projectBlue/projectBlueWater/release/seeds.txt # print out classes that are kept
 # -printusage /home/david/sandbox/projectBlue/projectBlueWater/release/usage.txt # print out classes that are obfuscated

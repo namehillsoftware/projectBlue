@@ -56,7 +56,7 @@ class DiskFileCachePersistence(
 
 		return cachedFilesProvider
 			.promiseCachedFile(libraryId, uniqueKey)
-			.eventually<CachedFile?> { cachedFile ->
+			.eventually { cachedFile ->
 				cachedFile
 					?.let {
 						if (it.fileName == canonicalFilePath) diskFileAccessTimeUpdater.promiseFileAccessedUpdate(it)
@@ -93,7 +93,7 @@ class DiskFileCachePersistence(
 			}
 	}
 
-	private fun promiseFilePathUpdate(cachedFile: CachedFile): Promise<CachedFile> = promiseTableMessage<CachedFile> {
+	private fun promiseFilePathUpdate(cachedFile: CachedFile): Promise<CachedFile> = promiseTableMessage {
 		val cachedFileId = cachedFile.id
 		val cachedFilePath = cachedFile.fileName
 		RepositoryAccessHelper(context).use { repositoryAccessHelper ->
