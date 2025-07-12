@@ -2,8 +2,9 @@ package com.lasthopesoftware.bluewater.android.ui.components
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.Text
@@ -27,8 +28,43 @@ import com.lasthopesoftware.bluewater.android.ui.navigable
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
 
+
 @Composable
-fun RowScope.ColumnMenuIcon(
+fun LabelledRefreshButton(
+	onClick: () -> Unit,
+	modifier: Modifier = Modifier,
+	focusRequester: FocusRequester? = null,
+) {
+	val refreshButtonLabel = stringResource(id = R.string.refresh)
+	ColumnMenuIcon(
+		onClick = onClick,
+		iconPainter = painterResource(id = R.drawable.refresh_36),
+		contentDescription = refreshButtonLabel,
+		label = refreshButtonLabel,
+		labelModifier = modifier,
+		labelMaxLines = 1,
+		focusRequester = focusRequester,
+	)
+}
+
+@Composable
+fun UnlabelledRefreshButton(
+	onClick: () -> Unit,
+	modifier: Modifier = Modifier,
+	focusRequester: FocusRequester? = null,
+) {
+	ColumnMenuIcon(
+		onClick = onClick,
+		iconPainter = painterResource(id = R.drawable.refresh_36),
+		contentDescription = stringResource(id = R.string.refresh),
+		label = null,
+		modifier = modifier,
+		focusRequester = focusRequester,
+	)
+}
+
+@Composable
+fun ColumnMenuIcon(
 	onClick: () -> Unit,
 	iconPainter: Painter,
 	contentDescription: String,
@@ -44,9 +80,7 @@ fun RowScope.ColumnMenuIcon(
 		onClick = onClick,
 		iconPainter = iconPainter,
 		contentDescription = contentDescription,
-		modifier = Modifier
-			.weight(1f)
-			.then(modifier),
+		modifier = modifier,
 		label = label,
 		labelColor = labelColor,
 		labelModifier = labelModifier,
@@ -57,9 +91,9 @@ fun RowScope.ColumnMenuIcon(
 }
 
 @Composable
-fun RowScope.ColumnMenuIcon(
+fun ColumnMenuIcon(
 	onClick: () -> Unit,
-	icon: @Composable () -> Unit,
+	icon: @Composable ColumnScope.() -> Unit,
 	modifier: Modifier = Modifier,
 	label: String? = null,
 	labelColor: Color = LocalContentColor.current,
@@ -69,9 +103,7 @@ fun RowScope.ColumnMenuIcon(
 	MenuIcon(
 		onClick = onClick,
 		icon = icon,
-		modifier = Modifier
-			.weight(1f)
-			.then(modifier),
+		modifier = modifier,
 		label = label,
 		labelColor = labelColor,
 		labelModifier = labelModifier,
@@ -99,7 +131,7 @@ fun MenuIcon(
 				painter = iconPainter,
 				contentDescription = contentDescription,
 				modifier = Modifier.size(Dimensions.topMenuIconSize),
-				tint = LocalControlColor.current
+				tint = LocalControlColor.current,
 			)
 		},
 		modifier = modifier,
@@ -115,7 +147,7 @@ fun MenuIcon(
 @Composable
 fun MenuIcon(
 	onClick: () -> Unit,
-	icon: @Composable () -> Unit,
+	icon: @Composable ColumnScope.() -> Unit,
 	modifier: Modifier = Modifier,
 	label: String? = null,
 	labelColor: Color = LocalContentColor.current,
@@ -157,7 +189,7 @@ fun MenuIcon(
 @Composable
 fun MenuIcon(
 	onClick: () -> Unit,
-	icon: @Composable () -> Unit,
+	icon: @Composable ColumnScope.() -> Unit,
 	modifier: Modifier = Modifier,
 	label: @Composable (() -> Unit)? = null,
 	interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -176,6 +208,7 @@ fun MenuIcon(
 				isDefault = isDefault,
 				focusRequester = focusRequester,
 			)
+			.wrapContentSize(unbounded = true, align = Alignment.Center)
 			.then(modifier)
 			.semantics { role = Role.Button }
 	) {
@@ -183,38 +216,4 @@ fun MenuIcon(
 
 		label?.invoke()
 	}
-}
-
-@Composable
-fun RowScope.LabelledRefreshButton(
-	onClick: () -> Unit,
-	modifier: Modifier = Modifier,
-	focusRequester: FocusRequester? = null,
-) {
-	val refreshButtonLabel = stringResource(id = R.string.refresh)
-	ColumnMenuIcon(
-		onClick = onClick,
-		iconPainter = painterResource(id = R.drawable.refresh_36),
-		contentDescription = refreshButtonLabel,
-		label = refreshButtonLabel,
-		labelModifier = modifier,
-		labelMaxLines = 1,
-		focusRequester = focusRequester,
-	)
-}
-
-@Composable
-fun UnlabelledRefreshButton(
-	onClick: () -> Unit,
-	modifier: Modifier = Modifier,
-	focusRequester: FocusRequester? = null,
-) {
-	MenuIcon(
-		onClick = onClick,
-		iconPainter = painterResource(id = R.drawable.refresh_36),
-		contentDescription = stringResource(id = R.string.refresh),
-		label = null,
-		modifier = modifier,
-		focusRequester = focusRequester,
-	)
 }

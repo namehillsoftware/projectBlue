@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -78,7 +77,7 @@ private val textFieldHeight = TextFieldDefaults.MinHeight + TextFieldDefaults.Fo
 private val topBarHeight = textFieldHeight + searchFieldPadding
 
 @Composable
-fun RowScope.LabelledRefreshButton(
+fun LabelledRefreshButton(
 	searchFilesViewModel: SearchFilesViewModel,
 	modifier: Modifier = Modifier,
 	focusRequester: FocusRequester? = null,
@@ -313,9 +312,9 @@ fun SearchFilesView(
 											.fillMaxWidth()
 									) {
 										LabelledPlayButton(
-											libraryState = searchFilesViewModel,
-											playbackServiceController = playbackServiceController,
-											serviceFilesListState = searchFilesViewModel,
+                                            libraryState = searchFilesViewModel,
+                                            playbackServiceController = playbackServiceController,
+                                            serviceFilesListState = searchFilesViewModel,
 										)
 
 										LabelledShuffleButton(
