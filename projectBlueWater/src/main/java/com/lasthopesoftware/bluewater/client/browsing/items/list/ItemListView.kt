@@ -14,12 +14,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
@@ -33,6 +35,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -50,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
+import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
@@ -70,6 +74,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowScrollPaddi
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topRowOuterPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
+import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.LabelledPlayButton
@@ -96,6 +101,7 @@ import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.toPromise
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 private val boxHeight = expandedTitleHeight + appBarHeight
@@ -421,7 +427,8 @@ fun ItemListView(
 
 	BoxWithConstraints(modifier = Modifier
 		.fillMaxSize()
-		.focusGroup()) {
+		.focusGroup()
+	) {
 		ControlSurface {
 			DetermineWindowControlColors()
 			val isItemsLoading by itemListViewModel.isLoading.subscribeAsState()
@@ -475,14 +482,17 @@ fun ItemListView(
 				if (isHeaderTall) {
 					Column(modifier = Modifier
 						.background(MaterialTheme.colors.surface)
-						.fillMaxWidth()) headerColumn@{
+						.fillMaxWidth()
+					) headerColumn@{
 						val heightValue by heightScaler.getValueState()
+						val headerCollapseProgress by heightScaler.getProgressState()
 
 						Box(
 							modifier = Modifier
 								.fillMaxWidth()
 								.height(LocalDensity.current.run { heightValue.toDp() })
 						) {
+
 							BackButton(
 								applicationNavigation::navigateUp,
 								modifier = Modifier
@@ -504,8 +514,6 @@ fun ItemListView(
 
 							ProvideTextStyle(MaterialTheme.typography.h5) {
 								val startPadding by rememberTitleStartPadding(heightScaler.getProgressState())
-
-								val headerCollapseProgress by heightScaler.getProgressState()
 
 								val topPadding by remember {
 									derivedStateOf {
@@ -559,8 +567,48 @@ fun ItemListView(
 								.horizontalScroll(rememberScrollState()),
 							horizontalArrangement = Arrangement.Start,
 						) {
+							val chevronRotation by remember { derivedStateOf { 180 * headerCollapseProgress } }
+							val isCollapsed by remember { derivedStateOf { headerCollapseProgress > .98f } }
+
+							val chevronLabel =
+								stringResource(id = if (isCollapsed) R.string.top else R.string.bottom)
+							val scope = rememberCoroutineScope()
+
+							ColumnMenuIcon(
+								onClick = {
+									scope.launch {
+										if (isCollapsed) {
+											heightScaler.goToMax()
+											lazyListState.scrollToItem(0)
+										} else {
+											heightScaler.goToMin()
+											lazyListState.scrollToItem(lazyListState.layoutInfo.totalItemsCount - 1)
+										}
+									}
+								},
+								icon = {
+									Icon(
+										painter = painterResource(id = R.drawable.chevron_up_white_36dp),
+										tint = LocalControlColor.current,
+										contentDescription = chevronLabel,
+										modifier = Modifier
+											.size(topMenuIconSize)
+											.rotate(chevronRotation),
+									)
+								},
+								label = chevronLabel,
+								labelMaxLines = 1,
+							)
+
 							if (files.any()) {
 								LabelledPlayButton(
+									libraryState = itemListViewModel,
+									playbackServiceController = playbackServiceController,
+									serviceFilesListState = fileListViewModel,
+									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+								)
+
+								LabelledShuffleButton(
 									libraryState = itemListViewModel,
 									playbackServiceController = playbackServiceController,
 									serviceFilesListState = fileListViewModel,
@@ -571,32 +619,25 @@ fun ItemListView(
 									fileListViewModel,
 									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
 								)
-
-								LabelledShuffleButton(
-									libraryState = itemListViewModel,
-									playbackServiceController = playbackServiceController,
-									serviceFilesListState = fileListViewModel,
-									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
-								)
-							} else {
-								LabelledActiveDownloadsButton(
-									itemListViewModel = itemListViewModel,
-									applicationNavigation = applicationNavigation,
-									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
-								)
-
-								LabelledSettingsButton(
-									itemListViewModel,
-									applicationNavigation,
-									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
-								)
-
-								LabelledSearchButton(
-									itemListViewModel = itemListViewModel,
-									applicationNavigation = applicationNavigation,
-									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
-								)
 							}
+
+							LabelledActiveDownloadsButton(
+								itemListViewModel = itemListViewModel,
+								applicationNavigation = applicationNavigation,
+								modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+							)
+
+							LabelledSettingsButton(
+								itemListViewModel,
+								applicationNavigation,
+								modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+							)
+
+							LabelledSearchButton(
+								itemListViewModel = itemListViewModel,
+								applicationNavigation = applicationNavigation,
+								modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+							)
 						}
 					}
 				} else {
