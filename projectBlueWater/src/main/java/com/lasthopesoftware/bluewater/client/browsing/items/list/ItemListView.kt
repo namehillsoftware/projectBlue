@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
@@ -97,6 +99,7 @@ import kotlinx.coroutines.async
 import kotlin.math.roundToInt
 
 private val boxHeight = expandedTitleHeight + appBarHeight
+private val menuIconHorizontalPadding = viewPaddingUnit * 4
 
 @Composable
 fun ItemsCountHeader(itemsCount: Int) {
@@ -370,47 +373,6 @@ fun ItemListView(
 					fixedKnobRatio = knobHeight,
 				),
 		) {
-			item(contentType = ItemListContentType.Menu) {
-				Row(
-					modifier = Modifier
-						.padding(rowPadding)
-						.fillMaxWidth()
-						.focusGroup(),
-					horizontalArrangement = Arrangement.SpaceEvenly,
-				) {
-					if (files.any()) {
-						LabelledPlayButton(
-							libraryState = itemListViewModel,
-							playbackServiceController = playbackServiceController,
-							serviceFilesListState = fileListViewModel,
-						)
-
-						LabelledSyncButton(fileListViewModel)
-
-						LabelledShuffleButton(
-							libraryState = itemListViewModel,
-							playbackServiceController = playbackServiceController,
-							serviceFilesListState = fileListViewModel,
-						)
-					} else {
-						LabelledActiveDownloadsButton(
-							itemListViewModel = itemListViewModel,
-							applicationNavigation = applicationNavigation,
-						)
-
-						LabelledSettingsButton(
-							itemListViewModel,
-							applicationNavigation
-						)
-
-						LabelledSearchButton(
-							itemListViewModel = itemListViewModel,
-							applicationNavigation = applicationNavigation,
-						)
-					}
-				}
-			}
-
 			if (items.any()) {
 				item(contentType = ItemListContentType.Header) {
 					ItemsCountHeader(items.size)
@@ -460,7 +422,9 @@ fun ItemListView(
 
 	val isFilesLoading by fileListViewModel.isLoading.subscribeAsState()
 
-	BoxWithConstraints(modifier = Modifier.fillMaxSize().focusGroup()) {
+	BoxWithConstraints(modifier = Modifier
+		.fillMaxSize()
+		.focusGroup()) {
 		ControlSurface {
 			DetermineWindowControlColors()
 			val isItemsLoading by itemListViewModel.isLoading.subscribeAsState()
@@ -512,7 +476,9 @@ fun ItemListView(
 					.nestedScroll(heightScaler)
 			) {
 				if (isHeaderTall) {
-					Column(modifier = Modifier.background(MaterialTheme.colors.surface)) headerColumn@{
+					Column(modifier = Modifier
+						.background(MaterialTheme.colors.surface)
+						.fillMaxWidth()) headerColumn@{
 						val heightValue by heightScaler.getValueState()
 
 						Box(
@@ -586,6 +552,53 @@ fun ItemListView(
 										isMarqueeEnabled = !lazyListState.isScrollInProgress
 									)
 								}
+							}
+						}
+
+						Row(
+							modifier = Modifier
+								.padding(rowPadding)
+								.focusGroup()
+								.horizontalScroll(rememberScrollState()),
+							horizontalArrangement = Arrangement.Start,
+						) {
+							if (files.any()) {
+								LabelledPlayButton(
+									libraryState = itemListViewModel,
+									playbackServiceController = playbackServiceController,
+									serviceFilesListState = fileListViewModel,
+									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+								)
+
+								LabelledSyncButton(
+									fileListViewModel,
+									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+								)
+
+								LabelledShuffleButton(
+									libraryState = itemListViewModel,
+									playbackServiceController = playbackServiceController,
+									serviceFilesListState = fileListViewModel,
+									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+								)
+							} else {
+								LabelledActiveDownloadsButton(
+									itemListViewModel = itemListViewModel,
+									applicationNavigation = applicationNavigation,
+									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+								)
+
+								LabelledSettingsButton(
+									itemListViewModel,
+									applicationNavigation,
+									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+								)
+
+								LabelledSearchButton(
+									itemListViewModel = itemListViewModel,
+									applicationNavigation = applicationNavigation,
+									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+								)
 							}
 						}
 					}

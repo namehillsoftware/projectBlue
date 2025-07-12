@@ -127,9 +127,7 @@ private fun StaticFileMenu(
 					painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
 					colorFilter = colorFilter,
 					contentDescription = addFileToPlaybackLabel,
-					modifier = Modifier
-						.size(iconSize)
-						.align(Alignment.CenterVertically),
+					modifier = Modifier.size(iconSize),
 				)
 			},
 			label = addFileToPlaybackLabel,

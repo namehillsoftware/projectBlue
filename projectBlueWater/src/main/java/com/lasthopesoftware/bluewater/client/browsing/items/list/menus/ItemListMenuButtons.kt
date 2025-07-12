@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list.menus
 
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -14,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewMod
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 
 @Composable
-fun RowScope.LabelledActiveDownloadsButton(
+fun LabelledActiveDownloadsButton(
 	itemListViewModel: ItemListViewModel,
 	applicationNavigation: NavigateApplication,
 	modifier: Modifier = Modifier,
@@ -28,13 +27,13 @@ fun RowScope.LabelledActiveDownloadsButton(
 		iconPainter = painterResource(id = R.drawable.ic_water),
 		contentDescription = stringResource(id = R.string.activeDownloads),
 		label = stringResource(id = R.string.downloads), // Use shortened version for button size
-		labelModifier = modifier,
 		labelMaxLines = 1,
+		modifier = modifier,
 	)
 }
 
 @Composable
-fun RowScope.LabelledSearchButton(
+fun LabelledSearchButton(
 	itemListViewModel: ItemListViewModel,
 	applicationNavigation: NavigateApplication,
 	modifier: Modifier = Modifier,
@@ -48,12 +47,12 @@ fun RowScope.LabelledSearchButton(
 		contentDescription = searchButtonLabel,
 		label = searchButtonLabel,
 		labelMaxLines = 1,
-		labelModifier = modifier,
+		modifier = modifier,
 	)
 }
 
 @Composable
-fun RowScope.LabelledSettingsButton(
+fun LabelledSettingsButton(
 	itemListViewModel: ItemListViewModel,
 	applicationNavigation: NavigateApplication,
 	modifier: Modifier = Modifier,
@@ -66,8 +65,8 @@ fun RowScope.LabelledSettingsButton(
 		iconPainter = painterResource(id = R.drawable.ic_action_settings),
 		contentDescription = settingsButtonLabel,
 		label = settingsButtonLabel,
-		labelModifier = modifier,
 		labelMaxLines = 1,
+		modifier = modifier,
 	)
 }
 

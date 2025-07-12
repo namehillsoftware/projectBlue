@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list
 
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -15,7 +14,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackSer
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 
 @Composable
-fun RowScope.LabelledShuffleButton(
+fun LabelledShuffleButton(
 	libraryState: LoadedLibraryState,
 	playbackServiceController: ControlPlaybackService,
 	serviceFilesListState: ServiceFilesListState,
@@ -31,31 +30,13 @@ fun RowScope.LabelledShuffleButton(
 		iconPainter = painterResource(id = R.drawable.av_shuffle),
 		contentDescription = shuffleButtonLabel,
 		label = shuffleButtonLabel,
-		labelModifier = modifier,
 		labelMaxLines = 1,
+		modifier = modifier,
 	)
 }
 
 @Composable
-fun RowScope.UnlabelledShuffleButton(
-	libraryState: LoadedLibraryState,
-	playbackServiceController: ControlPlaybackService,
-	serviceFilesListState: ServiceFilesListState,
-) {
-	val shuffleButtonLabel = stringResource(R.string.btn_shuffle_files)
-	ColumnMenuIcon(
-		onClick = {
-			libraryState.loadedLibraryId?.also {
-				playbackServiceController.shuffleAndStartPlaylist(it, serviceFilesListState.files.value)
-			}
-		},
-		iconPainter = painterResource(id = R.drawable.av_shuffle),
-		contentDescription = shuffleButtonLabel,
-	)
-}
-
-@Composable
-fun RowScope.LabelledPlayButton(
+fun LabelledPlayButton(
 	libraryState: LoadedLibraryState,
 	playbackServiceController: ControlPlaybackService,
 	serviceFilesListState: ServiceFilesListState,
@@ -71,32 +52,13 @@ fun RowScope.LabelledPlayButton(
 		iconPainter = painterResource(id = R.drawable.av_play),
 		contentDescription = playButtonLabel,
 		label = playButtonLabel,
-		labelModifier = modifier,
 		labelMaxLines = 1,
+		modifier = modifier,
 	)
 }
 
 @Composable
-fun RowScope.UnlabelledPlayButton(
-	libraryState: LoadedLibraryState,
-	playbackServiceController: ControlPlaybackService,
-	serviceFilesListState: ServiceFilesListState,
-) {
-	val playButtonLabel = stringResource(id = R.string.btn_play)
-	ColumnMenuIcon(
-		onClick = {
-			libraryState.loadedLibraryId?.also {
-				playbackServiceController.startPlaylist(it, serviceFilesListState.files.value)
-			}
-		},
-		iconPainter = painterResource(id = R.drawable.av_play),
-		contentDescription = playButtonLabel,
-		label = null,
-	)
-}
-
-@Composable
-fun RowScope.LabelledSyncButton(
+fun LabelledSyncButton(
 	fileListViewModel: FileListViewModel,
 	modifier: Modifier = Modifier,
 ) {
@@ -115,24 +77,6 @@ fun RowScope.LabelledSyncButton(
 		},
 		label = syncButtonLabel,
 		labelMaxLines = 1,
-		labelModifier = modifier,
-	)
-}
-
-@Composable
-fun RowScope.UnlabelledSyncButton(fileListViewModel: FileListViewModel) {
-	val isSynced by fileListViewModel.isSynced.collectAsState()
-	val syncButtonLabel =
-		if (!isSynced) stringResource(id = R.string.btn_sync_item)
-		else stringResource(id = R.string.files_synced)
-	ColumnMenuIcon(
-		onClick = { fileListViewModel.toggleSync() },
-		icon = {
-			SyncIcon(
-				isActive = isSynced,
-				modifier = Modifier.size(Dimensions.topMenuIconSize),
-				contentDescription = syncButtonLabel,
-			)
-		},
+		modifier = modifier,
 	)
 }
