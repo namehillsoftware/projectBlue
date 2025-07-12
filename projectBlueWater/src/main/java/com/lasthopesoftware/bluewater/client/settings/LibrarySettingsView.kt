@@ -69,7 +69,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPa
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
-import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.menuHeight
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topRowOuterPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
@@ -86,7 +86,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 private val expandedTitleHeight = Dimensions.expandedTitleHeight
-private val expandedIconSize = menuHeight
+private val expandedIconSize = topMenuHeight
 private val appBarHeight = Dimensions.appBarHeight
 private val boxHeight = expandedTitleHeight + appBarHeight
 private val innerGroupPadding = viewPaddingUnit * 2
@@ -826,7 +826,7 @@ fun LibrarySettingsView(
 					modifier = Modifier
 						.fillMaxSize()
 				) {
-					val isHeaderTall by remember { derivedStateOf { (boxHeight + menuHeight) * 2 < maxHeight } }
+					val isHeaderTall by remember { derivedStateOf { (boxHeight + topMenuHeight) * 2 < maxHeight } }
 
 					Column(
 						modifier = Modifier

@@ -83,7 +83,7 @@ import com.lasthopesoftware.bluewater.android.ui.navigable
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.DetermineWindowControlColors
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.appBarHeight
-import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.menuHeight
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topRowOuterPadding
@@ -114,7 +114,7 @@ private fun StaticFileMenu(
 	Row(
 		modifier = Modifier
 			.padding(top = padding)
-			.height(menuHeight)
+			.height(topMenuHeight)
 	) {
 		val iconColor = mediaStylePalette.secondaryTextColor
 		val iconSize = topMenuIconSize
@@ -128,9 +128,7 @@ private fun StaticFileMenu(
 					painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
 					colorFilter = colorFilter,
 					contentDescription = addFileToPlaybackLabel,
-					modifier = Modifier
-						.size(iconSize)
-						.align(Alignment.CenterVertically),
+					modifier = Modifier.size(iconSize),
 				)
 			},
 			label = addFileToPlaybackLabel,

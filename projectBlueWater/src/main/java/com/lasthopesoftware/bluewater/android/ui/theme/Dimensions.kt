@@ -16,7 +16,7 @@ object Dimensions {
 	val expandedTitleHeight = 84.dp
 	val viewPaddingUnit = 4.dp
 	val topRowOuterPadding by lazy(LazyThreadSafetyMode.NONE) { viewPaddingUnit * 4 }
-	val menuHeight by lazy(LazyThreadSafetyMode.NONE) { topMenuIconSize + viewPaddingUnit * 6 }
+	val topMenuHeight by lazy(LazyThreadSafetyMode.NONE) { topMenuIconSize + viewPaddingUnit * 6 }
 	val topMenuIconSizeWithPadding by lazy(LazyThreadSafetyMode.NONE) { topMenuIconSize + topRowOuterPadding * 2 }
 	val rowPadding by lazy(LazyThreadSafetyMode.NONE) { viewPaddingUnit * 2 }
 	val rowPaddingValues by lazy(LazyThreadSafetyMode.NONE) { PaddingValues(rowPadding) }
