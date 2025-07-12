@@ -137,6 +137,8 @@
     <string name="log_to_file">Log to File</string>
     <string name="scroll_to_now_playing_item">Scroll to Now Playing Item</string>
     <string name="auto_scroll_to_now_playing_item">Auto Scroll to Now Playing Item</string>
+    <string name="bottom">Bottom</string>
+    <string name="top">Top</string>
     <string name="navigate_back">Navigate Back</string>
     <string name="optional_mac_address">Optional MAC Address</string>
     <string name="refresh">Refresh</string>
