@@ -721,36 +721,36 @@ fun ItemListView(
 									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
 								)
 
-								LabelledSyncButton(
-									fileListViewModel,
-									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
-								)
-
 								LabelledShuffleButton(
 									libraryState = itemListViewModel,
 									playbackServiceController = playbackServiceController,
 									serviceFilesListState = fileListViewModel,
 									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
 								)
-							} else {
-								LabelledActiveDownloadsButton(
-									itemListViewModel = itemListViewModel,
-									applicationNavigation = applicationNavigation,
-									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
-								)
 
-								LabelledSettingsButton(
-									itemListViewModel,
-									applicationNavigation,
-									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
-								)
-
-								LabelledSearchButton(
-									itemListViewModel = itemListViewModel,
-									applicationNavigation = applicationNavigation,
+								LabelledSyncButton(
+									fileListViewModel,
 									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
 								)
 							}
+
+							LabelledActiveDownloadsButton(
+								itemListViewModel = itemListViewModel,
+								applicationNavigation = applicationNavigation,
+								modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+							)
+
+							LabelledSettingsButton(
+								itemListViewModel,
+								applicationNavigation,
+								modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+							)
+
+							LabelledSearchButton(
+								itemListViewModel = itemListViewModel,
+								applicationNavigation = applicationNavigation,
+								modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+							)
 						}
 					}
 				} else {
