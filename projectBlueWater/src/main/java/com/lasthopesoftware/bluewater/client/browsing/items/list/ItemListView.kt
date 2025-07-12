@@ -4,11 +4,13 @@ import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
@@ -77,10 +80,10 @@ import com.lasthopesoftware.bluewater.android.ui.theme.DetermineWindowControlCol
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.appBarHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.expandedTitleHeight
-import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.menuHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowScrollPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.standardRowHeight
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topRowOuterPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
@@ -124,12 +127,13 @@ import kotlinx.coroutines.rx3.asFlow
 import kotlin.math.roundToInt
 
 private val boxHeight = expandedTitleHeight + appBarHeight
+private val menuIconHorizontalPadding = viewPaddingUnit * 4
 
 @Composable
 fun ItemsCountHeader(itemsCount: Int) {
 	Box(
 		modifier = Modifier
-			.height(menuHeight)
+			.height(topMenuHeight)
 			.padding(viewPaddingUnit)
 	) {
 		ProvideTextStyle(MaterialTheme.typography.h5) {
@@ -149,7 +153,7 @@ fun FilesCountHeader(filesCount: Int) {
 	Box(
 		modifier = Modifier
 			.padding(viewPaddingUnit)
-			.height(menuHeight)
+			.height(topMenuHeight)
 	) {
 		ProvideTextStyle(MaterialTheme.typography.h5) {
 			Text(
@@ -351,7 +355,7 @@ fun ChildItem(
 	}
 }
 
-@OptIn(ExperimentalCoroutinesApi::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun ItemListView(
     itemListViewModel: ItemListViewModel,
@@ -439,49 +443,6 @@ fun ItemListView(
 					knobCornerRadius = 1.dp,
 				),
 		) {
-			item(contentType = ItemListContentType.Menu) {
-				Row(
-					modifier = Modifier
-						.padding(rowPadding)
-						.fillMaxWidth()
-						.focusGroup(),
-					horizontalArrangement = Arrangement.SpaceEvenly,
-				) {
-					if (files.any()) {
-						LabelledPlayButton(
-							libraryState = itemListViewModel,
-							playbackServiceController = playbackServiceController,
-							serviceFilesListState = fileListViewModel,
-							focusRequester = firstMenuButtonFocus,
-						)
-
-						LabelledSyncButton(fileListViewModel)
-
-						LabelledShuffleButton(
-							libraryState = itemListViewModel,
-							playbackServiceController = playbackServiceController,
-							serviceFilesListState = fileListViewModel,
-						)
-					} else {
-						LabelledActiveDownloadsButton(
-							itemListViewModel = itemListViewModel,
-							applicationNavigation = applicationNavigation,
-							focusRequester = firstMenuButtonFocus
-						)
-
-						LabelledSettingsButton(
-							itemListViewModel,
-							applicationNavigation
-						)
-
-						LabelledSearchButton(
-							itemListViewModel = itemListViewModel,
-							applicationNavigation = applicationNavigation,
-						)
-					}
-				}
-			}
-
 			if (items.any()) {
 				item(contentType = ItemListContentType.Header) {
 					ItemsCountHeader(items.size)
@@ -532,7 +493,7 @@ fun ItemListView(
 			// 5in in pixels, pixels/Inch
 			val maxScrollBarHeight = remember(maxHeight, headerHeight) {
 				val dpi = 160f
-				(2.5f * dpi).dp.coerceAtMost(maxHeight - headerHeight - menuHeight)
+				(2.5f * dpi).dp.coerceAtMost(maxHeight - headerHeight - topMenuHeight)
 			}
 
 			val localHapticFeedback = LocalHapticFeedback.current
@@ -589,7 +550,7 @@ fun ItemListView(
 
 					if (totalItems <= minVisibleItemsForScroll) emptyList()
 					else buildList {
-						add(Pair(stringResources.top,0f))
+						add(Pair(stringResources.top, 0f))
 
 						if (files.any() && files.size > minVisibleItemsForScroll) {
 							add(Pair(stringResources.files,if (items.any()) (2f + items.size) / totalItems else 1f / totalItems))
@@ -605,8 +566,8 @@ fun ItemListView(
 			}
 
 			val fullListSize by LocalDensity.current.remember(maxHeight) {
-				val topMenuHeightPx = (menuHeight + rowPadding * 2).toPx()
-				val headerHeightPx = (menuHeight + viewPaddingUnit * 2).toPx()
+				val topMenuHeightPx = (topMenuHeight + rowPadding * 2).toPx()
+				val headerHeightPx = (topMenuHeight + viewPaddingUnit * 2).toPx()
 				val rowHeightPx = standardRowHeight.toPx()
 				val dividerHeight = 1.dp.toPx()
 
@@ -638,17 +599,21 @@ fun ItemListView(
 				AnchoredProgressScrollConnectionDispatcher(anchoredScrollConnectionState, -fullListSize, compositeScrollConnection)
 			}
 
-			val isHeaderTall by remember(maxHeight) { derivedStateOf { (boxHeight + menuHeight) * 2 < maxHeight } }
+			val isHeaderTall by remember(maxHeight) { derivedStateOf { (boxHeight + topMenuHeight) * 2 < maxHeight } }
 			// Use a box instead of a column to ensure the space taken by the header is accounted for when scrolling up.
 			Box(
 				modifier = Modifier
 					.fillMaxSize()
 					.nestedScroll(anchoredScrollConnectionDispatcher)
 			) {
-				val actualExpandedHeight by remember { derivedStateOf { if (isHeaderTall) boxHeight else collapsedHeight } }
-				BoxWithConstraints(
-					modifier = Modifier.fillMaxSize()
-				) {
+				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+					val actualExpandedHeight by remember {
+						derivedStateOf {
+							if (isHeaderTall) boxHeight + topMenuHeight + rowPadding * 2
+							else collapsedHeight
+						}
+					}
+
 					if (!isLoading) LoadedItemListView(
 						anchoredScrollConnectionState,
 						{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
@@ -658,78 +623,132 @@ fun ItemListView(
 				}
 
 				if (isHeaderTall) {
-					val heightValue by titleHeightScaler.valueState
-
-					Box(
+					Column(
 						modifier = Modifier
-							.fillMaxWidth()
-							.height(LocalDensity.current.run { heightValue.toDp() })
 							.background(MaterialTheme.colors.surface)
-							.focusProperties {
-								down = firstMenuButtonFocus
-							}
+							.fillMaxWidth()
 					) headerColumn@{
-						BackButton(
-							applicationNavigation::navigateUp,
+						val heightValue by titleHeightScaler.valueState
+
+						Box(
 							modifier = Modifier
-								.align(Alignment.TopStart)
-								.padding(topRowOuterPadding)
-						)
+								.fillMaxWidth()
+								.height(LocalDensity.current.run { heightValue.toDp() })
+								.background(MaterialTheme.colors.surface)
+								.focusProperties {
+									down = firstMenuButtonFocus
+								}
+						) headerColumn@{
+							BackButton(
+								applicationNavigation::navigateUp,
+								modifier = Modifier
+									.align(Alignment.TopStart)
+									.padding(topRowOuterPadding)
+							)
 
-						UnlabelledRefreshButton(
-							itemDataLoader,
-							Modifier
-								.align(Alignment.TopEnd)
-								.padding(
-									vertical = topRowOuterPadding, horizontal = viewPaddingUnit * 2
-								),
-						)
+							UnlabelledRefreshButton(
+								itemDataLoader,
+								Modifier
+									.align(Alignment.TopEnd)
+									.padding(
+										vertical = topRowOuterPadding, horizontal = viewPaddingUnit * 2
+									),
+							)
 
-						ProvideTextStyle(MaterialTheme.typography.h5) {
-							val startPadding by rememberTitleStartPadding(titleHeightScaler.progressState)
+							ProvideTextStyle(MaterialTheme.typography.h5) {
+								val startPadding by rememberTitleStartPadding(titleHeightScaler.progressState)
 
-							val headerCollapseProgress by titleHeightScaler.progressState
+								val headerCollapseProgress by titleHeightScaler.progressState
 
-							val topPadding by remember {
-								derivedStateOf {
-									linearInterpolation(
-										appBarHeight,
-										14.dp,
-										headerCollapseProgress
+								val topPadding by remember {
+									derivedStateOf {
+										linearInterpolation(
+											appBarHeight,
+											14.dp,
+											headerCollapseProgress
+										)
+									}
+								}
+
+								val endPadding by remember {
+									derivedStateOf {
+										linearInterpolation(
+											viewPaddingUnit * 2,
+											topMenuIconSize + viewPaddingUnit * 4,
+											headerCollapseProgress
+										)
+									}
+								}
+
+								val maxLines by remember { derivedStateOf { (2 - headerCollapseProgress).roundToInt() } }
+								if (maxLines > 1) {
+									Text(
+										text = itemValue,
+										maxLines = maxLines,
+										overflow = TextOverflow.Ellipsis,
+										modifier = Modifier
+											.fillMaxWidth()
+											.padding(start = startPadding, top = topPadding, end = endPadding),
+									)
+								} else {
+									MarqueeText(
+										text = itemValue,
+										overflow = TextOverflow.Ellipsis,
+										gradientSides = setOf(GradientSide.End),
+										gradientEdgeColor = MaterialTheme.colors.surface,
+										modifier = Modifier
+											.fillMaxWidth()
+											.padding(start = startPadding, top = topPadding, end = endPadding),
+										isMarqueeEnabled = !lazyListState.isScrollInProgress
 									)
 								}
 							}
+						}
 
-							val endPadding by remember {
-								derivedStateOf {
-									linearInterpolation(
-										viewPaddingUnit * 2,
-										topMenuIconSize + viewPaddingUnit * 4,
-										headerCollapseProgress
-									)
-								}
-							}
+						Row(
+							modifier = Modifier
+								.height(topMenuHeight)
+								.padding(rowPadding)
+								.focusGroup()
+								.horizontalScroll(rememberScrollState()),
+							horizontalArrangement = Arrangement.Start,
+						) {
+							if (files.any()) {
+								LabelledPlayButton(
+									libraryState = itemListViewModel,
+									playbackServiceController = playbackServiceController,
+									serviceFilesListState = fileListViewModel,
+									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+								)
 
-							val maxLines by remember { derivedStateOf { (2 - headerCollapseProgress).roundToInt() } }
-							if (maxLines > 1) {
-								Text(
-									text = itemValue,
-									maxLines = maxLines,
-									overflow = TextOverflow.Ellipsis,
-									modifier = Modifier
-										.fillMaxWidth()
-										.padding(start = startPadding, top = topPadding, end = endPadding),
+								LabelledSyncButton(
+									fileListViewModel,
+									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+								)
+
+								LabelledShuffleButton(
+									libraryState = itemListViewModel,
+									playbackServiceController = playbackServiceController,
+									serviceFilesListState = fileListViewModel,
+									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
 								)
 							} else {
-								MarqueeText(
-									text = itemValue,
-									overflow = TextOverflow.Ellipsis,
-									gradientSides = setOf(GradientSide.End),
-									gradientEdgeColor = MaterialTheme.colors.surface,
-									modifier = Modifier
-										.fillMaxWidth()
-										.padding(start = startPadding, top = topPadding, end = endPadding),
-									isMarqueeEnabled = !lazyListState.isScrollInProgress
+								LabelledActiveDownloadsButton(
+									itemListViewModel = itemListViewModel,
+									applicationNavigation = applicationNavigation,
+									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+								)
+
+								LabelledSettingsButton(
+									itemListViewModel,
+									applicationNavigation,
+									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+								)
+
+								LabelledSearchButton(
+									itemListViewModel = itemListViewModel,
+									applicationNavigation = applicationNavigation,
+									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
 								)
 							}
 						}

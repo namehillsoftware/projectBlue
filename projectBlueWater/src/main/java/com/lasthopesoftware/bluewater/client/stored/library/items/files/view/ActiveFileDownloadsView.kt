@@ -228,7 +228,7 @@ fun ActiveFileDownloadsView(
 							Row(
 								modifier = Modifier
 									.padding(Dimensions.rowPadding)
-									.height(Dimensions.menuHeight)
+									.height(Dimensions.topMenuHeight)
 									.fillMaxWidth()
 							) {
 								val isSyncing by activeFileDownloadsViewModel.isSyncing.subscribeAsState()

@@ -344,7 +344,7 @@ fun NowPlayingRating(
 			backgroundColor = LocalControlColor.current.copy(alpha = .1f),
 			modifier = Modifier
 				.fillMaxWidth()
-				.height(Dimensions.menuHeight),
+				.height(Dimensions.topMenuHeight),
 			onRatingSelected = if (isRatingEnabled) {
 				{
 					nowPlayingFilePropertiesViewModel.updateRating(it.toFloat())
