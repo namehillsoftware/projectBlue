@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -105,7 +106,6 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 private val boxHeight = expandedTitleHeight + appBarHeight
-private val menuIconHorizontalPadding = viewPaddingUnit * 4
 
 @Composable
 fun ItemsCountHeader(itemsCount: Int) {
@@ -570,12 +570,14 @@ fun ItemListView(
 								.horizontalScroll(rememberScrollState()),
 							horizontalArrangement = Arrangement.Start,
 						) {
-							val chevronRotation by remember { derivedStateOf { 180 * headerCollapseProgress } }
+							val chevronRotation by remember { derivedStateOf { linearInterpolation(180f, 0f, headerCollapseProgress) } }
 							val isCollapsed by remember { derivedStateOf { headerCollapseProgress > .98f } }
 
 							val chevronLabel =
 								stringResource(id = if (isCollapsed) R.string.top else R.string.bottom)
 							val scope = rememberCoroutineScope()
+
+							val menuIconModifier = Modifier.width(topMenuIconSize * 4)
 
 							ColumnMenuIcon(
 								onClick = {
@@ -601,6 +603,7 @@ fun ItemListView(
 								},
 								label = chevronLabel,
 								labelMaxLines = 1,
+								modifier = menuIconModifier,
 							)
 
 							if (files.any()) {
@@ -608,38 +611,38 @@ fun ItemListView(
 									libraryState = itemListViewModel,
 									playbackServiceController = playbackServiceController,
 									serviceFilesListState = fileListViewModel,
-									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+									modifier = menuIconModifier,
 								)
 
 								LabelledShuffleButton(
 									libraryState = itemListViewModel,
 									playbackServiceController = playbackServiceController,
 									serviceFilesListState = fileListViewModel,
-									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+									modifier = menuIconModifier,
 								)
 
 								LabelledSyncButton(
 									fileListViewModel,
-									modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+									modifier = menuIconModifier,
 								)
 							}
 
 							LabelledActiveDownloadsButton(
 								itemListViewModel = itemListViewModel,
 								applicationNavigation = applicationNavigation,
-								modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+								modifier = menuIconModifier,
 							)
 
 							LabelledSettingsButton(
 								itemListViewModel,
 								applicationNavigation,
-								modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+								modifier = menuIconModifier,
 							)
 
 							LabelledSearchButton(
 								itemListViewModel = itemListViewModel,
 								applicationNavigation = applicationNavigation,
-								modifier = Modifier.padding(horizontal = menuIconHorizontalPadding),
+								modifier = menuIconModifier,
 							)
 						}
 					}
