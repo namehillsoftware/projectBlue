@@ -364,7 +364,6 @@ fun ItemListView(
 	fun BoxWithConstraintsScope.LoadedItemListView() {
 		val items by itemListViewModel.items.subscribeAsState()
 
-		val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
 		LazyColumn(
 			state = lazyListState,
 			modifier = Modifier
@@ -376,7 +375,6 @@ fun ItemListView(
 					trackColor = Color.Transparent,
 					visibleAlpha = .4f,
 					knobCornerRadius = 1.dp,
-					fixedKnobRatio = knobHeight,
 				),
 		) {
 			if (items.any()) {
@@ -428,9 +426,10 @@ fun ItemListView(
 
 	val isFilesLoading by fileListViewModel.isLoading.subscribeAsState()
 
-	BoxWithConstraints(modifier = Modifier
-		.fillMaxSize()
-		.focusGroup()
+	BoxWithConstraints(
+		modifier = Modifier
+			.fillMaxSize()
+			.focusGroup()
 	) {
 		ControlSurface {
 			DetermineWindowControlColors()
