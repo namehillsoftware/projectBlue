@@ -441,40 +441,6 @@ fun ItemListView(
 			val collapsedHeightPx = LocalDensity.current.run { collapsedHeight.toPx() }
 			val heightScaler = memorableScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
 
-			val scope = rememberCoroutineScope()
-
-			val isAtTop by remember {
-				derivedStateOf {
-					lazyListState.firstVisibleItemIndex == 0 && lazyListState.firstVisibleItemScrollOffset == 0
-				}
-			}
-
-			val inputMode = LocalInputModeManager.current
-			DisposableEffect(isAtTop, inputMode, heightScaler, lazyListState) {
-				if (isAtTop) {
-					onDispose { }
-				} else {
-					val scrollToTopAction = {
-						scope.async {
-							if (lazyListState.firstVisibleItemIndex <= 0) false
-							else {
-								heightScaler.goToMax()
-								lazyListState.scrollToItem(0)
-								if (inputMode.inputMode == InputMode.Keyboard)
-									refreshButtonFocus.requestFocus()
-								true
-							}
-						}.toPromise()
-					}
-
-					undoBackStack.addAction(scrollToTopAction)
-
-					onDispose {
-						undoBackStack.removeAction(scrollToTopAction)
-					}
-				}
-			}
-
 			val isHeaderTall by remember { derivedStateOf { (boxHeight + menuHeight) * 2 < maxHeight } }
 			Column(
 				modifier = Modifier
