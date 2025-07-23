@@ -72,6 +72,10 @@ class ScrollConnectedScaler private constructor(private val max: Float, private 
 		totalDistanceTraveled.floatValue = -fullDistance
 	}
 
+	fun overrideDistanceTraveled(distance: Float) {
+		totalDistanceTraveled.floatValue = distance
+	}
+
 	private fun calculateProgress(value: Float) = if (fullDistance == 0f) 1f else (max - value) / fullDistance
 
 	object Saver : androidx.compose.runtime.saveable.Saver<ScrollConnectedScaler, Triple<Float, Float, Float>> {

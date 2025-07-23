@@ -7,7 +7,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,11 +39,9 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -59,7 +56,6 @@ import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.memorableScrollConnectedScaler
-import com.lasthopesoftware.bluewater.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
@@ -101,7 +97,6 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseables
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.toPromise
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -354,6 +349,7 @@ fun ItemListView(
 ) {
 	val files by fileListViewModel.files.subscribeAsState()
 	val rowHeight = Dimensions.standardRowHeight
+	val rowHeightPx = LocalDensity.current.run { remember(LocalDensity.current) { rowHeight.toPx() } }
 	val itemValue by itemListViewModel.itemValue.subscribeAsState()
 
 	val lazyListState = rememberLazyListState()
@@ -361,7 +357,7 @@ fun ItemListView(
 	val refreshButtonFocus = remember { FocusRequester() }
 
 	@Composable
-	fun BoxWithConstraintsScope.LoadedItemListView() {
+	fun LoadedItemListView() {
 		val items by itemListViewModel.items.subscribeAsState()
 
 		LazyColumn(
@@ -460,7 +456,6 @@ fun ItemListView(
 								.fillMaxWidth()
 								.height(LocalDensity.current.run { heightValue.toDp() })
 						) {
-
 							BackButton(
 								applicationNavigation::navigateUp,
 								modifier = Modifier
@@ -552,7 +547,11 @@ fun ItemListView(
 											lazyListState.scrollToItem(0)
 										} else {
 											heightScaler.goToMin()
-											lazyListState.scrollToItem(lazyListState.layoutInfo.totalItemsCount - 1)
+											val totalItems = lazyListState.layoutInfo.totalItemsCount
+											lazyListState.scrollToItem(totalItems - 1)
+											val itemSize = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()?.size?.toFloat() ?: rowHeightPx
+											// Estimate total distance traveled
+											heightScaler.overrideDistanceTraveled(-(itemSize * (lazyListState.firstVisibleItemIndex - 1)) + lazyListState.firstVisibleItemScrollOffset)
 										}
 									}
 								},
@@ -648,7 +647,7 @@ fun ItemListView(
 					}
 				}
 
-				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+				Box(modifier = Modifier.fillMaxSize()) {
 					val isLoaded = !isItemsLoading && !isFilesLoading
 
 					if (isLoaded) LoadedItemListView()
