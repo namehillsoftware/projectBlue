@@ -103,6 +103,8 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseables
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.toPromise
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -550,8 +552,10 @@ fun ItemListView(
 
 							LaunchedEffect(lazyListState) {
 								snapshotFlow { lazyListState.layoutInfo }
-									.collect {
-										isScrollingRequired = it.totalItemsCount > it.visibleItemsInfo.size
+									.map { Pair(it.totalItemsCount, it.visibleItemsInfo.size) }
+									.distinctUntilChanged()
+									.collect { (totalCount, displayedCount) ->
+										isScrollingRequired = totalCount > displayedCount
 									}
 							}
 
