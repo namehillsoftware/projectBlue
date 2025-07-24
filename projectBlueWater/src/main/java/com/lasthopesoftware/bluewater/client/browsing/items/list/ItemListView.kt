@@ -357,8 +357,6 @@ fun ItemListView(
     undoBackStack: UndoStack,
 ) {
 	val files by fileListViewModel.files.subscribeAsState()
-	val rowHeight = Dimensions.standardRowHeight
-	val rowHeightPx = LocalDensity.current.run { remember(LocalDensity.current) { rowHeight.toPx() } }
 	val itemValue by itemListViewModel.itemValue.subscribeAsState()
 
 	val lazyListState = rememberLazyListState()
@@ -541,14 +539,9 @@ fun ItemListView(
 								.horizontalScroll(rememberScrollState()),
 							horizontalArrangement = Arrangement.Start,
 						) {
-							val chevronRotation by remember { derivedStateOf { linearInterpolation(180f, 0f, headerCollapseProgress) } }
-							val isCollapsed by remember { derivedStateOf { headerCollapseProgress > .98f } }
-
-							val chevronLabel = stringResource(id = if (isCollapsed) R.string.top else R.string.bottom)
-							val scope = rememberCoroutineScope()
-
 							val menuIconModifier = Modifier.width(topMenuIconSize * 4)
 							var isScrollingRequired by remember { mutableStateOf(false) }
+							val scope = rememberCoroutineScope()
 
 							LaunchedEffect(lazyListState) {
 								snapshotFlow { lazyListState.layoutInfo }
@@ -560,6 +553,13 @@ fun ItemListView(
 							}
 
 							if (isScrollingRequired) {
+								val chevronRotation by remember { derivedStateOf { linearInterpolation(180f, 0f, headerCollapseProgress) } }
+								val isCollapsed by remember { derivedStateOf { headerCollapseProgress > .98f } }
+
+								val chevronLabel = stringResource(id = if (isCollapsed) R.string.top else R.string.bottom)
+								val rowHeight = Dimensions.standardRowHeight
+								val rowHeightPx = LocalDensity.current.run { remember(LocalDensity.current) { rowHeight.toPx() } }
+
 								ColumnMenuIcon(
 									onClick = {
 										scope.launch {
