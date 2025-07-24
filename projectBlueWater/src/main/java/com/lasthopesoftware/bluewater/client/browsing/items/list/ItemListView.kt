@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
@@ -100,6 +101,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.LoadItemData
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledActiveDownloadsButton
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSearchButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSettingsButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledRefreshButton
@@ -355,6 +357,7 @@ fun ChildItem(
 	}
 }
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun ItemListView(
@@ -385,7 +388,6 @@ fun ItemListView(
 		onScrollProgress: (Float) -> Unit,
 		headerHeight: Dp = 0.dp,
 	) {
-
 		val items by itemListViewModel.items.subscribeAsState()
 
 		LaunchedEffect(anchoredScrollConnectionState) {
@@ -705,6 +707,8 @@ fun ItemListView(
 							}
 						}
 
+						val isNotLoading by remember { derivedStateOf { !isFilesLoading && !isItemsLoading } }
+
 						Row(
 							modifier = Modifier
 								.height(topMenuHeight)
@@ -714,6 +718,14 @@ fun ItemListView(
 							horizontalArrangement = Arrangement.Start,
 						) {
 							val menuIconModifier = Modifier.width(topMenuIconSize * 4)
+
+							if (isNotLoading) {
+								LabelledRefreshButton(
+									itemListViewModel = itemListViewModel,
+									fileListViewModel = fileListViewModel,
+									modifier = menuIconModifier,
+								)
+							}
 
 							if (files.any()) {
 								LabelledPlayButton(
@@ -736,23 +748,25 @@ fun ItemListView(
 								)
 							}
 
-							LabelledActiveDownloadsButton(
-								itemListViewModel = itemListViewModel,
-								applicationNavigation = applicationNavigation,
-								modifier = menuIconModifier,
-							)
+							if (!isItemsLoading) {
+								LabelledActiveDownloadsButton(
+									itemListViewModel = itemListViewModel,
+									applicationNavigation = applicationNavigation,
+									modifier = menuIconModifier,
+								)
 
-							LabelledSettingsButton(
-								itemListViewModel,
-								applicationNavigation,
-								modifier = menuIconModifier,
-							)
+								LabelledSettingsButton(
+									itemListViewModel,
+									applicationNavigation,
+									modifier = menuIconModifier,
+								)
 
-							LabelledSearchButton(
-								itemListViewModel = itemListViewModel,
-								applicationNavigation = applicationNavigation,
-								modifier = menuIconModifier,
-							)
+								LabelledSearchButton(
+									itemListViewModel = itemListViewModel,
+									applicationNavigation = applicationNavigation,
+									modifier = menuIconModifier,
+								)
+							}
 						}
 					}
 				} else {

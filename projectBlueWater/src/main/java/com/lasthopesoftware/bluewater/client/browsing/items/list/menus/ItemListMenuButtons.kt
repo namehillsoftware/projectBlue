@@ -8,6 +8,7 @@ import androidx.compose.ui.res.stringResource
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
+import com.lasthopesoftware.bluewater.android.ui.components.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledRefreshButton
 import com.lasthopesoftware.bluewater.client.browsing.items.LoadItemData
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
@@ -84,5 +85,20 @@ fun UnlabelledRefreshButton(
 		},
 		modifier = modifier,
 		focusRequester = focusRequester,
+	)
+}
+
+@Composable
+fun LabelledRefreshButton(
+	itemListViewModel: ItemListViewModel,
+	fileListViewModel: FileListViewModel,
+	modifier: Modifier = Modifier,
+) {
+	LabelledRefreshButton(
+		onClick = {
+			itemListViewModel.promiseRefresh()
+			fileListViewModel.promiseRefresh()
+		},
+		modifier = modifier,
 	)
 }
