@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.horizontalScroll
@@ -83,6 +84,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledActiveDownloadsButton
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSearchButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSettingsButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledRefreshButton
@@ -333,6 +335,7 @@ fun ChildItem(
 	}
 }
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun ItemListView(
@@ -523,6 +526,8 @@ fun ItemListView(
 							}
 						}
 
+						val isNotLoading by remember { derivedStateOf { !isFilesLoading && !isItemsLoading } }
+
 						Row(
 							modifier = Modifier
 								.padding(rowPadding)
@@ -533,42 +538,54 @@ fun ItemListView(
 							val chevronRotation by remember { derivedStateOf { linearInterpolation(180f, 0f, headerCollapseProgress) } }
 							val isCollapsed by remember { derivedStateOf { headerCollapseProgress > .98f } }
 
-							val chevronLabel =
-								stringResource(id = if (isCollapsed) R.string.top else R.string.bottom)
+							val chevronLabel = stringResource(id = if (isCollapsed) R.string.top else R.string.bottom)
 							val scope = rememberCoroutineScope()
 
 							val menuIconModifier = Modifier.width(topMenuIconSize * 4)
+							val isScrollingRequired by remember { derivedStateOf { lazyListState.layoutInfo.visibleItemsInfo.size <= lazyListState.layoutInfo.totalItemsCount }}
 
-							ColumnMenuIcon(
-								onClick = {
-									scope.launch {
-										if (isCollapsed) {
-											heightScaler.goToMax()
-											lazyListState.scrollToItem(0)
-										} else {
-											heightScaler.goToMin()
-											val totalItems = lazyListState.layoutInfo.totalItemsCount
-											lazyListState.scrollToItem(totalItems - 1)
-											val itemSize = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()?.size?.toFloat() ?: rowHeightPx
-											// Estimate total distance traveled
-											heightScaler.overrideDistanceTraveled(-(itemSize * (lazyListState.firstVisibleItemIndex - 1)) + lazyListState.firstVisibleItemScrollOffset)
+							if (isScrollingRequired) {
+								ColumnMenuIcon(
+									onClick = {
+										scope.launch {
+											if (isCollapsed) {
+												heightScaler.goToMax()
+												lazyListState.scrollToItem(0)
+											} else {
+												heightScaler.goToMin()
+												val totalItems = lazyListState.layoutInfo.totalItemsCount
+												lazyListState.scrollToItem(totalItems - 1)
+												val itemSize =
+													lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()?.size?.toFloat()
+														?: rowHeightPx
+												// Estimate total distance traveled
+												heightScaler.overrideDistanceTraveled(-(itemSize * (lazyListState.firstVisibleItemIndex - 1)) + lazyListState.firstVisibleItemScrollOffset)
+											}
 										}
-									}
-								},
-								icon = {
-									Icon(
-										painter = painterResource(id = R.drawable.chevron_up_white_36dp),
-										tint = LocalControlColor.current,
-										contentDescription = chevronLabel,
-										modifier = Modifier
-											.size(topMenuIconSize)
-											.rotate(chevronRotation),
-									)
-								},
-								label = chevronLabel,
-								labelMaxLines = 1,
-								modifier = menuIconModifier,
-							)
+									},
+									icon = {
+										Icon(
+											painter = painterResource(id = R.drawable.chevron_up_white_36dp),
+											tint = LocalControlColor.current,
+											contentDescription = chevronLabel,
+											modifier = Modifier
+												.size(topMenuIconSize)
+												.rotate(chevronRotation),
+										)
+									},
+									label = chevronLabel,
+									labelMaxLines = 1,
+									modifier = menuIconModifier,
+								)
+							}
+
+							if (isNotLoading) {
+								LabelledRefreshButton(
+									itemListViewModel = itemListViewModel,
+									fileListViewModel = fileListViewModel,
+									modifier = menuIconModifier,
+								)
+							}
 
 							if (files.any()) {
 								LabelledPlayButton(
@@ -591,23 +608,25 @@ fun ItemListView(
 								)
 							}
 
-							LabelledActiveDownloadsButton(
-								itemListViewModel = itemListViewModel,
-								applicationNavigation = applicationNavigation,
-								modifier = menuIconModifier,
-							)
+							if (!isItemsLoading) {
+								LabelledActiveDownloadsButton(
+									itemListViewModel = itemListViewModel,
+									applicationNavigation = applicationNavigation,
+									modifier = menuIconModifier,
+								)
 
-							LabelledSettingsButton(
-								itemListViewModel,
-								applicationNavigation,
-								modifier = menuIconModifier,
-							)
+								LabelledSettingsButton(
+									itemListViewModel,
+									applicationNavigation,
+									modifier = menuIconModifier,
+								)
 
-							LabelledSearchButton(
-								itemListViewModel = itemListViewModel,
-								applicationNavigation = applicationNavigation,
-								modifier = menuIconModifier,
-							)
+								LabelledSearchButton(
+									itemListViewModel = itemListViewModel,
+									applicationNavigation = applicationNavigation,
+									modifier = menuIconModifier,
+								)
+							}
 						}
 					}
 				} else {
