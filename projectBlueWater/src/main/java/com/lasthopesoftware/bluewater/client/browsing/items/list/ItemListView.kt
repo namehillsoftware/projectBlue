@@ -748,25 +748,23 @@ fun ItemListView(
 								)
 							}
 
-							if (!isItemsLoading) {
-								LabelledActiveDownloadsButton(
-									itemListViewModel = itemListViewModel,
-									applicationNavigation = applicationNavigation,
-									modifier = menuIconModifier,
-								)
+							LabelledActiveDownloadsButton(
+								itemListViewModel = itemListViewModel,
+								applicationNavigation = applicationNavigation,
+								modifier = menuIconModifier,
+							)
 
-								LabelledSettingsButton(
-									itemListViewModel,
-									applicationNavigation,
-									modifier = menuIconModifier,
-								)
+							LabelledSettingsButton(
+								itemListViewModel,
+								applicationNavigation,
+								modifier = menuIconModifier,
+							)
 
-								LabelledSearchButton(
-									itemListViewModel = itemListViewModel,
-									applicationNavigation = applicationNavigation,
-									modifier = menuIconModifier,
-								)
-							}
+							LabelledSearchButton(
+								itemListViewModel = itemListViewModel,
+								applicationNavigation = applicationNavigation,
+								modifier = menuIconModifier,
+							)
 						}
 					}
 				} else {
