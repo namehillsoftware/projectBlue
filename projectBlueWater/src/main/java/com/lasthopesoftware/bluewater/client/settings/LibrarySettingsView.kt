@@ -63,7 +63,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.StandardTextField
-import com.lasthopesoftware.bluewater.android.ui.components.memorableScrollConnectedScaler
+import com.lasthopesoftware.bluewater.android.ui.components.memorableFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
@@ -106,7 +106,7 @@ private fun SpacedOutRow(modifier: Modifier = Modifier, content: @Composable (Ro
 
 
 @Composable
-private fun RowScope.LabelledChangeServerTypeButton(
+private fun LabelledChangeServerTypeButton(
 	stringResources: GetStringResources,
 	onClick: () -> Unit,
 	modifier: Modifier = Modifier,
@@ -123,7 +123,7 @@ private fun RowScope.LabelledChangeServerTypeButton(
 
 
 @Composable
-private fun RowScope.LabelledRemoveServerButton(
+private fun LabelledRemoveServerButton(
 	librarySettingsViewModel: LibrarySettingsViewModel,
 	stringResources: GetStringResources,
 	modifier: Modifier = Modifier,
@@ -138,7 +138,7 @@ private fun RowScope.LabelledRemoveServerButton(
 }
 
 @Composable
-private fun RowScope.LabelledSaveAndConnectButton(
+private fun LabelledSaveAndConnectButton(
 	librarySettingsViewModel: LibrarySettingsViewModel,
 	navigateApplication: NavigateApplication,
 	stringResources: GetStringResources,
@@ -311,7 +311,7 @@ private fun LibrarySettingsList(
 								val fingerprint =
 									userSslCertificates.promiseUserSslCertificateFingerprint().suspend()
 								sslCertificateFingerprint.value = fingerprint
-							} catch (e: Throwable) {
+							} catch (_: Throwable) {
 								hasError = true
 							}
 						}
@@ -556,7 +556,7 @@ private fun LibrarySettingsList(
 									val fingerprint =
 										userSslCertificates.promiseUserSslCertificateFingerprint().suspend()
 									sslCertificateFingerprint.value = fingerprint
-								} catch (e: Throwable) {
+								} catch (_: Throwable) {
 									hasError = true
 								}
 							}
@@ -817,7 +817,7 @@ fun LibrarySettingsView(
 
 				val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 				val collapsedHeightPx = LocalDensity.current.run { appBarHeight.toPx() }
-				val heightScaler = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
+				val heightScaler = memorableFullScreenScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
 
 				val isLoadingState by librarySettingsViewModel.isLoading.subscribeAsState()
 				var isSelectingServerType by remember { mutableStateOf(false) }
@@ -832,7 +832,7 @@ fun LibrarySettingsView(
 
 						val scope = rememberCoroutineScope()
 
-						val headerCollapseProgress by heightScaler.getProgressState()
+						val headerCollapseProgress by heightScaler.progressState
 
 						val isIconsVisible by LocalDensity.current.run {
 							remember {
@@ -865,7 +865,7 @@ fun LibrarySettingsView(
 						}
 
 						if (isHeaderTall) {
-							val heightValue by heightScaler.getValueState()
+							val heightValue by heightScaler.valueState
 
 							Box(
 								modifier = Modifier
@@ -885,7 +885,7 @@ fun LibrarySettingsView(
 									}
 
 
-									val startPadding by rememberTitleStartPadding(heightScaler.getProgressState())
+									val startPadding by rememberTitleStartPadding(heightScaler.progressState)
 									val endPadding = viewPaddingUnit
 									MarqueeText(
 										text = stringResource(id = R.string.settings),

@@ -74,7 +74,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledRefreshButton
-import com.lasthopesoftware.bluewater.android.ui.components.memorableScrollConnectedScaler
+import com.lasthopesoftware.bluewater.android.ui.components.memorableFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.indicateFocus
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
@@ -513,7 +513,7 @@ fun FileDetailsView(
 		val boxHeight = expandedTitlePadding + titleHeight
 		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 		val collapsedHeight = appBarHeight + rowPadding
-		val heightScaler = memorableScrollConnectedScaler(max = boxHeightPx, min = LocalDensity.current.run { collapsedHeight.toPx() })
+		val heightScaler = memorableFullScreenScrollConnectedScaler(max = boxHeightPx, min = LocalDensity.current.run { collapsedHeight.toPx() })
 
 		val lazyListState = rememberLazyListState()
 
@@ -522,7 +522,7 @@ fun FileDetailsView(
 				.fillMaxSize()
 				.nestedScroll(heightScaler)
 		) {
-			val headerCollapseProgress by heightScaler.getProgressState()
+			val headerCollapseProgress by heightScaler.progressState
 
 			if (!isLoading) {
 				LazyColumn(modifier = Modifier.fillMaxSize(), state = lazyListState) {
@@ -705,7 +705,7 @@ fun FileDetailsView(
 						.fillMaxWidth(),
 					contentAlignment = Alignment.CenterStart,
 				) {
-					val startPadding by rememberTitleStartPadding(heightScaler.getProgressState())
+					val startPadding by rememberTitleStartPadding(heightScaler.progressState)
 					val endPadding by remember {
 						derivedStateOf {
 							linearInterpolation(

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -52,14 +53,17 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
+import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
+import com.lasthopesoftware.bluewater.android.ui.components.memorableFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
@@ -73,6 +77,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.expandedTitleH
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.menuHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowScrollPadding
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.standardRowHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topRowOuterPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
@@ -108,7 +113,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-private val boxHeight = expandedTitleHeight + appBarHeight
+private val appBarAndTitleHeight = expandedTitleHeight + appBarHeight
 
 @Composable
 fun ItemsCountHeader(itemsCount: Int) {
@@ -229,7 +234,6 @@ fun ChildItem(
     playbackLibraryItems: PlaybackLibraryItems,
     backStack: UndoStack,
 ) {
-	val rowHeight = Dimensions.standardRowHeight
 	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
 
 	val childItemViewModel = remember(childItemViewModelProvider::getViewModel)
@@ -269,9 +273,9 @@ fun ChildItem(
 						applicationNavigation.viewItem(it, item)
 					}
 				},
-				scrollPadding = rowHeight.rowScrollPadding
+				scrollPadding = standardRowHeight.rowScrollPadding
 			)
-			.height(rowHeight)
+			.height(standardRowHeight)
 			.fillMaxSize()
 			.padding(Dimensions.rowPaddingValues)
 		) {
@@ -288,7 +292,7 @@ fun ChildItem(
 	} else {
 		Row(
 			modifier = Modifier
-				.height(rowHeight)
+				.height(standardRowHeight)
 				.padding(Dimensions.rowPaddingValues)
 		) {
 			ListItemIcon(
@@ -338,6 +342,104 @@ fun ChildItem(
 					.align(Alignment.CenterVertically),
 			)
 		}
+	}
+}
+
+@Composable
+fun ItemListMenu(
+	itemListViewModel: ItemListViewModel,
+	fileListViewModel: FileListViewModel,
+	applicationNavigation: NavigateApplication,
+	playbackServiceController: ControlPlaybackService,
+	isScrollingRequired: Boolean,
+	scrollProgress: Float,
+	isScrollingUp: Boolean,
+	onScrollTrackerClicked: () -> Unit,
+	modifier: Modifier = Modifier
+) {
+	Row(
+		modifier = Modifier
+			.padding(rowPadding)
+			.focusGroup()
+			.then(modifier)
+			.horizontalScroll(rememberScrollState()),
+		horizontalArrangement = Arrangement.Start,
+	) {
+		val menuIconModifier = Modifier.width(topMenuIconSize * 4)
+
+		if (isScrollingRequired) {
+			val chevronRotation = linearInterpolation(180f, 0f, scrollProgress)
+
+			val chevronLabel = stringResource(id = if (isScrollingUp) R.string.top else R.string.bottom)
+
+			ColumnMenuIcon(
+				onClick = onScrollTrackerClicked,
+				icon = {
+					Icon(
+						painter = painterResource(id = R.drawable.chevron_up_white_36dp),
+						tint = LocalControlColor.current,
+						contentDescription = chevronLabel,
+						modifier = Modifier
+							.size(topMenuIconSize)
+							.rotate(chevronRotation),
+					)
+				},
+				label = chevronLabel,
+				labelMaxLines = 1,
+				modifier = menuIconModifier,
+			)
+		}
+
+		val isFilesLoading by fileListViewModel.isLoading.subscribeAsState()
+		val isItemsLoading by itemListViewModel.isLoading.subscribeAsState()
+		val isNotLoading by remember { derivedStateOf { !isFilesLoading && !isItemsLoading } }
+		if (isNotLoading) {
+			LabelledRefreshButton(
+				itemListViewModel = itemListViewModel,
+				fileListViewModel = fileListViewModel,
+				modifier = menuIconModifier,
+			)
+		}
+
+		val files by fileListViewModel.files.subscribeAsState()
+		if (files.any()) {
+			LabelledPlayButton(
+				libraryState = itemListViewModel,
+				playbackServiceController = playbackServiceController,
+				serviceFilesListState = fileListViewModel,
+				modifier = menuIconModifier,
+			)
+
+			LabelledShuffleButton(
+				libraryState = itemListViewModel,
+				playbackServiceController = playbackServiceController,
+				serviceFilesListState = fileListViewModel,
+				modifier = menuIconModifier,
+			)
+
+			LabelledSyncButton(
+				fileListViewModel,
+				modifier = menuIconModifier,
+			)
+		}
+
+		LabelledActiveDownloadsButton(
+			itemListViewModel = itemListViewModel,
+			applicationNavigation = applicationNavigation,
+			modifier = menuIconModifier,
+		)
+
+		LabelledSettingsButton(
+			itemListViewModel,
+			applicationNavigation,
+			modifier = menuIconModifier,
+		)
+
+		LabelledSearchButton(
+			itemListViewModel = itemListViewModel,
+			applicationNavigation = applicationNavigation,
+			modifier = menuIconModifier,
+		)
 	}
 }
 
@@ -440,28 +542,85 @@ fun ItemListView(
 
 			val collapsedHeight = appBarHeight
 
-			val expandedHeightPx = LocalDensity.current.run { boxHeight.toPx() }
+			val expandedHeightPx = LocalDensity.current.run { appBarAndTitleHeight.toPx() }
 			val collapsedHeightPx = LocalDensity.current.run { collapsedHeight.toPx() }
-			val heightScaler = memorableScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
+			val titleHeightScaler = memorableFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
+			val rowHeightPx = LocalDensity.current.run { remember(LocalDensity.current) { standardRowHeight.toPx() } }
+			val menuOffsetScaler = memorableScrollConnectedScaler(expandedHeightPx, -rowHeightPx)
 
-			val isHeaderTall by remember { derivedStateOf { (boxHeight + menuHeight) * 2 < maxHeight } }
+			val isHeaderTall by remember { derivedStateOf { (expandedTitleHeight + menuHeight) * 2 < maxHeight } }
 			Column(
 				modifier = Modifier
 					.fillMaxSize()
-					.nestedScroll(heightScaler)
+					.nestedScroll(
+						remember(titleHeightScaler, menuOffsetScaler) {
+							LinkedNestedScrollConnection(titleHeightScaler, menuOffsetScaler)
+						}
+					)
 			) {
 				if (isHeaderTall) {
-					Column(modifier = Modifier
+					val titleHeightValue by titleHeightScaler.valueState
+					val menuOffsetValue by menuOffsetScaler.valueState
+					val boxHeight by LocalDensity.current.run {
+						remember(LocalDensity.current) {
+							derivedStateOf {
+								(menuOffsetValue.toDp() + standardRowHeight).coerceAtLeast(appBarHeight)
+							}
+						}
+					}
+					Box(modifier = Modifier
 						.background(MaterialTheme.colors.surface)
+						.height(boxHeight)
 						.fillMaxWidth()
-					) headerColumn@{
-						val heightValue by heightScaler.getValueState()
-						val headerCollapseProgress by heightScaler.getProgressState()
+					) header@{
+						val headerCollapseProgress by titleHeightScaler.progressState
+
+						var isScrollingRequired by remember { mutableStateOf(false) }
+
+						LaunchedEffect(lazyListState) {
+							snapshotFlow { lazyListState.layoutInfo }
+								.map { Pair(it.totalItemsCount, it.visibleItemsInfo.size) }
+								.distinctUntilChanged()
+								.collect { (totalCount, displayedCount) ->
+									isScrollingRequired = totalCount > displayedCount
+								}
+						}
+
+						val scope = rememberCoroutineScope()
+						val isCollapsed by remember { derivedStateOf { headerCollapseProgress > .98f } }
+						ItemListMenu(
+							itemListViewModel = itemListViewModel,
+							fileListViewModel = fileListViewModel,
+							applicationNavigation = applicationNavigation,
+							playbackServiceController = playbackServiceController,
+							isScrollingRequired = isScrollingRequired,
+							scrollProgress = headerCollapseProgress,
+							isScrollingUp = isCollapsed,
+							onScrollTrackerClicked = {
+								scope.launch {
+									if (isCollapsed) {
+										titleHeightScaler.goToMax()
+										lazyListState.scrollToItem(0)
+									} else {
+										titleHeightScaler.goToMin()
+										val totalItems = lazyListState.layoutInfo.totalItemsCount
+										lazyListState.scrollToItem(totalItems - 1)
+										val itemSize =
+											lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()?.size?.toFloat()
+												?: rowHeightPx
+										// Estimate total distance traveled
+										titleHeightScaler.overrideDistanceTraveled(-(itemSize * (lazyListState.firstVisibleItemIndex - 1)) + lazyListState.firstVisibleItemScrollOffset)
+									}
+								}
+							},
+							modifier = Modifier.offset { IntOffset(x = 0, menuOffsetScaler.valueState.value.roundToInt()) },
+						)
 
 						Box(
 							modifier = Modifier
 								.fillMaxWidth()
-								.height(LocalDensity.current.run { heightValue.toDp() })
+								.background(MaterialTheme.colors.surface)
+								.height(LocalDensity.current.run { titleHeightValue.toDp() })
 						) {
 							BackButton(
 								applicationNavigation::navigateUp,
@@ -483,7 +642,7 @@ fun ItemListView(
 							)
 
 							ProvideTextStyle(MaterialTheme.typography.h5) {
-								val startPadding by rememberTitleStartPadding(heightScaler.getProgressState())
+								val startPadding by rememberTitleStartPadding(titleHeightScaler.progressState)
 
 								val topPadding by remember {
 									derivedStateOf {
@@ -528,118 +687,6 @@ fun ItemListView(
 									)
 								}
 							}
-						}
-
-						val isNotLoading by remember { derivedStateOf { !isFilesLoading && !isItemsLoading } }
-
-						Row(
-							modifier = Modifier
-								.padding(rowPadding)
-								.focusGroup()
-								.horizontalScroll(rememberScrollState()),
-							horizontalArrangement = Arrangement.Start,
-						) {
-							val menuIconModifier = Modifier.width(topMenuIconSize * 4)
-							var isScrollingRequired by remember { mutableStateOf(false) }
-							val scope = rememberCoroutineScope()
-
-							LaunchedEffect(lazyListState) {
-								snapshotFlow { lazyListState.layoutInfo }
-									.map { Pair(it.totalItemsCount, it.visibleItemsInfo.size) }
-									.distinctUntilChanged()
-									.collect { (totalCount, displayedCount) ->
-										isScrollingRequired = totalCount > displayedCount
-									}
-							}
-
-							if (isScrollingRequired) {
-								val chevronRotation by remember { derivedStateOf { linearInterpolation(180f, 0f, headerCollapseProgress) } }
-								val isCollapsed by remember { derivedStateOf { headerCollapseProgress > .98f } }
-
-								val chevronLabel = stringResource(id = if (isCollapsed) R.string.top else R.string.bottom)
-								val rowHeight = Dimensions.standardRowHeight
-								val rowHeightPx = LocalDensity.current.run { remember(LocalDensity.current) { rowHeight.toPx() } }
-
-								ColumnMenuIcon(
-									onClick = {
-										scope.launch {
-											if (isCollapsed) {
-												heightScaler.goToMax()
-												lazyListState.scrollToItem(0)
-											} else {
-												heightScaler.goToMin()
-												val totalItems = lazyListState.layoutInfo.totalItemsCount
-												lazyListState.scrollToItem(totalItems - 1)
-												val itemSize =
-													lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()?.size?.toFloat()
-														?: rowHeightPx
-												// Estimate total distance traveled
-												heightScaler.overrideDistanceTraveled(-(itemSize * (lazyListState.firstVisibleItemIndex - 1)) + lazyListState.firstVisibleItemScrollOffset)
-											}
-										}
-									},
-									icon = {
-										Icon(
-											painter = painterResource(id = R.drawable.chevron_up_white_36dp),
-											tint = LocalControlColor.current,
-											contentDescription = chevronLabel,
-											modifier = Modifier
-												.size(topMenuIconSize)
-												.rotate(chevronRotation),
-										)
-									},
-									label = chevronLabel,
-									labelMaxLines = 1,
-									modifier = menuIconModifier,
-								)
-							}
-
-							if (isNotLoading) {
-								LabelledRefreshButton(
-									itemListViewModel = itemListViewModel,
-									fileListViewModel = fileListViewModel,
-									modifier = menuIconModifier,
-								)
-							}
-
-							if (files.any()) {
-								LabelledPlayButton(
-									libraryState = itemListViewModel,
-									playbackServiceController = playbackServiceController,
-									serviceFilesListState = fileListViewModel,
-									modifier = menuIconModifier,
-								)
-
-								LabelledShuffleButton(
-									libraryState = itemListViewModel,
-									playbackServiceController = playbackServiceController,
-									serviceFilesListState = fileListViewModel,
-									modifier = menuIconModifier,
-								)
-
-								LabelledSyncButton(
-									fileListViewModel,
-									modifier = menuIconModifier,
-								)
-							}
-
-							LabelledActiveDownloadsButton(
-								itemListViewModel = itemListViewModel,
-								applicationNavigation = applicationNavigation,
-								modifier = menuIconModifier,
-							)
-
-							LabelledSettingsButton(
-								itemListViewModel,
-								applicationNavigation,
-								modifier = menuIconModifier,
-							)
-
-							LabelledSearchButton(
-								itemListViewModel = itemListViewModel,
-								applicationNavigation = applicationNavigation,
-								modifier = menuIconModifier,
-							)
 						}
 					}
 				} else {
