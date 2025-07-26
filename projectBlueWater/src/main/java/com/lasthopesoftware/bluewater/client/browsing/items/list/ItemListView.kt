@@ -672,7 +672,9 @@ fun ItemListView(
 
 			val titleHeightScaler = rememberFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
 			val compositeScrollConnection = remember(titleHeightScaler) {
-				LinkedNestedScrollConnection(titleHeightScaler, menuHeightScaler)
+				ConsumedOffsetErasingNestedScrollConnection(
+					LinkedNestedScrollConnection(titleHeightScaler, menuHeightScaler)
+				)
 			}
 
 			val anchoredScrollConnectionDispatcher = rememberAutoCloseable(anchoredScrollConnectionState, fullListSize, compositeScrollConnection) {
@@ -790,7 +792,7 @@ fun ItemListView(
 							modifier = Modifier
 								.fillMaxWidth()
 								.background(MaterialTheme.colors.surface)
-								.height(LocalDensity.current.run { menuHeightValue.toDp() })
+								.height(LocalDensity.current.remember { menuHeightValue.toDp() })
 								.clip(RectangleShape)
 						) {
 							ItemListMenu(
