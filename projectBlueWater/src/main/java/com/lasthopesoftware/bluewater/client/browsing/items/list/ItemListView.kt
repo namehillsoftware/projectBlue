@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,9 +43,11 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -598,7 +601,7 @@ fun ItemListView(
 			val collapsedHeightPx = LocalDensity.current.remember { collapsedHeight.toPx() }
 			val items by itemListViewModel.items.subscribeAsState()
 			val rowHeightPx = LocalDensity.current.remember { standardRowHeight.toPx() }
-			val menuOffsetScaler = rememberPreScrollConnectedScaler(expandedHeightPx, -rowHeightPx)
+			val menuHeightScaler = rememberPreScrollConnectedScaler(rowHeightPx, 0f)
 
 			var minVisibleItemsForScroll by remember { mutableIntStateOf(30) }
 			LaunchedEffect(lazyListState, itemDataLoader) {
@@ -669,7 +672,9 @@ fun ItemListView(
 
 			val titleHeightScaler = rememberFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
 			val compositeScrollConnection = remember(titleHeightScaler) {
-				LinkedNestedScrollConnection(titleHeightScaler, menuOffsetScaler)
+				ConsumedOffsetErasingNestedScrollConnection(
+					LinkedNestedScrollConnection(titleHeightScaler, menuHeightScaler)
+				)
 			}
 
 			val anchoredScrollConnectionDispatcher = rememberAutoCloseable(anchoredScrollConnectionState, fullListSize, compositeScrollConnection) {
@@ -701,29 +706,14 @@ fun ItemListView(
 
 				if (isHeaderTall) {
 					val titleHeightValue by titleHeightScaler.valueState
-					val menuOffsetValue by menuOffsetScaler.valueState
-					val boxHeight by LocalDensity.current.run {
-						remember(LocalDensity.current) {
-							derivedStateOf {
-								(menuOffsetValue.toDp() + standardRowHeight).coerceAtLeast(appBarHeight)
-							}
-						}
-					}
-					Box(
+					val menuHeightValue by menuHeightScaler.valueState
+
+					Column(
 						modifier = Modifier
 							.background(MaterialTheme.colors.surface)
-						.height(boxHeight)
 							.fillMaxWidth()
 					) headerColumn@{
 						val headerCollapseProgress by titleHeightScaler.progressState
-						ItemListMenu(
-							itemListViewModel = itemListViewModel,
-							fileListViewModel = fileListViewModel,
-							applicationNavigation = applicationNavigation,
-							playbackServiceController = playbackServiceController,
-							modifier = Modifier.offset { IntOffset(x = 0, menuOffsetScaler.valueState.value.roundToInt()) },
-						)
-
 						Box(
 							modifier = Modifier
 								.fillMaxWidth()
@@ -796,6 +786,22 @@ fun ItemListView(
 									)
 								}
 							}
+						}
+
+						Box(
+							modifier = Modifier
+								.fillMaxWidth()
+								.background(MaterialTheme.colors.surface)
+								.height(LocalDensity.current.remember { menuHeightValue.toDp() })
+								.clip(RectangleShape)
+						) {
+							ItemListMenu(
+								itemListViewModel = itemListViewModel,
+								fileListViewModel = fileListViewModel,
+								applicationNavigation = applicationNavigation,
+								playbackServiceController = playbackServiceController,
+								modifier = Modifier.offset { IntOffset(x = 0, y = (menuHeightValue - rowHeightPx).roundToInt()) },
+							)
 						}
 					}
 				} else {
