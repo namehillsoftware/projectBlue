@@ -61,6 +61,7 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
+import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
@@ -549,16 +550,17 @@ fun ItemListView(
 			val titleHeightScaler = memorableFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
 			val rowHeightPx = LocalDensity.current.run { remember(LocalDensity.current) { standardRowHeight.toPx() } }
 			val menuHeightScaler = memorableScrollConnectedScaler(rowHeightPx, 0f)
+			val compositeScrollConnection = remember(titleHeightScaler, menuHeightScaler) {
+				ConsumedOffsetErasingNestedScrollConnection(
+					LinkedNestedScrollConnection(titleHeightScaler, menuHeightScaler)
+				)
+			}
 
 			val isHeaderTall by remember { derivedStateOf { (expandedTitleHeight + menuHeight) * 2 < maxHeight } }
 			Column(
 				modifier = Modifier
 					.fillMaxSize()
-					.nestedScroll(
-						remember(titleHeightScaler, menuHeightScaler) {
-							LinkedNestedScrollConnection(titleHeightScaler, menuHeightScaler)
-						}
-					)
+					.nestedScroll(compositeScrollConnection)
 			) {
 				if (isHeaderTall) {
 					val titleHeightValue by titleHeightScaler.valueState
@@ -674,10 +676,10 @@ fun ItemListView(
 								onScrollTrackerClicked = {
 									scope.launch {
 										if (isCollapsed) {
-											titleHeightScaler.goToMax()
+											compositeScrollConnection.goToMax()
 											lazyListState.scrollToItem(0)
 										} else {
-											titleHeightScaler.goToMin()
+											compositeScrollConnection.goToMin()
 											val totalItems = lazyListState.layoutInfo.totalItemsCount
 											lazyListState.scrollToItem(totalItems - 1)
 											val itemSize =
