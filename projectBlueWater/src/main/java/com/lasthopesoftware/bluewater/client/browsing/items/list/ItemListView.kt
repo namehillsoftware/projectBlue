@@ -41,9 +41,11 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
@@ -546,75 +548,27 @@ fun ItemListView(
 			val collapsedHeightPx = LocalDensity.current.run { collapsedHeight.toPx() }
 			val titleHeightScaler = memorableFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
 			val rowHeightPx = LocalDensity.current.run { remember(LocalDensity.current) { standardRowHeight.toPx() } }
-			val menuOffsetScaler = memorableScrollConnectedScaler(expandedHeightPx, -rowHeightPx)
+			val menuHeightScaler = memorableScrollConnectedScaler(rowHeightPx, 0f)
 
 			val isHeaderTall by remember { derivedStateOf { (expandedTitleHeight + menuHeight) * 2 < maxHeight } }
 			Column(
 				modifier = Modifier
 					.fillMaxSize()
 					.nestedScroll(
-						remember(titleHeightScaler, menuOffsetScaler) {
-							LinkedNestedScrollConnection(titleHeightScaler, menuOffsetScaler)
+						remember(titleHeightScaler, menuHeightScaler) {
+							LinkedNestedScrollConnection(titleHeightScaler, menuHeightScaler)
 						}
 					)
 			) {
 				if (isHeaderTall) {
 					val titleHeightValue by titleHeightScaler.valueState
-					val menuOffsetValue by menuOffsetScaler.valueState
-					val boxHeight by LocalDensity.current.run {
-						remember(LocalDensity.current) {
-							derivedStateOf {
-								(menuOffsetValue.toDp() + standardRowHeight).coerceAtLeast(appBarHeight)
-							}
-						}
-					}
-					Box(modifier = Modifier
+					val menuHeightValue by menuHeightScaler.valueState
+
+					Column(modifier = Modifier
 						.background(MaterialTheme.colors.surface)
-						.height(boxHeight)
 						.fillMaxWidth()
 					) header@{
 						val headerCollapseProgress by titleHeightScaler.progressState
-
-						var isScrollingRequired by remember { mutableStateOf(false) }
-
-						LaunchedEffect(lazyListState) {
-							snapshotFlow { lazyListState.layoutInfo }
-								.map { Pair(it.totalItemsCount, it.visibleItemsInfo.size) }
-								.distinctUntilChanged()
-								.collect { (totalCount, displayedCount) ->
-									isScrollingRequired = totalCount > displayedCount
-								}
-						}
-
-						val scope = rememberCoroutineScope()
-						val isCollapsed by remember { derivedStateOf { headerCollapseProgress > .98f } }
-						ItemListMenu(
-							itemListViewModel = itemListViewModel,
-							fileListViewModel = fileListViewModel,
-							applicationNavigation = applicationNavigation,
-							playbackServiceController = playbackServiceController,
-							isScrollingRequired = isScrollingRequired,
-							scrollProgress = headerCollapseProgress,
-							isScrollingUp = isCollapsed,
-							onScrollTrackerClicked = {
-								scope.launch {
-									if (isCollapsed) {
-										titleHeightScaler.goToMax()
-										lazyListState.scrollToItem(0)
-									} else {
-										titleHeightScaler.goToMin()
-										val totalItems = lazyListState.layoutInfo.totalItemsCount
-										lazyListState.scrollToItem(totalItems - 1)
-										val itemSize =
-											lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()?.size?.toFloat()
-												?: rowHeightPx
-										// Estimate total distance traveled
-										titleHeightScaler.overrideDistanceTraveled(-(itemSize * (lazyListState.firstVisibleItemIndex - 1)) + lazyListState.firstVisibleItemScrollOffset)
-									}
-								}
-							},
-							modifier = Modifier.offset { IntOffset(x = 0, menuOffsetScaler.valueState.value.roundToInt()) },
-						)
 
 						Box(
 							modifier = Modifier
@@ -687,6 +641,55 @@ fun ItemListView(
 									)
 								}
 							}
+						}
+
+						Box(
+							modifier = Modifier
+								.fillMaxWidth()
+								.background(MaterialTheme.colors.surface)
+								.height(LocalDensity.current.run { menuHeightValue.toDp() })
+								.clip(RectangleShape)
+						) {
+							var isScrollingRequired by remember { mutableStateOf(false) }
+
+							LaunchedEffect(lazyListState) {
+								snapshotFlow { lazyListState.layoutInfo }
+									.map { Pair(it.totalItemsCount, it.visibleItemsInfo.size) }
+									.distinctUntilChanged()
+									.collect { (totalCount, displayedCount) ->
+										isScrollingRequired = totalCount > displayedCount
+									}
+							}
+
+							val scope = rememberCoroutineScope()
+							val isCollapsed by remember { derivedStateOf { headerCollapseProgress > .98f } }
+							ItemListMenu(
+								itemListViewModel = itemListViewModel,
+								fileListViewModel = fileListViewModel,
+								applicationNavigation = applicationNavigation,
+								playbackServiceController = playbackServiceController,
+								isScrollingRequired = isScrollingRequired,
+								scrollProgress = headerCollapseProgress,
+								isScrollingUp = isCollapsed,
+								onScrollTrackerClicked = {
+									scope.launch {
+										if (isCollapsed) {
+											titleHeightScaler.goToMax()
+											lazyListState.scrollToItem(0)
+										} else {
+											titleHeightScaler.goToMin()
+											val totalItems = lazyListState.layoutInfo.totalItemsCount
+											lazyListState.scrollToItem(totalItems - 1)
+											val itemSize =
+												lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()?.size?.toFloat()
+													?: rowHeightPx
+											// Estimate total distance traveled
+											titleHeightScaler.overrideDistanceTraveled(-(itemSize * (lazyListState.firstVisibleItemIndex - 1)) + lazyListState.firstVisibleItemScrollOffset)
+										}
+									}
+								},
+								modifier = Modifier.offset { IntOffset(x = 0, y = (menuHeightValue - rowHeightPx).roundToInt()) },
+							)
 						}
 					}
 				} else {
