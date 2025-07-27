@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
+import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.MenuIcon
@@ -116,7 +117,9 @@ fun ActiveFileDownloadsView(
 		Column(
 			modifier = Modifier
 				.fillMaxSize()
-				.nestedScroll(heightScaler)
+				.nestedScroll(remember(heightScaler) {
+					ConsumedOffsetErasingNestedScrollConnection(heightScaler)
+				})
 		) {
 			Column(
 				modifier = Modifier

@@ -59,6 +59,7 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
+import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
@@ -827,7 +828,11 @@ fun LibrarySettingsView(
 				) {
 					val isHeaderTall by remember { derivedStateOf { (boxHeight + menuHeight) * 2 < maxHeight } }
 
-					Column(modifier = Modifier.nestedScroll(heightScaler)) {
+					Column(
+						modifier = Modifier.nestedScroll(remember(heightScaler) {
+							ConsumedOffsetErasingNestedScrollConnection(heightScaler)
+						})
+					) {
 						val scrollState = rememberScrollState()
 
 						val scope = rememberCoroutineScope()

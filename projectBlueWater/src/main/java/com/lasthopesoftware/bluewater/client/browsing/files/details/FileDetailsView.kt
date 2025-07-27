@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details
 
 import android.graphics.Bitmap
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -58,6 +57,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -70,6 +70,7 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
+import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.RatingBar
@@ -482,9 +483,7 @@ fun FileDetailsView(
 	bitmapProducer: ProduceBitmaps,
 	playableFileDetailsState: PlayableFileDetailsState? = null
 ) {
-	val activity = LocalActivity.current ?: return
-
-	val paletteProvider = MediaStylePaletteProvider(activity)
+	val paletteProvider = MediaStylePaletteProvider(LocalContext.current)
 	val coverArt by viewModel.coverArt.subscribeAsState()
 	val coverArtBitmap by coverArt
 		.takeIf { it.isNotEmpty() }
@@ -520,7 +519,7 @@ fun FileDetailsView(
 		Box(
 			modifier = Modifier
 				.fillMaxSize()
-				.nestedScroll(heightScaler)
+				.nestedScroll(remember(heightScaler) { ConsumedOffsetErasingNestedScrollConnection(heightScaler) })
 		) {
 			val headerCollapseProgress by heightScaler.progressState
 
