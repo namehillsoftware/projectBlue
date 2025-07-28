@@ -19,11 +19,12 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.annotation.ColorInt
 import androidx.annotation.FloatRange
 import androidx.core.graphics.ColorUtils
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.drawable.toDrawable
 import androidx.palette.graphics.Palette
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
@@ -35,15 +36,14 @@ import androidx.compose.ui.graphics.Color as ComposeColor
 /**
  * A class the processes media notifications and extracts the right text and background colors.
  */
-class MediaStylePaletteProvider(private val context: Context) {
-	private val mBlackWhiteFilter: Palette.Filter =
-		Palette.Filter { _, hsl -> isNotWhiteOrBlack(hsl) }
-
+class MediaStylePaletteProvider(private val context: Context) : Palette.Filter {
 	private fun promisePalette(drawable: Drawable): Promise<MediaStylePalette> =
 		ThreadPools.compute.preparePromise { getMediaPalette(drawable) }
 
+	override fun isAllowed(rgb: Int, hsl: FloatArray): Boolean = isNotWhiteOrBlack(hsl)
+
 	fun promisePalette(bitmap: Bitmap): Promise<MediaStylePalette> {
-		val drawable = BitmapDrawable(context.resources, bitmap)
+		val drawable = bitmap.toDrawable(context.resources)
 		return promisePalette(drawable)
 	}
 
@@ -62,7 +62,7 @@ class MediaStylePaletteProvider(private val context: Context) {
 		val factor = sqrt(maxBitmapArea.toDouble() / area)
 		width = (factor * width).toInt()
 		height = (factor * height).toInt()
-		val bitmap: Bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+		val bitmap: Bitmap = createBitmap(width, height)
 		val canvas = Canvas(bitmap)
 		drawable.setBounds(0, 0, width, height)
 		drawable.draw(canvas)
@@ -91,7 +91,7 @@ class MediaStylePaletteProvider(private val context: Context) {
 			}
 		}
 
-		paletteBuilder.addFilter(mBlackWhiteFilter)
+		paletteBuilder.addFilter(this)
 		val palette = paletteBuilder.generate()
 		val foregroundColor = selectForegroundColor(backgroundColor.rgb, palette, maxBitmapArea)
 		return finalizeColors(backgroundColor.rgb, foregroundColor)
@@ -202,7 +202,7 @@ class MediaStylePaletteProvider(private val context: Context) {
 		width = (factor * width).toInt()
 		height = (factor * height).toInt()
 
-		val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+		val bitmap = createBitmap(width, height)
 		val canvas = Canvas(bitmap)
 		drawable.setBounds(0, 0, width, height)
 		drawable.draw(canvas)
