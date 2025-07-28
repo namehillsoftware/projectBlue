@@ -90,14 +90,12 @@ fun UnlabelledRefreshButton(
 
 @Composable
 fun LabelledRefreshButton(
-	itemListViewModel: ItemListViewModel,
-	fileListViewModel: FileListViewModel,
+	itemDataLoader: LoadItemData,
 	modifier: Modifier = Modifier,
 ) {
 	LabelledRefreshButton(
 		onClick = {
-			itemListViewModel.promiseRefresh()
-			fileListViewModel.promiseRefresh()
+			itemDataLoader.promiseRefresh()
 		},
 		modifier = modifier,
 	)
