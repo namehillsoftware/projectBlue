@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -66,6 +67,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.initialization.C
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingView
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.exceptions.UncaughtExceptionHandlerLogger
@@ -94,11 +96,12 @@ private fun BrowserLibraryDestination.Navigate(
 	libraryConnectionDependencies: LibraryConnectionDependents,
 ) {
 	with(browserViewDependencies) {
-		Box(
+		BoxWithConstraints(
 			modifier = Modifier
 				.fillMaxSize()
 				.background(Color.Black)
-		) {
+		) screenBox@{
+
 			val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 			val layoutDirection = LocalLayoutDirection.current
 			Column(
@@ -176,8 +179,15 @@ private fun BrowserLibraryDestination.Navigate(
 						}
 					}
 				) { paddingValues ->
-					Box(modifier = Modifier.padding(paddingValues)) {
-						NavigateToLibraryDestination(
+					BoxWithConstraints(modifier = Modifier.padding(paddingValues)) nestedBox@{
+						val screenScope = ScreenDimensionsScope(
+							screenHeight = this@screenBox.maxHeight,
+							screenWidth = this@screenBox.maxWidth,
+							innerBoxScope = this@nestedBox
+						)
+
+						screenScope.NavigateToLibraryDestination(
+							this@Navigate,
 							browserViewDependencies
 						)
 					}

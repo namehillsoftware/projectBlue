@@ -11,20 +11,24 @@ import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencie
 import com.lasthopesoftware.bluewater.client.browsing.files.list.search.SearchFilesView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsView
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.ViewModelInitAction
 import com.lasthopesoftware.promises.extensions.suspend
 import java.io.IOException
 
 @Composable
-fun BrowserLibraryDestination.NavigateToLibraryDestination(browserViewDependencies: ScopedViewModelDependencies) {
-	when (this) {
+fun ScreenDimensionsScope.NavigateToLibraryDestination(
+	destination: BrowserLibraryDestination,
+	browserViewDependencies: ScopedViewModelDependencies
+) {
+	when (destination) {
 		is LibraryScreen -> {
-			LoadedItemListView(browserViewDependencies, libraryId, null)
+			LoadedItemListView(browserViewDependencies, destination.libraryId, null)
 		}
 
 		is ItemScreen -> {
-			LoadedItemListView(browserViewDependencies, libraryId, item)
+			LoadedItemListView(browserViewDependencies, destination.libraryId, destination.item)
 		}
 
 		is DownloadsScreen -> {
@@ -36,7 +40,7 @@ fun BrowserLibraryDestination.NavigateToLibraryDestination(browserViewDependenci
 					undoBackStack = undoBackStackBuilder,
 				)
 
-				activeFileDownloadsViewModel.loadActiveDownloads(libraryId)
+				activeFileDownloadsViewModel.loadActiveDownloads(destination.libraryId)
 			}
 		}
 
@@ -66,20 +70,20 @@ fun BrowserLibraryDestination.NavigateToLibraryDestination(browserViewDependenci
 				}
 
 				ViewModelInitAction {
-					searchFilesViewModel.setActiveLibraryId(libraryId)
+					searchFilesViewModel.setActiveLibraryId(destination.libraryId)
 
 					if (initializeConnection) {
 						LaunchedEffect(key1 = Unit) {
-							isConnectionLost = !connectionStatusViewModel.initializeConnection(libraryId).suspend()
+							isConnectionLost = !connectionStatusViewModel.initializeConnection(destination.libraryId).suspend()
 							initializeConnection = false
 						}
 					}
 
 					if (!isConnectionLost) {
-						LaunchedEffect(filePropertyFilter) {
+						LaunchedEffect(destination.filePropertyFilter) {
 							try {
-								if (filePropertyFilter != null) {
-									searchFilesViewModel.prependFilter(filePropertyFilter)
+								if (destination.filePropertyFilter != null) {
+									searchFilesViewModel.prependFilter(destination.filePropertyFilter)
 									searchFilesViewModel.findFiles().suspend()
 								}
 							} catch (e: IOException) {

@@ -253,7 +253,12 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedVi
 					.fillMaxHeight()
 					.focusGroup()
 			) {
-				NavigateToTvLibraryDestination(browserViewDependencies)
+				val screenDimensions = ScreenDimensionsScope(
+					this@BoxWithConstraints.maxHeight,
+					this@BoxWithConstraints.maxWidth,
+					this@BoxWithConstraints,
+				)
+				screenDimensions.NavigateToTvLibraryDestination(this@NowPlayingTvView, browserViewDependencies)
 			}
 		} else {
 			BackHandler {
