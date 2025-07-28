@@ -18,6 +18,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.UndoStack
@@ -28,7 +29,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import java.io.IOException
 
 @Composable
-fun LoadedItemListView(viewModelDependencies: ScopedViewModelDependencies, libraryId: LibraryId, item: IItem?) {
+fun ScreenDimensionsScope.LoadedItemListView(viewModelDependencies: ScopedViewModelDependencies, libraryId: LibraryId, item: IItem?) {
 	with (viewModelDependencies) {
 		LoadedItemListView(
 			libraryId,
@@ -49,7 +50,7 @@ fun LoadedItemListView(viewModelDependencies: ScopedViewModelDependencies, libra
 }
 
 @Composable
-private fun LoadedItemListView(
+private fun ScreenDimensionsScope.LoadedItemListView(
     libraryId: LibraryId,
     item: IItem?,
     itemListViewModel: ItemListViewModel,
