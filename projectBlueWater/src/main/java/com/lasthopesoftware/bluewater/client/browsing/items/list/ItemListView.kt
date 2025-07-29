@@ -100,7 +100,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledA
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSearchButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSettingsButton
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledRefreshButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
@@ -462,11 +461,12 @@ fun ItemListView(
 	playbackServiceController: ControlPlaybackService,
 	undoBackStack: UndoStack,
 	lazyListState: LazyListState,
+	modifier: Modifier = Modifier,
 ) {
 	val items by itemListViewModel.items.subscribeAsState()
 	val files by fileListViewModel.files.subscribeAsState()
 
-	Box(modifier = Modifier.fillMaxSize()) {
+	Box(modifier = Modifier.fillMaxSize().then(modifier)) {
 		val isItemsLoading by itemListViewModel.isLoading.subscribeAsState()
 		val isFilesLoading by fileListViewModel.isLoading.subscribeAsState()
 		val isLoading by remember { derivedStateOf { isFilesLoading || isItemsLoading } }
@@ -554,22 +554,40 @@ fun ScreenDimensionsScope.ItemListView(
 
 	val lazyListState = rememberLazyListState()
 
-	val refreshButtonFocus = remember { FocusRequester() }
+	val defaultFocus = remember { FocusRequester() }
 
 	ControlSurface {
 		DetermineWindowControlColors()
+
+		val rowHeightPx =
+			LocalDensity.current.run { remember(LocalDensity.current) { standardRowHeight.toPx() } }
+		val scrollingDirectionConnection = memorableScrollConnectedScaler(rowHeightPx * 2f, 0f)
+		val scrollingDirectionProgress by scrollingDirectionConnection.progressState
+		val inverseScrollingDirectionProgress by remember { derivedStateOf { 1f - scrollingDirectionProgress } }
+		val isScrollingUp by remember { derivedStateOf { inverseScrollingDirectionProgress > .5f } }
+
+		var isScrollingRequired by remember { mutableStateOf(false) }
+		LaunchedEffect(lazyListState) {
+			snapshotFlow { lazyListState.layoutInfo }
+				.map { Pair(it.totalItemsCount, it.visibleItemsInfo.size) }
+				.distinctUntilChanged()
+				.collect { (totalCount, displayedCount) ->
+					isScrollingRequired = totalCount > displayedCount
+				}
+		}
 
 		val collapsedHeight = appBarHeight
 		if (maxWidth < Dimensions.twoColumnThreshold) {
 			val expandedHeightPx = LocalDensity.current.run { appBarAndTitleHeight.toPx() }
 			val collapsedHeightPx = LocalDensity.current.run { collapsedHeight.toPx() }
 			val titleHeightScaler = memorableFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
-			val rowHeightPx =
-				LocalDensity.current.run { remember(LocalDensity.current) { standardRowHeight.toPx() } }
+
 			val menuHeightScaler = memorableScrollConnectedScaler(rowHeightPx, 0f)
 			val compositeScrollConnection = remember(titleHeightScaler, menuHeightScaler) {
 				ConsumedOffsetErasingNestedScrollConnection(
-					LinkedNestedScrollConnection(titleHeightScaler, menuHeightScaler)
+					LinkedNestedScrollConnection(ConsumedOffsetErasingNestedScrollConnection(scrollingDirectionConnection),
+						LinkedNestedScrollConnection(titleHeightScaler, menuHeightScaler)
+					)
 				)
 			}
 
@@ -601,16 +619,34 @@ fun ScreenDimensionsScope.ItemListView(
 								.padding(topRowOuterPadding)
 						)
 
-						UnlabelledRefreshButton(
-							itemListViewModel,
-							fileListViewModel,
-							Modifier
+						val menuHeightProgress by menuHeightScaler.progressState
+						val chevronRotation by remember { derivedStateOf { linearInterpolation(0f, 180f, menuHeightProgress) } }
+						val isMenuFullyShown by remember { derivedStateOf { menuHeightProgress < .02f } }
+						val chevronLabel = stringResource(id = if (isScrollingUp) R.string.top else R.string.bottom)
+
+						ColumnMenuIcon(
+							onClick = {
+								if (!isMenuFullyShown) {
+									menuHeightScaler.goToMax()
+								}
+							},
+							icon = {
+								Icon(
+									painter = painterResource(id = R.drawable.chevron_up_white_36dp),
+									tint = LocalControlColor.current,
+									contentDescription = chevronLabel,
+									modifier = Modifier
+										.size(topMenuIconSize)
+										.rotate(chevronRotation),
+								)
+							},
+							modifier = Modifier
 								.align(Alignment.TopEnd)
 								.padding(
 									vertical = topRowOuterPadding,
 									horizontal = viewPaddingUnit * 2
 								),
-							refreshButtonFocus
+							focusRequester = defaultFocus,
 						)
 
 						ProvideTextStyle(MaterialTheme.typography.h5) {
@@ -668,30 +704,18 @@ fun ScreenDimensionsScope.ItemListView(
 							.height(LocalDensity.current.run { menuHeightValue.toDp() })
 							.clip(RectangleShape)
 					) {
-						var isScrollingRequired by remember { mutableStateOf(false) }
-
-						LaunchedEffect(lazyListState) {
-							snapshotFlow { lazyListState.layoutInfo }
-								.map { Pair(it.totalItemsCount, it.visibleItemsInfo.size) }
-								.distinctUntilChanged()
-								.collect { (totalCount, displayedCount) ->
-									isScrollingRequired = totalCount > displayedCount
-								}
-						}
-
 						val scope = rememberCoroutineScope()
-						val isCollapsed by remember { derivedStateOf { headerCollapseProgress > .98f } }
 						ItemListMenu(
 							itemListViewModel = itemListViewModel,
 							fileListViewModel = fileListViewModel,
 							applicationNavigation = applicationNavigation,
 							playbackServiceController = playbackServiceController,
 							isScrollingRequired = isScrollingRequired,
-							scrollProgress = headerCollapseProgress,
-							isScrollingUp = isCollapsed,
+							scrollProgress = inverseScrollingDirectionProgress,
+							isScrollingUp = isScrollingUp,
 							onScrollTrackerClicked = {
 								scope.launch {
-									if (isCollapsed) {
+									if (isScrollingUp) {
 										compositeScrollConnection.goToMax()
 										lazyListState.scrollToItem(0)
 									} else {
@@ -759,19 +783,17 @@ fun ScreenDimensionsScope.ItemListView(
 					}
 
 					val scope = rememberCoroutineScope()
-//						val isCollapsed by remember { derivedStateOf { headerCollapseProgress > .98f } }
-					val isCollapsed = false
 					ItemListMenu(
 						itemListViewModel = itemListViewModel,
 						fileListViewModel = fileListViewModel,
 						applicationNavigation = applicationNavigation,
 						playbackServiceController = playbackServiceController,
-						isScrollingRequired = true,
-						scrollProgress = 0f,
-						isScrollingUp = lazyListState.lastScrolledBackward,
+						isScrollingRequired = isScrollingRequired,
+						scrollProgress = inverseScrollingDirectionProgress,
+						isScrollingUp = isScrollingUp,
 						onScrollTrackerClicked = {
 							scope.launch {
-								if (isCollapsed) {
+								if (isScrollingUp) {
 									lazyListState.scrollToItem(0)
 								} else {
 									val totalItems = lazyListState.layoutInfo.totalItemsCount
@@ -794,7 +816,8 @@ fun ScreenDimensionsScope.ItemListView(
 					playbackLibraryItems,
 					playbackServiceController,
 					undoBackStack,
-					lazyListState
+					lazyListState,
+					modifier = Modifier.nestedScroll(remember(scrollingDirectionConnection) { ConsumedOffsetErasingNestedScrollConnection(scrollingDirectionConnection) }),
 				)
 			}
 		}
