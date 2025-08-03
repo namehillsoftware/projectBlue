@@ -561,7 +561,7 @@ fun ScreenDimensionsScope.ItemListView(
 
 		val rowHeightPx =
 			LocalDensity.current.run { remember(LocalDensity.current) { standardRowHeight.toPx() } }
-		val scrollingDirectionConnection = memorableScrollConnectedScaler(rowHeightPx * 2f, 0f)
+		val scrollingDirectionConnection = memorableScrollConnectedScaler(rowHeightPx * .5f, 0f)
 		val scrollingDirectionProgress by scrollingDirectionConnection.progressState
 		val inverseScrollingDirectionProgress by remember { derivedStateOf { 1f - scrollingDirectionProgress } }
 		val isScrollingUp by remember { derivedStateOf { inverseScrollingDirectionProgress > .5f } }
@@ -582,11 +582,11 @@ fun ScreenDimensionsScope.ItemListView(
 			val collapsedHeightPx = LocalDensity.current.run { collapsedHeight.toPx() }
 			val titleHeightScaler = memorableFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
 
-			val menuHeightScaler = memorableScrollConnectedScaler(rowHeightPx, 0f)
-			val compositeScrollConnection = remember(titleHeightScaler, menuHeightScaler) {
+			val compositeScrollConnection = remember(titleHeightScaler, scrollingDirectionConnection) {
 				ConsumedOffsetErasingNestedScrollConnection(
-					LinkedNestedScrollConnection(ConsumedOffsetErasingNestedScrollConnection(scrollingDirectionConnection),
-						LinkedNestedScrollConnection(titleHeightScaler, menuHeightScaler)
+					LinkedNestedScrollConnection(
+						ConsumedOffsetErasingNestedScrollConnection(scrollingDirectionConnection),
+						titleHeightScaler
 					)
 				)
 			}
@@ -597,7 +597,6 @@ fun ScreenDimensionsScope.ItemListView(
 					.nestedScroll(compositeScrollConnection)
 			) {
 				val titleHeightValue by titleHeightScaler.valueState
-				val menuHeightValue by menuHeightScaler.valueState
 
 				Column(
 					modifier = Modifier
@@ -605,6 +604,7 @@ fun ScreenDimensionsScope.ItemListView(
 						.fillMaxWidth()
 				) header@{
 					val headerCollapseProgress by titleHeightScaler.progressState
+					val menuHeightScaler = memorableScrollConnectedScaler(rowHeightPx, 0f)
 
 					Box(
 						modifier = Modifier
@@ -622,12 +622,14 @@ fun ScreenDimensionsScope.ItemListView(
 						val menuHeightProgress by menuHeightScaler.progressState
 						val chevronRotation by remember { derivedStateOf { linearInterpolation(0f, 180f, menuHeightProgress) } }
 						val isMenuFullyShown by remember { derivedStateOf { menuHeightProgress < .02f } }
-						val chevronLabel = stringResource(id = if (isScrollingUp) R.string.top else R.string.bottom)
+						val chevronLabel = stringResource(id = if (isMenuFullyShown) R.string.collapse else R.string.expand)
 
 						ColumnMenuIcon(
 							onClick = {
 								if (!isMenuFullyShown) {
 									menuHeightScaler.goToMax()
+								} else {
+									menuHeightScaler.goToMin()
 								}
 							},
 							icon = {
@@ -697,6 +699,7 @@ fun ScreenDimensionsScope.ItemListView(
 						}
 					}
 
+					val menuHeightValue by menuHeightScaler.valueState
 					Box(
 						modifier = Modifier
 							.fillMaxWidth()
