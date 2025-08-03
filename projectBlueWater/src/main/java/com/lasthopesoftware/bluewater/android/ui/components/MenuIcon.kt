@@ -99,6 +99,7 @@ fun ColumnMenuIcon(
 	labelColor: Color = LocalContentColor.current,
 	labelModifier: Modifier = Modifier,
 	labelMaxLines: Int = 1,
+	focusRequester: FocusRequester? = null,
 ) {
 	MenuIcon(
 		onClick = onClick,
@@ -108,6 +109,7 @@ fun ColumnMenuIcon(
 		labelColor = labelColor,
 		labelModifier = labelModifier,
 		labelMaxLines = labelMaxLines,
+		focusRequester = focusRequester,
 	)
 }
 
