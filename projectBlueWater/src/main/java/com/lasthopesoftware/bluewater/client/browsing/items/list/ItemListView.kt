@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -27,6 +29,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
@@ -44,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
@@ -70,9 +74,9 @@ import com.lasthopesoftware.bluewater.android.ui.components.AnchoredChips
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredProgressScrollConnectionDispatcher
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
+import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
-import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
@@ -96,6 +100,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topRowOuterPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
+import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.LabelledPlayButton
@@ -111,7 +116,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledA
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSearchButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSettingsButton
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledRefreshButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
@@ -456,7 +460,9 @@ fun ItemListView(
 	onScrollProgress: (Float) -> Unit,
 	headerHeight: Dp = 0.dp,
 ) {
-	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+	BoxWithConstraints(modifier = Modifier
+		.fillMaxSize()
+		) {
 		val isLoading by itemDataLoader.isLoading.subscribeAsState()
 		if (isLoading) {
 			CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -670,7 +676,6 @@ fun ScreenDimensionsScope.ItemListView(
 			val collapsedHeightPx = LocalDensity.current.remember { collapsedHeight.toPx() }
 			val rowHeightPx =
 				LocalDensity.current.remember { standardRowHeight.toPx() }
-			val menuHeightScaler = rememberPreScrollConnectedScaler(rowHeightPx, 0f)
 
 			val fullListSize by LocalDensity.current.remember(maxHeight) {
 				val topMenuHeightPx = (topMenuHeight + rowPadding * 2).toPx()
@@ -678,7 +683,7 @@ fun ScreenDimensionsScope.ItemListView(
 				val rowHeightPx = standardRowHeight.toPx()
 				val dividerHeight = 1.dp.toPx()
 
-				derivedStateOf {
+			derivedStateOf {
 					var fullListSize = topMenuHeightPx
 					if (items.any()) {
 						fullListSize += headerHeightPx + rowHeightPx * items.size + dividerHeight * items.size - 1
@@ -697,9 +702,7 @@ fun ScreenDimensionsScope.ItemListView(
 
 			val titleHeightScaler = rememberFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
 			val compositeScrollConnection = remember(titleHeightScaler) {
-				ConsumedOffsetErasingNestedScrollConnection(
-					LinkedNestedScrollConnection(titleHeightScaler, menuHeightScaler)
-				)
+				ConsumedOffsetErasingNestedScrollConnection(titleHeightScaler)
 			}
 
 			val anchoredScrollConnectionDispatcher = rememberAutoCloseable(anchoredScrollConnectionState, fullListSize, compositeScrollConnection) {
@@ -736,9 +739,10 @@ fun ScreenDimensionsScope.ItemListView(
 						.fillMaxWidth()
 				) headerColumn@{
 					val titleHeightValue by titleHeightScaler.valueState
-					val menuHeightValue by menuHeightScaler.valueState
 
 					val headerCollapseProgress by titleHeightScaler.progressState
+					val menuHeightScaler = rememberPreScrollConnectedScaler(rowHeightPx, 0f)
+
 					Box(
 						modifier = Modifier
 							.fillMaxWidth()
@@ -752,15 +756,35 @@ fun ScreenDimensionsScope.ItemListView(
 								.padding(topRowOuterPadding)
 						)
 
-						UnlabelledRefreshButton(
-							itemDataLoader,
-							Modifier
+						val menuHeightProgress by menuHeightScaler.progressState
+						val chevronRotation by remember { derivedStateOf { linearInterpolation(0f, 180f, menuHeightProgress) } }
+						val isMenuFullyShown by remember { derivedStateOf { menuHeightProgress < .02f } }
+						val chevronLabel = stringResource(id = if (isMenuFullyShown) R.string.collapse else R.string.expand)
+
+						ColumnMenuIcon(
+							onClick = {
+								if (!isMenuFullyShown) {
+									menuHeightScaler.goToMax()
+								} else {
+									menuHeightScaler.goToMin()
+								}
+							},
+							icon = {
+								Icon(
+									painter = painterResource(id = R.drawable.chevron_up_white_36dp),
+									tint = LocalControlColor.current,
+									contentDescription = chevronLabel,
+									modifier = Modifier
+										.size(topMenuIconSize)
+										.rotate(chevronRotation),
+								)
+							},
+							modifier = Modifier
 								.align(Alignment.TopEnd)
 								.padding(
 									vertical = topRowOuterPadding,
 									horizontal = viewPaddingUnit * 2
 								),
-
 						)
 
 						ProvideTextStyle(MaterialTheme.typography.h5) {
@@ -811,6 +835,7 @@ fun ScreenDimensionsScope.ItemListView(
 						}
 					}
 
+					val menuHeightValue by menuHeightScaler.valueState
 					Box(
 						modifier = Modifier
 							.fillMaxWidth()
