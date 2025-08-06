@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
@@ -10,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.editableF
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.getFormattedValue
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
@@ -40,6 +42,7 @@ class FileDetailsViewModel(
 	private val controlPlayback: ControlPlaybackService,
 	registerForApplicationMessages: RegisterForApplicationMessages,
 	private val urlKeyProvider: ProvideUrlKey,
+	private val libraryFileProvider: ProvideLibraryFiles,
 ) : ViewModel(), ImmediateAction {
 
 	companion object {
@@ -61,6 +64,8 @@ class FileDetailsViewModel(
 	private var associatedUrlKey: UrlKeyHolder<ServiceFile>? = null
 	private var associatedPlaylist = emptyList<ServiceFile>()
 	private var activePositionedFile: PositionedFile? = null
+	private var activeItemId: ItemId? = null
+
 	private val propertyUpdateRegistrations = registerForApplicationMessages.registerReceiver { message: FilePropertiesUpdatedMessage ->
 		if (message.urlServiceKey == associatedUrlKey) reloadFileProperties()
 	}
@@ -107,6 +112,15 @@ class FileDetailsViewModel(
 		return promiseLoadedActiveFile()
 	}
 
+	fun load(libraryId: LibraryId, itemId: ItemId, positionedFile: PositionedFile): Promise<Unit> {
+		activeLibraryId = libraryId
+		activePositionedFile = positionedFile
+		activeItemId = itemId
+		associatedPlaylist = emptyList()
+
+		return promiseLoadedActiveFile()
+	}
+
 	fun promiseLoadedActiveFile(): Promise<Unit> = activeLibraryId
 		?.let { libraryId ->
 			activePositionedFile?.serviceFile?.let {  serviceFile ->
@@ -114,6 +128,10 @@ class FileDetailsViewModel(
 				val isReadOnlyPromise = connectionPermissions
 					.promiseIsReadOnly(libraryId)
 					.then { r -> isConnectionReadOnly = r }
+
+				val playlistPromise = activeItemId
+					?.let { loadAssociatedPlaylist(libraryId, it) }
+					.keepPromise(Unit)
 
 				val filePropertiesSetPromise = loadFileProperties(libraryId, serviceFile)
 
@@ -130,7 +148,7 @@ class FileDetailsViewModel(
 					}
 
 				Promise
-					.whenAll(filePropertiesSetPromise, bitmapSetPromise, urlKeyPromise, isReadOnlyPromise)
+					.whenAll(filePropertiesSetPromise, playlistPromise, bitmapSetPromise, urlKeyPromise, isReadOnlyPromise)
 					.must(this)
 					.unitResponse()
 			}
@@ -161,6 +179,13 @@ class FileDetailsViewModel(
 	override fun act() {
 		mutableIsLoading.value = false
 	}
+
+	private fun loadAssociatedPlaylist(libraryId: LibraryId, itemId: ItemId): Promise<Unit> =
+		libraryFileProvider
+			.promiseFiles(libraryId, itemId)
+			.then { files ->
+				associatedPlaylist = files
+			}
 
 	private fun loadFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Unit> =
 		filePropertiesProvider

@@ -70,6 +70,7 @@ class WhenAnotherPropertyIsEdited {
 			mockk(),
 			RecordingApplicationMessageBus(),
 			PassThroughUrlKeyProvider(URL("http://damage")),
+			mockk(),
 		)
 	}
 

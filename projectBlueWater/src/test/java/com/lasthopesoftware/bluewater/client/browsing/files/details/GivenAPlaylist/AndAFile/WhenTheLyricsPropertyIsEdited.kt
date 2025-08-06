@@ -70,6 +70,7 @@ class WhenTheLyricsPropertyIsEdited {
 			mockk(),
 			RecordingApplicationMessageBus(),
 			PassThroughUrlKeyProvider(URL("http://damage")),
+			mockk(),
 		)
 	}
 

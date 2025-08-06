@@ -73,6 +73,7 @@ class ScopedViewModelRegistry(
 			controlPlayback = playbackServiceController,
 			registerForApplicationMessages = registerForApplicationMessages,
 			urlKeyProvider = urlKeyProvider,
+			libraryFileProvider = libraryFilesProvider,
 		)
 	}
 

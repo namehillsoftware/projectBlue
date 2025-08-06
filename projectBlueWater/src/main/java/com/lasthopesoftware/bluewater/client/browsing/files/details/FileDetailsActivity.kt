@@ -69,6 +69,7 @@ import java.io.IOException
 			localApplicationDependencies.playbackServiceController,
 			localApplicationDependencies.registerForApplicationMessages,
 			libraryConnectedDependencies.urlKeyProvider,
+			libraryConnectedDependencies.libraryFilesProvider,
 		)
 	}
 
@@ -129,7 +130,7 @@ import java.io.IOException
 								isConnectionLost = true
 							else
 								finish()
-						} catch (e: Throwable) {
+						} catch (_: Throwable) {
 							finish()
 						}
 					}

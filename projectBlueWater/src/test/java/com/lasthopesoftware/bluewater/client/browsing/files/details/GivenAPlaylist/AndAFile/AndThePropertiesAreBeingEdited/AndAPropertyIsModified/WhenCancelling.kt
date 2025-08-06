@@ -67,6 +67,7 @@ class WhenCancelling {
 			mockk(),
 			RecordingApplicationMessageBus(),
 			PassThroughUrlKeyProvider(URL("http://damage")),
+			mockk(),
 		)
 	}
 

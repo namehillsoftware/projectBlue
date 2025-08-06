@@ -76,7 +76,8 @@ class WhenTheFilePropertiesChange {
 							ServiceFile(serviceFileId)
 						)
 					} returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
-				}
+				},
+				mockk(),
 			)
 		)
 	}
