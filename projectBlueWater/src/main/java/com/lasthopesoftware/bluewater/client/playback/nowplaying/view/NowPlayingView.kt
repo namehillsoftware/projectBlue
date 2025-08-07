@@ -37,6 +37,7 @@ import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
@@ -54,8 +55,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -420,12 +425,14 @@ fun NowPlayingPlaylist(
 	playlistViewModel: NowPlayingPlaylistViewModel,
 	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
 	undoBackStack: UndoStack,
+	lazyListState: LazyListState,
 	modifier: Modifier = Modifier,
 ) {
 	val nowPlayingFiles by playlistViewModel.nowPlayingList.subscribeAsState()
 	val activeLibraryId by nowPlayingFilePropertiesViewModel.activeLibraryId.subscribeAsState()
 
 	val dragDropListState = rememberDragDropListState(
+		lazyListState = lazyListState,
 		onMove = { from, to ->
 			playlistViewModel.swapFiles(from, to)
 		},
@@ -438,17 +445,15 @@ fun NowPlayingPlaylist(
 
 	val playingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.subscribeAsState()
 
-	LaunchedEffect(key1 = Unit) {
-		playingFile?.also {
-			dragDropListState.lazyListState.scrollToFileIfNotScrolling(it)
-		}
-	}
-
 	val isAutoScrollEnabled by playlistViewModel.isAutoScrolling.subscribeAsState()
 	if (isAutoScrollEnabled) {
+		var lastScrolledToItem by rememberSaveable { mutableStateOf<PositionedFile?>(null) }
 		LaunchedEffect(key1 = playingFile) {
 			playingFile?.also {
-				dragDropListState.lazyListState.scrollToFileIfNotScrolling(it)
+				if (it != lastScrolledToItem) {
+					dragDropListState.lazyListState.scrollToFileIfNotScrolling(it)
+					lastScrolledToItem = it
+				}
 			}
 		}
 	}
@@ -550,6 +555,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
 	undoBackStack: UndoStack,
+	lazyListState: LazyListState,
 ) {
 	val isScreenControlsVisible by nowPlayingScreenViewModel.isScreenControlsVisible.subscribeAsState()
 
@@ -560,9 +566,11 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	val halfScreenHeight = filePropertiesHeight / 2
 	val halfScreenHeightPx = LocalDensity.current.run { halfScreenHeight.toPx() }
 
+	var draggableState by rememberSaveable { mutableStateOf(SlideOutState.Closed) }
+
 	val playlistDrawerState = remember {
 		AnchoredDraggableState(
-			initialValue = SlideOutState.Closed,
+			initialValue = draggableState,
 			anchors = DraggableAnchors {
 				SlideOutState.Closed at filePropertiesHeightPx
 				SlideOutState.PartiallyOpen at halfScreenHeightPx
@@ -579,6 +587,10 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 		})
 
 		onDispose { }
+	}
+
+	LaunchedEffect(playlistDrawerState) {
+		snapshotFlow { playlistDrawerState.currentValue }.collect { draggableState = it }
 	}
 
 	val playlistEditingShownProgress by remember(playlistDrawerState) {
@@ -616,7 +628,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 			onDispose { }
 		} else {
 			playlistViewModel.showPlaylist()
-			val hidePlaylistAcion = {
+			val hidePlaylistAction = {
 				scope.async {
 					if (!playlistViewModel.isPlaylistShown.value) false
 					else {
@@ -626,10 +638,10 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 				}.toPromise()
 			}
 
-			undoBackStack.addAction(hidePlaylistAcion)
+			undoBackStack.addAction(hidePlaylistAction)
 
 			onDispose {
-				undoBackStack.removeAction(hidePlaylistAcion)
+				undoBackStack.removeAction(hidePlaylistAction)
 			}
 		}
 	}
@@ -803,6 +815,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 					playlistViewModel,
 					viewModelMessageBus,
 					undoBackStack,
+					lazyListState,
 					modifier = Modifier
 						.height(playlistHeight)
 						.background(SharedColors.overlayDark)
@@ -835,13 +848,17 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 	applicationNavigation: NavigateApplication,
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
-	undoBackStack: UndoStack
+	undoBackStack: UndoStack,
+	lazyListState: LazyListState
 ) {
 	val playlistWidth = screenHeight.coerceIn(minimumMenuWidth, maxWidth / 2)
 	val playlistWidthPx = LocalDensity.current.run { playlistWidth.toPx() }
-	val draggableState = remember {
+
+	var draggableState by rememberSaveable { mutableStateOf(SlideOutState.Open) }
+
+	val playlistDrawerState = remember {
 		AnchoredDraggableState(
-			initialValue = SlideOutState.Open,
+			initialValue = draggableState,
 			anchors = DraggableAnchors {
 				SlideOutState.Closed at 0f
 				SlideOutState.Open at playlistWidthPx
@@ -850,7 +867,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 	}
 
 	DisposableEffect(playlistWidthPx) {
-		draggableState.updateAnchors(DraggableAnchors {
+		playlistDrawerState.updateAnchors(DraggableAnchors {
 			SlideOutState.Closed at 0f
 			SlideOutState.Open at playlistWidthPx
 		})
@@ -858,19 +875,22 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 		onDispose { }
 	}
 
+	LaunchedEffect(playlistDrawerState) {
+		snapshotFlow { playlistDrawerState.currentValue }.collect { draggableState = it }
+	}
 
 	Box(
 		modifier = Modifier
 			.fillMaxSize()
-			.anchoredDraggable(draggableState, true, Orientation.Horizontal),
+			.anchoredDraggable(playlistDrawerState, true, Orientation.Horizontal),
 	) {
 		val nowPlayingPaneWidth = LocalDensity.current.run {
-			this@NowPlayingWideView.maxWidth - draggableState.requireOffset().toDp()
+			this@NowPlayingWideView.maxWidth - playlistDrawerState.requireOffset().toDp()
 		}
 
-		val playlistOpenProgress by remember(draggableState) {
+		val playlistOpenProgress by remember(playlistDrawerState) {
 			derivedStateOf {
-				draggableState.progress(
+				playlistDrawerState.progress(
 					SlideOutState.Closed,
 					SlideOutState.Open
 				)
@@ -944,13 +964,13 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 								.clickable(
 									onClick = {
 										scope.launch {
-											if (draggableState.currentValue == SlideOutState.Open) {
+											if (playlistDrawerState.currentValue == SlideOutState.Open) {
 												playlistViewModel.finishPlaylistEdit()
 												scope.launch {
-													draggableState.animateTo(SlideOutState.Closed)
+													playlistDrawerState.animateTo(SlideOutState.Closed)
 												}
 											} else {
-												draggableState.animateTo(SlideOutState.Open)
+												playlistDrawerState.animateTo(SlideOutState.Open)
 											}
 										}
 									},
@@ -988,8 +1008,8 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 					.background(SharedColors.overlayDark),
 				horizontalAlignment = Alignment.CenterHorizontally,
 			) {
-				DisposableEffect(key1 = draggableState.currentValue) {
-					if (draggableState.currentValue == SlideOutState.Closed) {
+				DisposableEffect(key1 = playlistDrawerState.currentValue) {
+					if (playlistDrawerState.currentValue == SlideOutState.Closed) {
 						playlistViewModel.enableSystemAutoScrolling()
 					} else {
 						playlistViewModel.disableSystemAutoScrolling()
@@ -1018,6 +1038,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 					playlistViewModel,
 					viewModelMessageBus = viewModelMessageBus,
 					undoBackStack = undoBackStack,
+					lazyListState = lazyListState,
 					modifier = Modifier
 						.fillMaxHeight()
 						.onFocusChanged { f ->
@@ -1091,6 +1112,9 @@ fun NowPlayingView(
 						)
 
 						with(screenScope) {
+							val playingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.subscribeAsState()
+							val lazyListState = rememberLazyListState(playingFile?.playlistPosition ?: 0)
+
 							if (screenWidth < Dimensions.twoColumnThreshold) {
 								NowPlayingNarrowView(
 									nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
@@ -1100,7 +1124,9 @@ fun NowPlayingView(
 									childItemViewModelProvider = childItemViewModelProvider,
 									applicationNavigation = applicationNavigation,
 									itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-									viewModelMessageBus = viewModelMessageBus, undoBackStack = undoBackStack,
+									viewModelMessageBus = viewModelMessageBus,
+									undoBackStack = undoBackStack,
+									lazyListState = lazyListState,
 								)
 							} else {
 								NowPlayingWideView(
@@ -1112,7 +1138,8 @@ fun NowPlayingView(
 									applicationNavigation = applicationNavigation,
 									itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 									viewModelMessageBus = viewModelMessageBus,
-									undoBackStack = undoBackStack
+									undoBackStack = undoBackStack,
+									lazyListState = lazyListState,
 								)
 							}
 						}
