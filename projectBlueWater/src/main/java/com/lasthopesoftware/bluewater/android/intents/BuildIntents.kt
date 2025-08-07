@@ -22,6 +22,8 @@ interface BuildIntents {
 
 	fun buildFileDetailsIntent(libraryId: LibraryId, item: IItem, positionedFile: PositionedFile): Intent
 
+	fun buildFileDetailsIntent(libraryId: LibraryId, searchQuery: String, positionedFile: PositionedFile): Intent
+
 	fun buildFileDetailsIntent(libraryId: LibraryId, playlist: Collection<ServiceFile>, position: Int): Intent
 
 	fun buildNowPlayingIntent(libraryId: LibraryId): Intent

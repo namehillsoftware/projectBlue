@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAPlaylist
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsFromItemViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -26,7 +26,7 @@ class WhenAddingTheFileToNowPlaying {
 	private var addedServiceFile: ServiceFile? = null
 
 	private val viewModel by lazy {
-		FileDetailsViewModel(
+		FileDetailsFromItemViewModel(
 			mockk {
 				every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
 			},

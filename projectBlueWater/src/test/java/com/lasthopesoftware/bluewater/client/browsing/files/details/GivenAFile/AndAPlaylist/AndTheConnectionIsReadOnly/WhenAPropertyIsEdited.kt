@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAPlaylist.AndTheConnectionIsReadOnly
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsFromItemViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
@@ -28,7 +28,7 @@ class WhenAnotherPropertyIsEdited {
 	private var persistedValue = ""
 
 	private val viewModel by lazy {
-		FileDetailsViewModel(
+		FileDetailsFromItemViewModel(
 			mockk {
 				every { promiseIsReadOnly(LibraryId(libraryId)) } returns true.toPromise()
 			},
@@ -74,7 +74,7 @@ class WhenAnotherPropertyIsEdited {
 		)
 	}
 
-	private val FileDetailsViewModel.propertyToEdit
+	private val FileDetailsFromItemViewModel.propertyToEdit
 		get() = fileProperties.value.first { it.property == EditableFilePropertyDefinition.Band.propertyName }
 
 	@BeforeAll

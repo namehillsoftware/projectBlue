@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAPlaylist.AndThePropertiesAreBeingEdited.AndAPropertyIsModified
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsFromItemViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -26,7 +26,7 @@ class WhenCancellingAndEditingAgain {
 	private var persistedTrackNumber = ""
 
 	private val viewModel by lazy {
-		FileDetailsViewModel(
+		FileDetailsFromItemViewModel(
 			mockk {
 				every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
 			},

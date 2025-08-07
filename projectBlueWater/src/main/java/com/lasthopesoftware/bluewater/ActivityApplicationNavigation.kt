@@ -36,6 +36,10 @@ class ActivityApplicationNavigation(
 		componentActivity.startActivity(intentBuilder.buildFileDetailsIntent(libraryId, item, positionedFile))
 	}
 
+	override fun viewFileDetails(libraryId: LibraryId, searchQuery: String, positionedFile: PositionedFile) = loopInOperation {
+		componentActivity.startActivity(intentBuilder.buildFileDetailsIntent(libraryId, searchQuery, positionedFile))
+	}
+
 	override fun viewFileDetails(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int) = loopInOperation {
 		componentActivity.startActivity(intentBuilder.buildFileDetailsIntent(libraryId, playlist, position))
 	}

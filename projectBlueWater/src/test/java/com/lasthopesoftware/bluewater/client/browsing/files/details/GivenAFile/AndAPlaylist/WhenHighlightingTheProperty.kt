@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAPlaylist
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsFromItemViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -23,7 +23,7 @@ class WhenHighlightingTheProperty {
 		private const val serviceFileId = "485"
 
 		private val viewModel by lazy {
-			FileDetailsViewModel(
+			FileDetailsFromItemViewModel(
 				mockk {
 					every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
 				},

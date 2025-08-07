@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAQuery
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsFromSearchViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -32,7 +32,7 @@ class WhenPlayingFromFileDetails {
 	private var startedPosition = -1
 
 	private val mut by lazy {
-		FileDetailsViewModel(
+		FileDetailsFromSearchViewModel(
 			mockk {
 				every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
 			},
@@ -54,7 +54,10 @@ class WhenPlayingFromFileDetails {
 				every { promiseImageBytes() } returns byteArrayOf(111, 112).toPromise()
 			},
 			mockk {
-				every { promiseImageBytes(LibraryId(libraryId), any<ServiceFile>()) } returns byteArrayOf(322.toByte(), 480.toByte()).toPromise()
+				every { promiseImageBytes(LibraryId(libraryId), any<ServiceFile>()) } returns byteArrayOf(
+					322.toByte(),
+					480.toByte()
+				).toPromise()
 			},
 			mockk {
 				every { startPlaylist(LibraryId(libraryId), any<List<ServiceFile>>(), any()) } answers {

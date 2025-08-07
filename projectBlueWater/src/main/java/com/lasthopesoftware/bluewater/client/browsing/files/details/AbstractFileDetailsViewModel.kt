@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
@@ -11,9 +10,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.editableF
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.getFormattedValue
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
-import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
-import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
@@ -32,13 +28,12 @@ import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.emptyByteArray
-import com.lasthopesoftware.types.Either
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 
-class FileDetailsViewModel(
+abstract class AbstractFileDetailsViewModel(
 	private val connectionPermissions: CheckIfConnectionIsReadOnly,
 	private val filePropertiesProvider: ProvideEditableLibraryFileProperties,
 	private val updateFileProperties: UpdateFileProperties,
@@ -47,7 +42,6 @@ class FileDetailsViewModel(
 	private val controlPlayback: ControlPlaybackService,
 	registerForApplicationMessages: RegisterForApplicationMessages,
 	private val urlKeyProvider: ProvideUrlKey,
-	private val libraryFileProvider: ProvideLibraryFiles,
 ) : ViewModel(), ImmediateAction, ImmediateResponse<List<ServiceFile>, Unit> {
 
 	companion object {
@@ -62,6 +56,8 @@ class FileDetailsViewModel(
 			NormalizedFileProperties.Waveform,
 			NormalizedFileProperties.LengthInPcmBlocks
 		)
+
+		private val emptyListPromise by lazy { emptyList<ServiceFile>().toPromise() }
 	}
 
 	private var isConnectionReadOnly = false
@@ -69,7 +65,6 @@ class FileDetailsViewModel(
 	private var associatedUrlKey: UrlKeyHolder<ServiceFile>? = null
 	private var associatedPlaylist = emptyList<ServiceFile>()
 	private var activePositionedFile: PositionedFile? = null
-	private var activeContextKey: Either<KeyedIdentifier, String>? = null
 
 	private val propertyUpdateRegistrations = registerForApplicationMessages.registerReceiver { message: FilePropertiesUpdatedMessage ->
 		if (message.urlServiceKey == associatedUrlKey) reloadFileProperties()
@@ -121,19 +116,9 @@ class FileDetailsViewModel(
 		return promiseLoadedActiveFile()
 	}
 
-	fun load(libraryId: LibraryId, itemId: KeyedIdentifier, positionedFile: PositionedFile): Promise<Unit> {
+	fun load(libraryId: LibraryId, positionedFile: PositionedFile): Promise<Unit> {
 		activeLibraryId = libraryId
 		activePositionedFile = positionedFile
-		activeContextKey = Either.Left(itemId)
-		associatedPlaylist = emptyList()
-
-		return promiseLoadedActiveFile()
-	}
-
-	fun load(libraryId: LibraryId, searchQuery: String, positionedFile: PositionedFile): Promise<Unit> {
-		activeLibraryId = libraryId
-		activePositionedFile = positionedFile
-		activeContextKey = Either.Right(searchQuery)
 		associatedPlaylist = emptyList()
 
 		return promiseLoadedActiveFile()
@@ -147,15 +132,7 @@ class FileDetailsViewModel(
 					.promiseIsReadOnly(libraryId)
 					.then { r -> isConnectionReadOnly = r }
 
-				val playlistPromise = when(val key = activeContextKey) {
-					is Either.Left -> when (val id = key.left) {
-						is ItemId -> libraryFileProvider.promiseFiles(libraryId, id).then(this)
-						is PlaylistId -> libraryFileProvider.promiseFiles(libraryId, id).then(this)
-						else -> Unit.toPromise()
-					}
-					is Either.Right -> libraryFileProvider.promiseAudioFiles(libraryId, key.right).then(this)
-					else -> Unit.toPromise()
-				}
+				val playlistPromise = promiseFiles(libraryId).then(this)
 
 				val filePropertiesSetPromise = loadFileProperties(libraryId, serviceFile)
 
@@ -178,6 +155,8 @@ class FileDetailsViewModel(
 			}
 		}
 		.keepPromise(Unit)
+
+	protected open fun promiseFiles(libraryId: LibraryId): Promise<List<ServiceFile>> = emptyListPromise
 
 	private fun reloadFileProperties(): Promise<Unit> =
 		activeLibraryId

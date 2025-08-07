@@ -1,7 +1,8 @@
 package com.lasthopesoftware.bluewater.client.browsing
 
 import androidx.lifecycle.ViewModelStoreOwner
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsFromItemViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsFromSearchViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinitionProvider
@@ -60,8 +61,25 @@ class ScopedViewModelRegistry(
 		)
 	}
 
-	override val fileDetailsViewModel by viewModelStoreOwner.buildViewModelLazily {
-		FileDetailsViewModel(
+	override val fileDetailsFromItemViewModel by viewModelStoreOwner.buildViewModelLazily {
+		FileDetailsFromItemViewModel(
+			connectionPermissions = connectionAuthenticationChecker,
+			filePropertiesProvider = EditableLibraryFilePropertiesProvider(
+				freshLibraryFileProperties,
+				EditableFilePropertyDefinitionProvider(libraryConnectionProvider),
+			),
+			updateFileProperties = filePropertiesStorage,
+			defaultImageProvider = defaultImageProvider,
+			imageProvider = imageBytesProvider,
+			controlPlayback = playbackServiceController,
+			registerForApplicationMessages = registerForApplicationMessages,
+			urlKeyProvider = urlKeyProvider,
+			libraryFileProvider = libraryFilesProvider,
+		)
+	}
+
+	override val fileDetailsFromSearchViewModel by viewModelStoreOwner.buildViewModelLazily {
+		FileDetailsFromSearchViewModel(
 			connectionPermissions = connectionAuthenticationChecker,
 			filePropertiesProvider = EditableLibraryFilePropertiesProvider(
 				freshLibraryFileProperties,

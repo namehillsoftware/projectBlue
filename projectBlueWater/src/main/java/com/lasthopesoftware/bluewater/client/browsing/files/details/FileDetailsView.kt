@@ -103,7 +103,7 @@ import kotlinx.coroutines.launch
 private val viewPadding = viewPaddingUnit
 
 @Composable
-private fun StaticFileMenu(viewModel: FileDetailsViewModel, mediaStylePalette: MediaStylePalette) {
+private fun StaticFileMenu(viewModel: AbstractFileDetailsViewModel, mediaStylePalette: MediaStylePalette) {
 	val padding = viewPadding * 3
 
 	Row(
@@ -152,7 +152,7 @@ private fun StaticFileMenu(viewModel: FileDetailsViewModel, mediaStylePalette: M
 }
 
 @Composable
-fun FileRating(viewModel: FileDetailsViewModel, mediaStylePalette: MediaStylePalette, modifier: Modifier) {
+fun FileRating(viewModel: AbstractFileDetailsViewModel, mediaStylePalette: MediaStylePalette, modifier: Modifier) {
 	val rating by viewModel.rating.subscribeAsState()
 
 	RatingBar(
@@ -188,11 +188,11 @@ fun rememberComputedColorPalette(
 
 @Composable
 fun FilePropertyHeader(
-	viewModel: FileDetailsViewModel,
-	palette: MediaStylePalette,
-	modifier: Modifier = Modifier,
-	isMarqueeEnabled: Boolean,
-	titleFontSize: TextUnit = 24.sp
+    viewModel: AbstractFileDetailsViewModel,
+    palette: MediaStylePalette,
+    modifier: Modifier = Modifier,
+    isMarqueeEnabled: Boolean,
+    titleFontSize: TextUnit = 24.sp
 ) {
 	val fileName by viewModel.fileName.subscribeAsState(NullBox(stringResource(id = R.string.lbl_loading)))
 
@@ -227,9 +227,9 @@ fun FilePropertyHeader(
 
 @Composable
 fun FilePropertyRow(
-	viewModel: FileDetailsViewModel,
-	property: FileDetailsViewModel.FilePropertyViewModel,
-	palette: MediaStylePalette
+    viewModel: AbstractFileDetailsViewModel,
+    property: AbstractFileDetailsViewModel.FilePropertyViewModel,
+    palette: MediaStylePalette
 ) {
 	val itemPadding = 2.dp
 
@@ -306,9 +306,9 @@ fun FilePropertyRow(
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun FileDetailsEditor(
-	viewModel: FileDetailsViewModel,
-	navigateApplication: NavigateApplication,
-	palette: MediaStylePalette
+    viewModel: AbstractFileDetailsViewModel,
+    navigateApplication: NavigateApplication,
+    palette: MediaStylePalette
 ) {
 	val maybeHighlightedFileProperty by viewModel.highlightedProperty.subscribeAsState()
 	maybeHighlightedFileProperty?.let { fileProperty ->
@@ -473,9 +473,9 @@ private fun FileDetailsEditor(
 @Composable
 @OptIn(ExperimentalComposeUiApi::class)
 fun FileDetailsView(
-	viewModel: FileDetailsViewModel,
-	navigateApplication: NavigateApplication,
-	bitmapProducer: ProduceBitmaps
+    viewModel: AbstractFileDetailsViewModel,
+    navigateApplication: NavigateApplication,
+    bitmapProducer: ProduceBitmaps
 ) {
 	val activity = LocalActivity.current ?: return
 

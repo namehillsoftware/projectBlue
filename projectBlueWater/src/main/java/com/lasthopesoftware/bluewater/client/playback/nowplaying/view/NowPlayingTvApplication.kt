@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
+import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.tween
@@ -82,6 +83,8 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryD
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationGraphNavigation
+import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsFromItemScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsFromSearchScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.HiddenSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryDestination
@@ -124,6 +127,7 @@ import org.slf4j.LoggerFactory
 
 private val logger by lazy { LoggerFactory.getLogger("NowPlayingTvApplication") }
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalComposeUiApi::class)
 @ExperimentalFoundationApi
 @Composable
@@ -507,11 +511,31 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedViewModel
 			NowPlayingTvView(browserViewDependencies = browserViewDependencies)
 		}
 
-		is FileDetailsScreen -> {
-			val fileDetailsViewModel = browserViewDependencies.fileDetailsViewModel
-			FileDetailsView(fileDetailsViewModel, browserViewDependencies.applicationNavigation, browserViewDependencies.bitmapProducer)
+		is FileDetailsScreen -> {}
 
-			fileDetailsViewModel.loadFromList(libraryId, playlist, position)
+
+		is FileDetailsFromItemScreen -> {
+			val viewModel = browserViewDependencies.fileDetailsFromItemViewModel
+
+			FileDetailsView(
+				viewModel = viewModel,
+				navigateApplication = browserViewDependencies.applicationNavigation,
+				bitmapProducer = browserViewDependencies.bitmapProducer,
+			)
+
+			viewModel.load(libraryId, item.itemId, positionedFile)
+		}
+
+		is FileDetailsFromSearchScreen -> {
+			val viewModel = browserViewDependencies.fileDetailsFromSearchViewModel
+
+			FileDetailsView(
+				viewModel = viewModel,
+				navigateApplication = browserViewDependencies.applicationNavigation,
+				bitmapProducer = browserViewDependencies.bitmapProducer,
+			)
+
+			viewModel.load(libraryId, searchQuery, positionedFile)
 		}
 
 		is ConnectionSettingsScreen -> {

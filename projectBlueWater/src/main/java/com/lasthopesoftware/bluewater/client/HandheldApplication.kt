@@ -37,6 +37,7 @@ import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ReusedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelRegistry
+import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsView
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
@@ -45,6 +46,8 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryD
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationGraphNavigation
+import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsFromItemScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsFromSearchScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.HiddenSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryDestination
@@ -193,11 +196,36 @@ fun LibraryDestination.Navigate(
 ) {
 	with(browserViewDependencies) {
 		when (this@Navigate) {
+
 			is BrowserLibraryDestination -> {
 				Navigate(
 					browserViewDependencies = browserViewDependencies,
 					libraryConnectionDependencies = libraryConnectionDependencies,
 				)
+			}
+
+			is FileDetailsFromItemScreen -> {
+				val viewModel = fileDetailsFromItemViewModel
+
+				FileDetailsView(
+					viewModel = viewModel,
+					navigateApplication = applicationNavigation,
+					bitmapProducer = bitmapProducer,
+				)
+
+				viewModel.load(libraryId, item.itemId, positionedFile)
+			}
+
+			is FileDetailsFromSearchScreen -> {
+				val viewModel = fileDetailsFromSearchViewModel
+
+				FileDetailsView(
+					viewModel = viewModel,
+					navigateApplication = applicationNavigation,
+					bitmapProducer = bitmapProducer,
+				)
+
+				viewModel.load(libraryId, searchQuery, positionedFile)
 			}
 
 			is FileDetailsScreen -> {}
