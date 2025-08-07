@@ -1,8 +1,8 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAPlaylist.AndTheConnectionIsReadOnly
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFileProperty
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
@@ -19,10 +19,9 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-class WhenTheLyricsPropertyIsEdited {
-
+class WhenAnotherPropertyIsEdited {
 	companion object {
-		private const val libraryId = 469
+		private const val libraryId = 792
 		private const val serviceFileId = "220"
 	}
 
@@ -31,7 +30,7 @@ class WhenTheLyricsPropertyIsEdited {
 	private val viewModel by lazy {
 		FileDetailsViewModel(
 			mockk {
-				every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
+				every { promiseIsReadOnly(LibraryId(libraryId)) } returns true.toPromise()
 			},
 			mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
@@ -42,7 +41,7 @@ class WhenTheLyricsPropertyIsEdited {
 						ReadOnlyFileProperty(NormalizedFileProperties.Name, "please"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Artist, "brown"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Genre, "subject"),
-						EditableFileProperty(NormalizedFileProperties.Lyrics, "belief"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Lyrics, "belief"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Comment, "pad"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Composer, "hotel"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Custom, "curl"),
@@ -52,6 +51,7 @@ class WhenTheLyricsPropertyIsEdited {
 						ReadOnlyFileProperty(NormalizedFileProperties.AlbumArtist, "calm"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Album, "distant"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Date, "1355"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Band, "stair"),
 					)
 				)
 			},
@@ -74,31 +74,32 @@ class WhenTheLyricsPropertyIsEdited {
 		)
 	}
 
+	private val FileDetailsViewModel.propertyToEdit
+		get() = fileProperties.value.first { it.property == EditableFilePropertyDefinition.Band.propertyName }
+
 	@BeforeAll
 	fun act() {
 		viewModel.apply {
 			loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
-			fileProperties.apply {
-				value.first { it.property == NormalizedFileProperties.Lyrics }.apply {
-					highlight()
-					edit()
-				}
+			propertyToEdit.apply {
+				highlight()
+				edit()
 			}
 		}
 	}
 
 	@Test
 	fun `then the property has the correct editable type`() {
-		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == NormalizedFileProperties.Lyrics }?.editableType).isEqualTo(FilePropertyType.LongFormText)
+		assertThat(viewModel.propertyToEdit.editableType).isEqualTo(FilePropertyType.ShortFormText)
 	}
 
 	@Test
-	fun `then the property is being edited`() {
-		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == NormalizedFileProperties.Lyrics }?.isEditing?.value).isTrue
+	fun `then the property is NOT being edited`() {
+		assertThat(viewModel.propertyToEdit.isEditing.value).isFalse
 	}
 
 	@Test
 	fun `then the new property is highlighted`() {
-		assertThat(viewModel.highlightedProperty.value).isEqualTo(viewModel.fileProperties.value.firstOrNull { it.property == NormalizedFileProperties.Lyrics })
+		assertThat(viewModel.highlightedProperty.value).isEqualTo(viewModel.propertyToEdit)
 	}
 }

@@ -1,9 +1,7 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile.AndThePropertiesAreBeingEdited
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAPlaylist.AndThePropertiesAreBeingEdited.AndAPropertyIsModified
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFileProperty
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -19,13 +17,13 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-class WhenAnotherPropertyIsEdited {
+class WhenCancelling {
 	companion object {
-		private const val libraryId = 805
-		private const val serviceFileId = "220"
+		private const val libraryId = 918
+		private const val serviceFileId = "79"
 	}
 
-	private var persistedValue = ""
+	private var persistedTrackNumber = ""
 
 	private val viewModel by lazy {
 		FileDetailsViewModel(
@@ -44,19 +42,19 @@ class WhenAnotherPropertyIsEdited {
 						ReadOnlyFileProperty(NormalizedFileProperties.Lyrics, "belief"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Comment, "pad"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Composer, "hotel"),
-						EditableFileProperty(NormalizedFileProperties.Custom, "curl"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Custom, "curl"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Publisher, "capital"),
 						ReadOnlyFileProperty(NormalizedFileProperties.TotalDiscs, "354"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Track, "882"),
-						EditableFileProperty(NormalizedFileProperties.AlbumArtist, "calm"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Track, "703"),
+						ReadOnlyFileProperty(NormalizedFileProperties.AlbumArtist, "calm"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Album, "distant"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Date, "1355"),
 					)
 				)
 			},
 			mockk {
-				every { promiseFileUpdate(LibraryId(libraryId), ServiceFile(serviceFileId), NormalizedFileProperties.Custom, any(), false) } answers {
-					persistedValue = arg(2)
+				every { promiseFileUpdate(LibraryId(libraryId), ServiceFile(serviceFileId), NormalizedFileProperties.Track, any(), false) } answers {
+					persistedTrackNumber = arg(2)
 					Unit.toPromise()
 				}
 			},
@@ -77,49 +75,48 @@ class WhenAnotherPropertyIsEdited {
 	fun act() {
 		viewModel.apply {
 			loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
-			fileProperties.apply {
-				value.first { it.property == NormalizedFileProperties.Custom }
-					.apply {
-						highlight()
-						edit()
-						updateValue("omit")
-					}
-				value.first { it.property == NormalizedFileProperties.AlbumArtist }.apply {
-					highlight()
-					edit()
-					updateValue("silk")
-				}
+			fileProperties.value.first { it.property == NormalizedFileProperties.Track }.apply {
+				updateValue("141")
+				cancel()
 			}
 		}
 	}
 
 	@Test
-	fun `then the property change is not persisted`() {
-		assertThat(persistedValue).isEmpty()
+	fun `then the property is not being edited`() {
+		assertThat(
+			viewModel
+				.fileProperties
+				.value
+				.firstOrNull { it.property == NormalizedFileProperties.Track }
+				?.isEditing
+				?.value).isFalse
 	}
 
 	@Test
-	fun `then the original property is not being edited`() {
-		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == NormalizedFileProperties.Custom }?.isEditing?.value).isFalse
+	fun `then the uncommitted property is NOT changed`() {
+		assertThat(
+			viewModel
+				.fileProperties
+				.value
+				.firstOrNull { it.property == NormalizedFileProperties.Track }
+				?.uncommittedValue
+				?.value).isEqualTo("703")
 	}
 
 	@Test
-	fun `then the new property is being edited`() {
-		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == NormalizedFileProperties.AlbumArtist }?.isEditing?.value).isTrue
+	fun `then the committed property is NOT changed`() {
+		assertThat(
+			viewModel
+				.fileProperties
+				.value
+				.firstOrNull { it.property == NormalizedFileProperties.Track }
+				?.committedValue
+				?.value).isEqualTo("703")
 	}
 
 	@Test
-	fun `then the new property is highlighted`() {
-		assertThat(viewModel.highlightedProperty.value).isEqualTo(viewModel.fileProperties.value.firstOrNull { it.property == NormalizedFileProperties.AlbumArtist })
-	}
-
-	@Test
-	fun `then the property has the correct editable type`() {
-		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == NormalizedFileProperties.AlbumArtist }?.editableType).isEqualTo(FilePropertyType.ShortFormText)
-	}
-
-	@Test
-	fun `then the property is edited`() {
-		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == NormalizedFileProperties.AlbumArtist }?.uncommittedValue?.value).isEqualTo("silk")
+	fun `then the property change is NOT persisted`() {
+		assertThat(persistedTrackNumber).isEmpty()
 	}
 }

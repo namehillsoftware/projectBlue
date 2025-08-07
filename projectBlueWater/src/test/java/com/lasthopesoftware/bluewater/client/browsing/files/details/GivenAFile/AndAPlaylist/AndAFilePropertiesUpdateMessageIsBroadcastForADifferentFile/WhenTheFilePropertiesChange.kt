@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile.AndAFilePropertiesUpdateMessageIsBroadcast
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAPlaylist.AndAFilePropertiesUpdateMessageIsBroadcastForADifferentFile
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
@@ -18,11 +18,10 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-
 class WhenTheFilePropertiesChange {
 	companion object {
-		private const val libraryId = 856
-		private const val serviceFileId = "491"
+		private const val libraryId = 798
+		private const val serviceFileId = "783"
 	}
 
 	private val services by lazy {
@@ -37,13 +36,13 @@ class WhenTheFilePropertiesChange {
 				mockk {
 					every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
 						sequenceOf(
-							ReadOnlyFileProperty(NormalizedFileProperties.Rating, "3"),
-							ReadOnlyFileProperty("bread", "prevent"),
-							ReadOnlyFileProperty("silence", "wind"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Name, "sorry"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Artist, "receive"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Album, "part"),
-							ReadOnlyFileProperty(NormalizedFileProperties.StackView, "basic"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Rating, "815"),
+							ReadOnlyFileProperty("little", "more"),
+							ReadOnlyFileProperty("evening", "skin"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Name, "ahead"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Artist, "moon"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Album, "number"),
+							ReadOnlyFileProperty(NormalizedFileProperties.ImageFile, "battle"),
 						)
 					) andThen Promise(
 						sequenceOf(
@@ -62,20 +61,12 @@ class WhenTheFilePropertiesChange {
 					every { promiseImageBytes() } returns byteArrayOf(3, 4).toPromise()
 				},
 				mockk {
-					every { promiseImageBytes(LibraryId(libraryId), any<ServiceFile>()) } returns byteArrayOf(
-						61,
-						127
-					).toPromise()
+					every { promiseImageBytes(LibraryId(libraryId), any<ServiceFile>()) } returns byteArrayOf(61, 127).toPromise()
 				},
 				mockk(),
 				recordingApplicationMessageBus,
 				mockk {
-					every {
-						promiseUrlKey(
-							LibraryId(libraryId),
-							ServiceFile(serviceFileId)
-						)
-					} returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
+					every { promiseUrlKey(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
 				},
 				mockk(),
 			)
@@ -101,40 +92,40 @@ class WhenTheFilePropertiesChange {
 			4
 		).toExpiringFuture().get()
 
-		messageBus.sendMessage(FilePropertiesUpdatedMessage(UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId))))
+		messageBus.sendMessage(FilePropertiesUpdatedMessage(UrlKeyHolder(URL("http://bow"), ServiceFile("937"))))
 	}
 
 	@Test
 	fun `then the properties are correct`() {
 		assertThat(services.second.fileProperties.value.map { Pair(it.property, it.committedValue.value) }).hasSameElementsAs(
 			listOf(
-				Pair(NormalizedFileProperties.Rating, "7"),
-				Pair("bread", "scenery"),
-				Pair("rush", "offense"),
-				Pair(NormalizedFileProperties.Name, "kiss"),
-				Pair(NormalizedFileProperties.Artist, "adoption"),
-				Pair(NormalizedFileProperties.Album, "motherly"),
+				Pair(NormalizedFileProperties.Rating, "815"),
+				Pair("little", "more"),
+				Pair("evening", "skin"),
+				Pair(NormalizedFileProperties.Name, "ahead"),
+				Pair(NormalizedFileProperties.Artist, "moon"),
+				Pair(NormalizedFileProperties.Album, "number"),
 			)
 		)
 	}
 
 	@Test
 	fun `then the rating is correct`() {
-		assertThat(services.second.rating.value).isEqualTo(7)
+		assertThat(services.second.rating.value).isEqualTo(815)
 	}
 
 	@Test
 	fun `then the artist is correct`() {
-		assertThat(services.second.artist.value).isEqualTo("adoption")
+		assertThat(services.second.artist.value).isEqualTo("moon")
 	}
 
 	@Test
 	fun `then the file name is correct`() {
-		assertThat(services.second.fileName.value).isEqualTo("kiss")
+		assertThat(services.second.fileName.value).isEqualTo("ahead")
 	}
 
 	@Test
 	fun `then the album is correct`() {
-		assertThat(services.second.album.value).isEqualTo("motherly")
+		assertThat(services.second.album.value).isEqualTo("number")
 	}
 }

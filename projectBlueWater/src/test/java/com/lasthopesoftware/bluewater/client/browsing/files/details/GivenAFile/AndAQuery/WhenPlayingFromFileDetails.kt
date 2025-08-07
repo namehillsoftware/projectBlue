@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAQuery
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.Normalize
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
@@ -21,8 +22,9 @@ import java.net.URL
 class WhenPlayingFromFileDetails {
 
 	companion object {
-		private const val libraryId = 591
-		private const val serviceFileId = "338"
+		private const val libraryId = 299
+		private const val serviceFileId = "cgxDh6Qn"
+		private const val searchQuery = "O5poI8WP2q"
 	}
 
 	private lateinit var startedLibraryId: LibraryId
@@ -65,26 +67,28 @@ class WhenPlayingFromFileDetails {
 			mockk {
 				every { promiseUrlKey(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
 			},
-			mockk(),
+			mockk {
+				every { promiseAudioFiles(LibraryId(libraryId), searchQuery) } returns listOf(
+					ServiceFile("cd8a407d-7afb-4e1a-9f89-8b81f902375b"),
+					ServiceFile("2eb367f1-8713-449e-9bec-0e326169d778"),
+					ServiceFile(serviceFileId),
+					ServiceFile("17f00a96-00c2-4d06-aef9-3f7cacc9812c"),
+					ServiceFile("606ce37e-006a-47e7-928c-71b65ffc587f"),
+					ServiceFile("82b138b5-7be1-4352-b825-48087ca8e1aa"),
+					ServiceFile("f76c2f3c-339b-42df-93e4-7e4e980de65c"),
+					ServiceFile("6eb75879-ab8e-4707-bc7e-7dca8d0ed843"),
+				).toPromise()
+			},
 		)
 	}
 
 	@BeforeAll
 	fun act() {
 		mut.apply {
-			loadFromList(
+			load(
 				LibraryId(libraryId),
-				listOf(
-					ServiceFile("830"),
-					ServiceFile(serviceFileId),
-					ServiceFile("628"),
-					ServiceFile("537"),
-					ServiceFile("284"),
-					ServiceFile("419"),
-					ServiceFile("36"),
-					ServiceFile("396"),
-				),
-				1
+				searchQuery,
+				PositionedFile(2, ServiceFile(serviceFileId))
 			).toExpiringFuture().get()
 
 			play()
@@ -99,20 +103,20 @@ class WhenPlayingFromFileDetails {
 	@Test
 	fun `then the correct playlist is started`() {
 		assertThat(startedList).containsExactlyInAnyOrder(
-			ServiceFile("830"),
+			ServiceFile("cd8a407d-7afb-4e1a-9f89-8b81f902375b"),
+			ServiceFile("2eb367f1-8713-449e-9bec-0e326169d778"),
 			ServiceFile(serviceFileId),
-			ServiceFile("628"),
-			ServiceFile("537"),
-			ServiceFile("284"),
-			ServiceFile("419"),
-			ServiceFile("36"),
-			ServiceFile("396"),
+			ServiceFile("17f00a96-00c2-4d06-aef9-3f7cacc9812c"),
+			ServiceFile("606ce37e-006a-47e7-928c-71b65ffc587f"),
+			ServiceFile("82b138b5-7be1-4352-b825-48087ca8e1aa"),
+			ServiceFile("f76c2f3c-339b-42df-93e4-7e4e980de65c"),
+			ServiceFile("6eb75879-ab8e-4707-bc7e-7dca8d0ed843"),
 		)
 	}
 
 	@Test
 	fun `then the playlist is started at the correct position`() {
-		assertThat(startedPosition).isEqualTo(1)
+		assertThat(startedPosition).isEqualTo(2)
 	}
 
 	@Test

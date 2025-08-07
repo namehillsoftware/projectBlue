@@ -5,7 +5,9 @@ import androidx.activity.ComponentActivity
 import com.lasthopesoftware.bluewater.android.intents.BuildIntents
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.HandlerExecutor
 import com.namehillsoftware.handoff.promises.Promise
@@ -28,6 +30,10 @@ class ActivityApplicationNavigation(
 
 	override fun viewApplicationSettings() = loopInOperation {
 		componentActivity.startActivity(intentBuilder.buildApplicationSettingsIntent())
+	}
+
+	override fun viewFileDetails(libraryId: LibraryId, item: IItem, positionedFile: PositionedFile) = loopInOperation {
+		componentActivity.startActivity(intentBuilder.buildFileDetailsIntent(libraryId, item, positionedFile))
 	}
 
 	override fun viewFileDetails(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int) = loopInOperation {

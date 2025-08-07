@@ -1,13 +1,13 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile.AndPropertiesAreLoaded
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAPlaylist
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
-import com.lasthopesoftware.bluewater.shared.observables.toCloseable
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
@@ -21,11 +21,12 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-class `When Reloading` {
+class WhenLoading {
 
 	companion object {
-		private const val libraryId = 446
-		private const val serviceFileId = "15a5341f83924404b9ec04573d1e1862"
+		private const val libraryId = 944
+		private const val serviceFileId = "161"
+		private const val playlistId = "33249da9-590c-489d-870b-ce907e70ddc7"
 	}
 
 	private val viewModel by lazy {
@@ -44,60 +45,51 @@ class `When Reloading` {
 						ReadOnlyFileProperty(NormalizedFileProperties.Album, "virtue"),
 						ReadOnlyFileProperty(NormalizedFileProperties.DateCreated, "1592510356")
 					)
-				) andThen Promise(
-					sequenceOf(
-						ReadOnlyFileProperty(NormalizedFileProperties.Rating, "729"),
-						ReadOnlyFileProperty("gCaqE9Z", "I03s2HREwCY"),
-						ReadOnlyFileProperty("n2naBbP", "1TcgZ1nsRN"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Name, "Namfusce"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Artist, "EkaterinaYu"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Album, "Quisquecras"),
-						ReadOnlyFileProperty(NormalizedFileProperties.DateCreated, "2272510356")
-					)
 				)
 			},
 			mockk(),
 			mockk {
-				every { promiseImageBytes() } returns byteArrayOf(7, 7).toPromise()
+				every { promiseImageBytes() } returns byteArrayOf(3, 4).toPromise()
 			},
 			mockk {
-				every { promiseImageBytes(LibraryId(libraryId), any<ServiceFile>()) } returns byteArrayOf(90, 127, 89).toPromise()
+				every { promiseImageBytes(LibraryId(libraryId), any<ServiceFile>()) } returns byteArrayOf(61, 127).toPromise()
 			},
 			mockk(),
 			RecordingApplicationMessageBus(),
 			mockk {
 				every { promiseUrlKey(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
 			},
-			mockk(),
+			mockk {
+				every { promiseFiles(LibraryId(libraryId), PlaylistId(playlistId)) } returns listOf(
+					ServiceFile("165"),
+					ServiceFile("9Qw5g27Emkn"),
+					ServiceFile(serviceFileId),
+					ServiceFile("786.01"),
+					ServiceFile(serviceFileId),
+				).toPromise()
+			},
 		)
 	}
 
-	private val loadingStates = mutableListOf<Boolean>()
-
 	@BeforeAll
 	fun act() {
-		viewModel.isLoading.mapNotNull().subscribe(loadingStates::add).toCloseable().use {
-			viewModel.loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
-			viewModel.promiseLoadedActiveFile().toExpiringFuture().get()
-		}
-	}
-
-	@Test
-	fun `then the loading states are correct`() {
-		assertThat(loadingStates).containsExactly(false, true, false, true, false)
+		viewModel
+			.load(LibraryId(libraryId), PlaylistId(playlistId), PositionedFile(2, ServiceFile(serviceFileId)))
+			.toExpiringFuture()
+			.get()
 	}
 
 	@Test
 	fun `then the properties are correct`() {
 		assertThat(viewModel.fileProperties.value.map { Pair(it.property, it.committedValue.value) }).hasSameElementsAs(
 			listOf(
-				Pair(NormalizedFileProperties.Rating, "729"),
-				Pair("gCaqE9Z", "I03s2HREwCY"),
-				Pair("n2naBbP", "1TcgZ1nsRN"),
-				Pair(NormalizedFileProperties.Name, "Namfusce"),
-				Pair(NormalizedFileProperties.Artist, "EkaterinaYu"),
-				Pair(NormalizedFileProperties.Album, "Quisquecras"),
-				Pair(NormalizedFileProperties.DateCreated, DateTime(2272510356L * 1000).toString(DateTimeFormatterBuilder()
+				Pair(NormalizedFileProperties.Rating, "3"),
+				Pair("too", "prevent"),
+				Pair("shirt", "wind"),
+				Pair(NormalizedFileProperties.Name, "holiday"),
+				Pair(NormalizedFileProperties.Artist, "board"),
+				Pair(NormalizedFileProperties.Album, "virtue"),
+				Pair(NormalizedFileProperties.DateCreated, DateTime(1592510356L * 1000).toString(DateTimeFormatterBuilder()
 					.appendMonthOfYear(1)
 					.appendLiteral('/')
 					.appendDayOfMonth(1)
@@ -116,21 +108,21 @@ class `When Reloading` {
 
 	@Test
 	fun `then the rating is correct`() {
-		assertThat(viewModel.rating.value).isEqualTo(729)
+		assertThat(viewModel.rating.value).isEqualTo(3)
 	}
 
 	@Test
 	fun `then the artist is correct`() {
-		assertThat(viewModel.artist.value).isEqualTo("EkaterinaYu")
+		assertThat(viewModel.artist.value).isEqualTo("board")
 	}
 
 	@Test
 	fun `then the file name is correct`() {
-		assertThat(viewModel.fileName.value).isEqualTo("Namfusce")
+		assertThat(viewModel.fileName.value).isEqualTo("holiday")
 	}
 
 	@Test
 	fun `then the album is correct`() {
-		assertThat(viewModel.album.value).isEqualTo("Quisquecras")
+		assertThat(viewModel.album.value).isEqualTo("virtue")
 	}
 }

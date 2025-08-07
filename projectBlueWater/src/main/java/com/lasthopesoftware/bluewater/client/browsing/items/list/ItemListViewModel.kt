@@ -28,7 +28,8 @@ class ItemListViewModel(
 	private val mutableIsLoading = MutableInteractionState(true)
 	private val mutableItemValue = MutableInteractionState("")
 
-	private var loadedItem: IItem? = null
+	var loadedItem: IItem? = null
+		private set
 	override var loadedLibraryId: LibraryId? = null
 		private set
 

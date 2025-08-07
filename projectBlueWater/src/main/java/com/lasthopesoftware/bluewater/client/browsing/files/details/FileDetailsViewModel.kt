@@ -12,6 +12,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.getFormat
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
+import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
@@ -27,10 +29,13 @@ import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
 import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.emptyByteArray
+import com.lasthopesoftware.types.Either
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 
 class FileDetailsViewModel(
@@ -43,7 +48,7 @@ class FileDetailsViewModel(
 	registerForApplicationMessages: RegisterForApplicationMessages,
 	private val urlKeyProvider: ProvideUrlKey,
 	private val libraryFileProvider: ProvideLibraryFiles,
-) : ViewModel(), ImmediateAction {
+) : ViewModel(), ImmediateAction, ImmediateResponse<List<ServiceFile>, Unit> {
 
 	companion object {
 		private val propertiesToSkip = setOf(
@@ -64,7 +69,7 @@ class FileDetailsViewModel(
 	private var associatedUrlKey: UrlKeyHolder<ServiceFile>? = null
 	private var associatedPlaylist = emptyList<ServiceFile>()
 	private var activePositionedFile: PositionedFile? = null
-	private var activeItemId: ItemId? = null
+	private var activeContextKey: Either<KeyedIdentifier, String>? = null
 
 	private val propertyUpdateRegistrations = registerForApplicationMessages.registerReceiver { message: FilePropertiesUpdatedMessage ->
 		if (message.urlServiceKey == associatedUrlKey) reloadFileProperties()
@@ -103,6 +108,10 @@ class FileDetailsViewModel(
 		super.onCleared()
 	}
 
+	override fun respond(resolution: List<ServiceFile>) {
+		associatedPlaylist = resolution
+	}
+
 	fun loadFromList(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int): Promise<Unit> {
 		val serviceFile = playlist[position]
 		activeLibraryId = libraryId
@@ -112,10 +121,19 @@ class FileDetailsViewModel(
 		return promiseLoadedActiveFile()
 	}
 
-	fun load(libraryId: LibraryId, itemId: ItemId, positionedFile: PositionedFile): Promise<Unit> {
+	fun load(libraryId: LibraryId, itemId: KeyedIdentifier, positionedFile: PositionedFile): Promise<Unit> {
 		activeLibraryId = libraryId
 		activePositionedFile = positionedFile
-		activeItemId = itemId
+		activeContextKey = Either.Left(itemId)
+		associatedPlaylist = emptyList()
+
+		return promiseLoadedActiveFile()
+	}
+
+	fun load(libraryId: LibraryId, searchQuery: String, positionedFile: PositionedFile): Promise<Unit> {
+		activeLibraryId = libraryId
+		activePositionedFile = positionedFile
+		activeContextKey = Either.Right(searchQuery)
 		associatedPlaylist = emptyList()
 
 		return promiseLoadedActiveFile()
@@ -129,9 +147,15 @@ class FileDetailsViewModel(
 					.promiseIsReadOnly(libraryId)
 					.then { r -> isConnectionReadOnly = r }
 
-				val playlistPromise = activeItemId
-					?.let { loadAssociatedPlaylist(libraryId, it) }
-					.keepPromise(Unit)
+				val playlistPromise = when(val key = activeContextKey) {
+					is Either.Left -> when (val id = key.left) {
+						is ItemId -> libraryFileProvider.promiseFiles(libraryId, id).then(this)
+						is PlaylistId -> libraryFileProvider.promiseFiles(libraryId, id).then(this)
+						else -> Unit.toPromise()
+					}
+					is Either.Right -> libraryFileProvider.promiseAudioFiles(libraryId, key.right).then(this)
+					else -> Unit.toPromise()
+				}
 
 				val filePropertiesSetPromise = loadFileProperties(libraryId, serviceFile)
 
@@ -179,13 +203,6 @@ class FileDetailsViewModel(
 	override fun act() {
 		mutableIsLoading.value = false
 	}
-
-	private fun loadAssociatedPlaylist(libraryId: LibraryId, itemId: ItemId): Promise<Unit> =
-		libraryFileProvider
-			.promiseFiles(libraryId, itemId)
-			.then { files ->
-				associatedPlaylist = files
-			}
 
 	private fun loadFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Unit> =
 		filePropertiesProvider

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile.AndThePropertiesAreBeingEdited.AndAPropertyIsModified
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAPlaylist.AndThePropertiesAreBeingEdited.AndAPropertyIsModified
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
@@ -17,13 +17,13 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-class WhenCommittingTheChanges {
+class WhenCancellingAndEditingAgain {
 	companion object {
-		private const val libraryId = 713
-		private const val serviceFileId = "294"
+		private const val libraryId = 114
+		private const val serviceFileId = "371"
 	}
 
-	private var persistedValue = ""
+	private var persistedTrackNumber = ""
 
 	private val viewModel by lazy {
 		FileDetailsViewModel(
@@ -33,7 +33,7 @@ class WhenCommittingTheChanges {
 			mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
 					sequenceOf(
-						ReadOnlyFileProperty(NormalizedFileProperties.Rating, "2"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Rating, "68"),
 						ReadOnlyFileProperty("awkward", "prevent"),
 						ReadOnlyFileProperty("feast", "wind"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Name, "please"),
@@ -45,7 +45,7 @@ class WhenCommittingTheChanges {
 						ReadOnlyFileProperty(NormalizedFileProperties.Custom, "curl"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Publisher, "capital"),
 						ReadOnlyFileProperty(NormalizedFileProperties.TotalDiscs, "354"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Track, "882"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Track, "703"),
 						ReadOnlyFileProperty(NormalizedFileProperties.AlbumArtist, "calm"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Album, "distant"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Date, "1355"),
@@ -53,8 +53,8 @@ class WhenCommittingTheChanges {
 				)
 			},
 			mockk {
-				every { promiseFileUpdate(LibraryId(libraryId), ServiceFile(serviceFileId), NormalizedFileProperties.Track, any(), true) } answers {
-					persistedValue = arg(3)
+				every { promiseFileUpdate(LibraryId(libraryId), ServiceFile(serviceFileId), NormalizedFileProperties.Track, any(), false) } answers {
+					persistedTrackNumber = arg(2)
 					Unit.toPromise()
 				}
 			},
@@ -75,32 +75,18 @@ class WhenCommittingTheChanges {
 	fun act() {
 		viewModel.apply {
 			loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
-			fileProperties.value.first { it.property == NormalizedFileProperties.Track }
-				.apply {
-					updateValue("617")
-					commitChanges().toExpiringFuture().get()
-				}
+			fileProperties.value.first { it.property == NormalizedFileProperties.Date }.apply {
+				highlight()
+				edit()
+				cancel()
+				highlight()
+				edit()
+			}
 		}
 	}
 
 	@Test
-	fun `then the property is not being edited`() {
-		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == NormalizedFileProperties.Track }?.isEditing?.value).isFalse
-	}
-
-	@Test
-	fun `then the committed property is changed`() {
-		assertThat(
-			viewModel
-				.fileProperties
-				.value
-				.firstOrNull { it.property == NormalizedFileProperties.Track }
-				?.committedValue
-				?.value).isEqualTo("617")
-	}
-
-	@Test
-	fun `then the property change is persisted`() {
-		assertThat(persistedValue).isEqualTo("617")
+	fun `then the property is highlighted`() {
+		assertThat(viewModel.highlightedProperty.value).isEqualTo(viewModel.fileProperties.value.first { it.property == NormalizedFileProperties.Date })
 	}
 }

@@ -39,6 +39,8 @@ import java.io.IOException
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<FileDetailsActivity>()) }
 		val playlist by lazy { magicPropertyBuilder.buildProperty("playlist") }
 		val playlistPosition by lazy { magicPropertyBuilder.buildProperty("playlistPosition") }
+		val itemId by lazy { magicPropertyBuilder.buildProperty("itemId") }
+		val positionedFile by lazy { magicPropertyBuilder.buildProperty("positionedFile") }
 		val libraryIdKey by lazy { magicPropertyBuilder.buildProperty("libraryId") }
 	}
 

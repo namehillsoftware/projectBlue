@@ -1,11 +1,13 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAnItem
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
@@ -22,8 +24,9 @@ import java.net.URL
 class WhenLoading {
 
 	companion object {
-		private const val libraryId = 944
-		private const val serviceFileId = "161"
+		private const val libraryId = 667
+		private const val serviceFileId = "753"
+		private const val itemId = "699"
 	}
 
 	private val viewModel by lazy {
@@ -56,13 +59,22 @@ class WhenLoading {
 			mockk {
 				every { promiseUrlKey(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
 			},
-			mockk(),
+			mockk {
+				every { promiseFiles(LibraryId(libraryId), ItemId(itemId)) } returns listOf(
+					ServiceFile(serviceFileId),
+					ServiceFile("9191"),
+					ServiceFile("737"),
+				).toPromise()
+			},
 		)
 	}
 
 	@BeforeAll
 	fun act() {
-		viewModel.loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
+		viewModel
+			.load(LibraryId(libraryId), ItemId(itemId), PositionedFile(0, ServiceFile(serviceFileId)))
+			.toExpiringFuture()
+			.get()
 	}
 
 	@Test
