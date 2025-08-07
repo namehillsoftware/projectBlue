@@ -423,7 +423,6 @@ fun NowPlayingPlaylist(
 	modifier: Modifier = Modifier,
 ) {
 	val nowPlayingFiles by playlistViewModel.nowPlayingList.subscribeAsState()
-	val playlist by remember { derivedStateOf { nowPlayingFiles.map { p -> p.serviceFile } } }
 	val activeLibraryId by nowPlayingFilePropertiesViewModel.activeLibraryId.subscribeAsState()
 
 	val dragDropListState = rememberDragDropListState(
@@ -490,11 +489,7 @@ fun NowPlayingPlaylist(
 
 		val viewFilesClickHandler = {
 			activeLibraryId?.also {
-				applicationNavigation.viewFileDetails(
-					it,
-					playlist,
-					positionedFile.playlistPosition
-				)
+				applicationNavigation.viewNowPlayingFileDetails(it, positionedFile)
 			}
 			Unit
 		}

@@ -79,6 +79,10 @@ class DestinationGraphNavigation(
 		navController.navigate(FileDetailsFromSearchScreen(libraryId, searchQuery, positionedFile))
 	}.toPromise()
 
+	override fun viewNowPlayingFileDetails(libraryId: LibraryId, positionedFile: PositionedFile) = coroutineScope.launch {
+		navController.navigate(FileDetailsFromNowPlayingScreen(libraryId, positionedFile))
+	}.toPromise()
+
 	override fun viewItem(libraryId: LibraryId, item: IItem) = coroutineScope.launch {
 		navController.navigate(ItemScreen(libraryId, item))
 	}.toPromise()

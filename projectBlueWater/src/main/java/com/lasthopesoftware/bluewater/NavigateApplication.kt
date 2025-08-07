@@ -23,6 +23,8 @@ interface NavigateApplication {
 
 	fun viewFileDetails(libraryId: LibraryId, searchQuery: String, positionedFile: PositionedFile) = Unit.toPromise()
 
+	fun viewNowPlayingFileDetails(libraryId: LibraryId, positionedFile: PositionedFile) = Unit.toPromise()
+
 	fun viewFileDetails(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int) = Unit.toPromise()
 
 	fun launchSearch(libraryId: LibraryId) = Unit.toPromise()

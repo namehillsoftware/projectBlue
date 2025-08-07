@@ -58,6 +58,12 @@ class FileDetailsFromSearchScreen(
 	val positionedFile: PositionedFile
 ) : LibraryDestination
 
+@Parcelize
+class FileDetailsFromNowPlayingScreen(
+	override val libraryId: LibraryId,
+	val positionedFile: PositionedFile
+) : LibraryDestination
+
 sealed interface BrowserLibraryDestination : LibraryDestination
 
 @Parcelize

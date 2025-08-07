@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.namehillsoftware.handoff.promises.Promise
 
-class NowPlayingFileDetailsViewModel(
+class FileDetailsFromNowPlayingViewModel(
 	connectionPermissions: CheckIfConnectionIsReadOnly,
 	filePropertiesProvider: ProvideEditableLibraryFileProperties,
 	updateFileProperties: UpdateFileProperties,

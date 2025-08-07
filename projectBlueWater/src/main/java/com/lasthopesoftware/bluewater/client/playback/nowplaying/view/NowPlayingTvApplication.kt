@@ -84,6 +84,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSetti
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationGraphNavigation
 import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsFromItemScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsFromNowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsFromSearchScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.HiddenSettingsScreen
@@ -536,6 +537,18 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedViewModel
 			)
 
 			viewModel.load(libraryId, searchQuery, positionedFile)
+		}
+
+		is FileDetailsFromNowPlayingScreen -> {
+			val viewModel = browserViewDependencies.fileDetailsFromNowPlayingViewModel
+
+			FileDetailsView(
+				viewModel = viewModel,
+				navigateApplication = browserViewDependencies.applicationNavigation,
+				bitmapProducer = browserViewDependencies.bitmapProducer,
+			)
+
+			viewModel.load(libraryId, positionedFile)
 		}
 
 		is ConnectionSettingsScreen -> {
