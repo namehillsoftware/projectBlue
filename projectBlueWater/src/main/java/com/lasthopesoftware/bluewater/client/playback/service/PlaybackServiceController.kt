@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.playback.service
 import android.content.Context
 import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
@@ -26,14 +25,8 @@ import com.namehillsoftware.handoff.promises.Promise
 	override fun moveFile(libraryId: LibraryId, dragFrom: Int, dragTo: Int) =
 		PlaybackService.moveFile(context, libraryId, dragFrom, dragTo)
 
-	override fun startPlaylist(libraryId: LibraryId, fileStringList: String, position: Int) {
-		PlaybackService.startPlaylist(context, libraryId, position, fileStringList)
-	}
-
 	override fun startPlaylist(libraryId: LibraryId, serviceFiles: List<ServiceFile>, position: Int) {
-		FileStringListUtilities
-			.promiseSerializedFileStringList(serviceFiles)
-			.then { it -> startPlaylist(libraryId, it, position) }
+		PlaybackService.startPlaylist(context, libraryId, serviceFiles, position)
 	}
 
 	override fun shuffleAndStartPlaylist(libraryId: LibraryId, serviceFiles: List<ServiceFile>) {

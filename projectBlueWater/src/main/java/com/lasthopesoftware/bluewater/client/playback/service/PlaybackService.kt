@@ -28,7 +28,6 @@ import com.lasthopesoftware.bluewater.android.services.ControlService
 import com.lasthopesoftware.bluewater.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlayStatsOnPlaybackCompletedReceiver
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
@@ -147,13 +146,14 @@ import java.util.concurrent.TimeoutException
 		fun initialize(context: Context, libraryId: LibraryId) =
 			context.safelyStartService(getNewSelfIntent(context, PlaybackEngineAction.Initialize(libraryId)))
 
-		fun startPlaylist(context: Context, libraryId: LibraryId, filePos: Int, serializedFileList: String) {
-			context.safelyStartServiceInForeground(
-				getNewSelfIntent(
-					context,
-					PlaybackStartingAction.StartPlaylist(libraryId, filePos, serializedFileList)
-				)
-			)
+		fun startPlaylist(context: Context, libraryId: LibraryId, playlist: List<ServiceFile>, filePos: Int): Promise<Unit> {
+			initialize(context, libraryId)
+			return context.promiseBoundService<PlaybackService>()
+				.eventually { h ->
+					h.service
+						.startNewPlaylist(libraryId, playlist, filePos)
+						.must { _ -> h.close() }
+				}
 		}
 
 		fun seekTo(context: Context, libraryId: LibraryId, filePos: Int, fileProgress: Int = 0) {
@@ -169,12 +169,12 @@ import java.util.concurrent.TimeoutException
 			context.safelyStartServiceInForeground(
 				getNewSelfIntent(
 					context,
-					PlaybackStartingAction.Play(libraryId)
+					PlaybackEngineAction.Play(libraryId)
 				)
 			)
 
 		fun pendingPlayingIntent(context: Context, libraryId: LibraryId): PendingIntent =
-			getPendingIntent(context, PlaybackStartingAction.Play(libraryId))
+			getPendingIntent(context, PlaybackEngineAction.Play(libraryId))
 
 		@JvmStatic
 		fun pause(context: Context) =
@@ -600,24 +600,12 @@ import java.util.concurrent.TimeoutException
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 		super.onStartCommand(intent, flags, startId)
 
-		fun handlePlaybackStartingAction(playbackStartingAction: PlaybackStartingAction): Promise<Unit> {
-			stopNotificationIfNotPlaying()
-			return when (playbackStartingAction) {
-				is PlaybackStartingAction.Play -> resumePlayback(playbackStartingAction.libraryId)
-				is PlaybackStartingAction.StartPlaylist -> {
-					val (libraryId, playlistPosition, playlistString) = playbackStartingAction
-
-					startNewPlaylist(libraryId, playlistString, playlistPosition)
-				}
-			}
-		}
-
 		fun handlePlaybackEngineAction(playbackEngineAction: PlaybackEngineAction): Promise<Unit> {
 			return when (playbackEngineAction) {
-				is PlaybackStartingAction -> handlePlaybackStartingAction(playbackEngineAction)
+				is PlaybackEngineAction.Play -> resumePlayback(playbackEngineAction.libraryId)
 				is PlaybackEngineAction.TogglePlayPause -> {
 					if (isMarkedForPlay) pausePlayback()
-					else handlePlaybackStartingAction(PlaybackStartingAction.Play(playbackEngineAction.libraryId))
+					else resumePlayback(playbackEngineAction.libraryId)
 				}
 				is PlaybackEngineAction.Initialize -> restorePlaybackServices(playbackEngineAction.libraryId).unitResponse()
 				is PlaybackEngineAction.RepeatPlaylist -> {
@@ -812,6 +800,32 @@ import java.util.concurrent.TimeoutException
 
 	override fun onBind(intent: Intent): IBinder? = binder
 
+	private fun startNewPlaylist(libraryId: LibraryId, playlist: List<ServiceFile>, playlistPosition: Int): Promise<Unit> {
+		activeLibraryId = libraryId
+		val playbackState = promisedPlaybackServices.value
+
+		isMarkedForPlay = true
+		applicationMessageBus.sendMessage(PlaybackMessage.PlaybackStarting)
+
+		if (!areListenersRegistered) registerListeners()
+
+		return playbackState.eventually {
+			it.playbackState
+				.startPlaylist(
+					libraryId,
+					playlist.toList(),
+					playlistPosition
+				)
+				.then(
+					{ _ ->
+						startActivity(playbackServiceDependencies.intentBuilder.buildNowPlayingIntent(libraryId))
+						applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
+					},
+					{ e -> it.errorHandler.onError(e) }
+				)
+		}
+	}
+
 	private fun guardDestroyedService() {
 		if (isDestroyed)
 			throw UnsupportedOperationException("Cannot create PlaybackService after onDestroy is called")
@@ -831,36 +845,6 @@ import java.util.concurrent.TimeoutException
 
 		if (lazyAudioBecomingNoisyReceiver.isInitialized()) unregisterReceiver(lazyAudioBecomingNoisyReceiver.value)
 		areListenersRegistered = false
-	}
-
-	private fun startNewPlaylist(libraryId: LibraryId, playlistString: String, playlistPosition: Int): Promise<Unit> {
-		activeLibraryId = libraryId
-		val playbackState = promisedPlaybackServices.value
-
-		isMarkedForPlay = true
-		applicationMessageBus.sendMessage(PlaybackMessage.PlaybackStarting)
-
-		return FileStringListUtilities
-			.promiseParsedFileStringList(playlistString)
-			.eventually { playlist ->
-				if (!areListenersRegistered) registerListeners()
-
-				playbackState.eventually {
-					it.playbackState
-						.startPlaylist(
-							libraryId,
-							playlist.toList(),
-							playlistPosition
-						)
-						.then(
-							{ _ ->
-								startActivity(playbackServiceDependencies.intentBuilder.buildNowPlayingIntent(libraryId))
-								applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
-							},
-							{ e -> it.errorHandler.onError(e) }
-						)
-				}
-			}
 	}
 
 	private fun resumePlayback(libraryId: LibraryId): Promise<Unit> {
@@ -933,10 +917,6 @@ import java.util.concurrent.TimeoutException
 
 	private fun broadcastChangedFile(libraryId: LibraryId, positionedFile: PositionedFile) {
 		applicationMessageBus.sendMessage(LibraryPlaybackMessage.TrackChanged(libraryId, positionedFile))
-	}
-
-	private fun stopNotificationIfNotPlaying() {
-		if (!isMarkedForPlay) notificationController.removeNotification(playingNotificationId)
 	}
 
 	private fun haltService() = stopSelf()
@@ -1096,17 +1076,9 @@ import java.util.concurrent.TimeoutException
 			@IgnoredOnParcel
 			override val requestCode = 12
 		}
-	}
-
-	private sealed interface PlaybackStartingAction : PlaybackEngineAction {
-		@Parcelize
-		data class StartPlaylist(override val libraryId: LibraryId, val playlistPosition: Int, val serializedPlaylist: String) : PlaybackStartingAction {
-			@IgnoredOnParcel
-			override val requestCode = 13
-		}
 
 		@Parcelize
-		data class Play(override val libraryId: LibraryId) : PlaybackStartingAction {
+		data class Play(override val libraryId: LibraryId) : PlaybackEngineAction {
 			@IgnoredOnParcel
 			override val requestCode = 14
 		}

@@ -5,7 +5,7 @@ import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ProvideFileStringListForItem
+import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -15,7 +15,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackSer
 class MediaSessionCallbackReceiver(
 	private val controlPlaybackService: ControlPlaybackService,
 	private val selectedLibraryId: ProvideSelectedLibraryId,
-	private val fileStringListProvider: ProvideFileStringListForItem,
+	private val libraryFileProvider: ProvideLibraryFiles,
 ) : MediaSessionCompat.Callback() {
 	override fun onPrepare() {
 		withSelectedLibraryId(controlPlaybackService::initialize)
@@ -61,12 +61,12 @@ class MediaSessionCallbackReceiver(
 		val itemId = ids.firstOrNull() ?: return
 
 		withSelectedLibraryId { libraryId ->
-			val promisedFileStringList = fileStringListProvider.promiseFileStringList(libraryId, ItemId(itemId))
+			val promisedFiles = libraryFileProvider.promiseFiles(libraryId, ItemId(itemId))
 
 			if (ids.size < 2) {
-				promisedFileStringList.then { sl -> controlPlaybackService.startPlaylist(libraryId, sl) }
+				promisedFiles.then { sl -> controlPlaybackService.startPlaylist(libraryId, sl) }
 			} else {
-				promisedFileStringList.then { sl -> controlPlaybackService.startPlaylist(libraryId, sl, ids[1].toInt()) }
+				promisedFiles.then { sl -> controlPlaybackService.startPlaylist(libraryId, sl, ids[1].toInt()) }
 			}
 		}
 	}
