@@ -72,7 +72,6 @@ import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ReusedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelRegistry
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
@@ -117,11 +116,8 @@ import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
 import com.lasthopesoftware.promises.extensions.suspend
-import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
-import dev.olshevski.navigation.reimagined.NavController
 import dev.olshevski.navigation.reimagined.NavHost
-import dev.olshevski.navigation.reimagined.navigate
 import dev.olshevski.navigation.reimagined.rememberNavController
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
@@ -591,7 +587,6 @@ fun NowPlayingTvPlaylist(
 	modifier: Modifier = Modifier,
 ) {
 	val nowPlayingFiles by playlistViewModel.nowPlayingList.subscribeAsState()
-	val playlist by remember { derivedStateOf { nowPlayingFiles.map { p -> p.serviceFile } } }
 	val activeLibraryId by nowPlayingFilePropertiesViewModel.activeLibraryId.subscribeAsState()
 
 	val lazyListState = rememberLazyListState()
@@ -666,11 +661,7 @@ fun NowPlayingTvPlaylist(
 			},
 			onItemClick = {
 				activeLibraryId?.also {
-					applicationNavigation.viewFileDetails(
-						it,
-						playlist,
-						positionedFile.playlistPosition
-					)
+					applicationNavigation.viewNowPlayingFileDetails(it, positionedFile)
 				}
 			},
 			onRemoveFromNowPlayingClick = {
@@ -695,25 +686,6 @@ fun NowPlayingTvPlaylist(
 		items(items = nowPlayingFiles, key = { f -> f }) { f ->
 			NowPlayingFileView(positionedFile = f)
 		}
-	}
-}
-
-private class NowPlayingNavigation(
-	inner: NavigateApplication,
-	private val navController: NavController<Destination>,
-) : NavigateApplication by inner {
-	override fun viewFileDetails(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int): Promise<Unit> {
-		navController.navigate(FileDetailsScreen(libraryId, playlist, position))
-		return Unit.toPromise()
-	}
-}
-
-private class NowPlayingDependencies<T>(inner: T, navController: NavController<Destination>)
-	: EntryDependencies by inner, AutoCloseable by inner
-	where T : EntryDependencies, T: AutoCloseable
-{
-	override val applicationNavigation by lazy {
-		NowPlayingNavigation(inner.applicationNavigation, navController)
 	}
 }
 
@@ -754,15 +726,12 @@ fun NowPlayingTvApplication(
 	}
 
 	val routedNavigationDependencies = remember {
-		NowPlayingDependencies(
-			RoutedNavigationDependencies(
-				entryDependencies,
-				destinationGraphNavigation,
-				connectionStatusViewModel,
-				navController,
-				initialDestination
-			),
-			navController
+		RoutedNavigationDependencies(
+			entryDependencies,
+			destinationGraphNavigation,
+			connectionStatusViewModel,
+			navController,
+			initialDestination
 		)
 	}
 

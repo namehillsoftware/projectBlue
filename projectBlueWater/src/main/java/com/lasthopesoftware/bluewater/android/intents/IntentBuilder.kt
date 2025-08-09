@@ -7,7 +7,6 @@ import androidx.annotation.OptIn
 import androidx.core.net.toUri
 import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.client.EntryActivity
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
@@ -49,12 +48,6 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 		putExtra(FileDetailsActivity.libraryIdKey, libraryId)
 		putExtra(FileDetailsActivity.searchQuery, searchQuery)
 		putExtra(FileDetailsActivity.positionedFile, positionedFile)
-	}
-
-	@OptIn(UnstableApi::class)
-	override fun buildFileDetailsIntent(libraryId: LibraryId, playlist: Collection<ServiceFile>, position: Int) = context.getIntent<FileDetailsActivity>().apply {
-		putExtra(FileDetailsActivity.libraryIdKey, libraryId)
-		putExtra(FileDetailsActivity.playlistPosition, position)
 	}
 
 	override fun buildNowPlayingIntent(libraryId: LibraryId): Intent = getBrowserActivityIntent(NowPlayingScreen(libraryId))

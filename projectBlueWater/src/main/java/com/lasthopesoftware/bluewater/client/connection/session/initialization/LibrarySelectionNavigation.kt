@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection.session.initialization
 
 import com.lasthopesoftware.bluewater.NavigateApplication
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.TrackSelectedLibrary
@@ -36,9 +35,6 @@ class LibrarySelectionNavigation(
 
 	override fun search(libraryId: LibraryId, filePropertyFilter: FileProperty): Promise<Unit> =
 		selectConnection(libraryId) { inner.search(libraryId, filePropertyFilter) }
-
-	override fun viewFileDetails(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int): Promise<Unit> =
-		selectConnection(libraryId) { inner.viewFileDetails(libraryId, playlist, position) }
 
 	override fun viewFileDetails(libraryId: LibraryId, item: IItem, positionedFile: PositionedFile): Promise<Unit> =
 		selectConnection(libraryId) { inner.viewFileDetails(libraryId, item, positionedFile) }
