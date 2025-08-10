@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater
 import android.os.Handler
 import androidx.activity.ComponentActivity
 import com.lasthopesoftware.bluewater.android.intents.BuildIntents
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.promises.extensions.preparePromise
@@ -28,10 +27,6 @@ class ActivityApplicationNavigation(
 
 	override fun viewApplicationSettings() = loopInOperation {
 		componentActivity.startActivity(intentBuilder.buildApplicationSettingsIntent())
-	}
-
-	override fun viewFileDetails(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int) = loopInOperation {
-		componentActivity.startActivity(intentBuilder.buildFileDetailsIntent(libraryId, playlist, position))
 	}
 
 	override fun viewNowPlaying(libraryId: LibraryId) = loopInOperation {

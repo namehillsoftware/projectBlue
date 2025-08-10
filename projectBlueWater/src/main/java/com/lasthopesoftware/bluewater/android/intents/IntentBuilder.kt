@@ -36,10 +36,9 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 	}
 
 	@OptIn(UnstableApi::class)
-	override fun buildFileDetailsIntent(libraryId: LibraryId, playlist: Collection<ServiceFile>, position: Int) = context.getIntent<FileDetailsActivity>().apply {
+	override fun buildFileDetailsIntent(libraryId: LibraryId, file: ServiceFile) = context.getIntent<FileDetailsActivity>().apply {
 		putExtra(FileDetailsActivity.libraryIdKey, libraryId)
-		putExtra(FileDetailsActivity.playlistPosition, position)
-		putExtra(FileDetailsActivity.playlist, playlist.map { it.key }.toTypedArray())
+		putExtra(FileDetailsActivity.serviceFile, file)
 	}
 
 	override fun buildNowPlayingIntent(libraryId: LibraryId): Intent = getBrowserActivityIntent(NowPlayingScreen(libraryId))

@@ -22,8 +22,6 @@ interface ControlPlaybackService {
 
 	fun moveFile(libraryId: LibraryId, dragFrom: Int, dragTo: Int)
 
-	fun startPlaylist(libraryId: LibraryId, fileStringList: String, position: Int = 0)
-
 	fun startPlaylist(libraryId: LibraryId, serviceFiles: List<ServiceFile>, position: Int = 0)
 
 	fun shuffleAndStartPlaylist(libraryId: LibraryId, serviceFiles: List<ServiceFile>)

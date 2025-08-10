@@ -4,8 +4,6 @@ import com.lasthopesoftware.bluewater.ApplicationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.access.DelegatingLibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ProvideFileStringListForItem
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.DelegatingFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
@@ -47,7 +45,6 @@ interface LibraryConnectionDependents {
 	val libraryFilePropertiesProvider: CachedFilePropertiesProvider
 	val freshLibraryFileProperties: ProvideFreshLibraryFileProperties
 	val connectionAuthenticationChecker: ConnectionAuthenticationChecker
-    val itemStringListProvider: ProvideFileStringListForItem
 }
 
 class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryConnectionDependents {
@@ -102,8 +99,6 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 		)
 	}
 
-	override val itemStringListProvider by lazy { ItemStringListProvider(application.libraryConnectionProvider) }
-
 	override val libraryFilesProvider by lazy {
 		DelegatingLibraryFileProvider(
 			LibraryFileProvider(application.libraryConnectionProvider),
@@ -114,7 +109,7 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 		)
 	}
 
-	override val playbackLibraryItems by lazy { ItemPlayback(itemStringListProvider, application.playbackServiceController) }
+	override val playbackLibraryItems by lazy { ItemPlayback(libraryFilesProvider, application.playbackServiceController) }
 
 	override val pollForConnections by lazy {
 		LibraryConnectionPollingSessions(LibraryConnectionPoller(application.connectionSessions, ConnectionPollTimes))

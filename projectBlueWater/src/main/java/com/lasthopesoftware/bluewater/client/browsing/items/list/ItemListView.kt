@@ -169,7 +169,10 @@ fun RenderTrackTitleItem(
 	val viewFileDetailsClickHandler = remember(position) {
 		{
 			itemListViewModel.loadedLibraryId?.also {
-				applicationNavigation.viewFileDetails(it, fileListViewModel.files.value, position)
+				itemListViewModel.loadedItem?.also { item ->
+					applicationNavigation
+						.viewFileDetails(it, fileListViewModel.files.value, position)
+				}
 			}
 			Unit
 		}

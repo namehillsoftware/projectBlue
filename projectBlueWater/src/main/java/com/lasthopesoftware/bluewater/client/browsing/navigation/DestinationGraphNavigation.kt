@@ -1,10 +1,12 @@
 package com.lasthopesoftware.bluewater.client.browsing.navigation
 
 import com.lasthopesoftware.bluewater.NavigateApplication
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -68,6 +70,14 @@ class DestinationGraphNavigation(
 		navController.popUpTo { it is ApplicationSettingsScreen }
 
 		navController.navigate(LibraryScreen(libraryId))
+	}.toPromise()
+
+	override fun viewFileDetails(libraryId: LibraryId, files: List<ServiceFile>, position: Int) = coroutineScope.launch {
+		navController.navigate(ListedFileDetailsScreen(libraryId, files, position))
+	}.toPromise()
+
+	override fun viewNowPlayingFileDetails(libraryId: LibraryId, positionedFile: PositionedFile) = coroutineScope.launch {
+		navController.navigate(FileDetailsFromNowPlayingScreen(libraryId, positionedFile))
 	}.toPromise()
 
 	override fun viewItem(libraryId: LibraryId, item: IItem) = coroutineScope.launch {

@@ -71,7 +71,6 @@ class LiveMediaCenterConnection(
 		private const val imageFormat = "jpg"
 		private const val serializedFileListParameter = "Action=Serialize"
 		private const val shuffleFileListParameter = "Shuffle=1"
-		private const val resetCacheParameter = "ResetCache=1"
 
 		private val editableFilePropertyDefinitions by lazy { EditableFilePropertyDefinition.entries.toSet().toPromise() }
 	}
@@ -311,7 +310,7 @@ class LiveMediaCenterConnection(
 			.promiseStandardResponse()
 			.also(cp::doCancel)
 			.then { standardRequest ->
-				standardRequest.items["Sync"]
+				standardRequest.items["Master"]
 					?.takeIf { revisionValue -> revisionValue.isNotEmpty() }
 					?.toLong()
 			}
@@ -332,7 +331,6 @@ class LiveMediaCenterConnection(
 				path,
 				*params,
 				serializedFileListParameter,
-				resetCacheParameter,
 			).also(cp::doCancel).promiseStringBody()
 		}
 
@@ -533,7 +531,7 @@ class LiveMediaCenterConnection(
 					false
 				)
 
-				return Promise.whenAll(numberPlaysUpdate, lastPlayedUpdate).unitResponse()
+				return whenAll(numberPlaysUpdate, lastPlayedUpdate).unitResponse()
 			} catch (ne: NumberFormatException) {
 				logger.error(ne.toString(), ne)
 				return Unit.toPromise()

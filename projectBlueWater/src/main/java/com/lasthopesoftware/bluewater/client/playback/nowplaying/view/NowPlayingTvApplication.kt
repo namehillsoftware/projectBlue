@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
+import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.tween
@@ -71,7 +72,6 @@ import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ReusedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelRegistry
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
@@ -82,9 +82,10 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryD
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationGraphNavigation
-import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsFromNowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.HiddenSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryDestination
+import com.lasthopesoftware.bluewater.client.browsing.navigation.ListedFileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NewConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.RoutedNavigationDependencies
@@ -113,17 +114,15 @@ import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
 import com.lasthopesoftware.promises.extensions.suspend
-import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
-import dev.olshevski.navigation.reimagined.NavController
 import dev.olshevski.navigation.reimagined.NavHost
-import dev.olshevski.navigation.reimagined.navigate
 import dev.olshevski.navigation.reimagined.rememberNavController
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 
 private val logger by lazy { LoggerFactory.getLogger("NowPlayingTvApplication") }
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalComposeUiApi::class)
 @ExperimentalFoundationApi
 @Composable
@@ -507,11 +506,30 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedViewModel
 			NowPlayingTvView(browserViewDependencies = browserViewDependencies)
 		}
 
-		is FileDetailsScreen -> {
-			val fileDetailsViewModel = browserViewDependencies.fileDetailsViewModel
-			FileDetailsView(fileDetailsViewModel, browserViewDependencies.applicationNavigation, browserViewDependencies.bitmapProducer)
+		is ListedFileDetailsScreen -> {
+			val viewModel = browserViewDependencies.listedFileDetailsViewModel
 
-			fileDetailsViewModel.loadFromList(libraryId, playlist, position)
+			FileDetailsView(
+				viewModel = viewModel,
+				navigateApplication = browserViewDependencies.applicationNavigation,
+				bitmapProducer = browserViewDependencies.bitmapProducer,
+				playableFileDetailsState = viewModel,
+			)
+
+			viewModel.load(libraryId, files, position)
+		}
+
+		is FileDetailsFromNowPlayingScreen -> {
+			val viewModel = browserViewDependencies.fileDetailsFromNowPlayingViewModel
+
+			FileDetailsView(
+				viewModel = viewModel,
+				navigateApplication = browserViewDependencies.applicationNavigation,
+				bitmapProducer = browserViewDependencies.bitmapProducer,
+				playableFileDetailsState = viewModel,
+			)
+
+			viewModel.load(libraryId, positionedFile)
 		}
 
 		is ConnectionSettingsScreen -> {
@@ -554,7 +572,6 @@ fun NowPlayingTvPlaylist(
 	modifier: Modifier = Modifier,
 ) {
 	val nowPlayingFiles by playlistViewModel.nowPlayingList.subscribeAsState()
-	val playlist by remember { derivedStateOf { nowPlayingFiles.map { p -> p.serviceFile } } }
 	val activeLibraryId by nowPlayingFilePropertiesViewModel.activeLibraryId.subscribeAsState()
 
 	val lazyListState = rememberLazyListState()
@@ -629,11 +646,7 @@ fun NowPlayingTvPlaylist(
 			},
 			onItemClick = {
 				activeLibraryId?.also {
-					applicationNavigation.viewFileDetails(
-						it,
-						playlist,
-						positionedFile.playlistPosition
-					)
+					applicationNavigation.viewNowPlayingFileDetails(it, positionedFile)
 				}
 			},
 			onRemoveFromNowPlayingClick = {
@@ -658,25 +671,6 @@ fun NowPlayingTvPlaylist(
 		items(items = nowPlayingFiles, key = { f -> f }) { f ->
 			NowPlayingFileView(positionedFile = f)
 		}
-	}
-}
-
-private class NowPlayingNavigation(
-	inner: NavigateApplication,
-	private val navController: NavController<Destination>,
-) : NavigateApplication by inner {
-	override fun viewFileDetails(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int): Promise<Unit> {
-		navController.navigate(FileDetailsScreen(libraryId, playlist, position))
-		return Unit.toPromise()
-	}
-}
-
-private class NowPlayingDependencies<T>(inner: T, navController: NavController<Destination>)
-	: EntryDependencies by inner, AutoCloseable by inner
-	where T : EntryDependencies, T: AutoCloseable
-{
-	override val applicationNavigation by lazy {
-		NowPlayingNavigation(inner.applicationNavigation, navController)
 	}
 }
 
@@ -717,15 +711,12 @@ fun NowPlayingTvApplication(
 	}
 
 	val routedNavigationDependencies = remember {
-		NowPlayingDependencies(
-			RoutedNavigationDependencies(
-				entryDependencies,
-				destinationGraphNavigation,
-				connectionStatusViewModel,
-				navController,
-				initialDestination
-			),
-			navController
+		RoutedNavigationDependencies(
+			entryDependencies,
+			destinationGraphNavigation,
+			connectionStatusViewModel,
+			navController,
+			initialDestination
 		)
 	}
 

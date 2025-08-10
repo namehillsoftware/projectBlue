@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit
 				MediaSessionCallbackReceiver(
 					playbackServiceController,
 					selectedLibraryIdProvider,
-					libraryConnectionDependencies.itemStringListProvider,
+					libraryConnectionDependencies.libraryFilesProvider,
 				)
 			)
 

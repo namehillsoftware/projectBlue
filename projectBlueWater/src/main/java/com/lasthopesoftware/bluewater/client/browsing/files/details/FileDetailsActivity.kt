@@ -37,8 +37,10 @@ import java.io.IOException
 
 	companion object {
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<FileDetailsActivity>()) }
-		val playlist by lazy { magicPropertyBuilder.buildProperty("playlist") }
 		val playlistPosition by lazy { magicPropertyBuilder.buildProperty("playlistPosition") }
+		val itemId by lazy { magicPropertyBuilder.buildProperty("itemId") }
+		val positionedFile by lazy { magicPropertyBuilder.buildProperty("positionedFile") }
+		val serviceFile by lazy { magicPropertyBuilder.buildProperty("serviceFile") }
 		val libraryIdKey by lazy { magicPropertyBuilder.buildProperty("libraryId") }
 	}
 
@@ -107,29 +109,31 @@ import java.io.IOException
 				when {
 					isGettingConnection -> ConnectionUpdatesView(connectionViewModel = connectionStatusViewModel)
 					isConnectionLost -> ConnectionLostView(onCancel = { finish() }, onRetry = { isConnectionLost = false })
-					else -> FileDetailsView(vm, activityApplicationNavigation, localApplicationDependencies.bitmapProducer)
+					else -> FileDetailsView(
+						vm,
+						activityApplicationNavigation,
+						localApplicationDependencies.bitmapProducer,
+					)
 				}
 
 				if (!isConnectionLost) {
 					LaunchedEffect(key1 = Unit) {
 						try {
-							val isInitialized = connectionStatusViewModel.initializeConnection(libraryId).suspend()
-							val position = intent.getIntExtra(playlistPosition, -1)
-							when {
-								position < 0 -> finish()
-								!isInitialized -> isConnectionLost = true
-								else -> {
-									val playlist = intent.getStringArrayExtra(playlist)?.map(::ServiceFile) ?: emptyList()
-
-									vm.loadFromList(libraryId, playlist, position).suspend()
-								}
+							val serviceFile = intent.safelyGetParcelableExtra<ServiceFile>(serviceFile)
+							if (serviceFile == null) {
+								finish()
+								return@LaunchedEffect
 							}
+
+							val isInitialized = connectionStatusViewModel.initializeConnection(libraryId).suspend()
+							if (!isInitialized) isConnectionLost = true
+							else vm.load(libraryId, serviceFile)
 						} catch (e: IOException) {
 							if (ConnectionLostExceptionFilter.isConnectionLostException(e))
 								isConnectionLost = true
 							else
 								finish()
-						} catch (e: Throwable) {
+						} catch (_: Throwable) {
 							finish()
 						}
 					}

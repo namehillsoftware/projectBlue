@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.promises.extensions.toPromise
 
 interface NavigateApplication {
@@ -18,7 +19,9 @@ interface NavigateApplication {
 
 	fun viewServerSettings(libraryId: LibraryId) = Unit.toPromise()
 
-	fun viewFileDetails(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int) = Unit.toPromise()
+	fun viewFileDetails(libraryId: LibraryId, files: List<ServiceFile>, position: Int) = Unit.toPromise()
+
+	fun viewNowPlayingFileDetails(libraryId: LibraryId, positionedFile: PositionedFile) = Unit.toPromise()
 
 	fun launchSearch(libraryId: LibraryId) = Unit.toPromise()
 

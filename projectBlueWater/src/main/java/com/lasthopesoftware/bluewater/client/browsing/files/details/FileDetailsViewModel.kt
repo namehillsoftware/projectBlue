@@ -14,7 +14,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
@@ -40,7 +39,7 @@ class FileDetailsViewModel(
 	private val controlPlayback: ControlPlaybackService,
 	registerForApplicationMessages: RegisterForApplicationMessages,
 	private val urlKeyProvider: ProvideUrlKey,
-) : ViewModel(), ImmediateAction {
+) : ViewModel(), ImmediateAction, FileDetailsState, LoadFileDetailsState {
 
 	companion object {
 		private val propertiesToSkip = setOf(
@@ -59,13 +58,12 @@ class FileDetailsViewModel(
 	private var isConnectionReadOnly = false
 	private var activeEditingFile: FilePropertyViewModel? = null
 	private var associatedUrlKey: UrlKeyHolder<ServiceFile>? = null
-	private var associatedPlaylist = emptyList<ServiceFile>()
-	private var activePositionedFile: PositionedFile? = null
 	private val propertyUpdateRegistrations = registerForApplicationMessages.registerReceiver { message: FilePropertiesUpdatedMessage ->
 		if (message.urlServiceKey == associatedUrlKey) reloadFileProperties()
 	}
 
 	private val mutableFileName = MutableInteractionState("")
+
 	private val mutableAlbum = MutableInteractionState("")
 	private val mutableArtist = MutableInteractionState("")
 	private val mutableFileProperties = MutableInteractionState(emptyList<FilePropertyViewModel>())
@@ -75,21 +73,24 @@ class FileDetailsViewModel(
 	private val mutableRating = MutableInteractionState(0)
 	private val mutableHighlightedProperty = MutableInteractionState<FilePropertyViewModel?>(null)
 
-	val fileName = mutableFileName.asInteractionState()
-	val artist = mutableArtist.asInteractionState()
-	val album = mutableAlbum.asInteractionState()
-	val fileProperties = mutableFileProperties.asInteractionState()
-	val isLoading = mutableIsLoading.asInteractionState()
-	val coverArt = LiftedInteractionState(
+	override val fileName = mutableFileName.asInteractionState()
+	override val artist = mutableArtist.asInteractionState()
+	override val album = mutableAlbum.asInteractionState()
+	override val fileProperties = mutableFileProperties.asInteractionState()
+	override val isLoading = mutableIsLoading.asInteractionState()
+	override val coverArt = LiftedInteractionState(
 		promisedDefaultCoverArt
 			.toMaybeObservable()
 			.toObservable()
 			.concatWith(mutableCoverArt.mapNotNull()),
 		emptyByteArray
 	)
-	val rating = mutableRating.asInteractionState()
-	val highlightedProperty = mutableHighlightedProperty.asInteractionState()
-	var activeLibraryId: LibraryId? = null
+	override val rating = mutableRating.asInteractionState()
+	override val highlightedProperty = mutableHighlightedProperty.asInteractionState()
+
+	override var activeLibraryId: LibraryId? = null
+		private set
+	override var activeServiceFile: ServiceFile? = null
 		private set
 
 	override fun onCleared() {
@@ -98,18 +99,16 @@ class FileDetailsViewModel(
 		super.onCleared()
 	}
 
-	fun loadFromList(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int): Promise<Unit> {
-		val serviceFile = playlist[position]
+	override fun load(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Unit> {
 		activeLibraryId = libraryId
-		activePositionedFile = PositionedFile(position, serviceFile)
-		associatedPlaylist = playlist
+		activeServiceFile = serviceFile
 
 		return promiseLoadedActiveFile()
 	}
 
-	fun promiseLoadedActiveFile(): Promise<Unit> = activeLibraryId
+	override fun promiseLoadedActiveFile(): Promise<Unit> = activeLibraryId
 		?.let { libraryId ->
-			activePositionedFile?.serviceFile?.let {  serviceFile ->
+			activeServiceFile?.let {  serviceFile ->
 				mutableIsLoading.value = true
 				val isReadOnlyPromise = connectionPermissions
 					.promiseIsReadOnly(libraryId)
@@ -137,26 +136,20 @@ class FileDetailsViewModel(
 		}
 		.keepPromise(Unit)
 
-	private fun reloadFileProperties(): Promise<Unit> =
-		activeLibraryId
-			?.let { l ->
-				activePositionedFile?.serviceFile?.let {  sf ->
-					loadFileProperties(l, sf)
-				}
-			}
-			.keepPromise(Unit)
-
-	fun addToNowPlaying() {
-		val serviceFile = activePositionedFile?.serviceFile ?: return
+	override fun addToNowPlaying() {
+		val serviceFile = activeServiceFile ?: return
 		val libraryId = activeLibraryId ?: return
 		controlPlayback.addToPlaylist(libraryId, serviceFile)
 	}
 
-	fun play() {
-		val positionedFile = activePositionedFile ?: return
-		val libraryId = activeLibraryId ?: return
-		controlPlayback.startPlaylist(libraryId, associatedPlaylist, positionedFile.playlistPosition)
-	}
+	private fun reloadFileProperties(): Promise<Unit> =
+		activeLibraryId
+			?.let { l ->
+				activeServiceFile?.let {  sf ->
+					loadFileProperties(l, sf)
+				}
+			}
+			.keepPromise(Unit)
 
 	override fun act() {
 		mutableIsLoading.value = false
@@ -222,8 +215,7 @@ class FileDetailsViewModel(
 			val newValue = uncommittedValue.value
 
 			return activeLibraryId?.let { l ->
-					activePositionedFile
-						?.serviceFile
+					activeServiceFile
 						?.let { serviceFile ->
 							updateFileProperties
 								.promiseFileUpdate(l, serviceFile, property, newValue, true)

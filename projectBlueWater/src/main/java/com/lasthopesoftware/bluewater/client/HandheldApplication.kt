@@ -37,6 +37,7 @@ import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ReusedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelRegistry
+import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsView
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
@@ -45,10 +46,11 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryD
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationGraphNavigation
-import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsFromNowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.HiddenSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryMenu
+import com.lasthopesoftware.bluewater.client.browsing.navigation.ListedFileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigateToLibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NewConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
@@ -193,6 +195,7 @@ fun LibraryDestination.Navigate(
 ) {
 	with(browserViewDependencies) {
 		when (this@Navigate) {
+
 			is BrowserLibraryDestination -> {
 				Navigate(
 					browserViewDependencies = browserViewDependencies,
@@ -200,7 +203,31 @@ fun LibraryDestination.Navigate(
 				)
 			}
 
-			is FileDetailsScreen -> {}
+			is ListedFileDetailsScreen -> {
+				val viewModel = listedFileDetailsViewModel
+
+				FileDetailsView(
+					viewModel = viewModel,
+					navigateApplication = applicationNavigation,
+					bitmapProducer = bitmapProducer,
+					playableFileDetailsState = viewModel,
+				)
+
+				viewModel.load(libraryId, files, position)
+			}
+
+			is FileDetailsFromNowPlayingScreen -> {
+				val viewModel = fileDetailsFromNowPlayingViewModel
+
+				FileDetailsView(
+					viewModel = viewModel,
+					navigateApplication = applicationNavigation,
+					bitmapProducer = bitmapProducer,
+					playableFileDetailsState = viewModel,
+				)
+
+				viewModel.load(libraryId, positionedFile)
+			}
 
 			is ConnectionSettingsScreen -> {
 				val viewModel = librarySettingsViewModel

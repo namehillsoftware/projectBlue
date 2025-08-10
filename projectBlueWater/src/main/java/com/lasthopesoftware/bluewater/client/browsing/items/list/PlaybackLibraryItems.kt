@@ -6,8 +6,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 interface PlaybackLibraryItems {
-	fun playItem(libraryId: LibraryId, itemId: ItemId): Promise<Unit>
-	fun playPlaylist(libraryId: LibraryId, playlistId: PlaylistId): Promise<Unit>
+	fun playItem(libraryId: LibraryId, itemId: ItemId, position: Int = 0): Promise<Unit>
+	fun playPlaylist(libraryId: LibraryId, playlistId: PlaylistId, position: Int = 0): Promise<Unit>
 
 	fun playItemShuffled(libraryId: LibraryId, itemId: ItemId): Promise<Unit>
 	fun playPlaylistShuffled(libraryId: LibraryId, playlistId: PlaylistId): Promise<Unit>

@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import kotlinx.parcelize.Parcelize
 
 sealed interface Destination : Parcelable
@@ -37,10 +38,16 @@ class ConnectionSettingsScreen(override val libraryId: LibraryId) : LibraryDesti
 class NowPlayingScreen(override val libraryId: LibraryId) : LibraryDestination
 
 @Parcelize
-class FileDetailsScreen(
+class ListedFileDetailsScreen(
 	override val libraryId: LibraryId,
-	val playlist: List<ServiceFile>,
+	val files: List<ServiceFile>,
 	val position: Int
+) : LibraryDestination
+
+@Parcelize
+class FileDetailsFromNowPlayingScreen(
+	override val libraryId: LibraryId,
+	val positionedFile: PositionedFile
 ) : LibraryDestination
 
 sealed interface BrowserLibraryDestination : LibraryDestination

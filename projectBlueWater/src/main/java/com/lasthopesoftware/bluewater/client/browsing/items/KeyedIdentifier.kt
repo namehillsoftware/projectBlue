@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items
 
-interface KeyedIdentifier {
+import android.os.Parcelable
+
+interface KeyedIdentifier : Parcelable {
 	val id: String
 }
