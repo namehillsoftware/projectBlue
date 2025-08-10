@@ -310,7 +310,7 @@ class LiveMediaCenterConnection(
 			.promiseStandardResponse()
 			.also(cp::doCancel)
 			.then { standardRequest ->
-				standardRequest.items["Sync"]
+				standardRequest.items["Master"]
 					?.takeIf { revisionValue -> revisionValue.isNotEmpty() }
 					?.toLong()
 			}
