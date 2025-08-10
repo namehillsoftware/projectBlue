@@ -21,7 +21,7 @@ class `When getting files` {
 
 	private val mut by lazy {
 		val httpConnection = FakeHttpConnection().apply {
-			mapResponse(TestUrl.withMcApi().addPath("Playlist/Files").addParams("Playlist=-466327", "Action=Serialize", "ResetCache=1")) {
+			mapResponse(TestUrl.withMcApi().addPath("Playlist/Files").addParams("Playlist=-466327", "Action=Serialize")) {
 				PassThroughHttpResponse(
 					200,
 					"OK",
