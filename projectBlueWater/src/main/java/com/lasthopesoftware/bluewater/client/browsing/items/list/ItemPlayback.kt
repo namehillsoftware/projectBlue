@@ -11,15 +11,15 @@ class ItemPlayback(
 	private val itemFileProvider: ProvideLibraryFiles,
 	private val controlPlaybackService: ControlPlaybackService
 ) : PlaybackLibraryItems {
-	override fun playItem(libraryId: LibraryId, itemId: ItemId): Promise<Unit> =
+	override fun playItem(libraryId: LibraryId, itemId: ItemId, position: Int): Promise<Unit> =
 		itemFileProvider
 			.promiseFiles(libraryId, itemId)
-			.then { it -> controlPlaybackService.startPlaylist(libraryId, it) }
+			.then { it -> controlPlaybackService.startPlaylist(libraryId, it, position) }
 
-	override fun playPlaylist(libraryId: LibraryId, playlistId: PlaylistId): Promise<Unit> =
+	override fun playPlaylist(libraryId: LibraryId, playlistId: PlaylistId, position: Int): Promise<Unit> =
 		itemFileProvider
 			.promiseFiles(libraryId, playlistId)
-			.then { it -> controlPlaybackService.startPlaylist(libraryId, it) }
+			.then { it -> controlPlaybackService.startPlaylist(libraryId, it, position) }
 
 	override fun playItemShuffled(libraryId: LibraryId, itemId: ItemId): Promise<Unit> =
 		itemFileProvider

@@ -85,7 +85,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.Unlabelle
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
@@ -172,7 +171,7 @@ fun RenderTrackTitleItem(
 			itemListViewModel.loadedLibraryId?.also {
 				itemListViewModel.loadedItem?.also { item ->
 					applicationNavigation
-						.viewFileDetails(it, item, PositionedFile(position, serviceFile))
+						.viewFileDetails(it, fileListViewModel.files.value, position)
 				}
 			}
 			Unit

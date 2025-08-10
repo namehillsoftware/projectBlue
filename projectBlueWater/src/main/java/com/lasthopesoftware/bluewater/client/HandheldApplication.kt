@@ -46,13 +46,11 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryD
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationGraphNavigation
-import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsFromItemScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsFromNowPlayingScreen
-import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsFromSearchScreen
-import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.HiddenSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryMenu
+import com.lasthopesoftware.bluewater.client.browsing.navigation.ListedFileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigateToLibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NewConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
@@ -205,28 +203,17 @@ fun LibraryDestination.Navigate(
 				)
 			}
 
-			is FileDetailsFromItemScreen -> {
-				val viewModel = fileDetailsFromItemViewModel
+			is ListedFileDetailsScreen -> {
+				val viewModel = listedFileDetailsViewModel
 
 				FileDetailsView(
 					viewModel = viewModel,
 					navigateApplication = applicationNavigation,
 					bitmapProducer = bitmapProducer,
+					playableFileDetailsState = viewModel,
 				)
 
-				viewModel.load(libraryId, item.itemId, positionedFile)
-			}
-
-			is FileDetailsFromSearchScreen -> {
-				val viewModel = fileDetailsFromSearchViewModel
-
-				FileDetailsView(
-					viewModel = viewModel,
-					navigateApplication = applicationNavigation,
-					bitmapProducer = bitmapProducer,
-				)
-
-				viewModel.load(libraryId, searchQuery, positionedFile)
+				viewModel.load(libraryId, files, position)
 			}
 
 			is FileDetailsFromNowPlayingScreen -> {
@@ -236,12 +223,11 @@ fun LibraryDestination.Navigate(
 					viewModel = viewModel,
 					navigateApplication = applicationNavigation,
 					bitmapProducer = bitmapProducer,
+					playableFileDetailsState = viewModel,
 				)
 
 				viewModel.load(libraryId, positionedFile)
 			}
-
-			is FileDetailsScreen -> {}
 
 			is ConnectionSettingsScreen -> {
 				val viewModel = librarySettingsViewModel

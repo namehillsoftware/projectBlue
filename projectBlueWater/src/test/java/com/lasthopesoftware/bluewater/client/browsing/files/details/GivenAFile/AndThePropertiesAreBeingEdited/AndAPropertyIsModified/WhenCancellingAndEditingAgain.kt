@@ -1,9 +1,7 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAPlaylist.AndTheConnectionIsReadOnly
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndThePropertiesAreBeingEdited.AndAPropertyIsModified
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsFromItemViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
+import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -19,23 +17,23 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-class WhenAnotherPropertyIsEdited {
+class WhenCancellingAndEditingAgain {
 	companion object {
-		private const val libraryId = 792
-		private const val serviceFileId = "220"
+		private const val libraryId = 114
+		private const val serviceFileId = "371"
 	}
 
-	private var persistedValue = ""
+	private var persistedTrackNumber = ""
 
 	private val viewModel by lazy {
-		FileDetailsFromItemViewModel(
+		FileDetailsViewModel(
 			mockk {
-				every { promiseIsReadOnly(LibraryId(libraryId)) } returns true.toPromise()
+				every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
 			},
 			mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
 					sequenceOf(
-						ReadOnlyFileProperty(NormalizedFileProperties.Rating, "2"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Rating, "68"),
 						ReadOnlyFileProperty("awkward", "prevent"),
 						ReadOnlyFileProperty("feast", "wind"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Name, "please"),
@@ -47,17 +45,24 @@ class WhenAnotherPropertyIsEdited {
 						ReadOnlyFileProperty(NormalizedFileProperties.Custom, "curl"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Publisher, "capital"),
 						ReadOnlyFileProperty(NormalizedFileProperties.TotalDiscs, "354"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Track, "882"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Track, "703"),
 						ReadOnlyFileProperty(NormalizedFileProperties.AlbumArtist, "calm"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Album, "distant"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Date, "1355"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Band, "stair"),
 					)
 				)
 			},
 			mockk {
-				every { promiseFileUpdate(LibraryId(libraryId), ServiceFile(serviceFileId), NormalizedFileProperties.Custom, any(), false) } answers {
-					persistedValue = arg(2)
+				every {
+					promiseFileUpdate(
+						LibraryId(libraryId),
+						ServiceFile(serviceFileId),
+						NormalizedFileProperties.Track,
+						any(),
+						false
+					)
+				} answers {
+					persistedTrackNumber = arg(2)
 					Unit.toPromise()
 				}
 			},
@@ -65,23 +70,25 @@ class WhenAnotherPropertyIsEdited {
 				every { promiseImageBytes() } returns byteArrayOf(3, 4).toPromise()
 			},
 			mockk {
-				every { promiseImageBytes(LibraryId(libraryId), any<ServiceFile>()) } returns byteArrayOf(61, 127).toPromise()
+				every { promiseImageBytes(LibraryId(libraryId), any<ServiceFile>()) } returns byteArrayOf(
+					61,
+					127
+				).toPromise()
 			},
 			mockk(),
 			RecordingApplicationMessageBus(),
 			PassThroughUrlKeyProvider(URL("http://damage")),
-			mockk(),
 		)
 	}
-
-	private val FileDetailsFromItemViewModel.propertyToEdit
-		get() = fileProperties.value.first { it.property == EditableFilePropertyDefinition.Band.propertyName }
 
 	@BeforeAll
 	fun act() {
 		viewModel.apply {
-			loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
-			propertyToEdit.apply {
+			load(LibraryId(libraryId), ServiceFile(serviceFileId)).toExpiringFuture().get()
+			fileProperties.value.first { it.property == NormalizedFileProperties.Date }.apply {
+				highlight()
+				edit()
+				cancel()
 				highlight()
 				edit()
 			}
@@ -89,17 +96,7 @@ class WhenAnotherPropertyIsEdited {
 	}
 
 	@Test
-	fun `then the property has the correct editable type`() {
-		assertThat(viewModel.propertyToEdit.editableType).isEqualTo(FilePropertyType.ShortFormText)
-	}
-
-	@Test
-	fun `then the property is NOT being edited`() {
-		assertThat(viewModel.propertyToEdit.isEditing.value).isFalse
-	}
-
-	@Test
-	fun `then the new property is highlighted`() {
-		assertThat(viewModel.highlightedProperty.value).isEqualTo(viewModel.propertyToEdit)
+	fun `then the property is highlighted`() {
+		assertThat(viewModel.highlightedProperty.value).isEqualTo(viewModel.fileProperties.value.first { it.property == NormalizedFileProperties.Date })
 	}
 }

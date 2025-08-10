@@ -103,7 +103,11 @@ import kotlinx.coroutines.launch
 private val viewPadding = viewPaddingUnit
 
 @Composable
-private fun StaticFileMenu(viewModel: AbstractFileDetailsViewModel, mediaStylePalette: MediaStylePalette) {
+private fun StaticFileMenu(
+	fileDetailsState: FileDetailsState,
+	mediaStylePalette: MediaStylePalette,
+	playableFileDetailsState: PlayableFileDetailsState? = null,
+) {
 	val padding = viewPadding * 3
 
 	Row(
@@ -117,7 +121,7 @@ private fun StaticFileMenu(viewModel: AbstractFileDetailsViewModel, mediaStylePa
 		val addFileToPlaybackLabel = stringResource(id = R.string.btn_add_file_to_playback)
 		val colorFilter = ColorFilter.tint(iconColor)
 		ColumnMenuIcon(
-			onClick = { viewModel.addToNowPlaying() },
+			onClick = { fileDetailsState.addToNowPlaying() },
 			icon = {
 				Image(
 					painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
@@ -133,26 +137,28 @@ private fun StaticFileMenu(viewModel: AbstractFileDetailsViewModel, mediaStylePa
 			labelColor = iconColor
 		)
 
-		val playLabel = stringResource(id = R.string.btn_play)
-		ColumnMenuIcon(
-			onClick = { viewModel.play() },
-			icon = {
-				Image(
-					painter = painterResource(id = R.drawable.av_play_white),
-					colorFilter = colorFilter,
-					contentDescription = playLabel,
-					modifier = Modifier.size(iconSize),
-				)
-			},
-			label = playLabel,
-			labelMaxLines = 1,
-			labelColor = iconColor
-		)
+		if (playableFileDetailsState != null) {
+			val playLabel = stringResource(id = R.string.btn_play)
+			ColumnMenuIcon(
+				onClick = { playableFileDetailsState.play() },
+				icon = {
+					Image(
+						painter = painterResource(id = R.drawable.av_play_white),
+						colorFilter = colorFilter,
+						contentDescription = playLabel,
+						modifier = Modifier.size(iconSize),
+					)
+				},
+				label = playLabel,
+				labelMaxLines = 1,
+				labelColor = iconColor
+			)
+		}
 	}
 }
 
 @Composable
-fun FileRating(viewModel: AbstractFileDetailsViewModel, mediaStylePalette: MediaStylePalette, modifier: Modifier) {
+fun FileRating(viewModel: FileDetailsState, mediaStylePalette: MediaStylePalette, modifier: Modifier) {
 	val rating by viewModel.rating.subscribeAsState()
 
 	RatingBar(
@@ -188,11 +194,11 @@ fun rememberComputedColorPalette(
 
 @Composable
 fun FilePropertyHeader(
-    viewModel: AbstractFileDetailsViewModel,
-    palette: MediaStylePalette,
-    modifier: Modifier = Modifier,
-    isMarqueeEnabled: Boolean,
-    titleFontSize: TextUnit = 24.sp
+	viewModel: FileDetailsState,
+	palette: MediaStylePalette,
+	modifier: Modifier = Modifier,
+	isMarqueeEnabled: Boolean,
+	titleFontSize: TextUnit = 24.sp
 ) {
 	val fileName by viewModel.fileName.subscribeAsState(NullBox(stringResource(id = R.string.lbl_loading)))
 
@@ -227,9 +233,9 @@ fun FilePropertyHeader(
 
 @Composable
 fun FilePropertyRow(
-    viewModel: AbstractFileDetailsViewModel,
-    property: AbstractFileDetailsViewModel.FilePropertyViewModel,
-    palette: MediaStylePalette
+	viewModel: FileDetailsState,
+	property: FileDetailsViewModel.FilePropertyViewModel,
+	palette: MediaStylePalette
 ) {
 	val itemPadding = 2.dp
 
@@ -306,9 +312,9 @@ fun FilePropertyRow(
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun FileDetailsEditor(
-    viewModel: AbstractFileDetailsViewModel,
-    navigateApplication: NavigateApplication,
-    palette: MediaStylePalette
+	viewModel: FileDetailsState,
+	navigateApplication: NavigateApplication,
+	palette: MediaStylePalette
 ) {
 	val maybeHighlightedFileProperty by viewModel.highlightedProperty.subscribeAsState()
 	maybeHighlightedFileProperty?.let { fileProperty ->
@@ -473,9 +479,10 @@ private fun FileDetailsEditor(
 @Composable
 @OptIn(ExperimentalComposeUiApi::class)
 fun FileDetailsView(
-    viewModel: AbstractFileDetailsViewModel,
-    navigateApplication: NavigateApplication,
-    bitmapProducer: ProduceBitmaps
+	viewModel: FileDetailsState,
+	navigateApplication: NavigateApplication,
+	bitmapProducer: ProduceBitmaps,
+	playableFileDetailsState: PlayableFileDetailsState? = null
 ) {
 	val activity = LocalActivity.current ?: return
 
@@ -629,21 +636,23 @@ fun FileDetailsView(
 								labelMaxLines = 1,
 							)
 
-							val playLabel = stringResource(id = R.string.btn_play)
-							ColumnMenuIcon(
-								onClick = { viewModel.play() },
-								icon = {
-									Image(
-										painter = painterResource(id = R.drawable.av_play_white),
-										colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-										contentDescription = playLabel,
-										modifier = Modifier.size(topMenuIconSize),
-									)
-								},
-								label = playLabel,
-								labelColor = coverArtColorState.secondaryTextColor,
-								labelMaxLines = 1,
-							)
+							if (playableFileDetailsState != null) {
+								val playLabel = stringResource(id = R.string.btn_play)
+								ColumnMenuIcon(
+									onClick = { playableFileDetailsState.play() },
+									icon = {
+										Image(
+											painter = painterResource(id = R.drawable.av_play_white),
+											colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+											contentDescription = playLabel,
+											modifier = Modifier.size(topMenuIconSize),
+										)
+									},
+									label = playLabel,
+									labelColor = coverArtColorState.secondaryTextColor,
+									labelMaxLines = 1,
+								)
+							}
 						}
 					}
 
@@ -774,7 +783,7 @@ fun FileDetailsView(
 							}
 					}
 
-					StaticFileMenu(viewModel, coverArtColorState)
+					StaticFileMenu(viewModel, coverArtColorState, playableFileDetailsState)
 				}
 
 				Column(modifier = Modifier.fillMaxWidth()) {

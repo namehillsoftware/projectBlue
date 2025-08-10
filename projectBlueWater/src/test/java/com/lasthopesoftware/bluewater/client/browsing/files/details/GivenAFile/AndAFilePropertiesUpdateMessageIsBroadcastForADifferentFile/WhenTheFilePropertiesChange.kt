@@ -1,7 +1,7 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAPlaylist.AndAFilePropertiesUpdateMessageIsBroadcast
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAFilePropertiesUpdateMessageIsBroadcastForADifferentFile
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsFromItemViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
@@ -18,11 +18,10 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-
 class WhenTheFilePropertiesChange {
 	companion object {
-		private const val libraryId = 856
-		private const val serviceFileId = "491"
+		private const val libraryId = 798
+		private const val serviceFileId = "783"
 	}
 
 	private val services by lazy {
@@ -30,20 +29,20 @@ class WhenTheFilePropertiesChange {
 
 		Pair(
 			recordingApplicationMessageBus,
-			FileDetailsFromItemViewModel(
+			FileDetailsViewModel(
 				mockk {
 					every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
 				},
 				mockk {
 					every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
 						sequenceOf(
-							ReadOnlyFileProperty(NormalizedFileProperties.Rating, "3"),
-							ReadOnlyFileProperty("bread", "prevent"),
-							ReadOnlyFileProperty("silence", "wind"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Name, "sorry"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Artist, "receive"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Album, "part"),
-							ReadOnlyFileProperty(NormalizedFileProperties.StackView, "basic"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Rating, "815"),
+							ReadOnlyFileProperty("little", "more"),
+							ReadOnlyFileProperty("evening", "skin"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Name, "ahead"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Artist, "moon"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Album, "number"),
+							ReadOnlyFileProperty(NormalizedFileProperties.ImageFile, "battle"),
 						)
 					) andThen Promise(
 						sequenceOf(
@@ -77,7 +76,6 @@ class WhenTheFilePropertiesChange {
 						)
 					} returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
 				},
-				mockk(),
 			)
 		)
 	}
@@ -86,55 +84,42 @@ class WhenTheFilePropertiesChange {
 	fun act() {
 		val (messageBus, viewModel) = services
 
-		viewModel.loadFromList(
-			LibraryId(libraryId),
-			listOf(
-				ServiceFile("291"),
-				ServiceFile("312"),
-				ServiceFile("783"),
-				ServiceFile("380"),
-				ServiceFile(serviceFileId),
-				ServiceFile("723"),
-				ServiceFile("81"),
-				ServiceFile("543"),
-			),
-			4
-		).toExpiringFuture().get()
+		viewModel.load(LibraryId(libraryId), ServiceFile(serviceFileId)).toExpiringFuture().get()
 
-		messageBus.sendMessage(FilePropertiesUpdatedMessage(UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId))))
+		messageBus.sendMessage(FilePropertiesUpdatedMessage(UrlKeyHolder(URL("http://bow"), ServiceFile("937"))))
 	}
 
 	@Test
 	fun `then the properties are correct`() {
 		assertThat(services.second.fileProperties.value.map { Pair(it.property, it.committedValue.value) }).hasSameElementsAs(
 			listOf(
-				Pair(NormalizedFileProperties.Rating, "7"),
-				Pair("bread", "scenery"),
-				Pair("rush", "offense"),
-				Pair(NormalizedFileProperties.Name, "kiss"),
-				Pair(NormalizedFileProperties.Artist, "adoption"),
-				Pair(NormalizedFileProperties.Album, "motherly"),
+				Pair(NormalizedFileProperties.Rating, "815"),
+				Pair("little", "more"),
+				Pair("evening", "skin"),
+				Pair(NormalizedFileProperties.Name, "ahead"),
+				Pair(NormalizedFileProperties.Artist, "moon"),
+				Pair(NormalizedFileProperties.Album, "number"),
 			)
 		)
 	}
 
 	@Test
 	fun `then the rating is correct`() {
-		assertThat(services.second.rating.value).isEqualTo(7)
+		assertThat(services.second.rating.value).isEqualTo(815)
 	}
 
 	@Test
 	fun `then the artist is correct`() {
-		assertThat(services.second.artist.value).isEqualTo("adoption")
+		assertThat(services.second.artist.value).isEqualTo("moon")
 	}
 
 	@Test
 	fun `then the file name is correct`() {
-		assertThat(services.second.fileName.value).isEqualTo("kiss")
+		assertThat(services.second.fileName.value).isEqualTo("ahead")
 	}
 
 	@Test
 	fun `then the album is correct`() {
-		assertThat(services.second.album.value).isEqualTo("motherly")
+		assertThat(services.second.album.value).isEqualTo("number")
 	}
 }

@@ -14,7 +14,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
@@ -25,15 +24,13 @@ import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
 import com.lasthopesoftware.promises.extensions.keepPromise
-import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.emptyByteArray
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
-import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 
-abstract class AbstractFileDetailsViewModel(
+class FileDetailsViewModel(
 	private val connectionPermissions: CheckIfConnectionIsReadOnly,
 	private val filePropertiesProvider: ProvideEditableLibraryFileProperties,
 	private val updateFileProperties: UpdateFileProperties,
@@ -42,7 +39,7 @@ abstract class AbstractFileDetailsViewModel(
 	private val controlPlayback: ControlPlaybackService,
 	registerForApplicationMessages: RegisterForApplicationMessages,
 	private val urlKeyProvider: ProvideUrlKey,
-) : ViewModel(), ImmediateAction, ImmediateResponse<List<ServiceFile>, Unit> {
+) : ViewModel(), ImmediateAction, FileDetailsState, LoadFileDetailsState {
 
 	companion object {
 		private val propertiesToSkip = setOf(
@@ -56,21 +53,17 @@ abstract class AbstractFileDetailsViewModel(
 			NormalizedFileProperties.Waveform,
 			NormalizedFileProperties.LengthInPcmBlocks
 		)
-
-		private val emptyListPromise by lazy { emptyList<ServiceFile>().toPromise() }
 	}
 
 	private var isConnectionReadOnly = false
 	private var activeEditingFile: FilePropertyViewModel? = null
 	private var associatedUrlKey: UrlKeyHolder<ServiceFile>? = null
-	private var associatedPlaylist = emptyList<ServiceFile>()
-	private var activePositionedFile: PositionedFile? = null
-
 	private val propertyUpdateRegistrations = registerForApplicationMessages.registerReceiver { message: FilePropertiesUpdatedMessage ->
 		if (message.urlServiceKey == associatedUrlKey) reloadFileProperties()
 	}
 
 	private val mutableFileName = MutableInteractionState("")
+
 	private val mutableAlbum = MutableInteractionState("")
 	private val mutableArtist = MutableInteractionState("")
 	private val mutableFileProperties = MutableInteractionState(emptyList<FilePropertyViewModel>())
@@ -80,21 +73,24 @@ abstract class AbstractFileDetailsViewModel(
 	private val mutableRating = MutableInteractionState(0)
 	private val mutableHighlightedProperty = MutableInteractionState<FilePropertyViewModel?>(null)
 
-	val fileName = mutableFileName.asInteractionState()
-	val artist = mutableArtist.asInteractionState()
-	val album = mutableAlbum.asInteractionState()
-	val fileProperties = mutableFileProperties.asInteractionState()
-	val isLoading = mutableIsLoading.asInteractionState()
-	val coverArt = LiftedInteractionState(
+	override val fileName = mutableFileName.asInteractionState()
+	override val artist = mutableArtist.asInteractionState()
+	override val album = mutableAlbum.asInteractionState()
+	override val fileProperties = mutableFileProperties.asInteractionState()
+	override val isLoading = mutableIsLoading.asInteractionState()
+	override val coverArt = LiftedInteractionState(
 		promisedDefaultCoverArt
 			.toMaybeObservable()
 			.toObservable()
 			.concatWith(mutableCoverArt.mapNotNull()),
 		emptyByteArray
 	)
-	val rating = mutableRating.asInteractionState()
-	val highlightedProperty = mutableHighlightedProperty.asInteractionState()
-	var activeLibraryId: LibraryId? = null
+	override val rating = mutableRating.asInteractionState()
+	override val highlightedProperty = mutableHighlightedProperty.asInteractionState()
+
+	override var activeLibraryId: LibraryId? = null
+		private set
+	override var activeServiceFile: ServiceFile? = null
 		private set
 
 	override fun onCleared() {
@@ -103,36 +99,20 @@ abstract class AbstractFileDetailsViewModel(
 		super.onCleared()
 	}
 
-	override fun respond(resolution: List<ServiceFile>) {
-		associatedPlaylist = resolution
-	}
-
-	fun loadFromList(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int): Promise<Unit> {
-		val serviceFile = playlist[position]
+	override fun load(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Unit> {
 		activeLibraryId = libraryId
-		activePositionedFile = PositionedFile(position, serviceFile)
-		associatedPlaylist = playlist
+		activeServiceFile = serviceFile
 
 		return promiseLoadedActiveFile()
 	}
 
-	fun load(libraryId: LibraryId, positionedFile: PositionedFile): Promise<Unit> {
-		activeLibraryId = libraryId
-		activePositionedFile = positionedFile
-		associatedPlaylist = emptyList()
-
-		return promiseLoadedActiveFile()
-	}
-
-	fun promiseLoadedActiveFile(): Promise<Unit> = activeLibraryId
+	override fun promiseLoadedActiveFile(): Promise<Unit> = activeLibraryId
 		?.let { libraryId ->
-			activePositionedFile?.serviceFile?.let {  serviceFile ->
+			activeServiceFile?.let {  serviceFile ->
 				mutableIsLoading.value = true
 				val isReadOnlyPromise = connectionPermissions
 					.promiseIsReadOnly(libraryId)
 					.then { r -> isConnectionReadOnly = r }
-
-				val playlistPromise = promiseFiles(libraryId).then(this)
 
 				val filePropertiesSetPromise = loadFileProperties(libraryId, serviceFile)
 
@@ -149,35 +129,27 @@ abstract class AbstractFileDetailsViewModel(
 					}
 
 				Promise
-					.whenAll(filePropertiesSetPromise, playlistPromise, bitmapSetPromise, urlKeyPromise, isReadOnlyPromise)
+					.whenAll(filePropertiesSetPromise, bitmapSetPromise, urlKeyPromise, isReadOnlyPromise)
 					.must(this)
 					.unitResponse()
 			}
 		}
 		.keepPromise(Unit)
 
-	protected open fun promiseFiles(libraryId: LibraryId): Promise<List<ServiceFile>> = emptyListPromise
-
-	private fun reloadFileProperties(): Promise<Unit> =
-		activeLibraryId
-			?.let { l ->
-				activePositionedFile?.serviceFile?.let {  sf ->
-					loadFileProperties(l, sf)
-				}
-			}
-			.keepPromise(Unit)
-
-	fun addToNowPlaying() {
-		val serviceFile = activePositionedFile?.serviceFile ?: return
+	override fun addToNowPlaying() {
+		val serviceFile = activeServiceFile ?: return
 		val libraryId = activeLibraryId ?: return
 		controlPlayback.addToPlaylist(libraryId, serviceFile)
 	}
 
-	fun play() {
-		val positionedFile = activePositionedFile ?: return
-		val libraryId = activeLibraryId ?: return
-		controlPlayback.startPlaylist(libraryId, associatedPlaylist, positionedFile.playlistPosition)
-	}
+	private fun reloadFileProperties(): Promise<Unit> =
+		activeLibraryId
+			?.let { l ->
+				activeServiceFile?.let {  sf ->
+					loadFileProperties(l, sf)
+				}
+			}
+			.keepPromise(Unit)
 
 	override fun act() {
 		mutableIsLoading.value = false
@@ -243,8 +215,7 @@ abstract class AbstractFileDetailsViewModel(
 			val newValue = uncommittedValue.value
 
 			return activeLibraryId?.let { l ->
-					activePositionedFile
-						?.serviceFile
+					activeServiceFile
 						?.let { serviceFile ->
 							updateFileProperties
 								.promiseFileUpdate(l, serviceFile, property, newValue, true)

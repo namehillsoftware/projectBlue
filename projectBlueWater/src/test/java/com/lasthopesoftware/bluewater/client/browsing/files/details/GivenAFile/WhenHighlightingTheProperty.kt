@@ -1,7 +1,7 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAPlaylist
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsFromItemViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -23,7 +23,7 @@ class WhenHighlightingTheProperty {
 		private const val serviceFileId = "485"
 
 		private val viewModel by lazy {
-			FileDetailsFromItemViewModel(
+			FileDetailsViewModel(
 				mockk {
 					every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
 				},
@@ -54,14 +54,26 @@ class WhenHighlightingTheProperty {
 					every { promiseImageBytes() } returns byteArrayOf(3, 4).toPromise()
 				},
 				mockk {
-					every { promiseImageBytes(LibraryId(libraryId), any<ServiceFile>()) } returns byteArrayOf(61, 127).toPromise()
+					every {
+						promiseImageBytes(
+							LibraryId(libraryId),
+							any<ServiceFile>()
+						)
+					} returns byteArrayOf(61, 127).toPromise()
 				},
 				mockk(),
 				RecordingApplicationMessageBus(),
 				mockk {
-					every { promiseUrlKey(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
+					every {
+						promiseUrlKey(
+							LibraryId(libraryId),
+							ServiceFile(serviceFileId)
+						)
+					} returns UrlKeyHolder(
+						URL("http://bow"),
+						ServiceFile(serviceFileId)
+					).toPromise()
 				},
-				mockk(),
 			)
 		}
 	}
@@ -69,7 +81,7 @@ class WhenHighlightingTheProperty {
 	@BeforeAll
 	fun act() {
 		viewModel.apply {
-			loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
+			load(LibraryId(libraryId), ServiceFile(serviceFileId)).toExpiringFuture().get()
 			fileProperties.value.first { it.property == NormalizedFileProperties.Publisher }.highlight()
 		}
 	}

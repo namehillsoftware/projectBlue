@@ -1,7 +1,7 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAPlaylist.AndThePropertiesAreBeingEdited.AndAPropertyIsModified
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndThePropertiesAreBeingEdited.AndAPropertyIsModified
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsFromItemViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -17,16 +17,16 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-class WhenCancelling {
+class WhenCommittingTheChanges {
 	companion object {
-		private const val libraryId = 918
-		private const val serviceFileId = "79"
+		private const val libraryId = 713
+		private const val serviceFileId = "294"
 	}
 
-	private var persistedTrackNumber = ""
+	private var persistedValue = ""
 
 	private val viewModel by lazy {
-		FileDetailsFromItemViewModel(
+		FileDetailsViewModel(
 			mockk {
 				every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
 			},
@@ -45,7 +45,7 @@ class WhenCancelling {
 						ReadOnlyFileProperty(NormalizedFileProperties.Custom, "curl"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Publisher, "capital"),
 						ReadOnlyFileProperty(NormalizedFileProperties.TotalDiscs, "354"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Track, "703"),
+						ReadOnlyFileProperty(NormalizedFileProperties.Track, "882"),
 						ReadOnlyFileProperty(NormalizedFileProperties.AlbumArtist, "calm"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Album, "distant"),
 						ReadOnlyFileProperty(NormalizedFileProperties.Date, "1355"),
@@ -53,8 +53,16 @@ class WhenCancelling {
 				)
 			},
 			mockk {
-				every { promiseFileUpdate(LibraryId(libraryId), ServiceFile(serviceFileId), NormalizedFileProperties.Track, any(), false) } answers {
-					persistedTrackNumber = arg(2)
+				every {
+					promiseFileUpdate(
+						LibraryId(libraryId),
+						ServiceFile(serviceFileId),
+						NormalizedFileProperties.Track,
+						any(),
+						true
+					)
+				} answers {
+					persistedValue = arg(3)
 					Unit.toPromise()
 				}
 			},
@@ -62,61 +70,47 @@ class WhenCancelling {
 				every { promiseImageBytes() } returns byteArrayOf(3, 4).toPromise()
 			},
 			mockk {
-				every { promiseImageBytes(LibraryId(libraryId), any<ServiceFile>()) } returns byteArrayOf(61, 127).toPromise()
+				every { promiseImageBytes(LibraryId(libraryId), any<ServiceFile>()) } returns byteArrayOf(
+					61,
+					127
+				).toPromise()
 			},
 			mockk(),
 			RecordingApplicationMessageBus(),
 			PassThroughUrlKeyProvider(URL("http://damage")),
-			mockk(),
 		)
 	}
 
 	@BeforeAll
 	fun act() {
 		viewModel.apply {
-			loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
-			fileProperties.value.first { it.property == NormalizedFileProperties.Track }.apply {
-				updateValue("141")
-				cancel()
-			}
+			load(LibraryId(libraryId), ServiceFile(serviceFileId)).toExpiringFuture().get()
+			fileProperties.value.first { it.property == NormalizedFileProperties.Track }
+				.apply {
+					updateValue("617")
+					commitChanges().toExpiringFuture().get()
+				}
 		}
 	}
 
 	@Test
 	fun `then the property is not being edited`() {
-		assertThat(
-			viewModel
-				.fileProperties
-				.value
-				.firstOrNull { it.property == NormalizedFileProperties.Track }
-				?.isEditing
-				?.value).isFalse
+		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == NormalizedFileProperties.Track }?.isEditing?.value).isFalse
 	}
 
 	@Test
-	fun `then the uncommitted property is NOT changed`() {
-		assertThat(
-			viewModel
-				.fileProperties
-				.value
-				.firstOrNull { it.property == NormalizedFileProperties.Track }
-				?.uncommittedValue
-				?.value).isEqualTo("703")
-	}
-
-	@Test
-	fun `then the committed property is NOT changed`() {
+	fun `then the committed property is changed`() {
 		assertThat(
 			viewModel
 				.fileProperties
 				.value
 				.firstOrNull { it.property == NormalizedFileProperties.Track }
 				?.committedValue
-				?.value).isEqualTo("703")
+				?.value).isEqualTo("617")
 	}
 
 	@Test
-	fun `then the property change is NOT persisted`() {
-		assertThat(persistedTrackNumber).isEmpty()
+	fun `then the property change is persisted`() {
+		assertThat(persistedValue).isEqualTo("617")
 	}
 }

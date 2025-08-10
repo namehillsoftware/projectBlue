@@ -1,53 +1,34 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details
 
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideEditableLibraryFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateFileProperties
+import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
+import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
-import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
-import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
-import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
-import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.namehillsoftware.handoff.promises.Promise
 
 class FileDetailsFromItemViewModel(
-	connectionPermissions: CheckIfConnectionIsReadOnly,
-	filePropertiesProvider: ProvideEditableLibraryFileProperties,
-	updateFileProperties: UpdateFileProperties,
-	defaultImageProvider: ProvideDefaultImage,
-	imageProvider: GetImageBytes,
-	controlPlayback: ControlPlaybackService,
-	registerForApplicationMessages: RegisterForApplicationMessages,
-	urlKeyProvider: ProvideUrlKey,
-	private val libraryFileProvider: ProvideLibraryFiles,
-) : AbstractFileDetailsViewModel(
-	connectionPermissions,
-	filePropertiesProvider,
-	updateFileProperties,
-	defaultImageProvider,
-	imageProvider,
-	controlPlayback,
-	registerForApplicationMessages,
-	urlKeyProvider,
-) {
-	var activeKeyedId: KeyedIdentifier? = null
-		private set
+	private val playbackLibraryItems: PlaybackLibraryItems,
+	private val loadFileDetailsState: LoadFileDetailsState,
+	private val fileDetailsState: FileDetailsState,
+) : ViewModel(), PlayableFileDetailsState, FileDetailsState by fileDetailsState  {
+	private var activeKeyedId: KeyedIdentifier? = null
+	private var activePositionedFile: PositionedFile? = null
 
 	fun load(libraryId: LibraryId, itemId: KeyedIdentifier, positionedFile: PositionedFile): Promise<Unit> {
 		activeKeyedId = itemId
-		return load(libraryId, positionedFile)
+		activePositionedFile = positionedFile
+		return loadFileDetailsState.load(libraryId, positionedFile.serviceFile)
 	}
 
-	override fun promiseFiles(libraryId: LibraryId): Promise<List<ServiceFile>> = when (val id = activeKeyedId) {
-		is ItemId -> libraryFileProvider.promiseFiles(libraryId, id)
-		is PlaylistId -> libraryFileProvider.promiseFiles(libraryId, id)
-		else -> super.promiseFiles(libraryId)
+	override fun play() {
+		val libraryId = activeLibraryId ?: return
+		val positionedFile = activePositionedFile ?: return
+		when (val id = activeKeyedId) {
+			is ItemId -> playbackLibraryItems.playItem(libraryId, id, positionedFile.playlistPosition)
+			is PlaylistId -> playbackLibraryItems.playPlaylist(libraryId, id, positionedFile.playlistPosition)
+		}
 	}
 }

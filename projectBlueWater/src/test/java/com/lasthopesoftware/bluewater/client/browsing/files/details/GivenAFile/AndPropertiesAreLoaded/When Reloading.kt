@@ -1,7 +1,7 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAPlaylist.AndPropertiesAreLoaded
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndPropertiesAreLoaded
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsFromItemViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -29,7 +29,7 @@ class `When Reloading` {
 	}
 
 	private val viewModel by lazy {
-		FileDetailsFromItemViewModel(
+		FileDetailsViewModel(
 			mockk {
 				every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
 			},
@@ -61,14 +61,22 @@ class `When Reloading` {
 				every { promiseImageBytes() } returns byteArrayOf(7, 7).toPromise()
 			},
 			mockk {
-				every { promiseImageBytes(LibraryId(libraryId), any<ServiceFile>()) } returns byteArrayOf(90, 127, 89).toPromise()
+				every { promiseImageBytes(LibraryId(libraryId), any<ServiceFile>()) } returns byteArrayOf(
+					90,
+					127,
+					89
+				).toPromise()
 			},
 			mockk(),
 			RecordingApplicationMessageBus(),
 			mockk {
-				every { promiseUrlKey(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
+				every {
+					promiseUrlKey(
+						LibraryId(libraryId),
+						ServiceFile(serviceFileId)
+					)
+				} returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
 			},
-			mockk(),
 		)
 	}
 
@@ -77,7 +85,7 @@ class `When Reloading` {
 	@BeforeAll
 	fun act() {
 		viewModel.isLoading.mapNotNull().subscribe(loadingStates::add).toCloseable().use {
-			viewModel.loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
+			viewModel.load(LibraryId(libraryId), ServiceFile(serviceFileId)).toExpiringFuture().get()
 			viewModel.promiseLoadedActiveFile().toExpiringFuture().get()
 		}
 	}

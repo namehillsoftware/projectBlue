@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.list
+package com.lasthopesoftware.bluewater.client.browsing.files.list.search
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -56,11 +56,14 @@ import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.list.LabelledPlayButton
+import com.lasthopesoftware.bluewater.client.browsing.files.list.LabelledShuffleButton
+import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackTitleItemView
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListContentType
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.UndoStack
@@ -95,14 +98,14 @@ fun RowScope.LabelledRefreshButton(
 
 @Composable
 fun RenderTrackTitleItem(
-	position: Int,
-	serviceFile: ServiceFile,
-	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
-	searchFilesViewModel: SearchFilesViewModel,
-	applicationNavigation: NavigateApplication,
-	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	playbackServiceController: ControlPlaybackService,
+    position: Int,
+    serviceFile: ServiceFile,
+    trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+    searchFilesViewModel: SearchFilesViewModel,
+    applicationNavigation: NavigateApplication,
+    nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
+    itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+    playbackServiceController: ControlPlaybackService,
 ) {
 	val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 
@@ -121,46 +124,50 @@ fun RenderTrackTitleItem(
 
 	val viewFilesClickHandler = {
 		searchFilesViewModel.loadedLibraryId?.also {
-			applicationNavigation.viewFileDetails(it, searchFilesViewModel.query.value, PositionedFile(position, serviceFile))
+			applicationNavigation.viewFileDetails(it, searchFilesViewModel.files.value, position)
 		}
 		Unit
 	}
 
 	val playingFile by nowPlayingViewModel.nowPlayingFile.subscribeAsState()
-	TrackTitleItemView(
-		itemName = fileName,
-		isActive = playingFile?.serviceFile == serviceFile,
-		isHiddenMenuShown = isMenuShown,
-		onItemClick = viewFilesClickHandler,
-		onHiddenMenuClick = {
-			itemListMenuBackPressedHandler.hideAllMenus()
-			fileItemViewModel.showMenu()
-		},
-		onAddToNowPlayingClick = {
-			searchFilesViewModel.loadedLibraryId?.also {
-				playbackServiceController.addToPlaylist(it, serviceFile)
-			}
-		},
-		onViewFilesClick = viewFilesClickHandler,
-		onPlayClick = {
-			fileItemViewModel.hideMenu()
-			searchFilesViewModel.loadedLibraryId?.also {
-				playbackServiceController.startPlaylist(it, searchFilesViewModel.files.value, position)
-			}
-		}
-	)
+    TrackTitleItemView(
+        itemName = fileName,
+        isActive = playingFile?.serviceFile == serviceFile,
+        isHiddenMenuShown = isMenuShown,
+        onItemClick = viewFilesClickHandler,
+        onHiddenMenuClick = {
+            itemListMenuBackPressedHandler.hideAllMenus()
+            fileItemViewModel.showMenu()
+        },
+        onAddToNowPlayingClick = {
+            searchFilesViewModel.loadedLibraryId?.also {
+                playbackServiceController.addToPlaylist(it, serviceFile)
+            }
+        },
+        onViewFilesClick = viewFilesClickHandler,
+        onPlayClick = {
+            fileItemViewModel.hideMenu()
+            searchFilesViewModel.loadedLibraryId?.also {
+                playbackServiceController.startPlaylist(
+                    it,
+                    searchFilesViewModel.files.value,
+                    position
+                )
+            }
+        }
+    )
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun SearchFilesView(
-	searchFilesViewModel: SearchFilesViewModel,
-	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
-	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	applicationNavigation: NavigateApplication,
-	playbackServiceController: ControlPlaybackService,
-	backStackBuilder: UndoStack
+    searchFilesViewModel: SearchFilesViewModel,
+    nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
+    trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+    itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+    applicationNavigation: NavigateApplication,
+    playbackServiceController: ControlPlaybackService,
+    backStackBuilder: UndoStack
 ) {
 	val files by searchFilesViewModel.files.subscribeAsState()
 	var isConnectionLost by remember { mutableStateOf(false) }

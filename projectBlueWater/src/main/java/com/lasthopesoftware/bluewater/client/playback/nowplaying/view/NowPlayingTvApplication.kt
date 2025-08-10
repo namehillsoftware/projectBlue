@@ -82,12 +82,10 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryD
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationGraphNavigation
-import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsFromItemScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsFromNowPlayingScreen
-import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsFromSearchScreen
-import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.HiddenSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryDestination
+import com.lasthopesoftware.bluewater.client.browsing.navigation.ListedFileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NewConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.RoutedNavigationDependencies
@@ -508,31 +506,17 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedViewModel
 			NowPlayingTvView(browserViewDependencies = browserViewDependencies)
 		}
 
-		is FileDetailsScreen -> {}
-
-
-		is FileDetailsFromItemScreen -> {
-			val viewModel = browserViewDependencies.fileDetailsFromItemViewModel
+		is ListedFileDetailsScreen -> {
+			val viewModel = browserViewDependencies.listedFileDetailsViewModel
 
 			FileDetailsView(
 				viewModel = viewModel,
 				navigateApplication = browserViewDependencies.applicationNavigation,
 				bitmapProducer = browserViewDependencies.bitmapProducer,
+				playableFileDetailsState = viewModel,
 			)
 
-			viewModel.load(libraryId, item.itemId, positionedFile)
-		}
-
-		is FileDetailsFromSearchScreen -> {
-			val viewModel = browserViewDependencies.fileDetailsFromSearchViewModel
-
-			FileDetailsView(
-				viewModel = viewModel,
-				navigateApplication = browserViewDependencies.applicationNavigation,
-				bitmapProducer = browserViewDependencies.bitmapProducer,
-			)
-
-			viewModel.load(libraryId, searchQuery, positionedFile)
+			viewModel.load(libraryId, files, position)
 		}
 
 		is FileDetailsFromNowPlayingScreen -> {
@@ -542,6 +526,7 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedViewModel
 				viewModel = viewModel,
 				navigateApplication = browserViewDependencies.applicationNavigation,
 				bitmapProducer = browserViewDependencies.bitmapProducer,
+				playableFileDetailsState = viewModel,
 			)
 
 			viewModel.load(libraryId, positionedFile)

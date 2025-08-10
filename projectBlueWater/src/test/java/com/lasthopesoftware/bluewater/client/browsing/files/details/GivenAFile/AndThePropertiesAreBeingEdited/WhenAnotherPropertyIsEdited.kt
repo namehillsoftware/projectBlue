@@ -1,7 +1,7 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAPlaylist.AndThePropertiesAreBeingEdited
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndThePropertiesAreBeingEdited
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsFromItemViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
@@ -28,7 +28,7 @@ class WhenAnotherPropertyIsEdited {
 	private var persistedValue = ""
 
 	private val viewModel by lazy {
-		FileDetailsFromItemViewModel(
+		FileDetailsViewModel(
 			mockk {
 				every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
 			},
@@ -55,7 +55,15 @@ class WhenAnotherPropertyIsEdited {
 				)
 			},
 			mockk {
-				every { promiseFileUpdate(LibraryId(libraryId), ServiceFile(serviceFileId), NormalizedFileProperties.Custom, any(), false) } answers {
+				every {
+					promiseFileUpdate(
+						LibraryId(libraryId),
+						ServiceFile(serviceFileId),
+						NormalizedFileProperties.Custom,
+						any(),
+						false
+					)
+				} answers {
 					persistedValue = arg(2)
 					Unit.toPromise()
 				}
@@ -64,19 +72,21 @@ class WhenAnotherPropertyIsEdited {
 				every { promiseImageBytes() } returns byteArrayOf(3, 4).toPromise()
 			},
 			mockk {
-				every { promiseImageBytes(LibraryId(libraryId), any<ServiceFile>()) } returns byteArrayOf(61, 127).toPromise()
+				every { promiseImageBytes(LibraryId(libraryId), any<ServiceFile>()) } returns byteArrayOf(
+					61,
+					127
+				).toPromise()
 			},
 			mockk(),
 			RecordingApplicationMessageBus(),
 			PassThroughUrlKeyProvider(URL("http://damage")),
-			mockk(),
 		)
 	}
 
 	@BeforeAll
 	fun act() {
 		viewModel.apply {
-			loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
+			load(LibraryId(libraryId), ServiceFile(serviceFileId)).toExpiringFuture().get()
 			fileProperties.apply {
 				value.first { it.property == NormalizedFileProperties.Custom }
 					.apply {

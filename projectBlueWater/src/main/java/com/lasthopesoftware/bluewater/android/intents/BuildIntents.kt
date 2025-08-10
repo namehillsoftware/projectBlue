@@ -2,10 +2,9 @@ package com.lasthopesoftware.bluewater.android.intents
 
 import android.app.PendingIntent
 import android.content.Intent
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
-import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 
 interface BuildIntents {
 
@@ -19,9 +18,7 @@ interface BuildIntents {
 
 	fun buildLibraryServerSettingsPendingIntent(libraryId: LibraryId): PendingIntent
 
-	fun buildFileDetailsIntent(libraryId: LibraryId, item: IItem, positionedFile: PositionedFile): Intent
-
-	fun buildFileDetailsIntent(libraryId: LibraryId, searchQuery: String, positionedFile: PositionedFile): Intent
+	fun buildFileDetailsIntent(libraryId: LibraryId, file: ServiceFile): Intent
 
 	fun buildNowPlayingIntent(libraryId: LibraryId): Intent
 

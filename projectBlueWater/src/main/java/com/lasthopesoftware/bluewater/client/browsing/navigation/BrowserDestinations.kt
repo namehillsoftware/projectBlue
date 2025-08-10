@@ -38,24 +38,10 @@ class ConnectionSettingsScreen(override val libraryId: LibraryId) : LibraryDesti
 class NowPlayingScreen(override val libraryId: LibraryId) : LibraryDestination
 
 @Parcelize
-class FileDetailsScreen(
+class ListedFileDetailsScreen(
 	override val libraryId: LibraryId,
-	val playlist: List<ServiceFile>,
+	val files: List<ServiceFile>,
 	val position: Int
-) : LibraryDestination
-
-@Parcelize
-class FileDetailsFromItemScreen(
-	override val libraryId: LibraryId,
-	val item: IItem,
-	val positionedFile: PositionedFile
-) : LibraryDestination
-
-@Parcelize
-class FileDetailsFromSearchScreen(
-	override val libraryId: LibraryId,
-	val searchQuery: String,
-	val positionedFile: PositionedFile
 ) : LibraryDestination
 
 @Parcelize

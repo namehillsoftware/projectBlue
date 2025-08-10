@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAQuery.An
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.list.search.SearchFilesViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.observables.toCloseable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture

@@ -1,9 +1,11 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.list
+package com.lasthopesoftware.bluewater.client.browsing.files.list.search
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
+import com.lasthopesoftware.bluewater.client.browsing.files.list.LoadedLibraryState
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ServiceFilesListState
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState

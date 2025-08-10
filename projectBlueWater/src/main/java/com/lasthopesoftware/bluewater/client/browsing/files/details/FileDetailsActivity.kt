@@ -15,10 +15,10 @@ import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.android.ui.ProjectBlueComposableApplication
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinitionProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
-import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
@@ -26,7 +26,6 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnect
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
@@ -40,8 +39,8 @@ import java.io.IOException
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<FileDetailsActivity>()) }
 		val playlistPosition by lazy { magicPropertyBuilder.buildProperty("playlistPosition") }
 		val itemId by lazy { magicPropertyBuilder.buildProperty("itemId") }
-		val searchQuery by lazy { magicPropertyBuilder.buildProperty("searchQuery") }
 		val positionedFile by lazy { magicPropertyBuilder.buildProperty("positionedFile") }
+		val serviceFile by lazy { magicPropertyBuilder.buildProperty("serviceFile") }
 		val libraryIdKey by lazy { magicPropertyBuilder.buildProperty("libraryId") }
 	}
 
@@ -63,7 +62,7 @@ import java.io.IOException
 	}
 
 	private val vm by buildViewModelLazily {
-		FileDetailsFromItemViewModel(
+		FileDetailsViewModel(
 			libraryConnectedDependencies.connectionAuthenticationChecker,
 			filePropertiesProvider,
 			libraryConnectedDependencies.filePropertiesStorage,
@@ -72,7 +71,6 @@ import java.io.IOException
 			localApplicationDependencies.playbackServiceController,
 			localApplicationDependencies.registerForApplicationMessages,
 			libraryConnectedDependencies.urlKeyProvider,
-			libraryConnectedDependencies.libraryFilesProvider,
 		)
 	}
 
@@ -111,21 +109,25 @@ import java.io.IOException
 				when {
 					isGettingConnection -> ConnectionUpdatesView(connectionViewModel = connectionStatusViewModel)
 					isConnectionLost -> ConnectionLostView(onCancel = { finish() }, onRetry = { isConnectionLost = false })
-					else -> FileDetailsView(vm, activityApplicationNavigation, localApplicationDependencies.bitmapProducer)
+					else -> FileDetailsView(
+						vm,
+						activityApplicationNavigation,
+						localApplicationDependencies.bitmapProducer,
+					)
 				}
 
 				if (!isConnectionLost) {
 					LaunchedEffect(key1 = Unit) {
 						try {
-							val isInitialized = connectionStatusViewModel.initializeConnection(libraryId).suspend()
-							val keyedIdentifier = intent.safelyGetParcelableExtra<KeyedIdentifier>(itemId)
-							val positionedFile = intent.safelyGetParcelableExtra<PositionedFile>(positionedFile)
-							when {
-								positionedFile == null -> finish()
-								!isInitialized -> isConnectionLost = true
-								keyedIdentifier != null -> vm.load(libraryId, keyedIdentifier, positionedFile).suspend()
-//								query != null -> vm.load(libraryId, query, positionedFile).suspend()
+							val serviceFile = intent.safelyGetParcelableExtra<ServiceFile>(serviceFile)
+							if (serviceFile == null) {
+								finish()
+								return@LaunchedEffect
 							}
+
+							val isInitialized = connectionStatusViewModel.initializeConnection(libraryId).suspend()
+							if (!isInitialized) isConnectionLost = true
+							else vm.load(libraryId, serviceFile)
 						} catch (e: IOException) {
 							if (ConnectionLostExceptionFilter.isConnectionLostException(e))
 								isConnectionLost = true

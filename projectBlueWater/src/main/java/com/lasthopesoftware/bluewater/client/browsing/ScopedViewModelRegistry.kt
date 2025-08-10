@@ -3,9 +3,10 @@ package com.lasthopesoftware.bluewater.client.browsing
 import androidx.lifecycle.ViewModelStoreOwner
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsFromItemViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsFromNowPlayingViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsFromSearchViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.details.ListedFileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.list.search.SearchFilesViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinitionProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
@@ -62,8 +63,8 @@ class ScopedViewModelRegistry(
 		)
 	}
 
-	override val fileDetailsFromItemViewModel by viewModelStoreOwner.buildViewModelLazily {
-		FileDetailsFromItemViewModel(
+	override val fileDetailsViewModel by viewModelStoreOwner.buildViewModelLazily {
+		FileDetailsViewModel(
 			connectionPermissions = connectionAuthenticationChecker,
 			filePropertiesProvider = EditableLibraryFilePropertiesProvider(
 				freshLibraryFileProperties,
@@ -75,41 +76,30 @@ class ScopedViewModelRegistry(
 			controlPlayback = playbackServiceController,
 			registerForApplicationMessages = registerForApplicationMessages,
 			urlKeyProvider = urlKeyProvider,
-			libraryFileProvider = libraryFilesProvider,
 		)
 	}
 
-	override val fileDetailsFromSearchViewModel by viewModelStoreOwner.buildViewModelLazily {
-		FileDetailsFromSearchViewModel(
-			connectionPermissions = connectionAuthenticationChecker,
-			filePropertiesProvider = EditableLibraryFilePropertiesProvider(
-				freshLibraryFileProperties,
-				EditableFilePropertyDefinitionProvider(libraryConnectionProvider),
-			),
-			updateFileProperties = filePropertiesStorage,
-			defaultImageProvider = defaultImageProvider,
-			imageProvider = imageBytesProvider,
-			controlPlayback = playbackServiceController,
-			registerForApplicationMessages = registerForApplicationMessages,
-			urlKeyProvider = urlKeyProvider,
-			libraryFileProvider = libraryFilesProvider,
+	override val fileDetailsFromItemViewModel by viewModelStoreOwner.buildViewModelLazily {
+		FileDetailsFromItemViewModel(
+			playbackLibraryItems,
+			fileDetailsViewModel,
+			fileDetailsViewModel,
+		)
+	}
+
+	override val listedFileDetailsViewModel by viewModelStoreOwner.buildViewModelLazily {
+		ListedFileDetailsViewModel(
+			playbackServiceController,
+			fileDetailsViewModel,
+			fileDetailsViewModel,
 		)
 	}
 
 	override val fileDetailsFromNowPlayingViewModel by viewModelStoreOwner.buildViewModelLazily {
 		FileDetailsFromNowPlayingViewModel(
-			connectionPermissions = connectionAuthenticationChecker,
-			filePropertiesProvider = EditableLibraryFilePropertiesProvider(
-				freshLibraryFileProperties,
-				EditableFilePropertyDefinitionProvider(libraryConnectionProvider),
-			),
-			updateFileProperties = filePropertiesStorage,
-			defaultImageProvider = defaultImageProvider,
-			imageProvider = imageBytesProvider,
-			controlPlayback = playbackServiceController,
-			registerForApplicationMessages = registerForApplicationMessages,
-			urlKeyProvider = urlKeyProvider,
-			nowPlayingRepository = nowPlayingState,
+			playbackServiceController,
+			fileDetailsViewModel,
+			fileDetailsViewModel,
 		)
 	}
 
