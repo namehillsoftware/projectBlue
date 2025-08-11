@@ -32,7 +32,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -48,13 +47,12 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
+import com.lasthopesoftware.bluewater.android.ui.components.FastScroller
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.memorableScrollConnectedScaler
-import com.lasthopesoftware.bluewater.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
-import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.navigable
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
@@ -344,7 +342,6 @@ fun ItemListView(
     undoBackStack: UndoStack,
 ) {
 	val files by fileListViewModel.files.subscribeAsState()
-	val rowHeight = Dimensions.standardRowHeight
 	val itemValue by itemListViewModel.itemValue.subscribeAsState()
 
 	val lazyListState = rememberLazyListState()
@@ -355,20 +352,10 @@ fun ItemListView(
 	fun BoxWithConstraintsScope.LoadedItemListView() {
 		val items by itemListViewModel.items.subscribeAsState()
 
-		val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
 		LazyColumn(
 			state = lazyListState,
 			modifier = Modifier
-				.focusGroup()
-				.scrollbar(
-					lazyListState,
-					horizontal = false,
-					knobColor = MaterialTheme.colors.onSurface,
-					trackColor = Color.Transparent,
-					visibleAlpha = .4f,
-					knobCornerRadius = 1.dp,
-					fixedKnobRatio = knobHeight,
-				),
+				.focusGroup(),
 		) {
 			item(contentType = ItemListContentType.Menu) {
 				Row(
@@ -456,6 +443,11 @@ fun ItemListView(
 					Divider()
 			}
 		}
+
+		FastScroller(
+			lazyListState,
+			modifier = Modifier.align(Alignment.CenterEnd),
+		)
 	}
 
 	val isFilesLoading by fileListViewModel.isLoading.subscribeAsState()
