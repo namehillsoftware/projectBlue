@@ -32,7 +32,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 36
 		versionName gitVersion()
-		archivesBaseName = "project-blue-" + gitVersion()
+		base.archivesName = "project-blue-" + gitVersion()
 	}
 
 	signingConfigs {
