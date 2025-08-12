@@ -57,6 +57,7 @@ fun FastScroller(
 ) {
 	val scope = rememberCoroutineScope()
 	var thumbOffsetY by remember { mutableFloatStateOf(0f) } // Current vertical position of the scroll thumb
+	var targetOffsetY by remember { mutableFloatStateOf(0f) } // Current vertical position of the scroll thumb
 	var isDragging by remember { mutableStateOf(false) } // Tracks if the user is dragging the thumb
 	var isScrolling by remember { mutableStateOf(false) }
 	LaunchedEffect(listState) {
@@ -81,7 +82,7 @@ fun FastScroller(
 	}
 
 	LaunchedEffect(listState) {
-		snapshotFlow { thumbOffsetY }
+		snapshotFlow { targetOffsetY }
 			.debounce(300.milliseconds)
 			.collect { newOffset ->
 				val listSize = listState.layoutInfo.totalItemsCount
@@ -151,7 +152,8 @@ fun FastScroller(
 							val newOffset = (thumbOffsetY + dragAmount)
 								.coerceIn(0f, scrollBarHeight.value - thumbHeight)
 
-							thumbOffsetY = newOffset // Update the thumb position
+							targetOffsetY = newOffset // Update the thumb position
+							thumbOffsetY = newOffset
 					 	},
 						onDragEnd = {
 							// Hide the scrollbar after a delay once dragging ends
