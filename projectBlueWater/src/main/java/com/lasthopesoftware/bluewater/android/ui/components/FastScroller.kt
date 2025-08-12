@@ -39,11 +39,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
-
+import kotlin.time.Duration.Companion.milliseconds
 
 // Source: https://medium.com/@kezzieleo/implementing-a-custom-fast-scroller-in-jetpack-compose-502f2d69c124
+@OptIn(FlowPreview::class)
 @Composable
 fun FastScroller(
 	listState: LazyListState, // State of the LazyColumn to track scrolling
@@ -74,6 +77,19 @@ fun FastScroller(
 				val totalScrollableHeight = scrollBarHeight.value - thumbHeight
 				// Calculate the new thumb position based on the scroll progress
 				thumbOffsetY = (firstVisibleListItem / (info.totalItemsCount - 1)) * totalScrollableHeight
+			}
+	}
+
+	LaunchedEffect(listState) {
+		snapshotFlow { thumbOffsetY }
+			.debounce(300.milliseconds)
+			.collect { newOffset ->
+				val listSize = listState.layoutInfo.totalItemsCount
+				// Compute the target item index based on the thumb position
+				val targetIndex = ((newOffset / (scrollBarHeight.value - thumbHeight)) * (listSize - 1))
+					.toInt()
+					.coerceIn(0, listSize - 1)
+				listState.scrollToItem(targetIndex)
 			}
 	}
 
@@ -136,18 +152,7 @@ fun FastScroller(
 								.coerceIn(0f, scrollBarHeight.value - thumbHeight)
 
 							thumbOffsetY = newOffset // Update the thumb position
-
-							val listSize = listState.layoutInfo.totalItemsCount
-							// Compute the target item index based on the thumb position
-							val targetIndex = ((newOffset / (scrollBarHeight.value - thumbHeight)) * (listSize - 1))
-								.toInt()
-								.coerceIn(0, listSize - 1)
-
-							// Scroll to the calculated item index
-							scope.launch {
-								listState.scrollToItem(targetIndex)
-							}
-						},
+					 	},
 						onDragEnd = {
 							// Hide the scrollbar after a delay once dragging ends
 							scope.launch {
