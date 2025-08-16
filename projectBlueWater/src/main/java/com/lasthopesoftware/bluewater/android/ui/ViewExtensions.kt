@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.android.ui
+package com.lasthopesoftware.bluewater.android.ui
 
 import android.app.Activity
 import android.content.Context
