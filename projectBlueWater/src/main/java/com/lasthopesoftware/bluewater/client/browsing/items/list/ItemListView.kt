@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -51,6 +52,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
+import com.lasthopesoftware.bluewater.android.ui.components.MinimapScrollBar
 import com.lasthopesoftware.bluewater.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
@@ -94,6 +96,7 @@ import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.toPromise
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 private val boxHeight = expandedTitleHeight + appBarHeight
@@ -454,6 +457,15 @@ fun ItemListView(
 
 				if (i < files.lastIndex)
 					Divider()
+			}
+		}
+
+		val scope = rememberCoroutineScope()
+		MinimapScrollBar(modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()) { percentage ->
+			val finalItem = lazyListState.layoutInfo.totalItemsCount - 1
+			val targetItem = linearInterpolation(0f, finalItem.toFloat(), percentage).roundToInt()
+			scope.launch {
+				lazyListState.scrollToItem(targetItem)
 			}
 		}
 	}
