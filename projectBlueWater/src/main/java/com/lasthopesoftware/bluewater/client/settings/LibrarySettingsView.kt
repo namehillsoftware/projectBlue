@@ -64,7 +64,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.StandardTextField
-import com.lasthopesoftware.bluewater.android.ui.components.memorableFullScreenScrollConnectedScaler
+import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
@@ -818,7 +818,7 @@ fun LibrarySettingsView(
 
 				val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 				val collapsedHeightPx = LocalDensity.current.run { appBarHeight.toPx() }
-				val heightScaler = memorableFullScreenScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
+				val heightScaler = rememberFullScreenScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
 
 				val isLoadingState by librarySettingsViewModel.isLoading.subscribeAsState()
 				var isSelectingServerType by remember { mutableStateOf(false) }

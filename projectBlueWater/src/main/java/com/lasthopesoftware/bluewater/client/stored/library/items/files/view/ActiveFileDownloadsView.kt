@@ -51,8 +51,8 @@ import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasin
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.MenuIcon
-import com.lasthopesoftware.bluewater.android.ui.components.memorableFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberCalculatedKnobHeight
+import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
@@ -111,7 +111,7 @@ fun ActiveFileDownloadsView(
 		val isLoading by activeFileDownloadsViewModel.isLoading.subscribeAsState()
 
 		val heightScaler = LocalDensity.current.run {
-			memorableFullScreenScrollConnectedScaler(max = boxHeight.toPx(), min = appBarHeight.toPx())
+			rememberFullScreenScrollConnectedScaler(max = boxHeight.toPx(), min = appBarHeight.toPx())
 		}
 
 		Column(
