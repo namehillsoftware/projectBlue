@@ -1,6 +1,8 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.horizontalScroll
@@ -60,6 +62,7 @@ import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.android.ui.calculateProgress
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
@@ -604,7 +607,11 @@ fun ScreenDimensionsScope.ItemListView(
 						.fillMaxWidth()
 				) header@{
 					val headerCollapseProgress by titleHeightScaler.progressState
-					val menuHeightScaler = rememberDirectionalScrollConnectedScaler(rowHeightPx, 0f)
+					var shouldMenuBeShown by remember { mutableStateOf(true) }
+					val menuHeight by animateDpAsState(
+						targetValue = if (shouldMenuBeShown) standardRowHeight else 0.dp,
+						animationSpec = remember { tween() }
+					)
 
 					Box(
 						modifier = Modifier
@@ -619,7 +626,7 @@ fun ScreenDimensionsScope.ItemListView(
 								.padding(topRowOuterPadding)
 						)
 
-						val menuHeightProgress by menuHeightScaler.progressState
+						val menuHeightProgress by remember { derivedStateOf { calculateProgress(standardRowHeight, 0.dp, menuHeight) } }
 						val chevronRotation by remember { derivedStateOf { linearInterpolation(0f, 180f, menuHeightProgress) } }
 						val isMenuFullyShown by remember { derivedStateOf { menuHeightProgress < .02f } }
 						val chevronLabel = stringResource(id = if (isMenuFullyShown) R.string.collapse else R.string.expand)
@@ -627,9 +634,9 @@ fun ScreenDimensionsScope.ItemListView(
 						ColumnMenuIcon(
 							onClick = {
 								if (!isMenuFullyShown) {
-									menuHeightScaler.goToMax()
+									shouldMenuBeShown = true
 								} else {
-									menuHeightScaler.goToMin()
+									shouldMenuBeShown = false
 								}
 							},
 							icon = {
@@ -699,12 +706,11 @@ fun ScreenDimensionsScope.ItemListView(
 						}
 					}
 
-					val menuHeightValue by menuHeightScaler.valueState
 					Box(
 						modifier = Modifier
 							.fillMaxWidth()
 							.background(MaterialTheme.colors.surface)
-							.height(LocalDensity.current.run { menuHeightValue.toDp() })
+							.height(menuHeight)
 							.clip(RectangleShape)
 					) {
 						val scope = rememberCoroutineScope()
@@ -731,7 +737,7 @@ fun ScreenDimensionsScope.ItemListView(
 							modifier = Modifier.offset {
 								IntOffset(
 									x = 0,
-									y = (menuHeightValue - rowHeightPx).roundToInt()
+									y = (menuHeight.toPx() - rowHeightPx).roundToInt()
 								)
 							},
 						)
