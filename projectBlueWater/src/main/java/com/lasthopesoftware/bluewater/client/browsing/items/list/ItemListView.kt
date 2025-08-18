@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import android.annotation.SuppressLint
-import android.os.Parcelable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.horizontalScroll
@@ -45,11 +44,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -64,16 +61,13 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
-import com.lasthopesoftware.bluewater.android.ui.components.BoundedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
-import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionDispatcher
 import com.lasthopesoftware.bluewater.android.ui.components.rememberDirectionalScrollConnectedScaler
-import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
@@ -122,7 +116,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.parcelize.Parcelize
 import kotlin.math.roundToInt
 
 private val appBarAndTitleHeight = expandedTitleHeight + appBarHeight
@@ -544,25 +537,6 @@ fun ItemListView(
 	}
 }
 
-class LazyListStateScrollConnection(private val lazyListState: LazyListState) : BoundedScrollConnection {
-	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-		val consumed = lazyListState.dispatchRawDelta(-available.y)
-		return Offset.Zero.copy(y = consumed)
-	}
-
-	override fun goToMax() {}
-
-	override fun goToMin() {}
-}
-
-@Parcelize
-enum class ScrollAnchors : Parcelable {
-	TOP,
-	ITEMS,
-	FILES,
-	BOTTOM
-}
-
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalCoroutinesApi::class)
 @Composable
@@ -608,36 +582,7 @@ fun ScreenDimensionsScope.ItemListView(
 		if (maxWidth < Dimensions.twoColumnThreshold) {
 			val expandedHeightPx = LocalDensity.current.run { appBarAndTitleHeight.toPx() }
 			val collapsedHeightPx = LocalDensity.current.run { collapsedHeight.toPx() }
-			val titleHeightScaler = rememberFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
-			val items by itemListViewModel.items.subscribeAsState()
-			val files by fileListViewModel.files.subscribeAsState()
-			val menuHeightPx = LocalDensity.current.run { menuHeight.toPx() }
-			val maxHeightPx = LocalDensity.current.run { maxHeight.toPx() }
-			val anchors = remember(items, files, menuHeightPx, expandedHeightPx, collapsedHeightPx, maxHeightPx) {
-				buildMap {
-					put(ScrollAnchors.TOP, 0f)
-					val collapsedScroll = expandedHeightPx - collapsedHeightPx
-//					val collapsedScroll = 0f
-//					val menuHeightPx = 0f
-					when {
-						items.any() -> {
-							put(ScrollAnchors.ITEMS, -collapsedScroll)
-							val itemListSize = collapsedScroll + menuHeightPx + rowHeightPx * items.size
-							if (files.any()) {
-								put(ScrollAnchors.FILES, -itemListSize)
-								put(ScrollAnchors.BOTTOM, -(itemListSize + menuHeightPx + rowHeightPx * files.size - maxHeightPx))
-							} else {
-								put(ScrollAnchors.BOTTOM, -(itemListSize - maxHeightPx))
-							}
-						}
-						files.any() -> {
-							put(ScrollAnchors.FILES, -collapsedScroll)
-							put(ScrollAnchors.BOTTOM, -(collapsedScroll + menuHeightPx + rowHeightPx * files.size - maxHeightPx))
-						}
-					}
-				}
-			}
-
+			val titleHeightScaler = rememberDirectionalScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
 			val compositeScrollConnection =
 				remember(titleHeightScaler, scrollingDirectionConnection) {
 					LinkedNestedScrollConnection(
@@ -646,16 +591,10 @@ fun ScreenDimensionsScope.ItemListView(
 					)
 				}
 
-			val anchoredScrollConnectionDispatcher = rememberAnchoredScrollConnectionDispatcher(
-				lazyListState,
-				anchors,
-				compositeScrollConnection
-			)
-
 			Column(
 				modifier = Modifier
 					.fillMaxSize()
-					.nestedScroll(anchoredScrollConnectionDispatcher)
+					.nestedScroll(compositeScrollConnection)
 			) {
 				val titleHeightValue by titleHeightScaler.valueState
 
@@ -780,17 +719,12 @@ fun ScreenDimensionsScope.ItemListView(
 							onScrollTrackerClicked = {
 								scope.launch {
 									if (isScrollingUp) {
-										anchoredScrollConnectionDispatcher.goToMin()
-//										lazyListState.scrollToItem(0)
+										compositeScrollConnection.goToMax()
+										lazyListState.scrollToItem(0)
 									} else {
-										anchoredScrollConnectionDispatcher.goToMax()
-//										val totalItems = lazyListState.layoutInfo.totalItemsCount
-//										lazyListState.animateScrollToItem(totalItems - 1)
-//										val itemSize =
-//											lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()?.size?.toFloat()
-//												?: rowHeightPx
-//										// Estimate total distance traveled
-//										titleHeightScaler.overrideDistanceTraveled(-(itemSize * (lazyListState.firstVisibleItemIndex - 1)) + lazyListState.firstVisibleItemScrollOffset)
+										val totalItems = lazyListState.layoutInfo.totalItemsCount
+										lazyListState.animateScrollToItem(totalItems - 1)
+										compositeScrollConnection.goToMin()
 									}
 								}
 							},

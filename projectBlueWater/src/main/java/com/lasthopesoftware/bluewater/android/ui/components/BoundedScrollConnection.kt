@@ -1,14 +1,11 @@
 package com.lasthopesoftware.bluewater.android.ui.components
 
-import android.os.Parcelable
 import android.util.Log
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.asFloatState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.SaverScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -16,8 +13,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.unit.Velocity
-import androidx.compose.ui.util.fastRoundToInt
-import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.compilation.DebugFlag
 
 private const val logTag = "ScrollConnectedScaler"
@@ -25,94 +20,6 @@ private const val logTag = "ScrollConnectedScaler"
 interface BoundedScrollConnection : NestedScrollConnection {
 	fun goToMax()
 	fun goToMin()
-}
-
-@Composable
-fun <T : Parcelable> rememberAnchoredScrollConnectionDispatcher(
-	lazyListState: LazyListState,
-	anchors: Map<T, Float>,
-	inner: BoundedScrollConnection,
-): AnchoredScrollConnectionDispatcher<T> {
-	val state = rememberSaveable(anchors, saver = AnchoredScrollConnectionDispatcher.AnchoredScrollConnectionState.Saver()) {
-		AnchoredScrollConnectionDispatcher.AnchoredScrollConnectionState(anchors, 0f)
-	}
-
-	return remember(inner, lazyListState, state) {
-		AnchoredScrollConnectionDispatcher(lazyListState, state, inner)
-	}
-}
-
-class AnchoredScrollConnectionDispatcher<T : Parcelable>(
-	private val lazyListState: LazyListState,
-	private val state: AnchoredScrollConnectionState<T>,
-	private val inner: BoundedScrollConnection,
-) : BoundedScrollConnection by inner {
-	private val min by lazy { state.anchors.values.first() }
-	private val max by lazy { state.anchors.values.last() }
-	private val fullDistance by lazy { max - min }
-
-	val valueState by derivedStateOf { (max + state.totalDistanceTraveled).coerceIn(min, max) }
-
-	val progressState by lazy { derivedStateOf { calculateProgress(valueState) } }
-
-	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-		// try to consume before LazyColumn to collapse toolbar if needed, hence pre-scroll
-		state.totalDistanceTraveled += available.y
-
-		if (DebugFlag.isDebugCompilation) {
-			Log.d(logTag, "totalDistanceTraveled: ${state.totalDistanceTraveled}")
-		}
-
-		return inner.onPreScroll(available, source)
-	}
-
-	override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-		state.totalDistanceTraveled -= available.y
-
-		if (DebugFlag.isDebugCompilation) {
-			Log.d(logTag, "totalDistanceTraveled: ${state.totalDistanceTraveled}")
-			Log.d(logTag, "consumed: ${consumed.y}")
-			Log.d(logTag, "available: ${available.y}")
-		}
-
-		return inner.onPostScroll(consumed, available, source)
-	}
-
-	override fun goToMin() {
-		goToOffset(min)
-	}
-
-	override fun goToMax() {
-		goToOffset(max)
-	}
-
-	fun goTo(anchor: T) {
-		state.anchors[anchor]?.also(::goToOffset)
-	}
-
-	private fun goToOffset(offset: Float) {
-		val distanceToTravel = offset - state.totalDistanceTraveled
-		onPreScroll(Offset(x= 0f, y = distanceToTravel), NestedScrollSource.UserInput)
-		val selectedIndex = linearInterpolation(0f, (lazyListState.layoutInfo.totalItemsCount - 1).toFloat(), calculateProgress(offset)).fastRoundToInt()
-		lazyListState.requestScrollToItem(selectedIndex)
-	}
-
-	private fun calculateProgress(value: Float) = if (fullDistance == 0f) 1f else value / fullDistance
-
-	class AnchoredScrollConnectionState<T : Parcelable>(
-		val anchors: Map<T, Float>,
-		initialDistanceTraveled: Float,
-	) {
-		var totalDistanceTraveled by mutableFloatStateOf(initialDistanceTraveled)
-
-		class Saver<T : Parcelable> : androidx.compose.runtime.saveable.Saver<AnchoredScrollConnectionState<T>, Pair<Map<T, Float>, Float>> {
-			override fun restore(value: Pair<Map<T, Float>, Float>): AnchoredScrollConnectionState<T> =
-				AnchoredScrollConnectionState(anchors = value.first, value.second)
-
-			override fun SaverScope.save(value: AnchoredScrollConnectionState<T>): Pair<Map<T, Float>, Float> =
-				Pair(value.anchors,value.totalDistanceTraveled)
-		}
-	}
 }
 
 /**
@@ -212,7 +119,10 @@ class DirectionalScrollConnectedScaler private constructor(private val max: Floa
 	}
 
 	override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-		return if (available.y > 0) consumeY(available) else Offset.Zero
+		if (available.y <= 0) return Offset.Zero
+
+		consumeY(consumed) // Re-use the already consumed amount to improve user experience
+		return consumeY(available)
 	}
 
 	private fun consumeY(available: Offset): Offset {
