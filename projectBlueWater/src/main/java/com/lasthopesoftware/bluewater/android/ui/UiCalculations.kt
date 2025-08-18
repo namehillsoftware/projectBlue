@@ -12,6 +12,9 @@ fun linearInterpolation(initial: Dp, final: Dp, progress: Float): Dp =
 fun linearInterpolation(initial: Float, final: Float, progress: Float): Float =
 	initial + (final - initial) * progress
 
+fun calculateProgress(initial: Dp, final: Dp, currentPosition: Dp): Float =
+	((currentPosition - initial) / (final - initial)).coerceIn(0f, 1f)
+
 fun calculateProgress(initial: Float, final: Float, currentPosition: Float): Float =
 	((currentPosition - initial) / (final - initial)).coerceIn(0f, 1f)
 
