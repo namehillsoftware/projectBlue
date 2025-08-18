@@ -2,6 +2,8 @@ package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import android.annotation.SuppressLint
 import android.util.Log
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.scrollBy
@@ -40,6 +42,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -70,6 +73,7 @@ import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.android.ui.calculateProgress
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredChips
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredProgressScrollConnectionDispatcher
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredScrollConnectionState
@@ -81,7 +85,6 @@ import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
-import com.lasthopesoftware.bluewater.android.ui.components.rememberPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
@@ -741,7 +744,11 @@ fun ScreenDimensionsScope.ItemListView(
 					val titleHeightValue by titleHeightScaler.valueState
 
 					val headerCollapseProgress by titleHeightScaler.progressState
-					val menuHeightScaler = rememberPreScrollConnectedScaler(rowHeightPx, 0f)
+					var shouldMenuBeShown by remember { mutableStateOf(true) }
+					val menuHeight by animateDpAsState(
+						targetValue = if (shouldMenuBeShown) standardRowHeight else 0.dp,
+						animationSpec = remember { tween() }
+					)
 
 					Box(
 						modifier = Modifier
@@ -756,18 +763,14 @@ fun ScreenDimensionsScope.ItemListView(
 								.padding(topRowOuterPadding)
 						)
 
-						val menuHeightProgress by menuHeightScaler.progressState
+						val menuHeightProgress by remember { derivedStateOf { calculateProgress(standardRowHeight, 0.dp, menuHeight) } }
 						val chevronRotation by remember { derivedStateOf { linearInterpolation(0f, 180f, menuHeightProgress) } }
 						val isMenuFullyShown by remember { derivedStateOf { menuHeightProgress < .02f } }
 						val chevronLabel = stringResource(id = if (isMenuFullyShown) R.string.collapse else R.string.expand)
 
 						ColumnMenuIcon(
 							onClick = {
-								if (!isMenuFullyShown) {
-									menuHeightScaler.goToMax()
-								} else {
-									menuHeightScaler.goToMin()
-								}
+								shouldMenuBeShown = !isMenuFullyShown
 							},
 							icon = {
 								Icon(
@@ -835,12 +838,11 @@ fun ScreenDimensionsScope.ItemListView(
 						}
 					}
 
-					val menuHeightValue by menuHeightScaler.valueState
 					Box(
 						modifier = Modifier
 							.fillMaxWidth()
 							.background(MaterialTheme.colors.surface)
-							.height(LocalDensity.current.remember { menuHeightValue.toDp() })
+							.height(menuHeight)
 							.clip(RectangleShape)
 					) {
 
@@ -853,7 +855,7 @@ fun ScreenDimensionsScope.ItemListView(
 							modifier = Modifier.offset {
 								IntOffset(
 									x = 0,
-									y = (menuHeightValue - rowHeightPx).roundToInt()
+									y = (menuHeight.toPx() - rowHeightPx).roundToInt()
 								)
 							},
 						)
