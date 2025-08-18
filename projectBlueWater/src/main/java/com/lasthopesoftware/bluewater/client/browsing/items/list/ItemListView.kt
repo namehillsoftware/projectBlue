@@ -677,11 +677,7 @@ fun ScreenDimensionsScope.ItemListView(
 
 						ColumnMenuIcon(
 							onClick = {
-								if (!isMenuFullyShown) {
-									shouldMenuBeShown = true
-								} else {
-									shouldMenuBeShown = false
-								}
+								shouldMenuBeShown = !isMenuFullyShown
 							},
 							icon = {
 								Icon(
