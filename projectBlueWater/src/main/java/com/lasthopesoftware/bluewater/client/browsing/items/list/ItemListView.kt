@@ -122,6 +122,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
+import java.io.Serializable
 import kotlin.math.roundToInt
 
 private val appBarAndTitleHeight = expandedTitleHeight + appBarHeight
@@ -544,7 +545,7 @@ fun ItemListView(
 }
 
 @Parcelize
-enum class ScrollAnchors : Parcelable {
+enum class ScrollAnchors : Parcelable, Serializable {
 	TOP,
 	ITEMS,
 	FILES,
