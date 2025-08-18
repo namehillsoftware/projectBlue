@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import android.annotation.SuppressLint
+import android.os.Parcelable
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -70,7 +71,8 @@ import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
-import com.lasthopesoftware.bluewater.android.ui.components.rememberDirectionalScrollConnectedScaler
+import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionDispatcher
+import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
@@ -119,6 +121,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.parcelize.Parcelize
 import kotlin.math.roundToInt
 
 private val appBarAndTitleHeight = expandedTitleHeight + appBarHeight
@@ -540,6 +543,14 @@ fun ItemListView(
 	}
 }
 
+@Parcelize
+enum class ScrollAnchors : Parcelable {
+	TOP,
+	ITEMS,
+	FILES,
+	BOTTOM
+}
+
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalCoroutinesApi::class)
 @Composable
@@ -585,7 +596,34 @@ fun ScreenDimensionsScope.ItemListView(
 		if (maxWidth < Dimensions.twoColumnThreshold) {
 			val expandedHeightPx = LocalDensity.current.run { appBarAndTitleHeight.toPx() }
 			val collapsedHeightPx = LocalDensity.current.run { collapsedHeight.toPx() }
-			val titleHeightScaler = rememberDirectionalScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
+			val titleHeightScaler = rememberFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
+			val items by itemListViewModel.items.subscribeAsState()
+			val files by fileListViewModel.files.subscribeAsState()
+			val menuHeightPx = LocalDensity.current.run { menuHeight.toPx() }
+			val maxHeightPx = LocalDensity.current.run { maxHeight.toPx() }
+			val anchors = remember(items, files, menuHeightPx, expandedHeightPx, collapsedHeightPx, maxHeightPx) {
+				buildMap {
+					put(ScrollAnchors.TOP, 0f)
+					val collapsedScroll = expandedHeightPx - collapsedHeightPx
+					when {
+						items.any() -> {
+							put(ScrollAnchors.ITEMS, -collapsedScroll)
+							val itemListSize = collapsedScroll + menuHeightPx + rowHeightPx * items.size
+							if (files.any()) {
+								put(ScrollAnchors.FILES, -itemListSize)
+								put(ScrollAnchors.BOTTOM, -(itemListSize + menuHeightPx + rowHeightPx * files.size - maxHeightPx))
+							} else {
+								put(ScrollAnchors.BOTTOM, -(itemListSize - maxHeightPx))
+							}
+						}
+						files.any() -> {
+							put(ScrollAnchors.FILES, -collapsedScroll)
+							put(ScrollAnchors.BOTTOM, -(collapsedScroll + menuHeightPx + rowHeightPx * files.size - maxHeightPx))
+						}
+					}
+				}
+			}
+
 			val compositeScrollConnection =
 				remember(titleHeightScaler, scrollingDirectionConnection) {
 					LinkedNestedScrollConnection(
@@ -594,10 +632,16 @@ fun ScreenDimensionsScope.ItemListView(
 					)
 				}
 
+			val anchoredScrollConnectionDispatcher = rememberAnchoredScrollConnectionDispatcher(
+				lazyListState,
+				anchors,
+				compositeScrollConnection
+			)
+
 			Column(
 				modifier = Modifier
 					.fillMaxSize()
-					.nestedScroll(compositeScrollConnection)
+					.nestedScroll(anchoredScrollConnectionDispatcher)
 			) {
 				val titleHeightValue by titleHeightScaler.valueState
 
@@ -725,12 +769,9 @@ fun ScreenDimensionsScope.ItemListView(
 							onScrollTrackerClicked = {
 								scope.launch {
 									if (isScrollingUp) {
-										compositeScrollConnection.goToMax()
-										lazyListState.scrollToItem(0)
+										anchoredScrollConnectionDispatcher.goToMin()
 									} else {
-										val totalItems = lazyListState.layoutInfo.totalItemsCount
-										lazyListState.animateScrollToItem(totalItems - 1)
-										compositeScrollConnection.goToMin()
+										anchoredScrollConnectionDispatcher.goToMax()
 									}
 								}
 							},
