@@ -9,10 +9,10 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -461,7 +461,11 @@ fun ItemListView(
 		}
 
 		val scope = rememberCoroutineScope()
-		MinimapScrollBar(modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()) { percentage ->
+		MinimapScrollBar(
+			modifier = Modifier.heightIn(200.dp, maxHeight / 3 * 2)
+				.align(Alignment.BottomEnd)
+				.padding(vertical = rowPadding)
+		) { percentage ->
 			val finalItem = lazyListState.layoutInfo.totalItemsCount - 1
 			val targetItem = linearInterpolation(0f, finalItem.toFloat(), percentage).roundToInt()
 			scope.launch {
