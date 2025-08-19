@@ -110,7 +110,7 @@ class AnchoredScrollConnectionDispatcher<T : Parcelable>(
 				AnchoredScrollConnectionState(anchors = value.first, value.second)
 
 			override fun SaverScope.save(value: AnchoredScrollConnectionState<T>): Pair<Map<T, Float>, Float> =
-				Pair(value.anchors,value.totalDistanceTraveled)
+				Pair(value.anchors.toMap(),value.totalDistanceTraveled)
 		}
 	}
 }
