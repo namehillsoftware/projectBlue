@@ -101,6 +101,7 @@ import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.toPromise
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
 import kotlinx.parcelize.Parcelize
 import kotlin.math.round
@@ -485,9 +486,7 @@ fun ItemListView(
 				.heightIn(200.dp, maxScrollBarHeight)
 				.align(Alignment.BottomEnd)
 				.padding(vertical = rowPadding),
-			onScrollProgress = {
-				onScrollProgress(it)
-			},
+			onScrollProgress = onScrollProgress,
 			onSelected = {
 				localHapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
 			}
@@ -558,6 +557,7 @@ fun ItemListView(
 
 			LaunchedEffect(anchoredScrollConnectionDispatcher, lazyListState) {
 				snapshotFlow { anchoredScrollConnectionDispatcher.selectedProgress }
+					.drop(1) // Ignore initial state
 					.map { round(it * 100) / 100 }
 					.distinctUntilChanged()
 					.collect {
