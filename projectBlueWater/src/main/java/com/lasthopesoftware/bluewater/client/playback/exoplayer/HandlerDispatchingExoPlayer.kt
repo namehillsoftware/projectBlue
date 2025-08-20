@@ -430,7 +430,7 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun setShuffleOrder(shuffleOrder: ShuffleOrder): Promise<PromisingExoPlayer> =
 		loopIn {
-			innerPlayer.setShuffleOrder(shuffleOrder)
+			innerPlayer.shuffleOrder = shuffleOrder
 			this
 		}
 
