@@ -248,26 +248,21 @@ fun ChildItem(
 	if (!isMenuShown) {
 		Box(modifier = Modifier
 			.navigable(
-				interactionSource = remember { MutableInteractionSource() },
-				indication = null,
-				onLongClick = {
-					hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+				interactionSource = remember { MutableInteractionSource() }, indication = null, onLongClick = {
+				hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
 
-					itemListMenuBackPressedHandler.hideAllMenus()
+				itemListMenuBackPressedHandler.hideAllMenus()
 
-					childItemViewModel.showMenu()
+				childItemViewModel.showMenu()
 
-					backStack.addAction {
-						childItemViewModel.hideMenu().toPromise()
-					}
-				},
-				onClickLabel = stringResource(id = R.string.btn_view_song_details),
-				onClick = {
-					itemListViewModel.loadedLibraryId?.also {
-						applicationNavigation.viewItem(it, item)
-					}
-				},
-				scrollPadding = rowHeight.rowScrollPadding
+				backStack.addAction {
+					childItemViewModel.hideMenu().toPromise()
+				}
+			}, onClickLabel = stringResource(id = R.string.btn_view_song_details), onClick = {
+				itemListViewModel.loadedLibraryId?.also {
+					applicationNavigation.viewItem(it, item)
+				}
+			}, scrollPadding = rowHeight.rowScrollPadding
 			)
 			.height(rowHeight)
 			.fillMaxSize()
@@ -370,6 +365,16 @@ fun ItemListView(
 
 	@Composable
 	fun BoxWithConstraintsScope.LoadedItemListView(onScrollProgress: (Float) -> Unit) {
+
+		// 5in in pixels, pixels/Inch
+		val density = LocalDensity.current
+		val context = LocalContext.current
+		val maxScrollBarHeight = remember(density, context) {
+			with (density) {
+				(5 * context.resources.displayMetrics.ydpi).toDp()
+			}
+		}
+
 		val items by itemListViewModel.items.subscribeAsState()
 
 		val knobHeight by rememberCalculatedKnobHeight(lazyListState, standardRowHeight)
@@ -474,22 +479,16 @@ fun ItemListView(
 			}
 		}
 
-
-		// 5in in pixels, pixels/Inch
-		val density = LocalDensity.current
-		val context = LocalContext.current
-		val maxScrollBarHeight = remember(density, context) {
-			with (density) {
-				(5 * context.resources.displayMetrics.ydpi).toDp()
-			}
-		}
-
+		val localHapticFeedback = LocalHapticFeedback.current
 		MinimapScrollBar(
 			modifier = Modifier
 				.heightIn(200.dp, maxScrollBarHeight)
 				.align(Alignment.BottomEnd)
 				.padding(vertical = rowPadding),
-			onScrollProgress = onScrollProgress,
+			onScrollProgress = {
+				onScrollProgress(it)
+				localHapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
+			},
 		)
 	}
 
@@ -594,8 +593,7 @@ fun ItemListView(
 								Modifier
 									.align(Alignment.TopEnd)
 									.padding(
-										vertical = topRowOuterPadding,
-										horizontal = viewPaddingUnit * 2
+										vertical = topRowOuterPadding, horizontal = viewPaddingUnit * 2
 									),
 								refreshButtonFocus
 							)
