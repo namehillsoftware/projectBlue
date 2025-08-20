@@ -487,8 +487,10 @@ fun ItemListView(
 				.padding(vertical = rowPadding),
 			onScrollProgress = {
 				onScrollProgress(it)
-				localHapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
 			},
+			onSelected = {
+				localHapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
+			}
 		)
 	}
 

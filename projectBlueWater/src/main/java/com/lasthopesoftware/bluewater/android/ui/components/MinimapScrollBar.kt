@@ -27,11 +27,11 @@ private val totalAnchorSize = anchorSize + minAnchorVerticalPadding * 2
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun MinimapScrollBar(modifier: Modifier = Modifier, onScrollProgress: (Float) -> Unit) {
+fun MinimapScrollBar(modifier: Modifier = Modifier, onScrollProgress: (Float) -> Unit, onSelected: (Int) -> Unit) {
 	BoxWithConstraints(modifier = modifier) {
 		val maxAnchors = (maxHeight.value / totalAnchorSize.value).toInt().coerceAtMost(20)
 		val anchors = 0 .. maxAnchors
-		val anchoredPercentages = anchors.map { it / maxAnchors.toFloat() }
+		val anchoredPercentages = anchors.map { Pair(it, it / maxAnchors.toFloat()) }
 		var draggedPosition = remember { 0f }
 		Column(
 			modifier = Modifier
@@ -43,23 +43,29 @@ fun MinimapScrollBar(modifier: Modifier = Modifier, onScrollProgress: (Float) ->
 					) { _, dragAmount ->
 						draggedPosition += dragAmount
 						val progress = (draggedPosition / maxHeight.toPx()).coerceIn(0f, 1f)
-						val selectedAnchor = anchoredPercentages.firstOrNull { it == progress }
-						if (selectedAnchor != null)
-							onScrollProgress(selectedAnchor)
-						else
+						val selectedAnchor = anchoredPercentages.firstOrNull { (_, p) -> p == progress }
+						if (selectedAnchor == null) {
 							onScrollProgress(round(progress * 100) / 100)
+						} else {
+							val (anchor, progress) = selectedAnchor
+							onScrollProgress(progress)
+							onSelected(anchor)
+						}
 					}
 				},
 			verticalArrangement = Arrangement.SpaceEvenly,
 		) {
-			for (i in anchoredPercentages) {
+			for ((i, p) in anchoredPercentages) {
 				Box(
 					modifier = Modifier
 						.padding(horizontal = viewPaddingUnit * 2, vertical = minAnchorVerticalPadding)
 						.background(color = LocalControlColor.current, shape = CircleShape)
 						.size(viewPaddingUnit * 2)
 						.navigable(
-							onClick = { onScrollProgress(i) }
+							onClick = {
+								onScrollProgress(p)
+								onSelected(i)
+							}
 						)
 				)
 			}
