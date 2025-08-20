@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalInputModeManager
@@ -461,8 +462,19 @@ fun ItemListView(
 		}
 
 		val scope = rememberCoroutineScope()
+
+		// 5in in pixels, pixels/Inch
+		val density = LocalDensity.current
+		val context = LocalContext.current
+		val maxScrollBarHeight = remember(density, context) {
+			with (density) {
+				(5 * context.resources.displayMetrics.ydpi).toDp()
+			}
+		}
+
 		MinimapScrollBar(
-			modifier = Modifier.heightIn(200.dp, maxHeight / 3 * 2)
+			modifier = Modifier
+				.heightIn(200.dp, maxScrollBarHeight)
 				.align(Alignment.BottomEnd)
 				.padding(vertical = rowPadding)
 		) { percentage ->
@@ -476,7 +488,9 @@ fun ItemListView(
 
 	val isFilesLoading by fileListViewModel.isLoading.subscribeAsState()
 
-	BoxWithConstraints(modifier = Modifier.fillMaxSize().focusGroup()) {
+	BoxWithConstraints(modifier = Modifier
+		.fillMaxSize()
+		.focusGroup()) {
 		ControlSurface {
 			DetermineWindowControlColors()
 			val isItemsLoading by itemListViewModel.isLoading.subscribeAsState()
