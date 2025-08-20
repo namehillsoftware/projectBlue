@@ -123,6 +123,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import java.io.Serializable
+import kotlin.math.round
 import kotlin.math.roundToInt
 
 private val appBarAndTitleHeight = expandedTitleHeight + appBarHeight
@@ -602,7 +603,7 @@ fun ScreenDimensionsScope.ItemListView(
 			val files by fileListViewModel.files.subscribeAsState()
 			val menuHeightPx = LocalDensity.current.run { menuHeight.toPx() }
 			val maxHeightPx = LocalDensity.current.run { maxHeight.toPx() }
-			val anchors = remember(items, files, menuHeightPx, expandedHeightPx, collapsedHeightPx, maxHeightPx) {
+			val scrollAnchors = remember(items, files, menuHeightPx, expandedHeightPx, collapsedHeightPx, maxHeightPx) {
 				buildMap {
 					put(ScrollAnchors.TOP, 0f)
 					val collapsedScroll = expandedHeightPx - collapsedHeightPx
@@ -634,10 +635,20 @@ fun ScreenDimensionsScope.ItemListView(
 				}
 
 			val anchoredScrollConnectionDispatcher = rememberAnchoredScrollConnectionDispatcher(
-				lazyListState,
-				anchors,
-				compositeScrollConnection
+				scrollAnchors,
+				compositeScrollConnection,
 			)
+
+			LaunchedEffect(anchoredScrollConnectionDispatcher, lazyListState) {
+				snapshotFlow { anchoredScrollConnectionDispatcher.selectedProgress }
+					.map { round(it * 100) / 100 }
+					.distinctUntilChanged()
+					.collect {
+						val totalItems = lazyListState.layoutInfo.totalItemsCount - 1
+						if (totalItems > 0)
+							lazyListState.scrollToItem((totalItems * it).roundToInt())
+					}
+			}
 
 			Column(
 				modifier = Modifier
