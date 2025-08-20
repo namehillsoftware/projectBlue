@@ -369,7 +369,7 @@ fun ItemListView(
 	val refreshButtonFocus = remember { FocusRequester() }
 
 	@Composable
-	fun BoxWithConstraintsScope.LoadedItemListView() {
+	fun BoxWithConstraintsScope.LoadedItemListView(onScrollProgress: (Float) -> Unit) {
 		val items by itemListViewModel.items.subscribeAsState()
 
 		val knobHeight by rememberCalculatedKnobHeight(lazyListState, standardRowHeight)
@@ -473,6 +473,24 @@ fun ItemListView(
 					Divider()
 			}
 		}
+
+
+		// 5in in pixels, pixels/Inch
+		val density = LocalDensity.current
+		val context = LocalContext.current
+		val maxScrollBarHeight = remember(density, context) {
+			with (density) {
+				(5 * context.resources.displayMetrics.ydpi).toDp()
+			}
+		}
+
+		MinimapScrollBar(
+			modifier = Modifier
+				.heightIn(200.dp, maxScrollBarHeight)
+				.align(Alignment.BottomEnd)
+				.padding(vertical = rowPadding),
+			onScrollProgress = onScrollProgress,
+		)
 	}
 
 	val isFilesLoading by fileListViewModel.isLoading.subscribeAsState()
@@ -672,26 +690,8 @@ fun ItemListView(
 				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 					val isLoaded = !isItemsLoading && !isFilesLoading
 
-					if (isLoaded) {
-						LoadedItemListView()
-
-						// 5in in pixels, pixels/Inch
-						val density = LocalDensity.current
-						val context = LocalContext.current
-						val maxScrollBarHeight = remember(density, context) {
-							with (density) {
-								(5 * context.resources.displayMetrics.ydpi).toDp()
-							}
-						}
-
-						MinimapScrollBar(
-							modifier = Modifier
-								.heightIn(200.dp, maxScrollBarHeight)
-								.align(Alignment.BottomEnd)
-								.padding(vertical = rowPadding),
-							onScrollProgress = anchoredScrollConnectionDispatcher::progressTo
-						)
-					} else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+					if (isLoaded) LoadedItemListView(anchoredScrollConnectionDispatcher::progressTo)
+					else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 				}
 			}
 		}
