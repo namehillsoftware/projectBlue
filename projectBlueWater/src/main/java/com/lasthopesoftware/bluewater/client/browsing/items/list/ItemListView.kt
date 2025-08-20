@@ -47,6 +47,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
@@ -372,8 +373,8 @@ fun ItemListView(
 		val context = LocalContext.current
 		val maxScrollBarHeight = remember(density, context) {
 			with (density) {
-				(5 * context.resources.displayMetrics.ydpi).toDp()
-			}
+				(3 * context.resources.displayMetrics.ydpi).toDp()
+			}.coerceAtMost(maxHeight)
 		}
 
 		val items by itemListViewModel.items.subscribeAsState()
