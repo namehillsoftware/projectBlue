@@ -583,7 +583,6 @@ fun ItemListView(
 			LaunchedEffect(anchoredScrollConnectionDispatcher, lazyListState) {
 				snapshotFlow { anchoredScrollConnectionDispatcher.selectedProgress }
 					.drop(1) // Ignore initial state
-					.distinctUntilChanged()
 					.collect {
 						val totalItems = lazyListState.layoutInfo.totalItemsCount - 1
 						if (totalItems > 0)
