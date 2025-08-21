@@ -29,8 +29,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -58,7 +60,6 @@ import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.MinimapScrollBar
-import com.lasthopesoftware.bluewater.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
@@ -252,20 +253,20 @@ fun ChildItem(
 		Box(modifier = Modifier
 			.navigable(
 				interactionSource = remember { MutableInteractionSource() }, indication = null, onLongClick = {
-				hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+					hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
 
-				itemListMenuBackPressedHandler.hideAllMenus()
+					itemListMenuBackPressedHandler.hideAllMenus()
 
-				childItemViewModel.showMenu()
+					childItemViewModel.showMenu()
 
-				backStack.addAction {
-					childItemViewModel.hideMenu().toPromise()
-				}
-			}, onClickLabel = stringResource(id = R.string.btn_view_song_details), onClick = {
-				itemListViewModel.loadedLibraryId?.also {
-					applicationNavigation.viewItem(it, item)
-				}
-			}, scrollPadding = rowHeight.rowScrollPadding
+					backStack.addAction {
+						childItemViewModel.hideMenu().toPromise()
+					}
+				}, onClickLabel = stringResource(id = R.string.btn_view_song_details), onClick = {
+					itemListViewModel.loadedLibraryId?.also {
+						applicationNavigation.viewItem(it, item)
+					}
+				}, scrollPadding = rowHeight.rowScrollPadding
 			)
 			.height(rowHeight)
 			.fillMaxSize()
@@ -369,22 +370,21 @@ fun ItemListView(
 	@Composable
 	fun BoxWithConstraintsScope.LoadedItemListView(onScrollProgress: (Float) -> Unit) {
 
-		// 5in in pixels, pixels/Inch
-		val density = LocalDensity.current
-		val resources = LocalResources.current
-		val maxScrollBarHeight = remember(density, resources, maxHeight) {
-			with (density) {
-				(3 * resources.displayMetrics.ydpi).toDp()
-			}.coerceAtMost(maxHeight)
-		}
-
 		val items by itemListViewModel.items.subscribeAsState()
 
-		val knobHeight by rememberCalculatedKnobHeight(lazyListState, standardRowHeight)
-		LazyColumn(
-			state = lazyListState,
-			modifier = Modifier
-				.focusGroup()
+		var isLargeList by remember { mutableStateOf(false) }
+		LaunchedEffect(lazyListState) {
+			snapshotFlow { lazyListState.layoutInfo }
+				.map { it.totalItemsCount }
+				.distinctUntilChanged()
+				.collect {
+					isLargeList = it >= 80
+				}
+		}
+
+		var modifier = Modifier.focusGroup()
+		if (!isLargeList) {
+			modifier = modifier
 				.scrollbar(
 					lazyListState,
 					horizontal = false,
@@ -392,8 +392,11 @@ fun ItemListView(
 					trackColor = Color.Transparent,
 					visibleAlpha = .4f,
 					knobCornerRadius = 1.dp,
-					fixedKnobRatio = knobHeight,
-				),
+				)
+		}
+		LazyColumn(
+			state = lazyListState,
+			modifier = modifier,
 		) {
 			item(contentType = ItemListContentType.Menu) {
 				Row(
@@ -482,17 +485,28 @@ fun ItemListView(
 			}
 		}
 
-		val localHapticFeedback = LocalHapticFeedback.current
-		MinimapScrollBar(
-			modifier = Modifier
-				.heightIn(200.dp, maxScrollBarHeight)
-				.align(Alignment.BottomEnd)
-				.padding(vertical = rowPadding),
-			onScrollProgress = onScrollProgress,
-			onSelected = {
-				localHapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
+		if (isLargeList) {
+			// 5in in pixels, pixels/Inch
+			val density = LocalDensity.current
+			val resources = LocalResources.current
+			val maxScrollBarHeight = remember(density, resources, maxHeight) {
+				with (density) {
+					(3 * resources.displayMetrics.ydpi).toDp()
+				}.coerceAtMost(maxHeight)
 			}
-		)
+
+			val localHapticFeedback = LocalHapticFeedback.current
+			MinimapScrollBar(
+				modifier = Modifier
+					.heightIn(200.dp, maxScrollBarHeight)
+					.align(Alignment.BottomEnd)
+					.padding(vertical = rowPadding),
+				onScrollProgress = onScrollProgress,
+				onSelected = {
+					localHapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
+				}
+			)
+		}
 	}
 
 	val isFilesLoading by fileListViewModel.isLoading.subscribeAsState()
@@ -510,7 +524,6 @@ fun ItemListView(
 			val expandedHeightPx = LocalDensity.current.remember { boxHeight.toPx() }
 			val collapsedHeightPx = LocalDensity.current.remember { collapsedHeight.toPx() }
 			val items by itemListViewModel.items.subscribeAsState()
-			val files by fileListViewModel.files.subscribeAsState()
 			val menuHeightPx = LocalDensity.current.remember { menuHeight.toPx() }
 			val maxHeightPx = LocalDensity.current.remember { maxHeight.toPx() }
 			val scrollAnchors by remember( menuHeightPx, expandedHeightPx, collapsedHeightPx, maxHeightPx) {
