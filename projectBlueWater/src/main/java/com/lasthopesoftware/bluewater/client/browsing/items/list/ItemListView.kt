@@ -107,7 +107,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
 import kotlinx.parcelize.Parcelize
-import kotlin.math.round
 import kotlin.math.roundToInt
 
 private val boxHeight = expandedTitleHeight + appBarHeight
@@ -368,7 +367,7 @@ fun ItemListView(
 	val refreshButtonFocus = remember { FocusRequester() }
 
 	@Composable
-	fun BoxWithConstraintsScope.LoadedItemListView(onScrollProgress: (Float) -> Unit) {
+	fun BoxWithConstraintsScope.LoadedItemListView(knownPoints: Set<Float>, onScrollProgress: (Float) -> Unit) {
 
 		val items by itemListViewModel.items.subscribeAsState()
 
@@ -501,6 +500,7 @@ fun ItemListView(
 					.heightIn(200.dp, maxScrollBarHeight)
 					.align(Alignment.BottomEnd)
 					.padding(vertical = rowPadding),
+				knownPoints = knownPoints,
 				onScrollProgress = onScrollProgress,
 				onSelected = {
 					localHapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
@@ -583,7 +583,6 @@ fun ItemListView(
 			LaunchedEffect(anchoredScrollConnectionDispatcher, lazyListState) {
 				snapshotFlow { anchoredScrollConnectionDispatcher.selectedProgress }
 					.drop(1) // Ignore initial state
-					.map { round(it * 100) / 100 }
 					.distinctUntilChanged()
 					.collect {
 						val totalItems = lazyListState.layoutInfo.totalItemsCount - 1
@@ -715,8 +714,10 @@ fun ItemListView(
 				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 					val isLoaded = !isItemsLoading && !isFilesLoading
 
-					if (isLoaded) LoadedItemListView(anchoredScrollConnectionDispatcher::progressTo)
-					else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+					if (isLoaded) LoadedItemListView(
+						progressAnchors.values.toSet(),
+						anchoredScrollConnectionDispatcher::progressTo
+					) else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 				}
 			}
 		}

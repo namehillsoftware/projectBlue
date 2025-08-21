@@ -19,6 +19,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import com.lasthopesoftware.bluewater.android.ui.navigable
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
+import kotlin.math.abs
 import kotlin.math.round
 
 private val anchorSize = viewPaddingUnit * 2
@@ -28,11 +29,27 @@ private val totalAnchorSize = anchorSize + minAnchorVerticalPadding * 2
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun MinimapScrollBar(modifier: Modifier = Modifier, onScrollProgress: (Float) -> Unit, onSelected: (Int) -> Unit) {
+fun MinimapScrollBar(
+	modifier: Modifier = Modifier,
+	knownPoints: Set<Float> = emptySet(),
+	onScrollProgress: ((Float) -> Unit)? = null,
+	onSelected: ((Int) -> Unit)? = null
+) {
 	BoxWithConstraints(modifier = modifier) {
-		val maxAnchors = (maxHeight.value / totalAnchorSize.value).toInt().coerceAtMost(20)
-		val anchors = 0 .. maxAnchors
-		val anchoredPercentages = anchors.map { Pair(it, it / maxAnchors.toFloat()) }
+		val anchoredPercentages = remember( maxHeight) {
+			val maxAnchors = (maxHeight.value / totalAnchorSize.value).toInt().coerceAtMost(19)
+			val anchors = 0 .. maxAnchors
+			val anchorCount = anchors.last().toFloat()
+			val fractionStep = 1 / anchorCount
+			val halfStep = fractionStep * .5f
+			anchors.map { a ->
+				val percentage = a / anchorCount
+				val closestKnownPoint = knownPoints
+					.filter { abs(percentage - it) < halfStep }
+					.minByOrNull { abs(percentage - it) }
+				Pair(a, closestKnownPoint ?: percentage)
+			}
+		}
 		var draggedPosition = remember { 0f }
 		Column(
 			modifier = Modifier
@@ -47,11 +64,11 @@ fun MinimapScrollBar(modifier: Modifier = Modifier, onScrollProgress: (Float) ->
 						val progress = (draggedPosition / maxHeight.toPx()).coerceIn(0f, 1f)
 						val selectedAnchor = anchoredPercentages.firstOrNull { (_, p) -> p == progress }
 						if (selectedAnchor == null) {
-							onScrollProgress(round(progress * 100) / 100)
+							onScrollProgress?.invoke(round(progress * 100) / 100)
 						} else {
 							val (anchor, progress) = selectedAnchor
-							onScrollProgress(progress)
-							onSelected(anchor)
+							onScrollProgress?.invoke(progress)
+							onSelected?.invoke(anchor)
 						}
 					}
 				},
@@ -65,8 +82,8 @@ fun MinimapScrollBar(modifier: Modifier = Modifier, onScrollProgress: (Float) ->
 						.size(viewPaddingUnit * 2)
 						.navigable(
 							onClick = {
-								onScrollProgress(p)
-								onSelected(i)
+								onScrollProgress?.invoke(p)
+								onSelected?.invoke(i)
 							}
 						)
 				)
