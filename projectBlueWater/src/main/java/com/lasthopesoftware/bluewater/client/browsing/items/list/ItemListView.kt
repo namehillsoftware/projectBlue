@@ -39,9 +39,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -370,10 +370,10 @@ fun ItemListView(
 
 		// 5in in pixels, pixels/Inch
 		val density = LocalDensity.current
-		val context = LocalContext.current
-		val maxScrollBarHeight = remember(density, context) {
+		val resources = LocalResources.current
+		val maxScrollBarHeight = remember(density, resources, maxHeight) {
 			with (density) {
-				(3 * context.resources.displayMetrics.ydpi).toDp()
+				(3 * resources.displayMetrics.ydpi).toDp()
 			}.coerceAtMost(maxHeight)
 		}
 
