@@ -15,7 +15,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.unit.Velocity
+import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
+import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
+import com.lasthopesoftware.bluewater.shared.observables.toCloseable
 import com.lasthopesoftware.compilation.DebugFlag
+import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import kotlinx.parcelize.Parcelize
 
 private const val logTag = "ScrollConnectedScaler"
@@ -50,19 +54,41 @@ class AnchoredProgressScrollConnectionDispatcher<T : Parcelable>(
 	private val state: AnchoredScrollConnectionState<T>,
 	private val fullDistance: Float,
 	private val inner: BoundedScrollConnection,
-) : BoundedScrollConnection by inner {
+) : BoundedScrollConnection by inner, AutoCloseable {
+
+	private val autoCloseableManager = AutoCloseableManager()
+
+	private val selectedProgressState = MutableInteractionState(state.selectedProgress)
 
 	private val relativeAnchors = state.progressAnchors
 
-	private var totalDistanceTraveled = state.progress * fullDistance
+	private val totalDistanceTraveled = MutableInteractionState(state.progress * fullDistance)
 
-	var selectedProgress by mutableFloatStateOf(state.selectedProgress)
-		private set
+	val selectedProgress = selectedProgressState.asInteractionState()
+
+	init {
+		autoCloseableManager.manage(
+			selectedProgressState
+				.mapNotNull()
+				.subscribe { state.selectedProgress = it }
+				.toCloseable()
+		)
+
+		autoCloseableManager.manage(
+			totalDistanceTraveled
+				.mapNotNull()
+				.subscribe { state.progress = it / fullDistance }
+				.toCloseable()
+		)
+	}
+
+	override fun close() {
+		autoCloseableManager.close()
+	}
 
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
 		// try to consume before LazyColumn to collapse toolbar if needed, hence pre-scroll
-		totalDistanceTraveled += available.y
-		state.progress = totalDistanceTraveled / fullDistance
+		totalDistanceTraveled.value += available.y
 
 		if (DebugFlag.isDebugCompilation) {
 			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
@@ -72,8 +98,7 @@ class AnchoredProgressScrollConnectionDispatcher<T : Parcelable>(
 	}
 
 	override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-		totalDistanceTraveled -= available.y
-		state.progress = totalDistanceTraveled / fullDistance
+		totalDistanceTraveled.value -= available.y
 
 		if (DebugFlag.isDebugCompilation) {
 			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
@@ -98,10 +123,9 @@ class AnchoredProgressScrollConnectionDispatcher<T : Parcelable>(
 
 	fun progressTo(progress: Float) {
 		val offset = progress * fullDistance
-		val distanceToTravel = offset - totalDistanceTraveled
+		val distanceToTravel = offset - totalDistanceTraveled.value
 		onPreScroll(Offset(x= 0f, y = distanceToTravel), NestedScrollSource.UserInput)
-		selectedProgress = progress
-		state.selectedProgress = progress
+		selectedProgressState.value = progress
 	}
 
 	@Parcelize

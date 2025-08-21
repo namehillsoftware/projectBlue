@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.android.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -16,3 +17,14 @@ fun calculateProgress(initial: Float, final: Float, currentPosition: Float): Flo
 
 @Composable
 inline fun <T> Density.remember(crossinline calculation: Density.() -> T) = remember(this) { this.calculation() }
+
+@Composable
+inline fun <T : AutoCloseable> rememberAutoCloseable(key1: Any?, key2: Any?, key3: Any?, crossinline calculation: () -> T): T {
+	val result = remember(key1, key2, key3, calculation)
+
+	DisposableEffect(result) {
+		onDispose { result.close() }
+	}
+
+	return result
+}

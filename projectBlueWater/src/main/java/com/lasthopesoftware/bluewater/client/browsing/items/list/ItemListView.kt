@@ -66,6 +66,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.navigable
 import com.lasthopesoftware.bluewater.android.ui.remember
+import com.lasthopesoftware.bluewater.android.ui.rememberAutoCloseable
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.DetermineWindowControlColors
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
@@ -100,12 +101,13 @@ import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackSer
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.UndoStack
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
+import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.toPromise
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.rx3.asFlow
 import kotlinx.parcelize.Parcelize
 import kotlin.math.roundToInt
 
@@ -576,13 +578,15 @@ fun ItemListView(
 				ConsumedOffsetErasingNestedScrollConnection(titleHeightScaler)
 			}
 
-			val anchoredScrollConnectionDispatcher = remember(state, scrollAnchors, compositeScrollConnection) {
+			val anchoredScrollConnectionDispatcher = rememberAutoCloseable(state, scrollAnchors, compositeScrollConnection) {
 				AnchoredProgressScrollConnectionDispatcher(state, scrollAnchors.values.last(), compositeScrollConnection)
 			}
 
 			LaunchedEffect(anchoredScrollConnectionDispatcher, lazyListState) {
-				snapshotFlow { anchoredScrollConnectionDispatcher.selectedProgress }
-					.drop(1) // Ignore initial state
+				anchoredScrollConnectionDispatcher.selectedProgress
+					.skip(1) // Ignore initial state
+					.mapNotNull()
+					.asFlow()
 					.collect {
 						val totalItems = lazyListState.layoutInfo.totalItemsCount - 1
 						if (totalItems > 0)

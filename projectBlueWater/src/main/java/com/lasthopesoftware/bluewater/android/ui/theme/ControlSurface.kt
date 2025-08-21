@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
-import com.lasthopesoftware.bluewater.shared.android.ui.findWindow
+import com.lasthopesoftware.bluewater.android.ui.findWindow
 
 val LocalControlColor = compositionLocalOf { Color.Black }
 val LocalSurfaceColor = compositionLocalOf { Color.White }
