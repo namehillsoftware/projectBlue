@@ -56,7 +56,7 @@ class AnchoredProgressScrollConnectionDispatcher<T : Parcelable>(
 
 	private var totalDistanceTraveled = state.progress * fullDistance
 
-	var selectedProgress by mutableFloatStateOf(relativeAnchors.values.first())
+	var selectedProgress by mutableFloatStateOf(state.selectedProgress)
 		private set
 
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
@@ -65,7 +65,7 @@ class AnchoredProgressScrollConnectionDispatcher<T : Parcelable>(
 		state.progress = totalDistanceTraveled / fullDistance
 
 		if (DebugFlag.isDebugCompilation) {
-			Log.d(logTag, "totalDistanceTraveled: ${totalDistanceTraveled}")
+			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
 		}
 
 		return inner.onPreScroll(available, source)
@@ -101,12 +101,14 @@ class AnchoredProgressScrollConnectionDispatcher<T : Parcelable>(
 		val distanceToTravel = offset - totalDistanceTraveled
 		onPreScroll(Offset(x= 0f, y = distanceToTravel), NestedScrollSource.UserInput)
 		selectedProgress = progress
+		state.selectedProgress = progress
 	}
 
 	@Parcelize
 	data class AnchoredScrollConnectionState<T : Parcelable>(
 		val progressAnchors: Map<T, Float>,
 		var progress: Float,
+		var selectedProgress: Float = progressAnchors.values.first(),
 	) : Parcelable
 }
 
