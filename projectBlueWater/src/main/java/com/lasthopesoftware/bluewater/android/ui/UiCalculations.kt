@@ -1,5 +1,8 @@
 package com.lasthopesoftware.bluewater.android.ui
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 
 fun linearInterpolation(initial: Dp, final: Dp, progress: Float): Dp =
@@ -10,3 +13,6 @@ fun linearInterpolation(initial: Float, final: Float, progress: Float): Float =
 
 fun calculateProgress(initial: Float, final: Float, currentPosition: Float): Float =
 	((currentPosition - initial) / (final - initial)).coerceIn(0f, 1f)
+
+@Composable
+inline fun <T> Density.remember(crossinline calculation: Density.() -> T) = remember(this) { this.calculation() }

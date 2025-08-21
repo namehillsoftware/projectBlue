@@ -64,6 +64,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPa
 import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.navigable
+import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.DetermineWindowControlColors
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
@@ -505,51 +506,61 @@ fun ItemListView(
 			val isItemsLoading by itemListViewModel.isLoading.subscribeAsState()
 
 			val collapsedHeight = appBarHeight
-			val rowHeightPx =
-				LocalDensity.current.run { remember(LocalDensity.current) { standardRowHeight.toPx() } }
-			val expandedHeightPx = LocalDensity.current.run { boxHeight.toPx() }
-			val collapsedHeightPx = LocalDensity.current.run { collapsedHeight.toPx() }
-			val titleHeightScaler = rememberFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
+			val rowHeightPx = LocalDensity.current.remember { standardRowHeight.toPx() }
+			val expandedHeightPx = LocalDensity.current.remember { boxHeight.toPx() }
+			val collapsedHeightPx = LocalDensity.current.remember { collapsedHeight.toPx() }
 			val items by itemListViewModel.items.subscribeAsState()
 			val files by fileListViewModel.files.subscribeAsState()
-			val menuHeightPx = LocalDensity.current.run { menuHeight.toPx() }
-			val maxHeightPx = LocalDensity.current.run { maxHeight.toPx() }
-			val scrollAnchors = remember(items, files, menuHeightPx, expandedHeightPx, collapsedHeightPx, maxHeightPx) {
-				buildMap {
-					put(ScrollAnchors.TOP, 0f)
-					val collapsedScroll = expandedHeightPx - collapsedHeightPx
-					when {
-						items.any() -> {
-							put(ScrollAnchors.ITEMS, -collapsedScroll)
-							val itemListSize = collapsedScroll + menuHeightPx + rowHeightPx * items.size
-							if (files.any()) {
-								put(ScrollAnchors.FILES, -itemListSize)
-								put(ScrollAnchors.BOTTOM, -(itemListSize + menuHeightPx + rowHeightPx * files.size - maxHeightPx))
-							} else {
-								put(ScrollAnchors.BOTTOM, -(itemListSize - maxHeightPx))
+			val menuHeightPx = LocalDensity.current.remember { menuHeight.toPx() }
+			val maxHeightPx = LocalDensity.current.remember { maxHeight.toPx() }
+			val scrollAnchors by remember( menuHeightPx, expandedHeightPx, collapsedHeightPx, maxHeightPx) {
+				derivedStateOf {
+					buildMap {
+						put(ScrollAnchors.TOP, 0f)
+						val collapsedScroll = expandedHeightPx - collapsedHeightPx
+						when {
+							items.any() -> {
+								put(ScrollAnchors.ITEMS, -collapsedScroll)
+								val itemListSize = collapsedScroll + menuHeightPx + rowHeightPx * items.size
+								if (files.any()) {
+									put(ScrollAnchors.FILES, -itemListSize)
+									put(
+										ScrollAnchors.BOTTOM,
+										-(itemListSize + menuHeightPx + rowHeightPx * files.size - maxHeightPx)
+									)
+								} else {
+									put(ScrollAnchors.BOTTOM, -(itemListSize - maxHeightPx))
+								}
 							}
-						}
-						files.any() -> {
-							put(ScrollAnchors.FILES, -collapsedScroll)
-							put(ScrollAnchors.BOTTOM, -(collapsedScroll + menuHeightPx + rowHeightPx * files.size - maxHeightPx))
+
+							files.any() -> {
+								put(ScrollAnchors.FILES, -collapsedScroll)
+								put(
+									ScrollAnchors.BOTTOM,
+									-(collapsedScroll + menuHeightPx + rowHeightPx * files.size - maxHeightPx)
+								)
+							}
 						}
 					}
 				}
 			}
 
-			val compositeScrollConnection = remember(titleHeightScaler) {
-				ConsumedOffsetErasingNestedScrollConnection(titleHeightScaler)
-			}
-
-			val progressAnchors = remember(scrollAnchors) {
-				scrollAnchors.run {
-					val bottom = values.last()
-					map { (a, v) -> Pair(a, v / bottom) }.toMap()
+			val progressAnchors by remember {
+				derivedStateOf {
+					scrollAnchors.run {
+						val bottom = values.last()
+						map { (a, v) -> Pair(a, v / bottom) }.toMap()
+					}
 				}
 			}
 
 			val state = rememberSaveable(progressAnchors) {
 				AnchoredProgressScrollConnectionDispatcher.AnchoredScrollConnectionState(progressAnchors, 0f)
+			}
+
+			val titleHeightScaler = rememberFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
+			val compositeScrollConnection = remember(titleHeightScaler) {
+				ConsumedOffsetErasingNestedScrollConnection(titleHeightScaler)
 			}
 
 			val anchoredScrollConnectionDispatcher = remember(state, scrollAnchors, compositeScrollConnection) {
