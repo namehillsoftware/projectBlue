@@ -58,7 +58,7 @@ class AnchoredProgressScrollConnectionDispatcher<T : Parcelable>(
 
 	private val autoCloseableManager = AutoCloseableManager()
 
-	private val selectedProgressState = MutableInteractionState(state.selectedProgress)
+	private val selectedProgressState = MutableInteractionState<Float?>(state.selectedProgress)
 
 	private val relativeAnchors = state.progressAnchors
 
@@ -88,6 +88,7 @@ class AnchoredProgressScrollConnectionDispatcher<T : Parcelable>(
 
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
 		// try to consume before LazyColumn to collapse toolbar if needed, hence pre-scroll
+		selectedProgressState.value = null
 		totalDistanceTraveled.value += available.y
 
 		if (DebugFlag.isDebugCompilation) {
@@ -132,7 +133,7 @@ class AnchoredProgressScrollConnectionDispatcher<T : Parcelable>(
 	data class AnchoredScrollConnectionState<T : Parcelable>(
 		val progressAnchors: Map<T, Float>,
 		var progress: Float,
-		var selectedProgress: Float = progressAnchors.values.first(),
+		var selectedProgress: Float? = null,
 	) : Parcelable
 }
 
