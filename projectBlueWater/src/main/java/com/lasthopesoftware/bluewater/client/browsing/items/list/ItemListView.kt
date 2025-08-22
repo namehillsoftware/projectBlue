@@ -536,7 +536,7 @@ fun ItemListView(
 						when {
 							items.any() -> {
 								put(ScrollAnchors.ITEMS, -collapsedScroll)
-								val itemListSize = collapsedScroll + menuHeightPx + rowHeightPx * items.size
+								val itemListSize = collapsedScroll + rowHeightPx * items.size
 								if (files.any()) {
 									put(ScrollAnchors.FILES, -itemListSize)
 									put(
