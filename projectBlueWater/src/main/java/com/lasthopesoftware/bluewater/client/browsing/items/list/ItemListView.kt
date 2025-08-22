@@ -107,7 +107,7 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.rx3.asFlow
+import kotlinx.coroutines.rx3.collect
 import kotlinx.parcelize.Parcelize
 import kotlin.math.roundToInt
 
@@ -586,7 +586,6 @@ fun ItemListView(
 				anchoredScrollConnectionDispatcher.selectedProgress
 					.skip(1) // Ignore initial state
 					.mapNotNull()
-					.asFlow()
 					.collect {
 						val totalItems = lazyListState.layoutInfo.totalItemsCount - 1
 						if (totalItems > 0)
