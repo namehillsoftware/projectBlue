@@ -1,13 +1,12 @@
 package com.lasthopesoftware.bluewater.android.ui.components
 
-import android.os.Parcelable
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.asFloatState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.SaverScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -20,7 +19,6 @@ import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
 import com.lasthopesoftware.bluewater.shared.observables.toCloseable
 import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
-import kotlinx.parcelize.Parcelize
 
 private const val logTag = "ScrollConnectedScaler"
 
@@ -29,29 +27,59 @@ interface BoundedScrollConnection : NestedScrollConnection {
 	fun goToMin()
 }
 
+//@Composable
+//fun rememberAnchoredScrollConnectionDispatcher(
+//	anchors: FloatArray,
+//	inner: BoundedScrollConnection,
+//): AnchoredProgressScrollConnectionDispatcher {
+//	val progressAnchors = remember(anchors) {
+//		anchors.run {
+//			val bottom = values.last()
+//			map { (a, v) -> Pair(a, v / bottom) }.toMap()
+//		}
+//	}
+//
+//	val state = rememberSaveable(progressAnchors) {
+//		AnchoredProgressScrollConnectionDispatcher.MutableAnchoredScrollConnectionState(progressAnchors, 0f)
+//	}
+//
+//	return remember(state, inner) {
+//		AnchoredProgressScrollConnectionDispatcher(state, anchors.values.last(), inner)
+//	}
+//}
+
 @Composable
-fun <T> rememberAnchoredScrollConnectionDispatcher(
-	anchors: Map<T, Float>,
-	inner: BoundedScrollConnection,
-): AnchoredProgressScrollConnectionDispatcher<T> where T : Parcelable {
-	val progressAnchors = remember(anchors) {
-		anchors.run {
-			val bottom = values.last()
-			map { (a, v) -> Pair(a, v / bottom) }.toMap()
-		}
-	}
-
-	val state = rememberSaveable(progressAnchors) {
-		AnchoredProgressScrollConnectionDispatcher.AnchoredScrollConnectionState(progressAnchors, 0f)
-	}
-
-	return remember(state, inner) {
-		AnchoredProgressScrollConnectionDispatcher(state, anchors.values.last(), inner)
+fun rememberAnchoredScrollConnectionState(progressAnchors: FloatArray, progress: Float = 0f, selectedProgress: Float? = null): MutableAnchoredScrollConnectionState {
+	return rememberSaveable(progressAnchors, saver = MutableAnchoredScrollConnectionState.Saver) {
+		MutableAnchoredScrollConnectionState(progressAnchors, progress, selectedProgress)
 	}
 }
 
-class AnchoredProgressScrollConnectionDispatcher<T : Parcelable>(
-	private val state: AnchoredScrollConnectionState<T>,
+interface AnchoredScrollConnectionState {
+	val progressAnchors: FloatArray
+	val progress: Float
+	val selectedProgress: Float?
+}
+
+class MutableAnchoredScrollConnectionState(
+	override val progressAnchors: FloatArray,
+	progress: Float,
+	selectedProgress: Float? = null,
+) : AnchoredScrollConnectionState {
+	override var selectedProgress by mutableStateOf(selectedProgress)
+	override var progress by mutableFloatStateOf(progress)
+
+	object Saver : androidx.compose.runtime.saveable.Saver<MutableAnchoredScrollConnectionState, Triple<FloatArray, Float, Float?>> {
+		override fun restore(value: Triple<FloatArray, Float, Float?>): MutableAnchoredScrollConnectionState =
+			MutableAnchoredScrollConnectionState(value.first, value.second, value.third)
+
+		override fun SaverScope.save(value: MutableAnchoredScrollConnectionState): Triple<FloatArray, Float, Float?> =
+			Triple(value.progressAnchors, value.progress, value.selectedProgress)
+	}
+}
+
+class AnchoredProgressScrollConnectionDispatcher(
+	private val state: MutableAnchoredScrollConnectionState,
 	private val fullDistance: Float,
 	private val inner: BoundedScrollConnection,
 ) : BoundedScrollConnection by inner, AutoCloseable {
@@ -63,8 +91,6 @@ class AnchoredProgressScrollConnectionDispatcher<T : Parcelable>(
 	private val relativeAnchors = state.progressAnchors
 
 	private val totalDistanceTraveled = MutableInteractionState(state.progress * fullDistance)
-
-	val selectedProgress = selectedProgressState.asInteractionState()
 
 	init {
 		autoCloseableManager.manage(
@@ -111,15 +137,11 @@ class AnchoredProgressScrollConnectionDispatcher<T : Parcelable>(
 	}
 
 	override fun goToMin() {
-		goTo(relativeAnchors.keys.first())
+		progressTo(relativeAnchors.first())
 	}
 
 	override fun goToMax() {
-		goTo(relativeAnchors.keys.last())
-	}
-
-	fun goTo(anchor: T) {
-		relativeAnchors[anchor]?.also(::progressTo)
+		progressTo(relativeAnchors.last())
 	}
 
 	fun progressTo(progress: Float) {
@@ -128,13 +150,6 @@ class AnchoredProgressScrollConnectionDispatcher<T : Parcelable>(
 		onPreScroll(Offset(x= 0f, y = distanceToTravel), NestedScrollSource.UserInput)
 		selectedProgressState.value = progress
 	}
-
-	@Parcelize
-	data class AnchoredScrollConnectionState<T : Parcelable>(
-		val progressAnchors: Map<T, Float>,
-		var progress: Float,
-		var selectedProgress: Float? = null,
-	) : Parcelable
 }
 
 /**
