@@ -20,8 +20,6 @@ import com.lasthopesoftware.bluewater.shared.observables.toCloseable
 import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
 
-private const val logTag = "ScrollConnectedScaler"
-
 interface BoundedScrollConnection : NestedScrollConnection {
 	fun goToMax()
 	fun goToMin()
@@ -84,6 +82,10 @@ class AnchoredProgressScrollConnectionDispatcher(
 	private val inner: BoundedScrollConnection,
 ) : BoundedScrollConnection by inner, AutoCloseable {
 
+	companion object {
+		private const val logTag = "AnchoredProgressScrollConnectionDispatcher"
+	}
+
 	private val autoCloseableManager = AutoCloseableManager()
 
 	private val selectedProgressState = MutableInteractionState<Float?>(state.selectedProgress)
@@ -117,7 +119,7 @@ class AnchoredProgressScrollConnectionDispatcher(
 		totalDistanceTraveled.value += available.y
 
 		if (DebugFlag.isDebugCompilation) {
-			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
+			Log.d(logTag, "totalDistanceTraveled: ${totalDistanceTraveled.value}")
 		}
 
 		return inner.onPreScroll(available, source)
@@ -127,7 +129,7 @@ class AnchoredProgressScrollConnectionDispatcher(
 		totalDistanceTraveled.value -= available.y
 
 		if (DebugFlag.isDebugCompilation) {
-			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
+			Log.d(logTag, "totalDistanceTraveled: ${totalDistanceTraveled.value}")
 			Log.d(logTag, "consumed: ${consumed.y}")
 			Log.d(logTag, "available: ${available.y}")
 		}
@@ -165,6 +167,10 @@ class FullScreenScrollConnectedScaler private constructor(
 	private val min: Float,
 	initialDistanceTraveled: Float
 ) : BoundedScrollConnection {
+
+	companion object {
+		private const val logTag = "FullScreenScrollConnectedScaler"
+	}
 
 	constructor(max: Float, min: Float): this(max, min, 0f)
 
@@ -231,6 +237,10 @@ fun rememberPreScrollConnectedScaler(max: Float, min: Float) = rememberSaveable(
 }
 
 class PreScrollConnectedScaler private constructor(private val max: Float, private val min: Float, initialDistanceTraveled: Float) : BoundedScrollConnection {
+
+	companion object {
+		private const val logTag = "PreScrollConnectedScaler"
+	}
 
 	constructor(max: Float, min: Float): this(max, min, max)
 

@@ -115,8 +115,8 @@ private val boxHeight = expandedTitleHeight + appBarHeight
 fun ItemsCountHeader(itemsCount: Int) {
 	Box(
 		modifier = Modifier
-			.padding(viewPaddingUnit)
 			.height(menuHeight)
+			.padding(viewPaddingUnit)
 	) {
 		ProvideTextStyle(MaterialTheme.typography.h5) {
 			Text(
@@ -544,6 +544,9 @@ fun ItemListView(
 						fullListSize += headerHeightPx + rowHeightPx * files.size + dividerHeight * files.size - 1
 					}
 
+					fullListSize -= maxHeight.toPx()
+					if (files.any() || items.any())
+						fullListSize += rowHeightPx + dividerHeight
 					fullListSize.coerceAtLeast(0f)
 				}
 			}
