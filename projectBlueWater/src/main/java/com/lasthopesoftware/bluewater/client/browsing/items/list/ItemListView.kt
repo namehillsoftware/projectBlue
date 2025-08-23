@@ -36,7 +36,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
@@ -62,7 +61,6 @@ import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
-import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.navigable
 import com.lasthopesoftware.bluewater.android.ui.remember
@@ -365,31 +363,19 @@ fun ItemListView(
 
 		val items by itemListViewModel.items.subscribeAsState()
 
-		var isLargeList by remember { mutableStateOf(false) }
+		var isScrollRequired by remember { mutableStateOf(false) }
 		LaunchedEffect(lazyListState) {
 			snapshotFlow { lazyListState.layoutInfo }
-				.map { it.totalItemsCount }
+				.map { Pair(it.visibleItemsInfo.size, it.totalItemsCount) }
 				.distinctUntilChanged()
-				.collect {
-					isLargeList = it >= 80
+				.collect { (visibleSize, totalItems) ->
+					isScrollRequired = totalItems > visibleSize
 				}
 		}
 
-		var modifier = Modifier.focusGroup()
-		if (!isLargeList) {
-			modifier = modifier
-				.scrollbar(
-					lazyListState,
-					horizontal = false,
-					knobColor = MaterialTheme.colors.onSurface,
-					trackColor = Color.Transparent,
-					visibleAlpha = .4f,
-					knobCornerRadius = 1.dp,
-				)
-		}
 		LazyColumn(
 			state = lazyListState,
-			modifier = modifier,
+			modifier = Modifier.focusGroup(),
 		) {
 			item(contentType = ItemListContentType.Menu) {
 				Row(
@@ -478,7 +464,7 @@ fun ItemListView(
 			}
 		}
 
-		if (isLargeList) {
+		if (isScrollRequired) {
 			// 5in in pixels, pixels/Inch
 			val density = LocalDensity.current
 			val resources = LocalResources.current

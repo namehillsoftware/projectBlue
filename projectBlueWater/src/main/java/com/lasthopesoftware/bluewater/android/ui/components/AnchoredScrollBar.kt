@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,6 +41,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
 import kotlin.math.round
 
 private val dragIconSize = Dimensions.listItemMenuIconSize
+private val anchorIconSize = viewPaddingUnit * 4
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalComposeUiApi::class)
@@ -51,7 +53,7 @@ fun AnchoredScrollBar(
 	onSelected: ((Int) -> Unit)? = null
 ) {
 	BoxWithConstraints(
-		modifier = modifier.padding(vertical = dragIconSize / 2),
+		modifier = modifier.requiredWidth(anchorIconSize + dragIconSize + viewPaddingUnit * 2).padding(vertical = dragIconSize / 2),
 		contentAlignment = Alignment.TopCenter,
 	) {
 		val anchoredPercentages = remember {
@@ -81,9 +83,9 @@ fun AnchoredScrollBar(
 			colorFilter = ColorFilter.tint(MaterialTheme.colors.onSecondary),
 			modifier = Modifier
 				.size(dragIconSize)
+				.align(Alignment.TopEnd)
 				.offset { IntOffset(x = 0, y = ((anchoredScrollConnectionState.progress * maxHeightPx) - dragIconSize.toPx() * .5).fastRoundToInt()) }
 				.background(MaterialTheme.colors.secondary, RoundedCornerShape(4.dp))
-				.padding(viewPaddingUnit)
 				.pointerInput(Unit) {
 					detectVerticalDragGestures { change, dragAmount ->
 						change.consume()
@@ -99,17 +101,20 @@ fun AnchoredScrollBar(
 							onSelected?.invoke(anchor)
 						}
 					}
-				},
+				}
+				.padding(viewPaddingUnit),
 		)
 
 		Box(
-			modifier = Modifier.fillMaxHeight(),
+			modifier = Modifier
+				.align(Alignment.TopStart)
+				.fillMaxHeight(),
 		) {
 			for ((i, p) in anchoredPercentages) {
 				Box(
 					modifier = Modifier
-						.size(viewPaddingUnit * 4)
-						.offset(y = p * this@BoxWithConstraints.maxHeight - viewPaddingUnit * 2)
+						.size(anchorIconSize)
+						.offset(y = p * this@BoxWithConstraints.maxHeight - anchorIconSize / 2)
 						.background(color = LocalControlColor.current, shape = CircleShape)
 						.navigable(
 							onClick = {
