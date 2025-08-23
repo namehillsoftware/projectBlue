@@ -19,6 +19,18 @@ fun calculateProgress(initial: Float, final: Float, currentPosition: Float): Flo
 inline fun <T> Density.remember(crossinline calculation: Density.() -> T) = remember(this) { this.calculation() }
 
 @Composable
+inline fun <T> Density.remember(key1: Any?, key2: Any?, crossinline calculation: Density.() -> T) =
+	remember(this, key1, key2) { this.calculation() }
+
+@Composable
+inline fun <T> Density.remember(key1: Any?, key2: Any?, key3: Any?, crossinline calculation: Density.() -> T) =
+	remember(this, key1, key2, key3) { this.calculation() }
+
+@Composable
+inline fun <T> Density.remember(key1: Any?, key2: Any?, key3: Any?, key4: Any?, crossinline calculation: Density.() -> T) =
+	remember(this, key1, key2, key3, key4) { this.calculation() }
+
+@Composable
 inline fun <T : AutoCloseable> rememberAutoCloseable(key1: Any?, key2: Any?, key3: Any?, crossinline calculation: () -> T): T {
 	val result = remember(key1, key2, key3, calculation)
 

@@ -95,8 +95,7 @@ class AnchoredProgressScrollConnectionDispatcher(
 	init {
 		autoCloseableManager.manage(
 			selectedProgressState
-				.mapNotNull()
-				.subscribe { state.selectedProgress = it }
+				.subscribe { state.selectedProgress = it.value }
 				.toCloseable()
 		)
 

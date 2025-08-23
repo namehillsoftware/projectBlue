@@ -499,44 +499,52 @@ fun ItemListView(
 			val isItemsLoading by itemListViewModel.isLoading.subscribeAsState()
 
 			val collapsedHeight = appBarHeight
-			val rowHeightPx = LocalDensity.current.remember { standardRowHeight.toPx() }
 			val expandedHeightPx = LocalDensity.current.remember { boxHeight.toPx() }
 			val collapsedHeightPx = LocalDensity.current.remember { collapsedHeight.toPx() }
 			val items by itemListViewModel.items.subscribeAsState()
-			val menuHeightPx = LocalDensity.current.remember { menuHeight.toPx() }
-			val maxHeightPx = LocalDensity.current.remember { maxHeight.toPx() }
-			val scrollAnchors by remember( menuHeightPx, expandedHeightPx, collapsedHeightPx, maxHeightPx) {
-				derivedStateOf {
-					buildList {
-						add(0f)
-						val collapsedScroll = expandedHeightPx - collapsedHeightPx
-						when {
-							items.any() -> {
-								add(-collapsedScroll)
-								val itemListSize = collapsedScroll + rowHeightPx * items.size
-								if (files.any()) {
-									add(-itemListSize)
-									add(-(itemListSize + menuHeightPx + rowHeightPx * files.size - maxHeightPx))
-								} else {
-									add(-(itemListSize - maxHeightPx))
-								}
-							}
-
-							files.any() -> {
-								add(-collapsedScroll)
-								add(-(collapsedScroll + menuHeightPx + rowHeightPx * files.size - maxHeightPx))
-							}
-						}
-					}
-				}
-			}
 
 			val progressAnchors by remember {
 				derivedStateOf {
-					scrollAnchors.run {
-						val bottom = last()
-						map { v -> v / bottom }.toFloatArray()
+					var totalItems = 1
+					if (items.any())
+						totalItems += 1 + items.size
+
+					if (files.any())
+						totalItems += 1 + files.size
+
+					buildList {
+						add(0f)
+
+						if (items.any()) {
+							add(1f / totalItems)
+						}
+
+						if (files.any()) {
+							add(if (items.any()) (2f + items.size) / totalItems else 1f / totalItems)
+						}
+
+						add(1f)
+					}.toFloatArray()
+				}
+			}
+
+			val fullListSize by LocalDensity.current.remember(expandedHeightPx, collapsedHeightPx) {
+				val topMenuHeightPx = (menuHeight + rowPadding * 2).toPx()
+				val headerHeightPx = (menuHeight + viewPaddingUnit * 2).toPx()
+				val rowHeightPx = standardRowHeight.toPx()
+				val dividerHeight = 1.dp.toPx()
+
+				derivedStateOf {
+					var fullListSize = topMenuHeightPx
+					if (items.any()) {
+						fullListSize += headerHeightPx + rowHeightPx * items.size + dividerHeight * items.size - 1
 					}
+
+					if (files.any()) {
+						fullListSize += headerHeightPx + rowHeightPx * files.size + dividerHeight * files.size - 1
+					}
+
+					fullListSize.coerceAtLeast(0f)
 				}
 			}
 
@@ -547,8 +555,8 @@ fun ItemListView(
 				ConsumedOffsetErasingNestedScrollConnection(titleHeightScaler)
 			}
 
-			val anchoredScrollConnectionDispatcher = rememberAutoCloseable(anchoredScrollConnectionState, scrollAnchors, compositeScrollConnection) {
-				AnchoredProgressScrollConnectionDispatcher(anchoredScrollConnectionState, scrollAnchors.last(), compositeScrollConnection)
+			val anchoredScrollConnectionDispatcher = rememberAutoCloseable(anchoredScrollConnectionState, fullListSize, compositeScrollConnection) {
+				AnchoredProgressScrollConnectionDispatcher(anchoredScrollConnectionState, -fullListSize, compositeScrollConnection)
 			}
 
 			LaunchedEffect(anchoredScrollConnectionState, lazyListState) {

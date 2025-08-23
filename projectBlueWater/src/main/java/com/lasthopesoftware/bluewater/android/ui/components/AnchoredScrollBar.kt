@@ -56,7 +56,7 @@ fun AnchoredScrollBar(
 		modifier = modifier.requiredWidth(anchorIconSize + dragIconSize + viewPaddingUnit * 2).padding(vertical = dragIconSize / 2),
 		contentAlignment = Alignment.TopCenter,
 	) {
-		val anchoredPercentages = remember {
+		val anchoredPercentages = remember(anchoredScrollConnectionState.progressAnchors) {
 			val boundedAnchors = anchoredScrollConnectionState.progressAnchors.distinct().sorted()
 
 			val separatedAnchors = boundedAnchors
@@ -76,7 +76,7 @@ fun AnchoredScrollBar(
 
 		val maxHeightPx = LocalDensity.current.remember { maxHeight.toPx() }
 
-		var draggedPosition by remember { mutableFloatStateOf(0f) }
+		var draggedPosition by remember { mutableFloatStateOf(anchoredScrollConnectionState.progress * maxHeightPx) }
 		Image(
 			painter = painterResource(id = R.drawable.drag),
 			contentDescription = stringResource(id = R.string.drag_item),
