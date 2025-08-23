@@ -36,9 +36,6 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUni
 import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
 import kotlin.math.round
 
-private val anchorSize = viewPaddingUnit * 2
-private val minAnchorVerticalPadding = viewPaddingUnit
-private val totalAnchorSize = anchorSize + minAnchorVerticalPadding * 2
 private val dragIconSize = Dimensions.listItemMenuIconSize
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
@@ -79,18 +76,10 @@ fun MinimapScrollBar(
 				.size(dragIconSize)
 				.offset { IntOffset(x = 0, y = ((anchoredScrollConnectionState.progress * maxHeightPx) - dragIconSize.toPx() * .5).fastRoundToInt()) }
 				.background(LocalControlColor.current, RoundedCornerShape(1.dp))
-				.padding(viewPaddingUnit),
-		)
-
-		Box(
-			modifier = Modifier
-				.fillMaxHeight()
+				.padding(viewPaddingUnit)
 				.pointerInput(Unit) {
-					detectVerticalDragGestures(
-						onDragStart = { startingOffset ->
-							draggedPosition = startingOffset.y
-						}
-					) { _, dragAmount ->
+					detectVerticalDragGestures { change, dragAmount ->
+						change.consume()
 						draggedPosition = (draggedPosition + dragAmount).fastCoerceIn(0f, maxHeightPx)
 						val progress = draggedPosition / maxHeightPx
 						val roundedProgress = round(progress * 100) / 100
@@ -104,6 +93,10 @@ fun MinimapScrollBar(
 						}
 					}
 				},
+		)
+
+		Box(
+			modifier = Modifier.fillMaxHeight(),
 		) {
 			for ((i, p) in anchoredPercentages) {
 				Box(
