@@ -12,13 +12,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -41,13 +44,16 @@ private val dragIconSize = Dimensions.listItemMenuIconSize
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun MinimapScrollBar(
+fun AnchoredScrollBar(
 	modifier: Modifier = Modifier,
 	anchoredScrollConnectionState: AnchoredScrollConnectionState,
 	onScrollProgress: ((Float) -> Unit)? = null,
 	onSelected: ((Int) -> Unit)? = null
 ) {
-	BoxWithConstraints(modifier = modifier.padding(vertical = dragIconSize / 2)) {
+	BoxWithConstraints(
+		modifier = modifier.padding(vertical = dragIconSize / 2),
+		contentAlignment = Alignment.TopCenter,
+	) {
 		val anchoredPercentages = remember {
 			val boundedAnchors = anchoredScrollConnectionState.progressAnchors.distinct().sorted()
 
@@ -72,10 +78,11 @@ fun MinimapScrollBar(
 		Image(
 			painter = painterResource(id = R.drawable.drag),
 			contentDescription = stringResource(id = R.string.drag_item),
+			colorFilter = ColorFilter.tint(MaterialTheme.colors.onSecondary),
 			modifier = Modifier
 				.size(dragIconSize)
 				.offset { IntOffset(x = 0, y = ((anchoredScrollConnectionState.progress * maxHeightPx) - dragIconSize.toPx() * .5).fastRoundToInt()) }
-				.background(LocalControlColor.current, RoundedCornerShape(1.dp))
+				.background(MaterialTheme.colors.secondary, RoundedCornerShape(4.dp))
 				.padding(viewPaddingUnit)
 				.pointerInput(Unit) {
 					detectVerticalDragGestures { change, dragAmount ->
@@ -101,8 +108,8 @@ fun MinimapScrollBar(
 			for ((i, p) in anchoredPercentages) {
 				Box(
 					modifier = Modifier
-						.size(viewPaddingUnit * 2)
-						.offset(y = p * this@BoxWithConstraints.maxHeight)
+						.size(viewPaddingUnit * 4)
+						.offset(y = p * this@BoxWithConstraints.maxHeight - viewPaddingUnit * 2)
 						.background(color = LocalControlColor.current, shape = CircleShape)
 						.navigable(
 							onClick = {

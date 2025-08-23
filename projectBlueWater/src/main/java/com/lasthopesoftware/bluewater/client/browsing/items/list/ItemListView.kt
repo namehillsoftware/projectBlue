@@ -52,13 +52,13 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredProgressScrollConnectionDispatcher
+import com.lasthopesoftware.bluewater.android.ui.components.AnchoredScrollBar
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
-import com.lasthopesoftware.bluewater.android.ui.components.MinimapScrollBar
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
@@ -489,10 +489,9 @@ fun ItemListView(
 			}
 
 			val localHapticFeedback = LocalHapticFeedback.current
-			MinimapScrollBar(
+			AnchoredScrollBar(
 				modifier = Modifier
 					.heightIn(200.dp, maxScrollBarHeight)
-					.padding(vertical = topRowOuterPadding)
 					.align(Alignment.BottomEnd),
 				anchoredScrollConnectionState = anchoredScrollConnectionState,
 				onScrollProgress = onScrollProgress,
