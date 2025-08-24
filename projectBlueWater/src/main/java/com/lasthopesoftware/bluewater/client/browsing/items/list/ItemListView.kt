@@ -105,8 +105,6 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlin.math.roundToInt
 
@@ -380,15 +378,16 @@ fun ItemListView(
 		LaunchedEffect(anchoredScrollConnectionState) {
 			snapshotFlow { anchoredScrollConnectionState.selectedProgress }
 				.drop(1) // Ignore initial state
-				.filterNotNull()
-				.filter { it >= 0 }
 				.map {
-					val totalItems = lazyListState.layoutInfo.totalItemsCount - 1
-					(totalItems * it).fastRoundToInt()
+					it?.let {
+						val totalItems = lazyListState.layoutInfo.totalItemsCount - 1
+						(totalItems * it).fastRoundToInt()
+					}
 				}
-				.filter { it >= 0 }
 				.distinctUntilChanged()
-				.collect(lazyListState::scrollToItem)
+				.collect {
+					it?.let { lazyListState.scrollToItem(it) }
+				}
 		}
 
 		LazyColumn(
@@ -546,7 +545,7 @@ fun ItemListView(
 				}
 			}
 
-			val fullListSize by LocalDensity.current.remember {
+			val fullListSize by LocalDensity.current.remember(maxHeight) {
 				val topMenuHeightPx = (menuHeight + rowPadding * 2).toPx()
 				val headerHeightPx = (menuHeight + viewPaddingUnit * 2).toPx()
 				val rowHeightPx = standardRowHeight.toPx()
