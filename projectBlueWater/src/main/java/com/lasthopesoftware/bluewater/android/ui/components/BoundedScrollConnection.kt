@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.android.ui.components
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.asFloatState
@@ -88,7 +89,7 @@ class AnchoredProgressScrollConnectionDispatcher(
 
 	private val autoCloseableManager = AutoCloseableManager()
 
-	private val selectedProgressState = MutableInteractionState<Float?>(state.selectedProgress)
+	private val selectedProgressState = MutableInteractionState(state.selectedProgress)
 
 	private val relativeAnchors = state.progressAnchors
 
@@ -104,7 +105,7 @@ class AnchoredProgressScrollConnectionDispatcher(
 		autoCloseableManager.manage(
 			totalDistanceTraveled
 				.mapNotNull()
-				.subscribe { state.progress = it / fullDistance }
+				.subscribe { state.progress = (it / fullDistance).toFloat() }
 				.toCloseable()
 		)
 	}
@@ -113,6 +114,7 @@ class AnchoredProgressScrollConnectionDispatcher(
 		autoCloseableManager.close()
 	}
 
+	@SuppressLint("LongLogTag")
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
 		// try to consume before LazyColumn to collapse toolbar if needed, hence pre-scroll
 		selectedProgressState.value = null
@@ -125,6 +127,7 @@ class AnchoredProgressScrollConnectionDispatcher(
 		return inner.onPreScroll(available, source)
 	}
 
+	@SuppressLint("LongLogTag")
 	override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
 		totalDistanceTraveled.value -= available.y
 
@@ -182,6 +185,7 @@ class FullScreenScrollConnectedScaler private constructor(
 
 	val progressState by lazy { derivedStateOf { calculateProgress(valueState.value) } }
 
+	@SuppressLint("LongLogTag")
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
 		// try to consume before LazyColumn to collapse toolbar if needed, hence pre-scroll
 		val delta = available.y
@@ -196,6 +200,7 @@ class FullScreenScrollConnectedScaler private constructor(
 		return available.copy(y = valueState.value - originalValue)
 	}
 
+	@SuppressLint("LongLogTag")
 	override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
 		totalDistanceTraveled -= available.y
 
@@ -257,6 +262,7 @@ class PreScrollConnectedScaler private constructor(private val max: Float, priva
 		return consumeY(available)
 	}
 
+	@SuppressLint("LongLogTag")
 	private fun consumeY(available: Offset): Offset {
 		val delta = available.y
 		val originalValue = mutableValueState.floatValue

@@ -38,7 +38,6 @@ import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
-import kotlin.math.round
 
 private val dragIconSize = Dimensions.listItemMenuIconSize
 private val anchorIconSize = viewPaddingUnit * 4
@@ -91,10 +90,9 @@ fun AnchoredScrollBar(
 						change.consume()
 						draggedPosition = (draggedPosition + dragAmount).fastCoerceIn(0f, maxHeightPx)
 						val progress = draggedPosition / maxHeightPx
-						val roundedProgress = round(progress * 100) / 100
-						val selectedAnchor = anchoredPercentages.firstOrNull { (_, p) -> p == roundedProgress }
+						val selectedAnchor = anchoredPercentages.firstOrNull { (_, p) -> p == progress }
 						if (selectedAnchor == null) {
-							onScrollProgress?.invoke(roundedProgress)
+							onScrollProgress?.invoke(progress)
 						} else {
 							val (anchor, progress) = selectedAnchor
 							onScrollProgress?.invoke(progress)

@@ -48,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastRoundToInt
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredProgressScrollConnectionDispatcher
@@ -359,7 +360,10 @@ fun ItemListView(
 	val refreshButtonFocus = remember { FocusRequester() }
 
 	@Composable
-	fun BoxWithConstraintsScope.LoadedItemListView(anchoredScrollConnectionState: AnchoredScrollConnectionState, onScrollProgress: (Float) -> Unit) {
+	fun BoxWithConstraintsScope.LoadedItemListView(
+		anchoredScrollConnectionState: AnchoredScrollConnectionState,
+		onScrollProgress: (Float) -> Unit,
+	) {
 
 		val items by itemListViewModel.items.subscribeAsState()
 
@@ -371,6 +375,20 @@ fun ItemListView(
 				.collect { (visibleSize, totalItems) ->
 					isScrollRequired = totalItems > visibleSize
 				}
+		}
+
+		LaunchedEffect(anchoredScrollConnectionState) {
+			snapshotFlow { anchoredScrollConnectionState.selectedProgress }
+				.drop(1) // Ignore initial state
+				.filterNotNull()
+				.filter { it >= 0 }
+				.map {
+					val totalItems = lazyListState.layoutInfo.totalItemsCount - 1
+					(totalItems * it).fastRoundToInt()
+				}
+				.filter { it >= 0 }
+				.distinctUntilChanged()
+				.collect(lazyListState::scrollToItem)
 		}
 
 		LazyColumn(
@@ -528,7 +546,7 @@ fun ItemListView(
 				}
 			}
 
-			val fullListSize by LocalDensity.current.remember(expandedHeightPx, collapsedHeightPx) {
+			val fullListSize by LocalDensity.current.remember {
 				val topMenuHeightPx = (menuHeight + rowPadding * 2).toPx()
 				val headerHeightPx = (menuHeight + viewPaddingUnit * 2).toPx()
 				val rowHeightPx = standardRowHeight.toPx()
@@ -560,18 +578,6 @@ fun ItemListView(
 
 			val anchoredScrollConnectionDispatcher = rememberAutoCloseable(anchoredScrollConnectionState, fullListSize, compositeScrollConnection) {
 				AnchoredProgressScrollConnectionDispatcher(anchoredScrollConnectionState, -fullListSize, compositeScrollConnection)
-			}
-
-			LaunchedEffect(anchoredScrollConnectionState, lazyListState) {
-				snapshotFlow { anchoredScrollConnectionState.selectedProgress }
-					.drop(1) // Ignore initial state
-					.filterNotNull()
-					.filter { it >= 0 }
-					.collect {
-						val totalItems = lazyListState.layoutInfo.totalItemsCount - 1
-						if (totalItems > 0)
-							lazyListState.scrollToItem((totalItems * it).roundToInt())
-					}
 			}
 
 			val isHeaderTall by remember { derivedStateOf { (boxHeight + menuHeight) * 2 < maxHeight } }
@@ -699,7 +705,7 @@ fun ItemListView(
 
 					if (isLoaded) LoadedItemListView(
 						anchoredScrollConnectionState,
-						anchoredScrollConnectionDispatcher::progressTo
+						anchoredScrollConnectionDispatcher::progressTo,
 					) else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 				}
 			}
