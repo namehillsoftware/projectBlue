@@ -19,6 +19,10 @@ fun calculateProgress(initial: Float, final: Float, currentPosition: Float): Flo
 inline fun <T> Density.remember(crossinline calculation: Density.() -> T) = remember(this) { this.calculation() }
 
 @Composable
+inline fun <T> Density.remember(key1: Any?, crossinline calculation: Density.() -> T) =
+	remember(this, key1) { this.calculation() }
+
+@Composable
 inline fun <T> Density.remember(key1: Any?, key2: Any?, crossinline calculation: Density.() -> T) =
 	remember(this, key1, key2) { this.calculation() }
 
