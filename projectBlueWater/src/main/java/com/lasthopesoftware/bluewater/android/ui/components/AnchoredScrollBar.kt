@@ -75,7 +75,7 @@ fun AnchoredScrollBar(
 
 		val maxHeightPx = LocalDensity.current.remember { maxHeight.toPx() }
 
-		var draggedPosition by remember { mutableFloatStateOf(anchoredScrollConnectionState.progress * maxHeightPx) }
+		var draggedPosition by remember(maxHeightPx) { mutableFloatStateOf(anchoredScrollConnectionState.progress * maxHeightPx) }
 		Image(
 			painter = painterResource(id = R.drawable.drag),
 			contentDescription = stringResource(id = R.string.drag_item),
