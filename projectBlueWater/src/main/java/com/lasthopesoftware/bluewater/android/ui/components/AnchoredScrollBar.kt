@@ -38,6 +38,7 @@ import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
+import kotlin.math.abs
 
 private val dragIconSize = Dimensions.listItemMenuIconSize
 private val anchorIconSize = viewPaddingUnit * 4
@@ -73,9 +74,11 @@ fun AnchoredScrollBar(
 			separatedAnchors
 		}
 
-		val maxHeightPx = LocalDensity.current.remember { maxHeight.toPx() }
+		val maxHeightPx = LocalDensity.current.remember(maxHeight) { maxHeight.toPx() }
 
-		var draggedPosition by remember(maxHeightPx) { mutableFloatStateOf(anchoredScrollConnectionState.progress * maxHeightPx) }
+		var draggedPosition by remember(maxHeightPx) {
+			mutableFloatStateOf(anchoredScrollConnectionState.progress * maxHeightPx)
+		}
 		Image(
 			painter = painterResource(id = R.drawable.drag),
 			contentDescription = stringResource(id = R.string.drag_item),
@@ -83,18 +86,27 @@ fun AnchoredScrollBar(
 			modifier = Modifier
 				.size(dragIconSize)
 				.align(Alignment.TopEnd)
-				.offset { IntOffset(x = 0, y = ((anchoredScrollConnectionState.progress * maxHeightPx) - dragIconSize.toPx() * .5).fastRoundToInt()) }
+				.offset { IntOffset(x = 0, y = ((anchoredScrollConnectionState.progress * maxHeight.toPx()) - dragIconSize.toPx() * .5).fastRoundToInt()) }
 				.background(MaterialTheme.colors.secondary, RoundedCornerShape(4.dp))
 				.pointerInput(Unit) {
 					detectVerticalDragGestures { change, dragAmount ->
 						change.consume()
+						val maxHeightPx = maxHeight.toPx()
 						draggedPosition = (draggedPosition + dragAmount).fastCoerceIn(0f, maxHeightPx)
 						val progress = draggedPosition / maxHeightPx
-						val selectedAnchor = anchoredPercentages.firstOrNull { (_, p) -> p == progress }
+						val direction = dragAmount / abs(dragAmount)
+						val selectedAnchor = anchoredPercentages
+							.filter { (_, p) ->
+								val difference = direction * (p - progress)
+								difference < .015f && difference >= 0f
+							}
+							.minByOrNull { (_, p) -> direction * (p - progress) }
+
 						if (selectedAnchor == null) {
 							onScrollProgress?.invoke(progress)
 						} else {
 							val (anchor, progress) = selectedAnchor
+							draggedPosition = progress * maxHeightPx
 							onScrollProgress?.invoke(progress)
 							onSelected?.invoke(anchor)
 						}

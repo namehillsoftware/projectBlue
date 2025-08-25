@@ -77,6 +77,7 @@ class MutableAnchoredScrollConnectionState(
 	}
 }
 
+@SuppressLint("LongLogTag")
 class AnchoredProgressScrollConnectionDispatcher(
 	private val state: MutableAnchoredScrollConnectionState,
 	private val fullDistance: Float,
@@ -98,14 +99,19 @@ class AnchoredProgressScrollConnectionDispatcher(
 	init {
 		autoCloseableManager.manage(
 			selectedProgressState
-				.subscribe { state.selectedProgress = it.value }
+				.subscribe {
+					if (DebugFlag.isDebugCompilation) {
+						Log.d(logTag, "selectedProgress: $it")
+					}
+					state.selectedProgress = it.value
+				}
 				.toCloseable()
 		)
 
 		autoCloseableManager.manage(
 			totalDistanceTraveled
 				.mapNotNull()
-				.subscribe { state.progress = (it / fullDistance).toFloat() }
+				.subscribe { state.progress = (it / fullDistance).coerceIn(0f, 1f) }
 				.toCloseable()
 		)
 	}

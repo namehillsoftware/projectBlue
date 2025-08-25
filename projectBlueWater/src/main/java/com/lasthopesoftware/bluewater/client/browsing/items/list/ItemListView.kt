@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -101,6 +102,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.UndoStack
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.promises.extensions.toPromise
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -380,13 +382,20 @@ fun ItemListView(
 				.drop(1) // Ignore initial state
 				.map {
 					it?.let {
-						val totalItems = lazyListState.layoutInfo.totalItemsCount - 1
-						(totalItems * it).fastRoundToInt()
+						val totalItems = lazyListState.layoutInfo.totalItemsCount
+						val index = (totalItems * it).fastRoundToInt().coerceAtMost(totalItems - 1)
+
+						index
 					}
 				}
 				.distinctUntilChanged()
 				.collect {
-					it?.let { lazyListState.scrollToItem(it) }
+					it?.let {
+						if (DebugFlag.isDebugCompilation) {
+							Log.d("LoadedItemListView", "Selected index: $it")
+						}
+						lazyListState.scrollToItem(it)
+					}
 				}
 		}
 
