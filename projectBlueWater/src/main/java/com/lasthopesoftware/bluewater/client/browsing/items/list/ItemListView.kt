@@ -362,6 +362,7 @@ fun ItemListView(
 	@Composable
 	fun BoxWithConstraintsScope.LoadedItemListView(
 		anchoredScrollConnectionState: AnchoredScrollConnectionState,
+		estimatedListSize: Float,
 		onScrollProgress: (Float) -> Unit,
 	) {
 
@@ -383,18 +384,36 @@ fun ItemListView(
 				.map {
 					it?.let {
 						val totalItems = lazyListState.layoutInfo.totalItemsCount
-						val index = (totalItems * it).fastRoundToInt().coerceAtMost(totalItems - 1)
-
-						index
+						val fractionalIndex = totalItems * it
+						fractionalIndex
 					}
 				}
 				.distinctUntilChanged()
 				.collect {
-					it?.let {
+					it?.let { fractionalIndex ->
 						if (DebugFlag.isDebugCompilation) {
 							Log.d("LoadedItemListView", "Selected index: $it")
 						}
-						lazyListState.scrollToItem(it)
+
+						val index = fractionalIndex.toInt()
+
+						lazyListState.scrollToItem(index)
+
+						val offsetPercentage = fractionalIndex - index
+						if (offsetPercentage != 0f) {
+							val offsetPixels = lazyListState
+								.layoutInfo
+								.visibleItemsInfo
+								.firstOrNull()
+								?.size
+								?.let { s -> s * offsetPercentage }
+								?.fastRoundToInt()
+								?.takeIf { p -> p != 0 }
+
+							if (offsetPixels != null) {
+								lazyListState.scrollToItem(index, offsetPixels)
+							}
+						}
 					}
 				}
 		}
@@ -713,6 +732,7 @@ fun ItemListView(
 
 					if (isLoaded) LoadedItemListView(
 						anchoredScrollConnectionState,
+						fullListSize,
 						anchoredScrollConnectionDispatcher::progressTo,
 					) else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 				}
