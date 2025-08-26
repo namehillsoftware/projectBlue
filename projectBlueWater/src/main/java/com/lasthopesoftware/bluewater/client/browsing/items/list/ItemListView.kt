@@ -109,6 +109,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
 import kotlin.math.roundToInt
+import kotlin.math.sign
 
 private val boxHeight = expandedTitleHeight + appBarHeight
 
@@ -428,18 +429,32 @@ fun ItemListView(
 //		}
 
 		LaunchedEffect(anchoredScrollConnectionState) {
+			var priorProgress = 0f
+			var priorIndex = 0f
 			snapshotFlow { anchoredScrollConnectionState.selectedProgress }
 				.drop(1) // Ignore initial state
 				.map {
 					val layoutInfo = lazyListState.layoutInfo
 					it?.let { progress ->
-						val totalItems = layoutInfo.totalItemsCount - 1
+						val totalItems = layoutInfo.totalItemsCount
 						val fractionalIndex = totalItems * progress
 
-						val finalScrollToItem = layoutInfo.totalItemsCount - layoutInfo.visibleItemsInfo.size + 1
+						val finalScrollToItem = totalItems - layoutInfo.visibleItemsInfo.size + 1
 						val scrollBack = (totalItems - finalScrollToItem) * progress
 
-						fractionalIndex - scrollBack
+						val newIndex = fractionalIndex - scrollBack
+
+						val progressDiff = progress - priorProgress
+						val indexDiff = newIndex - priorIndex
+
+						priorProgress = progress
+
+						if (progressDiff.sign == indexDiff.sign) {
+							priorIndex = newIndex
+							newIndex
+						} else {
+							priorIndex
+						}
 					}
 				}
 				.distinctUntilChanged()
