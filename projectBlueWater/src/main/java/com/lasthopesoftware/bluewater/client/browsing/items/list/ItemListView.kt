@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.items.list
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,7 +50,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastRoundToInt
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredProgressScrollConnectionDispatcher
@@ -362,7 +362,6 @@ fun ItemListView(
 	@Composable
 	fun BoxWithConstraintsScope.LoadedItemListView(
 		anchoredScrollConnectionState: AnchoredScrollConnectionState,
-		estimatedListSize: Float,
 		onScrollProgress: (Float) -> Unit,
 	) {
 
@@ -382,10 +381,21 @@ fun ItemListView(
 			snapshotFlow { anchoredScrollConnectionState.selectedProgress }
 				.drop(1) // Ignore initial state
 				.map {
-					it?.let {
-						val totalItems = lazyListState.layoutInfo.totalItemsCount
-						val fractionalIndex = totalItems * it
-						fractionalIndex
+					val layoutInfo = lazyListState.layoutInfo
+					when (it) {
+						null -> null
+						1f -> layoutInfo.totalItemsCount - 1f
+						else -> {
+							val finalScrollToItem = layoutInfo.totalItemsCount - layoutInfo.visibleItemsInfo.size + 1
+							val fractionalIndex = layoutInfo.totalItemsCount * it
+
+							if (fractionalIndex <= finalScrollToItem) {
+								fractionalIndex
+							} else {
+								onScrollProgress(1f)
+								null
+							}
+						}
 					}
 				}
 				.distinctUntilChanged()
@@ -407,16 +417,80 @@ fun ItemListView(
 								.firstOrNull()
 								?.size
 								?.let { s -> s * offsetPercentage }
-								?.fastRoundToInt()
-								?.takeIf { p -> p != 0 }
+								?.takeIf { p -> p != 0f }
 
 							if (offsetPixels != null) {
-								lazyListState.scrollToItem(index, offsetPixels)
+								lazyListState.scrollBy(offsetPixels)
 							}
 						}
 					}
 				}
 		}
+
+//		LaunchedEffect(anchoredScrollConnectionState) {
+//			snapshotFlow { anchoredScrollConnectionState.selectedProgress }
+//				.drop(1) // Ignore initial state
+//				.map {
+//					val layoutInfo = lazyListState.layoutInfo
+//					it?.let {
+//						val totalItems = layoutInfo.totalItemsCount - 1
+//						val fractionalIndex = totalItems * it
+//						fractionalIndex
+//					}
+//				}
+//				.distinctUntilChanged()
+//				.collect {
+//					it?.let { fractionalIndex ->
+//						if (DebugFlag.isDebugCompilation) {
+//							Log.d("LoadedItemListView", "Selected index: $it")
+//						}
+//
+//						val index = fractionalIndex.toInt()
+//
+//						lazyListState.scrollToItem(index)
+//
+//						val offsetPercentage = fractionalIndex - index
+//						if (offsetPercentage != 0f) {
+//							val offsetPixels = lazyListState
+//								.layoutInfo
+//								.visibleItemsInfo
+//								.firstOrNull()
+//								?.size
+//								?.let { s -> s * offsetPercentage }
+//								?.fastRoundToInt()
+//								?.takeIf { p -> p != 0 }
+//
+//							if (offsetPixels != null) {
+//								lazyListState.scrollToItem(index, offsetPixels)
+//							}
+//						}
+//					}
+//				}
+//		}
+
+//		var scrollOffset by remember { mutableFloatStateOf(0f) }
+//		LaunchedEffect(anchoredScrollConnectionState) {
+//			snapshotFlow { anchoredScrollConnectionState.selectedProgress }
+//				.drop(1) // Ignore initial state
+//				.map {
+//					it?.let {
+//						val targetOffset = estimatedListSize * it
+//						targetOffset - scrollOffset
+//					}
+//				}
+//				.distinctUntilChanged()
+//				.collect {
+//					it?.let { pixels ->
+//						if (DebugFlag.isDebugCompilation) {
+//							Log.d("LoadedItemListView", "Pixels: $it")
+//						}
+//
+//						lazyListState.scroll {
+//							scrollOffset += scrollBy(pixels)
+//						}
+//					}
+//				}
+//		}
 
 		LazyColumn(
 			state = lazyListState,
@@ -732,7 +806,6 @@ fun ItemListView(
 
 					if (isLoaded) LoadedItemListView(
 						anchoredScrollConnectionState,
-						fullListSize,
 						anchoredScrollConnectionDispatcher::progressTo,
 					) else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 				}

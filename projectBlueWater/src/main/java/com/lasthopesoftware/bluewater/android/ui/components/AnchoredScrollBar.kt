@@ -53,7 +53,9 @@ fun AnchoredScrollBar(
 	onSelected: ((Int) -> Unit)? = null
 ) {
 	BoxWithConstraints(
-		modifier = modifier.requiredWidth(anchorIconSize + dragIconSize + viewPaddingUnit * 2).padding(vertical = dragIconSize / 2),
+		modifier = modifier
+			.fillMaxHeight()
+			.requiredWidth(anchorIconSize + dragIconSize + viewPaddingUnit * 2).padding(vertical = dragIconSize / 2),
 		contentAlignment = Alignment.TopCenter,
 	) {
 		val anchoredPercentages = remember(anchoredScrollConnectionState.progressAnchors) {
