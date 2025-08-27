@@ -50,8 +50,8 @@ import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.android.ui.components.AnchoredChips
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredProgressScrollConnectionDispatcher
-import com.lasthopesoftware.bluewater.android.ui.components.AnchoredScrollBar
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
@@ -521,7 +521,7 @@ fun ItemListView(
 		}
 
 		val localHapticFeedback = LocalHapticFeedback.current
-		AnchoredScrollBar(
+		AnchoredChips(
 			modifier = Modifier
 				.heightIn(200.dp, maxScrollBarHeight)
 				.align(Alignment.BottomEnd),

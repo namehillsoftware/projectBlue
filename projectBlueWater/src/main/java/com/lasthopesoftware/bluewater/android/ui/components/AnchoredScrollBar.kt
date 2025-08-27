@@ -6,7 +6,9 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -14,7 +16,11 @@ import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Chip
+import androidx.compose.material.ChipDefaults
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -83,7 +89,7 @@ fun AnchoredScrollBar(
 		BoxWithConstraints(
 			modifier = modifier
 				.fillMaxHeight()
-				.requiredWidth(anchorIconSize + dragIconSize + viewPaddingUnit * 2)
+				.requiredWidth(dragIconSize + viewPaddingUnit * 2)
 				.padding(vertical = dragIconSize / 2)
 				.alpha(alpha),
 			contentAlignment = Alignment.TopCenter,
@@ -155,6 +161,87 @@ fun AnchoredScrollBar(
 					}
 					.padding(viewPaddingUnit),
 			)
+		}
+	}
+}
+
+@SuppressLint("UnusedBoxWithConstraintsScope")
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterialApi::class)
+@Composable
+fun AnchoredChips(
+	modifier: Modifier = Modifier,
+	anchoredScrollConnectionState: AnchoredScrollConnectionState,
+	lazyListState: LazyListState,
+	onScrollProgress: ((Float) -> Unit)? = null,
+	onSelected: ((Int) -> Unit)? = null
+) {
+	val targetAlpha =
+		if (lazyListState.isScrollInProgress) {
+			1f
+		} else {
+			0f
+		}
+	val animationDurationMs =
+		if (lazyListState.isScrollInProgress) {
+			150
+		} else {
+			500
+		}
+	val animationDelayMs =
+		if (lazyListState.isScrollInProgress) {
+			0
+		} else {
+			3000
+		}
+
+	val alpha by animateFloatAsState(
+		targetValue = targetAlpha,
+		animationSpec = tween(delayMillis = animationDelayMs, durationMillis = animationDurationMs)
+	)
+
+	if (alpha <= 0f) return
+
+	BoxWithConstraints(
+		modifier = modifier
+			.fillMaxHeight(),
+		contentAlignment = Alignment.TopCenter,
+	) {
+		val anchoredPercentages = remember(anchoredScrollConnectionState.progressAnchors) {
+			val boundedAnchors = anchoredScrollConnectionState.progressAnchors.distinct().sorted()
+
+			val separatedAnchors = boundedAnchors
+				.filter { a ->
+					for (b in boundedAnchors) {
+						if (b == a) continue
+						if (b > a) return@filter true
+						if (a - b < .025) return@filter false
+					}
+
+					true
+				}
+				.withIndex()
+
+			separatedAnchors
+		}
+
+		Column(
+			modifier = Modifier
+				.align(Alignment.TopStart)
+				.fillMaxHeight(),
+			verticalArrangement = Arrangement.SpaceBetween,
+		) {
+			for ((i, p) in anchoredPercentages) {
+				Chip(
+					onClick = {
+						onScrollProgress?.invoke(p)
+						onSelected?.invoke(i)
+					},
+					border = ChipDefaults.outlinedBorder,
+					colors = ChipDefaults.chipColors(),
+				) {
+					Text("Test")
+				}
+			}
 		}
 	}
 }
