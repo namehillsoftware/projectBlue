@@ -30,7 +30,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -50,8 +52,8 @@ import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.android.ui.components.AnchoredChips
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredProgressScrollConnectionDispatcher
-import com.lasthopesoftware.bluewater.android.ui.components.AnchoredScrollBar
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
@@ -99,15 +101,21 @@ import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackSer
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.UndoStack
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
+import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.strings.GetStringResources
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.rx3.asFlow
 import kotlin.math.roundToInt
-import kotlin.math.sign
 
 private val boxHeight = expandedTitleHeight + appBarHeight
 
@@ -349,6 +357,7 @@ fun ItemListView(
     applicationNavigation: NavigateApplication,
     playbackLibraryItems: PlaybackLibraryItems,
     playbackServiceController: ControlPlaybackService,
+	stringResources: GetStringResources,
     undoBackStack: UndoStack,
 ) {
 	val files by fileListViewModel.files.subscribeAsState()
@@ -361,14 +370,13 @@ fun ItemListView(
 	@Composable
 	fun BoxWithConstraintsScope.LoadedItemListView(
 		anchoredScrollConnectionState: AnchoredScrollConnectionState,
+		chipLabel: @Composable (Int, Float) -> Unit,
 		onScrollProgress: (Float) -> Unit,
 	) {
 
 		val items by itemListViewModel.items.subscribeAsState()
 
 		LaunchedEffect(anchoredScrollConnectionState) {
-			var priorProgress = 0f
-			var priorIndex = 0f
 			snapshotFlow { anchoredScrollConnectionState.selectedProgress }
 				.drop(1) // Ignore initial state
 				.map {
@@ -376,19 +384,8 @@ fun ItemListView(
 					it?.let { progress ->
 						val totalItems = layoutInfo.totalItemsCount
 
-						val newIndex = (totalItems - layoutInfo.visibleItemsInfo.size + 1) * progress
-
-						val progressDiff = progress - priorProgress
-						val indexDiff = newIndex - priorIndex
-
-						priorProgress = progress
-
-						if (progressDiff.sign == indexDiff.sign) {
-							priorIndex = newIndex
-							newIndex
-						} else {
-							priorIndex
-						}
+						val newIndex = (totalItems - 1) * progress
+						newIndex
 					}
 				}
 				.distinctUntilChanged()
@@ -521,12 +518,13 @@ fun ItemListView(
 		}
 
 		val localHapticFeedback = LocalHapticFeedback.current
-		AnchoredScrollBar(
+		AnchoredChips(
 			modifier = Modifier
 				.heightIn(200.dp, maxScrollBarHeight)
 				.align(Alignment.BottomEnd),
 			anchoredScrollConnectionState = anchoredScrollConnectionState,
 			lazyListState = lazyListState,
+			chipLabel = chipLabel,
 			onScrollProgress = onScrollProgress,
 			onSelected = {
 				localHapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
@@ -549,7 +547,24 @@ fun ItemListView(
 			val collapsedHeightPx = LocalDensity.current.remember { collapsedHeight.toPx() }
 			val items by itemListViewModel.items.subscribeAsState()
 
-			val progressAnchors by remember {
+			var minVisibleItemsForScroll by remember { mutableIntStateOf(30) }
+			LaunchedEffect(lazyListState, itemListViewModel, fileListViewModel) {
+				combine(
+					snapshotFlow { lazyListState.layoutInfo },
+					itemListViewModel.isLoading.mapNotNull().asFlow(),
+					fileListViewModel.isLoading.mapNotNull().asFlow(),
+				) { info, i, f -> Triple(info, i, f) }
+					.filterNot { (_, i, f) -> i || f }
+					.map { (info, _, _) -> info.visibleItemsInfo.size }
+					.filter { it == 0 }
+					.distinctUntilChanged()
+					.take(1)
+					.collect {
+						minVisibleItemsForScroll = (it * 3).coerceAtLeast(30)
+					}
+			}
+
+			val labeledAnchors by remember {
 				derivedStateOf {
 					var totalItems = 1
 					if (items.any())
@@ -558,20 +573,21 @@ fun ItemListView(
 					if (files.any())
 						totalItems += 1 + files.size
 
-					buildList {
-						add(0f)
+					if (totalItems <= minVisibleItemsForScroll) emptyList()
+					else buildList {
+						add(Pair(stringResources.top,0f))
 
-						if (items.any()) {
-							add(1f / totalItems)
+						if (files.any() && files.size > minVisibleItemsForScroll) {
+							add(Pair(stringResources.files,if (items.any()) (2f + items.size) / totalItems else 1f / totalItems))
 						}
 
-						if (files.any()) {
-							add(if (items.any()) (2f + items.size) / totalItems else 1f / totalItems)
-						}
-
-						add(1f)
-					}.toFloatArray()
+						add(Pair(stringResources.end, 1f))
+					}
 				}
+			}
+
+			val progressAnchors by remember {
+				derivedStateOf { labeledAnchors.map { (_, p) -> p }.toFloatArray() }
 			}
 
 			val fullListSize by LocalDensity.current.remember(maxHeight) {
@@ -733,6 +749,7 @@ fun ItemListView(
 
 					if (isLoaded) LoadedItemListView(
 						anchoredScrollConnectionState,
+						{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
 						anchoredScrollConnectionDispatcher::progressTo,
 					) else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 				}

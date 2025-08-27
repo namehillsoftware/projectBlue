@@ -24,6 +24,7 @@ import com.lasthopesoftware.bluewater.shared.android.UndoStack
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.ViewModelInitAction
 import com.lasthopesoftware.promises.extensions.suspend
+import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import java.io.IOException
 
@@ -43,6 +44,7 @@ fun LoadedItemListView(viewModelDependencies: ScopedViewModelDependencies, libra
 			playbackLibraryItems = playbackLibraryItems,
 			playbackServiceController = playbackServiceController,
 			connectionStatusViewModel = connectionStatusViewModel,
+			stringResources = stringResources,
 			undoBackStack = undoBackStackBuilder,
 		)
 	}
@@ -62,6 +64,7 @@ private fun LoadedItemListView(
     playbackLibraryItems: PlaybackLibraryItems,
     playbackServiceController: ControlPlaybackService,
     connectionStatusViewModel: ConnectionStatusViewModel,
+	stringResources: GetStringResources,
     undoBackStack: UndoStack,
 ) {
 	var isConnectionLost by remember { mutableStateOf(false) }
@@ -85,6 +88,7 @@ private fun LoadedItemListView(
 			applicationNavigation,
 			playbackLibraryItems,
 			playbackServiceController,
+			stringResources,
 			undoBackStack,
 		)
 	}
@@ -109,7 +113,7 @@ private fun LoadedItemListView(
 						isConnectionLost = true
 					else
 						applicationNavigation.backOut().suspend()
-				} catch (e: Exception) {
+				} catch (_: Exception) {
 					applicationNavigation.backOut().suspend()
 				}
 			}
