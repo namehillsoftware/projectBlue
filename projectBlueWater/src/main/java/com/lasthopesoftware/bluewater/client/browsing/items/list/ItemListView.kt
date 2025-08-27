@@ -30,9 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -368,16 +366,6 @@ fun ItemListView(
 
 		val items by itemListViewModel.items.subscribeAsState()
 
-		var isScrollRequired by remember { mutableStateOf(false) }
-		LaunchedEffect(lazyListState) {
-			snapshotFlow { lazyListState.layoutInfo }
-				.map { Pair(it.visibleItemsInfo.size, it.totalItemsCount) }
-				.distinctUntilChanged()
-				.collect { (visibleSize, totalItems) ->
-					isScrollRequired = totalItems > visibleSize
-				}
-		}
-
 		LaunchedEffect(anchoredScrollConnectionState) {
 			var priorProgress = 0f
 			var priorIndex = 0f
@@ -523,28 +511,27 @@ fun ItemListView(
 			}
 		}
 
-		if (isScrollRequired) {
-			// 5in in pixels, pixels/Inch
-			val density = LocalDensity.current
-			val resources = LocalResources.current
-			val maxScrollBarHeight = remember(density, resources, maxHeight) {
-				with (density) {
-					(2.5f * resources.displayMetrics.ydpi).toDp()
-				}.coerceAtMost(maxHeight)
-			}
-
-			val localHapticFeedback = LocalHapticFeedback.current
-			AnchoredScrollBar(
-				modifier = Modifier
-					.heightIn(200.dp, maxScrollBarHeight)
-					.align(Alignment.BottomEnd),
-				anchoredScrollConnectionState = anchoredScrollConnectionState,
-				onScrollProgress = onScrollProgress,
-				onSelected = {
-					localHapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
-				}
-			)
+		// 5in in pixels, pixels/Inch
+		val density = LocalDensity.current
+		val resources = LocalResources.current
+		val maxScrollBarHeight = remember(density, resources, maxHeight) {
+			with (density) {
+				(2.5f * resources.displayMetrics.ydpi).toDp()
+			}.coerceAtMost(maxHeight)
 		}
+
+		val localHapticFeedback = LocalHapticFeedback.current
+		AnchoredScrollBar(
+			modifier = Modifier
+				.heightIn(200.dp, maxScrollBarHeight)
+				.align(Alignment.BottomEnd),
+			anchoredScrollConnectionState = anchoredScrollConnectionState,
+			lazyListState = lazyListState,
+			onScrollProgress = onScrollProgress,
+			onSelected = {
+				localHapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
+			}
+		)
 	}
 
 	val isFilesLoading by fileListViewModel.isLoading.subscribeAsState()
