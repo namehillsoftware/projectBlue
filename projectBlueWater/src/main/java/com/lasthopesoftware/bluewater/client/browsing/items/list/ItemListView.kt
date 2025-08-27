@@ -378,56 +378,6 @@ fun ItemListView(
 				}
 		}
 
-//		LaunchedEffect(anchoredScrollConnectionState) {
-//			snapshotFlow { anchoredScrollConnectionState.selectedProgress }
-//				.drop(1) // Ignore initial state
-//				.map {
-//					val layoutInfo = lazyListState.layoutInfo
-//					when (it) {
-//						null -> null
-//						1f -> layoutInfo.totalItemsCount - 1f
-//						else -> {
-//							val finalScrollToItem = layoutInfo.totalItemsCount - layoutInfo.visibleItemsInfo.size + 1
-//							val fractionalIndex = layoutInfo.totalItemsCount * it
-//
-//							if (fractionalIndex <= finalScrollToItem) {
-//								fractionalIndex
-//							} else {
-//								onScrollProgress(1f)
-//								null
-//							}
-//						}
-//					}
-//				}
-//				.distinctUntilChanged()
-//				.collect {
-//					it?.let { fractionalIndex ->
-//						if (DebugFlag.isDebugCompilation) {
-//							Log.d("LoadedItemListView", "Selected index: $it")
-//						}
-//
-//						val index = fractionalIndex.toInt()
-//
-//						lazyListState.scrollToItem(index)
-//
-//						val offsetPercentage = fractionalIndex - index
-//						if (offsetPercentage != 0f) {
-//							val offsetPixels = lazyListState
-//								.layoutInfo
-//								.visibleItemsInfo
-//								.firstOrNull()
-//								?.size
-//								?.let { s -> s * offsetPercentage }
-//								?.takeIf { p -> p != 0f }
-//
-//							if (offsetPixels != null) {
-//								lazyListState.scrollBy(offsetPixels)
-//							}
-//						}
-//					}
-//				}
-//		}
-
 		LaunchedEffect(anchoredScrollConnectionState) {
 			var priorProgress = 0f
 			var priorIndex = 0f
@@ -437,12 +387,8 @@ fun ItemListView(
 					val layoutInfo = lazyListState.layoutInfo
 					it?.let { progress ->
 						val totalItems = layoutInfo.totalItemsCount
-						val fractionalIndex = totalItems * progress
 
-						val finalScrollToItem = totalItems - layoutInfo.visibleItemsInfo.size + 1
-						val scrollBack = (totalItems - finalScrollToItem) * progress
-
-						val newIndex = fractionalIndex - scrollBack
+						val newIndex = (totalItems - layoutInfo.visibleItemsInfo.size + 1) * progress
 
 						val progressDiff = progress - priorProgress
 						val indexDiff = newIndex - priorIndex
@@ -485,30 +431,6 @@ fun ItemListView(
 					}
 				}
 		}
-
-//		var scrollOffset by remember { mutableFloatStateOf(0f) }
-//		LaunchedEffect(anchoredScrollConnectionState) {
-//			snapshotFlow { anchoredScrollConnectionState.selectedProgress }
-//				.drop(1) // Ignore initial state
-//				.map {
-//					it?.let {
-//						val targetOffset = estimatedListSize * it
-//						targetOffset - scrollOffset
-//					}
-//				}
-//				.distinctUntilChanged()
-//				.collect {
-//					it?.let { pixels ->
-//						if (DebugFlag.isDebugCompilation) {
-//							Log.d("LoadedItemListView", "Pixels: $it")
-//						}
-//
-//						lazyListState.scroll {
-//							scrollOffset += scrollBy(pixels)
-//						}
-//					}
-//				}
-//		}
 
 		LazyColumn(
 			state = lazyListState,
