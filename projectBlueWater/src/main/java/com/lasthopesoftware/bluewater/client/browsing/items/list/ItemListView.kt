@@ -102,6 +102,7 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseables
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.strings.GetStringResources
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -349,6 +350,7 @@ fun ItemListView(
     applicationNavigation: NavigateApplication,
     playbackLibraryItems: PlaybackLibraryItems,
     playbackServiceController: ControlPlaybackService,
+	stringResources: GetStringResources,
     undoBackStack: UndoStack,
 ) {
 	val files by fileListViewModel.files.subscribeAsState()
@@ -361,6 +363,7 @@ fun ItemListView(
 	@Composable
 	fun BoxWithConstraintsScope.LoadedItemListView(
 		anchoredScrollConnectionState: AnchoredScrollConnectionState,
+		chipLabel: @Composable (Int, Float) -> Unit,
 		onScrollProgress: (Float) -> Unit,
 	) {
 
@@ -527,6 +530,7 @@ fun ItemListView(
 				.align(Alignment.BottomEnd),
 			anchoredScrollConnectionState = anchoredScrollConnectionState,
 			lazyListState = lazyListState,
+			chipLabel = chipLabel,
 			onScrollProgress = onScrollProgress,
 			onSelected = {
 				localHapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
@@ -549,7 +553,7 @@ fun ItemListView(
 			val collapsedHeightPx = LocalDensity.current.remember { collapsedHeight.toPx() }
 			val items by itemListViewModel.items.subscribeAsState()
 
-			val progressAnchors by remember {
+			val labeledAnchors by remember {
 				derivedStateOf {
 					var totalItems = 1
 					if (items.any())
@@ -559,19 +563,23 @@ fun ItemListView(
 						totalItems += 1 + files.size
 
 					buildList {
-						add(0f)
+						add(Pair(stringResources.top,0f))
 
 						if (items.any()) {
-							add(1f / totalItems)
+							add(Pair(stringResources.items,1f / totalItems))
 						}
 
 						if (files.any()) {
-							add(if (items.any()) (2f + items.size) / totalItems else 1f / totalItems)
+							add(Pair(stringResources.files,if (items.any()) (2f + items.size) / totalItems else 1f / totalItems))
 						}
 
-						add(1f)
-					}.toFloatArray()
+						add(Pair(stringResources.bottom, 1f))
+					}
 				}
+			}
+
+			val progressAnchors by remember {
+				derivedStateOf { labeledAnchors.map { (_, p) -> p }.toFloatArray() }
 			}
 
 			val fullListSize by LocalDensity.current.remember(maxHeight) {
@@ -733,6 +741,7 @@ fun ItemListView(
 
 					if (isLoaded) LoadedItemListView(
 						anchoredScrollConnectionState,
+						{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
 						anchoredScrollConnectionDispatcher::progressTo,
 					) else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 				}

@@ -20,7 +20,6 @@ import androidx.compose.material.Chip
 import androidx.compose.material.ChipDefaults
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -47,7 +46,6 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUni
 import kotlin.math.abs
 
 private val dragIconSize = Dimensions.listItemMenuIconSize
-private val anchorIconSize = viewPaddingUnit * 4
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalComposeUiApi::class)
@@ -172,6 +170,7 @@ fun AnchoredChips(
 	modifier: Modifier = Modifier,
 	anchoredScrollConnectionState: AnchoredScrollConnectionState,
 	lazyListState: LazyListState,
+	chipLabel: @Composable (Int, Float) -> Unit,
 	onScrollProgress: ((Float) -> Unit)? = null,
 	onSelected: ((Int) -> Unit)? = null
 ) {
@@ -238,8 +237,9 @@ fun AnchoredChips(
 					},
 					border = ChipDefaults.outlinedBorder,
 					colors = ChipDefaults.chipColors(),
+					modifier = Modifier.padding(viewPaddingUnit),
 				) {
-					Text("Test")
+					chipLabel(i, p)
 				}
 			}
 		}

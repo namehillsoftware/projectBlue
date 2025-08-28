@@ -84,4 +84,16 @@ interface GetStringResources {
 
 	val changeServerType: String
 		get() = ""
+
+	val items: String
+		get() = ""
+
+	val files: String
+		get() = ""
+
+	val bottom: String
+		get() = ""
+
+	val top: String
+		get() = ""
 }
