@@ -200,47 +200,41 @@ fun AnchoredChips(
 
 	if (alpha <= 0f) return
 
-	BoxWithConstraints(
+	val anchoredPercentages = remember(anchoredScrollConnectionState.progressAnchors) {
+		val boundedAnchors = anchoredScrollConnectionState.progressAnchors.distinct().sorted()
+
+		val separatedAnchors = boundedAnchors
+			.filter { a ->
+				for (b in boundedAnchors) {
+					if (b == a) continue
+					if (b > a) return@filter true
+					if (a - b < .025) return@filter false
+				}
+
+				true
+			}
+			.withIndex()
+
+		separatedAnchors
+	}
+
+	Column(
 		modifier = modifier
-			.fillMaxHeight(),
-		contentAlignment = Alignment.TopCenter,
+			.fillMaxHeight()
+			.alpha(alpha),
+		verticalArrangement = Arrangement.SpaceBetween,
 	) {
-		val anchoredPercentages = remember(anchoredScrollConnectionState.progressAnchors) {
-			val boundedAnchors = anchoredScrollConnectionState.progressAnchors.distinct().sorted()
-
-			val separatedAnchors = boundedAnchors
-				.filter { a ->
-					for (b in boundedAnchors) {
-						if (b == a) continue
-						if (b > a) return@filter true
-						if (a - b < .025) return@filter false
-					}
-
-					true
-				}
-				.withIndex()
-
-			separatedAnchors
-		}
-
-		Column(
-			modifier = Modifier
-				.align(Alignment.TopStart)
-				.fillMaxHeight(),
-			verticalArrangement = Arrangement.SpaceBetween,
-		) {
-			for ((i, p) in anchoredPercentages) {
-				Chip(
-					onClick = {
-						onScrollProgress?.invoke(p)
-						onSelected?.invoke(i)
-					},
-					border = ChipDefaults.outlinedBorder,
-					colors = ChipDefaults.chipColors(),
-					modifier = Modifier.padding(viewPaddingUnit),
-				) {
-					chipLabel(i, p)
-				}
+		for ((i, p) in anchoredPercentages) {
+			Chip(
+				onClick = {
+					onScrollProgress?.invoke(p)
+					onSelected?.invoke(i)
+				},
+				border = ChipDefaults.outlinedBorder,
+				colors = ChipDefaults.chipColors(),
+				modifier = Modifier.padding(viewPaddingUnit),
+			) {
+				chipLabel(i, p)
 			}
 		}
 	}
