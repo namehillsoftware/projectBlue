@@ -108,7 +108,10 @@ import com.lasthopesoftware.resources.strings.GetStringResources
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.take
 import kotlin.math.roundToInt
 
 private val boxHeight = expandedTitleHeight + appBarHeight
@@ -541,13 +544,16 @@ fun ItemListView(
 			val collapsedHeightPx = LocalDensity.current.remember { collapsedHeight.toPx() }
 			val items by itemListViewModel.items.subscribeAsState()
 
-			var minVisibleItemsForScroll by remember { mutableIntStateOf(0) }
-			LaunchedEffect(lazyListState) {
+			var minVisibleItemsForScroll by remember { mutableIntStateOf(30) }
+			LaunchedEffect(lazyListState, isItemsLoading, isFilesLoading) {
 				snapshotFlow { lazyListState.layoutInfo }
-					.map { it.totalItemsCount }
+					.filterNot { isItemsLoading || isFilesLoading }
+					.map { it.visibleItemsInfo.size }
+					.filter { it == 0 }
 					.distinctUntilChanged()
+					.take(1)
 					.collect {
-						minVisibleItemsForScroll = it * 3
+						minVisibleItemsForScroll = (it * 3).coerceAtLeast(30)
 					}
 			}
 
@@ -560,7 +566,8 @@ fun ItemListView(
 					if (files.any())
 						totalItems += 1 + files.size
 
-					buildList {
+					if (totalItems <= minVisibleItemsForScroll) emptyList()
+					else buildList {
 						add(Pair(stringResources.top,0f))
 
 						if (files.any() && files.size > minVisibleItemsForScroll) {
