@@ -30,7 +30,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -513,8 +515,7 @@ fun ItemListView(
 		AnchoredChips(
 			modifier = Modifier
 				.heightIn(200.dp, maxScrollBarHeight)
-				.align(Alignment.BottomEnd)
-				.fillMaxWidth(),
+				.align(Alignment.BottomEnd),
 			anchoredScrollConnectionState = anchoredScrollConnectionState,
 			lazyListState = lazyListState,
 			chipLabel = chipLabel,
@@ -540,6 +541,16 @@ fun ItemListView(
 			val collapsedHeightPx = LocalDensity.current.remember { collapsedHeight.toPx() }
 			val items by itemListViewModel.items.subscribeAsState()
 
+			var minVisibleItemsForScroll by remember { mutableIntStateOf(0) }
+			LaunchedEffect(lazyListState) {
+				snapshotFlow { lazyListState.layoutInfo }
+					.map { it.totalItemsCount }
+					.distinctUntilChanged()
+					.collect {
+						minVisibleItemsForScroll = it * 3
+					}
+			}
+
 			val labeledAnchors by remember {
 				derivedStateOf {
 					var totalItems = 1
@@ -552,15 +563,11 @@ fun ItemListView(
 					buildList {
 						add(Pair(stringResources.top,0f))
 
-						if (items.any()) {
-							add(Pair(stringResources.items,1f / totalItems))
-						}
-
-						if (files.any()) {
+						if (files.any() && files.size > minVisibleItemsForScroll) {
 							add(Pair(stringResources.files,if (items.any()) (2f + items.size) / totalItems else 1f / totalItems))
 						}
 
-						add(Pair(stringResources.bottom, 1f))
+						add(Pair(stringResources.end, 1f))
 					}
 				}
 			}

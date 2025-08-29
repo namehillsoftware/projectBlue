@@ -96,4 +96,7 @@ interface GetStringResources {
 
 	val top: String
 		get() = ""
+
+	val end: String
+		get() = ""
 }

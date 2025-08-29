@@ -151,4 +151,5 @@
     <string name="playlists">Playlists</string>
     <string name="top">Top</string>
     <string name="bottom">Bottom</string>
+    <string name="end">End</string>
 </resources>

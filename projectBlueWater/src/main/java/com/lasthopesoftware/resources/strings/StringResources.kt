@@ -38,6 +38,7 @@ class StringResources(private val context: Context): GetStringResources {
 	override val files by lazyString(R.string.files)
 	override val bottom by lazyString(R.string.bottom)
 	override val top by lazyString(R.string.top)
+	override val end by lazyString(R.string.end)
 
 	private fun lazyString(@StringRes stringResourceId: Int) = lazy { context.getString(stringResourceId) }
 }
