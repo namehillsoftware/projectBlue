@@ -223,6 +223,7 @@ fun AnchoredChips(
 			.fillMaxHeight()
 			.alpha(alpha),
 		verticalArrangement = Arrangement.SpaceBetween,
+		horizontalAlignment = Alignment.CenterHorizontally,
 	) {
 		for ((i, p) in anchoredPercentages) {
 			Chip(

@@ -513,7 +513,8 @@ fun ItemListView(
 		AnchoredChips(
 			modifier = Modifier
 				.heightIn(200.dp, maxScrollBarHeight)
-				.align(Alignment.BottomEnd),
+				.align(Alignment.BottomEnd)
+				.fillMaxWidth(),
 			anchoredScrollConnectionState = anchoredScrollConnectionState,
 			lazyListState = lazyListState,
 			chipLabel = chipLabel,
