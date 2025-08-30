@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
@@ -66,6 +67,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
+import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.navigable
 import com.lasthopesoftware.bluewater.android.ui.remember
@@ -423,7 +425,16 @@ fun ItemListView(
 
 		LazyColumn(
 			state = lazyListState,
-			modifier = Modifier.focusGroup(),
+			modifier = Modifier
+				.focusGroup()
+				.scrollbar(
+					lazyListState,
+					horizontal = false,
+					knobColor = MaterialTheme.colors.onSurface,
+					trackColor = Color.Transparent,
+					visibleAlpha = .4f,
+					knobCornerRadius = 1.dp,
+				),
 		) {
 			if (headerHeight > 0.dp) {
 				item(contentType = ItemListContentType.Spacer) {
