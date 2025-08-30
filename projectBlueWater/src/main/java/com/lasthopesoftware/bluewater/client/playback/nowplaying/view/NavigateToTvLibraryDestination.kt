@@ -65,6 +65,7 @@ fun BrowserLibraryDestination.NavigateToTvLibraryDestination(browserViewDependen
 						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 						applicationNavigation = applicationNavigation,
 						playbackServiceController = playbackServiceController,
+						stringResources = stringResources,
 						backStackBuilder = undoBackStackBuilder,
 					)
 				}
