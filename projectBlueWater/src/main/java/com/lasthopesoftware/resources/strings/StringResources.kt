@@ -34,6 +34,11 @@ class StringResources(private val context: Context): GetStringResources {
 	override val changeServerType by lazyString(R.string.change_server_type)
 	override val artists by lazyString(R.string.artists)
 	override val playlists by lazyString(R.string.playlists)
+	override val items by lazyString(R.string.items)
+	override val files by lazyString(R.string.files)
+	override val bottom by lazyString(R.string.bottom)
+	override val top by lazyString(R.string.top)
+	override val end by lazyString(R.string.end)
 
 	private fun lazyString(@StringRes stringResourceId: Int) = lazy { context.getString(stringResourceId) }
 }
