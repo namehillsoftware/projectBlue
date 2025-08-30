@@ -59,11 +59,12 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
+import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.StandardTextField
-import com.lasthopesoftware.bluewater.android.ui.components.memorableScrollConnectedScaler
+import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
@@ -311,7 +312,7 @@ private fun LibrarySettingsList(
 								val fingerprint =
 									userSslCertificates.promiseUserSslCertificateFingerprint().suspend()
 								sslCertificateFingerprint.value = fingerprint
-							} catch (e: Throwable) {
+							} catch (_: Throwable) {
 								hasError = true
 							}
 						}
@@ -556,7 +557,7 @@ private fun LibrarySettingsList(
 									val fingerprint =
 										userSslCertificates.promiseUserSslCertificateFingerprint().suspend()
 									sslCertificateFingerprint.value = fingerprint
-								} catch (e: Throwable) {
+								} catch (_: Throwable) {
 									hasError = true
 								}
 							}
@@ -817,7 +818,7 @@ fun LibrarySettingsView(
 
 				val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 				val collapsedHeightPx = LocalDensity.current.run { appBarHeight.toPx() }
-				val heightScaler = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
+				val heightScaler = rememberFullScreenScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
 
 				val isLoadingState by librarySettingsViewModel.isLoading.subscribeAsState()
 				var isSelectingServerType by remember { mutableStateOf(false) }
@@ -827,12 +828,17 @@ fun LibrarySettingsView(
 				) {
 					val isHeaderTall by remember { derivedStateOf { (boxHeight + menuHeight) * 2 < maxHeight } }
 
-					Column(modifier = Modifier.nestedScroll(heightScaler)) {
+					Column(
+						modifier = Modifier
+							.nestedScroll(remember(heightScaler) {
+								ConsumedOffsetErasingNestedScrollConnection(heightScaler)
+							})
+					) {
 						val scrollState = rememberScrollState()
 
 						val scope = rememberCoroutineScope()
 
-						val headerCollapseProgress by heightScaler.getProgressState()
+						val headerCollapseProgress by heightScaler.progressState
 
 						val isIconsVisible by LocalDensity.current.run {
 							remember {
@@ -865,7 +871,7 @@ fun LibrarySettingsView(
 						}
 
 						if (isHeaderTall) {
-							val heightValue by heightScaler.getValueState()
+							val heightValue by heightScaler.valueState
 
 							Box(
 								modifier = Modifier
@@ -885,7 +891,7 @@ fun LibrarySettingsView(
 									}
 
 
-									val startPadding by rememberTitleStartPadding(heightScaler.getProgressState())
+									val startPadding by rememberTitleStartPadding(heightScaler.progressState)
 									val endPadding = viewPaddingUnit
 									MarqueeText(
 										text = stringResource(id = R.string.settings),
