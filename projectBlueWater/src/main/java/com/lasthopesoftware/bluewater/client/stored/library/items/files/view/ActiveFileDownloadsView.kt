@@ -47,11 +47,12 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
+import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.MenuIcon
-import com.lasthopesoftware.bluewater.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberCalculatedKnobHeight
+import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
@@ -110,21 +111,25 @@ fun ActiveFileDownloadsView(
 		val isLoading by activeFileDownloadsViewModel.isLoading.subscribeAsState()
 
 		val heightScaler = LocalDensity.current.run {
-			memorableScrollConnectedScaler(max = boxHeight.toPx(), min = appBarHeight.toPx())
+			rememberFullScreenScrollConnectedScaler(max = boxHeight.toPx(), min = appBarHeight.toPx())
 		}
 
 		Column(
 			modifier = Modifier
 				.fillMaxSize()
-				.nestedScroll(heightScaler)
+				.nestedScroll(
+					remember(heightScaler) {
+						ConsumedOffsetErasingNestedScrollConnection(heightScaler)
+					}
+				)
 		) {
 			Column(
 				modifier = Modifier
 					.fillMaxWidth()
 					.background(MaterialTheme.colors.surface),
 			) {
-				val heightValue by heightScaler.getValueState()
-				val headerCollapseProgress by heightScaler.getProgressState()
+				val heightValue by heightScaler.valueState
+				val headerCollapseProgress by heightScaler.progressState
 				Box(
 					modifier = Modifier
 						.fillMaxWidth()
@@ -133,7 +138,7 @@ fun ActiveFileDownloadsView(
 					val topPadding by remember { derivedStateOf { linearInterpolation(Dimensions.appBarHeight, 14.dp, headerCollapseProgress) } }
 
 					ProvideTextStyle(MaterialTheme.typography.h5) {
-						val startPadding by rememberTitleStartPadding(heightScaler.getProgressState())
+						val startPadding by rememberTitleStartPadding(heightScaler.progressState)
 						val header = stringResource(id = R.string.activeDownloads)
 						MarqueeText(
 							text = header,
