@@ -70,11 +70,12 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
+import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledRefreshButton
-import com.lasthopesoftware.bluewater.android.ui.components.memorableScrollConnectedScaler
+import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.indicateFocus
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
@@ -515,16 +516,16 @@ fun FileDetailsView(
 		val boxHeight = expandedTitlePadding + titleHeight
 		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 		val collapsedHeight = appBarHeight + rowPadding
-		val heightScaler = memorableScrollConnectedScaler(max = boxHeightPx, min = LocalDensity.current.run { collapsedHeight.toPx() })
+		val heightScaler = rememberFullScreenScrollConnectedScaler(max = boxHeightPx, min = LocalDensity.current.run { collapsedHeight.toPx() })
 
 		val lazyListState = rememberLazyListState()
 
 		Box(
 			modifier = Modifier
 				.fillMaxSize()
-				.nestedScroll(heightScaler)
+				.nestedScroll(remember(heightScaler) { ConsumedOffsetErasingNestedScrollConnection(heightScaler) })
 		) {
-			val headerCollapseProgress by heightScaler.getProgressState()
+			val headerCollapseProgress by heightScaler.progressState
 
 			if (!isLoading) {
 				LazyColumn(modifier = Modifier.fillMaxSize(), state = lazyListState) {
@@ -707,7 +708,7 @@ fun FileDetailsView(
 						.fillMaxWidth(),
 					contentAlignment = Alignment.CenterStart,
 				) {
-					val startPadding by rememberTitleStartPadding(heightScaler.getProgressState())
+					val startPadding by rememberTitleStartPadding(heightScaler.progressState)
 					val endPadding by remember {
 						derivedStateOf {
 							linearInterpolation(

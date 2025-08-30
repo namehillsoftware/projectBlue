@@ -1,7 +1,9 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list.search
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,29 +32,36 @@ import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.InputMode
-import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.android.ui.components.AnchoredChips
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.LabelledRefreshButton
-import com.lasthopesoftware.bluewater.android.ui.components.rememberCalculatedKnobHeight
+import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
@@ -68,13 +78,23 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.UndoStack
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
+import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsMutableState
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.strings.GetStringResources
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNot
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.rx3.asFlow
 import java.io.IOException
 
 private val searchFieldPadding = Dimensions.topRowOuterPadding
@@ -98,14 +118,14 @@ fun RowScope.LabelledRefreshButton(
 
 @Composable
 fun RenderTrackTitleItem(
-    position: Int,
-    serviceFile: ServiceFile,
-    trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
-    searchFilesViewModel: SearchFilesViewModel,
-    applicationNavigation: NavigateApplication,
-    nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-    itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-    playbackServiceController: ControlPlaybackService,
+	position: Int,
+	serviceFile: ServiceFile,
+	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+	searchFilesViewModel: SearchFilesViewModel,
+	applicationNavigation: NavigateApplication,
+	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+	playbackServiceController: ControlPlaybackService,
 ) {
 	val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 
@@ -130,44 +150,45 @@ fun RenderTrackTitleItem(
 	}
 
 	val playingFile by nowPlayingViewModel.nowPlayingFile.subscribeAsState()
-    TrackTitleItemView(
-        itemName = fileName,
-        isActive = playingFile?.serviceFile == serviceFile,
-        isHiddenMenuShown = isMenuShown,
-        onItemClick = viewFilesClickHandler,
-        onHiddenMenuClick = {
-            itemListMenuBackPressedHandler.hideAllMenus()
-            fileItemViewModel.showMenu()
-        },
-        onAddToNowPlayingClick = {
-            searchFilesViewModel.loadedLibraryId?.also {
-                playbackServiceController.addToPlaylist(it, serviceFile)
-            }
-        },
-        onViewFilesClick = viewFilesClickHandler,
-        onPlayClick = {
-            fileItemViewModel.hideMenu()
-            searchFilesViewModel.loadedLibraryId?.also {
-                playbackServiceController.startPlaylist(
-                    it,
-                    searchFilesViewModel.files.value,
-                    position
-                )
-            }
-        }
-    )
+	TrackTitleItemView(
+		itemName = fileName,
+		isActive = playingFile?.serviceFile == serviceFile,
+		isHiddenMenuShown = isMenuShown,
+		onItemClick = viewFilesClickHandler,
+		onHiddenMenuClick = {
+			itemListMenuBackPressedHandler.hideAllMenus()
+			fileItemViewModel.showMenu()
+		},
+		onAddToNowPlayingClick = {
+			searchFilesViewModel.loadedLibraryId?.also {
+				playbackServiceController.addToPlaylist(it, serviceFile)
+			}
+		},
+		onViewFilesClick = viewFilesClickHandler,
+		onPlayClick = {
+			fileItemViewModel.hideMenu()
+			searchFilesViewModel.loadedLibraryId?.also {
+				playbackServiceController.startPlaylist(
+					it,
+					searchFilesViewModel.files.value,
+					position
+				)
+			}
+		}
+	)
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun SearchFilesView(
-    searchFilesViewModel: SearchFilesViewModel,
-    nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-    trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
-    itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-    applicationNavigation: NavigateApplication,
-    playbackServiceController: ControlPlaybackService,
-    backStackBuilder: UndoStack
+	searchFilesViewModel: SearchFilesViewModel,
+	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
+	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+	applicationNavigation: NavigateApplication,
+	playbackServiceController: ControlPlaybackService,
+	stringResources: GetStringResources,
+	backStackBuilder: UndoStack
 ) {
 	val files by searchFilesViewModel.files.subscribeAsState()
 	var isConnectionLost by remember { mutableStateOf(false) }
@@ -183,7 +204,7 @@ fun SearchFilesView(
 				modifier = Modifier
 					.fillMaxWidth()
 					.background(MaterialTheme.colors.surface)
-			) {
+			) headerColumn@{
 				Row(
 					modifier = Modifier
 						.fillMaxWidth()
@@ -230,7 +251,8 @@ fun SearchFilesView(
 										try {
 											searchFilesViewModel.findFiles().suspend()
 										} catch (e: IOException) {
-											isConnectionLost = ConnectionLostExceptionFilter.isConnectionLostException(e)
+											isConnectionLost =
+												ConnectionLostExceptionFilter.isConnectionLostException(e)
 										}
 									}
 								}
@@ -248,6 +270,7 @@ fun SearchFilesView(
 						CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 					}
 				}
+
 				isConnectionLost -> {
 					ConnectionLostView(
 						onCancel = { isConnectionLost = false },
@@ -262,44 +285,12 @@ fun SearchFilesView(
 						}
 					)
 				}
+
 				files.any() -> {
 					BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-						val rowHeight = Dimensions.standardRowHeight
 						val lazyListState = rememberLazyListState()
 
-						val isAtTop by remember {
-							derivedStateOf {
-								lazyListState.firstVisibleItemIndex == 0 && lazyListState.firstVisibleItemScrollOffset == 0
-							}
-						}
-
 						val refreshButtonFocus = remember { FocusRequester() }
-						val inputMode = LocalInputModeManager.current
-						DisposableEffect(isAtTop, inputMode, lazyListState) {
-							if (isAtTop) {
-								onDispose { }
-							} else {
-								val scrollToTopAction = {
-									scope.async {
-										if (lazyListState.firstVisibleItemIndex <= 0) false
-										else {
-											lazyListState.scrollToItem(0)
-											if (inputMode.inputMode == InputMode.Keyboard)
-												refreshButtonFocus.requestFocus()
-											true
-										}
-									}.toPromise()
-								}
-
-								backStackBuilder.addAction(scrollToTopAction)
-
-								onDispose {
-									backStackBuilder.removeAction(scrollToTopAction)
-								}
-							}
-						}
-
-						val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
 						LazyColumn(
 							state = lazyListState,
 							modifier = Modifier
@@ -310,7 +301,6 @@ fun SearchFilesView(
 									trackColor = Color.Transparent,
 									visibleAlpha = .4f,
 									knobCornerRadius = 1.dp,
-									fixedKnobRatio = knobHeight,
 								),
 						) {
 							item(contentType = ItemListContentType.Menu) {
@@ -374,8 +364,110 @@ fun SearchFilesView(
 									Divider()
 							}
 						}
+
+						var minVisibleItemsForScroll by remember { mutableIntStateOf(30) }
+						LaunchedEffect(lazyListState, searchFilesViewModel) {
+							combine(
+								snapshotFlow { lazyListState.layoutInfo },
+								searchFilesViewModel.isLoading.mapNotNull().asFlow()
+							) { info, s -> Pair(info, s) }
+								.filterNot { (_, s) -> s }
+								.map { (info, _) -> info.visibleItemsInfo.size }
+								.filter { it == 0 }
+								.distinctUntilChanged()
+								.take(1)
+								.collect {
+									minVisibleItemsForScroll = (it * 3).coerceAtLeast(30)
+								}
+						}
+
+						val labeledAnchors by remember {
+							derivedStateOf {
+								var totalItems = 1
+
+								if (files.any())
+									totalItems += 1 + files.size
+
+								if (totalItems <= minVisibleItemsForScroll) emptyList()
+								else listOf(
+									Pair(stringResources.top,0f),
+									Pair(stringResources.end,1f),
+								)
+							}
+						}
+
+						val progressAnchors by remember {
+							derivedStateOf { labeledAnchors.map { (_, p) -> p }.toFloatArray() }
+						}
+
+						val anchoredScrollConnectionState = rememberAnchoredScrollConnectionState(progressAnchors)
+
+						LaunchedEffect(anchoredScrollConnectionState) {
+							snapshotFlow { anchoredScrollConnectionState.selectedProgress }
+								.drop(1) // Ignore initial state
+								.map {
+									val layoutInfo = lazyListState.layoutInfo
+									it?.let { progress ->
+										val totalItems = layoutInfo.totalItemsCount
+
+										val newIndex = (totalItems - 1) * progress
+										newIndex
+									}
+								}
+								.distinctUntilChanged()
+								.collect {
+									it?.let { fractionalIndex ->
+										if (DebugFlag.isDebugCompilation) {
+											Log.d("LoadedItemListView", "Selected index: $it")
+										}
+
+										val index = fractionalIndex.toInt()
+
+										lazyListState.scrollToItem(index)
+
+										val offsetPercentage = fractionalIndex - index
+										if (offsetPercentage != 0f) {
+											val offsetPixels = lazyListState
+												.layoutInfo
+												.visibleItemsInfo
+												.firstOrNull()
+												?.size
+												?.let { s -> s * offsetPercentage }
+												?.takeIf { p -> p != 0f }
+
+											if (offsetPixels != null) {
+												lazyListState.scrollBy(offsetPixels)
+											}
+										}
+									}
+								}
+						}
+
+						// 5in in pixels, pixels/Inch
+						val density = LocalDensity.current
+						val resources = LocalResources.current
+						val maxScrollBarHeight = remember(density, resources, maxHeight) {
+							with (density) {
+								(2.5f * resources.displayMetrics.ydpi).toDp()
+							}.coerceAtMost(maxHeight)
+						}
+
+						val localHapticFeedback = LocalHapticFeedback.current
+						AnchoredChips(
+							modifier = Modifier
+								.heightIn(200.dp, maxScrollBarHeight)
+								.align(Alignment.BottomEnd),
+							anchoredScrollConnectionState = anchoredScrollConnectionState,
+							lazyListState = lazyListState,
+							chipLabel = { _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
+							onScrollProgress = { p -> anchoredScrollConnectionState.selectedProgress = p },
+							onSelected = {
+								localHapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
+							}
+						)
 					}
 				}
+
 				else -> {
 					Spacer(modifier = Modifier.fillMaxSize())
 				}

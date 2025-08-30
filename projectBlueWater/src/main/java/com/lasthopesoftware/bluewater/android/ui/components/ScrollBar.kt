@@ -122,8 +122,7 @@ fun Modifier.scrollbar(
 
 	val alpha by animateFloatAsState(
 		targetValue = targetAlpha,
-		animationSpec =
-		tween(delayMillis = animationDelayMs, durationMillis = animationDurationMs)
+		animationSpec = tween(delayMillis = animationDelayMs, durationMillis = animationDurationMs)
 	)
 
 	drawWithContent {
