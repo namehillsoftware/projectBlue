@@ -60,6 +60,7 @@ fun BrowserLibraryDestination.NavigateToLibraryDestination(browserViewDependenci
 						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 						applicationNavigation = applicationNavigation,
 						playbackServiceController = playbackServiceController,
+						stringResources = stringResources,
 						backStackBuilder = undoBackStackBuilder,
 					)
 				}

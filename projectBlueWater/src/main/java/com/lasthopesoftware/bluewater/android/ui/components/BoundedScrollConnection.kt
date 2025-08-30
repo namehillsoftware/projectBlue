@@ -26,6 +26,12 @@ interface BoundedScrollConnection : NestedScrollConnection {
 	fun goToMin()
 }
 
+object NoOpBoundedScrollConnection : BoundedScrollConnection {
+	override fun goToMax() {}
+
+	override fun goToMin() {}
+}
+
 @Composable
 fun rememberAnchoredScrollConnectionState(progressAnchors: FloatArray, progress: Float = 0f, selectedProgress: Float? = null): MutableAnchoredScrollConnectionState {
 	return rememberSaveable(progressAnchors, saver = MutableAnchoredScrollConnectionState.Saver) {
@@ -60,7 +66,7 @@ class MutableAnchoredScrollConnectionState(
 class AnchoredProgressScrollConnectionDispatcher(
 	private val state: MutableAnchoredScrollConnectionState,
 	private val fullDistance: Float,
-	private val inner: BoundedScrollConnection,
+	private val inner: BoundedScrollConnection = NoOpBoundedScrollConnection,
 ) : BoundedScrollConnection by inner, AutoCloseable {
 
 	companion object {
