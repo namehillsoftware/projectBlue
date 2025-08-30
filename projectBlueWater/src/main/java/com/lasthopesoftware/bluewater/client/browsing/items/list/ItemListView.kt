@@ -101,17 +101,20 @@ import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackSer
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.UndoStack
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
+import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.GetStringResources
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.rx3.asFlow
 import kotlin.math.roundToInt
 
 private val boxHeight = expandedTitleHeight + appBarHeight
@@ -545,10 +548,14 @@ fun ItemListView(
 			val items by itemListViewModel.items.subscribeAsState()
 
 			var minVisibleItemsForScroll by remember { mutableIntStateOf(30) }
-			LaunchedEffect(lazyListState, isItemsLoading, isFilesLoading) {
-				snapshotFlow { lazyListState.layoutInfo }
-					.filterNot { isItemsLoading || isFilesLoading }
-					.map { it.visibleItemsInfo.size }
+			LaunchedEffect(lazyListState, itemListViewModel, fileListViewModel) {
+				combine(
+					snapshotFlow { lazyListState.layoutInfo },
+					itemListViewModel.isLoading.mapNotNull().asFlow(),
+					fileListViewModel.isLoading.mapNotNull().asFlow(),
+				) { info, i, f -> Triple(info, i, f) }
+					.filterNot { (_, i, f) -> i || f }
+					.map { (info, _, _) -> info.visibleItemsInfo.size }
 					.filter { it == 0 }
 					.distinctUntilChanged()
 					.take(1)
