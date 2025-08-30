@@ -26,27 +26,6 @@ interface BoundedScrollConnection : NestedScrollConnection {
 	fun goToMin()
 }
 
-//@Composable
-//fun rememberAnchoredScrollConnectionDispatcher(
-//	anchors: FloatArray,
-//	inner: BoundedScrollConnection,
-//): AnchoredProgressScrollConnectionDispatcher {
-//	val progressAnchors = remember(anchors) {
-//		anchors.run {
-//			val bottom = values.last()
-//			map { (a, v) -> Pair(a, v / bottom) }.toMap()
-//		}
-//	}
-//
-//	val state = rememberSaveable(progressAnchors) {
-//		AnchoredProgressScrollConnectionDispatcher.MutableAnchoredScrollConnectionState(progressAnchors, 0f)
-//	}
-//
-//	return remember(state, inner) {
-//		AnchoredProgressScrollConnectionDispatcher(state, anchors.values.last(), inner)
-//	}
-//}
-
 @Composable
 fun rememberAnchoredScrollConnectionState(progressAnchors: FloatArray, progress: Float = 0f, selectedProgress: Float? = null): MutableAnchoredScrollConnectionState {
 	return rememberSaveable(progressAnchors, saver = MutableAnchoredScrollConnectionState.Saver) {

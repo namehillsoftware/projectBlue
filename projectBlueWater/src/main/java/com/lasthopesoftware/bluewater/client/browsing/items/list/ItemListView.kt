@@ -11,11 +11,13 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -48,6 +50,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
@@ -372,6 +375,7 @@ fun ItemListView(
 		anchoredScrollConnectionState: AnchoredScrollConnectionState,
 		chipLabel: @Composable (Int, Float) -> Unit,
 		onScrollProgress: (Float) -> Unit,
+		headerHeight: Dp = 0.dp,
 	) {
 
 		val items by itemListViewModel.items.subscribeAsState()
@@ -421,6 +425,16 @@ fun ItemListView(
 			state = lazyListState,
 			modifier = Modifier.focusGroup(),
 		) {
+			if (headerHeight > 0.dp) {
+				item(contentType = ItemListContentType.Spacer) {
+					Spacer(
+						modifier = Modifier
+							.requiredHeight(headerHeight)
+							.fillMaxWidth()
+					)
+				}
+			}
+
 			item(contentType = ItemListContentType.Menu) {
 				Row(
 					modifier = Modifier
@@ -511,10 +525,10 @@ fun ItemListView(
 		// 5in in pixels, pixels/Inch
 		val density = LocalDensity.current
 		val resources = LocalResources.current
-		val maxScrollBarHeight = remember(density, resources, maxHeight) {
+		val maxScrollBarHeight = remember(density, resources, maxHeight, headerHeight) {
 			with (density) {
 				(2.5f * resources.displayMetrics.ydpi).toDp()
-			}.coerceAtMost(maxHeight)
+			}.coerceAtMost(maxHeight - headerHeight)
 		}
 
 		val localHapticFeedback = LocalHapticFeedback.current
@@ -624,12 +638,25 @@ fun ItemListView(
 				AnchoredProgressScrollConnectionDispatcher(anchoredScrollConnectionState, -fullListSize, compositeScrollConnection)
 			}
 
-			val isHeaderTall by remember { derivedStateOf { (boxHeight + menuHeight) * 2 < maxHeight } }
-			Column(
+			val isHeaderTall by remember(maxHeight) { derivedStateOf { (boxHeight + menuHeight) * 2 < maxHeight } }
+			// Use a box instead of a column to ensure the space taken by the header is accounted for when scrolling up.
+			Box(
 				modifier = Modifier
 					.fillMaxSize()
 					.nestedScroll(anchoredScrollConnectionDispatcher)
 			) {
+				val actualExpandedHeight by remember { derivedStateOf { if (isHeaderTall) boxHeight else collapsedHeight } }
+				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+					val isLoaded = !isItemsLoading && !isFilesLoading
+
+					if (isLoaded) LoadedItemListView(
+						anchoredScrollConnectionState,
+						{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
+						anchoredScrollConnectionDispatcher::progressTo,
+						actualExpandedHeight
+					) else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+				}
+
 				if (isHeaderTall) {
 					Column(modifier = Modifier.background(MaterialTheme.colors.surface)) headerColumn@{
 						val heightValue by titleHeightScaler.valueState
@@ -742,16 +769,6 @@ fun ItemListView(
 							)
 						}
 					}
-				}
-
-				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-					val isLoaded = !isItemsLoading && !isFilesLoading
-
-					if (isLoaded) LoadedItemListView(
-						anchoredScrollConnectionState,
-						{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
-						anchoredScrollConnectionDispatcher::progressTo,
-					) else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 				}
 			}
 		}
