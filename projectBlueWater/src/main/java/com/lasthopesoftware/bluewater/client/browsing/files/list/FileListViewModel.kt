@@ -40,31 +40,36 @@ class FileListViewModel(
 		mutableIsSynced.value = false
 		loadedLibraryId = libraryId
 
-		val promisedFiles = when (item) {
-			is Item -> itemFileProvider.promiseFiles(libraryId, ItemId(item.key))
-			is Playlist -> itemFileProvider.promiseFiles(libraryId, item.itemId)
-			else -> itemFileProvider.promiseFiles(libraryId)
+		return Promise.Proxy { cs ->
+			val promisedFiles = when (item) {
+				is Item -> itemFileProvider.promiseFiles(libraryId, ItemId(item.key))
+				is Playlist -> itemFileProvider.promiseFiles(libraryId, item.itemId)
+				else -> itemFileProvider.promiseFiles(libraryId)
+			}
+
+			cs.doCancel(promisedFiles)
+
+			val promisedFilesUpdate = promisedFiles.then { f -> mutableFiles.value = f }
+
+			val promisedSyncUpdate = item
+				?.let {
+					storedItemAccess
+						.isItemMarkedForSync(libraryId, it)
+						.then { isSynced ->
+							mutableIsSynced.value = isSynced
+						}
+				}
+				.keepPromise()
+
+			Promise
+				.whenAll(promisedFilesUpdate, promisedSyncUpdate)
+				.then { _ ->
+					loadedItem = item
+				}
+				.must { _ ->
+					mutableIsLoading.value = false
+				}
 		}
-
-		val promisedFilesUpdate = promisedFiles.then { f -> mutableFiles.value = f }
-
-		val promisedSyncUpdate = item
-			?.let {
-				storedItemAccess
-					.isItemMarkedForSync(libraryId, it)
-					.then { isSynced ->
-						mutableIsSynced.value = isSynced
-					}
-			}
-			.keepPromise()
-
-		return Promise.whenAll(promisedFilesUpdate, promisedSyncUpdate)
-			.then { _ ->
-				loadedItem = item
-			}
-			.must { _ ->
-				mutableIsLoading.value = false
-			}
 	}
 
 	fun promiseRefresh(): Promise<Unit> = loadedLibraryId

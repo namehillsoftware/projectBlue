@@ -46,22 +46,25 @@ class ItemListViewModel(
 		mutableItemValue.value = item?.value ?: ""
 		loadedLibraryId = libraryId
 
-		val promisedLibraryUpdate =
-			if (item != null) Unit.toPromise()
-			else libraryNameLookup
-				.promiseLibraryName(libraryId)
-				.then { n -> mutableItemValue.value = n ?: "" }
+		return Promise.Proxy { cs ->
+			val promisedLibraryUpdate =
+				if (item != null) Unit.toPromise()
+				else libraryNameLookup
+					.promiseLibraryName(libraryId)
+					.then { n -> mutableItemValue.value = n ?: "" }
 
-		val promisedItemUpdate = itemProvider
-			.promiseItems(libraryId, item?.itemId)
-			.then { items ->
-				mutableItems.value = items
-			}
+			val promisedItemUpdate = itemProvider
+				.promiseItems(libraryId, item?.itemId)
+				.also(cs::doCancel)
+				.then { items ->
+					mutableItems.value = items
+				}
 
-		return Promise
-			.whenAll(promisedItemUpdate, promisedLibraryUpdate)
-			.then { _ -> loadedItem = item }
-			.must { _ -> mutableIsLoading.value = false }
+			Promise
+				.whenAll(promisedItemUpdate, promisedLibraryUpdate)
+				.then { _ -> loadedItem = item }
+				.must { _ -> mutableIsLoading.value = false }
+		}
 	}
 
 	fun promiseRefresh(): Promise<Unit> = loadedLibraryId

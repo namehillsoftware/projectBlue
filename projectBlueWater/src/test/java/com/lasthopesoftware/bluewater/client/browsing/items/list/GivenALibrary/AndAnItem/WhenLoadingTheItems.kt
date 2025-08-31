@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.browsing.items.list.GivenALibrary.
 
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
-import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -18,17 +17,15 @@ private const val libraryId = 163
 
 class WhenLoadingTheItems {
 	private val viewModel by lazy {
-		val itemProvider = mockk<ProvideItems>().apply {
-			every { promiseItems(LibraryId(libraryId), ItemId("826")) } returns listOf(
-                Item("55"),
-                Item("137"),
-                Item("766"),
-                Item("812"),
-			).toPromise()
-		}
-
         ItemListViewModel(
-			itemProvider,
+			mockk {
+				every { promiseItems(LibraryId(libraryId), ItemId("826")) } returns listOf(
+					Item("55"),
+					Item("137"),
+					Item("766"),
+					Item("812"),
+				).toPromise()
+			},
 			RecordingApplicationMessageBus(),
 			mockk(),
 		)

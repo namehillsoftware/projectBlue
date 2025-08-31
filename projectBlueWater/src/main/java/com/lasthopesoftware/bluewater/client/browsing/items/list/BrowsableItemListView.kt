@@ -103,17 +103,21 @@ private fun LoadedItemListView(
 
 		if (!isConnectionLost) {
 			LaunchedEffect(item) {
+				val promisedLoad = Promise.whenAll(
+					itemListViewModel.loadItem(libraryId, item),
+					fileListViewModel.loadItem(libraryId, item),
+				)
 				try {
-					Promise.whenAll(
-						itemListViewModel.loadItem(libraryId, item),
-						fileListViewModel.loadItem(libraryId, item),
-					).suspend()
+					promisedLoad.suspend()
 				} catch (e: IOException) {
-					if (ConnectionLostExceptionFilter.isConnectionLostException(e))
+					promisedLoad.cancel()
+					if (ConnectionLostExceptionFilter.isConnectionLostException(e)) {
 						isConnectionLost = true
-					else
+					} else {
 						applicationNavigation.backOut().suspend()
+					}
 				} catch (_: Exception) {
+					promisedLoad.cancel()
 					applicationNavigation.backOut().suspend()
 				}
 			}
