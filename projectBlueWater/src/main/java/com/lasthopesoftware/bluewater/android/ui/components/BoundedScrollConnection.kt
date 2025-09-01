@@ -2,6 +2,9 @@ package com.lasthopesoftware.bluewater.android.ui.components
 
 import android.annotation.SuppressLint
 import android.util.Log
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.asFloatState
 import androidx.compose.runtime.derivedStateOf
@@ -271,8 +274,28 @@ class PreScrollConnectedScaler private constructor(private val max: Float, priva
 		mutableValueState.floatValue = max
 	}
 
+	suspend fun animateGoToMax(animationSpec: AnimationSpec<Float> = tween()) {
+		animate(
+			initialValue = mutableValueState.floatValue,
+			targetValue = max,
+			animationSpec = animationSpec,
+		) { value, _ ->
+			mutableValueState.floatValue = value
+		}
+	}
+
 	override fun goToMin() {
 		mutableValueState.floatValue = min
+	}
+
+	suspend fun animateGoToMin(animationSpec: AnimationSpec<Float> = tween()) {
+		animate(
+			initialValue = mutableValueState.floatValue,
+			targetValue = min,
+			animationSpec = animationSpec,
+		) { value, _ ->
+			mutableValueState.floatValue = value
+		}
 	}
 
 	private fun calculateProgress(value: Float) = if (fullDistance == 0f) 1f else (max - value) / fullDistance

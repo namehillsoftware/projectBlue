@@ -2,8 +2,6 @@ package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import android.annotation.SuppressLint
 import android.util.Log
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.scrollBy
@@ -19,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
@@ -42,8 +39,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -67,13 +64,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.android.ui.calculateProgress
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredChips
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredProgressScrollConnectionDispatcher
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredScrollConnectionState
@@ -81,10 +76,12 @@ import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
+import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
+import com.lasthopesoftware.bluewater.android.ui.components.rememberPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
@@ -142,6 +139,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx3.asFlow
 import kotlin.math.roundToInt
 
@@ -704,8 +702,11 @@ fun ScreenDimensionsScope.ItemListView(
 			}
 
 			val titleHeightScaler = rememberFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
+			val menuHeightScaler = rememberPreScrollConnectedScaler(rowHeightPx, 0f)
 			val compositeScrollConnection = remember(titleHeightScaler) {
-				ConsumedOffsetErasingNestedScrollConnection(titleHeightScaler)
+				ConsumedOffsetErasingNestedScrollConnection(
+					LinkedNestedScrollConnection(titleHeightScaler, menuHeightScaler)
+				)
 			}
 
 			val anchoredScrollConnectionDispatcher = rememberAutoCloseable(anchoredScrollConnectionState, fullListSize, compositeScrollConnection) {
@@ -744,12 +745,6 @@ fun ScreenDimensionsScope.ItemListView(
 					val titleHeightValue by titleHeightScaler.valueState
 
 					val headerCollapseProgress by titleHeightScaler.progressState
-					var shouldMenuBeShown by remember { mutableStateOf(true) }
-					val menuHeight by animateDpAsState(
-						targetValue = if (shouldMenuBeShown) standardRowHeight else 0.dp,
-						animationSpec = remember { tween() }
-					)
-
 					Box(
 						modifier = Modifier
 							.fillMaxWidth()
@@ -763,14 +758,22 @@ fun ScreenDimensionsScope.ItemListView(
 								.padding(topRowOuterPadding)
 						)
 
-						val menuHeightProgress by remember { derivedStateOf { calculateProgress(standardRowHeight, 0.dp, menuHeight) } }
+						val menuHeightProgress by menuHeightScaler.progressState
 						val chevronRotation by remember { derivedStateOf { linearInterpolation(0f, 180f, menuHeightProgress) } }
 						val isMenuFullyShown by remember { derivedStateOf { menuHeightProgress < .02f } }
 						val chevronLabel = stringResource(id = if (isMenuFullyShown) R.string.collapse else R.string.expand)
 
+						val scope = rememberCoroutineScope()
+
 						ColumnMenuIcon(
 							onClick = {
-								shouldMenuBeShown = !isMenuFullyShown
+								scope.launch {
+									if (!isMenuFullyShown) {
+										menuHeightScaler.animateGoToMax()
+									} else {
+										menuHeightScaler.animateGoToMin()
+									}
+								}
 							},
 							icon = {
 								Icon(
@@ -838,11 +841,13 @@ fun ScreenDimensionsScope.ItemListView(
 						}
 					}
 
+					val menuHeightValue by menuHeightScaler.valueState
+					val menuHeightDp by LocalDensity.current.remember { derivedStateOf { menuHeightValue.toDp() } }
 					Box(
 						modifier = Modifier
 							.fillMaxWidth()
 							.background(MaterialTheme.colors.surface)
-							.height(menuHeight)
+							.height(menuHeightDp)
 							.clip(RectangleShape)
 					) {
 
@@ -852,12 +857,6 @@ fun ScreenDimensionsScope.ItemListView(
 							itemDataLoader = itemDataLoader,
 							applicationNavigation = applicationNavigation,
 							playbackServiceController = playbackServiceController,
-							modifier = Modifier.offset {
-								IntOffset(
-									x = 0,
-									y = (menuHeight.toPx() - rowHeightPx).roundToInt()
-								)
-							},
 						)
 					}
 				}
