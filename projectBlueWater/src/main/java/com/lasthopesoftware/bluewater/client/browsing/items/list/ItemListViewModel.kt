@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
 import com.lasthopesoftware.bluewater.client.browsing.files.list.LoadedLibraryState
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
+import com.lasthopesoftware.bluewater.client.browsing.items.LoadItemData
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.ActivityLaunching
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LookupLibraryName
@@ -19,7 +20,7 @@ class ItemListViewModel(
 	private val itemProvider: ProvideItems,
 	messageBus: RegisterForApplicationMessages,
 	private val libraryNameLookup: LookupLibraryName,
-) : ViewModel(), TrackLoadedViewState, LoadedLibraryState {
+) : ViewModel(), TrackLoadedViewState, LoadedLibraryState, LoadItemData {
 
 	private val activityLaunchingReceiver = messageBus.registerReceiver { event : ActivityLaunching ->
 		mutableIsLoading.value = event != ActivityLaunching.HALTED // Only show the item list view again when launching error'ed for some reason
@@ -41,7 +42,7 @@ class ItemListViewModel(
 		activityLaunchingReceiver.close()
 	}
 
-	fun loadItem(libraryId: LibraryId, item: IItem? = null): Promise<Unit> {
+	override fun loadItem(libraryId: LibraryId, item: IItem?): Promise<Unit> {
 		mutableIsLoading.value = loadedLibraryId != libraryId || loadedItem != item
 		mutableItemValue.value = item?.value ?: ""
 		loadedLibraryId = libraryId
@@ -67,7 +68,7 @@ class ItemListViewModel(
 		}
 	}
 
-	fun promiseRefresh(): Promise<Unit> = loadedLibraryId
+	override fun promiseRefresh(): Promise<Unit> = loadedLibraryId
 		?.let { l ->
 			val item = loadedItem
 			loadedLibraryId = null

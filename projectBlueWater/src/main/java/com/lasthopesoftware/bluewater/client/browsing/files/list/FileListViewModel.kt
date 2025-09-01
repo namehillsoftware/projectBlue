@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibrar
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
+import com.lasthopesoftware.bluewater.client.browsing.items.LoadItemData
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
@@ -19,7 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 class FileListViewModel(
 	private val itemFileProvider: ProvideLibraryFiles,
 	private val storedItemAccess: AccessStoredItems,
-) : ViewModel(), TrackLoadedViewState, ServiceFilesListState {
+) : ViewModel(), TrackLoadedViewState, ServiceFilesListState, LoadItemData {
 
 	private val mutableIsLoading = MutableInteractionState(true)
 	private val mutableFiles = MutableInteractionState(emptyList<ServiceFile>())
@@ -34,7 +35,7 @@ class FileListViewModel(
 	val itemValue = mutableItemValue.asStateFlow()
 	val isSynced = mutableIsSynced.asStateFlow()
 
-	fun loadItem(libraryId: LibraryId, item: IItem? = null): Promise<Unit> {
+	override fun loadItem(libraryId: LibraryId, item: IItem?): Promise<Unit> {
 		mutableIsLoading.value = libraryId != loadedLibraryId || item != loadedItem
 		mutableItemValue.value = item?.value ?: ""
 		mutableIsSynced.value = false
@@ -72,7 +73,7 @@ class FileListViewModel(
 		}
 	}
 
-	fun promiseRefresh(): Promise<Unit> = loadedLibraryId
+	override fun promiseRefresh(): Promise<Unit> = loadedLibraryId
 		?.let { l ->
 			val item = loadedItem
 			loadedLibraryId = null
