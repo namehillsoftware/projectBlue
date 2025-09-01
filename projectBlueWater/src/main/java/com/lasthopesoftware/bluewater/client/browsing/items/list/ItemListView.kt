@@ -382,7 +382,7 @@ fun ItemListMenu(
 	Row(
 		modifier = Modifier
 			.height(topMenuHeight)
-			.padding(rowPadding)
+			.padding(vertical = rowPadding)
 			.focusGroup()
 			.then(modifier)
 			.horizontalScroll(rememberScrollState()),
@@ -646,7 +646,7 @@ fun ScreenDimensionsScope.ItemListView(
 		val files by fileListViewModel.files.subscribeAsState()
 		val labeledAnchors by remember {
 			derivedStateOf {
-				var totalItems = 1
+				var totalItems = 0
 				if (items.any())
 					totalItems += 1 + items.size
 
@@ -657,8 +657,8 @@ fun ScreenDimensionsScope.ItemListView(
 				else buildList {
 					add(Pair(stringResources.top, 0f))
 
-					if (files.any() && files.size > minVisibleItemsForScroll) {
-						add(Pair(stringResources.files,if (items.any()) (2f + items.size) / totalItems else 1f / totalItems))
+					if (files.any() && items.size > minVisibleItemsForScroll) {
+						add(Pair(stringResources.files, (1f + items.size) / totalItems))
 					}
 
 					add(Pair(stringResources.end, 1f))
@@ -679,7 +679,7 @@ fun ScreenDimensionsScope.ItemListView(
 				LocalDensity.current.remember { standardRowHeight.toPx() }
 
 			val fullListSize by LocalDensity.current.remember(maxHeight) {
-				val topMenuHeightPx = (topMenuHeight + rowPadding * 2).toPx()
+				val topMenuHeightPx = 0f
 				val headerHeightPx = (topMenuHeight + viewPaddingUnit * 2).toPx()
 				val rowHeightPx = standardRowHeight.toPx()
 				val dividerHeight = 1.dp.toPx()
@@ -850,7 +850,6 @@ fun ScreenDimensionsScope.ItemListView(
 							.height(menuHeightDp)
 							.clip(RectangleShape)
 					) {
-
 						ItemListMenu(
 							itemListViewModel = itemListViewModel,
 							fileListViewModel = fileListViewModel,
