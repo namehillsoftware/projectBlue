@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledRefreshButton
-import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.LoadItemData
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 
 @Composable
@@ -73,15 +73,13 @@ fun RowScope.LabelledSettingsButton(
 
 @Composable
 fun UnlabelledRefreshButton(
-	itemListViewModel: ItemListViewModel,
-	fileListViewModel: FileListViewModel,
+	itemDataLoader: LoadItemData,
 	modifier: Modifier = Modifier,
 	focusRequester: FocusRequester? = null,
 ) {
 	UnlabelledRefreshButton(
 		onClick = {
-			itemListViewModel.promiseRefresh()
-			fileListViewModel.promiseRefresh()
+			itemDataLoader.promiseRefresh()
 		},
 		modifier = modifier,
 		focusRequester = focusRequester,

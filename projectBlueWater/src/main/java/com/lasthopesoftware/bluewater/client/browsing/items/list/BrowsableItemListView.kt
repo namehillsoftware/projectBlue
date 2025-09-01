@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencie
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
+import com.lasthopesoftware.bluewater.client.browsing.items.LoadItemData
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
@@ -25,7 +26,6 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseables
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.ViewModelInitAction
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.GetStringResources
-import com.namehillsoftware.handoff.promises.Promise
 import java.io.IOException
 
 @Composable
@@ -36,6 +36,7 @@ fun LoadedItemListView(viewModelDependencies: ScopedViewModelDependencies, libra
 			item,
 			itemListViewModel = itemListViewModel,
 			fileListViewModel = fileListViewModel,
+			itemDataLoader = itemDataLoader,
 			nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
 			itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 			reusablePlaylistFileItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
@@ -56,6 +57,7 @@ private fun LoadedItemListView(
     item: IItem?,
     itemListViewModel: ItemListViewModel,
     fileListViewModel: FileListViewModel,
+	itemDataLoader: LoadItemData,
     nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
     itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
     reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider,
@@ -81,6 +83,7 @@ private fun LoadedItemListView(
 		ItemListView(
 			itemListViewModel,
 			fileListViewModel,
+			itemDataLoader,
 			nowPlayingViewModel,
 			itemListMenuBackPressedHandler,
 			reusablePlaylistFileItemViewModelProvider,
@@ -104,15 +107,13 @@ private fun LoadedItemListView(
 		if (!isConnectionLost) {
 			LaunchedEffect(item) {
 				try {
-					Promise.whenAll(
-						itemListViewModel.loadItem(libraryId, item),
-						fileListViewModel.loadItem(libraryId, item),
-					).suspend()
+					itemDataLoader.loadItem(libraryId, item).suspend()
 				} catch (e: IOException) {
-					if (ConnectionLostExceptionFilter.isConnectionLostException(e))
+					if (ConnectionLostExceptionFilter.isConnectionLostException(e)) {
 						isConnectionLost = true
-					else
+					} else {
 						applicationNavigation.backOut().suspend()
+					}
 				} catch (_: Exception) {
 					applicationNavigation.backOut().suspend()
 				}

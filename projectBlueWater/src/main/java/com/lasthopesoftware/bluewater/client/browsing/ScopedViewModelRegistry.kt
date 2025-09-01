@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewMod
 import com.lasthopesoftware.bluewater.client.browsing.files.list.search.SearchFilesViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinitionProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableLibraryFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.AggregateItemViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
@@ -38,6 +39,13 @@ class ScopedViewModelRegistry(
             libraryFilesProvider,
             storedItemAccess,
         )
+	}
+
+	override val itemDataLoader by viewModelStoreOwner.buildViewModelLazily {
+		AggregateItemViewModel(
+			itemListViewModel,
+			fileListViewModel
+		)
 	}
 
 	override val activeFileDownloadsViewModel by viewModelStoreOwner.buildViewModelLazily {

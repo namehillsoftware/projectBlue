@@ -105,7 +105,7 @@ fun <T> Promise<T>.guaranteedUnitResponse(): Promise<Unit> = this.then(
 	UnitResponse.respond()
 )
 
-private class UnitResponse<Resolution> private constructor() : ImmediateResponse<Resolution, Unit>, (Resolution, CancellationSignal) -> Unit {
+class UnitResponse<Resolution> private constructor() : ImmediateResponse<Resolution, Unit>, (Resolution, CancellationSignal) -> Unit {
 	override fun respond(resolution: Resolution) = Unit
 
 	override fun invoke(p1: Resolution, p2: CancellationSignal) = Unit

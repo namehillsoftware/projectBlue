@@ -94,6 +94,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFil
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
+import com.lasthopesoftware.bluewater.client.browsing.items.LoadItemData
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledActiveDownloadsButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSearchButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSettingsButton
@@ -355,6 +356,7 @@ fun ChildItem(
 fun ItemListView(
     itemListViewModel: ItemListViewModel,
     fileListViewModel: FileListViewModel,
+	itemDataLoader: LoadItemData,
     nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
     itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
     trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
@@ -557,7 +559,7 @@ fun ItemListView(
 		)
 	}
 
-	val isFilesLoading by fileListViewModel.isLoading.subscribeAsState()
+	val isLoading by itemDataLoader.isLoading.subscribeAsState()
 
 	BoxWithConstraints(modifier = Modifier
 		.fillMaxSize()
@@ -565,7 +567,6 @@ fun ItemListView(
 	) {
 		ControlSurface {
 			DetermineWindowControlColors()
-			val isItemsLoading by itemListViewModel.isLoading.subscribeAsState()
 
 			val collapsedHeight = appBarHeight
 			val expandedHeightPx = LocalDensity.current.remember { boxHeight.toPx() }
@@ -573,14 +574,13 @@ fun ItemListView(
 			val items by itemListViewModel.items.subscribeAsState()
 
 			var minVisibleItemsForScroll by remember { mutableIntStateOf(30) }
-			LaunchedEffect(lazyListState, itemListViewModel, fileListViewModel) {
+			LaunchedEffect(lazyListState, itemDataLoader) {
 				combine(
 					snapshotFlow { lazyListState.layoutInfo },
-					itemListViewModel.isLoading.mapNotNull().asFlow(),
-					fileListViewModel.isLoading.mapNotNull().asFlow(),
-				) { info, i, f -> Triple(info, i, f) }
-					.filterNot { (_, i, f) -> i || f }
-					.map { (info, _, _) -> info.visibleItemsInfo.size }
+					itemDataLoader.isLoading.mapNotNull().asFlow(),
+				) { info, i -> Pair(info, i) }
+					.filterNot { (_, i) -> i }
+					.map { (info, _) -> info.visibleItemsInfo.size }
 					.filter { it == 0 }
 					.distinctUntilChanged()
 					.take(1)
@@ -658,9 +658,7 @@ fun ItemListView(
 			) {
 				val actualExpandedHeight by remember { derivedStateOf { if (isHeaderTall) boxHeight else collapsedHeight } }
 				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-					val isLoaded = !isItemsLoading && !isFilesLoading
-
-					if (isLoaded) LoadedItemListView(
+					if (!isLoading) LoadedItemListView(
 						anchoredScrollConnectionState,
 						{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
 						anchoredScrollConnectionDispatcher::progressTo,
@@ -685,8 +683,7 @@ fun ItemListView(
 							)
 
 							UnlabelledRefreshButton(
-								itemListViewModel,
-								fileListViewModel,
+								itemDataLoader,
 								Modifier
 									.align(Alignment.TopEnd)
 									.padding(
@@ -772,10 +769,9 @@ fun ItemListView(
 							)
 						}
 
-						if (!isFilesLoading && !isItemsLoading) {
+						if (!isLoading) {
 							UnlabelledRefreshButton(
-								itemListViewModel,
-								fileListViewModel,
+								itemDataLoader,
 								Modifier.padding(horizontal = viewPaddingUnit)
 							)
 						}
