@@ -27,10 +27,11 @@ class AggregateItemViewModel(
 		)
 	}
 
-	override fun loadItem(libraryId: LibraryId, item: IItem?): Promise<Unit> {
+	override fun loadItem(libraryId: LibraryId, item: IItem?): Promise<Unit> = Promise.Proxy { cs ->
 		val promisedLoads = itemDataLoaders.map { it.loadItem(libraryId, item) }
 
-		return Promise.whenAll(promisedLoads)
+		Promise.whenAll(promisedLoads)
+			.also(cs::doCancel)
 			.then(
 				UnitResponse.respond(),
 				{
@@ -41,9 +42,10 @@ class AggregateItemViewModel(
 			)
 	}
 
-	override fun promiseRefresh(): Promise<Unit> {
+	override fun promiseRefresh(): Promise<Unit> = Promise.Proxy { cs ->
 		val promisedRefreshes = itemDataLoaders.map { it.promiseRefresh() }
-		return Promise.whenAll(promisedRefreshes)
+		Promise.whenAll(promisedRefreshes)
+			.also(cs::doCancel)
 			.then(
 				UnitResponse.respond(),
 				{
