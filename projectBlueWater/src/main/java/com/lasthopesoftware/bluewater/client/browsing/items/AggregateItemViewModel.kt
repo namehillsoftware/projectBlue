@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.shared.observables.InteractionState
 import com.lasthopesoftware.bluewater.shared.observables.LiftedInteractionState
 import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
 import com.lasthopesoftware.promises.extensions.UnitResponse
-import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.rxjava3.core.Observable
@@ -42,8 +41,18 @@ class AggregateItemViewModel(
 			)
 	}
 
-	override fun promiseRefresh(): Promise<Unit> =
-		Promise.whenAll(itemDataLoaders.map { it.promiseRefresh() }).unitResponse()
+	override fun promiseRefresh(): Promise<Unit> {
+		val promisedRefreshes = itemDataLoaders.map { it.promiseRefresh() }
+		return Promise.whenAll(promisedRefreshes)
+			.then(
+				UnitResponse.respond(),
+				{
+					for (promisedRefresh in promisedRefreshes)
+						promisedRefresh.cancel()
+					throw it
+				}
+			)
+	}
 
 	override fun onCleared() {
 		autoCloseableManager.close()
