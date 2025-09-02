@@ -423,7 +423,7 @@ fun ItemListMenu(
 		}
 
 		LabelledActiveDownloadsButton(
-			itemListViewModel = itemListViewModel,
+			loadedLibraryState = itemListViewModel,
 			applicationNavigation = applicationNavigation,
 			modifier = menuIconModifier,
 		)
@@ -675,8 +675,7 @@ fun ScreenDimensionsScope.ItemListView(
 		if (maxWidth < Dimensions.twoColumnThreshold) {
 			val expandedHeightPx = LocalDensity.current.remember { appBarAndTitleHeight.toPx() }
 			val collapsedHeightPx = LocalDensity.current.remember { collapsedHeight.toPx() }
-			val rowHeightPx =
-				LocalDensity.current.remember { standardRowHeight.toPx() }
+			val rowHeightPx = LocalDensity.current.remember { standardRowHeight.toPx() }
 
 			val fullListSize by LocalDensity.current.remember(maxHeight) {
 				val topMenuHeightPx = 0f
@@ -684,7 +683,7 @@ fun ScreenDimensionsScope.ItemListView(
 				val rowHeightPx = standardRowHeight.toPx()
 				val dividerHeight = 1.dp.toPx()
 
-			derivedStateOf {
+				derivedStateOf {
 					var fullListSize = topMenuHeightPx
 					if (items.any()) {
 						fullListSize += headerHeightPx + rowHeightPx * items.size + dividerHeight * items.size - 1
@@ -703,7 +702,7 @@ fun ScreenDimensionsScope.ItemListView(
 
 			val titleHeightScaler = rememberFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
 			val menuHeightScaler = rememberPreScrollConnectedScaler(rowHeightPx, 0f)
-			val compositeScrollConnection = remember(titleHeightScaler) {
+			val compositeScrollConnection = remember(titleHeightScaler, menuHeightScaler) {
 				ConsumedOffsetErasingNestedScrollConnection(
 					LinkedNestedScrollConnection(titleHeightScaler, menuHeightScaler)
 				)
