@@ -530,12 +530,15 @@ fun SearchFilesView(
 								}
 						}
 
-						// 5in in pixels, pixels/Inch
+						// 5" in pixels, pixels/Inch, unless the screen size is greater than 7"
 						val density = LocalDensity.current
 						val resources = LocalResources.current
 						val maxScrollBarHeight = remember(density, resources, this@BoxWithConstraints.maxHeight) {
 							with(density) {
-								(2.5f * resources.displayMetrics.ydpi).toDp()
+								val maxHeightPx = this@BoxWithConstraints.maxHeight.toPx() * resources.displayMetrics.density
+								val dpi = resources.displayMetrics.ydpi
+								if (maxHeightPx > 7 * dpi) maxHeightPx.toDp()
+								else (2.5f * dpi).toDp()
 							}.coerceAtMost(this@BoxWithConstraints.maxHeight)
 						}
 
