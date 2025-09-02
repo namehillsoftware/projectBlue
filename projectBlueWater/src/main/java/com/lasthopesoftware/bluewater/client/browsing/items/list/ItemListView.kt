@@ -382,7 +382,7 @@ fun ItemListMenu(
 	Row(
 		modifier = Modifier
 			.height(topMenuHeight)
-			.padding(rowPadding)
+			.padding(vertical = rowPadding)
 			.focusGroup()
 			.then(modifier)
 			.horizontalScroll(rememberScrollState()),
@@ -850,7 +850,6 @@ fun ScreenDimensionsScope.ItemListView(
 							.height(menuHeightDp)
 							.clip(RectangleShape)
 					) {
-
 						ItemListMenu(
 							itemListViewModel = itemListViewModel,
 							fileListViewModel = fileListViewModel,
