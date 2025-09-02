@@ -3,7 +3,9 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list.search
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -16,9 +18,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.CircularProgressIndicator
@@ -43,9 +47,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalResources
@@ -58,12 +65,22 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredChips
+import com.lasthopesoftware.bluewater.android.ui.components.AnchoredProgressScrollConnectionDispatcher
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
+import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
+import com.lasthopesoftware.bluewater.android.ui.components.rememberPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
+import com.lasthopesoftware.bluewater.android.ui.remember
+import com.lasthopesoftware.bluewater.android.ui.rememberAutoCloseable
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.standardRowHeight
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuHeight
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.LabelledPlayButton
 import com.lasthopesoftware.bluewater.client.browsing.files.list.LabelledShuffleButton
@@ -71,6 +88,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackTitleItemV
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListContentType
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledActiveDownloadsButton
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSettingsButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
@@ -264,32 +283,105 @@ fun SearchFilesView(
 			}
 
 			when {
-				isLoading -> {
-					Box(modifier = Modifier.fillMaxSize()) {
-						CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-					}
+				isLoading -> Box(modifier = Modifier.fillMaxSize()) {
+					CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 				}
 
-				isConnectionLost -> {
-					ConnectionLostView(
-						onCancel = { isConnectionLost = false },
-						onRetry = {
-							scope.launch {
-								try {
-									searchFilesViewModel.findFiles().suspend()
-								} catch (e: IOException) {
-									isConnectionLost = ConnectionLostExceptionFilter.isConnectionLostException(e)
-								}
+				isConnectionLost -> ConnectionLostView(
+					onCancel = { isConnectionLost = false },
+					onRetry = {
+						scope.launch {
+							try {
+								searchFilesViewModel.findFiles().suspend()
+							} catch (e: IOException) {
+								isConnectionLost = ConnectionLostExceptionFilter.isConnectionLostException(e)
 							}
 						}
-					)
-				}
+					}
+				)
 
-				files.any() -> {
-					BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-						val lazyListState = rememberLazyListState()
+				files.any() -> BoxWithConstraints {
+					val lazyListState = rememberLazyListState()
 
-						val refreshButtonFocus = remember { FocusRequester() }
+					val rowHeightPx = LocalDensity.current.remember { standardRowHeight.toPx() }
+					val menuHeightScaler = rememberPreScrollConnectedScaler(rowHeightPx, 0f)
+
+					val compositeScrollConnection = remember(menuHeightScaler) {
+						ConsumedOffsetErasingNestedScrollConnection(menuHeightScaler)
+					}
+
+					var minVisibleItemsForScroll by remember { mutableIntStateOf(30) }
+					LaunchedEffect(lazyListState, searchFilesViewModel) {
+						combine(
+							snapshotFlow { lazyListState.layoutInfo },
+							searchFilesViewModel.isLoading.mapNotNull().asFlow()
+						) { info, s -> Pair(info, s) }
+							.filterNot { (_, s) -> s }
+							.map { (info, _) -> info.visibleItemsInfo.size }
+							.filter { it == 0 }
+							.distinctUntilChanged()
+							.take(1)
+							.collect {
+								minVisibleItemsForScroll = (it * 3).coerceAtLeast(30)
+							}
+					}
+
+					val labeledAnchors by remember {
+						derivedStateOf {
+							var totalItems = 1
+
+							if (files.any())
+								totalItems += 1 + files.size
+
+							if (totalItems <= minVisibleItemsForScroll) emptyList()
+							else listOf(
+								Pair(stringResources.top,0f),
+								Pair(stringResources.end,1f),
+							)
+						}
+					}
+
+					val progressAnchors by remember {
+						derivedStateOf { labeledAnchors.map { (_, p) -> p }.toFloatArray() }
+					}
+
+					val anchoredScrollConnectionState = rememberAnchoredScrollConnectionState(progressAnchors)
+
+					val fullListSize by LocalDensity.current.remember(maxHeight) {
+						val topMenuHeightPx = 0f
+						val headerHeightPx = (topMenuHeight + viewPaddingUnit * 2).toPx()
+						val rowHeightPx = standardRowHeight.toPx()
+						val dividerHeight = 1.dp.toPx()
+
+						derivedStateOf {
+							var fullListSize = topMenuHeightPx
+
+							if (files.any()) {
+								fullListSize += headerHeightPx + rowHeightPx * files.size + dividerHeight * files.size - 1
+							}
+
+							fullListSize -= maxHeight.toPx()
+							if (files.any())
+								fullListSize += rowHeightPx + dividerHeight
+							fullListSize.coerceAtLeast(0f)
+						}
+					}
+
+					val anchoredScrollConnectionDispatcher = rememberAutoCloseable(
+						anchoredScrollConnectionState,
+						fullListSize,
+						compositeScrollConnection
+					) {
+						AnchoredProgressScrollConnectionDispatcher(
+							anchoredScrollConnectionState,
+							-fullListSize,
+							compositeScrollConnection
+						)
+					}
+
+					Box(
+						modifier = Modifier.fillMaxSize().nestedScroll(anchoredScrollConnectionDispatcher)
+					) {
 						LazyColumn(
 							state = lazyListState,
 							modifier = Modifier
@@ -302,45 +394,22 @@ fun SearchFilesView(
 									knobCornerRadius = 1.dp,
 								),
 						) {
-							item(contentType = ItemListContentType.Menu) {
-								if (files.any()) {
-									Row(
-										modifier = Modifier
-											.padding(Dimensions.rowPadding)
-											.fillMaxWidth()
-									) {
-										LabelledPlayButton(
-                                            libraryState = searchFilesViewModel,
-                                            playbackServiceController = playbackServiceController,
-                                            serviceFilesListState = searchFilesViewModel,
-										)
-
-										LabelledShuffleButton(
-											libraryState = searchFilesViewModel,
-											playbackServiceController = playbackServiceController,
-											serviceFilesListState = searchFilesViewModel,
-										)
-
-										LabelledRefreshButton(
-											searchFilesViewModel,
-											focusRequester = refreshButtonFocus
-										)
-									}
-								}
+							item(contentType = ItemListContentType.Spacer) {
+								Spacer(modifier = Modifier.height(topMenuHeight + rowPadding * 2))
 							}
 
 							item(contentType = ItemListContentType.Header) {
 								Box(
 									modifier = Modifier
-										.padding(Dimensions.viewPaddingUnit)
-										.height(Dimensions.viewPaddingUnit * 12)
+										.padding(viewPaddingUnit)
+										.height(viewPaddingUnit * 12)
 								) {
 									ProvideTextStyle(MaterialTheme.typography.h5) {
 										Text(
 											text = stringResource(R.string.file_count_label, files.size),
 											fontWeight = FontWeight.Bold,
 											modifier = Modifier
-												.padding(Dimensions.viewPaddingUnit)
+												.padding(viewPaddingUnit)
 												.align(Alignment.CenterStart)
 										)
 									}
@@ -364,42 +433,61 @@ fun SearchFilesView(
 							}
 						}
 
-						var minVisibleItemsForScroll by remember { mutableIntStateOf(30) }
-						LaunchedEffect(lazyListState, searchFilesViewModel) {
-							combine(
-								snapshotFlow { lazyListState.layoutInfo },
-								searchFilesViewModel.isLoading.mapNotNull().asFlow()
-							) { info, s -> Pair(info, s) }
-								.filterNot { (_, s) -> s }
-								.map { (info, _) -> info.visibleItemsInfo.size }
-								.filter { it == 0 }
-								.distinctUntilChanged()
-								.take(1)
-								.collect {
-									minVisibleItemsForScroll = (it * 3).coerceAtLeast(30)
+						val menuHeightValue by menuHeightScaler.valueState
+						val menuHeightDp by LocalDensity.current.remember { derivedStateOf { menuHeightValue.toDp() } }
+						Box(
+							modifier = Modifier
+								.fillMaxWidth()
+								.background(MaterialTheme.colors.surface)
+								.height(menuHeightDp)
+								.clip(RectangleShape)
+						) {
+							Row(
+								modifier = Modifier
+									.height(topMenuHeight)
+									.padding(vertical = rowPadding)
+									.focusGroup()
+									.fillMaxWidth()
+									.horizontalScroll(rememberScrollState()),
+							) {
+								val menuIconModifier = Modifier.width(topMenuIconSize * 4)
+
+								val refreshButtonFocus = remember { FocusRequester() }
+								if (files.any()) {
+									LabelledRefreshButton(
+										searchFilesViewModel,
+										focusRequester = refreshButtonFocus,
+										modifier = menuIconModifier,
+									)
+
+									LabelledPlayButton(
+										libraryState = searchFilesViewModel,
+										playbackServiceController = playbackServiceController,
+										serviceFilesListState = searchFilesViewModel,
+										modifier = menuIconModifier,
+									)
+
+									LabelledShuffleButton(
+										libraryState = searchFilesViewModel,
+										playbackServiceController = playbackServiceController,
+										serviceFilesListState = searchFilesViewModel,
+										modifier = menuIconModifier,
+									)
 								}
-						}
 
-						val labeledAnchors by remember {
-							derivedStateOf {
-								var totalItems = 1
+								LabelledActiveDownloadsButton(
+									loadedLibraryState = searchFilesViewModel,
+									applicationNavigation = applicationNavigation,
+									modifier = menuIconModifier,
+								)
 
-								if (files.any())
-									totalItems += 1 + files.size
-
-								if (totalItems <= minVisibleItemsForScroll) emptyList()
-								else listOf(
-									Pair(stringResources.top,0f),
-									Pair(stringResources.end,1f),
+								LabelledSettingsButton(
+									searchFilesViewModel,
+									applicationNavigation,
+									modifier = menuIconModifier,
 								)
 							}
 						}
-
-						val progressAnchors by remember {
-							derivedStateOf { labeledAnchors.map { (_, p) -> p }.toFloatArray() }
-						}
-
-						val anchoredScrollConnectionState = rememberAnchoredScrollConnectionState(progressAnchors)
 
 						LaunchedEffect(anchoredScrollConnectionState) {
 							snapshotFlow { anchoredScrollConnectionState.selectedProgress }
@@ -445,10 +533,10 @@ fun SearchFilesView(
 						// 5in in pixels, pixels/Inch
 						val density = LocalDensity.current
 						val resources = LocalResources.current
-						val maxScrollBarHeight = remember(density, resources, maxHeight) {
-							with (density) {
+						val maxScrollBarHeight = remember(density, resources, this@BoxWithConstraints.maxHeight) {
+							with(density) {
 								(2.5f * resources.displayMetrics.ydpi).toDp()
-							}.coerceAtMost(maxHeight)
+							}.coerceAtMost(this@BoxWithConstraints.maxHeight)
 						}
 
 						val localHapticFeedback = LocalHapticFeedback.current
@@ -458,7 +546,9 @@ fun SearchFilesView(
 								.align(Alignment.BottomEnd),
 							anchoredScrollConnectionState = anchoredScrollConnectionState,
 							lazyListState = lazyListState,
-							chipLabel = { _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
+							chipLabel = { _, p ->
+								labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) }
+							},
 							onScrollProgress = { p -> anchoredScrollConnectionState.selectedProgress = p },
 							onSelected = {
 								localHapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
@@ -467,9 +557,7 @@ fun SearchFilesView(
 					}
 				}
 
-				else -> {
-					Spacer(modifier = Modifier.fillMaxSize())
-				}
+				else -> Spacer(modifier = Modifier.fillMaxSize())
 			}
 		}
 	}
