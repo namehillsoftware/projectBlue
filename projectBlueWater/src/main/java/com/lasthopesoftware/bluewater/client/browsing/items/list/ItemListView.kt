@@ -540,8 +540,9 @@ fun ItemListView(
 		val resources = LocalResources.current
 		val maxScrollBarHeight = remember(density, resources, maxHeight, headerHeight) {
 			with (density) {
-				(2.5f * resources.displayMetrics.ydpi).toDp()
-			}.coerceAtMost(maxHeight - headerHeight)
+				val dpi = 160f
+				(2.5f * dpi).dp
+			}.coerceAtMost(maxHeight - headerHeight - menuHeight)
 		}
 
 		val localHapticFeedback = LocalHapticFeedback.current
