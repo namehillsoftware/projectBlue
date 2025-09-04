@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Indication
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -25,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.focusTarget
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -103,7 +103,7 @@ private val selectionKeys = setOf(Key.DirectionCenter, Key.Enter)
 // Courtesy of https://github.com/thesauri/dpad-compose/blob/main/app/src/main/java/dev/berggren/DpadFocusable.kt
 @ExperimentalComposeUiApi
 fun Modifier.navigable(
-	onClick: () -> Unit,
+	onClick: (() -> Unit)? = null,
 	onClickLabel: String? = null,
 	borderWidth: Dp = 1.dp,
 	unfocusedBorderColor: Color? = null,
@@ -134,7 +134,7 @@ fun Modifier.navigable(
 		}
 	}
 
-	val modifier = this.combinedClickable(
+	val modifier = if (onClick == null) this else this.combinedClickable(
 		interactionSource = boxInteractionSource,
 		indication = indication,
 		onLongClick = onLongClick,
@@ -225,7 +225,7 @@ fun Modifier.navigable(
 						previousPress?.let { previousPress ->
 							if (enabled) {
 								if (!longPressState.isActivated) {
-									onClick()
+									onClick?.invoke()
 								}
 
 								longPressState.reset()
@@ -248,7 +248,7 @@ fun Modifier.navigable(
 				}
 			}
 			.focusRequester(localFocusRequester)
-			.focusTarget()
+			.focusable()
 	}
 }
 

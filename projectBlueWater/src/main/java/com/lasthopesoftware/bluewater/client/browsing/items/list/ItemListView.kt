@@ -9,15 +9,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -351,7 +349,7 @@ fun ChildItem(
 	}
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun ItemListView(
     itemListViewModel: ItemListViewModel,
@@ -372,7 +370,7 @@ fun ItemListView(
 
 	val lazyListState = rememberLazyListState()
 
-	val refreshButtonFocus = remember { FocusRequester() }
+	val firstMenuButtonFocus = remember { FocusRequester() }
 
 	@Composable
 	fun BoxWithConstraintsScope.LoadedItemListView(
@@ -427,6 +425,7 @@ fun ItemListView(
 
 		LazyColumn(
 			state = lazyListState,
+			contentPadding = PaddingValues(top = headerHeight),
 			modifier = Modifier
 				.focusGroup()
 				.scrollbar(
@@ -438,16 +437,6 @@ fun ItemListView(
 					knobCornerRadius = 1.dp,
 				),
 		) {
-			if (headerHeight > 0.dp) {
-				item(contentType = ItemListContentType.Spacer) {
-					Spacer(
-						modifier = Modifier
-							.requiredHeight(headerHeight)
-							.fillMaxWidth()
-					)
-				}
-			}
-
 			item(contentType = ItemListContentType.Menu) {
 				Row(
 					modifier = Modifier
@@ -461,6 +450,7 @@ fun ItemListView(
 							libraryState = itemListViewModel,
 							playbackServiceController = playbackServiceController,
 							serviceFilesListState = fileListViewModel,
+							focusRequester = firstMenuButtonFocus,
 						)
 
 						LabelledSyncButton(fileListViewModel)
@@ -562,10 +552,7 @@ fun ItemListView(
 
 	val isLoading by itemDataLoader.isLoading.subscribeAsState()
 
-	BoxWithConstraints(modifier = Modifier
-		.fillMaxSize()
-		.focusGroup()
-	) {
+	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 		ControlSurface {
 			DetermineWindowControlColors()
 
@@ -658,7 +645,9 @@ fun ItemListView(
 					.nestedScroll(anchoredScrollConnectionDispatcher)
 			) {
 				val actualExpandedHeight by remember { derivedStateOf { if (isHeaderTall) boxHeight else collapsedHeight } }
-				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+				BoxWithConstraints(
+					modifier = Modifier.fillMaxSize()
+				) {
 					if (!isLoading) LoadedItemListView(
 						anchoredScrollConnectionState,
 						{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
@@ -668,78 +657,76 @@ fun ItemListView(
 				}
 
 				if (isHeaderTall) {
-					Column(modifier = Modifier.background(MaterialTheme.colors.surface)) headerColumn@{
-						val heightValue by titleHeightScaler.valueState
+					val heightValue by titleHeightScaler.valueState
 
-						Box(
+					Box(
+						modifier = Modifier
+							.fillMaxWidth()
+							.height(LocalDensity.current.run { heightValue.toDp() })
+							.background(MaterialTheme.colors.surface)
+					) headerColumn@{
+						BackButton(
+							applicationNavigation::navigateUp,
 							modifier = Modifier
-								.fillMaxWidth()
-								.height(LocalDensity.current.run { heightValue.toDp() })
-						) {
-							BackButton(
-								applicationNavigation::navigateUp,
-								modifier = Modifier
-									.align(Alignment.TopStart)
-									.padding(topRowOuterPadding)
-							)
+								.align(Alignment.TopStart)
+								.padding(topRowOuterPadding)
+						)
 
-							UnlabelledRefreshButton(
-								itemDataLoader,
-								Modifier
-									.align(Alignment.TopEnd)
-									.padding(
-										vertical = topRowOuterPadding, horizontal = viewPaddingUnit * 2
-									),
-								refreshButtonFocus
-							)
+						UnlabelledRefreshButton(
+							itemDataLoader,
+							Modifier
+								.align(Alignment.TopEnd)
+								.padding(
+									vertical = topRowOuterPadding, horizontal = viewPaddingUnit * 2
+								),
+						)
 
-							ProvideTextStyle(MaterialTheme.typography.h5) {
-								val startPadding by rememberTitleStartPadding(titleHeightScaler.progressState)
+						ProvideTextStyle(MaterialTheme.typography.h5) {
+							val startPadding by rememberTitleStartPadding(titleHeightScaler.progressState)
 
-								val headerCollapseProgress by titleHeightScaler.progressState
+							val headerCollapseProgress by titleHeightScaler.progressState
 
-								val topPadding by remember {
-									derivedStateOf {
-										linearInterpolation(
-											appBarHeight,
-											14.dp,
-											headerCollapseProgress
-										)
-									}
-								}
-
-								val endPadding by remember {
-									derivedStateOf {
-										linearInterpolation(
-											viewPaddingUnit * 2,
-											topMenuIconSize + viewPaddingUnit * 4,
-											headerCollapseProgress
-										)
-									}
-								}
-
-								val maxLines by remember { derivedStateOf { (2 - headerCollapseProgress).roundToInt() } }
-								if (maxLines > 1) {
-									Text(
-										text = itemValue,
-										maxLines = maxLines,
-										overflow = TextOverflow.Ellipsis,
-										modifier = Modifier
-											.fillMaxWidth()
-											.padding(start = startPadding, top = topPadding, end = endPadding),
-									)
-								} else {
-									MarqueeText(
-										text = itemValue,
-										overflow = TextOverflow.Ellipsis,
-										gradientSides = setOf(GradientSide.End),
-										gradientEdgeColor = MaterialTheme.colors.surface,
-										modifier = Modifier
-											.fillMaxWidth()
-											.padding(start = startPadding, top = topPadding, end = endPadding),
-										isMarqueeEnabled = !lazyListState.isScrollInProgress
+							val topPadding by remember {
+								derivedStateOf {
+									linearInterpolation(
+										appBarHeight,
+										14.dp,
+										headerCollapseProgress
 									)
 								}
+							}
+
+							val endPadding by remember {
+								derivedStateOf {
+									linearInterpolation(
+										viewPaddingUnit * 2,
+										topMenuIconSize + viewPaddingUnit * 4,
+										headerCollapseProgress
+									)
+								}
+							}
+
+							val maxLines by remember { derivedStateOf { (2 - headerCollapseProgress).roundToInt() } }
+							if (maxLines > 1) {
+								Text(
+									text = itemValue,
+									maxLines = maxLines,
+									overflow = TextOverflow.Ellipsis,
+									modifier = Modifier
+										.fillMaxWidth()
+										.padding(start = startPadding, top = topPadding, end = endPadding),
+								)
+							} else {
+								MarqueeText(
+									text = itemValue,
+									overflow = TextOverflow.Ellipsis,
+									gradientSides = setOf(GradientSide.End),
+									gradientEdgeColor = MaterialTheme.colors.surface,
+									modifier = Modifier
+										.fillMaxWidth()
+										.padding(start = startPadding, top = topPadding, end = endPadding),
+									isMarqueeEnabled = !lazyListState.isScrollInProgress
+								)
 							}
 						}
 					}
