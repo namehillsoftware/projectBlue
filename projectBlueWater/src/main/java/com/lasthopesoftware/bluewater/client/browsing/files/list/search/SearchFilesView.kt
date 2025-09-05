@@ -3,9 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list.search
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.scrollBy
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -19,11 +17,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.CircularProgressIndicator
@@ -52,10 +48,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -69,6 +66,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.AnchoredProgressScro
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.LabelledRefreshButton
+import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.rememberPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.remember
@@ -78,7 +76,6 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.standardRowHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuHeight
-import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.LabelledPlayButton
@@ -429,49 +426,35 @@ fun SearchFilesView(
 								.height(menuHeightDp)
 								.clip(RectangleShape)
 						) {
-							Row(
-								modifier = Modifier
-									.height(topMenuHeight)
-									.padding(vertical = rowPadding)
-									.focusGroup()
-									.fillMaxWidth()
-									.horizontalScroll(rememberScrollState()),
-							) {
-								val menuIconModifier = Modifier.width(topMenuIconSize * 4)
-
+							ListMenuRow(modifier = Modifier.fillMaxWidth()) {
 								val refreshButtonFocus = remember { FocusRequester() }
 								if (files.any()) {
 									LabelledRefreshButton(
 										searchFilesViewModel,
 										focusRequester = refreshButtonFocus,
-										modifier = menuIconModifier,
 									)
 
 									LabelledPlayButton(
 										libraryState = searchFilesViewModel,
 										playbackServiceController = playbackServiceController,
 										serviceFilesListState = searchFilesViewModel,
-										modifier = menuIconModifier,
 									)
 
 									LabelledShuffleButton(
 										libraryState = searchFilesViewModel,
 										playbackServiceController = playbackServiceController,
 										serviceFilesListState = searchFilesViewModel,
-										modifier = menuIconModifier,
 									)
 								}
 
 								LabelledActiveDownloadsButton(
 									loadedLibraryState = searchFilesViewModel,
 									applicationNavigation = applicationNavigation,
-									modifier = menuIconModifier,
 								)
 
 								LabelledSettingsButton(
 									searchFilesViewModel,
 									applicationNavigation,
-									modifier = menuIconModifier,
 								)
 							}
 						}
