@@ -46,7 +46,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalInputModeManager
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -65,7 +64,6 @@ import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasin
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
-import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledRefreshButton
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
@@ -532,13 +530,9 @@ fun ItemListView(
 
 		if (LocalInputModeManager.current.inputMode == InputMode.Touch) {
 			// 5in in pixels, pixels/Inch
-			val density = LocalDensity.current
-			val resources = LocalResources.current
-			val maxScrollBarHeight = remember(density, resources, maxHeight, headerHeight) {
-				with(density) {
-					val dpi = 160f
-					(2.5f * dpi).dp
-				}.coerceAtMost(maxHeight - headerHeight - menuHeight)
+			val maxScrollBarHeight = remember(maxHeight, headerHeight) {
+				val dpi = 160f
+				(2.5f * dpi).dp.coerceAtMost(maxHeight - headerHeight - menuHeight)
 			}
 
 			val localHapticFeedback = LocalHapticFeedback.current
@@ -683,7 +677,7 @@ fun ItemListView(
 						)
 
 						UnlabelledRefreshButton(
-							onClick = { firstMenuButtonFocus.requestFocus() },
+							itemDataLoader,
 							Modifier
 								.align(Alignment.TopEnd)
 								.padding(
