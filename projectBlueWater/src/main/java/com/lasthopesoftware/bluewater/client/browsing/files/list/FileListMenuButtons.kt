@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.lasthopesoftware.bluewater.R
@@ -60,6 +61,7 @@ fun RowScope.LabelledPlayButton(
 	playbackServiceController: ControlPlaybackService,
 	serviceFilesListState: ServiceFilesListState,
 	modifier: Modifier = Modifier,
+	focusRequester: FocusRequester? = null,
 ) {
 	val playButtonLabel = stringResource(id = R.string.btn_play)
 	ColumnMenuIcon(
@@ -73,6 +75,7 @@ fun RowScope.LabelledPlayButton(
 		label = playButtonLabel,
 		labelModifier = modifier,
 		labelMaxLines = 1,
+		focusRequester = focusRequester,
 	)
 }
 
