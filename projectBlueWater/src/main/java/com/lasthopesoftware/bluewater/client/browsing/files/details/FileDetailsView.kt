@@ -32,6 +32,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
@@ -44,11 +45,14 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rxjava3.subscribeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.ColorFilter
@@ -69,15 +73,18 @@ import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
+import com.lasthopesoftware.bluewater.android.ui.components.LabelledRefreshButton
+import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.RatingBar
-import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledRefreshButton
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
+import com.lasthopesoftware.bluewater.android.ui.components.rememberPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.indicateFocus
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.navigable
+import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.DetermineWindowControlColors
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.appBarHeight
@@ -86,6 +93,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topRowOuterPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
+import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
@@ -97,40 +105,39 @@ import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toState
 import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
+import kotlinx.coroutines.launch
 
 private val viewPadding = viewPaddingUnit
+private val maxMenuHeight = topMenuHeight + rowPadding
 
 @Composable
 private fun StaticFileMenu(
 	fileDetailsState: FileDetailsState,
 	mediaStylePalette: MediaStylePalette,
-	playableFileDetailsState: PlayableFileDetailsState? = null,
+	playableFileDetailsState: PlayableFileDetailsState?,
+	modifier: Modifier = Modifier,
 ) {
-	val padding = viewPadding * 3
-
-	Row(
-		modifier = Modifier
-			.padding(top = padding)
-			.height(topMenuHeight)
-	) {
-		val iconColor = mediaStylePalette.secondaryTextColor
-		val iconSize = topMenuIconSize
+	ListMenuRow(modifier = modifier) {
+		LabelledRefreshButton(
+			onClick = {
+				fileDetailsState.promiseLoadedActiveFile()
+			},
+		)
 
 		val addFileToPlaybackLabel = stringResource(id = R.string.btn_add_file_to_playback)
-		val colorFilter = ColorFilter.tint(iconColor)
 		ColumnMenuIcon(
 			onClick = { fileDetailsState.addToNowPlaying() },
 			icon = {
 				Image(
 					painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
-					colorFilter = colorFilter,
+					colorFilter = ColorFilter.tint(mediaStylePalette.secondaryTextColor),
 					contentDescription = addFileToPlaybackLabel,
-					modifier = Modifier.size(iconSize),
+					modifier = Modifier.size(topMenuIconSize),
 				)
 			},
 			label = addFileToPlaybackLabel,
+			labelColor = mediaStylePalette.secondaryTextColor,
 			labelMaxLines = 1,
-			labelColor = iconColor
 		)
 
 		if (playableFileDetailsState != null) {
@@ -140,14 +147,14 @@ private fun StaticFileMenu(
 				icon = {
 					Image(
 						painter = painterResource(id = R.drawable.av_play_white),
-						colorFilter = colorFilter,
+						colorFilter = ColorFilter.tint(mediaStylePalette.secondaryTextColor),
 						contentDescription = playLabel,
-						modifier = Modifier.size(iconSize),
+						modifier = Modifier.size(topMenuIconSize),
 					)
 				},
 				label = playLabel,
+				labelColor = mediaStylePalette.secondaryTextColor,
 				labelMaxLines = 1,
-				labelColor = iconColor
 			)
 		}
 	}
@@ -507,18 +514,27 @@ fun FileDetailsView(
 		val subTitleFontSize = MaterialTheme.typography.h6.fontSize
 		val guessedRowSpacing = viewPaddingUnit
 		val titleHeight =
-			LocalDensity.current.run { titleFontSize.toDp() + subTitleFontSize.toDp() } + guessedRowSpacing * 3
+			LocalDensity.current.remember { titleFontSize.toDp() + subTitleFontSize.toDp() + guessedRowSpacing * 3 }
 		val boxHeight = expandedTitlePadding + titleHeight
-		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
+		val boxHeightPx = LocalDensity.current.remember { boxHeight.toPx() }
 		val collapsedHeight = appBarHeight + rowPadding
 		val heightScaler = rememberFullScreenScrollConnectedScaler(max = boxHeightPx, min = LocalDensity.current.run { collapsedHeight.toPx() })
+		val menuHeightScaler = rememberPreScrollConnectedScaler(
+			LocalDensity.current.remember { maxMenuHeight.toPx() },
+			0f
+		)
+		val compositeScrollConnection = remember(heightScaler, menuHeightScaler) {
+			ConsumedOffsetErasingNestedScrollConnection(
+				LinkedNestedScrollConnection(heightScaler, menuHeightScaler)
+			)
+		}
 
 		val lazyListState = rememberLazyListState()
 
 		Box(
 			modifier = Modifier
 				.fillMaxSize()
-				.nestedScroll(remember(heightScaler) { ConsumedOffsetErasingNestedScrollConnection(heightScaler) })
+				.nestedScroll(compositeScrollConnection)
 		) {
 			val headerCollapseProgress by heightScaler.progressState
 
@@ -575,43 +591,11 @@ fun FileDetailsView(
 					}
 
 					item {
-						ListMenuRow(
-							modifier = Modifier.fillMaxWidth()
-						) {
-							val addFileToPlaybackLabel = stringResource(id = R.string.btn_add_file_to_playback)
-							ColumnMenuIcon(
-								onClick = { viewModel.addToNowPlaying() },
-								icon = {
-									Image(
-										painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
-										colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-										contentDescription = addFileToPlaybackLabel,
-										modifier = Modifier.size(topMenuIconSize),
-									)
-								},
-								label = addFileToPlaybackLabel,
-								labelColor = coverArtColorState.secondaryTextColor,
-								labelMaxLines = 1,
-							)
-
-							if (playableFileDetailsState != null) {
-								val playLabel = stringResource(id = R.string.btn_play)
-								ColumnMenuIcon(
-									onClick = { playableFileDetailsState.play() },
-									icon = {
-										Image(
-											painter = painterResource(id = R.drawable.av_play_white),
-											colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-											contentDescription = playLabel,
-											modifier = Modifier.size(topMenuIconSize),
-										)
-									},
-									label = playLabel,
-									labelColor = coverArtColorState.secondaryTextColor,
-									labelMaxLines = 1,
-								)
-							}
-						}
+						Spacer(
+							modifier = Modifier
+								.requiredHeight(maxMenuHeight)
+								.fillMaxWidth()
+						)
 					}
 
 					items(fileProperties) {
@@ -639,16 +623,48 @@ fun FileDetailsView(
 						.align(Alignment.CenterStart)
 				)
 
-				UnlabelledRefreshButton(
+				val menuHeightProgress by menuHeightScaler.progressState
+				val chevronRotation by remember {
+					derivedStateOf {
+						linearInterpolation(
+							0f,
+							180f,
+							menuHeightProgress
+						)
+					}
+				}
+				val isMenuFullyShown by remember { derivedStateOf { menuHeightProgress < .02f } }
+				val chevronLabel =
+					stringResource(id = if (isMenuFullyShown) R.string.collapse else R.string.expand)
+
+				val scope = rememberCoroutineScope()
+
+				ColumnMenuIcon(
 					onClick = {
-						viewModel.promiseLoadedActiveFile()
+						scope.launch {
+							if (!isMenuFullyShown) {
+								menuHeightScaler.animateGoToMax()
+							} else {
+								menuHeightScaler.animateGoToMin()
+							}
+						}
+					},
+					icon = {
+						Icon(
+							painter = painterResource(id = R.drawable.chevron_up_white_36dp),
+							tint = LocalControlColor.current,
+							contentDescription = chevronLabel,
+							modifier = Modifier
+								.size(topMenuIconSize)
+								.rotate(chevronRotation),
+						)
 					},
 					modifier = Modifier
+						.align(Alignment.TopEnd)
 						.padding(
 							vertical = topRowOuterPadding,
 							horizontal = viewPaddingUnit * 2
-						)
-						.align(Alignment.CenterEnd)
+						),
 				)
 			}
 
@@ -658,12 +674,11 @@ fun FileDetailsView(
 						linearInterpolation(expandedTitlePadding, 0.dp, headerCollapseProgress)
 					}
 				}
-				Box(
+
+				Column(
 					modifier = Modifier
 						.padding(top = topTitlePadding)
-						.requiredHeight(appBarHeight)
 						.fillMaxWidth(),
-					contentAlignment = Alignment.CenterStart,
 				) {
 					val startPadding by rememberTitleStartPadding(heightScaler.progressState)
 					val endPadding by remember {
@@ -681,6 +696,24 @@ fun FileDetailsView(
 						modifier = Modifier.padding(start = startPadding, end = endPadding),
 						titleFontSize = titleFontSize,
 						isMarqueeEnabled = !lazyListState.isScrollInProgress
+					)
+
+					val menuHeightPx by menuHeightScaler.valueState
+					val menuHeight by LocalDensity.current.remember {
+						derivedStateOf {
+							menuHeightPx.toDp()
+						}
+					}
+					StaticFileMenu(
+						viewModel,
+						coverArtColorState,
+						playableFileDetailsState,
+						modifier = Modifier
+							.fillMaxWidth()
+							.requiredHeight(menuHeight)
+							.padding(viewPadding * 2)
+							.clipToBounds()
+							.background(coverArtColorState.backgroundColor)
 					)
 				}
 			}
@@ -741,7 +774,14 @@ fun FileDetailsView(
 							}
 					}
 
-					StaticFileMenu(viewModel, coverArtColorState, playableFileDetailsState)
+					StaticFileMenu(
+						viewModel,
+						coverArtColorState,
+						playableFileDetailsState,
+						modifier = Modifier
+							.fillMaxWidth()
+							.padding(top = viewPadding * 3),
+					)
 				}
 
 				Column(modifier = Modifier.fillMaxWidth()) {
@@ -761,13 +801,6 @@ fun FileDetailsView(
 								.fillMaxWidth()
 								.weight(1f),
 							isMarqueeEnabled = !lazyListState.isScrollInProgress
-						)
-
-						UnlabelledRefreshButton(
-							onClick = {
-								viewModel.promiseLoadedActiveFile()
-							},
-							modifier = Modifier.padding(horizontal = viewPaddingUnit * 2)
 						)
 
 						Image(
