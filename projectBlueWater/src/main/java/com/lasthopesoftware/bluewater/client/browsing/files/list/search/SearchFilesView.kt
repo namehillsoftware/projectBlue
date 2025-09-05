@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -49,7 +50,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -71,7 +71,6 @@ import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasin
 import com.lasthopesoftware.bluewater.android.ui.components.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.rememberPreScrollConnectedScaler
-import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.rememberAutoCloseable
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
@@ -384,20 +383,8 @@ fun SearchFilesView(
 					) {
 						LazyColumn(
 							state = lazyListState,
-							modifier = Modifier
-								.scrollbar(
-									lazyListState,
-									horizontal = false,
-									knobColor = MaterialTheme.colors.onSurface,
-									trackColor = Color.Transparent,
-									visibleAlpha = .4f,
-									knobCornerRadius = 1.dp,
-								),
+							contentPadding = PaddingValues(top = topMenuHeight + rowPadding * 2)
 						) {
-							item(contentType = ItemListContentType.Spacer) {
-								Spacer(modifier = Modifier.height(topMenuHeight + rowPadding * 2))
-							}
-
 							item(contentType = ItemListContentType.Header) {
 								Box(
 									modifier = Modifier
