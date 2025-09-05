@@ -18,6 +18,7 @@ fun RowScope.LabelledActiveDownloadsButton(
 	itemListViewModel: ItemListViewModel,
 	applicationNavigation: NavigateApplication,
 	modifier: Modifier = Modifier,
+	focusRequester: FocusRequester? = null,
 ) {
 	ColumnMenuIcon(
 		onClick = {
@@ -30,6 +31,7 @@ fun RowScope.LabelledActiveDownloadsButton(
 		label = stringResource(id = R.string.downloads), // Use shortened version for button size
 		labelModifier = modifier,
 		labelMaxLines = 1,
+		focusRequester = focusRequester,
 	)
 }
 

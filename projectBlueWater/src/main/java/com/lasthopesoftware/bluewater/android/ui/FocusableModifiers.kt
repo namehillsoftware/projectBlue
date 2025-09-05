@@ -223,20 +223,20 @@ fun Modifier.navigable(
 
 					KeyEventType.KeyUp -> {
 						previousPress?.let { previousPress ->
-							if (enabled) {
-								if (!longPressState.isActivated) {
-									onClick?.invoke()
-								}
-
-								longPressState.reset()
-							}
-
 							scope.launch {
 								boxInteractionSource.emit(
 									PressInteraction.Release(
 										press = previousPress
 									)
 								)
+							}
+
+							if (enabled) {
+								if (!longPressState.isActivated) {
+									onClick?.invoke()
+								}
+
+								longPressState.reset()
 							}
 						}
 						true

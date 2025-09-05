@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -62,6 +63,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasin
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
+import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledRefreshButton
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
@@ -464,6 +466,7 @@ fun ItemListView(
 						LabelledActiveDownloadsButton(
 							itemListViewModel = itemListViewModel,
 							applicationNavigation = applicationNavigation,
+							focusRequester = firstMenuButtonFocus
 						)
 
 						LabelledSettingsButton(
@@ -664,6 +667,9 @@ fun ItemListView(
 							.fillMaxWidth()
 							.height(LocalDensity.current.run { heightValue.toDp() })
 							.background(MaterialTheme.colors.surface)
+							.focusProperties {
+								down = firstMenuButtonFocus
+							}
 					) headerColumn@{
 						BackButton(
 							applicationNavigation::navigateUp,
@@ -673,7 +679,7 @@ fun ItemListView(
 						)
 
 						UnlabelledRefreshButton(
-							itemDataLoader,
+							onClick = { firstMenuButtonFocus.requestFocus() },
 							Modifier
 								.align(Alignment.TopEnd)
 								.padding(
