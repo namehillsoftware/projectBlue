@@ -41,9 +41,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -528,29 +530,31 @@ fun ItemListView(
 			}
 		}
 
-		// 5in in pixels, pixels/Inch
-		val density = LocalDensity.current
-		val resources = LocalResources.current
-		val maxScrollBarHeight = remember(density, resources, maxHeight, headerHeight) {
-			with (density) {
-				val dpi = 160f
-				(2.5f * dpi).dp
-			}.coerceAtMost(maxHeight - headerHeight - menuHeight)
-		}
-
-		val localHapticFeedback = LocalHapticFeedback.current
-		AnchoredChips(
-			modifier = Modifier
-				.heightIn(200.dp, maxScrollBarHeight)
-				.align(Alignment.BottomEnd),
-			anchoredScrollConnectionState = anchoredScrollConnectionState,
-			lazyListState = lazyListState,
-			chipLabel = chipLabel,
-			onScrollProgress = onScrollProgress,
-			onSelected = {
-				localHapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
+		if (LocalInputModeManager.current.inputMode == InputMode.Touch) {
+			// 5in in pixels, pixels/Inch
+			val density = LocalDensity.current
+			val resources = LocalResources.current
+			val maxScrollBarHeight = remember(density, resources, maxHeight, headerHeight) {
+				with(density) {
+					val dpi = 160f
+					(2.5f * dpi).dp
+				}.coerceAtMost(maxHeight - headerHeight - menuHeight)
 			}
-		)
+
+			val localHapticFeedback = LocalHapticFeedback.current
+			AnchoredChips(
+				modifier = Modifier
+					.heightIn(200.dp, maxScrollBarHeight)
+					.align(Alignment.BottomEnd),
+				anchoredScrollConnectionState = anchoredScrollConnectionState,
+				lazyListState = lazyListState,
+				chipLabel = chipLabel,
+				onScrollProgress = onScrollProgress,
+				onSelected = {
+					localHapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
+				}
+			)
+		}
 	}
 
 	val isLoading by itemDataLoader.isLoading.subscribeAsState()
