@@ -147,52 +147,6 @@ private fun StaticFileMenu(
 			)
 		}
 	}
-
-//	val padding = viewPadding * 3
-//
-//	Row(
-//		modifier = Modifier
-//			.padding(top = padding)
-//			.height(topMenuHeight)
-//	) {
-//		val iconColor = mediaStylePalette.secondaryTextColor
-//		val iconSize = topMenuIconSize
-//
-//		val addFileToPlaybackLabel = stringResource(id = R.string.btn_add_file_to_playback)
-//		val colorFilter = ColorFilter.tint(iconColor)
-//		ColumnMenuIcon(
-//			onClick = { fileDetailsState.addToNowPlaying() },
-//			icon = {
-//				Image(
-//					painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
-//					colorFilter = colorFilter,
-//					contentDescription = addFileToPlaybackLabel,
-//					modifier = Modifier.size(iconSize),
-//				)
-//			},
-//			label = addFileToPlaybackLabel,
-//			labelMaxLines = 1,
-//			labelColor = iconColor
-//		)
-//
-//		if (playableFileDetailsState != null) {
-//			val playLabel = stringResource(id = R.string.btn_play)
-//			ColumnMenuIcon(
-//				onClick = { playableFileDetailsState.play() },
-//				icon = {
-//					Image(
-//						painter = painterResource(id = R.drawable.av_play_white),
-//						colorFilter = colorFilter,
-//						contentDescription = playLabel,
-//						modifier = Modifier.size(iconSize),
-//					)
-//				},
-//				label = playLabel,
-//				labelMaxLines = 1,
-//				labelColor = iconColor
-//			)
-//		}
-//	}
 }
 
 @Composable
