@@ -517,33 +517,30 @@ fun SearchFilesView(
 								}
 						}
 
-						// 5" in pixels, pixels/Inch, unless the screen size is greater than 7"
-						val density = LocalDensity.current
-						val resources = LocalResources.current
-						val maxScrollBarHeight = remember(density, resources, this@BoxWithConstraints.maxHeight) {
-							with(density) {
-								val maxHeightPx = this@BoxWithConstraints.maxHeight.toPx() * resources.displayMetrics.density
-								val dpi = resources.displayMetrics.ydpi
-								if (maxHeightPx > 7 * dpi) maxHeightPx.toDp()
-								else (2.5f * dpi).toDp()
-							}.coerceAtMost(this@BoxWithConstraints.maxHeight)
-						}
-
-						val localHapticFeedback = LocalHapticFeedback.current
-						AnchoredChips(
-							modifier = Modifier
-								.heightIn(200.dp, maxScrollBarHeight)
-								.align(Alignment.BottomEnd),
-							anchoredScrollConnectionState = anchoredScrollConnectionState,
-							lazyListState = lazyListState,
-							chipLabel = { _, p ->
-								labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) }
-							},
-							onScrollProgress = { p -> anchoredScrollConnectionState.selectedProgress = p },
-							onSelected = {
-								localHapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
+						if (LocalInputModeManager.current.inputMode == InputMode.Touch) {
+							// 5in in pixels, pixels/Inch
+							val maxHeight = this@BoxWithConstraints.maxHeight
+							val maxScrollBarHeight = remember(maxHeight) {
+								val dpi = 160f
+								(2.5f * dpi).dp.coerceAtMost(maxHeight - topMenuHeight)
 							}
-						)
+
+							val localHapticFeedback = LocalHapticFeedback.current
+							AnchoredChips(
+								modifier = Modifier
+									.heightIn(200.dp, maxScrollBarHeight)
+									.align(Alignment.BottomEnd),
+								anchoredScrollConnectionState = anchoredScrollConnectionState,
+								lazyListState = lazyListState,
+								chipLabel = { _, p ->
+									labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) }
+								},
+								onScrollProgress = { p -> anchoredScrollConnectionState.selectedProgress = p },
+								onSelected = {
+									localHapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
+								}
+							)
+						}
 					}
 				}
 
