@@ -7,7 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
@@ -45,13 +44,11 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rxjava3.subscribeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.ColorFilter
@@ -72,6 +69,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
+import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledRefreshButton
@@ -83,8 +81,8 @@ import com.lasthopesoftware.bluewater.android.ui.navigable
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.DetermineWindowControlColors
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.appBarHeight
-import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topRowOuterPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
@@ -99,7 +97,6 @@ import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toState
 import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
-import kotlinx.coroutines.launch
 
 private val viewPadding = viewPaddingUnit
 
@@ -504,8 +501,8 @@ fun FileDetailsView(
 		val fileProperties by viewModel.fileProperties.subscribeAsState()
 
 		val coverArtContainerHeight = 300.dp
-		val coverArtBottomPadding = viewPadding + 8.dp
-		val expandedTitlePadding = coverArtContainerHeight + coverArtBottomPadding
+		val coverArtBottomPadding = viewPadding * 3
+		val expandedTitlePadding = coverArtContainerHeight
 		val titleFontSize = MaterialTheme.typography.h5.fontSize
 		val subTitleFontSize = MaterialTheme.typography.h6.fontSize
 		val guessedRowSpacing = viewPaddingUnit
@@ -578,47 +575,9 @@ fun FileDetailsView(
 					}
 
 					item {
-						Row(
-							modifier = Modifier
-								.padding(rowPadding)
-								.fillMaxWidth()
-								.align(Alignment.TopEnd),
-							horizontalArrangement = Arrangement.SpaceEvenly,
+						ListMenuRow(
+							modifier = Modifier.fillMaxWidth()
 						) {
-							val chevronRotation by remember { derivedStateOf { 180 * headerCollapseProgress } }
-							val isCollapsed by remember { derivedStateOf { headerCollapseProgress > .98f } }
-
-							val chevronLabel =
-								stringResource(id = if (isCollapsed) R.string.expand else R.string.collapse)
-							val scope = rememberCoroutineScope()
-
-							ColumnMenuIcon(
-								onClick = {
-									scope.launch {
-										if (isCollapsed) {
-											heightScaler.goToMax()
-											lazyListState.scrollToItem(0)
-										} else {
-											heightScaler.goToMin()
-											lazyListState.scrollToItem(1)
-										}
-									}
-								},
-								icon = {
-									Image(
-										painter = painterResource(id = R.drawable.chevron_up_white_36dp),
-										colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-										contentDescription = chevronLabel,
-										modifier = Modifier
-											.size(topMenuIconSize)
-											.rotate(chevronRotation),
-									)
-								},
-								label = chevronLabel,
-								labelColor = coverArtColorState.secondaryTextColor,
-								labelMaxLines = 1,
-							)
-
 							val addFileToPlaybackLabel = stringResource(id = R.string.btn_add_file_to_playback)
 							ColumnMenuIcon(
 								onClick = { viewModel.addToNowPlaying() },

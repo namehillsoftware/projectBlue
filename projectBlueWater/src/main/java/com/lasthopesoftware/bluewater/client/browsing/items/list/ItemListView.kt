@@ -5,9 +5,7 @@ import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.scrollBy
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -24,7 +22,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
@@ -74,6 +71,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasin
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
+import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
@@ -374,24 +372,13 @@ fun ItemListMenu(
 	playbackServiceController: ControlPlaybackService,
 	modifier: Modifier = Modifier
 ) {
-	Row(
-		modifier = Modifier
-			.height(topMenuHeight)
-			.padding(vertical = rowPadding)
-			.focusGroup()
-			.then(modifier)
-			.horizontalScroll(rememberScrollState()),
-		horizontalArrangement = Arrangement.Start,
-	) {
-		val menuIconModifier = Modifier.width(topMenuIconSize * 4)
-
+	ListMenuRow(modifier = modifier) {
 		val isFilesLoading by fileListViewModel.isLoading.subscribeAsState()
 		val isItemsLoading by itemListViewModel.isLoading.subscribeAsState()
 		val isNotLoading by remember { derivedStateOf { !isFilesLoading && !isItemsLoading } }
 		if (isNotLoading) {
 			LabelledRefreshButton(
 				itemDataLoader = itemDataLoader,
-				modifier = menuIconModifier,
 			)
 		}
 
@@ -401,38 +388,32 @@ fun ItemListMenu(
 				libraryState = itemListViewModel,
 				playbackServiceController = playbackServiceController,
 				serviceFilesListState = fileListViewModel,
-				modifier = menuIconModifier,
 			)
 
 			LabelledShuffleButton(
 				libraryState = itemListViewModel,
 				playbackServiceController = playbackServiceController,
 				serviceFilesListState = fileListViewModel,
-				modifier = menuIconModifier,
 			)
 
 			LabelledSyncButton(
 				fileListViewModel,
-				modifier = menuIconModifier,
 			)
 		}
 
 		LabelledActiveDownloadsButton(
 			loadedLibraryState = itemListViewModel,
 			applicationNavigation = applicationNavigation,
-			modifier = menuIconModifier,
 		)
 
 		LabelledSettingsButton(
 			itemListViewModel,
 			applicationNavigation,
-			modifier = menuIconModifier,
 		)
 
 		LabelledSearchButton(
 			itemListViewModel = itemListViewModel,
 			applicationNavigation = applicationNavigation,
-			modifier = menuIconModifier,
 		)
 	}
 }
