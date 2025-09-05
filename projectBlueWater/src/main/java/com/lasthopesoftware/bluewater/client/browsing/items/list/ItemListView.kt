@@ -47,7 +47,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.InputMode
@@ -80,7 +79,6 @@ import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScro
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
-import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.navigable
 import com.lasthopesoftware.bluewater.android.ui.remember
@@ -512,17 +510,7 @@ fun ItemListView(
 			LazyColumn(
 				state = lazyListState,
 				contentPadding = PaddingValues(top = headerHeight),
-				modifier = Modifier
-					.focusGroup()
-					.scrollbar(
-						lazyListState,
-						horizontal = false,
-						knobColor = MaterialTheme.colors.onSurface,
-						trackColor = Color.Transparent,
-						visibleAlpha = .4f,
-						knobCornerRadius = 1.dp,
-
-						),
+				modifier = Modifier.focusGroup(),
 			) {
 				if (items.any()) {
 					item(contentType = ItemListContentType.Header) {
