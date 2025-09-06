@@ -709,11 +709,11 @@ fun FileDetailsView(
 						coverArtColorState,
 						playableFileDetailsState,
 						modifier = Modifier
+							.background(coverArtColorState.backgroundColor)
 							.fillMaxWidth()
 							.requiredHeight(menuHeight)
 							.padding(viewPadding * 2)
 							.clipToBounds()
-							.background(coverArtColorState.backgroundColor)
 					)
 				}
 			}
