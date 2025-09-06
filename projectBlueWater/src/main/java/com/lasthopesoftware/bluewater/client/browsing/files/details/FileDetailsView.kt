@@ -108,6 +108,7 @@ import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
 import kotlinx.coroutines.launch
 
 private val viewPadding = viewPaddingUnit
+private val maxMenuHeight = topMenuHeight + rowPadding
 
 @Composable
 private fun StaticFileMenu(
@@ -518,7 +519,10 @@ fun FileDetailsView(
 		val boxHeightPx = LocalDensity.current.remember { boxHeight.toPx() }
 		val collapsedHeight = appBarHeight + rowPadding
 		val heightScaler = rememberFullScreenScrollConnectedScaler(max = boxHeightPx, min = LocalDensity.current.run { collapsedHeight.toPx() })
-		val menuHeightScaler = rememberPreScrollConnectedScaler(LocalDensity.current.remember { topMenuHeight.toPx() }, 0f)
+		val menuHeightScaler = rememberPreScrollConnectedScaler(
+			LocalDensity.current.remember { maxMenuHeight.toPx() },
+			0f
+		)
 		val compositeScrollConnection = remember(heightScaler, menuHeightScaler) {
 			ConsumedOffsetErasingNestedScrollConnection(
 				LinkedNestedScrollConnection(heightScaler, menuHeightScaler)
@@ -589,7 +593,7 @@ fun FileDetailsView(
 					item {
 						Spacer(
 							modifier = Modifier
-								.requiredHeight(topMenuHeight + rowPadding)
+								.requiredHeight(maxMenuHeight)
 								.fillMaxWidth()
 						)
 					}
@@ -707,6 +711,7 @@ fun FileDetailsView(
 						modifier = Modifier
 							.fillMaxWidth()
 							.requiredHeight(menuHeight)
+							.padding(viewPadding * 2)
 							.clipToBounds()
 							.background(coverArtColorState.backgroundColor)
 					)
