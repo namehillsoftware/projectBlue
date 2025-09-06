@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSiz
 @Composable
 fun ListMenuRow(
 	modifier: Modifier = Modifier,
+	verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
 	content: @Composable RowScope.() -> Unit,
 ) {
 	Row(
@@ -27,7 +28,7 @@ fun ListMenuRow(
 			.padding(vertical = rowPadding, horizontal = topMenuIconSize)
 			.horizontalScroll(rememberScrollState()),
 		horizontalArrangement = Arrangement.spacedBy(topMenuIconSize * 2),
-		verticalAlignment = Alignment.CenterVertically,
+		verticalAlignment = verticalAlignment,
 	) {
 		content()
 	}

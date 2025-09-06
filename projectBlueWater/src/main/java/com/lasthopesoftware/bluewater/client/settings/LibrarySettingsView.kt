@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.rememberScrollState
@@ -62,6 +63,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LabeledSelection
+import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.StandardTextField
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
@@ -107,7 +109,7 @@ private fun SpacedOutRow(modifier: Modifier = Modifier, content: @Composable (Ro
 
 
 @Composable
-private fun RowScope.LabelledChangeServerTypeButton(
+private fun LabelledChangeServerTypeButton(
 	stringResources: GetStringResources,
 	onClick: () -> Unit,
 	modifier: Modifier = Modifier,
@@ -116,15 +118,15 @@ private fun RowScope.LabelledChangeServerTypeButton(
 		onClick = onClick,
 		iconPainter = painterResource(id = R.drawable.select_library_36dp),
 		contentDescription = stringResources.changeServerType,
+		modifier = modifier,
 		label = stringResources.changeServerType,
-		labelModifier = modifier,
 		labelMaxLines = 2,
 	)
 }
 
 
 @Composable
-private fun RowScope.LabelledRemoveServerButton(
+private fun LabelledRemoveServerButton(
 	librarySettingsViewModel: LibrarySettingsViewModel,
 	stringResources: GetStringResources,
 	modifier: Modifier = Modifier,
@@ -133,13 +135,13 @@ private fun RowScope.LabelledRemoveServerButton(
 		onClick = librarySettingsViewModel::requestLibraryRemoval,
 		iconPainter = painterResource(id = R.drawable.ic_remove_item_36dp),
 		contentDescription = stringResources.removeServer,
+		modifier = modifier,
 		label = stringResources.removeServer,
-		labelModifier = modifier,
 	)
 }
 
 @Composable
-private fun RowScope.LabelledSaveAndConnectButton(
+private fun LabelledSaveAndConnectButton(
 	librarySettingsViewModel: LibrarySettingsViewModel,
 	navigateApplication: NavigateApplication,
 	stringResources: GetStringResources,
@@ -169,9 +171,9 @@ private fun RowScope.LabelledSaveAndConnectButton(
 		},
 		iconPainter = painterResource(id = R.drawable.arrow_right_24dp),
 		contentDescription = saveAndConnectText,
+		modifier = modifier,
 		label = saveAndConnectText,
 		labelMaxLines = 2,
-		labelModifier = modifier,
 		focusRequester = focusRequester,
 	)
 }
@@ -949,19 +951,22 @@ fun LibrarySettingsView(
 							modifier = Modifier.verticalScroll(scrollState),
 							horizontalAlignment = Alignment.CenterHorizontally,
 						) {
-							Row(
-								modifier = Modifier
-									.padding(Dimensions.rowPadding)
-									.fillMaxWidth(),
+							ListMenuRow(
+								modifier = Modifier.fillMaxWidth(),
+								verticalAlignment = Alignment.Top,
 							) {
+								val buttonModifier = Modifier.widthIn(max = topMenuHeight * 2)
+
 								LabelledChangeServerTypeButton(
 									stringResources = stringResources,
 									onClick = { isSelectingServerType = true },
+									modifier = buttonModifier,
 								)
 
 								LabelledRemoveServerButton(
 									librarySettingsViewModel = librarySettingsViewModel,
 									stringResources = stringResources,
+									modifier = buttonModifier,
 								)
 
 								LabelledSaveAndConnectButton(
@@ -969,6 +974,7 @@ fun LibrarySettingsView(
 									navigateApplication = navigateApplication,
 									stringResources = stringResources,
 									focusRequester = connectFocusRequester,
+									modifier = buttonModifier,
 								)
 							}
 
