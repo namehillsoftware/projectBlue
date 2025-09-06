@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
@@ -91,6 +92,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.appBarHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconWidth
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topRowOuterPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
@@ -118,10 +120,13 @@ private fun StaticFileMenu(
 	modifier: Modifier = Modifier,
 ) {
 	ListMenuRow(modifier = modifier) {
+		val modifier = Modifier.requiredWidth(topMenuIconWidth)
+
 		LabelledRefreshButton(
 			onClick = {
 				fileDetailsState.promiseLoadedActiveFile()
 			},
+			modifier = modifier,
 		)
 
 		val addFileToPlaybackLabel = stringResource(id = R.string.btn_add_file_to_playback)
@@ -138,6 +143,7 @@ private fun StaticFileMenu(
 			label = addFileToPlaybackLabel,
 			labelColor = mediaStylePalette.secondaryTextColor,
 			labelMaxLines = 1,
+			modifier = modifier,
 		)
 
 		if (playableFileDetailsState != null) {
@@ -155,6 +161,7 @@ private fun StaticFileMenu(
 				label = playLabel,
 				labelColor = mediaStylePalette.secondaryTextColor,
 				labelMaxLines = 1,
+				modifier = Modifier.requiredWidth(topMenuIconWidth)
 			)
 		}
 	}
@@ -712,7 +719,6 @@ fun FileDetailsView(
 							.background(coverArtColorState.backgroundColor)
 							.fillMaxWidth()
 							.requiredHeight(menuHeight)
-							.padding(viewPadding * 2)
 							.clipToBounds()
 					)
 				}

@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
-import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
 
 @Composable
 fun ListMenuRow(
@@ -22,12 +21,12 @@ fun ListMenuRow(
 ) {
 	Row(
 		modifier = Modifier
-			.wrapContentHeight()
 			.focusGroup()
 			.then(modifier)
-			.padding(vertical = rowPadding, horizontal = topMenuIconSize)
-			.horizontalScroll(rememberScrollState()),
-		horizontalArrangement = Arrangement.spacedBy(topMenuIconSize * 2),
+			.padding(rowPadding)
+			.horizontalScroll(rememberScrollState())
+			.wrapContentHeight(),
+		horizontalArrangement = Arrangement.Start,
 		verticalAlignment = verticalAlignment,
 	) {
 		content()
