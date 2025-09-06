@@ -964,17 +964,17 @@ fun LibrarySettingsView(
 									modifier = buttonModifier,
 								)
 
+								LabelledRemoveServerButton(
+									librarySettingsViewModel = librarySettingsViewModel,
+									stringResources = stringResources,
+									modifier = buttonModifier,
+								)
+
 								LabelledSaveAndConnectButton(
 									librarySettingsViewModel = librarySettingsViewModel,
 									navigateApplication = navigateApplication,
 									stringResources = stringResources,
 									focusRequester = connectFocusRequester,
-									modifier = buttonModifier,
-								)
-
-								LabelledRemoveServerButton(
-									librarySettingsViewModel = librarySettingsViewModel,
-									stringResources = stringResources,
 									modifier = buttonModifier,
 								)
 							}
