@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -91,6 +92,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowScrollPaddi
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.standardRowHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconWidth
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topRowOuterPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
@@ -372,13 +374,17 @@ fun ItemListMenu(
 	playbackServiceController: ControlPlaybackService,
 	modifier: Modifier = Modifier
 ) {
-	ListMenuRow(modifier = modifier) {
+	ListMenuRow(
+		modifier = modifier,
+	) {
 		val isFilesLoading by fileListViewModel.isLoading.subscribeAsState()
 		val isItemsLoading by itemListViewModel.isLoading.subscribeAsState()
 		val isNotLoading by remember { derivedStateOf { !isFilesLoading && !isItemsLoading } }
+		val modifier = Modifier.requiredWidth(topMenuIconWidth)
 		if (isNotLoading) {
 			LabelledRefreshButton(
 				itemDataLoader = itemDataLoader,
+				modifier = modifier,
 			)
 		}
 
@@ -388,32 +394,38 @@ fun ItemListMenu(
 				libraryState = itemListViewModel,
 				playbackServiceController = playbackServiceController,
 				serviceFilesListState = fileListViewModel,
+				modifier = modifier,
 			)
 
 			LabelledShuffleButton(
 				libraryState = itemListViewModel,
 				playbackServiceController = playbackServiceController,
 				serviceFilesListState = fileListViewModel,
+				modifier = modifier,
 			)
 
 			LabelledSyncButton(
 				fileListViewModel,
+				modifier = modifier,
 			)
 		}
 
 		LabelledActiveDownloadsButton(
 			loadedLibraryState = itemListViewModel,
 			applicationNavigation = applicationNavigation,
+			modifier = modifier,
 		)
 
 		LabelledSettingsButton(
 			itemListViewModel,
 			applicationNavigation,
+			modifier = modifier,
 		)
 
 		LabelledSearchButton(
 			itemListViewModel = itemListViewModel,
 			applicationNavigation = applicationNavigation,
+			modifier = modifier,
 		)
 	}
 }
