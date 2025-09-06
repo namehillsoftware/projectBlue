@@ -32,6 +32,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
@@ -44,11 +45,14 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rxjava3.subscribeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.ColorFilter
@@ -70,21 +74,26 @@ import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LabelledRefreshButton
+import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
+import com.lasthopesoftware.bluewater.android.ui.components.rememberPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.indicateFocus
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.navigable
+import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.DetermineWindowControlColors
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.appBarHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topRowOuterPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
+import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
@@ -96,6 +105,7 @@ import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toState
 import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
+import kotlinx.coroutines.launch
 
 private val viewPadding = viewPaddingUnit
 
@@ -503,18 +513,24 @@ fun FileDetailsView(
 		val subTitleFontSize = MaterialTheme.typography.h6.fontSize
 		val guessedRowSpacing = viewPaddingUnit
 		val titleHeight =
-			LocalDensity.current.run { titleFontSize.toDp() + subTitleFontSize.toDp() } + guessedRowSpacing * 3
+			LocalDensity.current.remember { titleFontSize.toDp() + subTitleFontSize.toDp() + guessedRowSpacing * 3 }
 		val boxHeight = expandedTitlePadding + titleHeight
-		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
+		val boxHeightPx = LocalDensity.current.remember { boxHeight.toPx() }
 		val collapsedHeight = appBarHeight + rowPadding
 		val heightScaler = rememberFullScreenScrollConnectedScaler(max = boxHeightPx, min = LocalDensity.current.run { collapsedHeight.toPx() })
+		val menuHeightScaler = rememberPreScrollConnectedScaler(LocalDensity.current.remember { topMenuHeight.toPx() }, 0f)
+		val compositeScrollConnection = remember(heightScaler, menuHeightScaler) {
+			ConsumedOffsetErasingNestedScrollConnection(
+				LinkedNestedScrollConnection(heightScaler, menuHeightScaler)
+			)
+		}
 
 		val lazyListState = rememberLazyListState()
 
 		Box(
 			modifier = Modifier
 				.fillMaxSize()
-				.nestedScroll(remember(heightScaler) { ConsumedOffsetErasingNestedScrollConnection(heightScaler) })
+				.nestedScroll(compositeScrollConnection)
 		) {
 			val headerCollapseProgress by heightScaler.progressState
 
@@ -571,10 +587,10 @@ fun FileDetailsView(
 					}
 
 					item {
-						StaticFileMenu(
-							viewModel,
-							coverArtColorState,
-							playableFileDetailsState
+						Spacer(
+							modifier = Modifier
+								.requiredHeight(topMenuHeight + rowPadding)
+								.fillMaxWidth()
 						)
 					}
 
@@ -602,6 +618,50 @@ fun FileDetailsView(
 						.padding(topRowOuterPadding)
 						.align(Alignment.CenterStart)
 				)
+
+				val menuHeightProgress by menuHeightScaler.progressState
+				val chevronRotation by remember {
+					derivedStateOf {
+						linearInterpolation(
+							0f,
+							180f,
+							menuHeightProgress
+						)
+					}
+				}
+				val isMenuFullyShown by remember { derivedStateOf { menuHeightProgress < .02f } }
+				val chevronLabel =
+					stringResource(id = if (isMenuFullyShown) R.string.collapse else R.string.expand)
+
+				val scope = rememberCoroutineScope()
+
+				ColumnMenuIcon(
+					onClick = {
+						scope.launch {
+							if (!isMenuFullyShown) {
+								menuHeightScaler.animateGoToMax()
+							} else {
+								menuHeightScaler.animateGoToMin()
+							}
+						}
+					},
+					icon = {
+						Icon(
+							painter = painterResource(id = R.drawable.chevron_up_white_36dp),
+							tint = LocalControlColor.current,
+							contentDescription = chevronLabel,
+							modifier = Modifier
+								.size(topMenuIconSize)
+								.rotate(chevronRotation),
+						)
+					},
+					modifier = Modifier
+						.align(Alignment.TopEnd)
+						.padding(
+							vertical = topRowOuterPadding,
+							horizontal = viewPaddingUnit * 2
+						),
+				)
 			}
 
 			if (!isLoading) {
@@ -610,12 +670,11 @@ fun FileDetailsView(
 						linearInterpolation(expandedTitlePadding, 0.dp, headerCollapseProgress)
 					}
 				}
-				Box(
+
+				Column(
 					modifier = Modifier
 						.padding(top = topTitlePadding)
-						.requiredHeight(appBarHeight)
 						.fillMaxWidth(),
-					contentAlignment = Alignment.CenterStart,
 				) {
 					val startPadding by rememberTitleStartPadding(heightScaler.progressState)
 					val endPadding by remember {
@@ -633,6 +692,23 @@ fun FileDetailsView(
 						modifier = Modifier.padding(start = startPadding, end = endPadding),
 						titleFontSize = titleFontSize,
 						isMarqueeEnabled = !lazyListState.isScrollInProgress
+					)
+
+					val menuHeightPx by menuHeightScaler.valueState
+					val menuHeight by LocalDensity.current.remember {
+						derivedStateOf {
+							menuHeightPx.toDp()
+						}
+					}
+					StaticFileMenu(
+						viewModel,
+						coverArtColorState,
+						playableFileDetailsState,
+						modifier = Modifier
+							.fillMaxWidth()
+							.requiredHeight(menuHeight)
+							.clipToBounds()
+							.background(coverArtColorState.backgroundColor)
 					)
 				}
 			}
@@ -697,7 +773,9 @@ fun FileDetailsView(
 						viewModel,
 						coverArtColorState,
 						playableFileDetailsState,
-						modifier = Modifier.padding(top = viewPadding * 3),
+						modifier = Modifier
+							.fillMaxWidth()
+							.padding(top = viewPadding * 3),
 					)
 				}
 
