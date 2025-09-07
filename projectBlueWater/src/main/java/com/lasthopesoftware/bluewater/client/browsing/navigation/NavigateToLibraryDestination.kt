@@ -37,8 +37,7 @@ fun ScreenDimensionsScope.NavigateToLibraryDestination(
 					activeFileDownloadsViewModel = activeFileDownloadsViewModel,
 					trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
 					applicationNavigation = applicationNavigation,
-					undoBackStack = undoBackStackBuilder,
-				)
+                )
 
 				activeFileDownloadsViewModel.loadActiveDownloads(destination.libraryId)
 			}

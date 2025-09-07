@@ -38,7 +38,6 @@ fun ScreenDimensionsScope.NavigateToTvLibraryDestination(destination: BrowserLib
                     activeFileDownloadsViewModel = activeFileDownloadsViewModel,
                     trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
 					applicationNavigation = applicationNavigation,
-					undoBackStack = undoBackStackBuilder,
                 )
 
 				activeFileDownloadsViewModel.loadActiveDownloads(destination.libraryId)
