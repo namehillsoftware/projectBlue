@@ -33,7 +33,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
@@ -79,6 +78,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollCo
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.RatingBar
+import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledChevronIcon
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
@@ -95,7 +95,6 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSiz
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconWidth
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topRowOuterPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
-import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
@@ -632,13 +631,7 @@ fun FileDetailsView(
 
 				val menuHeightProgress by menuHeightScaler.progressState
 				val chevronRotation by remember {
-					derivedStateOf {
-						linearInterpolation(
-							0f,
-							180f,
-							menuHeightProgress
-						)
-					}
+					derivedStateOf { linearInterpolation(0f, 180f, menuHeightProgress) }
 				}
 				val isMenuFullyShown by remember { derivedStateOf { menuHeightProgress < .02f } }
 				val chevronLabel =
@@ -646,7 +639,7 @@ fun FileDetailsView(
 
 				val scope = rememberCoroutineScope()
 
-				ColumnMenuIcon(
+				UnlabelledChevronIcon(
 					onClick = {
 						scope.launch {
 							if (!isMenuFullyShown) {
@@ -656,22 +649,14 @@ fun FileDetailsView(
 							}
 						}
 					},
-					icon = {
-						Icon(
-							painter = painterResource(id = R.drawable.chevron_up_white_36dp),
-							tint = LocalControlColor.current,
-							contentDescription = chevronLabel,
-							modifier = Modifier
-								.size(topMenuIconSize)
-								.rotate(chevronRotation),
-						)
-					},
+					chevronDescription = chevronLabel,
 					modifier = Modifier
 						.align(Alignment.TopEnd)
 						.padding(
 							vertical = topRowOuterPadding,
 							horizontal = viewPaddingUnit * 2
 						),
+					chevronModifier = Modifier.rotate(chevronRotation),
 				)
 			}
 

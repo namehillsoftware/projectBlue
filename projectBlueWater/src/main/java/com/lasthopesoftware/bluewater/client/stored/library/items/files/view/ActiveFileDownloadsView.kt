@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
-import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
@@ -39,7 +38,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -47,13 +45,13 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
-import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.MenuIcon
+import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledChevronIcon
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
@@ -67,7 +65,6 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSiz
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconWidth
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topRowOuterPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
-import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackTitleItemView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewFileItem
@@ -219,7 +216,7 @@ fun ActiveFileDownloadsView(
 
 						val scope = rememberCoroutineScope()
 
-						ColumnMenuIcon(
+						UnlabelledChevronIcon(
 							onClick = {
 								scope.launch {
 									if (!isMenuFullyShown) {
@@ -229,21 +226,14 @@ fun ActiveFileDownloadsView(
 									}
 								}
 							},
-							icon = {
-								Icon(
-									painter = painterResource(id = R.drawable.chevron_up_white_36dp),
-									tint = LocalControlColor.current,
-									contentDescription = chevronLabel,
-									modifier = Modifier
-										.size(topMenuIconSize)
-										.rotate(chevronRotation),
-								)
-							},
+							chevronDescription = chevronLabel,
 							modifier = Modifier
-								.align(Alignment.CenterEnd)
+								.align(Alignment.TopEnd)
 								.padding(
+									vertical = topRowOuterPadding,
 									horizontal = viewPaddingUnit * 2
 								),
+							chevronModifier = Modifier.rotate(chevronRotation),
 						)
 					}
 				}
