@@ -25,7 +25,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.navigable
-import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
 import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
 
 
@@ -48,18 +48,25 @@ fun LabelledRefreshButton(
 }
 
 @Composable
-fun UnlabelledRefreshButton(
+fun UnlabelledChevronIcon(
 	onClick: () -> Unit,
+	chevronDescription: String,
 	modifier: Modifier = Modifier,
-	focusRequester: FocusRequester? = null,
+	chevronModifier: Modifier = Modifier,
 ) {
 	ColumnMenuIcon(
 		onClick = onClick,
-		iconPainter = painterResource(id = R.drawable.refresh_36),
-		contentDescription = stringResource(id = R.string.refresh),
-		label = null,
+		icon = {
+			Icon(
+				painter = painterResource(id = R.drawable.chevron_up_white_36dp),
+				tint = LocalControlColor.current,
+				contentDescription = chevronDescription,
+				modifier = Modifier
+					.size(topMenuIconSize)
+					.then(chevronModifier),
+			)
+		},
 		modifier = modifier,
-		focusRequester = focusRequester,
 	)
 }
 
@@ -132,7 +139,7 @@ fun MenuIcon(
 			Icon(
 				painter = iconPainter,
 				contentDescription = contentDescription,
-				modifier = Modifier.size(Dimensions.topMenuIconSize),
+				modifier = Modifier.size(topMenuIconSize),
 				tint = LocalControlColor.current,
 			)
 		},
