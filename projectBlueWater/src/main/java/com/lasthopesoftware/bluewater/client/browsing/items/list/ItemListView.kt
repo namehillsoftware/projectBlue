@@ -41,6 +41,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -736,41 +737,46 @@ fun ScreenDimensionsScope.ItemListView(
 									.padding(topRowOuterPadding)
 							)
 
-							val menuHeightProgress by menuHeightScaler.progressState
-							val chevronRotation by remember {
-								derivedStateOf {
-									linearInterpolation(
-										0f,
-										180f,
-										menuHeightProgress
-									)
-								}
-							}
-							val isMenuFullyShown by remember { derivedStateOf { menuHeightProgress < .02f } }
-							val chevronLabel =
-								stringResource(id = if (isMenuFullyShown) R.string.collapse else R.string.expand)
-
-							val scope = rememberCoroutineScope()
-
-							UnlabelledChevronIcon(
-								onClick = {
-									scope.launch {
-										if (!isMenuFullyShown) {
-											menuHeightScaler.animateGoToMax()
-										} else {
-											menuHeightScaler.animateGoToMin()
-										}
+							if (headerCollapseProgress > 0f) {
+								val menuHeightProgress by menuHeightScaler.progressState
+								val chevronRotation by remember {
+									derivedStateOf {
+										linearInterpolation(
+											0f,
+											180f,
+											menuHeightProgress
+										)
 									}
-								},
-								chevronDescription = chevronLabel,
-								modifier = Modifier
-									.align(Alignment.TopEnd)
-									.padding(
-										vertical = topRowOuterPadding,
-										horizontal = viewPaddingUnit * 2
-									),
-								chevronModifier = Modifier.rotate(chevronRotation),
-							)
+								}
+								val isMenuFullyShown by remember { derivedStateOf { menuHeightProgress < .02f } }
+								val chevronLabel =
+									stringResource(id = if (isMenuFullyShown) R.string.collapse else R.string.expand)
+
+								val scope = rememberCoroutineScope()
+
+								UnlabelledChevronIcon(
+									onClick = {
+										if (headerCollapseProgress < 1f) return@UnlabelledChevronIcon
+										scope.launch {
+											if (!isMenuFullyShown) {
+												menuHeightScaler.animateGoToMax()
+											} else {
+												menuHeightScaler.animateGoToMin()
+											}
+										}
+									},
+									chevronDescription = chevronLabel,
+									modifier = Modifier
+										.align(Alignment.TopEnd)
+										.padding(
+											vertical = topRowOuterPadding,
+											horizontal = viewPaddingUnit * 2
+										),
+									chevronModifier = Modifier
+										.rotate(chevronRotation)
+										.alpha(headerCollapseProgress),
+								)
+							}
 
 							ProvideTextStyle(MaterialTheme.typography.h5) {
 								val startPadding by rememberTitleStartPadding(titleHeightScaler.progressState)
