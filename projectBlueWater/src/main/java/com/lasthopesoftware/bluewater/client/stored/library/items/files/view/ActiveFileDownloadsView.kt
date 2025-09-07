@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.graphicsLayer
@@ -207,34 +208,40 @@ fun ActiveFileDownloadsView(
 								.padding(topRowOuterPadding)
 						)
 
-						val menuHeightProgress by menuHeightScaler.progressState
-						val chevronRotation by remember {
-							derivedStateOf { linearInterpolation(0f, 180f, menuHeightProgress) }
-						}
-						val isMenuFullyShown by remember { derivedStateOf { menuHeightProgress < .02f } }
-						val chevronLabel = stringResource(id = if (isMenuFullyShown) R.string.collapse else R.string.expand)
+						if (headerCollapseProgress > 0f) {
+							val menuHeightProgress by menuHeightScaler.progressState
+							val chevronRotation by remember {
+								derivedStateOf { linearInterpolation(0f, 180f, menuHeightProgress) }
+							}
+							val isMenuFullyShown by remember { derivedStateOf { menuHeightProgress < .02f } }
+							val chevronLabel =
+								stringResource(id = if (isMenuFullyShown) R.string.collapse else R.string.expand)
 
-						val scope = rememberCoroutineScope()
+							val scope = rememberCoroutineScope()
 
-						UnlabelledChevronIcon(
-							onClick = {
-								scope.launch {
-									if (!isMenuFullyShown) {
-										menuHeightScaler.animateGoToMax()
-									} else {
-										menuHeightScaler.animateGoToMin()
+							UnlabelledChevronIcon(
+								onClick = {
+									if (headerCollapseProgress < 1f) return@UnlabelledChevronIcon
+									scope.launch {
+										if (!isMenuFullyShown) {
+											menuHeightScaler.animateGoToMax()
+										} else {
+											menuHeightScaler.animateGoToMin()
+										}
 									}
-								}
-							},
-							chevronDescription = chevronLabel,
-							modifier = Modifier
-								.align(Alignment.TopEnd)
-								.padding(
-									vertical = topRowOuterPadding,
-									horizontal = viewPaddingUnit * 2
-								),
-							chevronModifier = Modifier.rotate(chevronRotation),
-						)
+								},
+								chevronDescription = chevronLabel,
+								modifier = Modifier
+									.align(Alignment.TopEnd)
+									.padding(
+										vertical = topRowOuterPadding,
+										horizontal = viewPaddingUnit * 2
+									),
+								chevronModifier = Modifier
+									.rotate(chevronRotation)
+									.alpha(headerCollapseProgress),
+							)
+						}
 					}
 				}
 
