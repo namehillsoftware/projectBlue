@@ -43,9 +43,8 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -652,7 +651,7 @@ fun ScreenDimensionsScope.ItemListView(
 			if (maxWidth < Dimensions.twoColumnThreshold) {
 				val expandedHeightPx = LocalDensity.current.remember { appBarAndTitleHeight.toPx() }
 				val collapsedHeightPx = LocalDensity.current.remember { collapsedHeight.toPx() }
-				val rowHeightPx = LocalDensity.current.remember { standardRowHeight.toPx() }
+				val topMenuHeightPx = LocalDensity.current.remember { topMenuHeight.toPx() }
 
 				val fullListSize by LocalDensity.current.remember(maxHeight) {
 					val topMenuHeightPx = 0f
@@ -678,7 +677,7 @@ fun ScreenDimensionsScope.ItemListView(
 				}
 
 				val titleHeightScaler = rememberFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
-				val menuHeightScaler = rememberPreScrollConnectedScaler(rowHeightPx, 0f)
+				val menuHeightScaler = rememberPreScrollConnectedScaler(topMenuHeightPx, 0f)
 				val compositeScrollConnection = remember(titleHeightScaler, menuHeightScaler) {
 					ConsumedOffsetErasingNestedScrollConnection(
 						LinkedNestedScrollConnection(titleHeightScaler, menuHeightScaler)
@@ -726,7 +725,7 @@ fun ScreenDimensionsScope.ItemListView(
 						val titleHeightValue by titleHeightScaler.valueState
 
 						val headerCollapseProgress by titleHeightScaler.progressState
-						val titleHeightValueDp by LocalDensity.current.run { derivedStateOf { titleHeightValue.toDp() } }
+						val titleHeightValueDp by LocalDensity.current.remember { derivedStateOf { titleHeightValue.toDp() } }
 						Box(
 							modifier = Modifier
 								.fillMaxWidth()
@@ -839,7 +838,7 @@ fun ScreenDimensionsScope.ItemListView(
 								.fillMaxWidth()
 								.background(MaterialTheme.colors.surface)
 								.height(menuHeightDp)
-								.clip(RectangleShape)
+								.clipToBounds()
 						) {
 							ItemListMenu(
 								itemListViewModel = itemListViewModel,

@@ -155,7 +155,7 @@ class AnchoredProgressScrollConnectionDispatcher(
  * https://developer.android.com/reference/kotlin/androidx/compose/ui/input/nestedscroll/package-summary#extension-functions
  */
 @Composable
-fun rememberFullScreenScrollConnectedScaler(max: Float, min: Float) = rememberSaveable(saver = FullScreenScrollConnectedScaler.Saver) {
+fun rememberFullScreenScrollConnectedScaler(max: Float, min: Float) = rememberSaveable(max, min, saver = FullScreenScrollConnectedScaler.Saver) {
 	FullScreenScrollConnectedScaler(max, min)
 }
 
