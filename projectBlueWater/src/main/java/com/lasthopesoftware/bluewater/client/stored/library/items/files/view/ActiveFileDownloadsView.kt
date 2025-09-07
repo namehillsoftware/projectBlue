@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -61,6 +62,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconWidth
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topRowOuterPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
@@ -283,6 +285,7 @@ fun ActiveFileDownloadsView(
 							},
 							label = { Text(text = label) },
 							enabled = isSyncChangeEnabled,
+							modifier = Modifier.requiredWidth(topMenuIconWidth),
 						)
 					}
 				}
