@@ -36,6 +36,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
@@ -130,6 +134,7 @@ fun ActiveFileDownloadsView(
 				.fillMaxSize()
 				.nestedScroll(compositeScroller)
 		) {
+			val listFocus = remember { FocusRequester() }
 			if (isLoading) {
 				Box(modifier = Modifier.fillMaxSize()) {
 					CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -141,7 +146,7 @@ fun ActiveFileDownloadsView(
 				LazyColumn(
 					state = lazyListState,
 					contentPadding = PaddingValues(top = Dimensions.expandedTitleHeight + Dimensions.appBarHeight + topMenuHeight + rowPadding * 2),
-					modifier = Modifier.fillMaxSize(),
+					modifier = Modifier.fillMaxSize().focusRequester(listFocus),
 				) {
 					item(contentType = ItemListContentType.Header) {
 						Box(
@@ -173,8 +178,14 @@ fun ActiveFileDownloadsView(
 			Column(
 				modifier = Modifier
 					.fillMaxWidth()
-					.background(MaterialTheme.colors.surface),
-			) {
+					.background(MaterialTheme.colors.surface)
+					.focusProperties {
+						onExit = {
+							if (requestedFocusDirection == FocusDirection.Down)
+								listFocus.requestFocus()
+						}
+					},
+			) headerColumn@{
 				val heightValue by heightScaler.valueState
 				val heightValueDp by LocalDensity.current.remember { derivedStateOf { heightValue.toDp() } }
 				Box(

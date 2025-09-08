@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.android.ui.components
 
-import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -19,10 +18,9 @@ fun ListMenuRow(
 ) {
 	Row(
 		modifier = Modifier
-			.focusGroup()
-			.then(modifier)
 			.horizontalScroll(rememberScrollState())
-			.wrapContentHeight(),
+			.wrapContentHeight()
+			.then(modifier),
 		horizontalArrangement = Arrangement.Start,
 		verticalAlignment = verticalAlignment,
 	) {

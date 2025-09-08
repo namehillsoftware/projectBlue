@@ -44,6 +44,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -445,10 +448,9 @@ fun ItemListView(
 	chipLabel: @Composable (Int, Float) -> Unit,
 	onScrollProgress: (Float) -> Unit,
 	headerHeight: Dp = 0.dp,
+	focusRequester: FocusRequester? = null
 ) {
-	BoxWithConstraints(modifier = Modifier
-		.fillMaxSize()
-		) {
+	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 		val isLoading by itemDataLoader.isLoading.subscribeAsState()
 		if (isLoading) {
 			CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -497,10 +499,13 @@ fun ItemListView(
 					}
 			}
 
+			var modifier = Modifier.focusGroup()
+			if (focusRequester != null)
+				modifier = modifier.focusRequester(focusRequester)
 			LazyColumn(
 				state = lazyListState,
 				contentPadding = PaddingValues(top = headerHeight),
-				modifier = Modifier.focusGroup(),
+				modifier = modifier,
 			) {
 				if (items.any()) {
 					item(contentType = ItemListContentType.Header) {
@@ -696,6 +701,7 @@ fun ScreenDimensionsScope.ItemListView(
 						.fillMaxSize()
 						.nestedScroll(anchoredScrollConnectionDispatcher)
 				) {
+					val listFocus = remember { FocusRequester() }
 					ItemListView(
 						itemListViewModel,
 						fileListViewModel,
@@ -712,13 +718,15 @@ fun ScreenDimensionsScope.ItemListView(
 						anchoredScrollConnectionState,
 						{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
 						anchoredScrollConnectionDispatcher::progressTo,
-						appBarAndTitleHeight + topMenuHeight + rowPadding * 2
+						appBarAndTitleHeight + topMenuHeight + rowPadding * 2,
+						listFocus
 					)
 
 					Column(
 						modifier = Modifier
 							.background(MaterialTheme.colors.surface)
 							.fillMaxWidth()
+							.focusGroup()
 					) headerColumn@{
 						val titleHeightValue by titleHeightScaler.valueState
 
@@ -841,6 +849,10 @@ fun ScreenDimensionsScope.ItemListView(
 								itemDataLoader = itemDataLoader,
 								applicationNavigation = applicationNavigation,
 								playbackServiceController = playbackServiceController,
+								modifier = Modifier
+									.focusProperties {
+										down = listFocus
+									}
 							)
 						}
 					}
