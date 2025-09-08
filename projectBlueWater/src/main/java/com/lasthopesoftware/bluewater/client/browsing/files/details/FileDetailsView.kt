@@ -702,16 +702,21 @@ fun FileDetailsView(
 							menuHeightPx.toDp()
 						}
 					}
-					StaticFileMenu(
-						viewModel,
-						coverArtColorState,
-						playableFileDetailsState,
+					Box(
 						modifier = Modifier
-							.background(coverArtColorState.backgroundColor)
 							.fillMaxWidth()
+							.background(coverArtColorState.backgroundColor)
 							.requiredHeight(menuHeight)
-							.clipToBounds()
-					)
+							.clipToBounds(),
+						contentAlignment = Alignment.BottomStart
+					) {
+						StaticFileMenu(
+							viewModel,
+							coverArtColorState,
+							playableFileDetailsState,
+							modifier = Modifier.requiredHeight(menuHeight)
+						)
+					}
 				}
 			}
 		}
