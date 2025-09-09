@@ -44,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
@@ -76,8 +77,8 @@ import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledChevronIcon
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
+import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
-import com.lasthopesoftware.bluewater.android.ui.components.rememberPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.navigable
@@ -500,6 +501,12 @@ fun ItemListView(
 			}
 
 			var modifier = Modifier.focusGroup()
+				.focusProperties {
+					onExit = {
+						if (requestedFocusDirection == FocusDirection.Up)
+							onScrollProgress(0f)
+					}
+				}
 			if (focusRequester != null)
 				modifier = modifier.focusRequester(focusRequester)
 			LazyColumn(
@@ -665,11 +672,11 @@ fun ScreenDimensionsScope.ItemListView(
 					derivedStateOf {
 						var fullListSize = topMenuHeightPx
 						if (items.any()) {
-							fullListSize += headerHeightPx + rowHeightPx * items.size + dividerHeight * items.size - 1
+							fullListSize += headerHeightPx + rowHeightPx * items.size + dividerHeight * (items.size - 1)
 						}
 
 						if (files.any()) {
-							fullListSize += headerHeightPx + rowHeightPx * files.size + dividerHeight * files.size - 1
+							fullListSize += headerHeightPx + rowHeightPx * files.size + dividerHeight * (files.size - 1)
 						}
 
 						fullListSize -= maxHeight.toPx()
@@ -680,7 +687,7 @@ fun ScreenDimensionsScope.ItemListView(
 				}
 
 				val titleHeightScaler = rememberFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
-				val menuHeightScaler = rememberPreScrollConnectedScaler(topMenuHeightPx, 0f)
+				val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(topMenuHeightPx, 0f)
 				val compositeScrollConnection = remember(titleHeightScaler, menuHeightScaler) {
 					ConsumedOffsetErasingNestedScrollConnection(
 						LinkedNestedScrollConnection(titleHeightScaler, menuHeightScaler)

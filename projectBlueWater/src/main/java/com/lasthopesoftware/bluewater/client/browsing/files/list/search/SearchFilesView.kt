@@ -68,7 +68,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasin
 import com.lasthopesoftware.bluewater.android.ui.components.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
-import com.lasthopesoftware.bluewater.android.ui.components.rememberPreScrollConnectedScaler
+import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.rememberAutoCloseable
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
@@ -300,7 +300,7 @@ fun SearchFilesView(
 					val lazyListState = rememberLazyListState()
 
 					val rowHeightPx = LocalDensity.current.remember { standardRowHeight.toPx() }
-					val menuHeightScaler = rememberPreScrollConnectedScaler(rowHeightPx, 0f)
+					val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(rowHeightPx, 0f)
 
 					val compositeScrollConnection = remember(menuHeightScaler) {
 						ConsumedOffsetErasingNestedScrollConnection(menuHeightScaler)
