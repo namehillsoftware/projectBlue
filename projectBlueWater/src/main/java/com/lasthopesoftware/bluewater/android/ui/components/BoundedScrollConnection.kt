@@ -96,12 +96,21 @@ class AnchoredProgressScrollConnectionDispatcher(
 				.toCloseable()
 		)
 
-		autoCloseableManager.manage(
-			totalDistanceTraveled
-				.mapNotNull()
-				.subscribe { state.progress = (it / fullDistance).coerceIn(0f, 1f) }
-				.toCloseable()
-		)
+		if (fullDistance != 0f) {
+			autoCloseableManager.manage(
+				totalDistanceTraveled
+					.mapNotNull()
+					.subscribe {
+						state.progress = (it / fullDistance).coerceIn(0f, 1f)
+						if (DebugFlag.isDebugCompilation) {
+							Log.d(logTag, "state.progress: ${state.progress}")
+						}
+					}
+					.toCloseable()
+			)
+		} else {
+			state.progress = 0f
+		}
 	}
 
 	override fun close() {
@@ -123,6 +132,10 @@ class AnchoredProgressScrollConnectionDispatcher(
 
 	@SuppressLint("LongLogTag")
 	override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+		val innerConsumed = inner.onPostScroll(consumed, available, source)
+
+		val available = available - innerConsumed
+
 		totalDistanceTraveled.value -= available.y
 
 		if (DebugFlag.isDebugCompilation) {
@@ -131,7 +144,7 @@ class AnchoredProgressScrollConnectionDispatcher(
 			Log.d(logTag, "available: ${available.y}")
 		}
 
-		return inner.onPostScroll(consumed, available, source)
+		return innerConsumed
 	}
 
 	override fun goToMin() {
@@ -182,9 +195,8 @@ class FullScreenScrollConnectedScaler private constructor(
 	@SuppressLint("LongLogTag")
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
 		// try to consume before LazyColumn to collapse toolbar if needed, hence pre-scroll
-		val delta = available.y
 		val originalValue = valueState.value
-		totalDistanceTraveled += delta
+		totalDistanceTraveled += available.y
 
 		if (DebugFlag.isDebugCompilation) {
 			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
@@ -196,6 +208,7 @@ class FullScreenScrollConnectedScaler private constructor(
 
 	@SuppressLint("LongLogTag")
 	override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+		val originalValue = valueState.value
 		totalDistanceTraveled -= available.y
 
 		if (DebugFlag.isDebugCompilation) {
@@ -204,7 +217,7 @@ class FullScreenScrollConnectedScaler private constructor(
 			Log.d(logTag, "available: ${available.y}")
 		}
 
-		return super.onPostScroll(consumed, available, source)
+		return available.copy(y = valueState.value - originalValue)
 	}
 
 	override fun goToMax() {
@@ -245,6 +258,8 @@ class PreScrollConnectedScaler private constructor(private val max: Float, priva
 
 	private val fullDistance = max - min
 
+	private var totalDistanceTraveled by mutableFloatStateOf(initialDistanceTraveled)
+
 	private val mutableValueState = mutableFloatStateOf(initialDistanceTraveled)
 
 	val valueState = mutableValueState.asFloatState()
@@ -256,6 +271,11 @@ class PreScrollConnectedScaler private constructor(private val max: Float, priva
 		return consumeY(available)
 	}
 
+	override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+		consumeY(-available)
+		return Offset.Zero
+	}
+
 	@SuppressLint("LongLogTag")
 	private fun consumeY(available: Offset): Offset {
 		val delta = available.y
@@ -264,7 +284,7 @@ class PreScrollConnectedScaler private constructor(private val max: Float, priva
 		mutableValueState.floatValue = newOffset.coerceIn(min, max)
 
 		if (DebugFlag.isDebugCompilation) {
-			Log.d(logTag, "valueState.value: ${valueState.value}")
+			Log.d(logTag, "valueState.value: ${valueState.floatValue}")
 		}
 
 		return available.copy(y = mutableValueState.floatValue - originalValue)
@@ -318,9 +338,10 @@ class LinkedNestedScrollConnection(
 		return second.onPreFling(nextAvailable)
 	}
 
+	// Propagate post- events in reverse order
 	override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-		val nextConsumed = first.onPostFling(consumed, available)
-		return second.onPostFling(consumed + nextConsumed, available - nextConsumed)
+		val nextConsumed = second.onPostFling(consumed, available)
+		return first.onPostFling(consumed + nextConsumed, available - nextConsumed)
 	}
 
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
@@ -329,8 +350,8 @@ class LinkedNestedScrollConnection(
 	}
 
 	override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-		val nextConsumed = first.onPostScroll(consumed, available, source)
-		return second.onPostScroll(consumed + nextConsumed, available - nextConsumed, source)
+		val nextConsumed = second.onPostScroll(consumed, available, source)
+		return first.onPostScroll(consumed + nextConsumed, available - nextConsumed, source)
 	}
 
 	override fun goToMax() {
