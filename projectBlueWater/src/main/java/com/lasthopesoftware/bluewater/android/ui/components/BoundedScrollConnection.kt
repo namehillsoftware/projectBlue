@@ -244,21 +244,21 @@ class FullScreenScrollConnectedScaler private constructor(
  * https://developer.android.com/reference/kotlin/androidx/compose/ui/input/nestedscroll/package-summary#extension-functions
  */
 @Composable
-fun rememberPreScrollConnectedScaler(max: Float, min: Float) = rememberSaveable(saver = PreScrollConnectedScaler.Saver) {
-	PreScrollConnectedScaler(max, min)
+fun rememberDeferredPreScrollConnectedScaler(max: Float, min: Float) = rememberSaveable(saver = DeferredPreScrollConnectedScaler.Saver) {
+	DeferredPreScrollConnectedScaler(max, min)
 }
 
-class PreScrollConnectedScaler private constructor(private val max: Float, private val min: Float, initialDistanceTraveled: Float) : BoundedScrollConnection {
+class DeferredPreScrollConnectedScaler private constructor(private val max: Float, private val min: Float, initialDistanceTraveled: Float) : BoundedScrollConnection {
 
 	companion object {
-		private const val logTag = "PreScrollConnectedScaler"
+		private const val logTag = "DeferredPreScrollConnectedScaler"
 	}
 
 	constructor(max: Float, min: Float): this(max, min, max)
 
 	private val fullDistance = max - min
 
-	private var totalDistanceTraveled by mutableFloatStateOf(initialDistanceTraveled)
+	private var preScrollAvailableOffset = Offset.Zero
 
 	private val mutableValueState = mutableFloatStateOf(initialDistanceTraveled)
 
@@ -267,13 +267,14 @@ class PreScrollConnectedScaler private constructor(private val max: Float, priva
 	val progressState by lazy { derivedStateOf { calculateProgress(valueState.value) } }
 
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-		// try to consume before LazyColumn to collapse toolbar if needed, hence pre-scroll
-		return consumeY(available)
+		// Defer consumption of pre-scroll until it is known how much was used by the lazylist, as we want to use
+		// the same as the lazylist used.
+		preScrollAvailableOffset = available
+		return Offset.Zero
 	}
 
 	override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-		consumeY(-available)
-		return Offset.Zero
+		return consumeY(preScrollAvailableOffset - available)
 	}
 
 	@SuppressLint("LongLogTag")
@@ -320,11 +321,11 @@ class PreScrollConnectedScaler private constructor(private val max: Float, priva
 
 	private fun calculateProgress(value: Float) = if (fullDistance == 0f) 1f else (max - value) / fullDistance
 
-	object Saver : androidx.compose.runtime.saveable.Saver<PreScrollConnectedScaler, Triple<Float, Float, Float>> {
-		override fun restore(value: Triple<Float, Float, Float>): PreScrollConnectedScaler =
-			PreScrollConnectedScaler(value.first, value.second, value.third)
+	object Saver : androidx.compose.runtime.saveable.Saver<DeferredPreScrollConnectedScaler, Triple<Float, Float, Float>> {
+		override fun restore(value: Triple<Float, Float, Float>): DeferredPreScrollConnectedScaler =
+			DeferredPreScrollConnectedScaler(value.first, value.second, value.third)
 
-		override fun SaverScope.save(value: PreScrollConnectedScaler): Triple<Float, Float, Float> =
+		override fun SaverScope.save(value: DeferredPreScrollConnectedScaler): Triple<Float, Float, Float> =
 			Triple(value.max, value.min, value.valueState.floatValue)
 	}
 }

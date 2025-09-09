@@ -57,8 +57,8 @@ import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.MenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledChevronIcon
+import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
-import com.lasthopesoftware.bluewater.android.ui.components.rememberPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.remember
@@ -122,7 +122,7 @@ fun ActiveFileDownloadsView(
 			rememberFullScreenScrollConnectedScaler(max = boxHeight.toPx(), min = appBarHeight.toPx())
 		}
 		val topMenuHeightPx = LocalDensity.current.remember { topMenuHeight.toPx() }
-		val menuHeightScaler = rememberPreScrollConnectedScaler(topMenuHeightPx, 0f)
+		val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(topMenuHeightPx, 0f)
 		val compositeScroller = remember(heightScaler) {
 			ConsumedOffsetErasingNestedScrollConnection(
 				LinkedNestedScrollConnection(heightScaler, menuHeightScaler)
