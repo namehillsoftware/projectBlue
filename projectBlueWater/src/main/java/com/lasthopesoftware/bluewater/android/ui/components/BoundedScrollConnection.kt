@@ -274,7 +274,10 @@ class DeferredPreScrollConnectedScaler private constructor(private val max: Floa
 	}
 
 	override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-		return consumeY(preScrollAvailableOffset - available)
+		consumeY(preScrollAvailableOffset - available)
+
+		// Do not report any offset consumed, as it will be using pre-scroll available offset.
+		return Offset.Zero
 	}
 
 	@SuppressLint("LongLogTag")
