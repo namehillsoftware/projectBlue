@@ -22,7 +22,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
@@ -73,6 +72,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasin
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
+import com.lasthopesoftware.bluewater.android.ui.components.ListLoading
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledChevronIcon
@@ -454,7 +454,7 @@ fun ItemListView(
 	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 		val isLoading by itemDataLoader.isLoading.subscribeAsState()
 		if (isLoading) {
-			CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+			ListLoading(modifier = Modifier.fillMaxSize())
 		} else {
 			val items by itemListViewModel.items.subscribeAsState()
 			val files by fileListViewModel.files.subscribeAsState()
