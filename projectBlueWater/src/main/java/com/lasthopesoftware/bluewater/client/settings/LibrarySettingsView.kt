@@ -1,10 +1,11 @@
 package com.lasthopesoftware.bluewater.client.settings
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
@@ -32,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -82,7 +85,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 
 private val expandedTitleHeight = Dimensions.expandedTitleHeight
-private val expandedIconSize = topMenuHeight
 private val appBarHeight = Dimensions.appBarHeight
 private val boxHeight = expandedTitleHeight + appBarHeight
 private val innerGroupPadding = viewPaddingUnit * 2
@@ -692,7 +694,7 @@ private fun LibrarySettingsList(
 }
 
 @Composable
-private fun BoxWithConstraintsScope.LibrarySettings(
+private fun ColumnScope.LibrarySettings(
 	librarySettingsViewModel: LibrarySettingsViewModel,
 	stringResources: GetStringResources,
 	userSslCertificates: ProvideUserSslCertificates,
@@ -705,7 +707,7 @@ private fun BoxWithConstraintsScope.LibrarySettings(
 			librarySettingsViewModel = librarySettingsViewModel,
 			undoBackStack = undoBackStack,
 			onServerTypeSelectionFinished = onServerTypeSelectionFinished,
-			modifier = Modifier.height(maxHeight - (expandedIconSize + boxHeight) * 2)
+			modifier = Modifier.wrapContentHeight().weight(1f)
 		)
 	} else {
 		val connectionSettingsViewModelState by librarySettingsViewModel.savedConnectionSettingsViewModel.subscribeAsState()
@@ -729,7 +731,7 @@ private fun BoxWithConstraintsScope.LibrarySettings(
 				librarySettingsViewModel = librarySettingsViewModel,
 				undoBackStack = undoBackStack,
 				onServerTypeSelectionFinished = onServerTypeSelectionFinished,
-				modifier = Modifier.height(maxHeight - (expandedIconSize + boxHeight) * 2)
+				modifier = Modifier.wrapContentHeight().weight(1f)
 			)
 		}
 	}
@@ -865,7 +867,7 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 		navigateApplication = navigateApplication
 	)
 
-	var isSelectingServerType by remember { mutableStateOf(false) }
+	var isSelectingServerType by rememberSaveable { mutableStateOf(false) }
 	val isLoadingState by librarySettingsViewModel.isLoading.subscribeAsState()
 
 	if (this@LibrarySettingsView.maxWidth < Dimensions.twoColumnThreshold) {
@@ -888,14 +890,14 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 		) {
 			if (!isLoadingState) {
 				Column(
-					modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+					modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
 					horizontalAlignment = Alignment.CenterHorizontally,
 				) {
 					Spacer(
 						modifier = Modifier.height(boxHeight + thisTopMenuHeight)
 					)
 
-					this@LibrarySettingsView.LibrarySettings(
+					LibrarySettings(
 						librarySettingsViewModel = librarySettingsViewModel,
 						stringResources = stringResources,
 						userSslCertificates = userSslCertificates,
@@ -1001,10 +1003,10 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 
 			if (!isLoadingState) {
 				Column(
-					modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+					modifier = Modifier.fillMaxWidth().verticalScroll(remember { ScrollState(0) }),
 					horizontalAlignment = Alignment.CenterHorizontally,
 				) {
-					this@LibrarySettingsView.LibrarySettings(
+					LibrarySettings(
 						librarySettingsViewModel = librarySettingsViewModel,
 						stringResources = stringResources,
 						userSslCertificates = userSslCertificates,
