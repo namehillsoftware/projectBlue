@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.lasthopesoftware.bluewater.android.ui.components.PaddedSystemScreenBox
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.DetermineWindowControlColors
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
@@ -240,17 +241,19 @@ fun LibraryDestination.Navigate(
 			}
 
 			is ConnectionSettingsScreen -> {
-				val viewModel = librarySettingsViewModel
+				PaddedSystemScreenBox {
+					val viewModel = librarySettingsViewModel
 
-				LibrarySettingsView(
-					librarySettingsViewModel = viewModel,
-					navigateApplication = applicationNavigation,
-					stringResources = stringResources,
-					userSslCertificates = userSslCertificateProvider,
-					undoBackStack = undoBackStackBuilder,
-				)
+					LibrarySettingsView(
+						librarySettingsViewModel = viewModel,
+						navigateApplication = applicationNavigation,
+						stringResources = stringResources,
+						userSslCertificates = userSslCertificateProvider,
+						undoBackStack = undoBackStackBuilder,
+					)
 
-				viewModel.loadLibrary(libraryId)
+					viewModel.loadLibrary(libraryId)
+				}
 			}
 
 			is NowPlayingScreen -> {
@@ -453,13 +456,15 @@ fun HandheldApplication(
 						}
 						?.registerBackNav()
 						?.apply {
-							LibrarySettingsView(
-								librarySettingsViewModel = librarySettingsViewModel,
-								navigateApplication = applicationNavigation,
-								stringResources = stringResources,
-								userSslCertificates = userSslCertificateProvider,
-								undoBackStack = undoBackStackBuilder,
-							)
+							PaddedSystemScreenBox {
+								LibrarySettingsView(
+									librarySettingsViewModel = librarySettingsViewModel,
+									navigateApplication = applicationNavigation,
+									stringResources = stringResources,
+									userSslCertificates = userSslCertificateProvider,
+									undoBackStack = undoBackStackBuilder,
+								)
+							}
 						}
 				}
 

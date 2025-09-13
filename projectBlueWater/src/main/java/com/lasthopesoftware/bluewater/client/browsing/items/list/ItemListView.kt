@@ -60,10 +60,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceAtMost
-import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.android.ui.calculateSummaryColumnWidth
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredChips
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredProgressScrollConnectionDispatcher
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredScrollConnectionState
@@ -116,7 +116,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.ScreenDimensionsScope
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.minimumMenuWidth
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
@@ -868,8 +867,7 @@ fun ScreenDimensionsScope.ItemListView(
 				Row(
 					modifier = Modifier.fillMaxSize(),
 				) {
-					val menuWidth =
-						this@ItemListView.screenHeight.coerceIn(minimumMenuWidth, this@ItemListView.maxWidth / 2)
+					val menuWidth = this@ItemListView.calculateSummaryColumnWidth()
 					Column(
 						modifier = Modifier.width(menuWidth),
 					) {

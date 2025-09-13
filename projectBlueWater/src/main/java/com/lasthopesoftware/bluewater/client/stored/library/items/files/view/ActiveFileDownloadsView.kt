@@ -49,10 +49,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.android.ui.calculateSummaryColumnWidth
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
@@ -80,7 +80,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackTitleItemV
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListContentType
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.ScreenDimensionsScope
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.minimumMenuWidth
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
@@ -361,8 +360,7 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 				Row(
 					modifier = Modifier.fillMaxSize(),
 				) {
-					val menuWidth =
-						this@ActiveFileDownloadsView.screenHeight.coerceIn(minimumMenuWidth, this@BoxWithConstraints.maxWidth / 2)
+					val menuWidth = this@ActiveFileDownloadsView.calculateSummaryColumnWidth()
 					Column(
 						modifier = Modifier.width(menuWidth),
 					) {
