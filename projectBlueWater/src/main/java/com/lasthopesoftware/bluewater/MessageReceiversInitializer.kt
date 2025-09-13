@@ -50,7 +50,7 @@ class MessageReceiversInitializer : Initializer<Unit> {
 				notificationManager.notify(
 					storageReadPermissionsConfiguration.notificationId,
 					storageReadPermissionsRequestNotificationBuilder
-						.buildReadPermissionsRequestNotification(readPermissionsNeeded.libraryId.id))
+						.buildReadPermissionsRequestNotification(readPermissionsNeeded.libraryId))
 			}
 
 			registerForApplicationMessages.registerReceiver(
