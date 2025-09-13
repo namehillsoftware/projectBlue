@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,6 +35,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
@@ -52,12 +54,15 @@ import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LabeledSelection
+import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.StandardTextField
+import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
+import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconWidth
@@ -860,81 +865,36 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 		navigateApplication = navigateApplication
 	)
 
-	val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
-	val collapsedHeightPx = LocalDensity.current.run { appBarHeight.toPx() }
-	val heightScaler = rememberFullScreenScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
-
 	var isSelectingServerType by remember { mutableStateOf(false) }
 	val isLoadingState by librarySettingsViewModel.isLoading.subscribeAsState()
 
 	if (this@LibrarySettingsView.maxWidth < Dimensions.twoColumnThreshold) {
-		Column(
-			modifier = Modifier
-				.nestedScroll(remember(heightScaler) {
-					ConsumedOffsetErasingNestedScrollConnection(heightScaler)
-				})
-		) {
-			val scrollState = rememberScrollState()
-
-			val headerCollapseProgress by heightScaler.progressState
-
-			val heightValue by heightScaler.valueState
-
-			Box(
-				modifier = Modifier
-					.height(LocalDensity.current.run { heightValue.toDp() })
-					.fillMaxWidth()
-					.background(MaterialTheme.colors.surface)
-			) {
-				ProvideTextStyle(MaterialTheme.typography.h5) {
-					val topPadding by remember {
-						derivedStateOf {
-							linearInterpolation(
-								Dimensions.appBarHeight,
-								14.dp,
-								headerCollapseProgress
-							)
-						}
-					}
-
-					val startPadding by rememberTitleStartPadding(heightScaler.progressState)
-					val endPadding = viewPaddingUnit
-					MarqueeText(
-						text = stringResource(id = R.string.settings),
-						overflow = TextOverflow.Ellipsis,
-						gradientSides = setOf(GradientSide.End),
-						gradientEdgeColor = MaterialTheme.colors.surface,
-						modifier = Modifier
-							.fillMaxWidth()
-							.padding(
-								start = startPadding,
-								end = endPadding,
-								top = topPadding
-							),
-					)
-				}
-
-				BackButton(
-					navigateApplication::navigateUp,
-					modifier = Modifier
-						.align(Alignment.TopStart)
-						.padding(topRowOuterPadding)
-				)
-			}
-
-			LibrarySettingsMenu(
-				librarySettingsViewModel = librarySettingsViewModel,
-				navigateApplication = navigateApplication,
-				stringResources = stringResources,
-				{ isSelectingServerType = true },
-				modifier = Modifier.fillMaxWidth()
+		val boxHeightPx = LocalDensity.current.remember { boxHeight.toPx() }
+		val collapsedHeightPx = LocalDensity.current.remember { appBarHeight.toPx() }
+		val thisTopMenuHeight = topMenuHeight + viewPaddingUnit * 6
+		val topMenuHeightPx = LocalDensity.current.remember { thisTopMenuHeight.toPx()  }
+		val heightScaler = rememberFullScreenScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
+		val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(topMenuHeightPx, 0f)
+		val compositeScroller = remember(heightScaler, menuHeightScaler) {
+			ConsumedOffsetErasingNestedScrollConnection(
+				LinkedNestedScrollConnection(heightScaler, menuHeightScaler)
 			)
+		}
 
+		Box(
+			modifier = Modifier
+				.fillMaxSize()
+				.nestedScroll(compositeScroller)
+		) {
 			if (!isLoadingState) {
 				Column(
-					modifier = Modifier.fillMaxWidth().verticalScroll(scrollState),
+					modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
 					horizontalAlignment = Alignment.CenterHorizontally,
 				) {
+					Spacer(
+						modifier = Modifier.height(boxHeight + thisTopMenuHeight)
+					)
+
 					this@LibrarySettingsView.LibrarySettings(
 						librarySettingsViewModel = librarySettingsViewModel,
 						stringResources = stringResources,
@@ -944,6 +904,62 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 						onServerTypeSelectionFinished = { isSelectingServerType = false }
 					)
 				}
+			}
+
+			Column {
+				val heightValue by heightScaler.valueState
+				Box(
+					modifier = Modifier
+						.height(LocalDensity.current.run { heightValue.toDp() })
+						.fillMaxWidth()
+						.background(MaterialTheme.colors.surface)
+				) {
+					ProvideTextStyle(MaterialTheme.typography.h5) {
+						val headerCollapseProgress by heightScaler.progressState
+						val topPadding by remember {
+							derivedStateOf {
+								linearInterpolation(
+									Dimensions.appBarHeight,
+									14.dp,
+									headerCollapseProgress
+								)
+							}
+						}
+
+						val startPadding by rememberTitleStartPadding(heightScaler.progressState)
+						val endPadding = viewPaddingUnit
+						MarqueeText(
+							text = stringResource(id = R.string.settings),
+							overflow = TextOverflow.Ellipsis,
+							gradientSides = setOf(GradientSide.End),
+							gradientEdgeColor = MaterialTheme.colors.surface,
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(
+									start = startPadding,
+									end = endPadding,
+									top = topPadding
+								),
+						)
+					}
+
+					BackButton(
+						navigateApplication::navigateUp,
+						modifier = Modifier
+							.align(Alignment.TopStart)
+							.padding(topRowOuterPadding)
+					)
+				}
+
+				val menuHeightPx by menuHeightScaler.valueState
+				val menuHeightDp by LocalDensity.current.remember { derivedStateOf { menuHeightPx.toDp() } }
+				LibrarySettingsMenu(
+					librarySettingsViewModel = librarySettingsViewModel,
+					navigateApplication = navigateApplication,
+					stringResources = stringResources,
+					onChangeServerTypeClick = { isSelectingServerType = true },
+					modifier = Modifier.fillMaxWidth().height(menuHeightDp).clipToBounds()
+				)
 			}
 		}
 	} else {
