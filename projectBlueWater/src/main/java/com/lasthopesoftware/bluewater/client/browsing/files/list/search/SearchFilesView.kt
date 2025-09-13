@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -76,6 +77,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.standardRowHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuHeight
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconWidth
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.LabelledPlayButton
@@ -427,34 +429,40 @@ fun SearchFilesView(
 								.clip(RectangleShape)
 						) {
 							ListMenuRow(modifier = Modifier.fillMaxWidth()) {
+								val modifier = Modifier.requiredWidth(topMenuIconWidth)
 								val refreshButtonFocus = remember { FocusRequester() }
 								if (files.any()) {
 									LabelledRefreshButton(
 										searchFilesViewModel,
 										focusRequester = refreshButtonFocus,
+										modifier = modifier,
 									)
 
 									LabelledPlayButton(
 										libraryState = searchFilesViewModel,
 										playbackServiceController = playbackServiceController,
 										serviceFilesListState = searchFilesViewModel,
+										modifier = modifier,
 									)
 
 									LabelledShuffleButton(
 										libraryState = searchFilesViewModel,
 										playbackServiceController = playbackServiceController,
 										serviceFilesListState = searchFilesViewModel,
+										modifier = modifier,
 									)
 								}
 
 								LabelledActiveDownloadsButton(
 									loadedLibraryState = searchFilesViewModel,
 									applicationNavigation = applicationNavigation,
+									modifier = modifier,
 								)
 
 								LabelledSettingsButton(
 									searchFilesViewModel,
 									applicationNavigation,
+									modifier = modifier,
 								)
 							}
 						}
