@@ -48,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -71,6 +72,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.LabelledRefreshButto
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
+import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.rememberAutoCloseable
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
@@ -401,7 +403,16 @@ private fun SearchFilesList(
 			) {
 				LazyColumn(
 					state = lazyListState,
-					contentPadding = PaddingValues(top = topMenuHeight + rowPadding * 2)
+					contentPadding = PaddingValues(top = topMenuHeight + rowPadding * 2),
+					modifier = Modifier
+						.scrollbar(
+							lazyListState,
+							horizontal = false,
+							knobColor = MaterialTheme.colors.onSurface,
+							trackColor = Color.Transparent,
+							visibleAlpha = .4f,
+							knobCornerRadius = 1.dp,
+						),
 				) {
 					item(contentType = ItemListContentType.Header) {
 						Box(
