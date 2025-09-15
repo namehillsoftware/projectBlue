@@ -47,6 +47,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -80,6 +81,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScro
 import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
+import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.navigable
 import com.lasthopesoftware.bluewater.android.ui.remember
@@ -506,6 +508,14 @@ fun ItemListView(
 							onScrollProgress(0f)
 					}
 				}
+				.scrollbar(
+					lazyListState,
+					horizontal = false,
+					knobColor = MaterialTheme.colors.onSurface,
+					trackColor = Color.Transparent,
+					visibleAlpha = .4f,
+					knobCornerRadius = 1.dp,
+				)
 			if (focusRequester != null)
 				modifier = modifier.focusRequester(focusRequester)
 			LazyColumn(
