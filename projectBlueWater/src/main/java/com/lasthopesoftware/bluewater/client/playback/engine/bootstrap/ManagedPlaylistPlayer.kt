@@ -13,7 +13,6 @@ import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManag
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
 import com.lasthopesoftware.promises.extensions.keepPromise
-import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.closables.PromisingCloseable
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
@@ -36,34 +35,30 @@ class ManagedPlaylistPlayer(
 	override fun updateFromState(libraryId: LibraryId): Promise<NowPlaying?> = promisedPlayer
 		.updateAndGet { originallyPromised ->
 			originallyPromised
-				.eventually { (op, player) ->
+				.eventually { (_, player) ->
 					nowPlayingState
 						.promiseNowPlaying(libraryId)
 						.eventually { np ->
-							when {
-								op == np -> Pair(np, player).toPromise()
-								np == null -> {
-									playbackQueues.reset()
-									player
-										?.haltPlayback()
-										.keepPromise()
-										.then { _ -> Pair(null, null) }
-								}
-								else -> {
-									with (np) {
-										val positionedFileQueueProvider = positionedFileQueueProviders.getValue(isRepeating)
-										val queue = positionedFileQueueProvider.provideQueue(libraryId, playlist, playlistPosition)
-										val preparedPlaybackQueue = playbackQueues.initializePreparedPlaybackQueue(queue)
+							if (np == null) {
+								playbackQueues.reset()
+								player
+									?.haltPlayback()
+									.keepPromise()
+									.then { _ -> Pair(null, null) }
+							} else {
+								with (np) {
+									val positionedFileQueueProvider = positionedFileQueueProviders.getValue(isRepeating)
+									val queue = positionedFileQueueProvider.provideQueue(libraryId, playlist, playlistPosition)
+									val preparedPlaybackQueue = playbackQueues.initializePreparedPlaybackQueue(queue)
 
-										player
-											?.promiseClose()
-											.keepPromise()
-											.then { _ ->
-												val newPlayer = PlaylistPlayer(preparedPlaybackQueue, Duration.millis(filePosition))
-												volumeManagement.managePlayer(newPlayer)
-												Pair(np, newPlayer)
-											}
-									}
+									player
+										?.promiseClose()
+										.keepPromise()
+										.then { _ ->
+											val newPlayer = PlaylistPlayer(preparedPlaybackQueue, Duration.millis(filePosition))
+											volumeManagement.managePlayer(newPlayer)
+											Pair(np, newPlayer)
+										}
 								}
 							}
 						}
