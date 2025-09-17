@@ -77,11 +77,13 @@ fun LabelledSettingsButton(
 fun LabelledRefreshButton(
 	itemDataLoader: LoadItemData,
 	modifier: Modifier = Modifier,
+	enabled: Boolean = true,
 ) {
 	LabelledRefreshButton(
 		onClick = {
 			itemDataLoader.promiseRefresh()
 		},
+		enabled = enabled,
 		modifier = modifier,
 	)
 }

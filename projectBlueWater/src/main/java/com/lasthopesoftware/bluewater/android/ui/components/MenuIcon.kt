@@ -27,12 +27,25 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.navigable
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
 import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
+import com.lasthopesoftware.bluewater.android.ui.theme.SharedAlphas
 
+const val disabledAlpha = SharedAlphas.disabledAlpha
+
+@Composable
+private fun labelColor(enabled: Boolean): Color =
+	if (enabled) LocalContentColor.current
+	else LocalContentColor.current.copy(alpha = disabledAlpha)
+
+@Composable
+private fun iconColor(enabled: Boolean): Color =
+	if (enabled) LocalControlColor.current
+	else LocalControlColor.current.copy(alpha = disabledAlpha)
 
 @Composable
 fun LabelledRefreshButton(
 	onClick: () -> Unit,
 	modifier: Modifier = Modifier,
+	enabled: Boolean = true,
 	focusRequester: FocusRequester? = null,
 ) {
 	val refreshButtonLabel = stringResource(id = R.string.refresh)
@@ -43,6 +56,7 @@ fun LabelledRefreshButton(
 		label = refreshButtonLabel,
 		labelModifier = modifier,
 		labelMaxLines = 1,
+		enabled = enabled,
 		focusRequester = focusRequester,
 	)
 }
@@ -76,8 +90,10 @@ fun ColumnMenuIcon(
 	iconPainter: Painter,
 	contentDescription: String,
 	modifier: Modifier = Modifier,
+	enabled: Boolean = true,
+	iconTint: Color = iconColor(enabled),
 	label: String? = null,
-	labelColor: Color = LocalContentColor.current,
+	labelColor: Color = labelColor(enabled),
 	labelModifier: Modifier = Modifier,
 	labelMaxLines: Int = 1,
 	isDefault: Boolean = false,
@@ -88,10 +104,12 @@ fun ColumnMenuIcon(
 		iconPainter = iconPainter,
 		contentDescription = contentDescription,
 		modifier = modifier,
+		iconTint = iconTint,
 		label = label,
 		labelColor = labelColor,
 		labelModifier = labelModifier,
 		labelMaxLines = labelMaxLines,
+		enabled = enabled,
 		isDefault = isDefault,
 		focusRequester = focusRequester,
 	)
@@ -102,8 +120,9 @@ fun ColumnMenuIcon(
 	onClick: () -> Unit,
 	icon: @Composable ColumnScope.() -> Unit,
 	modifier: Modifier = Modifier,
+	enabled: Boolean = true,
 	label: String? = null,
-	labelColor: Color = LocalContentColor.current,
+	labelColor: Color = labelColor(enabled),
 	labelModifier: Modifier = Modifier,
 	labelMaxLines: Int = 1,
 	focusRequester: FocusRequester? = null,
@@ -116,6 +135,7 @@ fun ColumnMenuIcon(
 		labelColor = labelColor,
 		labelModifier = labelModifier,
 		labelMaxLines = labelMaxLines,
+		enabled = enabled,
 		focusRequester = focusRequester,
 	)
 }
@@ -126,8 +146,10 @@ fun MenuIcon(
 	iconPainter: Painter,
 	contentDescription: String,
 	modifier: Modifier = Modifier,
+	enabled: Boolean = true,
+	iconTint: Color = iconColor(enabled),
 	label: String? = null,
-	labelColor: Color = LocalContentColor.current,
+	labelColor: Color = labelColor(enabled),
 	labelModifier: Modifier = Modifier,
 	labelMaxLines: Int = 1,
 	isDefault: Boolean = false,
@@ -140,7 +162,7 @@ fun MenuIcon(
 				painter = iconPainter,
 				contentDescription = contentDescription,
 				modifier = Modifier.size(topMenuIconSize),
-				tint = LocalControlColor.current,
+				tint = iconTint,
 			)
 		},
 		modifier = modifier,
@@ -148,6 +170,7 @@ fun MenuIcon(
 		labelColor = labelColor,
 		labelModifier = labelModifier,
 		labelMaxLines = labelMaxLines,
+		enabled = enabled,
 		isDefault = isDefault,
 		focusRequester = focusRequester,
 	)
@@ -158,8 +181,9 @@ fun MenuIcon(
 	onClick: () -> Unit,
 	icon: @Composable ColumnScope.() -> Unit,
 	modifier: Modifier = Modifier,
+	enabled: Boolean = true,
 	label: String? = null,
-	labelColor: Color = LocalContentColor.current,
+	labelColor: Color = labelColor(enabled),
 	labelModifier: Modifier = Modifier,
 	labelMaxLines: Int = Int.MAX_VALUE,
 	isDefault: Boolean = false,
@@ -179,6 +203,7 @@ fun MenuIcon(
 					color = labelColor,
 				)
 			},
+			enabled = enabled,
 			isDefault = isDefault,
 			focusRequester = focusRequester,
 		)
