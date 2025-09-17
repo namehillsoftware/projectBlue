@@ -126,6 +126,7 @@ private val topBarHeight = textFieldHeight + searchFieldPadding
 private fun LabelledRefreshButton(
 	searchFilesViewModel: SearchFilesViewModel,
 	modifier: Modifier = Modifier,
+	enabled: Boolean = false,
 	focusRequester: FocusRequester? = null,
 ) {
 	LabelledRefreshButton(
@@ -133,6 +134,7 @@ private fun LabelledRefreshButton(
 			searchFilesViewModel.promiseRefresh()
 		},
 		modifier = modifier,
+		enabled = enabled,
 		focusRequester = focusRequester,
 	)
 }
@@ -208,26 +210,29 @@ private fun SearchFilesMenu(
 	ListMenuRow(modifier = Modifier.fillMaxWidth()) {
 		val modifier = Modifier.requiredWidth(topMenuIconWidth)
 		val files by searchFilesViewModel.files.subscribeAsState()
-		if (files.any()) {
-			LabelledRefreshButton(
-				searchFilesViewModel,
-				modifier = modifier,
-			)
+		val isFileControlsEnabled = files.any()
 
-			LabelledPlayButton(
-				libraryState = searchFilesViewModel,
-				playbackServiceController = playbackServiceController,
-				serviceFilesListState = searchFilesViewModel,
-				modifier = modifier,
-			)
+		LabelledRefreshButton(
+			searchFilesViewModel,
+			modifier = modifier,
+			enabled = isFileControlsEnabled,
+		)
 
-			LabelledShuffleButton(
-				libraryState = searchFilesViewModel,
-				playbackServiceController = playbackServiceController,
-				serviceFilesListState = searchFilesViewModel,
-				modifier = modifier,
-			)
-		}
+		LabelledPlayButton(
+			libraryState = searchFilesViewModel,
+			playbackServiceController = playbackServiceController,
+			serviceFilesListState = searchFilesViewModel,
+			modifier = modifier,
+			enabled = isFileControlsEnabled,
+		)
+
+		LabelledShuffleButton(
+			libraryState = searchFilesViewModel,
+			playbackServiceController = playbackServiceController,
+			serviceFilesListState = searchFilesViewModel,
+			modifier = modifier,
+			enabled = isFileControlsEnabled,
+		)
 
 		LabelledActiveDownloadsButton(
 			loadedLibraryState = searchFilesViewModel,
