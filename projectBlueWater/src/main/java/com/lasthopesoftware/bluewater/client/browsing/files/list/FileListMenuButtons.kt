@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list
 
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -11,6 +12,8 @@ import androidx.compose.ui.res.stringResource
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
+import com.lasthopesoftware.bluewater.android.ui.theme.SharedAlphas
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 
@@ -20,6 +23,7 @@ fun LabelledShuffleButton(
 	playbackServiceController: ControlPlaybackService,
 	serviceFilesListState: ServiceFilesListState,
 	modifier: Modifier = Modifier,
+	enabled: Boolean = true,
 ) {
 	val shuffleButtonLabel = stringResource(R.string.btn_shuffle_files)
 	ColumnMenuIcon(
@@ -33,6 +37,7 @@ fun LabelledShuffleButton(
 		label = shuffleButtonLabel,
 		labelMaxLines = 1,
 		modifier = modifier,
+		enabled = enabled,
 	)
 }
 
@@ -42,6 +47,7 @@ fun LabelledPlayButton(
 	playbackServiceController: ControlPlaybackService,
 	serviceFilesListState: ServiceFilesListState,
 	modifier: Modifier = Modifier,
+	enabled: Boolean = true,
 	focusRequester: FocusRequester? = null,
 ) {
 	val playButtonLabel = stringResource(id = R.string.btn_play)
@@ -56,6 +62,7 @@ fun LabelledPlayButton(
 		label = playButtonLabel,
 		labelMaxLines = 1,
 		modifier = modifier,
+		enabled = enabled,
 		focusRequester = focusRequester,
 	)
 }
@@ -64,11 +71,15 @@ fun LabelledPlayButton(
 fun LabelledSyncButton(
 	fileListViewModel: FileListViewModel,
 	modifier: Modifier = Modifier,
+	enabled: Boolean = true,
 ) {
 	val isSynced by fileListViewModel.isSynced.collectAsState()
 	val syncButtonLabel =
 		if (!isSynced) stringResource(id = R.string.btn_sync_item)
 		else stringResource(id = R.string.files_synced)
+	var syncColor = if (isSynced) MaterialTheme.colors.primary else LocalControlColor.current
+	if (!enabled)
+		syncColor = syncColor.copy(alpha = SharedAlphas.disabledAlpha)
 	ColumnMenuIcon(
 		onClick = { fileListViewModel.toggleSync() },
 		icon = {
@@ -76,10 +87,12 @@ fun LabelledSyncButton(
 				isActive = isSynced,
 				modifier = Modifier.size(Dimensions.topMenuIconSize),
 				contentDescription = syncButtonLabel,
+				tint = syncColor,
 			)
 		},
 		label = syncButtonLabel,
 		labelMaxLines = 1,
 		modifier = modifier,
+		enabled = enabled,
 	)
 }

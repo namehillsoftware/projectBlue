@@ -383,34 +383,37 @@ fun ItemListMenu(
 		val isItemsLoading by itemListViewModel.isLoading.subscribeAsState()
 		val isNotLoading by remember { derivedStateOf { !isFilesLoading && !isItemsLoading } }
 		val modifier = Modifier.requiredWidth(topMenuIconWidth)
-		if (isNotLoading) {
-			LabelledRefreshButton(
-				itemDataLoader = itemDataLoader,
-				modifier = modifier,
-			)
-		}
+
+		LabelledRefreshButton(
+			itemDataLoader = itemDataLoader,
+			enabled = isNotLoading,
+			modifier = modifier,
+		)
 
 		val files by fileListViewModel.files.subscribeAsState()
-		if (files.any()) {
-			LabelledPlayButton(
-				libraryState = itemListViewModel,
-				playbackServiceController = playbackServiceController,
-				serviceFilesListState = fileListViewModel,
-				modifier = modifier,
-			)
+		val isFileControlsEnabled = files.any()
 
-			LabelledShuffleButton(
-				libraryState = itemListViewModel,
-				playbackServiceController = playbackServiceController,
-				serviceFilesListState = fileListViewModel,
-				modifier = modifier,
-			)
+		LabelledPlayButton(
+			libraryState = itemListViewModel,
+			playbackServiceController = playbackServiceController,
+			serviceFilesListState = fileListViewModel,
+			modifier = modifier,
+			enabled = isFileControlsEnabled,
+		)
 
-			LabelledSyncButton(
-				fileListViewModel,
-				modifier = modifier,
-			)
-		}
+		LabelledShuffleButton(
+			libraryState = itemListViewModel,
+			playbackServiceController = playbackServiceController,
+			serviceFilesListState = fileListViewModel,
+			modifier = modifier,
+			enabled = isFileControlsEnabled,
+		)
+
+		LabelledSyncButton(
+			fileListViewModel,
+			modifier = modifier,
+			enabled = isFileControlsEnabled
+		)
 
 		LabelledActiveDownloadsButton(
 			loadedLibraryState = itemListViewModel,

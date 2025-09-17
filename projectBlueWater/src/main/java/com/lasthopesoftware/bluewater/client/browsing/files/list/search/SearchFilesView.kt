@@ -133,7 +133,7 @@ private fun LabelledRefreshButton(
 			searchFilesViewModel.promiseRefresh()
 		},
 		modifier = modifier,
-		focusRequester,
+		focusRequester = focusRequester,
 	)
 }
 
