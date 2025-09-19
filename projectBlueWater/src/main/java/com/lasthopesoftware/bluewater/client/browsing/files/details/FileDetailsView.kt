@@ -543,7 +543,7 @@ fun FileDetailsView(
 				.fillMaxSize()
 				.nestedScroll(compositeScrollConnection)
 		) {
-			val headerCollapseProgress by heightScaler.progressState
+			val headerCollapseProgress by heightScaler.progressState.subscribeAsState()
 
 			if (!isLoading) {
 				LazyColumn(modifier = Modifier.fillMaxSize(), state = lazyListState) {
@@ -678,7 +678,7 @@ fun FileDetailsView(
 						.padding(top = topTitlePadding)
 						.fillMaxWidth(),
 				) {
-					val startPadding by rememberTitleStartPadding(heightScaler.progressState)
+					val startPadding by rememberTitleStartPadding(heightScaler.progressState.subscribeAsState())
 					val endPadding by remember {
 						derivedStateOf {
 							linearInterpolation(

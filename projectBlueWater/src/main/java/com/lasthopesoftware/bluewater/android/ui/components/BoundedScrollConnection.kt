@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.android.ui.components
 
 import android.annotation.SuppressLint
+import android.os.Parcelable
 import android.util.Log
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.animate
@@ -18,11 +19,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.unit.Velocity
+import com.lasthopesoftware.bluewater.android.ui.rememberAutoCloseable
+import com.lasthopesoftware.bluewater.shared.observables.LiftedInteractionState
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
 import com.lasthopesoftware.bluewater.shared.observables.toCloseable
 import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
+import kotlinx.parcelize.Parcelize
+import kotlin.math.abs
 
 interface BoundedScrollConnection : NestedScrollConnection {
 	fun goToMax()
@@ -163,40 +168,89 @@ class AnchoredProgressScrollConnectionDispatcher(
 	}
 }
 
+@Parcelize
+data class MutableScalerState(
+	val min: Float,
+	val max: Float,
+	var totalDistanceTraveled: Float = 0f,
+) : Parcelable
+
+@Composable
+fun rememberFullScreenScrollConnectedScalerState(min: Float, max: Float) = rememberSaveable(max, min) {
+	MutableScalerState(min, max)
+}
+
+@Composable
+fun rememberFullScreenScrollConnectedScaler(scalerState: MutableScalerState, maxTravelDistance: Float = Float.MAX_VALUE): FullScreenScrollConnectedScaler {
+	return rememberAutoCloseable(scalerState, maxTravelDistance) {
+		FullScreenScrollConnectedScaler(scalerState, maxTravelDistance)
+	}
+}
+
 /**
  * Will scale a value based on a nested **vertical** scroll, sourced from Android examples on this page:
  * https://developer.android.com/reference/kotlin/androidx/compose/ui/input/nestedscroll/package-summary#extension-functions
  */
 @Composable
-fun rememberFullScreenScrollConnectedScaler(max: Float, min: Float) = rememberSaveable(max, min, saver = FullScreenScrollConnectedScaler.Saver) {
-	FullScreenScrollConnectedScaler(max, min)
+fun rememberFullScreenScrollConnectedScaler(max: Float, min: Float, maxTravelDistance: Float = Float.MAX_VALUE): FullScreenScrollConnectedScaler {
+	val scalerState = rememberFullScreenScrollConnectedScalerState(min, max)
+
+	return rememberFullScreenScrollConnectedScaler(scalerState, maxTravelDistance)
 }
 
-class FullScreenScrollConnectedScaler private constructor(
-	private val max: Float,
-	private val min: Float,
-	initialDistanceTraveled: Float
-) : BoundedScrollConnection {
+class FullScreenScrollConnectedScaler(
+	private val state: MutableScalerState,
+	private val maxTravelDistance: Float = Float.MAX_VALUE,
+) : BoundedScrollConnection, AutoCloseable {
 
 	companion object {
 		private const val logTag = "FullScreenScrollConnectedScaler"
 	}
 
-	constructor(max: Float, min: Float): this(max, min, 0f)
+	private val autoCloseableManager = AutoCloseableManager()
 
-	private val fullDistance = max - min
+	private val fullDistance = state.max - state.min
 
-	private var totalDistanceTraveled by mutableFloatStateOf(initialDistanceTraveled)
+	private var totalDistanceTraveled = MutableInteractionState(keepWithinMaxTravelDistance(state.totalDistanceTraveled))
 
-	val valueState = derivedStateOf { (max + totalDistanceTraveled).coerceIn(min, max) }
+	val valueState by lazy {
+		autoCloseableManager.manage(
+			LiftedInteractionState(
+				totalDistanceTraveled.mapNotNull().map { (state.max + it).coerceIn(state.min, state.max) },
+				(state.max + state.totalDistanceTraveled).coerceIn(state.min, state.max)
+			)
+		)
+	}
 
-	val progressState by lazy { derivedStateOf { calculateProgress(valueState.value) } }
+	val progressState by lazy {
+		autoCloseableManager.manage(
+			LiftedInteractionState(
+				valueState.mapNotNull().map(::calculateProgress),
+				calculateProgress(valueState.value)
+			)
+		)
+	}
+
+	init {
+		autoCloseableManager.manage(
+			totalDistanceTraveled
+				.mapNotNull()
+				.subscribe {
+					state.totalDistanceTraveled = it
+				}
+				.toCloseable()
+		)
+	}
+
+	override fun close() {
+		autoCloseableManager.close()
+	}
 
 	@SuppressLint("LongLogTag")
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
 		// try to consume before LazyColumn to collapse toolbar if needed, hence pre-scroll
 		val originalValue = valueState.value
-		totalDistanceTraveled += available.y
+		totalDistanceTraveled.value += keepWithinMaxTravelDistance(available.y)
 
 		if (DebugFlag.isDebugCompilation) {
 			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
@@ -209,7 +263,7 @@ class FullScreenScrollConnectedScaler private constructor(
 	@SuppressLint("LongLogTag")
 	override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
 		val originalValue = valueState.value
-		totalDistanceTraveled -= available.y
+		totalDistanceTraveled.value -= keepWithinMaxTravelDistance(available.y)
 
 		if (DebugFlag.isDebugCompilation) {
 			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
@@ -221,21 +275,18 @@ class FullScreenScrollConnectedScaler private constructor(
 	}
 
 	override fun goToMax() {
-		totalDistanceTraveled = 0f
+		totalDistanceTraveled.value = keepWithinMaxTravelDistance(0f)
 	}
 
 	override fun goToMin() {
-		totalDistanceTraveled = -fullDistance
+		totalDistanceTraveled.value = keepWithinMaxTravelDistance(-fullDistance)
 	}
 
-	private fun calculateProgress(value: Float) = if (fullDistance == 0f) 1f else (max - value) / fullDistance
+	private fun calculateProgress(value: Float) = if (fullDistance == 0f) 1f else (state.max - value) / fullDistance
 
-	object Saver : androidx.compose.runtime.saveable.Saver<FullScreenScrollConnectedScaler, Triple<Float, Float, Float>> {
-		override fun restore(value: Triple<Float, Float, Float>): FullScreenScrollConnectedScaler =
-			FullScreenScrollConnectedScaler(value.first, value.second, value.third)
-
-		override fun SaverScope.save(value: FullScreenScrollConnectedScaler): Triple<Float, Float, Float> =
-			Triple(value.max, value.min, value.totalDistanceTraveled)
+	private fun keepWithinMaxTravelDistance(value: Float): Float {
+		val absoluteMax = abs(maxTravelDistance)
+		return value.coerceIn(-absoluteMax, absoluteMax)
 	}
 }
 

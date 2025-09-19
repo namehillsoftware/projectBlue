@@ -80,6 +80,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.linkedTo
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
+import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScalerState
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
@@ -452,10 +453,11 @@ fun ItemListView(
 	anchoredScrollConnectionState: AnchoredScrollConnectionState,
 	chipLabel: @Composable (Int, Float) -> Unit,
 	onScrollProgress: (Float) -> Unit,
+	modifier: Modifier = Modifier,
 	headerHeight: Dp = 0.dp,
 	focusRequester: FocusRequester? = null
 ) {
-	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+	BoxWithConstraints(modifier = modifier) {
 		val isLoading by itemDataLoader.isLoading.subscribeAsState()
 		if (isLoading) {
 			ListLoading(modifier = Modifier.fillMaxSize())
@@ -677,14 +679,10 @@ fun ScreenDimensionsScope.ItemListView(
 		val collapsedHeightPx = LocalDensity.current.remember { appBarHeight.toPx() }
 		val topMenuHeightPx = LocalDensity.current.remember { rowPadding.toPx() * 2 + topMenuHeight.toPx() }
 
-		val titleHeightScaler = rememberFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
-		val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(topMenuHeightPx, 0f)
+//		val titleHeightScaler = rememberFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
+		val titleHeightScalerState = rememberFullScreenScrollConnectedScalerState( collapsedHeightPx, expandedHeightPx)
 
-		val compositeScrollConnection = remember(titleHeightScaler, menuHeightScaler) {
-			titleHeightScaler
-				.linkedTo(menuHeightScaler)
-				.ignoreOffsetConsumption()
-		}
+		val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(topMenuHeightPx, 0f)
 
 		BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 
@@ -711,6 +709,14 @@ fun ScreenDimensionsScope.ItemListView(
 							fullListSize += rowHeightPx + dividerHeight
 						fullListSize.coerceAtLeast(0f)
 					}
+				}
+
+				val titleHeightScaler = rememberFullScreenScrollConnectedScaler(titleHeightScalerState, fullListSize)
+
+				val compositeScrollConnection = remember(titleHeightScaler, menuHeightScaler) {
+					titleHeightScaler
+						.linkedTo(menuHeightScaler)
+						.ignoreOffsetConsumption()
 				}
 
 				val anchoredScrollConnectionDispatcher =
@@ -744,8 +750,8 @@ fun ScreenDimensionsScope.ItemListView(
 						anchoredScrollConnectionState,
 						{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
 						anchoredScrollConnectionDispatcher::progressTo,
-						appBarAndTitleHeight + topMenuHeight + rowPadding * 2,
-						listFocus
+						headerHeight = appBarAndTitleHeight + topMenuHeight + rowPadding * 2,
+						focusRequester = listFocus
 					)
 
 					Column(
@@ -754,9 +760,9 @@ fun ScreenDimensionsScope.ItemListView(
 							.fillMaxWidth()
 							.focusGroup()
 					) headerColumn@{
-						val titleHeightValue by titleHeightScaler.valueState
+						val titleHeightValue by titleHeightScaler.valueState.subscribeAsState()
 
-						val headerCollapseProgress by titleHeightScaler.progressState
+						val headerCollapseProgress by titleHeightScaler.progressState.subscribeAsState()
 						val titleHeightValueDp by LocalDensity.current.remember { derivedStateOf { titleHeightValue.toDp() } }
 						Box(
 							modifier = Modifier
@@ -813,7 +819,7 @@ fun ScreenDimensionsScope.ItemListView(
 							}
 
 							ProvideTextStyle(MaterialTheme.typography.h5) {
-								val startPadding by rememberTitleStartPadding(titleHeightScaler.progressState)
+								val startPadding by rememberTitleStartPadding(titleHeightScaler.progressState.subscribeAsState())
 
 								val topPadding by remember {
 									derivedStateOf {
@@ -921,6 +927,14 @@ fun ScreenDimensionsScope.ItemListView(
 						)
 					}
 
+					val titleHeightScaler = rememberFullScreenScrollConnectedScaler(titleHeightScalerState)
+
+					val compositeScrollConnection = remember(titleHeightScaler, menuHeightScaler) {
+						titleHeightScaler
+							.linkedTo(menuHeightScaler)
+							.ignoreOffsetConsumption()
+					}
+
 					ItemListView(
 						itemListViewModel,
 						fileListViewModel,
@@ -935,8 +949,9 @@ fun ScreenDimensionsScope.ItemListView(
 						undoBackStack,
 						lazyListState,
 						anchoredScrollConnectionState,
-						{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
-						{ anchoredScrollConnectionState.selectedProgress = it },
+						chipLabel = { _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
+						onScrollProgress = { anchoredScrollConnectionState.selectedProgress = it },
+						modifier = Modifier.nestedScroll(compositeScrollConnection)
 					)
 				}
 			}
