@@ -275,11 +275,11 @@ class FullScreenScrollConnectedScaler(
 	}
 
 	override fun goToMax() {
-		totalDistanceTraveled.value = 0f
+		totalDistanceTraveled.value = keepWithinMaxTravelDistance(0f)
 	}
 
 	override fun goToMin() {
-		totalDistanceTraveled.value = -fullDistance
+		totalDistanceTraveled.value = keepWithinMaxTravelDistance(-fullDistance)
 	}
 
 	private fun calculateProgress(value: Float) = if (fullDistance == 0f) 1f else (state.max - value) / fullDistance
