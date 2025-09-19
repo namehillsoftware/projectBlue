@@ -265,14 +265,14 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 								}
 							},
 					) headerColumn@{
-						val heightValue by heightScaler.valueState
+						val heightValue by heightScaler.valueState.subscribeAsState()
 						val heightValueDp by LocalDensity.current.remember { derivedStateOf { heightValue.toDp() } }
 						Box(
 							modifier = Modifier
 								.fillMaxWidth()
 								.requiredHeight(heightValueDp)
 						) {
-							val headerCollapseProgress by heightScaler.progressState
+							val headerCollapseProgress by heightScaler.progressState.subscribeAsState()
 							val topPadding by remember {
 								derivedStateOf {
 									linearInterpolation(
@@ -284,7 +284,7 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 							}
 
 							ProvideTextStyle(MaterialTheme.typography.h5) {
-								val startPadding by rememberTitleStartPadding(heightScaler.progressState)
+								val startPadding by rememberTitleStartPadding(heightScaler.progressState.subscribeAsState())
 								val header = stringResource(id = R.string.activeDownloads)
 								MarqueeText(
 									text = header,
