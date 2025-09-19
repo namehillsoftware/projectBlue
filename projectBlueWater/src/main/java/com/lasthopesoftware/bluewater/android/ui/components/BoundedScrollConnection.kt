@@ -369,6 +369,9 @@ class LinkedNestedScrollConnection(
 	}
 }
 
+fun BoundedScrollConnection.linkedTo(other: BoundedScrollConnection) =
+	LinkedNestedScrollConnection(this, other)
+
 class ConsumedOffsetErasingNestedScrollConnection(private val inner: BoundedScrollConnection) : BoundedScrollConnection by inner {
 	override suspend fun onPreFling(available: Velocity): Velocity {
 		inner.onPreFling(available)
@@ -390,3 +393,6 @@ class ConsumedOffsetErasingNestedScrollConnection(private val inner: BoundedScro
 		return Offset.Zero
 	}
 }
+
+fun BoundedScrollConnection.ignoreOffsetConsumption() =
+	ConsumedOffsetErasingNestedScrollConnection(this)
