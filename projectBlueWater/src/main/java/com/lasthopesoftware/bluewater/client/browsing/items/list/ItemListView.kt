@@ -9,12 +9,12 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
@@ -59,7 +59,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
@@ -69,14 +69,14 @@ import com.lasthopesoftware.bluewater.android.ui.components.AnchoredChips
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredProgressScrollConnectionDispatcher
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
-import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
-import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.android.ui.components.ListLoading
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledChevronIcon
+import com.lasthopesoftware.bluewater.android.ui.components.ignoreOffsetConsumption
+import com.lasthopesoftware.bluewater.android.ui.components.linkedTo
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
@@ -452,10 +452,10 @@ fun ItemListView(
 	anchoredScrollConnectionState: AnchoredScrollConnectionState,
 	chipLabel: @Composable (Int, Float) -> Unit,
 	onScrollProgress: (Float) -> Unit,
-	headerHeight: Dp = 0.dp,
+	modifier: Modifier = Modifier,
 	focusRequester: FocusRequester? = null
 ) {
-	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+	BoxWithConstraints(modifier = modifier) {
 		val isLoading by itemDataLoader.isLoading.subscribeAsState()
 		if (isLoading) {
 			ListLoading(modifier = Modifier.fillMaxSize())
@@ -504,7 +504,8 @@ fun ItemListView(
 					}
 			}
 
-			var modifier = Modifier.focusGroup()
+			var modifier = Modifier
+				.focusGroup()
 				.focusProperties {
 					onExit = {
 						if (requestedFocusDirection == FocusDirection.Up)
@@ -523,7 +524,6 @@ fun ItemListView(
 				modifier = modifier.focusRequester(focusRequester)
 			LazyColumn(
 				state = lazyListState,
-				contentPadding = PaddingValues(top = headerHeight),
 				modifier = modifier,
 			) {
 				if (items.any()) {
@@ -574,9 +574,9 @@ fun ItemListView(
 
 
 			if (LocalInputModeManager.current.inputMode == InputMode.Touch) {        // 5in in pixels, pixels/Inch
-				val maxScrollBarHeight = remember( maxHeight, headerHeight) {
+				val maxScrollBarHeight = remember( maxHeight) {
 					val dpi = 160f
-					(2.5f * dpi).dp.coerceAtMost(maxHeight - headerHeight - topMenuHeight)
+					(2.5f * dpi).dp.coerceAtMost(maxHeight - topMenuHeight)
 				}
 
 				val localHapticFeedback = LocalHapticFeedback.current
@@ -614,14 +614,12 @@ fun ScreenDimensionsScope.ItemListView(
 	stringResources: GetStringResources,
     undoBackStack: UndoStack,
 ) {
-	val itemValue by itemListViewModel.itemValue.subscribeAsState()
-
-	val lazyListState = rememberLazyListState()
-
 	ControlSurface {
 		DetermineWindowControlColors()
 
-		val collapsedHeight = appBarHeight
+		val itemValue by itemListViewModel.itemValue.subscribeAsState()
+
+		val lazyListState = rememberLazyListState()
 
 		var minVisibleItemsForScroll by remember { mutableIntStateOf(30) }
 		LaunchedEffect(lazyListState, itemDataLoader) {
@@ -669,11 +667,25 @@ fun ScreenDimensionsScope.ItemListView(
 
 		val anchoredScrollConnectionState = rememberAnchoredScrollConnectionState(progressAnchors)
 
+		// Persist and adjust between rotations
+		val expandedHeightPx = LocalDensity.current.remember { appBarAndTitleHeight.toPx() }
+		val collapsedHeightPx = LocalDensity.current.remember { appBarHeight.toPx() }
+		val topMenuHeightPx = LocalDensity.current.remember { rowPadding.toPx() * 2 + topMenuHeight.toPx() }
+
+		val titleHeightScaler = rememberFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
+		val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(topMenuHeightPx, 0f)
+		val paddingScaler = rememberFullScreenScrollConnectedScaler(expandedHeightPx + topMenuHeightPx, collapsedHeightPx)
+
+		val compositeScrollConnection = remember(titleHeightScaler, menuHeightScaler, paddingScaler) {
+			titleHeightScaler
+				.linkedTo(menuHeightScaler)
+				.ignoreOffsetConsumption()
+				.linkedTo(paddingScaler)
+		}
+
 		BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+
 			if (maxWidth < Dimensions.twoColumnThreshold) {
-				val expandedHeightPx = LocalDensity.current.remember { appBarAndTitleHeight.toPx() }
-				val collapsedHeightPx = LocalDensity.current.remember { collapsedHeight.toPx() }
-				val topMenuHeightPx = LocalDensity.current.remember { topMenuHeight.toPx() }
 
 				val fullListSize by LocalDensity.current.remember(maxHeight) {
 					val topMenuHeightPx = 0f
@@ -696,14 +708,6 @@ fun ScreenDimensionsScope.ItemListView(
 							fullListSize += rowHeightPx + dividerHeight
 						fullListSize.coerceAtLeast(0f)
 					}
-				}
-
-				val titleHeightScaler = rememberFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
-				val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(topMenuHeightPx, 0f)
-				val compositeScrollConnection = remember(titleHeightScaler, menuHeightScaler) {
-					ConsumedOffsetErasingNestedScrollConnection(
-						LinkedNestedScrollConnection(titleHeightScaler, menuHeightScaler)
-					)
 				}
 
 				val anchoredScrollConnectionDispatcher =
@@ -737,8 +741,10 @@ fun ScreenDimensionsScope.ItemListView(
 						anchoredScrollConnectionState,
 						{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
 						anchoredScrollConnectionDispatcher::progressTo,
-						appBarAndTitleHeight + topMenuHeight + rowPadding * 2,
-						listFocus
+						focusRequester = listFocus,
+						modifier = Modifier
+							.height(this@BoxWithConstraints.maxHeight - appBarHeight)
+							.offset { IntOffset(x= 0, y = paddingScaler.valueState.value.roundToInt()) },
 					)
 
 					Column(
@@ -930,6 +936,7 @@ fun ScreenDimensionsScope.ItemListView(
 						anchoredScrollConnectionState,
 						{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
 						{ anchoredScrollConnectionState.selectedProgress = it },
+						modifier = Modifier.nestedScroll(compositeScrollConnection),
 					)
 				}
 			}
