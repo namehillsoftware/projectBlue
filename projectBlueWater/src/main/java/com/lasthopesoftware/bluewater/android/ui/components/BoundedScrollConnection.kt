@@ -27,6 +27,7 @@ import com.lasthopesoftware.bluewater.shared.observables.toCloseable
 import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import kotlinx.parcelize.Parcelize
+import kotlin.math.abs
 
 interface BoundedScrollConnection : NestedScrollConnection {
 	fun goToMax()
@@ -192,13 +193,9 @@ fun rememberFullScreenScrollConnectedScaler(scalerState: MutableScalerState, max
  */
 @Composable
 fun rememberFullScreenScrollConnectedScaler(max: Float, min: Float, maxTravelDistance: Float = Float.MAX_VALUE): FullScreenScrollConnectedScaler {
-	val scalerState = rememberSaveable(max, min) {
-		MutableScalerState(max, min)
-	}
+	val scalerState = rememberFullScreenScrollConnectedScalerState(min, max)
 
-	return rememberAutoCloseable(scalerState, maxTravelDistance) {
-		FullScreenScrollConnectedScaler(scalerState, maxTravelDistance)
-	}
+	return rememberFullScreenScrollConnectedScaler(scalerState, maxTravelDistance)
 }
 
 class FullScreenScrollConnectedScaler(
@@ -287,16 +284,10 @@ class FullScreenScrollConnectedScaler(
 
 	private fun calculateProgress(value: Float) = if (fullDistance == 0f) 1f else (state.max - value) / fullDistance
 
-	private fun keepWithinMaxTravelDistance(value: Float) =
-		value.coerceIn(-maxTravelDistance, maxTravelDistance)
-
-//	object Saver : androidx.compose.runtime.saveable.Saver<FullScreenScrollConnectedScaler, Triple<Float, Float, Float>> {
-//		override fun restore(value: Triple<Float, Float, Float>): FullScreenScrollConnectedScaler =
-//			FullScreenScrollConnectedScaler(value.first, value.second, value.third)
-//
-//		override fun SaverScope.save(value: FullScreenScrollConnectedScaler): Triple<Float, Float, Float> =
-//			Triple(value.max, value.min, value.totalDistanceTraveled)
-//	}
+	private fun keepWithinMaxTravelDistance(value: Float): Float {
+		val absoluteMax = abs(maxTravelDistance)
+		return value.coerceIn(-absoluteMax, absoluteMax)
+	}
 }
 
 /**
