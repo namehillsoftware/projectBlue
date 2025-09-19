@@ -725,7 +725,6 @@ fun ScreenDimensionsScope.ItemListView(
 						.nestedScroll(anchoredScrollConnectionDispatcher)
 				) {
 					val listFocus = remember { FocusRequester() }
-					val paddingScalerDp by LocalDensity.current.remember { derivedStateOf { paddingScaler.valueState.value.toDp() } }
 					ItemListView(
 						itemListViewModel,
 						fileListViewModel,
@@ -744,7 +743,7 @@ fun ScreenDimensionsScope.ItemListView(
 						anchoredScrollConnectionDispatcher::progressTo,
 						focusRequester = listFocus,
 						modifier = Modifier
-							.height(this@BoxWithConstraints.maxHeight - paddingScalerDp)
+							.height(this@BoxWithConstraints.maxHeight - appBarHeight)
 							.offset { IntOffset(x= 0, y = paddingScaler.valueState.value.roundToInt()) },
 					)
 
