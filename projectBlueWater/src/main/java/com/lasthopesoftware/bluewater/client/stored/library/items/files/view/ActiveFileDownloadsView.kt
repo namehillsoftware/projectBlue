@@ -28,7 +28,6 @@ import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -157,7 +156,7 @@ fun RenderTrackHeaderItem(
 		}
 	}
 
-	val fileName by fileItemViewModel.title.collectAsState()
+	val fileName by fileItemViewModel.title.subscribeAsState()
 
 	TrackTitleItemView(
 		itemName = fileName,

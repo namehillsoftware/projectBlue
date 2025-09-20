@@ -34,7 +34,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -614,8 +613,8 @@ fun NowPlayingTvPlaylist(
 			}
 		}
 
-		val fileName by fileItemViewModel.title.collectAsState()
-		val artist by fileItemViewModel.artist.collectAsState()
+		val fileName by fileItemViewModel.title.subscribeAsState()
+		val artist by fileItemViewModel.artist.subscribeAsState()
 		val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
 
 		NowPlayingTvItemView(

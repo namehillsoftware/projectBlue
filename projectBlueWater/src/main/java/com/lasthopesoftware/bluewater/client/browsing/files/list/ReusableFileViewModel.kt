@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.exceptions.isOkHttpCanceled
 import com.lasthopesoftware.exceptions.isSocketClosedException
 import com.lasthopesoftware.promises.PromiseDelay
@@ -21,8 +22,6 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.response.EventualAction
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import org.joda.time.Duration
 import java.io.IOException
 import java.util.Locale
@@ -55,11 +54,11 @@ class ReusableFileViewModel(
 	@Volatile
 	private var promisedState = Unit.toPromise()
 
-	private val mutableArtist = MutableStateFlow("")
-	private val mutableTitle = MutableStateFlow(stringResources.loading)
+	private val mutableArtist = MutableInteractionState("")
+	private val mutableTitle = MutableInteractionState(stringResources.loading)
 
-	override val artist = mutableArtist.asStateFlow()
-	override val title = mutableTitle.asStateFlow()
+	override val artist = mutableArtist.asInteractionState()
+	override val title = mutableTitle.asInteractionState()
 
 	override fun promiseUpdate(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Unit> =
 		synchronized(promiseSync) {

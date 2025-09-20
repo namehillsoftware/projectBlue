@@ -5,21 +5,20 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.HiddenLis
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
+import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.resources.closables.ResettableCloseable
 import com.namehillsoftware.handoff.promises.Promise
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 class ReusablePlaylistFileViewModel(
 	private val sendItemMenuMessages: SendTypedMessages<ItemListMenuMessage>,
 	private val viewFileItem: ViewFileItem
 ) : ViewPlaylistFileItem, HiddenListItemMenu, ResettableCloseable {
 
-	private val mutableIsMenuShown = MutableStateFlow(false)
+	private val mutableIsMenuShown = MutableInteractionState(false)
 
 	override val artist = viewFileItem.artist
 	override val title = viewFileItem.title
-	override val isMenuShown = mutableIsMenuShown.asStateFlow()
+	override val isMenuShown = mutableIsMenuShown.asInteractionState()
 
 	override fun promiseUpdate(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Unit> =
 		viewFileItem.promiseUpdate(libraryId, serviceFile)

@@ -487,9 +487,9 @@ fun NowPlayingPlaylist(
 			}
 		}
 
-		val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
-		val fileName by fileItemViewModel.title.collectAsState()
-		val artist by fileItemViewModel.artist.collectAsState()
+		val isMenuShown by fileItemViewModel.isMenuShown.subscribeAsState()
+		val fileName by fileItemViewModel.title.subscribeAsState()
+		val artist by fileItemViewModel.artist.subscribeAsState()
 		val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
 
 		val viewFilesClickHandler = {
