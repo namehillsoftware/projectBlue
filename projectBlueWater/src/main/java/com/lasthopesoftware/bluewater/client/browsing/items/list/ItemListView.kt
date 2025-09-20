@@ -679,8 +679,7 @@ fun ScreenDimensionsScope.ItemListView(
 		val collapsedHeightPx = LocalDensity.current.remember { appBarHeight.toPx() }
 		val topMenuHeightPx = LocalDensity.current.remember { rowPadding.toPx() * 2 + topMenuHeight.toPx() }
 
-//		val titleHeightScaler = rememberFullScreenScrollConnectedScaler(expandedHeightPx, collapsedHeightPx)
-		val titleHeightScalerState = rememberFullScreenScrollConnectedScalerState( collapsedHeightPx, expandedHeightPx)
+		val titleHeightScalerState = rememberFullScreenScrollConnectedScalerState(collapsedHeightPx, expandedHeightPx)
 
 		val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(topMenuHeightPx, 0f)
 
