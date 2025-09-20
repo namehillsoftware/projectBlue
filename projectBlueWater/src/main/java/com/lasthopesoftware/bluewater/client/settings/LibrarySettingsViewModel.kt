@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.settings
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
-import com.lasthopesoftware.bluewater.client.browsing.library.access.LookupLibraryName
 import com.lasthopesoftware.bluewater.client.browsing.library.access.RemoveLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
@@ -30,7 +29,6 @@ import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import io.reactivex.rxjava3.core.Observable
 
 class LibrarySettingsViewModel(
-	private val libraryNameLookup: LookupLibraryName,
 	private val librarySettingsProvider: ProvideLibrarySettings,
 	private val librarySettingsStorage: StoreLibrarySettings,
 	private val libraryRemoval: RemoveLibraries,
@@ -85,7 +83,6 @@ class LibrarySettingsViewModel(
 	private val mutableIsSaving = MutableInteractionState(false)
 	private val mutableIsPermissionsNeeded = MutableInteractionState(false)
 	private val mutableIsRemovalRequested = MutableInteractionState(false)
-	private val mutableSavedLibraryName = MutableInteractionState("")
 
 	private val isSettingsChangedObserver by lazy {
 		fun <T> observeLibraryChanges(observable: Observable<NullBox<T>>, libraryValue: LibrarySettings.() -> T?) =
@@ -123,8 +120,6 @@ class LibrarySettingsViewModel(
 	val activeLibraryId
 		get() = libraryState.value.libraryId?.takeIf { it.id > -1 }
 
-	val savedLibraryName = mutableSavedLibraryName.asInteractionState()
-
 	val availableConnectionSettings by lazy {
 		setOf(
 			mediaCenterConnectionSettingsViewModel,
@@ -139,15 +134,10 @@ class LibrarySettingsViewModel(
 	fun loadLibrary(libraryId: LibraryId): Promise<*> {
 		mutableIsLoading.value = true
 
-		return Promise
-			.whenAll(
-				librarySettingsProvider
-					.promiseLibrarySettings(libraryId)
-					.then(this),
-				libraryNameLookup
-					.promiseLibraryName(libraryId)
-					.then { n -> mutableSavedLibraryName.value = n ?: "" }
-			).must(this)
+		return librarySettingsProvider
+			.promiseLibrarySettings(libraryId)
+			.then(this)
+			.must(this)
 	}
 
 	fun saveLibrary(): Promise<Boolean> {
@@ -252,7 +242,11 @@ class LibrarySettingsViewModel(
 
 	private inline fun <reified C : StoredConnectionSettings, T> observeConnectionSettingsChanges(observable: Observable<NullBox<T>>, crossinline connectionValue: C.() -> T?) =
 		Observable.combineLatest(libraryState, observable) { s, o ->
-			s.value.connectionSettings?.let { it as? C }?.run(connectionValue)?.let { it != o.value } ?: false
+			s.value.connectionSettings
+				?.let { it as? C }
+				?.run(connectionValue)
+				?.let { it != o.value }
+				?: false
 		}.distinctUntilChanged()
 
 	interface ConnectionSettingsViewModel<ConnectionSettings : StoredConnectionSettings> : AutoCloseable {

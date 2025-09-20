@@ -20,10 +20,7 @@ class WhenRemovingTheLibrary {
 	private val libraryId = LibraryId(799)
     private val services by lazy {
         LibrarySettingsViewModel(
-			mockk {
-				every { promiseLibraryName(any()) } returns "".toPromise()
-			},
-			mockk {
+            mockk {
 				every { promiseLibrarySettings(any()) } answers {
 					val id = firstArg<LibraryId>()
 					if (removedLibraries.any { it.libraryId == id }) Promise.empty()

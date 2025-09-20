@@ -21,10 +21,7 @@ class WhenLoadingTheLibrarySettings {
 
     private val services by lazy {
         LibrarySettingsViewModel(
-			mockk {
-				every { promiseLibraryName(any()) } returns "".toPromise()
-			},
-			mockk {
+            mockk {
 				every { promiseLibrarySettings(any()) } returns Promise.empty()
 				every { promiseLibrarySettings(libraryId) } returns LibrarySettings(
 					libraryId = libraryId,

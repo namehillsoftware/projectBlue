@@ -9,9 +9,9 @@ class MutableInteractionState<T>(private val initialValue: T) : InteractionState
 	private val behaviorSubject = BehaviorSubject.createDefault(NullBox(initialValue))
 
 	override var value: T
-		get() = behaviorSubject.value?.value ?: initialValue
+		get() = computeValue()
 		set(newValue) {
-			if (value != newValue)
+			if (computeValue() != newValue)
 				behaviorSubject.onNext(NullBox(newValue))
 		}
 
@@ -20,4 +20,6 @@ class MutableInteractionState<T>(private val initialValue: T) : InteractionState
 	}
 
 	fun asInteractionState(): InteractionState<T> = this
+
+	private fun computeValue() = behaviorSubject.value?.value ?: initialValue
 }

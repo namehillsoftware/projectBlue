@@ -21,8 +21,7 @@ class WhenSavingTheLibrarySettings {
 
 	private val services by lazy {
 		LibrarySettingsViewModel(
-			mockk(),
-			mockk(),
+            mockk(),
 			mockk {
 				every { promiseSavedLibrarySettings(any()) } answers {
 					firstArg<LibrarySettings>().copy(libraryId = LibraryId(newLibraryId)).toPromise()
