@@ -52,7 +52,6 @@ import androidx.compose.material.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -668,7 +667,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 				NowPlayingHeadline(modifier = Modifier.weight(1f), nowPlayingFilePropertiesViewModel)
 
 				if (isScreenControlsVisible) {
-					val isScreenOnEnabled by nowPlayingScreenViewModel.isScreenOnEnabled.collectAsState()
+					val isScreenOnEnabled by nowPlayingScreenViewModel.isScreenOnEnabled.subscribeAsState()
 					Image(
 						painter = painterResource(if (isScreenOnEnabled) R.drawable.ic_screen_on_white_36dp else R.drawable.ic_screen_off_white_36dp),
 						alpha = .8f,
@@ -919,7 +918,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 				)
 
 				if (isScreenControlsVisible) {
-					val isScreenOnEnabled by nowPlayingScreenViewModel.isScreenOnEnabled.collectAsState()
+					val isScreenOnEnabled by nowPlayingScreenViewModel.isScreenOnEnabled.subscribeAsState()
 					Image(
 						painter = painterResource(if (isScreenOnEnabled) R.drawable.ic_screen_on_white_36dp else R.drawable.ic_screen_off_white_36dp),
 						alpha = .8f,
@@ -1067,7 +1066,7 @@ fun NowPlayingView(
 	bitmapProducer: ProduceBitmaps,
 	undoBackStack: UndoStack,
 ) {
-	val isScreenOn by nowPlayingScreenViewModel.isScreenOn.collectAsState()
+	val isScreenOn by nowPlayingScreenViewModel.isScreenOn.subscribeAsState()
 	KeepScreenOn(isScreenOn)
 
 	findWindow()?.isStatusBarLight = false
