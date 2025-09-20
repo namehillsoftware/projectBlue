@@ -163,8 +163,11 @@ class AnchoredProgressScrollConnectionDispatcher(
 	fun progressTo(progress: Float) {
 		val offset = progress * fullDistance
 		val distanceToTravel = offset - totalDistanceTraveled.value
-		onPreScroll(Offset(x= 0f, y = distanceToTravel), NestedScrollSource.UserInput)
+		val fakeAvailable = Offset(x= 0f, y = distanceToTravel)
+		val consumed = onPreScroll(fakeAvailable, NestedScrollSource.UserInput)
 		selectedProgressState.value = progress
+		val adjustedConsumed = fakeAvailable - consumed
+		onPostScroll(adjustedConsumed, fakeAvailable - adjustedConsumed, NestedScrollSource.UserInput)
 	}
 }
 
@@ -211,7 +214,7 @@ class FullScreenScrollConnectedScaler(
 
 	private val fullDistance = state.max - state.min
 
-	private var totalDistanceTraveled = MutableInteractionState(keepWithinMaxTravelDistance(state.totalDistanceTraveled))
+	private val totalDistanceTraveled = MutableInteractionState(keepWithinMaxTravelDistance(state.totalDistanceTraveled))
 
 	val valueState by lazy {
 		autoCloseableManager.manage(
