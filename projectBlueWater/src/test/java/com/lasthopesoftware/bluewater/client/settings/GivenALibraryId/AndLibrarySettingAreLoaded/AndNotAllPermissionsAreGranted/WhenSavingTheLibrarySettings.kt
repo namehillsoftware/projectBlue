@@ -19,10 +19,7 @@ class WhenSavingTheLibrarySettings {
 	private val libraryId = LibraryId(56)
     private val services by lazy {
 		LibrarySettingsViewModel(
-			mockk {
-				every { promiseLibraryName(libraryId) } returns "Bm2udAFPP".toPromise()
-			},
-			mockk {
+            mockk {
 				every { promiseLibrarySettings(libraryId) } returns LibrarySettings(
 					libraryId = libraryId,
 					isUsingExistingFiles = true,

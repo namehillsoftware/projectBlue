@@ -7,6 +7,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.rx3.asFlow
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
@@ -24,13 +25,12 @@ fun <T, S : MutableInteractionState<T>> S.subscribeAsMutableState(
 	val state = updatingState(context)
 
 	LaunchedEffect(key1 = this, context) {
-		value = state.value
 		if (context == EmptyCoroutineContext) {
-			snapshotFlow { state.value }.collect {
+			snapshotFlow { state.value }.drop(1).collect {
 				value = it
 			}
 		} else withContext(context) {
-			snapshotFlow { state.value }.collect {
+			snapshotFlow { state.value }.drop(1).collect {
 				value = it
 			}
 		}

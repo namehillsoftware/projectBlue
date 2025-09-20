@@ -23,9 +23,6 @@ class WhenSavingTheLibrarySettings {
 	private val services by lazy {
         LibrarySettingsViewModel(
 			mockk {
-				every { promiseLibraryName(libraryId) } returns "h7xOYcFV".toPromise()
-			},
-			mockk {
 				every { promiseLibrarySettings(libraryId) } returns LibrarySettings(
 					libraryId = libraryId,
 					isUsingExistingFiles = true,
@@ -121,11 +118,6 @@ class WhenSavingTheLibrarySettings {
 	@Test
 	fun `then the settings are changed after saving`() {
 		assertThat(settingsChangedAfterSaving).isFalse
-	}
-
-	@Test
-	fun `then the saved library name is correct`() {
-		assertThat(services.savedLibraryName.value).isEqualTo("h7xOYcFV")
 	}
 
 	@Test

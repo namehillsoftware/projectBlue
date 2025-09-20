@@ -155,7 +155,7 @@ private fun LabelledSaveAndConnectButton(
 	val scope = rememberCoroutineScope()
 	ColumnMenuIcon(
 		onClick = {
-			if (isSettingsChanged) {
+			if (librarySettingsViewModel.isSettingsChanged.value) {
 				scope.launch {
 					val isSaved = librarySettingsViewModel.saveLibrary().suspend()
 					if (isSaved)
