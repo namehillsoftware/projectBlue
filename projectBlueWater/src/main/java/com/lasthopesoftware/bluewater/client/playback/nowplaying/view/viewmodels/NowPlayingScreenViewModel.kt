@@ -16,8 +16,6 @@ import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.promises.PromiseDelay
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.rxjava3.core.Observable
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 class NowPlayingScreenViewModel(
 	private val applicationMessages: RegisterForApplicationMessages,
@@ -43,9 +41,9 @@ class NowPlayingScreenViewModel(
 	private var isPlayingState = false
 	private var activeLibraryId: LibraryId? = null
 
-	private val isDrawerShownInternalState = MutableStateFlow(false)
-	private val isScreenOnEnabledState = MutableStateFlow(nowPlayingDisplaySettings.isScreenOnDuringPlayback)
-	private val isScreenOnState = MutableStateFlow(false)
+	private val isDrawerShownInternalState = MutableInteractionState(false)
+	private val isScreenOnEnabledState = MutableInteractionState(nowPlayingDisplaySettings.isScreenOnDuringPlayback)
+	private val isScreenOnState = MutableInteractionState(false)
 	private val isScreenControlsVisibleState = MutableInteractionState(false)
 	private val isScreenControlsAlwaysVisibleState = MutableInteractionState(false)
 	val isScreenControlsVisible = LiftedInteractionState(
@@ -56,10 +54,10 @@ class NowPlayingScreenViewModel(
 		false
 	)
 
-	val isDrawerShownState = isDrawerShownInternalState.asStateFlow()
-	val isScreenOn = isScreenOnState.asStateFlow()
+	val isDrawerShownState = isDrawerShownInternalState.asInteractionState()
+	val isScreenOn = isScreenOnState.asInteractionState()
 
-	override val isScreenOnEnabled = isScreenOnEnabledState.asStateFlow()
+	override val isScreenOnEnabled = isScreenOnEnabledState.asInteractionState()
 	override val isDrawerShown
 		get() = isDrawerShownState.value
 

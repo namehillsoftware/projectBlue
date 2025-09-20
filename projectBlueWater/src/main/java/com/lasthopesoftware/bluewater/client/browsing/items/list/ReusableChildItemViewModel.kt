@@ -6,11 +6,10 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.I
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
+import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.closables.ResettableCloseable
 import com.namehillsoftware.handoff.promises.Promise
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 class ReusableChildItemViewModel(
 	private val storedItemAccess: AccessStoredItems,
@@ -19,11 +18,11 @@ class ReusableChildItemViewModel(
 	private var item: IItem? = null
 	private var libraryId: LibraryId? = null
 
-	private val mutableIsSynced = MutableStateFlow(false)
-	private val mutableIsMenuShown = MutableStateFlow(false)
+	private val mutableIsSynced = MutableInteractionState(false)
+	private val mutableIsMenuShown = MutableInteractionState(false)
 
-	val isSynced = mutableIsSynced.asStateFlow()
-	override val isMenuShown = mutableIsMenuShown.asStateFlow()
+	val isSynced = mutableIsSynced.asInteractionState()
+	override val isMenuShown = mutableIsMenuShown.asInteractionState()
 
 	fun update(libraryId: LibraryId, item: IItem) {
 		this.libraryId = libraryId

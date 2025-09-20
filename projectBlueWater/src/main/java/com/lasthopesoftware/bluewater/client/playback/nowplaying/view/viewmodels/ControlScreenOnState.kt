@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 
-import kotlinx.coroutines.flow.StateFlow
+import com.lasthopesoftware.bluewater.shared.observables.InteractionState
 
 interface ControlScreenOnState {
-	val isScreenOnEnabled: StateFlow<Boolean>
+	val isScreenOnEnabled: InteractionState<Boolean>
 	fun toggleScreenOn()
 }

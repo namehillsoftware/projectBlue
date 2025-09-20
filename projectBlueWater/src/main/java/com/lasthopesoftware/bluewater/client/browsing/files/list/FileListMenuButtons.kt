@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -16,6 +15,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
 import com.lasthopesoftware.bluewater.android.ui.theme.SharedAlphas
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 
 @Composable
 fun LabelledShuffleButton(
@@ -73,7 +73,7 @@ fun LabelledSyncButton(
 	modifier: Modifier = Modifier,
 	enabled: Boolean = true,
 ) {
-	val isSynced by fileListViewModel.isSynced.collectAsState()
+	val isSynced by fileListViewModel.isSynced.subscribeAsState()
 	val syncButtonLabel =
 		if (!isSynced) stringResource(id = R.string.btn_sync_item)
 		else stringResource(id = R.string.files_synced)

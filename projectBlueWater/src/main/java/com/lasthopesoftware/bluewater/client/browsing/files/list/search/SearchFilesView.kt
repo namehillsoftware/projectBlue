@@ -35,7 +35,6 @@ import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -162,8 +161,8 @@ private fun RenderTrackTitleItem(
 		}
 	}
 
-	val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
-	val fileName by fileItemViewModel.title.collectAsState()
+	val isMenuShown by fileItemViewModel.isMenuShown.subscribeAsState()
+	val fileName by fileItemViewModel.title.subscribeAsState()
 
 	val viewFilesClickHandler = {
 		searchFilesViewModel.loadedLibraryId?.also {

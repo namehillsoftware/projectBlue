@@ -29,7 +29,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -206,8 +205,8 @@ fun RenderTrackTitleItem(
 		}
 	}
 
-	val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
-	val fileName by fileItemViewModel.title.collectAsState()
+	val isMenuShown by fileItemViewModel.isMenuShown.subscribeAsState()
+	val fileName by fileItemViewModel.title.subscribeAsState()
 	val playingFile by nowPlayingViewModel.nowPlayingFile.subscribeAsState()
 	val isPlaying by remember(serviceFile) { derivedStateOf { playingFile?.serviceFile == serviceFile } }
 
@@ -276,7 +275,7 @@ fun ChildItem(
 		}
 	}
 
-	val isMenuShown by childItemViewModel.isMenuShown.collectAsState()
+	val isMenuShown by childItemViewModel.isMenuShown.subscribeAsState()
 	val hapticFeedback = LocalHapticFeedback.current
 
 	if (!isMenuShown) {
@@ -338,7 +337,7 @@ fun ChildItem(
 					.align(Alignment.CenterVertically),
 			)
 
-			val isChildItemSynced by childItemViewModel.isSynced.collectAsState()
+			val isChildItemSynced by childItemViewModel.isSynced.subscribeAsState()
 			SyncIcon(
 				isActive = isChildItemSynced,
 				modifier = Modifier
