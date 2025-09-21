@@ -17,15 +17,12 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -37,7 +34,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,6 +60,7 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.SlideOutState
 import com.lasthopesoftware.bluewater.android.ui.calculateProgress
+import com.lasthopesoftware.bluewater.android.ui.components.PaddedSystemScreenBox
 import com.lasthopesoftware.bluewater.android.ui.navigable
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
@@ -253,7 +250,12 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedVi
 					.fillMaxHeight()
 					.focusGroup()
 			) {
-				NavigateToTvLibraryDestination(browserViewDependencies)
+				val screenDimensions = ScreenDimensionsScope(
+					this@BoxWithConstraints.maxHeight,
+					this@BoxWithConstraints.maxWidth,
+					this@BoxWithConstraints,
+				)
+				screenDimensions.NavigateToTvLibraryDestination(this@NowPlayingTvView, browserViewDependencies)
 			}
 		} else {
 			BackHandler {
@@ -534,15 +536,8 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedViewModel
 
 		is ConnectionSettingsScreen -> {
 			with(browserViewDependencies) {
-				val viewModel = librarySettingsViewModel
-
-				val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
-
-				Box(
-					modifier = Modifier
-						.fillMaxSize()
-						.padding(systemBarsPadding)
-				) {
+				PaddedSystemScreenBox {
+					val viewModel = librarySettingsViewModel
 					LibrarySettingsView(
 						librarySettingsViewModel = viewModel,
 						navigateApplication = applicationNavigation,
@@ -550,9 +545,8 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedViewModel
 						userSslCertificates = userSslCertificateProvider,
 						undoBackStack = undoBackStackBuilder,
 					)
+					viewModel.loadLibrary(libraryId)
 				}
-
-				viewModel.loadLibrary(libraryId)
 			}
 		}
 
@@ -619,8 +613,8 @@ fun NowPlayingTvPlaylist(
 			}
 		}
 
-		val fileName by fileItemViewModel.title.collectAsState()
-		val artist by fileItemViewModel.artist.collectAsState()
+		val fileName by fileItemViewModel.title.subscribeAsState()
+		val artist by fileItemViewModel.artist.subscribeAsState()
 		val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
 
 		NowPlayingTvItemView(
@@ -825,9 +819,7 @@ fun NowPlayingTvApplication(
 						}
 						?.registerBackNav()
 						?.apply {
-							Box(
-								modifier = Modifier.fillMaxSize()
-							) {
+							PaddedSystemScreenBox {
 								LibrarySettingsView(
 									librarySettingsViewModel = librarySettingsViewModel,
 									navigateApplication = applicationNavigation,

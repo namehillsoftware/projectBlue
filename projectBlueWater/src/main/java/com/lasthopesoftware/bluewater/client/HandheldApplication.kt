@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -30,6 +31,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.lasthopesoftware.bluewater.android.ui.components.PaddedSystemScreenBox
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.DetermineWindowControlColors
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
@@ -66,6 +68,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.initialization.C
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingView
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.exceptions.UncaughtExceptionHandlerLogger
@@ -94,11 +97,12 @@ private fun BrowserLibraryDestination.Navigate(
 	libraryConnectionDependencies: LibraryConnectionDependents,
 ) {
 	with(browserViewDependencies) {
-		Box(
+		BoxWithConstraints(
 			modifier = Modifier
 				.fillMaxSize()
 				.background(Color.Black)
-		) {
+		) screenBox@{
+
 			val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 			val layoutDirection = LocalLayoutDirection.current
 			Column(
@@ -176,8 +180,15 @@ private fun BrowserLibraryDestination.Navigate(
 						}
 					}
 				) { paddingValues ->
-					Box(modifier = Modifier.padding(paddingValues)) {
-						NavigateToLibraryDestination(
+					BoxWithConstraints(modifier = Modifier.padding(paddingValues)) nestedBox@{
+						val screenScope = ScreenDimensionsScope(
+							screenHeight = this@screenBox.maxHeight,
+							screenWidth = this@screenBox.maxWidth,
+							innerBoxScope = this@nestedBox
+						)
+
+						screenScope.NavigateToLibraryDestination(
+							this@Navigate,
 							browserViewDependencies
 						)
 					}
@@ -230,17 +241,19 @@ fun LibraryDestination.Navigate(
 			}
 
 			is ConnectionSettingsScreen -> {
-				val viewModel = librarySettingsViewModel
+				PaddedSystemScreenBox {
+					val viewModel = librarySettingsViewModel
 
-				LibrarySettingsView(
-					librarySettingsViewModel = viewModel,
-					navigateApplication = applicationNavigation,
-					stringResources = stringResources,
-					userSslCertificates = userSslCertificateProvider,
-					undoBackStack = undoBackStackBuilder,
-				)
+					LibrarySettingsView(
+						librarySettingsViewModel = viewModel,
+						navigateApplication = applicationNavigation,
+						stringResources = stringResources,
+						userSslCertificates = userSslCertificateProvider,
+						undoBackStack = undoBackStackBuilder,
+					)
 
-				viewModel.loadLibrary(libraryId)
+					viewModel.loadLibrary(libraryId)
+				}
 			}
 
 			is NowPlayingScreen -> {
@@ -443,13 +456,15 @@ fun HandheldApplication(
 						}
 						?.registerBackNav()
 						?.apply {
-							LibrarySettingsView(
-								librarySettingsViewModel = librarySettingsViewModel,
-								navigateApplication = applicationNavigation,
-								stringResources = stringResources,
-								userSslCertificates = userSslCertificateProvider,
-								undoBackStack = undoBackStackBuilder,
-							)
+							PaddedSystemScreenBox {
+								LibrarySettingsView(
+									librarySettingsViewModel = librarySettingsViewModel,
+									navigateApplication = applicationNavigation,
+									stringResources = stringResources,
+									userSslCertificates = userSslCertificateProvider,
+									undoBackStack = undoBackStackBuilder,
+								)
+							}
 						}
 				}
 

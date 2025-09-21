@@ -14,8 +14,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredIt
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 class FileListViewModel(
 	private val itemFileProvider: ProvideLibraryFiles,
@@ -24,16 +22,16 @@ class FileListViewModel(
 
 	private val mutableIsLoading = MutableInteractionState(true)
 	private val mutableFiles = MutableInteractionState(emptyList<ServiceFile>())
-	private val mutableItemValue = MutableStateFlow("")
-	private val mutableIsSynced = MutableStateFlow(false)
+	private val mutableItemValue = MutableInteractionState("")
+	private val mutableIsSynced = MutableInteractionState(false)
 
 	private var loadedItem: IItem? = null
 	private var loadedLibraryId: LibraryId? = null
 
 	override val isLoading = mutableIsLoading.asInteractionState()
 	override val files = mutableFiles.asInteractionState()
-	val itemValue = mutableItemValue.asStateFlow()
-	val isSynced = mutableIsSynced.asStateFlow()
+	val itemValue = mutableItemValue.asInteractionState()
+	val isSynced = mutableIsSynced.asInteractionState()
 
 	override fun loadItem(libraryId: LibraryId, item: IItem?): Promise<Unit> {
 		mutableIsLoading.value = libraryId != loadedLibraryId || item != loadedItem

@@ -22,14 +22,14 @@ import com.lasthopesoftware.promises.extensions.suspend
 import java.io.IOException
 
 @Composable
-fun BrowserLibraryDestination.NavigateToTvLibraryDestination(browserViewDependencies: ScopedViewModelDependencies) {
-	when (this) {
+fun ScreenDimensionsScope.NavigateToTvLibraryDestination(destination: BrowserLibraryDestination, browserViewDependencies: ScopedViewModelDependencies) {
+	when (destination) {
 		is LibraryScreen -> {
-            LoadedItemListView(browserViewDependencies, libraryId, null)
+            LoadedItemListView(browserViewDependencies, destination.libraryId, null)
 		}
 
 		is ItemScreen -> {
-            LoadedItemListView(browserViewDependencies, libraryId, item)
+            LoadedItemListView(browserViewDependencies, destination.libraryId, destination.item)
 		}
 
 		is DownloadsScreen -> {
@@ -38,10 +38,9 @@ fun BrowserLibraryDestination.NavigateToTvLibraryDestination(browserViewDependen
                     activeFileDownloadsViewModel = activeFileDownloadsViewModel,
                     trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
 					applicationNavigation = applicationNavigation,
-					undoBackStack = undoBackStackBuilder,
                 )
 
-				activeFileDownloadsViewModel.loadActiveDownloads(libraryId)
+				activeFileDownloadsViewModel.loadActiveDownloads(destination.libraryId)
 			}
 		}
 
@@ -71,20 +70,20 @@ fun BrowserLibraryDestination.NavigateToTvLibraryDestination(browserViewDependen
 				}
 
 				ViewModelInitAction {
-					searchFilesViewModel.setActiveLibraryId(libraryId)
+					searchFilesViewModel.setActiveLibraryId(destination.libraryId)
 
 					if (reinitializeConnection) {
 						LaunchedEffect(key1 = Unit) {
-							isConnectionLost = !connectionStatusViewModel.initializeConnection(libraryId).suspend()
+							isConnectionLost = !connectionStatusViewModel.initializeConnection(destination.libraryId).suspend()
 							reinitializeConnection = false
 						}
 					}
 
 					if (!isConnectionLost) {
-						LaunchedEffect(filePropertyFilter) {
+						LaunchedEffect(destination.filePropertyFilter) {
 							try {
-								if (filePropertyFilter != null) {
-									searchFilesViewModel.prependFilter(filePropertyFilter)
+								if (destination.filePropertyFilter != null) {
+									searchFilesViewModel.prependFilter(destination.filePropertyFilter)
 									searchFilesViewModel.findFiles().suspend()
 								}
 							} catch (e: IOException) {

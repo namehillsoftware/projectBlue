@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list.menus
 
-import kotlinx.coroutines.flow.StateFlow
+import com.lasthopesoftware.bluewater.shared.observables.InteractionState
 
 interface HiddenListItemMenu {
-	val isMenuShown: StateFlow<Boolean>
+	val isMenuShown: InteractionState<Boolean>
 
 	fun showMenu(): Boolean
 	fun hideMenu(): Boolean

@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 
 object SharedAlphas {
 	const val controlAlpha = 0.6f
+	const val disabledAlpha = .4f
 }
 
 object SharedColors {

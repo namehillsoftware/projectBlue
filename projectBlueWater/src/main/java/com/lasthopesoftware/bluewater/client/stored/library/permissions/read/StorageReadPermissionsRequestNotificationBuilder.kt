@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.permissions.read
 
 import android.app.Notification
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.IStoragePermissionsRequestNotificationBuilder
 
 /**
@@ -8,10 +9,9 @@ import com.lasthopesoftware.bluewater.client.stored.library.permissions.IStorage
  */
 class StorageReadPermissionsRequestNotificationBuilder(
 	private val storagePermissionsRequestNotificationBuilder: IStoragePermissionsRequestNotificationBuilder
-) :
-	IStorageReadPermissionsRequestNotificationBuilder {
+) : IStorageReadPermissionsRequestNotificationBuilder {
 
-	override fun buildReadPermissionsRequestNotification(libraryId: Int): Notification? {
+	override fun buildReadPermissionsRequestNotification(libraryId: LibraryId): Notification? {
         return storagePermissionsRequestNotificationBuilder.buildStoragePermissionsRequestNotification(libraryId)
     }
 }

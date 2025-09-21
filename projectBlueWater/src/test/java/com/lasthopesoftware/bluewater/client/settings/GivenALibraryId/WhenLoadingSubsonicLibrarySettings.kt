@@ -14,15 +14,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class WhenLoadingTheLibrarySettings {
+class WhenLoadingSubsonicLibrarySettings {
 
     private val libraryId = LibraryId(659)
 
     private val services by lazy {
         LibrarySettingsViewModel(
-			mockk {
-				every { promiseLibraryName(libraryId) } returns "Zt0HwXFNWT".toPromise()
-			},
 			mockk {
 				every { promiseLibrarySettings(libraryId) } returns LibrarySettings(
 					libraryId = libraryId,
@@ -52,8 +49,8 @@ class WhenLoadingTheLibrarySettings {
     }
 
 	@Test
-	fun `then the saved library name is correct`() {
-		assertThat(services.savedLibraryName.value).isEqualTo("Zt0HwXFNWT")
+	fun `then the settings are not changed`() {
+		assertThat(services.isSettingsChanged.value).isFalse
 	}
 
     @Test

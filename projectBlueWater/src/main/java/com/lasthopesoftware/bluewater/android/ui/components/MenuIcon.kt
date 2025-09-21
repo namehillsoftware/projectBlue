@@ -2,8 +2,9 @@ package com.lasthopesoftware.bluewater.android.ui.components
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.Text
@@ -24,17 +25,75 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.navigable
-import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
 import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
+import com.lasthopesoftware.bluewater.android.ui.theme.SharedAlphas
+
+const val disabledAlpha = SharedAlphas.disabledAlpha
 
 @Composable
-fun RowScope.ColumnMenuIcon(
+private fun labelColor(enabled: Boolean): Color =
+	if (enabled) LocalContentColor.current
+	else LocalContentColor.current.copy(alpha = disabledAlpha)
+
+@Composable
+private fun iconColor(enabled: Boolean): Color =
+	if (enabled) LocalControlColor.current
+	else LocalControlColor.current.copy(alpha = disabledAlpha)
+
+@Composable
+fun LabelledRefreshButton(
+	onClick: () -> Unit,
+	modifier: Modifier = Modifier,
+	enabled: Boolean = true,
+	focusRequester: FocusRequester? = null,
+) {
+	val refreshButtonLabel = stringResource(id = R.string.refresh)
+	ColumnMenuIcon(
+		onClick = onClick,
+		iconPainter = painterResource(id = R.drawable.refresh_36),
+		contentDescription = refreshButtonLabel,
+		label = refreshButtonLabel,
+		labelModifier = modifier,
+		labelMaxLines = 1,
+		enabled = enabled,
+		focusRequester = focusRequester,
+	)
+}
+
+@Composable
+fun UnlabelledChevronIcon(
+	onClick: () -> Unit,
+	chevronDescription: String,
+	modifier: Modifier = Modifier,
+	chevronModifier: Modifier = Modifier,
+) {
+	ColumnMenuIcon(
+		onClick = onClick,
+		icon = {
+			Icon(
+				painter = painterResource(id = R.drawable.chevron_up_white_36dp),
+				tint = LocalControlColor.current,
+				contentDescription = chevronDescription,
+				modifier = Modifier
+					.size(topMenuIconSize)
+					.then(chevronModifier),
+			)
+		},
+		modifier = modifier,
+	)
+}
+
+@Composable
+fun ColumnMenuIcon(
 	onClick: () -> Unit,
 	iconPainter: Painter,
 	contentDescription: String,
 	modifier: Modifier = Modifier,
+	enabled: Boolean = true,
+	iconTint: Color = iconColor(enabled),
 	label: String? = null,
-	labelColor: Color = LocalContentColor.current,
+	labelColor: Color = labelColor(enabled),
 	labelModifier: Modifier = Modifier,
 	labelMaxLines: Int = 1,
 	isDefault: Boolean = false,
@@ -44,38 +103,40 @@ fun RowScope.ColumnMenuIcon(
 		onClick = onClick,
 		iconPainter = iconPainter,
 		contentDescription = contentDescription,
-		modifier = Modifier
-			.weight(1f)
-			.then(modifier),
+		modifier = modifier,
+		iconTint = iconTint,
 		label = label,
 		labelColor = labelColor,
 		labelModifier = labelModifier,
 		labelMaxLines = labelMaxLines,
+		enabled = enabled,
 		isDefault = isDefault,
 		focusRequester = focusRequester,
 	)
 }
 
 @Composable
-fun RowScope.ColumnMenuIcon(
+fun ColumnMenuIcon(
 	onClick: () -> Unit,
-	icon: @Composable () -> Unit,
+	icon: @Composable ColumnScope.() -> Unit,
 	modifier: Modifier = Modifier,
+	enabled: Boolean = true,
 	label: String? = null,
-	labelColor: Color = LocalContentColor.current,
+	labelColor: Color = labelColor(enabled),
 	labelModifier: Modifier = Modifier,
 	labelMaxLines: Int = 1,
+	focusRequester: FocusRequester? = null,
 ) {
 	MenuIcon(
 		onClick = onClick,
 		icon = icon,
-		modifier = Modifier
-			.weight(1f)
-			.then(modifier),
+		modifier = modifier,
 		label = label,
 		labelColor = labelColor,
 		labelModifier = labelModifier,
 		labelMaxLines = labelMaxLines,
+		enabled = enabled,
+		focusRequester = focusRequester,
 	)
 }
 
@@ -85,8 +146,10 @@ fun MenuIcon(
 	iconPainter: Painter,
 	contentDescription: String,
 	modifier: Modifier = Modifier,
+	enabled: Boolean = true,
+	iconTint: Color = iconColor(enabled),
 	label: String? = null,
-	labelColor: Color = LocalContentColor.current,
+	labelColor: Color = labelColor(enabled),
 	labelModifier: Modifier = Modifier,
 	labelMaxLines: Int = 1,
 	isDefault: Boolean = false,
@@ -98,8 +161,8 @@ fun MenuIcon(
 			Icon(
 				painter = iconPainter,
 				contentDescription = contentDescription,
-				modifier = Modifier.size(Dimensions.topMenuIconSize),
-				tint = LocalControlColor.current
+				modifier = Modifier.size(topMenuIconSize),
+				tint = iconTint,
 			)
 		},
 		modifier = modifier,
@@ -107,6 +170,7 @@ fun MenuIcon(
 		labelColor = labelColor,
 		labelModifier = labelModifier,
 		labelMaxLines = labelMaxLines,
+		enabled = enabled,
 		isDefault = isDefault,
 		focusRequester = focusRequester,
 	)
@@ -115,10 +179,11 @@ fun MenuIcon(
 @Composable
 fun MenuIcon(
 	onClick: () -> Unit,
-	icon: @Composable () -> Unit,
+	icon: @Composable ColumnScope.() -> Unit,
 	modifier: Modifier = Modifier,
+	enabled: Boolean = true,
 	label: String? = null,
-	labelColor: Color = LocalContentColor.current,
+	labelColor: Color = labelColor(enabled),
 	labelModifier: Modifier = Modifier,
 	labelMaxLines: Int = Int.MAX_VALUE,
 	isDefault: Boolean = false,
@@ -138,6 +203,7 @@ fun MenuIcon(
 					color = labelColor,
 				)
 			},
+			enabled = enabled,
 			isDefault = isDefault,
 			focusRequester = focusRequester,
 		)
@@ -157,7 +223,7 @@ fun MenuIcon(
 @Composable
 fun MenuIcon(
 	onClick: () -> Unit,
-	icon: @Composable () -> Unit,
+	icon: @Composable ColumnScope.() -> Unit,
 	modifier: Modifier = Modifier,
 	label: @Composable (() -> Unit)? = null,
 	interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -176,6 +242,7 @@ fun MenuIcon(
 				isDefault = isDefault,
 				focusRequester = focusRequester,
 			)
+			.wrapContentSize(unbounded = true, align = Alignment.Center)
 			.then(modifier)
 			.semantics { role = Role.Button }
 	) {
@@ -183,38 +250,4 @@ fun MenuIcon(
 
 		label?.invoke()
 	}
-}
-
-@Composable
-fun RowScope.LabelledRefreshButton(
-	onClick: () -> Unit,
-	modifier: Modifier = Modifier,
-	focusRequester: FocusRequester? = null,
-) {
-	val refreshButtonLabel = stringResource(id = R.string.refresh)
-	ColumnMenuIcon(
-		onClick = onClick,
-		iconPainter = painterResource(id = R.drawable.refresh_36),
-		contentDescription = refreshButtonLabel,
-		label = refreshButtonLabel,
-		labelModifier = modifier,
-		labelMaxLines = 1,
-		focusRequester = focusRequester,
-	)
-}
-
-@Composable
-fun UnlabelledRefreshButton(
-	onClick: () -> Unit,
-	modifier: Modifier = Modifier,
-	focusRequester: FocusRequester? = null,
-) {
-	MenuIcon(
-		onClick = onClick,
-		iconPainter = painterResource(id = R.drawable.refresh_36),
-		contentDescription = stringResource(id = R.string.refresh),
-		label = null,
-		modifier = modifier,
-		focusRequester = focusRequester,
-	)
 }
