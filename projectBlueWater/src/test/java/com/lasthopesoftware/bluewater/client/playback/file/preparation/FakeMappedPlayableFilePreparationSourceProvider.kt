@@ -16,8 +16,8 @@ class FakeMappedPlayableFilePreparationSourceProvider(queue: List<ServiceFile>) 
 
 	override fun providePlayableFilePreparationSource(): PlayableFilePreparationSource {
         return PlayableFilePreparationSource { _, sf, preparedAt ->
-			deferredResolutions[sf]
-				?.also {
+			deferredResolutions.getOrPut(sf, ::DeferredPreparedPlayableFile)
+				.also {
 					it.preparedAt = preparedAt
 					it.excuse { e ->
 						if (e is ResetCancellationException) {

@@ -259,6 +259,12 @@ class PlaybackEngine(
 		copy(playlist = playlist + serviceFile)
 	}.then(::updatePreparedFileQueueUsingState)
 
+	override fun playFileNext(serviceFile: ServiceFile): Promise<NowPlaying?> = saveState(activeLibraryId.get()) {
+		val mutableList = playlist.toMutableList()
+		mutableList.add(playlistPosition + 1, serviceFile)
+		copy(playlist = mutableList)
+	}.then(::updatePreparedFileQueueUsingState)
+
 	override fun removeFileAtPosition(position: Int): Promise<NowPlaying?> {
 		return promiseActiveNowPlaying()
 			.eventually {

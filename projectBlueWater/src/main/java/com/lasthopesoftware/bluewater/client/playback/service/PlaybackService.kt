@@ -229,6 +229,15 @@ import java.util.concurrent.TimeoutException
 			)
 		}
 
+		fun addAfterNowPlayingFile(context: Context, libraryId: LibraryId, serviceFile: ServiceFile) {
+			context.safelyStartService(
+				getNewSelfIntent(
+					context,
+					PlaybackEngineAction.AddFileToPlaylist(libraryId, serviceFile)
+				)
+			)
+		}
+
 		fun removeFileAtPositionFromPlaylist(context: Context, libraryId: LibraryId, filePosition: Int) {
 			context.safelyStartService(
 				getNewSelfIntent(
@@ -634,6 +643,21 @@ import java.util.concurrent.TimeoutException
 					val (libraryId, serviceFile) = playbackEngineAction
 					restorePlaybackServices(libraryId)
 						.eventually { it.playlistFiles.addFile(serviceFile) }
+						.then { _ -> applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId)) }
+						.eventually {
+							mainLoopHandlerExecutor.preparePromise {
+								Toast.makeText(
+									this,
+									getText(R.string.lbl_song_added_to_now_playing),
+									Toast.LENGTH_SHORT
+								).show()
+							}
+						}
+				}
+				is PlaybackEngineAction.AddFileAfterNowPlaying -> {
+					val (libraryId, serviceFile) = playbackEngineAction
+					restorePlaybackServices(libraryId)
+						.eventually { it.playlistFiles.playFileNext(serviceFile) }
 						.then { _ -> applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId)) }
 						.eventually {
 							mainLoopHandlerExecutor.preparePromise {
@@ -1075,6 +1099,12 @@ import java.util.concurrent.TimeoutException
 		data class ClearPlaylist(override val libraryId: LibraryId): PlaybackEngineAction {
 			@IgnoredOnParcel
 			override val requestCode = 12
+		}
+
+		@Parcelize
+		data class AddFileAfterNowPlaying(override val libraryId: LibraryId, val serviceFile: ServiceFile) : PlaybackEngineAction {
+			@IgnoredOnParcel
+			override val requestCode = 13
 		}
 
 		@Parcelize
