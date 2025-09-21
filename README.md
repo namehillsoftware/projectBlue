@@ -60,9 +60,10 @@ owned by the current user, run either `./build-release.sh` or `./build-apk.sh`.
 
 ### Building Flatpak
 
-1. Change to flatpak dir
-2. Change the build number of the apk in the flatpak YML file.
-3. Execute `flatpak-builder --force-clean --user --install-deps-from=flathub --repo=repo --install builddir com.lasthopesoftware.projectblue.yml`.
+1. Build the APK using one of the options above.
+2. Change to flatpak dir.
+3. Change the build number of the apk in the flatpak YML file.
+4. Execute `flatpak-builder --force-clean --user --install-deps-from=flathub --repo=repo --install builddir com.lasthopesoftware.projectblue.yml`.
 
 To run the finished flatpak, run ` flatpak run com.lasthopesoftware.projectblue`.
 
