@@ -146,6 +146,23 @@ private fun StaticFileMenu(
 			modifier = modifier,
 		)
 
+		val playFileNextPlaybackLabel = stringResource(id = R.string.btn_play_file_next)
+		ColumnMenuIcon(
+			onClick = { fileDetailsState.playNext() },
+			icon = {
+				Image(
+					painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
+					colorFilter = ColorFilter.tint(mediaStylePalette.secondaryTextColor),
+					contentDescription = playFileNextPlaybackLabel,
+					modifier = Modifier.size(topMenuIconSize),
+				)
+			},
+			label = playFileNextPlaybackLabel,
+			labelColor = mediaStylePalette.secondaryTextColor,
+			labelMaxLines = 1,
+			modifier = modifier,
+		)
+
 		if (playableFileDetailsState != null) {
 			val playLabel = stringResource(id = R.string.btn_play)
 			ColumnMenuIcon(

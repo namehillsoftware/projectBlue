@@ -233,7 +233,7 @@ import java.util.concurrent.TimeoutException
 			context.safelyStartService(
 				getNewSelfIntent(
 					context,
-					PlaybackEngineAction.AddFileToPlaylist(libraryId, serviceFile)
+					PlaybackEngineAction.AddFileAfterNowPlaying(libraryId, serviceFile)
 				)
 			)
 		}
