@@ -134,7 +134,7 @@ private fun StaticFileMenu(
 			onClick = { fileDetailsState.addToNowPlaying() },
 			icon = {
 				Image(
-					painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
+					painter = painterResource(id = R.drawable.playlist_plus),
 					colorFilter = ColorFilter.tint(mediaStylePalette.secondaryTextColor),
 					contentDescription = addFileToPlaybackLabel,
 					modifier = Modifier.size(topMenuIconSize),
@@ -151,7 +151,7 @@ private fun StaticFileMenu(
 			onClick = { fileDetailsState.playNext() },
 			icon = {
 				Image(
-					painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
+					painter = painterResource(id = R.drawable.playlist_inner_plus),
 					colorFilter = ColorFilter.tint(mediaStylePalette.secondaryTextColor),
 					contentDescription = playFileNextPlaybackLabel,
 					modifier = Modifier.size(topMenuIconSize),
