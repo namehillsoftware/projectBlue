@@ -127,6 +127,7 @@ private fun StaticFileMenu(
 				fileDetailsState.promiseLoadedActiveFile()
 			},
 			modifier = modifier,
+			labelColor = mediaStylePalette.secondaryTextColor
 		)
 
 		val addFileToPlaybackLabel = stringResource(id = R.string.btn_add_file_to_playback)
