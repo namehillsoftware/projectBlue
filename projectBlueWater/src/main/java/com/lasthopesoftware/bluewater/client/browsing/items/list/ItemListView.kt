@@ -74,7 +74,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.ListLoading
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledChevronIcon
-import com.lasthopesoftware.bluewater.android.ui.components.ignoreOffsetConsumption
+import com.lasthopesoftware.bluewater.android.ui.components.ignoreConsumedOffset
 import com.lasthopesoftware.bluewater.android.ui.components.linkedTo
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
@@ -714,7 +714,7 @@ fun ScreenDimensionsScope.ItemListView(
 				val compositeScrollConnection = remember(titleHeightScaler, menuHeightScaler) {
 					titleHeightScaler
 						.linkedTo(menuHeightScaler)
-						.ignoreOffsetConsumption()
+						.ignoreConsumedOffset()
 				}
 
 				val anchoredScrollConnectionDispatcher =
@@ -758,10 +758,10 @@ fun ScreenDimensionsScope.ItemListView(
 							.fillMaxWidth()
 							.focusGroup()
 					) headerColumn@{
-						val titleHeightValue by titleHeightScaler.valueState.subscribeAsState()
+						val titleHeightValue by titleHeightScaler.valueState
 
-						val headerCollapseProgress by titleHeightScaler.progressState.subscribeAsState()
-						val titleHeightValueDp by LocalDensity.current.remember { derivedStateOf { titleHeightValue.toDp() } }
+						val headerCollapseProgress by titleHeightScaler.progressState
+						val titleHeightValueDp by LocalDensity.current.remember(titleHeightScaler) { derivedStateOf { titleHeightValue.toDp() } }
 						Box(
 							modifier = Modifier
 								.fillMaxWidth()
@@ -817,9 +817,9 @@ fun ScreenDimensionsScope.ItemListView(
 							}
 
 							ProvideTextStyle(MaterialTheme.typography.h5) {
-								val startPadding by rememberTitleStartPadding(titleHeightScaler.progressState.subscribeAsState())
+								val startPadding by rememberTitleStartPadding(titleHeightScaler.progressState)
 
-								val topPadding by remember {
+								val topPadding by remember(titleHeightScaler) {
 									derivedStateOf {
 										linearInterpolation(
 											appBarHeight,
@@ -829,7 +829,7 @@ fun ScreenDimensionsScope.ItemListView(
 									}
 								}
 
-								val endPadding by remember {
+								val endPadding by remember(titleHeightScaler) {
 									derivedStateOf {
 										linearInterpolation(
 											viewPaddingUnit * 2,
@@ -839,7 +839,7 @@ fun ScreenDimensionsScope.ItemListView(
 									}
 								}
 
-								val maxLines by remember { derivedStateOf { (2 - headerCollapseProgress).roundToInt() } }
+								val maxLines by remember(titleHeightScaler) { derivedStateOf { (2 - headerCollapseProgress).roundToInt() } }
 								if (maxLines > 1) {
 									Text(
 										text = itemValue,
@@ -930,7 +930,7 @@ fun ScreenDimensionsScope.ItemListView(
 					val compositeScrollConnection = remember(titleHeightScaler, menuHeightScaler) {
 						titleHeightScaler
 							.linkedTo(menuHeightScaler)
-							.ignoreOffsetConsumption()
+							.ignoreConsumedOffset()
 					}
 
 					ItemListView(

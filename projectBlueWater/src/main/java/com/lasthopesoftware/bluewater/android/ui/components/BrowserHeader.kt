@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUni
 import kotlin.math.pow
 
 @Composable
-fun rememberTitleStartPadding(progress: State<Float>) = remember {
+fun rememberTitleStartPadding(progress: State<Float>) = remember(progress) {
 	derivedStateOf {
 		val acceleratedProgress = (1 - progress.value).pow(3).coerceIn(0f, 1f)
 		val acceleratedInverseProgress = 1 - acceleratedProgress

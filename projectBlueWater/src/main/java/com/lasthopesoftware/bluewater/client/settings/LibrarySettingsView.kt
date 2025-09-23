@@ -909,7 +909,7 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 			}
 
 			Column {
-				val heightValue by heightScaler.valueState.subscribeAsState()
+				val heightValue by heightScaler.valueState
 				Box(
 					modifier = Modifier
 						.height(LocalDensity.current.run { heightValue.toDp() })
@@ -917,7 +917,7 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 						.background(MaterialTheme.colors.surface)
 				) {
 					ProvideTextStyle(MaterialTheme.typography.h5) {
-						val headerCollapseProgress by heightScaler.progressState.subscribeAsState()
+						val headerCollapseProgress by heightScaler.progressState
 						val topPadding by remember {
 							derivedStateOf {
 								linearInterpolation(
@@ -928,7 +928,7 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 							}
 						}
 
-						val startPadding by rememberTitleStartPadding(heightScaler.progressState.subscribeAsState())
+						val startPadding by rememberTitleStartPadding(heightScaler.progressState)
 						val endPadding = viewPaddingUnit
 						MarqueeText(
 							text = stringResource(id = R.string.settings),
