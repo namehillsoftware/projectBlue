@@ -7,6 +7,7 @@ import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.asFloatState
 import androidx.compose.runtime.derivedStateOf
@@ -22,11 +23,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.unit.Velocity
-import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
-import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
-import com.lasthopesoftware.bluewater.shared.observables.toCloseable
 import com.lasthopesoftware.compilation.DebugFlag
-import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import kotlinx.parcelize.Parcelize
 import kotlin.math.abs
 
@@ -71,66 +68,72 @@ class MutableAnchoredScrollConnectionState(
 	}
 }
 
+@Composable
+fun rememberAnchoredProgressScrollConnectionDispatcher(state: AnchoredScrollConnectionState, fullDistance: Float, inner: BoundedScrollConnection = NoOpBoundedScrollConnection): AnchoredProgressScrollConnectionDispatcher {
+	val dispatcher = remember(state, fullDistance, inner) {
+		AnchoredProgressScrollConnectionDispatcher(
+			state,
+			fullDistance,
+			inner
+		)
+	}
+
+	LaunchedEffect(dispatcher) {
+		if (state is MutableAnchoredScrollConnectionState) {
+			snapshotFlow { dispatcher.selectedProgressState }
+				.collect { state.selectedProgress = it }
+		}
+	}
+
+	if (fullDistance != 0f) {
+		LaunchedEffect(dispatcher) {
+			if (state is MutableAnchoredScrollConnectionState) {
+				snapshotFlow { dispatcher.totalDistanceTraveled }
+					.collect {
+						state.progress = (it / fullDistance).coerceIn(0f, 1f)
+					}
+			}
+		}
+	} else {
+		DisposableEffect(dispatcher) {
+			onDispose {
+				if (state is MutableAnchoredScrollConnectionState) {
+					state.progress = 0f
+				}
+			}
+		}
+	}
+
+	return dispatcher
+}
+
 @SuppressLint("LongLogTag")
 class AnchoredProgressScrollConnectionDispatcher(
-	private val state: MutableAnchoredScrollConnectionState,
+	state: AnchoredScrollConnectionState,
 	private val fullDistance: Float,
 	private val inner: BoundedScrollConnection = NoOpBoundedScrollConnection,
-) : BoundedScrollConnection by inner, AutoCloseable {
+) : BoundedScrollConnection by inner {
 
 	companion object {
 		private const val logTag = "AnchoredProgressScrollConnectionDispatcher"
 	}
 
-	private val autoCloseableManager = AutoCloseableManager()
-
-	private val selectedProgressState = MutableInteractionState(state.selectedProgress)
-
 	private val relativeAnchors = state.progressAnchors
 
-	private val totalDistanceTraveled = MutableInteractionState(state.progress * fullDistance)
+	var selectedProgressState by mutableStateOf(state.selectedProgress)
+		private set
 
-	init {
-		autoCloseableManager.manage(
-			selectedProgressState
-				.subscribe {
-					if (DebugFlag.isDebugCompilation) {
-						Log.d(logTag, "selectedProgress: $it")
-					}
-					state.selectedProgress = it.value
-				}
-				.toCloseable()
-		)
-
-		if (fullDistance != 0f) {
-			autoCloseableManager.manage(
-				totalDistanceTraveled
-					.mapNotNull()
-					.subscribe {
-						state.progress = (it / fullDistance).coerceIn(0f, 1f)
-						if (DebugFlag.isDebugCompilation) {
-							Log.d(logTag, "state.progress: ${state.progress}")
-						}
-					}
-					.toCloseable()
-			)
-		} else {
-			state.progress = 0f
-		}
-	}
-
-	override fun close() {
-		autoCloseableManager.close()
-	}
+	var totalDistanceTraveled by mutableFloatStateOf(state.progress * fullDistance)
+		private set
 
 	@SuppressLint("LongLogTag")
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
 		// try to consume before LazyColumn to collapse toolbar if needed, hence pre-scroll
-		selectedProgressState.value = null
-		totalDistanceTraveled.value += available.y
+		selectedProgressState = null
+		totalDistanceTraveled += available.y
 
 		if (DebugFlag.isDebugCompilation) {
-			Log.d(logTag, "totalDistanceTraveled: ${totalDistanceTraveled.value}")
+			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
 		}
 
 		return inner.onPreScroll(available, source)
@@ -142,10 +145,10 @@ class AnchoredProgressScrollConnectionDispatcher(
 
 		val available = available - innerConsumed
 
-		totalDistanceTraveled.value -= available.y
+		totalDistanceTraveled -= available.y
 
 		if (DebugFlag.isDebugCompilation) {
-			Log.d(logTag, "totalDistanceTraveled: ${totalDistanceTraveled.value}")
+			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
 			Log.d(logTag, "consumed: ${consumed.y}")
 			Log.d(logTag, "available: ${available.y}")
 		}
@@ -163,10 +166,10 @@ class AnchoredProgressScrollConnectionDispatcher(
 
 	fun progressTo(progress: Float) {
 		val offset = progress * fullDistance
-		val distanceToTravel = offset - totalDistanceTraveled.value
+		val distanceToTravel = offset - totalDistanceTraveled
 		val fakeAvailable = Offset(x= 0f, y = distanceToTravel)
 		val consumed = onPreScroll(fakeAvailable, NestedScrollSource.UserInput)
-		selectedProgressState.value = progress
+		selectedProgressState = progress
 		val adjustedConsumed = fakeAvailable - consumed
 		onPostScroll(adjustedConsumed, fakeAvailable - adjustedConsumed, NestedScrollSource.UserInput)
 	}

@@ -65,7 +65,6 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.calculateSummaryColumnWidth
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredChips
-import com.lasthopesoftware.bluewater.android.ui.components.AnchoredProgressScrollConnectionDispatcher
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
@@ -76,6 +75,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledChevronIcon
 import com.lasthopesoftware.bluewater.android.ui.components.ignoreConsumedOffset
 import com.lasthopesoftware.bluewater.android.ui.components.linkedTo
+import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredProgressScrollConnectionDispatcher
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
@@ -85,7 +85,6 @@ import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.navigable
 import com.lasthopesoftware.bluewater.android.ui.remember
-import com.lasthopesoftware.bluewater.android.ui.rememberAutoCloseable
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.DetermineWindowControlColors
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
@@ -717,14 +716,11 @@ fun ScreenDimensionsScope.ItemListView(
 						.ignoreConsumedOffset()
 				}
 
-				val anchoredScrollConnectionDispatcher =
-					rememberAutoCloseable(anchoredScrollConnectionState, fullListSize, compositeScrollConnection) {
-						AnchoredProgressScrollConnectionDispatcher(
-							anchoredScrollConnectionState,
-							-fullListSize,
-							compositeScrollConnection
-						)
-					}
+				val anchoredScrollConnectionDispatcher = rememberAnchoredProgressScrollConnectionDispatcher(
+					anchoredScrollConnectionState,
+					-fullListSize,
+					compositeScrollConnection
+				)
 
 				Box(
 					modifier = Modifier
