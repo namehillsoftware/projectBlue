@@ -73,7 +73,6 @@ import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScro
 import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.remember
-import com.lasthopesoftware.bluewater.android.ui.rememberAutoCloseable
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
@@ -388,17 +387,11 @@ private fun SearchFilesList(
 				}
 			}
 
-			val anchoredScrollConnectionDispatcher = rememberAutoCloseable(
+			val anchoredScrollConnectionDispatcher = AnchoredProgressScrollConnectionDispatcher.remember(
 				anchoredScrollConnectionState,
-				fullListSize,
-				compositeScrollConnection
-			) {
-				AnchoredProgressScrollConnectionDispatcher(
-					anchoredScrollConnectionState,
-					-fullListSize,
-					compositeScrollConnection
-				)
-			}
+				compositeScrollConnection,
+				-fullListSize,
+			)
 
 			Box(
 				modifier = Modifier

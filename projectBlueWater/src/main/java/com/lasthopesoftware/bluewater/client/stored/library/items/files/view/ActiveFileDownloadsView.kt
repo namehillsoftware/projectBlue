@@ -54,6 +54,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.calculateSummaryColumnWidth
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
+import com.lasthopesoftware.bluewater.android.ui.components.FullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.ListLoading
@@ -62,7 +63,6 @@ import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.MenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledChevronIcon
 import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
-import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.remember
@@ -226,7 +226,7 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 		BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 			if (maxWidth < Dimensions.twoColumnThreshold) {
 				val heightScaler = LocalDensity.current.run {
-					rememberFullScreenScrollConnectedScaler(max = boxHeight.toPx(), min = appBarHeight.toPx())
+					FullScreenScrollConnectedScaler.remember(min = appBarHeight.toPx(), max = boxHeight.toPx())
 				}
 				val topMenuHeightPx = LocalDensity.current.remember { topMenuHeight.toPx() }
 				val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(topMenuHeightPx, 0f)
@@ -264,14 +264,14 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 								}
 							},
 					) headerColumn@{
-						val heightValue by heightScaler.valueState.subscribeAsState()
+						val heightValue by heightScaler.valueState
 						val heightValueDp by LocalDensity.current.remember { derivedStateOf { heightValue.toDp() } }
 						Box(
 							modifier = Modifier
 								.fillMaxWidth()
 								.requiredHeight(heightValueDp)
 						) {
-							val headerCollapseProgress by heightScaler.progressState.subscribeAsState()
+							val headerCollapseProgress by heightScaler.progressState
 							val topPadding by remember {
 								derivedStateOf {
 									linearInterpolation(
@@ -283,7 +283,7 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 							}
 
 							ProvideTextStyle(MaterialTheme.typography.h5) {
-								val startPadding by rememberTitleStartPadding(heightScaler.progressState.subscribeAsState())
+								val startPadding by rememberTitleStartPadding(heightScaler.progressState)
 								val header = stringResource(id = R.string.activeDownloads)
 								MarqueeText(
 									text = header,

@@ -72,16 +72,16 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
-import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
+import com.lasthopesoftware.bluewater.android.ui.components.FullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LabelledRefreshButton
-import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledChevronIcon
+import com.lasthopesoftware.bluewater.android.ui.components.ignoreConsumedOffset
+import com.lasthopesoftware.bluewater.android.ui.components.linkedTo
 import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
-import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.indicateFocus
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
@@ -127,7 +127,6 @@ private fun StaticFileMenu(
 				fileDetailsState.promiseLoadedActiveFile()
 			},
 			modifier = modifier,
-			labelColor = mediaStylePalette.secondaryTextColor
 		)
 
 		val addFileToPlaybackLabel = stringResource(id = R.string.btn_add_file_to_playback)
@@ -142,7 +141,6 @@ private fun StaticFileMenu(
 				)
 			},
 			label = addFileToPlaybackLabel,
-			labelColor = mediaStylePalette.secondaryTextColor,
 			labelMaxLines = 1,
 			modifier = modifier,
 		)
@@ -159,7 +157,6 @@ private fun StaticFileMenu(
 				)
 			},
 			label = playFileNextPlaybackLabel,
-			labelColor = mediaStylePalette.secondaryTextColor,
 			labelMaxLines = 1,
 			modifier = modifier,
 		)
@@ -177,7 +174,6 @@ private fun StaticFileMenu(
 					)
 				},
 				label = playLabel,
-				labelColor = mediaStylePalette.secondaryTextColor,
 				labelMaxLines = 1,
 				modifier = Modifier.requiredWidth(topMenuIconWidth)
 			)
@@ -543,15 +539,18 @@ fun FileDetailsView(
 		val boxHeight = expandedTitlePadding + titleHeight
 		val boxHeightPx = LocalDensity.current.remember { boxHeight.toPx() }
 		val collapsedHeight = appBarHeight + rowPadding
-		val heightScaler = rememberFullScreenScrollConnectedScaler(max = boxHeightPx, min = LocalDensity.current.run { collapsedHeight.toPx() })
+		val heightScaler = FullScreenScrollConnectedScaler.remember(
+			min = LocalDensity.current.run { collapsedHeight.toPx() },
+			max = boxHeightPx
+		)
 		val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(
 			LocalDensity.current.remember { maxMenuHeight.toPx() },
 			0f
 		)
 		val compositeScrollConnection = remember(heightScaler, menuHeightScaler) {
-			ConsumedOffsetErasingNestedScrollConnection(
-				LinkedNestedScrollConnection(heightScaler, menuHeightScaler)
-			)
+			heightScaler
+				.linkedTo(menuHeightScaler)
+				.ignoreConsumedOffset()
 		}
 
 		val lazyListState = rememberLazyListState()
@@ -561,7 +560,7 @@ fun FileDetailsView(
 				.fillMaxSize()
 				.nestedScroll(compositeScrollConnection)
 		) {
-			val headerCollapseProgress by heightScaler.progressState.subscribeAsState()
+			val headerCollapseProgress by heightScaler.progressState
 
 			if (!isLoading) {
 				LazyColumn(modifier = Modifier.fillMaxSize(), state = lazyListState) {
@@ -696,7 +695,7 @@ fun FileDetailsView(
 						.padding(top = topTitlePadding)
 						.fillMaxWidth(),
 				) {
-					val startPadding by rememberTitleStartPadding(heightScaler.progressState.subscribeAsState())
+					val startPadding by rememberTitleStartPadding(heightScaler.progressState)
 					val endPadding by remember {
 						derivedStateOf {
 							linearInterpolation(
