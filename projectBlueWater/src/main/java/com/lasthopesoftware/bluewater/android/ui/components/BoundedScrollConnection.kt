@@ -196,8 +196,8 @@ fun rememberFullScreenScrollConnectedScaler(scalerState: ScalerState, maxTravelD
 		FullScreenScrollConnectedScaler(scalerState, maxTravelDistance)
 	}
 
-	if (scalerState is MutableScalerState) {
-		LaunchedEffect(scaler) {
+	LaunchedEffect(scaler) {
+		if (scalerState is MutableScalerState) {
 			snapshotFlow { scaler.totalDistanceTraveled }.collect { scalerState.totalDistanceTraveled = it }
 		}
 	}
