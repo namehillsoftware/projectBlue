@@ -7,7 +7,6 @@ import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.asFloatState
 import androidx.compose.runtime.derivedStateOf
@@ -85,21 +84,15 @@ fun rememberAnchoredProgressScrollConnectionDispatcher(state: AnchoredScrollConn
 		}
 	}
 
-	if (fullDistance != 0f) {
-		LaunchedEffect(dispatcher) {
-			if (state is MutableAnchoredScrollConnectionState) {
+	LaunchedEffect(dispatcher) {
+		if (state is MutableAnchoredScrollConnectionState) {
+			if (fullDistance != 0f) {
 				snapshotFlow { dispatcher.totalDistanceTraveled }
 					.collect {
 						state.progress = (it / fullDistance).coerceIn(0f, 1f)
 					}
-			}
-		}
-	} else {
-		DisposableEffect(dispatcher) {
-			onDispose {
-				if (state is MutableAnchoredScrollConnectionState) {
-					state.progress = 0f
-				}
+			} else {
+				state.progress = 0f
 			}
 		}
 	}
