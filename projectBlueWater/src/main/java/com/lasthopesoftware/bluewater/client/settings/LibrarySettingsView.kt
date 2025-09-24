@@ -55,6 +55,7 @@ import com.lasthopesoftware.bluewater.android.ui.calculateSummaryColumnWidth
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
+import com.lasthopesoftware.bluewater.android.ui.components.FullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollConnection
@@ -62,7 +63,6 @@ import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.StandardTextField
 import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
-import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.remember
@@ -875,7 +875,7 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 		val collapsedHeightPx = LocalDensity.current.remember { appBarHeight.toPx() }
 		val thisTopMenuHeight = topMenuHeight + viewPaddingUnit * 6
 		val topMenuHeightPx = LocalDensity.current.remember { thisTopMenuHeight.toPx()  }
-		val heightScaler = rememberFullScreenScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
+		val heightScaler = FullScreenScrollConnectedScaler.remember(boxHeightPx, collapsedHeightPx)
 		val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(topMenuHeightPx, 0f)
 		val compositeScroller = remember(heightScaler, menuHeightScaler) {
 			ConsumedOffsetErasingNestedScrollConnection(

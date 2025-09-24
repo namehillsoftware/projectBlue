@@ -64,11 +64,11 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.calculateSummaryColumnWidth
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredChips
+import com.lasthopesoftware.bluewater.android.ui.components.AnchoredProgressScrollConnectionDispatcher
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
-import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredProgressScrollConnectionDispatcher
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
@@ -387,10 +387,10 @@ private fun SearchFilesList(
 				}
 			}
 
-			val anchoredScrollConnectionDispatcher = rememberAnchoredProgressScrollConnectionDispatcher(
+			val anchoredScrollConnectionDispatcher = AnchoredProgressScrollConnectionDispatcher.remember(
 				anchoredScrollConnectionState,
+				compositeScrollConnection,
 				-fullListSize,
-				compositeScrollConnection
 			)
 
 			Box(

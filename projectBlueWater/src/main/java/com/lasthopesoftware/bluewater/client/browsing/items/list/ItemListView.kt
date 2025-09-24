@@ -65,8 +65,10 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.calculateSummaryColumnWidth
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredChips
+import com.lasthopesoftware.bluewater.android.ui.components.AnchoredProgressScrollConnectionDispatcher
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
+import com.lasthopesoftware.bluewater.android.ui.components.FullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.android.ui.components.ListLoading
@@ -75,10 +77,8 @@ import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledChevronIcon
 import com.lasthopesoftware.bluewater.android.ui.components.ignoreConsumedOffset
 import com.lasthopesoftware.bluewater.android.ui.components.linkedTo
-import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredProgressScrollConnectionDispatcher
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
-import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScalerState
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
@@ -504,7 +504,8 @@ fun ItemListView(
 					}
 			}
 
-			var modifier = Modifier.focusGroup()
+			var modifier = Modifier
+				.focusGroup()
 				.focusProperties {
 					onExit = {
 						if (requestedFocusDirection == FocusDirection.Up)
@@ -683,44 +684,44 @@ fun ScreenDimensionsScope.ItemListView(
 
 		BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 
-			if (maxWidth < Dimensions.twoColumnThreshold) {
+			val fullListSize by LocalDensity.current.remember(maxHeight) {
+				val topMenuHeightPx = 0f
+				val headerHeightPx = (topMenuHeight + viewPaddingUnit * 2).toPx()
+				val rowHeightPx = standardRowHeight.toPx()
+				val dividerHeight = 1.dp.toPx()
 
-				val fullListSize by LocalDensity.current.remember(maxHeight) {
-					val topMenuHeightPx = 0f
-					val headerHeightPx = (topMenuHeight + viewPaddingUnit * 2).toPx()
-					val rowHeightPx = standardRowHeight.toPx()
-					val dividerHeight = 1.dp.toPx()
-
-					derivedStateOf {
-						var fullListSize = topMenuHeightPx
-						if (items.any()) {
-							fullListSize += headerHeightPx + rowHeightPx * items.size + dividerHeight * (items.size - 1)
-						}
-
-						if (files.any()) {
-							fullListSize += headerHeightPx + rowHeightPx * files.size + dividerHeight * (files.size - 1)
-						}
-
-						fullListSize -= maxHeight.toPx()
-						if (files.any() || items.any())
-							fullListSize += rowHeightPx + dividerHeight
-						fullListSize.coerceAtLeast(0f)
+				derivedStateOf {
+					var fullListSize = topMenuHeightPx
+					if (items.any()) {
+						fullListSize += headerHeightPx + rowHeightPx * items.size + dividerHeight * (items.size - 1)
 					}
+
+					if (files.any()) {
+						fullListSize += headerHeightPx + rowHeightPx * files.size + dividerHeight * (files.size - 1)
+					}
+
+					fullListSize -= maxHeight.toPx()
+					if (files.any() || items.any())
+						fullListSize += rowHeightPx + dividerHeight
+					fullListSize.coerceAtLeast(0f)
 				}
+			}
 
-				val titleHeightScaler = rememberFullScreenScrollConnectedScaler(titleHeightScalerState, fullListSize)
+			val titleHeightScaler = FullScreenScrollConnectedScaler.remember(titleHeightScalerState, fullListSize)
 
-				val compositeScrollConnection = remember(titleHeightScaler, menuHeightScaler) {
-					titleHeightScaler
-						.linkedTo(menuHeightScaler)
-						.ignoreConsumedOffset()
-				}
+			val compositeScrollConnection = remember(titleHeightScaler, menuHeightScaler) {
+				titleHeightScaler
+					.linkedTo(menuHeightScaler)
+					.ignoreConsumedOffset()
+			}
 
-				val anchoredScrollConnectionDispatcher = rememberAnchoredProgressScrollConnectionDispatcher(
-					anchoredScrollConnectionState,
-					-fullListSize,
-					compositeScrollConnection
-				)
+			val anchoredScrollConnectionDispatcher = AnchoredProgressScrollConnectionDispatcher.remember(
+				anchoredScrollConnectionState,
+				compositeScrollConnection,
+				-fullListSize,
+			)
+
+			if (maxWidth < Dimensions.twoColumnThreshold) {
 
 				Box(
 					modifier = Modifier
@@ -921,14 +922,6 @@ fun ScreenDimensionsScope.ItemListView(
 						)
 					}
 
-					val titleHeightScaler = rememberFullScreenScrollConnectedScaler(titleHeightScalerState)
-
-					val compositeScrollConnection = remember(titleHeightScaler, menuHeightScaler) {
-						titleHeightScaler
-							.linkedTo(menuHeightScaler)
-							.ignoreConsumedOffset()
-					}
-
 					ItemListView(
 						itemListViewModel,
 						fileListViewModel,
@@ -944,8 +937,8 @@ fun ScreenDimensionsScope.ItemListView(
 						lazyListState,
 						anchoredScrollConnectionState,
 						chipLabel = { _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
-						onScrollProgress = { anchoredScrollConnectionState.selectedProgress = it },
-						modifier = Modifier.nestedScroll(compositeScrollConnection)
+						onScrollProgress = anchoredScrollConnectionDispatcher::progressTo,
+						modifier = Modifier.nestedScroll(anchoredScrollConnectionDispatcher)
 					)
 				}
 			}

@@ -67,39 +67,6 @@ class MutableAnchoredScrollConnectionState(
 	}
 }
 
-@Composable
-fun rememberAnchoredProgressScrollConnectionDispatcher(state: AnchoredScrollConnectionState, fullDistance: Float, inner: BoundedScrollConnection = NoOpBoundedScrollConnection): AnchoredProgressScrollConnectionDispatcher {
-	val dispatcher = remember(state, fullDistance, inner) {
-		AnchoredProgressScrollConnectionDispatcher(
-			state,
-			fullDistance,
-			inner
-		)
-	}
-
-	LaunchedEffect(dispatcher) {
-		if (state is MutableAnchoredScrollConnectionState) {
-			snapshotFlow { dispatcher.selectedProgressState }
-				.collect { state.selectedProgress = it }
-		}
-	}
-
-	LaunchedEffect(dispatcher) {
-		if (state is MutableAnchoredScrollConnectionState) {
-			if (fullDistance != 0f) {
-				snapshotFlow { dispatcher.totalDistanceTraveled }
-					.collect {
-						state.progress = (it / fullDistance).coerceIn(0f, 1f)
-					}
-			} else {
-				state.progress = 0f
-			}
-		}
-	}
-
-	return dispatcher
-}
-
 @SuppressLint("LongLogTag")
 class AnchoredProgressScrollConnectionDispatcher(
 	state: AnchoredScrollConnectionState,
@@ -109,15 +76,46 @@ class AnchoredProgressScrollConnectionDispatcher(
 
 	companion object {
 		private const val logTag = "AnchoredProgressScrollConnectionDispatcher"
+
+		@Composable
+		fun remember(state: AnchoredScrollConnectionState, inner: BoundedScrollConnection = NoOpBoundedScrollConnection, fullDistance: Float = Float.MAX_VALUE): AnchoredProgressScrollConnectionDispatcher {
+			val dispatcher = remember(state, fullDistance, inner) {
+				AnchoredProgressScrollConnectionDispatcher(
+					state,
+					fullDistance,
+					inner
+				)
+			}
+
+			LaunchedEffect(dispatcher) {
+				if (state is MutableAnchoredScrollConnectionState) {
+					snapshotFlow { dispatcher.selectedProgressState }
+						.collect { state.selectedProgress = it }
+				}
+			}
+
+			LaunchedEffect(dispatcher) {
+				if (state is MutableAnchoredScrollConnectionState) {
+					if (fullDistance != 0f) {
+						snapshotFlow { dispatcher.totalDistanceTraveled }
+							.collect {
+								state.progress = (it / fullDistance).coerceIn(0f, 1f)
+							}
+					} else {
+						state.progress = 0f
+					}
+				}
+			}
+
+			return dispatcher
+		}
 	}
 
 	private val relativeAnchors = state.progressAnchors
 
-	var selectedProgressState by mutableStateOf(state.selectedProgress)
-		private set
+	private var selectedProgressState by mutableStateOf(state.selectedProgress)
 
-	var totalDistanceTraveled by mutableFloatStateOf(state.progress * fullDistance)
-		private set
+	private var totalDistanceTraveled by mutableFloatStateOf(state.progress * fullDistance)
 
 	@SuppressLint("LongLogTag")
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
@@ -186,35 +184,6 @@ fun rememberFullScreenScrollConnectedScalerState(min: Float, max: Float): Scaler
 	MutableScalerState(min, max)
 }
 
-@Composable
-fun rememberFullScreenScrollConnectedScaler(scalerState: ScalerState, maxTravelDistance: Float = Float.MAX_VALUE): FullScreenScrollConnectedScaler {
-	val scaler = remember(scalerState, maxTravelDistance) {
-		FullScreenScrollConnectedScaler(scalerState, maxTravelDistance)
-	}
-
-	LaunchedEffect(scaler) {
-		if (scalerState is MutableScalerState) {
-			snapshotFlow { scaler.totalDistanceTraveled }
-				.collect {
-					scalerState.totalDistanceTraveled = it
-				}
-		}
-	}
-
-	return scaler
-}
-
-/**
- * Will scale a value based on a nested **vertical** scroll, sourced from Android examples on this page:
- * https://developer.android.com/reference/kotlin/androidx/compose/ui/input/nestedscroll/package-summary#extension-functions
- */
-@Composable
-fun rememberFullScreenScrollConnectedScaler(max: Float, min: Float, maxTravelDistance: Float = Float.MAX_VALUE): FullScreenScrollConnectedScaler {
-	val scalerState = rememberFullScreenScrollConnectedScalerState(min, max)
-
-	return rememberFullScreenScrollConnectedScaler(scalerState, maxTravelDistance)
-}
-
 class FullScreenScrollConnectedScaler(
 	private val state: ScalerState,
 	maxTravelDistance: Float = Float.MAX_VALUE,
@@ -222,13 +191,41 @@ class FullScreenScrollConnectedScaler(
 
 	companion object {
 		private const val logTag = "FullScreenScrollConnectedScaler"
+
+		/**
+		 * Will scale a value based on a nested **vertical** scroll, sourced from Android examples on this page:
+		 * https://developer.android.com/reference/kotlin/androidx/compose/ui/input/nestedscroll/package-summary#extension-functions
+		 */
+		@Composable
+		fun remember(max: Float, min: Float, maxTravelDistance: Float = Float.MAX_VALUE): FullScreenScrollConnectedScaler {
+			val scalerState = rememberFullScreenScrollConnectedScalerState(min, max)
+
+			return remember(scalerState, maxTravelDistance)
+		}
+
+		@Composable
+		fun remember(scalerState: ScalerState, maxTravelDistance: Float = Float.MAX_VALUE): FullScreenScrollConnectedScaler {
+			val scaler = remember(scalerState, maxTravelDistance) {
+				FullScreenScrollConnectedScaler(scalerState, maxTravelDistance)
+			}
+
+			LaunchedEffect(scaler) {
+				if (scalerState is MutableScalerState) {
+					snapshotFlow { scaler.totalDistanceTraveled }
+						.collect {
+							scalerState.totalDistanceTraveled = it
+						}
+				}
+			}
+
+			return scaler
+		}
 	}
 
 	private val absoluteMax = abs(maxTravelDistance)
 	private val fullDistance = state.max - state.min
 
-	internal var totalDistanceTraveled by mutableFloatStateOf(keepWithinMaxTravelDistance(state.totalDistanceTraveled))
-		private set
+	private var totalDistanceTraveled by mutableFloatStateOf(keepWithinMaxTravelDistance(state.totalDistanceTraveled))
 
 	val valueState by lazy {
 		derivedStateOf {

@@ -31,7 +31,6 @@ class DramaticConnectionInitializationController(
 						.promiseIsConnectionActive(libraryId)
 						.eventually { isConnectionAlreadyActive ->
 							if (isConnectionAlreadyActive) {
-								logger.debug("Connection for {} already active.", libraryId)
 								manageConnectionSessions.promiseLibraryConnection(libraryId)
 							} else {
 								logger.debug("Connection for {} not active, creating.", libraryId)

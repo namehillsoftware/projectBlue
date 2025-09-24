@@ -72,6 +72,7 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
+import com.lasthopesoftware.bluewater.android.ui.components.FullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
@@ -81,7 +82,6 @@ import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledChevronIco
 import com.lasthopesoftware.bluewater.android.ui.components.ignoreConsumedOffset
 import com.lasthopesoftware.bluewater.android.ui.components.linkedTo
 import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
-import com.lasthopesoftware.bluewater.android.ui.components.rememberFullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.indicateFocus
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
@@ -539,7 +539,7 @@ fun FileDetailsView(
 		val boxHeight = expandedTitlePadding + titleHeight
 		val boxHeightPx = LocalDensity.current.remember { boxHeight.toPx() }
 		val collapsedHeight = appBarHeight + rowPadding
-		val heightScaler = rememberFullScreenScrollConnectedScaler(max = boxHeightPx, min = LocalDensity.current.run { collapsedHeight.toPx() })
+		val heightScaler = FullScreenScrollConnectedScaler.remember(max = boxHeightPx, min = LocalDensity.current.run { collapsedHeight.toPx() })
 		val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(
 			LocalDensity.current.remember { maxMenuHeight.toPx() },
 			0f
