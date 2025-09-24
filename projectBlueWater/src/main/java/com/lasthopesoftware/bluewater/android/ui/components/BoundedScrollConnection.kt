@@ -194,7 +194,10 @@ fun rememberFullScreenScrollConnectedScaler(scalerState: ScalerState, maxTravelD
 
 	LaunchedEffect(scaler) {
 		if (scalerState is MutableScalerState) {
-			snapshotFlow { scaler.totalDistanceTraveled }.collect { scalerState.totalDistanceTraveled = it }
+			snapshotFlow { scaler.totalDistanceTraveled }
+				.collect {
+					scalerState.totalDistanceTraveled = it
+				}
 		}
 	}
 
@@ -239,7 +242,7 @@ class FullScreenScrollConnectedScaler(
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
 		// try to consume before LazyColumn to collapse toolbar if needed, hence pre-scroll
 		val originalValue = valueState.value
-		totalDistanceTraveled += keepWithinMaxTravelDistance(available.y)
+		totalDistanceTraveled = keepWithinMaxTravelDistance(totalDistanceTraveled + available.y)
 
 		if (DebugFlag.isDebugCompilation) {
 			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
@@ -252,7 +255,7 @@ class FullScreenScrollConnectedScaler(
 	@SuppressLint("LongLogTag")
 	override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
 		val originalValue = valueState.value
-		totalDistanceTraveled -= keepWithinMaxTravelDistance(available.y)
+		totalDistanceTraveled = keepWithinMaxTravelDistance(totalDistanceTraveled - available.y)
 
 		if (DebugFlag.isDebugCompilation) {
 			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
