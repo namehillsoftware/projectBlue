@@ -8,7 +8,8 @@ import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 
-@UnstableApi class PlaybackServiceController(private val context: Context) : ControlPlaybackService {
+@UnstableApi
+class PlaybackServiceController(private val context: Context) : ControlPlaybackService {
 	override fun initialize(libraryId: LibraryId) = PlaybackService.initialize(context, libraryId)
 
 	override fun promiseIsMarkedForPlay(libraryId: LibraryId): Promise<Boolean> =
@@ -35,6 +36,10 @@ import com.namehillsoftware.handoff.promises.Promise
 
 	override fun addToPlaylist(libraryId: LibraryId, serviceFile: ServiceFile) {
 		PlaybackService.addFileToPlaylist(context, libraryId, serviceFile)
+	}
+
+	override fun addAfterNowPlayingFile(libraryId: LibraryId, serviceFile: ServiceFile) {
+		PlaybackService.addAfterNowPlayingFile(context, libraryId, serviceFile)
 	}
 
 	override fun removeFromPlaylistAtPosition(libraryId: LibraryId, position: Int) {

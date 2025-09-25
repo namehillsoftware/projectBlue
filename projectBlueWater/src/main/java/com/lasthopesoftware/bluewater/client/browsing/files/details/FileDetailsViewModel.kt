@@ -142,6 +142,12 @@ class FileDetailsViewModel(
 		controlPlayback.addToPlaylist(libraryId, serviceFile)
 	}
 
+	override fun playNext() {
+		val serviceFile = activeServiceFile ?: return
+		val libraryId = activeLibraryId ?: return
+		controlPlayback.addAfterNowPlayingFile(libraryId, serviceFile)
+	}
+
 	private fun reloadFileProperties(): Promise<Unit> =
 		activeLibraryId
 			?.let { l ->

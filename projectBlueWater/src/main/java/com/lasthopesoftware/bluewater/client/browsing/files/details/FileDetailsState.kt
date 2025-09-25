@@ -20,5 +20,6 @@ interface FileDetailsState {
 	val highlightedProperty: InteractionState<FileDetailsViewModel.FilePropertyViewModel?>
 
 	fun addToNowPlaying()
+	fun playNext()
 	fun promiseLoadedActiveFile(): Promise<Unit>
 }

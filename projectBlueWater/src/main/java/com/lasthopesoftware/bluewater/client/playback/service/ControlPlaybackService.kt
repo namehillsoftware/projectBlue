@@ -28,6 +28,8 @@ interface ControlPlaybackService {
 
 	fun addToPlaylist(libraryId: LibraryId, serviceFile: ServiceFile)
 
+	fun addAfterNowPlayingFile(libraryId: LibraryId, serviceFile: ServiceFile)
+
 	fun removeFromPlaylistAtPosition(libraryId: LibraryId, position: Int)
 
 	fun setRepeating(libraryId: LibraryId)

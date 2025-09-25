@@ -78,7 +78,7 @@ fun TrackTitleItemView(
 			.padding(Dimensions.rowPaddingValues)
 		) {
 			ListItemIcon(
-				painter = painterResource(id = R.drawable.ic_add_item_36dp),
+				painter = painterResource(id = R.drawable.playlist_plus),
 				contentDescription = stringResource(id = R.string.btn_add_file_to_playback),
 				modifier = Modifier
 					.fillMaxWidth()
