@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.settings.GivenTypicalSettings.AndTheSettingsAreLoaded
+package com.lasthopesoftware.bluewater.settings.GivenTypicalSettings.AndTheSettingsAreLoaded.AndVolumeLevelingIsEnabled
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
@@ -15,7 +15,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class `When Changing isVolumeLevelingEnabled` {
+class `When Changing isPeakLevelNormalizeEnabled` {
 	private var savedApplicationSettings: ApplicationSettings? = null
 
 	private val mutt by lazy {
@@ -25,8 +25,8 @@ class `When Changing isVolumeLevelingEnabled` {
 					ApplicationSettings(
 						isSyncOnPowerOnly = false,
 						isSyncOnWifiOnly = false,
-						isVolumeLevelingEnabled = true,
-						isPeakLevelNormalizeEnabled = true,
+						isVolumeLevelingEnabled = false,
+						isPeakLevelNormalizeEnabled = false,
 						chosenLibraryId = 95,
 						playbackEngineTypeName = PlaybackEngineType.ExoPlayer.name,
 					)
@@ -68,7 +68,8 @@ class `When Changing isVolumeLevelingEnabled` {
 			loadSettings().toExpiringFuture().get()
 
 			isPeakLevelEditableBeforeEnablingVolumeLeveling = isPeakLevelNormalizeEditable.value
-			promiseVolumeLevelingEnabledChange(!isVolumeLevelingEnabled.value).toExpiringFuture().get()
+			promiseVolumeLevelingEnabledChange(true).toExpiringFuture().get()
+			promisePeakLevelNormalizeEnabledChange(true).toExpiringFuture().get()
 		}
 	}
 
@@ -84,17 +85,17 @@ class `When Changing isVolumeLevelingEnabled` {
 
 	@Test
 	fun `then isVolumeLevelingEnabled is correct`() {
-		assertThat(savedApplicationSettings?.isVolumeLevelingEnabled).isFalse
+		assertThat(savedApplicationSettings?.isVolumeLevelingEnabled).isTrue
 	}
 
 	@Test
 	fun `then isPeakLevelEditableBeforeEnablingVolumeLeveling is correct`() {
-		assertThat(isPeakLevelEditableBeforeEnablingVolumeLeveling).isTrue
+		assertThat(isPeakLevelEditableBeforeEnablingVolumeLeveling).isFalse
 	}
 
 	@Test
 	fun `then isPeakLevelNormalizeEditable is correct`() {
-		assertThat(mutt.isPeakLevelNormalizeEditable.value).isFalse
+		assertThat(mutt.isPeakLevelNormalizeEditable.value).isTrue
 	}
 
 	@Test

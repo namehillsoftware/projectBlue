@@ -24,6 +24,7 @@ class `When Loading the Settings` {
 						isSyncOnPowerOnly = true,
 						isSyncOnWifiOnly = true,
 						isVolumeLevelingEnabled = true,
+						isPeakLevelNormalizeEnabled = true,
 						chosenLibraryId = 304,
 						playbackEngineTypeName = PlaybackEngineType.ExoPlayer.name,
 					)
@@ -81,6 +82,11 @@ class `When Loading the Settings` {
 	@Test
 	fun `then the playbackEngineType is correct`() {
 		assertThat(mutt.playbackEngineType.value).isEqualTo(PlaybackEngineType.ExoPlayer)
+	}
+
+	@Test
+	fun `then isPeakLevelNormalized is correct`() {
+		assertThat(mutt.isPeakLevelNormalizeEnabled.value).isTrue
 	}
 
 	@Test

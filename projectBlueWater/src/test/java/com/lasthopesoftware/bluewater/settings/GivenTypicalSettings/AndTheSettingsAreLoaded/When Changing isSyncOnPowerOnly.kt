@@ -105,6 +105,11 @@ class `When Changing isSyncOnPowerOnly` {
 	}
 
 	@Test
+	fun `then isPeakLevelNormalized is correct`() {
+		assertThat(savedApplicationSettings?.isPeakLevelNormalizeEnabled).isFalse
+	}
+
+	@Test
 	fun `then the libraries are correct`() {
 		assertThat(mutt.libraries.value).isEqualTo(
 			listOf(

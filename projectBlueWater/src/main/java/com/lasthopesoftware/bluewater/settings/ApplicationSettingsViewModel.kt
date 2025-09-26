@@ -36,10 +36,13 @@ class ApplicationSettingsViewModel(
 	private val mutableIsSyncOnPowerOnly = MutableInteractionState(false)
 	private val mutableIsSyncOnWifiOnly = MutableInteractionState(false)
 	private val mutableIsVolumeLevelingEnabled = MutableInteractionState(false)
+	private val mutableIsPeakLevelNormalizeEnabled = MutableInteractionState(false)
 
 	val isSyncOnWifiOnly = mutableIsSyncOnWifiOnly.asInteractionState()
 	val isSyncOnPowerOnly = mutableIsSyncOnPowerOnly.asInteractionState()
 	val isVolumeLevelingEnabled = mutableIsVolumeLevelingEnabled.asInteractionState()
+	val isPeakLevelNormalizeEditable = isVolumeLevelingEnabled
+	val isPeakLevelNormalizeEnabled = mutableIsPeakLevelNormalizeEnabled.asInteractionState()
 	val playbackEngineType = MutableInteractionState(PlaybackEngineType.ExoPlayer)
 	val chosenLibraryId = mutableChosenLibraryId.asInteractionState()
 	val libraries = mutableLibraries.asInteractionState()
@@ -62,6 +65,7 @@ class ApplicationSettingsViewModel(
 				mutableIsSyncOnWifiOnly.value = s.isSyncOnWifiOnly
 				mutableIsSyncOnPowerOnly.value = s.isSyncOnPowerOnly
 				mutableIsVolumeLevelingEnabled.value = s.isVolumeLevelingEnabled
+				mutableIsPeakLevelNormalizeEnabled.value = s.isPeakLevelNormalizeEnabled
 				mutableChosenLibraryId.value = LibraryId(s.chosenLibraryId)
 			}
 
@@ -111,12 +115,18 @@ class ApplicationSettingsViewModel(
 		return saveSettings()
 	}
 
+	fun promisePeakLevelNormalizeEnabledChange(isPeakLevelNormalizeEnabled: Boolean): Promise<*> {
+		mutableIsPeakLevelNormalizeEnabled.value = isPeakLevelNormalizeEnabled
+		return saveSettings()
+	}
+
 	private fun saveSettings(): Promise<*> =
 		applicationSettingsRepository
 			.promiseUpdatedSettings(
 				ApplicationSettings(
 					isSyncOnPowerOnly = isSyncOnPowerOnly.value,
 					isVolumeLevelingEnabled = isVolumeLevelingEnabled.value,
+					isPeakLevelNormalizeEnabled = isPeakLevelNormalizeEnabled.value,
 					isSyncOnWifiOnly = isSyncOnWifiOnly.value,
 					playbackEngineTypeName = playbackEngineType.value.name,
 					chosenLibraryId = chosenLibraryId.value.id
