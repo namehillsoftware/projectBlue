@@ -41,7 +41,7 @@ class MaxFileVolumeProvider(
 										try {
 											val replayGainVolumeLevel = replayGainString.toDouble()
 											val peakLevel =
-												if (isPeakLevelEnabled) fileProperties[NormalizedFileProperties.PeakGain]?.toDoubleOrNull() ?: 1.0
+												if (isPeakLevelEnabled) fileProperties[NormalizedFileProperties.PeakLevel]?.toDoubleOrNull() ?: 1.0
 												else 0.0
 											min(10.0.pow(replayGainVolumeLevel / 20.0), 1 / peakLevel)
 												.toFloat()

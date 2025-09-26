@@ -35,7 +35,7 @@ object NormalizedFileProperties {
 	const val Date = "Date"
 	const val VolumeLevelR128 = "Volume Level (R128)"
 	const val VolumeLevelReplayGain = "Volume Level (ReplayGain)"
-	const val PeakGain = "replaygain_track_peak"
+	const val PeakLevel = "Peak Level (ReplayGain)"
 	const val Waveform = "Waveform"
 	const val Genre = "Genre"
 	const val Lyrics = "Lyrics"

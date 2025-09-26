@@ -30,7 +30,7 @@ class WhenGettingTheMaxVolume {
                     )
                 } returns mapOf(
                     Pair(NormalizedFileProperties.VolumeLevelReplayGain, "-0.3"),
-                    Pair(NormalizedFileProperties.PeakGain, "1.047128548"),
+                    Pair(NormalizedFileProperties.PeakLevel, "1.047128548"),
                 ).toPromise()
             }
         )

@@ -68,8 +68,18 @@ class WhenGettingFileProperties {
 	}
 
 	@Test
+	fun `then the artist is correct`() {
+		assertThat(fileProperties!![NormalizedFileProperties.Artist]).isEqualTo("A.A. Bondy")
+	}
+
+	@Test
 	fun `then the replay gain is correct`() {
 		assertThat(fileProperties!![NormalizedFileProperties.VolumeLevelReplayGain]).isEqualTo("-2.34")
+	}
+
+	@Test
+	fun `then the peak level is correct`() {
+		assertThat(fileProperties!![NormalizedFileProperties.PeakLevel]).isEqualTo("0.933")
 	}
 
 	@Test

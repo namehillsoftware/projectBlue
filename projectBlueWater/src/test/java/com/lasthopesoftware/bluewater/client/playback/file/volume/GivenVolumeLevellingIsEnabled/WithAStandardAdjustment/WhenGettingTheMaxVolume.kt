@@ -25,7 +25,7 @@ class WhenGettingTheMaxVolume {
 			mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile("1")) } returns mapOf(
 					Pair(NormalizedFileProperties.VolumeLevelReplayGain, "-13.5"),
-					Pair(NormalizedFileProperties.PeakGain, "20"),
+					Pair(NormalizedFileProperties.PeakLevel, "20"),
 				).toPromise()
 			}
 		)

@@ -55,6 +55,7 @@ import java.io.InputStream
 import java.net.URL
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
+import kotlin.math.pow
 
 class LiveMediaCenterConnection(
 	private val mediaCenterConnectionDetails: MediaCenterConnectionDetails,
@@ -73,6 +74,10 @@ class LiveMediaCenterConnection(
 		private const val shuffleFileListParameter = "Shuffle=1"
 
 		private val editableFilePropertyDefinitions by lazy { EditableFilePropertyDefinition.entries.toSet().toPromise() }
+	}
+
+	private object KnownFileProperties {
+		const val peakLevelSample = "Peak Level (Sample)"
 	}
 
 	private val mcApiUrl by lazy { mediaCenterConnectionDetails.baseUrl.withMcApi() }
@@ -382,7 +387,7 @@ class LiveMediaCenterConnection(
 				responseString
 					.let(Jsoup::parse)
 					.let { xml ->
-						xml
+						val map = xml
 							.getElementsByTag("item")
 							.firstOrNull()
 							?.children()
@@ -392,9 +397,27 @@ class LiveMediaCenterConnection(
 									return
 								}
 
-								Pair(el.attr("Name"), el.wholeOwnText())
+								val name = el.attr("Name")
+								Pair(name, el.wholeOwnText())
 							}
 							?: emptyMap()
+
+						val peakLevelSampleValue = map[KnownFileProperties.peakLevelSample]
+						if (peakLevelSampleValue == null) map
+						else {
+							if (cancellationSignal.isCancelled) {
+								reject(filePropertiesCancellationException(serviceFile))
+								return
+							}
+
+							val peakLevelSample = peakLevelSampleValue
+								.split(';', limit = 2)
+								.firstOrNull()?.lowercase()?.removeSuffix("db")?.trimEnd()?.toDoubleOrNull()
+								?.let { 10.0.pow(it / 20) }
+								?: 1.0
+
+							map + Pair(NormalizedFileProperties.PeakLevel, peakLevelSample.toString())
+						}
 					}
 			)
 		}

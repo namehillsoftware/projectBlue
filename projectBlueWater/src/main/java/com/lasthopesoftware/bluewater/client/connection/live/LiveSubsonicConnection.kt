@@ -49,6 +49,7 @@ import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.net.URL
+import java.util.TreeMap
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 
@@ -81,6 +82,7 @@ class LiveSubsonicConnection(
 		const val artist = "artist"
 		const val replayGain = "replayGain"
 		const val trackGain = "trackGain"
+		const val peakGain = "trackPeak"
 	}
 
 	private val promisedRootItem by lazy {
@@ -279,29 +281,39 @@ class LiveSubsonicConnection(
 
 							httpResponse.body.use { b ->
 								b.reader().use { r ->
+									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
 									val subsonicResponse = JsonParser.parseReader(r).asJsonObject.get("subsonic-response")
 
+									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
 									val song = subsonicResponse?.asJsonObject?.get("song")
 
+									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
 									val elements = song?.asJsonObject?.asMap() ?: emptyMap()
 
-									val rating = elements[KnownFileProperties.replayGain]
-										?.asJsonObject
-										?.get(KnownFileProperties.trackGain)
-										?.asString
-
 									val returnElements = elements
-										.mapNotNull { (k, v) -> if (v.isJsonPrimitive) Pair(k, v.asString) else null }
-										.toMap()
-										.toSortedMap(String.CASE_INSENSITIVE_ORDER)
+										.mapNotNull { (k, v) ->
+											if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
+											if (v.isJsonPrimitive) Pair(k, v.asString) else null
+										}
+										.toMap(TreeMap(String.CASE_INSENSITIVE_ORDER))
 										.also {
+											if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
+
 											it[NormalizedFileProperties.Key] = it[KnownFileProperties.id]
 											it[NormalizedFileProperties.Name] = it[KnownFileProperties.title]
 										}
-										.toMutableMap()
 
-									if (rating != null)
-										returnElements[NormalizedFileProperties.VolumeLevelReplayGain] = rating
+									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
+
+									val replayGain = elements[KnownFileProperties.replayGain]?.asJsonObject
+									if (replayGain != null) {
+										replayGain.get(KnownFileProperties.trackGain)?.asString?.also {
+											returnElements[NormalizedFileProperties.VolumeLevelReplayGain] = it
+										}
+										replayGain.get(KnownFileProperties.peakGain)?.asString?.also {
+											returnElements[NormalizedFileProperties.PeakLevel] = it
+										}
+									}
 
 									returnElements
 								}
