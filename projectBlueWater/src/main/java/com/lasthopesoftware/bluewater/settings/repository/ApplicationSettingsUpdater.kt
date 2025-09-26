@@ -4,6 +4,7 @@ import android.database.sqlite.SQLiteDatabase
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.chosenLibraryIdColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isLoggingToFile
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isPeakLevelNormalizeEnabledColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnPowerOnlyColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnWifiOnlyColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isVolumeLevelingEnabledColumn
@@ -59,6 +60,10 @@ class ApplicationSettingsUpdater(private val applicationSettingsMigrator: Applic
 
 		if (oldVersion < 16) {
 			addIsLoggingToFile()
+		}
+
+		if (oldVersion < 21) {
+			db.execSQL("ALTER table `$tableName` ADD COLUMN `$isPeakLevelNormalizeEnabledColumn` SMALLINT DEFAULT 0 NOT NULL")
 		}
 	}
 }
