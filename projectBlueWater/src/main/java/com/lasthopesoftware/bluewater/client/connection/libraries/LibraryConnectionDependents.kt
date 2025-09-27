@@ -1,14 +1,16 @@
 package com.lasthopesoftware.bluewater.client.connection.libraries
 
 import com.lasthopesoftware.bluewater.ApplicationDependencies
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.DelegatingLibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.CaseInsensitiveFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.DelegatingFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FreshestRevisionFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFreshLibraryFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.access.DelegatingItemProvider
@@ -25,6 +27,7 @@ import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPollTi
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPollingSessions
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.policies.caching.CachePromiseFunctions
 import com.lasthopesoftware.policies.caching.CachingPolicyFactory
 import com.lasthopesoftware.policies.caching.LruPromiseCache
@@ -47,6 +50,9 @@ interface LibraryConnectionDependents {
 	val connectionAuthenticationChecker: ConnectionAuthenticationChecker
 }
 
+private const val maxFilePropertiesCacheSize = 500
+private val filePropertiesCache by lazy { LruPromiseCache<UrlKeyHolder<ServiceFile>, Map<String, String>>(maxFilePropertiesCacheSize) }
+
 class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryConnectionDependents {
 	companion object {
 		private val revisionExpirationTime by lazy { Duration.standardSeconds(30) }
@@ -58,14 +64,21 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 	override val connectionAuthenticationChecker by lazy { ConnectionAuthenticationChecker(application.libraryConnectionProvider) }
 
 	override val freshLibraryFileProperties: ProvideFreshLibraryFileProperties by lazy {
-		FilePropertiesProvider(guaranteedLibraryConnectionProvider, revisionProvider, FilePropertyCache)
+		FreshestRevisionFilePropertiesProvider(
+			CaseInsensitiveFilePropertiesProvider(
+				FilePropertiesProvider(guaranteedLibraryConnectionProvider)
+			),
+			urlKeyProvider,
+			revisionProvider,
+			LruPromiseCache(10),
+		)
 	}
 
 	override val libraryFilePropertiesProvider by lazy {
 		CachedFilePropertiesProvider(
 			urlKeyProvider,
-			FilePropertyCache,
 			freshLibraryFileProperties,
+			filePropertiesCache,
 		)
 	}
 
@@ -86,8 +99,6 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 			application.libraryConnectionProvider,
 			urlKeyProvider,
 			connectionAuthenticationChecker,
-			revisionProvider,
-			FilePropertyCache,
 			application.sendApplicationMessages
 		)
 	}
@@ -138,8 +149,8 @@ class RetryingLibraryConnectionRegistry(inner: LibraryConnectionDependents) : Li
 	override val libraryFilePropertiesProvider by lazy {
 		CachedFilePropertiesProvider(
 			urlKeyProvider,
-			FilePropertyCache,
 			freshLibraryFileProperties,
+			filePropertiesCache,
 		)
 	}
 
@@ -165,8 +176,8 @@ class RateLimitedFilePropertiesDependencies(
 	override val libraryFilePropertiesProvider by lazy {
 		CachedFilePropertiesProvider(
 			urlKeyProvider,
-			FilePropertyCache,
 			freshLibraryFileProperties,
+			filePropertiesCache,
 		)
 	}
 }

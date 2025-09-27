@@ -69,7 +69,7 @@ class WhenGettingFileProperties {
 
 	@Test
 	fun `then the artist is correct`() {
-		assertThat(fileProperties!![NormalizedFileProperties.Artist]).isEqualTo("A.A. Bondy")
+		assertThat(fileProperties!![NormalizedFileProperties.Artist.lowercase()]).isEqualTo("A.A. Bondy")
 	}
 
 	@Test
