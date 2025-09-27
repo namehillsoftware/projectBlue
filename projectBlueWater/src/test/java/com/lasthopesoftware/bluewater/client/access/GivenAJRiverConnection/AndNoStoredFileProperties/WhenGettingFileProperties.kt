@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFutur
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import kotlin.math.pow
 
 class WhenGettingFileProperties {
 	private val fileProperties by lazy {
@@ -23,6 +24,7 @@ class WhenGettingFileProperties {
 				ServiceFile("15"),
 				mapOf(
 					Pair(NormalizedFileProperties.Key, "45"),
+					Pair("Peak Level (Sample)", "308.99 dB; -0.3 Left; -0.5 Right"),
 					Pair(NormalizedFileProperties.Lyrics, """[In the Fade]
 
 [Verse 1: Josh Homme]
@@ -112,6 +114,16 @@ Some more valid text... la di da..."""),
     fun `then files property key is retrieved`() {
         assertThat(fileProperties!![NormalizedFileProperties.Key]).isEqualTo("45")
     }
+
+	@Test
+	fun `then the peak level is correct`() {
+		assertThat(fileProperties!![NormalizedFileProperties.PeakLevel]).isEqualTo(10.0.pow(308.99 / 20).toString())
+	}
+
+	@Test
+	fun `then the peak level sample property is correct`() {
+		assertThat(fileProperties!!["Peak Level (Sample)"]).isEqualTo("308.99 dB; -0.3 Left; -0.5 Right")
+	}
 
 	@Test
 	fun `then lyric files property is retrieved`() {

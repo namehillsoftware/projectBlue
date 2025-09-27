@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -62,7 +61,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 
-private val optionsPadding = PaddingValues(start = 32.dp, end = 32.dp)
+private val horizontalOptionsPadding = 32.dp
 
 private fun LazyListScope.settingsList(
 	standardRowModifier: Modifier,
@@ -99,7 +98,7 @@ private fun LazyListScope.settingsList(
 
 	item {
 		Row(
-			modifier = standardRowModifier.padding(optionsPadding),
+			modifier = standardRowModifier.padding(horizontal = horizontalOptionsPadding),
 			verticalAlignment = Alignment.CenterVertically,
 		) {
 			val isSyncOnWifiOnly by applicationSettingsViewModel.isSyncOnWifiOnly.subscribeAsState()
@@ -115,7 +114,7 @@ private fun LazyListScope.settingsList(
 
 	item {
 		Row(
-			modifier = standardRowModifier.padding(optionsPadding),
+			modifier = standardRowModifier.padding(horizontal = horizontalOptionsPadding),
 			verticalAlignment = Alignment.CenterVertically,
 		) {
 			val isSyncOnPowerOnly by applicationSettingsViewModel.isSyncOnPowerOnly.subscribeAsState()
@@ -141,17 +140,32 @@ private fun LazyListScope.settingsList(
 	}
 
 	item {
-		Row(
-			modifier = standardRowModifier.padding(optionsPadding),
-			verticalAlignment = Alignment.CenterVertically,
+		Column(
+			modifier = standardRowModifier.padding(horizontal = horizontalOptionsPadding),
+			verticalArrangement = Arrangement.SpaceEvenly,
 		) {
 			val isVolumeLevelingEnabled by applicationSettingsViewModel.isVolumeLevelingEnabled.subscribeAsState()
 			LabeledSelection(
-				label = stringResource(id = R.string.useVolumeLevelingSetting),
+				label = stringResource(id = R.string.use_volume_leveling_setting),
 				selected = isVolumeLevelingEnabled,
 				onSelected = { applicationSettingsViewModel.promiseVolumeLevelingEnabledChange(!isVolumeLevelingEnabled) }
 			) {
 				Checkbox(checked = isVolumeLevelingEnabled, onCheckedChange = null, enabled = !isLoading)
+			}
+
+			Box(
+				modifier = standardRowModifier.padding(start = horizontalOptionsPadding),
+				contentAlignment = Alignment.CenterStart,
+			) {
+				val isPeakLevelNormalizeEnabled by applicationSettingsViewModel.isPeakLevelNormalizeEnabled.subscribeAsState()
+				val isPeakLevelNormalizeEditable by applicationSettingsViewModel.isPeakLevelNormalizeEditable.subscribeAsState()
+				LabeledSelection(
+					label = stringResource(id = R.string.enable_peak_level_normalize),
+					selected = isPeakLevelNormalizeEnabled,
+					onSelected = { applicationSettingsViewModel.promisePeakLevelNormalizeEnabledChange(!isPeakLevelNormalizeEnabled) }
+				) {
+					Checkbox(checked = isPeakLevelNormalizeEnabled, onCheckedChange = null, enabled = isPeakLevelNormalizeEditable && !isLoading)
+				}
 			}
 		}
 	}

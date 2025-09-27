@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.settings.ApplicationSettingsUpdated
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.chosenLibraryIdColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isLoggingToFile
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isPeakLevelNormalizeEnabledColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnPowerOnlyColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnWifiOnlyColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isVolumeLevelingEnabledColumn
@@ -25,6 +26,7 @@ class ApplicationSettingsRepository(private val context: Context, private val me
 				.addSetter(isSyncOnWifiOnlyColumn)
 				.addSetter(isSyncOnPowerOnlyColumn)
 				.addSetter(isVolumeLevelingEnabledColumn)
+				.addSetter(isPeakLevelNormalizeEnabledColumn)
 				.addSetter(isLoggingToFile)
 				.addSetter(playbackEngineTypeNameColumn)
 				.addSetter(chosenLibraryIdColumn)
@@ -33,7 +35,7 @@ class ApplicationSettingsRepository(private val context: Context, private val me
 	}
 
 	override fun promiseApplicationSettings(): Promise<ApplicationSettings> =
-		promiseTableMessage<ApplicationSettings> {
+		promiseTableMessage {
 			RepositoryAccessHelper(context).use { helper ->
 				helper.beginNonExclusiveTransaction().use {
 					helper.mapSql("SELECT * FROM $tableName").fetchFirst()
@@ -49,6 +51,7 @@ class ApplicationSettingsRepository(private val context: Context, private val me
 						.addParameter(isSyncOnWifiOnlyColumn, applicationSettings.isSyncOnWifiOnly)
 						.addParameter(isSyncOnPowerOnlyColumn, applicationSettings.isSyncOnPowerOnly)
 						.addParameter(isVolumeLevelingEnabledColumn, applicationSettings.isVolumeLevelingEnabled)
+						.addParameter(isPeakLevelNormalizeEnabledColumn, applicationSettings.isPeakLevelNormalizeEnabled)
 						.addParameter(isLoggingToFile, applicationSettings.isLoggingToFile)
 						.addParameter(playbackEngineTypeNameColumn, applicationSettings.playbackEngineTypeName)
 						.addParameter(chosenLibraryIdColumn, applicationSettings.chosenLibraryId)
