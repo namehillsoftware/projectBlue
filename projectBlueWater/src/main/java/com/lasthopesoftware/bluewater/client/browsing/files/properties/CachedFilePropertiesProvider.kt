@@ -10,8 +10,8 @@ import com.namehillsoftware.handoff.promises.Promise
 
 class CachedFilePropertiesProvider(
 	private val urlKeys: ProvideUrlKey,
+	private val filePropertiesProvider: ProvideLibraryFileProperties,
 	private val filePropertiesContainerRepository: IFilePropertiesContainerRepository,
-	private val filePropertiesProvider: ProvideLibraryFileProperties
 ) : ProvideLibraryFileProperties {
 	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Map<String, String>> {
 		return urlKeys.promiseUrlKey(libraryId, serviceFile)

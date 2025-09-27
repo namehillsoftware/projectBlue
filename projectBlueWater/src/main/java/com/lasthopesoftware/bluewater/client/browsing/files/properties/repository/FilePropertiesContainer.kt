@@ -12,7 +12,7 @@ class FilePropertiesContainer(override val revision: Long, properties: Map<Strin
 		val currentProperties = properties
 		try {
 			currentProperties[key] = value
-		} catch (e: UnsupportedOperationException) {
+		} catch (_: UnsupportedOperationException) {
 			// The type system doesn't really know if a `Map` is read-only, so lazily detect if it's read-only
 			// based on getting an `UnsupportedOperationException` when trying to update it.
 			if (properties === currentProperties) {

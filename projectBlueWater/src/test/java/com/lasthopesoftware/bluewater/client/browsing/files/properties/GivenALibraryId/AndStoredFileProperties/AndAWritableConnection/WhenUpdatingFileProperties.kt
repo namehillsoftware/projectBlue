@@ -35,13 +35,13 @@ class WhenUpdatingFileProperties {
 	private val properties = mutableMapOf<String, String>()
 
 	private val services by lazy {
-		var isFilePropertiesContainerUpdated = false
+		var isFilePropertiesUpdated = false
 		val filePropertiesContainer = FakeFilePropertiesContainerRepository().apply {
 			putFilePropertiesContainer(
 				UrlKeyHolder(URL("http://test:80/MCWS/v1/"), ServiceFile(serviceFileId)),
 				object : OpenFilePropertiesContainer(FilePropertiesContainer(revision, mapOf(Pair("package", "heighten")))) {
 					override fun updateProperty(key: String, value: String) {
-						isFilePropertiesContainerUpdated = true
+						isFilePropertiesUpdatedFirst = isFilePropertiesUpdated
 						super.updateProperty(key, value)
 					}
 				}
@@ -50,7 +50,7 @@ class WhenUpdatingFileProperties {
 
 		val recordingApplicationMessageBus = object : RecordingApplicationMessageBus() {
 			override fun <T : ApplicationMessage> sendMessage(message: T) {
-				isFilePropertiesContainerUpdatedFirst = isFilePropertiesContainerUpdated
+				isFilePropertiesContainerUpdatedFirst = isFilePropertiesUpdatedFirst
 				super.sendMessage(message)
 			}
 		}
@@ -68,6 +68,7 @@ class WhenUpdatingFileProperties {
 									false
 								)
 							} answers {
+								isFilePropertiesUpdated = true
 								properties[secondArg()] = thirdArg()
 								Unit.toPromise()
 							}
@@ -93,6 +94,7 @@ class WhenUpdatingFileProperties {
 		Triple(filePropertiesContainer, recordingApplicationMessageBus, filePropertiesStorage)
     }
 
+	private var isFilePropertiesUpdatedFirst = false
 	private var isFilePropertiesContainerUpdatedFirst = false
 
 	@BeforeAll
@@ -112,7 +114,12 @@ class WhenUpdatingFileProperties {
 	}
 
 	@Test
-	fun `then the properties are updated in local storage before the message is sent`() {
+	fun `then the properties are updated before the message is sent`() {
+		assertThat(isFilePropertiesUpdatedFirst).isTrue
+	}
+
+	@Test
+	fun `then the container properties are updated before the message is sent`() {
 		assertThat(isFilePropertiesContainerUpdatedFirst).isTrue
 	}
 

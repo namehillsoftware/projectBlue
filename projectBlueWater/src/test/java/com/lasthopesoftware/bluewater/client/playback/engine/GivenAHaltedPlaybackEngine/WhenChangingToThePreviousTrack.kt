@@ -1,16 +1,11 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.GivenAHaltedPlaybackEngine
 
-import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertiesContainer
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.IFilePropertiesContainerRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
-import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
@@ -51,11 +46,6 @@ class WhenChangingToThePreviousTrack {
 		)
 
 		val libraryProvider = FakeLibraryRepository(libraryUnderTest)
-		val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()
-		every {
-			filePropertiesContainerRepository.getFilePropertiesContainer(UrlKeyHolder(TestUrl,	ServiceFile("4")))
-		} returns FilePropertiesContainer(1, mapOf(Pair(NormalizedFileProperties.Duration, "100")))
-
 		val preparedPlaybackQueueResourceManagement = PreparedPlaybackQueueResourceManagement(
 			fakePlaybackPreparerProvider,
 			mockk {

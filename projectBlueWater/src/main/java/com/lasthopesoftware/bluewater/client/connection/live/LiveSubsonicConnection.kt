@@ -49,7 +49,6 @@ import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.net.URL
-import java.util.TreeMap
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 
@@ -295,12 +294,16 @@ class LiveSubsonicConnection(
 											if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
 											if (v.isJsonPrimitive) Pair(k, v.asString) else null
 										}
-										.toMap(TreeMap(String.CASE_INSENSITIVE_ORDER))
-										.also {
+										.toMap(HashMap<String, String>())
+										.also { props ->
 											if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
 
-											it[NormalizedFileProperties.Key] = it[KnownFileProperties.id]
-											it[NormalizedFileProperties.Name] = it[KnownFileProperties.title]
+											props[KnownFileProperties.id]?.let {
+												props[NormalizedFileProperties.Key] = it
+											}
+											props[KnownFileProperties.title]?.let {
+												props[NormalizedFileProperties.Name] = it
+											}
 										}
 
 									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
