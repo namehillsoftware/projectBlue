@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties
 
+import kotlin.reflect.full.memberProperties
+
 object NormalizedFileProperties {
 	const val Artist = "Artist"
 	const val AlbumArtist = "Album Artist"
@@ -44,4 +46,13 @@ object NormalizedFileProperties {
 	const val Custom = "Custom"
 	const val Publisher = "Publisher"
 	const val TotalDiscs = "Total Discs"
+
+	val caseInsensitivePropertiesMap by lazy {
+		NormalizedFileProperties::class
+			.memberProperties
+			.filter { it.isConst }
+			.mapNotNull { it.call() as? String }
+			.associateWith { it }
+			.toSortedMap(String.CASE_INSENSITIVE_ORDER)
+	}
 }

@@ -19,8 +19,9 @@ class EditableLibraryFilePropertiesProvider(
 		val returnedProperties = HashSet<String>()
 
 		for ((name, value) in rawProperties) {
-			if (returnedProperties.add(name))
-				yield(getFileProperty(name, value))
+			val normalizedName = NormalizedFileProperties.caseInsensitivePropertiesMap[name] ?: name
+			if (returnedProperties.add(normalizedName))
+				yield(getFileProperty(normalizedName, value))
 		}
 
 		for (editable in EditableFilePropertyDefinition.entries) {

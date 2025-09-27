@@ -28,7 +28,6 @@ import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.emptyByteArray
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
-import kotlin.reflect.full.memberProperties
 
 
 class FileDetailsViewModel(
@@ -54,14 +53,6 @@ class FileDetailsViewModel(
 			NormalizedFileProperties.Waveform,
 			NormalizedFileProperties.LengthInPcmBlocks
 		)
-
-		private val caseInsensitivePropertiesMap by lazy {
-			NormalizedFileProperties::class
-				.memberProperties
-				.mapNotNull { it.call() as? String }
-				.associateWith { it }
-				.toSortedMap(String.CASE_INSENSITIVE_ORDER)
-		}
 	}
 
 	private var isConnectionReadOnly = false
@@ -175,7 +166,7 @@ class FileDetailsViewModel(
 			.promiseFileProperties(libraryId, serviceFile)
 			.then { fileProperties ->
 				val filePropertiesList = fileProperties.toList()
-				val filePropertiesMap = filePropertiesList.associateBy { caseInsensitivePropertiesMap[it.name] ?: it.name }
+				val filePropertiesMap = filePropertiesList.associateBy { it.name }
 
 				mutableFileName.value = filePropertiesMap[NormalizedFileProperties.Name]?.value ?: ""
 				mutableArtist.value = filePropertiesMap[NormalizedFileProperties.Artist]?.value ?: ""
@@ -209,7 +200,7 @@ class FileDetailsViewModel(
 			!isConnectionReadOnly && fileProperty is EditableFileProperty
 		}
 		val editableType by lazy(LazyThreadSafetyMode.PUBLICATION) { editableFilePropertyDefinition?.type }
-		val property by lazy(LazyThreadSafetyMode.PUBLICATION) { caseInsensitivePropertiesMap[fileProperty.name] ?: fileProperty.name }
+		val property = fileProperty.name
 
 		fun highlight() {
 			mutableHighlightedProperty.value = this
