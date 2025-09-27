@@ -24,8 +24,10 @@ import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
 import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.emptyByteArray
+import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 
@@ -164,19 +166,26 @@ class FileDetailsViewModel(
 	private fun loadFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Unit> =
 		filePropertiesProvider
 			.promiseFileProperties(libraryId, serviceFile)
-			.then { fileProperties ->
-				val filePropertiesList = fileProperties.toList()
-				val filePropertiesMap = filePropertiesList.associateBy { it.name }
+			.eventually { fileProperties ->
+				ThreadPools.compute.preparePromise { cs ->
+					if (cs.isCancelled) return@preparePromise
 
-				mutableFileName.value = filePropertiesMap[NormalizedFileProperties.Name]?.value ?: ""
-				mutableArtist.value = filePropertiesMap[NormalizedFileProperties.Artist]?.value ?: ""
-				mutableAlbum.value = filePropertiesMap[NormalizedFileProperties.Album]?.value ?: ""
-				mutableRating.value = filePropertiesMap[NormalizedFileProperties.Rating]?.value?.toIntOrNull() ?: 0
+					val filePropertiesList = fileProperties.toList()
 
-				mutableFileProperties.value = filePropertiesList
-					.filterNot { e -> propertiesToSkip.contains(e.name) }
-					.sortedBy { it.name }
-					.map(::FilePropertyViewModel)
+					if (cs.isCancelled) return@preparePromise
+					val filePropertiesMap = filePropertiesList.associateBy { it.name }
+
+					mutableFileName.value = filePropertiesMap[NormalizedFileProperties.Name]?.value ?: ""
+					mutableArtist.value = filePropertiesMap[NormalizedFileProperties.Artist]?.value ?: ""
+					mutableAlbum.value = filePropertiesMap[NormalizedFileProperties.Album]?.value ?: ""
+					mutableRating.value = filePropertiesMap[NormalizedFileProperties.Rating]?.value?.toIntOrNull() ?: 0
+
+					if (cs.isCancelled) return@preparePromise
+					mutableFileProperties.value = filePropertiesList
+						.filterNot { e -> propertiesToSkip.contains(e.name) }
+						.sortedBy { it.name }
+						.map(::FilePropertyViewModel)
+				}
 			}
 			.keepPromise(Unit)
 

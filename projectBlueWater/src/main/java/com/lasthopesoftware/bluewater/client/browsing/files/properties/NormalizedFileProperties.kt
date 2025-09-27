@@ -1,7 +1,9 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties
 
+import androidx.annotation.Keep
 import kotlin.reflect.full.memberProperties
 
+@Keep
 object NormalizedFileProperties {
 	const val Artist = "Artist"
 	const val AlbumArtist = "Album Artist"
