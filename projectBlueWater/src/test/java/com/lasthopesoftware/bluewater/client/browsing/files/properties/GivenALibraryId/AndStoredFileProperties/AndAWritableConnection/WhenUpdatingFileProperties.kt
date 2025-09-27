@@ -2,6 +2,9 @@ package com.lasthopesoftware.bluewater.client.browsing.files.properties.GivenALi
 
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainerRepository
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.OpenFilePropertiesContainer
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -33,10 +36,21 @@ class WhenUpdatingFileProperties {
 
 	private val services by lazy {
 		var isFilePropertiesUpdated = false
+		val filePropertiesContainer = FakeFilePropertiesContainerRepository().apply {
+			putFilePropertiesContainer(
+				UrlKeyHolder(URL("http://test:80/MCWS/v1/"), ServiceFile(serviceFileId)),
+				object : OpenFilePropertiesContainer(FilePropertiesContainer(revision, mapOf(Pair("package", "heighten")))) {
+					override fun updateProperty(key: String, value: String) {
+						isFilePropertiesUpdatedFirst = isFilePropertiesUpdated
+						super.updateProperty(key, value)
+					}
+				}
+			)
+		}
 
 		val recordingApplicationMessageBus = object : RecordingApplicationMessageBus() {
 			override fun <T : ApplicationMessage> sendMessage(message: T) {
-				isFilePropertiesUpdatedFirst = isFilePropertiesUpdated
+				isFilePropertiesContainerUpdatedFirst = isFilePropertiesUpdatedFirst
 				super.sendMessage(message)
 			}
 		}
@@ -70,17 +84,22 @@ class WhenUpdatingFileProperties {
 			mockk {
 				every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
 			},
+			mockk {
+				every { promiseRevision(LibraryId(libraryId)) } returns deferredRevisionPromise
+			},
+			filePropertiesContainer,
 			recordingApplicationMessageBus
 		)
 
-		Pair(recordingApplicationMessageBus, filePropertiesStorage)
+		Triple(filePropertiesContainer, recordingApplicationMessageBus, filePropertiesStorage)
     }
 
 	private var isFilePropertiesUpdatedFirst = false
+	private var isFilePropertiesContainerUpdatedFirst = false
 
 	@BeforeAll
 	fun act() {
-		val (_, storage) = services
+		val (_, _, storage) = services
 		storage
 			.promiseFileUpdate(
 				LibraryId(libraryId),
@@ -100,6 +119,25 @@ class WhenUpdatingFileProperties {
 	}
 
 	@Test
+	fun `then the container properties are updated before the message is sent`() {
+		assertThat(isFilePropertiesContainerUpdatedFirst).isTrue
+	}
+
+    @Test
+    fun `then the properties are updated in local storage`() {
+        assertThat(
+			services
+				.first
+				.getFilePropertiesContainer(
+					UrlKeyHolder(URL("http://test:80/MCWS/v1/"), ServiceFile(
+                    serviceFileId
+                ))
+				)
+				?.properties!!["package"])
+			.isEqualTo("model")
+    }
+
+	@Test
 	fun `then the properties are updated remotely`() {
 		assertThat(properties.map { e -> Pair(e.key, e.value) }).containsExactly(Pair("package", "model"))
 	}
@@ -108,7 +146,7 @@ class WhenUpdatingFileProperties {
 	fun `then a file property update message is sent`() {
 		assertThat(
 			services
-				.first
+				.second
 				.recordedMessages
 				.single())
 			.isEqualTo(

@@ -17,18 +17,13 @@ class FilePropertiesProvider(
 		Promise.Proxy<Map<String, String>>() {
 		init {
 			proxy(
-				libraryConnections
-					.promiseKey(libraryId, serviceFile)
+				if (isCancelled) promiseFilePropertiesCancelled(libraryId, serviceFile)
+				else libraryConnections
+					.promiseLibraryAccess(libraryId)
 					.also(::doCancel)
-					.eventually { urlKeyHolder ->
+					.eventually { access ->
 						if (isCancelled) promiseFilePropertiesCancelled(libraryId, serviceFile)
-						else libraryConnections
-							.promiseLibraryAccess(libraryId)
-							.also(::doCancel)
-							.eventually { access ->
-								if (isCancelled) promiseFilePropertiesCancelled(libraryId, serviceFile)
-								else access.promiseFileProperties(serviceFile)
-							}
+						else access.promiseFileProperties(serviceFile)
 					}
 			)
 		}
