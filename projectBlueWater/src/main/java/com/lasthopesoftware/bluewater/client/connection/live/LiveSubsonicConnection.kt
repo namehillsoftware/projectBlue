@@ -7,7 +7,8 @@ import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesLookup
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.LookupFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
@@ -33,7 +34,6 @@ import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.cancelBackThen
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.preparePromise
-import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.emptyByteArray
 import com.lasthopesoftware.resources.executors.ThreadPools
@@ -71,8 +71,6 @@ class LiveSubsonicConnection(
 
 		private val playlistsItem = ItemId(playlistsItemKey)
 		private val artistsItem = ItemId(artistsItemKey)
-
-		private val editableFilePropertyDefinitions by lazy { setOf(EditableFilePropertyDefinition.Rating).toPromise() }
 	}
 
 	private object KnownFileProperties {
@@ -130,7 +128,7 @@ class LiveSubsonicConnection(
 
 	override fun promiseIsConnectionPossible(): Promise<Boolean> = ConnectionPossiblePromise()
 
-	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<Map<String, String>> = FilePropertiesPromise(serviceFile)
+	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<LookupFileProperties> = FilePropertiesPromise(serviceFile)
 
 	override fun promiseFilePropertyUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> =
 		promiseSubsonicResponse<Response>("setRating", "id=${serviceFile.key}", "rating=$value").unitResponse()
@@ -185,8 +183,6 @@ class LiveSubsonicConnection(
 		.cancelBackThen { httpResponse, _ ->
 			httpResponse.body.use { it.readBytes() }
 		}
-
-	override fun promiseEditableFilePropertyDefinitions(): Promise<Set<EditableFilePropertyDefinition>> = editableFilePropertyDefinitions
 
 	override fun promiseFileStringList(itemId: ItemId?): Promise<String> = itemId
 		?.let(::promiseFiles)
@@ -265,8 +261,42 @@ class LiveSubsonicConnection(
 		}
 	}
 
+	private class SubsonicFilePropertiesLookup(
+		private val filePropertiesMap: MutableMap<String, String>
+	) : FilePropertiesLookup() {
+
+		companion object {
+			private val normalizedToKnown by lazy {
+				mapOf(
+					NormalizedFileProperties.Artist to KnownFileProperties.artist,
+					NormalizedFileProperties.Key to KnownFileProperties.id,
+					NormalizedFileProperties.Name to KnownFileProperties.title,
+					NormalizedFileProperties.VolumeLevelReplayGain to KnownFileProperties.trackGain,
+					NormalizedFileProperties.PeakLevel to KnownFileProperties.peakGain,
+				)
+			}
+
+			private val knownToNormalized by lazy {
+				normalizedToKnown.entries.associate { (k, v) -> v to k }
+			}
+		}
+
+		override val availableProperties by lazy {
+			filePropertiesMap.keys.map { knownToNormalized[it] ?: it }.toSet()
+		}
+
+		override fun getValue(name: String): String? =
+			filePropertiesMap[normalizedToKnown[name] ?: name] ?: filePropertiesMap[name.lowercase()]
+
+		override fun isEditable(name: String): Boolean = name == NormalizedFileProperties.Rating
+
+		override fun updateValue(name: String, value: String) {
+			filePropertiesMap[name] = value
+		}
+	}
+
 	private inner class FilePropertiesPromise(private val serviceFile: ServiceFile) :
-		Promise.Proxy<Map<String, String>>()
+		Promise.Proxy<LookupFileProperties>()
 	{
 		init {
 			proxy(
@@ -292,31 +322,19 @@ class LiveSubsonicConnection(
 									val returnElements = elements
 										.mapNotNull { (k, v) ->
 											if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-											if (v.isJsonPrimitive) Pair(k, v.asString) else null
+											if (v.isJsonPrimitive) k to v.asString else null
 										}
 										.toMap(HashMap<String, String>())
-										.also { props ->
-											if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-
-											props[KnownFileProperties.id]?.let {
-												props[NormalizedFileProperties.Key] = it
-											}
-											props[KnownFileProperties.title]?.let {
-												props[NormalizedFileProperties.Name] = it
-											}
-										}
 
 									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
 
-									val replayGain = elements[KnownFileProperties.replayGain]?.asJsonObject
-									if (replayGain != null) {
-										replayGain.get(KnownFileProperties.trackGain)?.asString?.also {
-											returnElements[NormalizedFileProperties.VolumeLevelReplayGain] = it
+									elements[KnownFileProperties.replayGain]?.asJsonObject
+										?.asMap()
+										?.mapNotNull { (k, v) ->
+											if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
+											if (v.isJsonPrimitive) k to v.asString else null
 										}
-										replayGain.get(KnownFileProperties.peakGain)?.asString?.also {
-											returnElements[NormalizedFileProperties.PeakLevel] = it
-										}
-									}
+										?.let(returnElements::putAll)
 
 									returnElements
 								}
@@ -335,7 +353,7 @@ class LiveSubsonicConnection(
 							.also(::doCancel)
 							.then { l ->
 								props[NormalizedFileProperties.Lyrics] = l?.lyrics?.value ?: ""
-								props
+								SubsonicFilePropertiesLookup(props)
 							}
 					}, ::handleException)
 			)

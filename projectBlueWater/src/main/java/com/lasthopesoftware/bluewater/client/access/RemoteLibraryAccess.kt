@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.access
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.LookupFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
@@ -11,7 +11,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import java.io.InputStream
 
 interface RemoteLibraryAccess {
-	fun promiseFileProperties(serviceFile: ServiceFile): Promise<Map<String, String>>
+	fun promiseFileProperties(serviceFile: ServiceFile): Promise<LookupFileProperties>
 	fun promiseFilePropertyUpdate(
 		serviceFile: ServiceFile,
 		property: String,
@@ -37,5 +37,4 @@ interface RemoteLibraryAccess {
 	fun promiseShuffledFileStringList(playlistId: PlaylistId): Promise<String>
 	fun promiseImageBytes(serviceFile: ServiceFile): Promise<ByteArray>
 	fun promiseImageBytes(itemId: ItemId): Promise<ByteArray>
-	fun promiseEditableFilePropertyDefinitions(): Promise<Set<EditableFilePropertyDefinition>>
 }

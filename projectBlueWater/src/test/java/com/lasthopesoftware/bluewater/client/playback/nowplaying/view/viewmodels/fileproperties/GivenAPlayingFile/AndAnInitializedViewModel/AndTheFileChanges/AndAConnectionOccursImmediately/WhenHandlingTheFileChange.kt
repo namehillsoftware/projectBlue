@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.fileproperties.GivenAPlayingFile.AndAnInitializedViewModel.AndTheFileChanges.AndAConnectionOccursImmediately
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
@@ -65,7 +66,7 @@ class WhenHandlingTheFileChange {
             messageBus,
             nowPlayingRepository,
             mockk {
-				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(firstServiceFileId)) } returns emptyMap<String, String>().toPromise()
+				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(firstServiceFileId)) } returns MappedFilePropertiesLookup().toPromise()
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(secondServiceFileId)) } throws ConnectException("Couldn't Connect!")
 			},
             mockk {

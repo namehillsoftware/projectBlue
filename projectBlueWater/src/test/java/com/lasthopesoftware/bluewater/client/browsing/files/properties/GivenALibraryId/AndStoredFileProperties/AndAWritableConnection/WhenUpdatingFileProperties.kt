@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.properties.GivenALi
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainerRepository
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.OpenFilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
@@ -39,7 +40,7 @@ class WhenUpdatingFileProperties {
 		val filePropertiesContainer = FakeFilePropertiesContainerRepository().apply {
 			putFilePropertiesContainer(
 				UrlKeyHolder(URL("http://test:80/MCWS/v1/"), ServiceFile(serviceFileId)),
-				object : OpenFilePropertiesContainer(FilePropertiesContainer(revision, mapOf(Pair("package", "heighten")))) {
+				object : OpenFilePropertiesContainer(FilePropertiesContainer(revision, MappedFilePropertiesLookup(mapOf(Pair("package", "heighten"))))) {
 					override fun updateProperty(key: String, value: String) {
 						isFilePropertiesUpdatedFirst = isFilePropertiesUpdated
 						super.updateProperty(key, value)
@@ -133,7 +134,7 @@ class WhenUpdatingFileProperties {
                     serviceFileId
                 ))
 				)
-				?.properties!!["package"])
+				?.properties?.get("package")?.value)
 			.isEqualTo("model")
     }
 

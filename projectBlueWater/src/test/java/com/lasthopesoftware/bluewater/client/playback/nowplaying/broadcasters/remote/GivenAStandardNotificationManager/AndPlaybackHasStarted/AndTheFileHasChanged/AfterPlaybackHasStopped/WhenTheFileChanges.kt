@@ -5,6 +5,7 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.FakeNowPlayingRepository
@@ -44,21 +45,21 @@ class WhenTheFileChanges : AndroidContext() {
 		MediaSessionBroadcaster(
 			FakeNowPlayingRepository(nowPlaying),
 			mockk {
-				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns mapOf(
+				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns MappedFilePropertiesLookup(mapOf(
 					Pair(NormalizedFileProperties.Name, "wing"),
 					Pair(NormalizedFileProperties.Rating, "861"),
 					Pair(NormalizedFileProperties.Artist, "toe"),
 					Pair(NormalizedFileProperties.Album, "paint"),
 					Pair(NormalizedFileProperties.Duration, "618"),
 					Pair(NormalizedFileProperties.Track, "723"),
-				).toPromise() andThen mapOf(
+				)).toPromise() andThen MappedFilePropertiesLookup(mapOf(
 					Pair(NormalizedFileProperties.Name, "deep"),
 					Pair(NormalizedFileProperties.Rating, "861"),
 					Pair(NormalizedFileProperties.Artist, "hut"),
 					Pair(NormalizedFileProperties.Album, "self"),
 					Pair(NormalizedFileProperties.Duration, "97"),
 					Pair(NormalizedFileProperties.Track, "340"),
-				).toPromise()
+				)).toPromise()
 			},
 			mockk {
 				every { promiseImageBytes(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns byteArrayOf((912).toByte(), (368).toByte(), (395).toByte()).toPromise()

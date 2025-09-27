@@ -10,7 +10,7 @@ import androidx.core.database.getLongOrNull
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.fileNameParts
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.localExternalRelativeFileDirectory
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.LookupFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.ProvideFileUrisForLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -45,7 +45,7 @@ interface MediaFileUriProvider : ProvideFileUrisForLibrary
 abstract class PermissionsCheckingMediaFileUriProvider(
 	private val filePropertiesProvider: ProvideLibraryFileProperties,
 	private val externalStorageReadPermissionsArbitrator: CheckOsPermissions,
-): MediaFileUriProvider, PromisedResponse<Map<String, String>, Uri?> {
+): MediaFileUriProvider, PromisedResponse<LookupFileProperties, Uri?> {
 	override fun promiseUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Uri?> =
 		if (externalStorageReadPermissionsArbitrator.run { !isReadPermissionGranted && !isReadMediaAudioPermissionGranted }) Promise.empty()
 		else getMediaQueryUri(libraryId, serviceFile)
@@ -60,9 +60,9 @@ class DataFileUriProvider(
 	filePropertiesProvider: ProvideLibraryFileProperties,
 	externalStorageReadPermissionsArbitrator: CheckOsPermissions,
 	private val contentResolver: ContentResolver,
-) : PermissionsCheckingMediaFileUriProvider(filePropertiesProvider, externalStorageReadPermissionsArbitrator), PromisedResponse<Map<String, String>, Uri?> {
+) : PermissionsCheckingMediaFileUriProvider(filePropertiesProvider, externalStorageReadPermissionsArbitrator) {
 
-	override fun promiseResponse(fileProperties: Map<String, String>): Promise<Uri?> {
+	override fun promiseResponse(fileProperties: LookupFileProperties): Promise<Uri?> {
 		val (_, baseFileName, _, postExtension) = fileProperties.fileNameParts
 			?: throw IOException("The filename property was not retrieved. A connection needs to be re-established.")
 
@@ -96,14 +96,14 @@ class MetadataMediaFileUriProvider(
 	filePropertiesProvider: ProvideLibraryFileProperties,
 	externalStorageReadPermissionsArbitrator: CheckOsPermissions,
 	private val contentResolver: ContentResolver,
-) : PermissionsCheckingMediaFileUriProvider(filePropertiesProvider, externalStorageReadPermissionsArbitrator), PromisedResponse<Map<String, String>, Uri?> {
+) : PermissionsCheckingMediaFileUriProvider(filePropertiesProvider, externalStorageReadPermissionsArbitrator) {
 
-	override fun promiseResponse(fileProperties: Map<String, String>): Promise<Uri?> = ThreadPools.io.preparePromise {
+	override fun promiseResponse(fileProperties: LookupFileProperties): Promise<Uri?> = ThreadPools.io.preparePromise {
 		val selectionArgs = arrayOf(
-			fileProperties[NormalizedFileProperties.Artist] ?: "",
-			fileProperties[NormalizedFileProperties.AlbumArtist] ?: "",
-			fileProperties[NormalizedFileProperties.Name] ?: "",
-			fileProperties[NormalizedFileProperties.Album] ?: ""
+			fileProperties.artist?.value ?: "",
+			fileProperties.albumArtist?.value ?: "",
+			fileProperties.name?.value ?: "",
+			fileProperties.album?.value ?: ""
 		)
 
 		val maybeCursor = contentResolver.query(

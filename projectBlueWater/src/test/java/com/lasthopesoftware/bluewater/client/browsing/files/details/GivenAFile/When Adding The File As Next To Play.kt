@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.PassThroughFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -32,7 +33,7 @@ class `When Adding The File As Next To Play` {
 			},
 			mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
-					emptySequence()
+					PassThroughFilePropertiesLookup()
 				)
 			},
 			mockk(),

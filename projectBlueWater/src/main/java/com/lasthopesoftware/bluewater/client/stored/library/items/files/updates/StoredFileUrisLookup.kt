@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePrope
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.fileNameParts
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.localExternalRelativeFileDirectory
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.localExternalRelativeFilePathAsMp3
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.LookupFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
@@ -43,7 +44,7 @@ class StoredFileUrisLookup(
 					}
 			}
 
-	private fun promiseLocalFileUri(libraryId: LibraryId, fileProperties: Map<String, String>): Promise<URI?> =
+	private fun promiseLocalFileUri(libraryId: LibraryId, fileProperties: LookupFileProperties): Promise<URI?> =
 		lookupSyncDirectory
 			.promiseSyncDirectory(libraryId)
 			.then { syncDir ->
@@ -60,7 +61,7 @@ class StoredFileUrisLookup(
 					?.let { File(it).toURI() }
 			}
 
-	private fun promiseExternalUri(libraryId: LibraryId, serviceFile: ServiceFile, fileProperties: Map<String, String>): Promise<URI?> =
+	private fun promiseExternalUri(libraryId: LibraryId, serviceFile: ServiceFile, fileProperties: LookupFileProperties): Promise<URI?> =
 		mediaFileUriProvider
 			.promiseUri(libraryId, serviceFile)
 			.eventually { existingUri ->

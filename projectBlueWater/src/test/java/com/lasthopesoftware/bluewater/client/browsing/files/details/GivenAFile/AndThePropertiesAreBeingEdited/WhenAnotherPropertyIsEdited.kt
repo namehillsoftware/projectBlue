@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsV
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.PassThroughFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.PassThroughUrlKeyProvider
@@ -34,23 +35,25 @@ class WhenAnotherPropertyIsEdited {
 			},
 			mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
-					sequenceOf(
-						ReadOnlyFileProperty(NormalizedFileProperties.Rating, "2"),
-						ReadOnlyFileProperty("awkward", "prevent"),
-						ReadOnlyFileProperty("feast", "wind"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Name, "please"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Artist, "brown"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Genre, "subject"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Lyrics, "belief"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Comment, "pad"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Composer, "hotel"),
-						EditableFileProperty(NormalizedFileProperties.Custom, "curl"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Publisher, "capital"),
-						ReadOnlyFileProperty(NormalizedFileProperties.TotalDiscs, "354"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Track, "882"),
-						EditableFileProperty(NormalizedFileProperties.AlbumArtist, "calm"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Album, "distant"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Date, "1355"),
+					PassThroughFilePropertiesLookup(
+						listOf(
+							ReadOnlyFileProperty(NormalizedFileProperties.Rating, "2"),
+							ReadOnlyFileProperty("awkward", "prevent"),
+							ReadOnlyFileProperty("feast", "wind"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Name, "please"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Artist, "brown"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Genre, "subject"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Lyrics, "belief"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Comment, "pad"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Composer, "hotel"),
+							EditableFileProperty(NormalizedFileProperties.Custom, "curl"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Publisher, "capital"),
+							ReadOnlyFileProperty(NormalizedFileProperties.TotalDiscs, "354"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Track, "882"),
+							EditableFileProperty(NormalizedFileProperties.AlbumArtist, "calm"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Album, "distant"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Date, "1355"),
+						)
 					)
 				)
 			},
@@ -88,13 +91,13 @@ class WhenAnotherPropertyIsEdited {
 		viewModel.apply {
 			load(LibraryId(libraryId), ServiceFile(serviceFileId)).toExpiringFuture().get()
 			fileProperties.apply {
-				value.first { it.property == NormalizedFileProperties.Custom }
+				value.first { it.propertyName == NormalizedFileProperties.Custom }
 					.apply {
 						highlight()
 						edit()
 						updateValue("omit")
 					}
-				value.first { it.property == NormalizedFileProperties.AlbumArtist }.apply {
+				value.first { it.propertyName == NormalizedFileProperties.AlbumArtist }.apply {
 					highlight()
 					edit()
 					updateValue("silk")
@@ -110,26 +113,26 @@ class WhenAnotherPropertyIsEdited {
 
 	@Test
 	fun `then the original property is not being edited`() {
-		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == NormalizedFileProperties.Custom }?.isEditing?.value).isFalse
+		assertThat(viewModel.fileProperties.value.firstOrNull { it.propertyName == NormalizedFileProperties.Custom }?.isEditing?.value).isFalse
 	}
 
 	@Test
 	fun `then the new property is being edited`() {
-		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == NormalizedFileProperties.AlbumArtist }?.isEditing?.value).isTrue
+		assertThat(viewModel.fileProperties.value.firstOrNull { it.propertyName == NormalizedFileProperties.AlbumArtist }?.isEditing?.value).isTrue
 	}
 
 	@Test
 	fun `then the new property is highlighted`() {
-		assertThat(viewModel.highlightedProperty.value).isEqualTo(viewModel.fileProperties.value.firstOrNull { it.property == NormalizedFileProperties.AlbumArtist })
+		assertThat(viewModel.highlightedProperty.value).isEqualTo(viewModel.fileProperties.value.firstOrNull { it.propertyName == NormalizedFileProperties.AlbumArtist })
 	}
 
 	@Test
 	fun `then the property has the correct editable type`() {
-		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == NormalizedFileProperties.AlbumArtist }?.editableType).isEqualTo(FilePropertyType.ShortFormText)
+		assertThat(viewModel.fileProperties.value.firstOrNull { it.propertyName == NormalizedFileProperties.AlbumArtist }?.editableType).isEqualTo(FilePropertyType.ShortFormText)
 	}
 
 	@Test
 	fun `then the property is edited`() {
-		assertThat(viewModel.fileProperties.value.firstOrNull { it.property == NormalizedFileProperties.AlbumArtist }?.uncommittedValue?.value).isEqualTo("silk")
+		assertThat(viewModel.fileProperties.value.firstOrNull { it.propertyName == NormalizedFileProperties.AlbumArtist }?.uncommittedValue?.value).isEqualTo("silk")
 	}
 }

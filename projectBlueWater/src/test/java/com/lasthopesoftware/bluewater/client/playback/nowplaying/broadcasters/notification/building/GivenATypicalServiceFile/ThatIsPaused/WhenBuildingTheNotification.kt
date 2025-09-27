@@ -8,6 +8,7 @@ import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
@@ -50,10 +51,10 @@ class WhenBuildingTheNotification : AndroidContext() {
 				every { promiseUrlKey(libraryId, ServiceFile("3")) } returns UrlKeyHolder(TestUrl, ServiceFile("3")).toPromise()
 			},
 			mockk {
-				every { promiseFileProperties(libraryId, ServiceFile("3")) } returns mapOf(
+				every { promiseFileProperties(libraryId, ServiceFile("3")) } returns MappedFilePropertiesLookup(mapOf(
 					Pair(NormalizedFileProperties.Artist, "test-artist"),
 					Pair(NormalizedFileProperties.Name, "song")
-				).toPromise()
+				)).toPromise()
 			},
 			mockk {
 				every { promiseImageBytes(libraryId, any<ServiceFile>()) } returns Promise(expectedBitmap)

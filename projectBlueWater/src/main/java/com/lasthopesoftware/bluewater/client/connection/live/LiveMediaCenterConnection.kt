@@ -6,8 +6,10 @@ import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesLookup
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyDefinition
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.LookupFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
@@ -73,7 +75,7 @@ class LiveMediaCenterConnection(
 		private const val serializedFileListParameter = "Action=Serialize"
 		private const val shuffleFileListParameter = "Shuffle=1"
 
-		private val editableFilePropertyDefinitions by lazy { EditableFilePropertyDefinition.entries.toSet().toPromise() }
+		private val editableFilePropertyDefinitions by lazy { FilePropertyDefinition.EditableFilePropertyDefinition.entries.toSet() }
 	}
 
 	private object KnownFileProperties {
@@ -134,7 +136,7 @@ class LiveMediaCenterConnection(
 
 	override fun promiseIsConnectionPossible(): Promise<Boolean> = ConnectionPossiblePromise()
 
-	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<Map<String, String>> =
+	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<LookupFileProperties> =
 		FilePropertiesPromise(serviceFile)
 
 	override fun promiseFilePropertyUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> =
@@ -259,8 +261,6 @@ class LiveMediaCenterConnection(
 			}
 		}
 
-	override fun promiseEditableFilePropertyDefinitions(): Promise<Set<EditableFilePropertyDefinition>> = editableFilePropertyDefinitions
-
 	override fun promiseFileStringList(itemId: ItemId?): Promise<String> =
 		itemId
 			?.run {
@@ -344,8 +344,38 @@ class LiveMediaCenterConnection(
 		return httpClient.promiseResponse(url)
 	}
 
+	private class MediaCenterFilePropertiesLookup(
+		private val filePropertiesMap: MutableMap<String, String>
+	) : FilePropertiesLookup() {
+
+		companion object {
+			private val editableFileProperties by lazy { editableFilePropertyDefinitions.map { it.name }.toSet() }
+		}
+
+		override val availableProperties by lazy { filePropertiesMap.keys }
+
+		override fun getValue(name: String): String? {
+			if (name != NormalizedFileProperties.PeakLevel) return filePropertiesMap[name]
+
+			val peakLevelSampleValue = filePropertiesMap[KnownFileProperties.peakLevelSample] ?: return null
+			val peakLevelSample = peakLevelSampleValue
+				.split(';', limit = 2)
+				.firstOrNull()?.lowercase()?.removeSuffix("db")?.trimEnd()?.toDoubleOrNull()
+				?.let { 10.0.pow(it / 20) }
+				?: 1.0
+
+			return peakLevelSample.toString()
+		}
+
+		override fun isEditable(name: String): Boolean = editableFileProperties.contains(name)
+
+		override fun updateValue(name: String, value: String) {
+			filePropertiesMap[name] = value
+		}
+	}
+
 	private inner class FilePropertiesPromise(private val serviceFile: ServiceFile) :
-		Promise<Map<String, String>>(),
+		Promise<LookupFileProperties>(),
 		PromisedResponse<HttpResponse, Unit>,
 		CancellableMessageWriter<Unit>,
 		ImmediateResponse<Throwable, Unit>
@@ -387,7 +417,8 @@ class LiveMediaCenterConnection(
 				responseString
 					.let(Jsoup::parse)
 					.let { xml ->
-						val map = xml
+						val map = HashMap<String, String>()
+						xml
 							.getElementsByTag("item")
 							.firstOrNull()
 							?.children()
@@ -400,24 +431,9 @@ class LiveMediaCenterConnection(
 								val name = el.attr("Name")
 								Pair(name, el.wholeOwnText())
 							}
-							?: emptyMap()
+							?.toMap(map)
 
-						val peakLevelSampleValue = map[KnownFileProperties.peakLevelSample]
-						if (peakLevelSampleValue == null) map
-						else {
-							if (cancellationSignal.isCancelled) {
-								reject(filePropertiesCancellationException(serviceFile))
-								return
-							}
-
-							val peakLevelSample = peakLevelSampleValue
-								.split(';', limit = 2)
-								.firstOrNull()?.lowercase()?.removeSuffix("db")?.trimEnd()?.toDoubleOrNull()
-								?.let { 10.0.pow(it / 20) }
-								?: 1.0
-
-							map + Pair(NormalizedFileProperties.PeakLevel, peakLevelSample.toString())
-						}
+						MediaCenterFilePropertiesLookup(map)
 					}
 			)
 		}
@@ -520,7 +536,7 @@ class LiveMediaCenterConnection(
 	}
 
 	private inner class FilePropertiesPlayStatsUpdatePromise(private val serviceFile: ServiceFile) :
-		Promise.Proxy<Unit>(), PromisedResponse<Map<String, String>, Unit>
+		Promise.Proxy<Unit>(), PromisedResponse<LookupFileProperties, Unit>
 	{
 		init {
 			proxy(
@@ -530,14 +546,14 @@ class LiveMediaCenterConnection(
 			)
 		}
 
-		override fun promiseResponse(fileProperties: Map<String, String>): Promise<Unit> {
+		override fun promiseResponse(fileProperties: LookupFileProperties): Promise<Unit> {
 			try {
-				val lastPlayedServer = fileProperties[NormalizedFileProperties.LastPlayed]
+				val lastPlayedServer = fileProperties.get(NormalizedFileProperties.LastPlayed)?.value
 				val duration = fileProperties.durationInMs ?: 0
 				val currentTime = System.currentTimeMillis()
 				if (lastPlayedServer != null && currentTime - duration <= lastPlayedServer.toLong() * 1000) return Unit.toPromise()
 
-				val numberPlaysString = fileProperties[NormalizedFileProperties.NumberPlays]
+				val numberPlaysString = fileProperties.get(NormalizedFileProperties.NumberPlays)?.value
 				val numberPlays = (numberPlaysString?.toIntOrNull() ?: 0) + 1
 				val numberPlaysUpdate = promiseFilePropertyUpdate(
 					serviceFile,

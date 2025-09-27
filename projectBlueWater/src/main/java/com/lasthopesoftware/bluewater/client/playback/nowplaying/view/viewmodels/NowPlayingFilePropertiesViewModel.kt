@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodel
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.LookupFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFreshLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
@@ -316,15 +317,15 @@ class NowPlayingFilePropertiesViewModel(
 			.excuse(::handleException)
 	}
 
-	private fun setFileProperties(fileProperties: Map<String, String>, isReadOnly: Boolean) {
-		artistState.value = fileProperties[NormalizedFileProperties.Artist] ?: stringResources.defaultNowPlayingArtist
-		titleState.value = fileProperties[NormalizedFileProperties.Name] ?: stringResources.defaultNowPlayingTrackTitle
+	private fun setFileProperties(fileProperties: LookupFileProperties, isReadOnly: Boolean) {
+		artistState.value = fileProperties.artist?.value ?: stringResources.defaultNowPlayingArtist
+		titleState.value = fileProperties.name?.value ?: stringResources.defaultNowPlayingTrackTitle
 
 		val duration = fileProperties.durationInMs ?: Int.MAX_VALUE
 		setTrackDuration(duration)
 
 		if (activeSongRatingUpdates == 0) {
-			val stringRating = fileProperties[NormalizedFileProperties.Rating]
+			val stringRating = fileProperties.rating?.value
 			val fileRating = stringRating?.toFloatOrNull() ?: 0f
 			songRatingState.value = fileRating
 		}
@@ -343,11 +344,11 @@ class NowPlayingFilePropertiesViewModel(
 	}
 
 	private class CachedPromises(
-        val key: UrlKeyHolder<ServiceFile>,
-        val libraryId: LibraryId,
-        val serviceFile: ServiceFile,
-        val promisedIsReadOnly: Promise<Boolean>,
-        val promisedProperties: Promise<Map<String, String>>,
+		val key: UrlKeyHolder<ServiceFile>,
+		val libraryId: LibraryId,
+		val serviceFile: ServiceFile,
+		val promisedIsReadOnly: Promise<Boolean>,
+		val promisedProperties: Promise<LookupFileProperties>,
 	) : AutoCloseable
 	{
 		override fun close() {

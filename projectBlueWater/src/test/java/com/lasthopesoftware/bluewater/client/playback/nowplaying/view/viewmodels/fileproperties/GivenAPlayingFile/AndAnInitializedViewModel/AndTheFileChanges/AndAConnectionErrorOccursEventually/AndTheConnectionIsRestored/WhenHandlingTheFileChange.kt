@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.fileproperties.GivenAPlayingFile.AndAnInitializedViewModel.AndTheFileChanges.AndAConnectionErrorOccursEventually.AndTheConnectionIsRestored
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
@@ -73,7 +74,7 @@ class WhenHandlingTheFileChange {
                         LibraryId(libraryId),
                         ServiceFile(firstServiceFileId)
                     )
-                } returns emptyMap<String, String>().toPromise()
+                } returns MappedFilePropertiesLookup().toPromise()
                 every {
                     promiseFileProperties(
                         LibraryId(libraryId),
@@ -82,11 +83,11 @@ class WhenHandlingTheFileChange {
                 } returnsMany listOf(
 					Promise(EOFException("Oof")),
 					Promise(EOFException("Uff")),
-					mapOf(
+					MappedFilePropertiesLookup(mapOf(
 						Pair(NormalizedFileProperties.Artist, "cow"),
 						Pair(NormalizedFileProperties.Name, "spill"),
 						Pair(NormalizedFileProperties.Rating, "591"),
-					).toPromise(),
+					)).toPromise(),
 				)
             },
             mockk {
@@ -147,7 +148,7 @@ class WhenHandlingTheFileChange {
 				// (but not reset the promise).
 				vm.initializeViewModel(LibraryId(libraryId)).toExpiringFuture().get()
 			}
-		} catch(e: Throwable) {
+		} catch(_: Throwable) {
 			// ignored
 		}
 

@@ -5,8 +5,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 class FakeFilesPropertiesProvider : ProvideLibraryFileProperties {
-    private val cachedFileProperties = HashMap<Pair<ServiceFile, LibraryId>, Map<String, String>>()
-    override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Map<String, String>> =
+    private val cachedFileProperties = HashMap<Pair<ServiceFile, LibraryId>, LookupFileProperties>()
+    override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<LookupFileProperties> =
 		try {
 			Promise(cachedFileProperties[Pair(serviceFile, libraryId)])
 		} catch (e: Throwable) {
@@ -14,6 +14,6 @@ class FakeFilesPropertiesProvider : ProvideLibraryFileProperties {
 		}
 
     fun addFilePropertiesToCache(serviceFile: ServiceFile, libraryId: LibraryId, fileProperties: Map<String, String>) {
-        cachedFileProperties[Pair(serviceFile, libraryId)] = fileProperties
+        cachedFileProperties[Pair(serviceFile, libraryId)] = MappedFilePropertiesLookup(fileProperties)
     }
 }

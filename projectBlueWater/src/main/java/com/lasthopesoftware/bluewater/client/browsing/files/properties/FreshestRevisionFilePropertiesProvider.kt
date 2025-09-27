@@ -16,11 +16,11 @@ class FreshestRevisionFilePropertiesProvider(
 	private val checkRevisions: CheckRevisions,
 	private val filePropertiesContainerProvider: IFilePropertiesContainerRepository
 ) : ProvideFreshLibraryFileProperties {
-	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Map<String, String>> =
+	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<LookupFileProperties> =
 		ProxiedFileProperties(libraryId, serviceFile)
 
 	private inner class ProxiedFileProperties(private val libraryId: LibraryId, private val serviceFile: ServiceFile) :
-		Promise.Proxy<Map<String, String>>() {
+		Promise.Proxy<LookupFileProperties>() {
 		init {
 			proxy(
 				urlKeys
@@ -34,7 +34,7 @@ class FreshestRevisionFilePropertiesProvider(
 							.eventually { revision ->
 								urlKeyHolder
 									.let(filePropertiesContainerProvider::getFilePropertiesContainer)
-									?.takeIf { it.properties.isNotEmpty() && revision == it.revision }
+									?.takeIf { it.properties.allProperties.any() && revision == it.revision }
 									?.properties
 									?.toPromise()
 									?: inner
