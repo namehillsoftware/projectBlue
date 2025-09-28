@@ -76,7 +76,6 @@ class LiveMediaCenterConnection(
 		private const val shuffleFileListParameter = "Shuffle=1"
 
 		private val editableFilePropertyDefinitions by lazy { FilePropertyDefinition.EditableFilePropertyDefinition.entries.toSet() }
-		private val promisedEditableFilePropertyDefinitions by lazy { editableFilePropertyDefinitions.toPromise() }
 	}
 
 	private object KnownFileProperties {
@@ -261,9 +260,6 @@ class LiveMediaCenterConnection(
 				}
 			}
 		}
-
-	override fun promiseEditableFilePropertyDefinitions(): Promise<Set<FilePropertyDefinition.EditableFilePropertyDefinition>> =
-		promisedEditableFilePropertyDefinitions
 
 	override fun promiseFileStringList(itemId: ItemId?): Promise<String> =
 		itemId
