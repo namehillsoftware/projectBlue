@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.DelegatingLib
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.CaseInsensitiveFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.DelegatingFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FreshestRevisionFilePropertiesProvider
@@ -61,9 +60,7 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 
 	override val freshLibraryFileProperties: ProvideFreshLibraryFileProperties by lazy {
 		FreshestRevisionFilePropertiesProvider(
-			CaseInsensitiveFilePropertiesProvider(
-				FilePropertiesProvider(guaranteedLibraryConnectionProvider)
-			),
+			FilePropertiesProvider(guaranteedLibraryConnectionProvider),
 			urlKeyProvider,
 			revisionProvider,
 			FilePropertyCache,

@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAnUnknown
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
@@ -25,7 +26,7 @@ class WhenLoadingFileDetails {
 
 	private val viewModel by lazy {
 		val filePropertiesProvider = mockk<ProvideLibraryFileProperties>().apply {
-			every { promiseFileProperties(LibraryId(libraryId), any()) } returns emptyMap<String, String>().toPromise()
+			every { promiseFileProperties(LibraryId(libraryId), any()) } returns MappedFilePropertiesLookup().toPromise()
 		}
 
 		val stringResource = mockk<GetStringResources>().apply {

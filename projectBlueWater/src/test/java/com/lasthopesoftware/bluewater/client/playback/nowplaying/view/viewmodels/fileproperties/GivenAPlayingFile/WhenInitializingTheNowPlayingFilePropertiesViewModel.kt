@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.fileproperties.GivenAPlayingFile
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFreshLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
@@ -56,7 +57,7 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 			every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } answers {
 				delayedPromise.then { _ ->
 					filePropertiesReturnedTime = System.currentTimeMillis()
-					emptyMap()
+					MappedFilePropertiesLookup()
 				}
 			}
 		}

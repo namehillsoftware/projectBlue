@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.fileproperties.GivenAPlayingFile.AndAnInitializedViewModel.AndThePlaylistChanges.AndTheFileIsNull
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFreshLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -56,11 +57,11 @@ class WhenHandlingThePlaylistChange {
 					LibraryId(libraryId),
 					ServiceFile("5")
 				)
-			} returns mapOf(
+			} returns MappedFilePropertiesLookup(mapOf(
 				Pair(NormalizedFileProperties.Artist, "tea"),
 				Pair(NormalizedFileProperties.Name, "rake"),
 				Pair(NormalizedFileProperties.Rating, "748"),
-			).toPromise()
+			)).toPromise()
 		}
 
 		val checkAuthentication = mockk<CheckIfConnectionIsReadOnly> {

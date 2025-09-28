@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.fileproperties.GivenAPlayingFile.AndTheRatingIsChanged
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFreshLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -62,18 +63,18 @@ class WhenTheServiceFileChangesConcurrently {
 
 		val filePropertiesProvider = mockk<ProvideFreshLibraryFileProperties> {
 			every { promiseFileProperties(LibraryId(libraryId), firstServiceFile) } returns
-				mapOf(
+				MappedFilePropertiesLookup(mapOf(
 					Pair(NormalizedFileProperties.Artist, "accident"),
 					Pair(NormalizedFileProperties.Name, "proposal"),
 					Pair(NormalizedFileProperties.Rating, "107"),
-				).toPromise()
+				)).toPromise()
 
 			every { promiseFileProperties(LibraryId(libraryId), secondServiceFile) } returns
-				mapOf(
+				MappedFilePropertiesLookup(mapOf(
 					Pair(NormalizedFileProperties.Artist, "offer"),
 					Pair(NormalizedFileProperties.Name, "film"),
 					Pair(NormalizedFileProperties.Rating, "476"),
-				).toPromise()
+				)).toPromise()
 		}
 
 		val checkAuthentication = mockk<CheckIfConnectionIsReadOnly> {

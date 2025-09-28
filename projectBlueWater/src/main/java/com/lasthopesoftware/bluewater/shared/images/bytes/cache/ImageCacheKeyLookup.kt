@@ -2,7 +2,8 @@ package com.lasthopesoftware.bluewater.shared.images.bytes.cache
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.albumArtistOrArtist
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.LookupFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -11,7 +12,7 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 class ImageCacheKeyLookup(private val cachedFilePropertiesProvider: CachedFilePropertiesProvider) : LookupImageCacheKey {
 	override fun promiseImageCacheKey(libraryId: LibraryId, serviceFile: ServiceFile): Promise<String> =
-		object : Promise.Proxy<String>(), ImmediateResponse<Map<String, String>, String> {
+		object : Promise.Proxy<String>(), ImmediateResponse<LookupFileProperties, String> {
 			init {
 				val promisedFileProperties = cachedFilePropertiesProvider.promiseFileProperties(libraryId, serviceFile)
 				doCancel(promisedFileProperties)
@@ -21,14 +22,12 @@ class ImageCacheKeyLookup(private val cachedFilePropertiesProvider: CachedFilePr
 				)
 			}
 
-			override fun respond(fileProperties: Map<String, String>): String {
+			override fun respond(fileProperties: LookupFileProperties): String {
 				// First try storing by the album artist, which can cover the artist for the entire album (i.e. an album with various
 				// artists), and then by artist if that field is empty
-				var artist = fileProperties[NormalizedFileProperties.AlbumArtist]
-				if (artist.isNullOrEmpty()) artist = fileProperties[NormalizedFileProperties.Artist]
+				val artist = fileProperties.albumArtistOrArtist?.value
 
-				var albumOrTrackName = fileProperties[NormalizedFileProperties.Album]
-				if (albumOrTrackName == null) albumOrTrackName = fileProperties[NormalizedFileProperties.Name]
+				val albumOrTrackName = fileProperties.album?.value ?: fileProperties.track?.value
 
 				return "$libraryId:$artist:$albumOrTrackName"
 			}

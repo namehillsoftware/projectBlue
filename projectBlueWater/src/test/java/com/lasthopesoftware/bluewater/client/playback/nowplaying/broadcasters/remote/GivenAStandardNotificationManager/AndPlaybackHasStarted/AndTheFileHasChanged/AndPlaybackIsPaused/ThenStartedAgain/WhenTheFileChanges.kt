@@ -5,6 +5,7 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.FakeNowPlayingRepository
@@ -44,14 +45,14 @@ class WhenTheFileChanges : AndroidContext() {
 		MediaSessionBroadcaster(
 			FakeNowPlayingRepository(nowPlaying),
             mockk {
-				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns mapOf(
+				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns MappedFilePropertiesLookup(mapOf(
 					Pair(NormalizedFileProperties.Name, "monkey"),
 					Pair(NormalizedFileProperties.Rating, "140"),
 					Pair(NormalizedFileProperties.Artist, "season"),
 					Pair(NormalizedFileProperties.Album, "nobody"),
 					Pair(NormalizedFileProperties.Duration, "688.502"),
 					Pair(NormalizedFileProperties.Track, "355"),
-				).toPromise()
+				)).toPromise()
 			},
 			mockk {
 				every { promiseImageBytes(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns byteArrayOf((912).toByte(), (368).toByte(), (395).toByte()).toPromise()

@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.fileproperties.GivenAPlayingFile.AndAnInitializedViewModel.AndTheLibraryIsChangedToOneWithNothingPlaying
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFreshLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -61,14 +62,14 @@ class `When changing the library back` {
 		}
 
 		val filePropertiesProvider = mockk<ProvideFreshLibraryFileProperties> {
-			every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } answers {
+			every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns MappedFilePropertiesLookup(
 				mapOf(
 					Pair(NormalizedFileProperties.Artist, "M4Znyape"),
 					Pair(NormalizedFileProperties.Name, "6Treuhhy"),
 					Pair(NormalizedFileProperties.Duration, "60"),
 					Pair(NormalizedFileProperties.Rating, "964.27"),
-				).toPromise()
-			}
+				)
+			).toPromise()
 		}
 
 		val checkAuthentication = mockk<CheckIfConnectionIsReadOnly> {

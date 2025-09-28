@@ -4,6 +4,7 @@ import android.media.MediaMetadata
 import android.support.v4.media.session.PlaybackStateCompat
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
@@ -34,14 +35,14 @@ class WhenPlaybackStarts : AndroidContext() {
 		MediaSessionBroadcaster(
 			FakeNowPlayingRepository(singleNowPlaying(LibraryId(libraryId), ServiceFile(serviceFileId))),
 			mockk {
-				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns mapOf(
+				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns MappedFilePropertiesLookup(mapOf(
 					Pair(NormalizedFileProperties.Name, "leaf"),
 					Pair(NormalizedFileProperties.Rating, "895"),
 					Pair(NormalizedFileProperties.Artist, "worry"),
 					Pair(NormalizedFileProperties.Album, "screw"),
 					Pair(NormalizedFileProperties.Duration, "247346"),
 					Pair(NormalizedFileProperties.Track, "622"),
-				).toPromise()
+				)).toPromise()
 			},
 			mockk {
 				every { promiseImageBytes(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns byteArrayOf((912).toByte(), (368).toByte(), (395).toByte()).toPromise()

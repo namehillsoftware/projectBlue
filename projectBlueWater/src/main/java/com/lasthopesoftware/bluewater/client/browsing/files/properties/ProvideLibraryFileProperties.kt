@@ -5,5 +5,5 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 interface ProvideLibraryFileProperties {
-	fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Map<String, String>>
+	fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<LookupFileProperties>
 }

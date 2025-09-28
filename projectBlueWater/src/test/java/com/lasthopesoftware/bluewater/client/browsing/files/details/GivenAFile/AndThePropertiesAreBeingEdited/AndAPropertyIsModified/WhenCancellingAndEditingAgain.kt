@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.PassThroughFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.PassThroughUrlKeyProvider
@@ -32,23 +33,25 @@ class WhenCancellingAndEditingAgain {
 			},
 			mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
-					sequenceOf(
-						ReadOnlyFileProperty(NormalizedFileProperties.Rating, "68"),
-						ReadOnlyFileProperty("awkward", "prevent"),
-						ReadOnlyFileProperty("feast", "wind"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Name, "please"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Artist, "brown"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Genre, "subject"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Lyrics, "belief"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Comment, "pad"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Composer, "hotel"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Custom, "curl"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Publisher, "capital"),
-						ReadOnlyFileProperty(NormalizedFileProperties.TotalDiscs, "354"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Track, "703"),
-						ReadOnlyFileProperty(NormalizedFileProperties.AlbumArtist, "calm"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Album, "distant"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Date, "1355"),
+					PassThroughFilePropertiesLookup(
+						listOf(
+							ReadOnlyFileProperty(NormalizedFileProperties.Rating, "68"),
+							ReadOnlyFileProperty("awkward", "prevent"),
+							ReadOnlyFileProperty("feast", "wind"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Name, "please"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Artist, "brown"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Genre, "subject"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Lyrics, "belief"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Comment, "pad"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Composer, "hotel"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Custom, "curl"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Publisher, "capital"),
+							ReadOnlyFileProperty(NormalizedFileProperties.TotalDiscs, "354"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Track, "703"),
+							ReadOnlyFileProperty(NormalizedFileProperties.AlbumArtist, "calm"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Album, "distant"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Date, "1355"),
+						)
 					)
 				)
 			},
@@ -85,7 +88,7 @@ class WhenCancellingAndEditingAgain {
 	fun act() {
 		viewModel.apply {
 			load(LibraryId(libraryId), ServiceFile(serviceFileId)).toExpiringFuture().get()
-			fileProperties.value.first { it.property == NormalizedFileProperties.Date }.apply {
+			fileProperties.value.first { it.propertyName == NormalizedFileProperties.Date }.apply {
 				highlight()
 				edit()
 				cancel()
@@ -97,6 +100,6 @@ class WhenCancellingAndEditingAgain {
 
 	@Test
 	fun `then the property is highlighted`() {
-		assertThat(viewModel.highlightedProperty.value).isEqualTo(viewModel.fileProperties.value.first { it.property == NormalizedFileProperties.Date })
+		assertThat(viewModel.highlightedProperty.value).isEqualTo(viewModel.fileProperties.value.first { it.propertyName == NormalizedFileProperties.Date })
 	}
 }

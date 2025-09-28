@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideEditableLibraryFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFreshLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.editableFilePropertyDefinition
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.getFormattedValue
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
@@ -34,7 +34,7 @@ import com.namehillsoftware.handoff.promises.response.ImmediateAction
 
 class FileDetailsViewModel(
 	private val connectionPermissions: CheckIfConnectionIsReadOnly,
-	private val filePropertiesProvider: ProvideEditableLibraryFileProperties,
+	private val filePropertiesProvider: ProvideFreshLibraryFileProperties,
 	private val updateFileProperties: UpdateFileProperties,
 	defaultImageProvider: ProvideDefaultImage,
 	private val imageProvider: GetImageBytes,
@@ -170,26 +170,23 @@ class FileDetailsViewModel(
 				ThreadPools.compute.preparePromise { cs ->
 					if (cs.isCancelled) return@preparePromise
 
-					val filePropertiesList = fileProperties.toList()
+					mutableFileName.value = fileProperties.name?.value ?: ""
+					mutableArtist.value = fileProperties.artist?.value ?: ""
+					mutableAlbum.value = fileProperties.album?.value ?: ""
+					mutableRating.value = fileProperties.rating?.value?.toIntOrNull() ?: 0
 
 					if (cs.isCancelled) return@preparePromise
-					val filePropertiesMap = filePropertiesList.associateBy { it.name }
 
-					mutableFileName.value = filePropertiesMap[NormalizedFileProperties.Name]?.value ?: ""
-					mutableArtist.value = filePropertiesMap[NormalizedFileProperties.Artist]?.value ?: ""
-					mutableAlbum.value = filePropertiesMap[NormalizedFileProperties.Album]?.value ?: ""
-					mutableRating.value = filePropertiesMap[NormalizedFileProperties.Rating]?.value?.toIntOrNull() ?: 0
-
-					if (cs.isCancelled) return@preparePromise
-					mutableFileProperties.value = filePropertiesList
+					mutableFileProperties.value = fileProperties.allProperties
 						.filterNot { e -> propertiesToSkip.contains(e.name) }
 						.sortedBy { it.name }
 						.map(::FilePropertyViewModel)
+						.toList()
 				}
 			}
 			.keepPromise(Unit)
 
-	inner class FilePropertyViewModel(fileProperty: FileProperty) {
+	inner class FilePropertyViewModel(val fileProperty: FileProperty) {
 
 		private val formattedValue by lazy(LazyThreadSafetyMode.PUBLICATION) { fileProperty.getFormattedValue() }
 		private val editableFilePropertyDefinition by lazy(LazyThreadSafetyMode.PUBLICATION) {
@@ -209,7 +206,7 @@ class FileDetailsViewModel(
 			!isConnectionReadOnly && fileProperty is EditableFileProperty
 		}
 		val editableType by lazy(LazyThreadSafetyMode.PUBLICATION) { editableFilePropertyDefinition?.type }
-		val property = fileProperty.name
+		val propertyName = fileProperty.name
 
 		fun highlight() {
 			mutableHighlightedProperty.value = this
@@ -233,7 +230,7 @@ class FileDetailsViewModel(
 					activeServiceFile
 						?.let { serviceFile ->
 							updateFileProperties
-								.promiseFileUpdate(l, serviceFile, property, newValue, true)
+								.promiseFileUpdate(l, serviceFile, propertyName, newValue, true)
 								.then { _ -> mutableCommittedValue.value = newValue }
 						}
 				}

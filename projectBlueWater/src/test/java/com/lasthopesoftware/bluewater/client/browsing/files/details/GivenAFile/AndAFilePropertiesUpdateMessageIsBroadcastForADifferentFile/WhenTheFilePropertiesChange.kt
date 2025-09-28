@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.PassThroughFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -35,24 +36,28 @@ class WhenTheFilePropertiesChange {
 				},
 				mockk {
 					every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
-						sequenceOf(
-							ReadOnlyFileProperty(NormalizedFileProperties.Rating, "815"),
-							ReadOnlyFileProperty("little", "more"),
-							ReadOnlyFileProperty("evening", "skin"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Name, "ahead"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Artist, "moon"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Album, "number"),
-							ReadOnlyFileProperty(NormalizedFileProperties.ImageFile, "battle"),
+						PassThroughFilePropertiesLookup(
+							listOf(
+								ReadOnlyFileProperty(NormalizedFileProperties.Rating, "815"),
+								ReadOnlyFileProperty("little", "more"),
+								ReadOnlyFileProperty("evening", "skin"),
+								ReadOnlyFileProperty(NormalizedFileProperties.Name, "ahead"),
+								ReadOnlyFileProperty(NormalizedFileProperties.Artist, "moon"),
+								ReadOnlyFileProperty(NormalizedFileProperties.Album, "number"),
+								ReadOnlyFileProperty(NormalizedFileProperties.ImageFile, "battle"),
+							)
 						)
 					) andThen Promise(
-						sequenceOf(
-							ReadOnlyFileProperty(NormalizedFileProperties.Rating, "7"),
-							ReadOnlyFileProperty("bread", "scenery"),
-							ReadOnlyFileProperty("rush", "offense"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Name, "kiss"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Artist, "adoption"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Album, "motherly"),
-							ReadOnlyFileProperty(NormalizedFileProperties.StackTop, "under"),
+						PassThroughFilePropertiesLookup(
+							listOf(
+								ReadOnlyFileProperty(NormalizedFileProperties.Rating, "7"),
+								ReadOnlyFileProperty("bread", "scenery"),
+								ReadOnlyFileProperty("rush", "offense"),
+								ReadOnlyFileProperty(NormalizedFileProperties.Name, "kiss"),
+								ReadOnlyFileProperty(NormalizedFileProperties.Artist, "adoption"),
+								ReadOnlyFileProperty(NormalizedFileProperties.Album, "motherly"),
+								ReadOnlyFileProperty(NormalizedFileProperties.StackTop, "under"),
+							)
 						)
 					)
 				},
@@ -91,7 +96,7 @@ class WhenTheFilePropertiesChange {
 
 	@Test
 	fun `then the properties are correct`() {
-		assertThat(services.second.fileProperties.value.map { Pair(it.property, it.committedValue.value) }).hasSameElementsAs(
+		assertThat(services.second.fileProperties.value.map { Pair(it.propertyName, it.committedValue.value) }).hasSameElementsAs(
 			listOf(
 				Pair(NormalizedFileProperties.Rating, "815"),
 				Pair("little", "more"),

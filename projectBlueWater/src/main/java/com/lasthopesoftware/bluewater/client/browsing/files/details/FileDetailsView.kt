@@ -98,7 +98,6 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topRowOuterPad
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.shared.NullBox
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePalette
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePaletteProvider
@@ -274,7 +273,7 @@ fun FilePropertyRow(
 			.indicateFocus(interactionSource),
 	) {
 		Text(
-			text = property.property,
+			text = property.propertyName,
 			color = palette.primaryTextColor,
 			modifier = Modifier
 				.weight(1f)
@@ -288,7 +287,7 @@ fun FilePropertyRow(
 
 		val propertyValue by property.committedValue.subscribeAsState()
 
-		when (property.property) {
+		when (property.propertyName) {
 			NormalizedFileProperties.Rating -> {
 				Box(
 					modifier = Modifier
@@ -342,7 +341,7 @@ private fun FileDetailsEditor(
 ) {
 	val maybeHighlightedFileProperty by viewModel.highlightedProperty.subscribeAsState()
 	maybeHighlightedFileProperty?.let { fileProperty ->
-		val property = fileProperty.property
+		val property = fileProperty.propertyName
 
 		Dialog(onDismissRequest = fileProperty::cancel) {
 			ControlSurface(
@@ -388,7 +387,7 @@ private fun FileDetailsEditor(
 						contentAlignment = Alignment.Center
 					) {
 						when {
-							fileProperty.property == NormalizedFileProperties.Rating -> {
+							fileProperty.propertyName == NormalizedFileProperties.Rating -> {
 								val ratingValue by remember { derivedStateOf { propertyValue.toInt() } }
 								RatingBar(
 									rating = ratingValue,
@@ -455,7 +454,7 @@ private fun FileDetailsEditor(
 										viewModel.activeLibraryId?.also {
 											navigateApplication.search(
 												it,
-												ReadOnlyFileProperty(property, propertyValue)
+												fileProperty.fileProperty
 											)
 										}
 									},

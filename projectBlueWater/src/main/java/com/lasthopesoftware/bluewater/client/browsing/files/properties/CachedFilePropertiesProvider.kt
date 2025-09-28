@@ -13,12 +13,12 @@ class CachedFilePropertiesProvider(
 	private val filePropertiesProvider: ProvideLibraryFileProperties,
 	private val filePropertiesContainerRepository: IFilePropertiesContainerRepository,
 ) : ProvideLibraryFileProperties {
-	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Map<String, String>> {
+	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<LookupFileProperties> {
 		return urlKeys.promiseUrlKey(libraryId, serviceFile)
 			.cancelBackEventually { urlKey ->
 				urlKey
 					?.let(filePropertiesContainerRepository::getFilePropertiesContainer)
-					?.takeIf { it.properties.isNotEmpty() }?.properties?.toPromise()
+					?.takeIf { it.properties.allProperties.any() }?.properties?.toPromise()
 					?: filePropertiesProvider.promiseFileProperties(libraryId, serviceFile)
 			}
 	}

@@ -6,6 +6,7 @@ import android.net.Uri
 import android.provider.MediaStore
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.MetadataMediaFileUriProvider
@@ -26,11 +27,11 @@ class `When Getting The Uri Using Metadata` : AndroidContext() {
 			MetadataMediaFileUriProvider(
 				mockk {
 					every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
-						mapOf(
+						MappedFilePropertiesLookup(mapOf(
 							Pair(NormalizedFileProperties.Name, "6ouymea"),
 							Pair(NormalizedFileProperties.Album, "dZF7D2gj"),
 							Pair(NormalizedFileProperties.Artist, "HkWSHt0"),
-						)
+						))
 					)
 				},
 				mockk {

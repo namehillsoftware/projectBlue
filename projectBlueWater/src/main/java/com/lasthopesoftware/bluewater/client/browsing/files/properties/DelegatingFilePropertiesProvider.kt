@@ -9,6 +9,6 @@ class DelegatingFilePropertiesProvider(private val inner: ProvideFreshLibraryFil
 
 	private val filePropertiesFunction by lazy { policy.applyPolicy(inner::promiseFileProperties) }
 
-	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Map<String, String>> =
+	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<LookupFileProperties> =
 		filePropertiesFunction(libraryId, serviceFile)
 }

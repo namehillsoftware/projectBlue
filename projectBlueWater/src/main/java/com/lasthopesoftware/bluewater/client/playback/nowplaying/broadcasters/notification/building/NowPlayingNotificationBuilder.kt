@@ -2,10 +2,11 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.n
 
 import android.content.Context
 import android.graphics.Bitmap
+import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
+import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
@@ -52,8 +53,8 @@ class NowPlayingNotificationBuilder(
 				filePropertiesProvider
 					.promiseFileProperties(libraryId, serviceFile)
 					.then { fileProperties ->
-						val artist = fileProperties[NormalizedFileProperties.Artist]
-						val name = fileProperties[NormalizedFileProperties.Name]
+						val artist = fileProperties?.artist?.value
+						val name = fileProperties?.name?.value
 						addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(libraryId), libraryId, isPlaying)
 							.setOngoing(isPlaying)
 							.setContentTitle(name)
@@ -88,6 +89,7 @@ class NowPlayingNotificationBuilder(
 			.setContentTitle(context.getString(R.string.lbl_loading))
 	}
 
+	@OptIn(UnstableApi::class)
 	private fun addButtons(builder: NotificationCompat.Builder, libraryId: LibraryId, isPlaying: Boolean): NotificationCompat.Builder =
 		builder
 			.addAction(

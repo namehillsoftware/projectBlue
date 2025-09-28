@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume.GivenVolumeLevellingIsEnabled.AndPeakLevelNormalizeIsEnabled.AndPeakLevelIsLowerThanGain
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider
@@ -28,10 +29,10 @@ class WhenGettingTheMaxVolume {
                         LibraryId(libraryId),
                         ServiceFile("1")
                     )
-                } returns mapOf(
+                } returns MappedFilePropertiesLookup(mapOf(
                     Pair(NormalizedFileProperties.VolumeLevelReplayGain, "-0.3"),
                     Pair(NormalizedFileProperties.PeakLevel, "1.047128548"),
-                ).toPromise()
+                )).toPromise()
             }
         )
 		maxFileVolumeProvider.promiseMaxFileVolume(

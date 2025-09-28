@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableF
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -27,24 +28,17 @@ class WhenGettingTheFileProperties {
 		EditableLibraryFilePropertiesProvider(
 			mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
-					mapOf(
-						Pair(NormalizedFileProperties.Rating.lowercase(), "218"),
-						Pair("Natoquefacilisis", "Semperlobortis"),
-						Pair("Vivamusdapibus", "Placeratinceptos"),
-						Pair(NormalizedFileProperties.Name.lowercase(), "Vulputateornare"),
-						Pair(NormalizedFileProperties.Artist.lowercase(), "Consequattempor"),
-						Pair(NormalizedFileProperties.Album.lowercase(), "Dignissimorci"),
-						Pair(NormalizedFileProperties.Composer.lowercase(), "Facilisimalesuada"),
-						Pair(NormalizedFileProperties.AlbumArtist.lowercase(), "Condimentummaecenas"),
-					)
-				)
-			},
-			mockk {
-				every { promiseEditableFilePropertyDefinitions(LibraryId(libraryId)) } returns Promise(
-					setOf(
-						EditableFilePropertyDefinition.Artist,
-						EditableFilePropertyDefinition.Rating,
-						EditableFilePropertyDefinition.DiscNumber
+					MappedFilePropertiesLookup(
+						mapOf(
+							Pair(NormalizedFileProperties.Rating.lowercase(), "218"),
+							Pair("Natoquefacilisis", "Semperlobortis"),
+							Pair("Vivamusdapibus", "Placeratinceptos"),
+							Pair(NormalizedFileProperties.Name.lowercase(), "Vulputateornare"),
+							Pair(NormalizedFileProperties.Artist.lowercase(), "Consequattempor"),
+							Pair(NormalizedFileProperties.Album.lowercase(), "Dignissimorci"),
+							Pair(NormalizedFileProperties.Composer.lowercase(), "Facilisimalesuada"),
+							Pair(NormalizedFileProperties.AlbumArtist.lowercase(), "Condimentummaecenas"),
+						)
 					)
 				)
 			}

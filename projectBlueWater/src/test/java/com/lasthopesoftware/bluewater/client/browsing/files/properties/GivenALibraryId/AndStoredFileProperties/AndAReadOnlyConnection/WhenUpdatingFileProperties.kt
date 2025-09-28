@@ -3,6 +3,8 @@ package com.lasthopesoftware.bluewater.client.browsing.files.properties.GivenALi
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainerRepository
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -30,7 +32,7 @@ class WhenUpdatingFileProperties {
 		val filePropertiesContainer = FakeFilePropertiesContainerRepository().apply {
 			putFilePropertiesContainer(
 				UrlKeyHolder(URL("http://test:80/MCWS/v1/"), ServiceFile(serviceFileId)),
-				FilePropertiesContainer(565, mapOf(Pair("politics", "postpone")))
+				FilePropertiesContainer(565, MappedFilePropertiesLookup(mapOf(Pair("politics", "postpone"))))
 			)
 		}
 
@@ -94,8 +96,9 @@ class WhenUpdatingFileProperties {
 				.first
 				.getFilePropertiesContainer(UrlKeyHolder(URL("http://test:80/MCWS/v1/"), ServiceFile(serviceFileId)))
 				?.properties
-		)
-			.containsExactlyEntriesOf(mapOf(Pair("politics", "postpone")))
+				?.allProperties
+				?.toList()
+		).containsExactly(ReadOnlyFileProperty("politics", "postpone"))
 	}
 
 	@Test

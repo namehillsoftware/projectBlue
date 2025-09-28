@@ -8,7 +8,6 @@ import android.support.v4.media.RatingCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.PlaybackNotificationRouter
@@ -152,9 +151,9 @@ class MediaSessionBroadcaster(
 		return filePropertiesProvider
 			.promiseFileProperties(libraryId, serviceFile)
 			.eventually { fileProperties ->
-				val artist = fileProperties[NormalizedFileProperties.Artist]
-				val name = fileProperties[NormalizedFileProperties.Name]
-				val album = fileProperties[NormalizedFileProperties.Album]
+				val artist = fileProperties?.artist?.value
+				val name = fileProperties?.name?.value
+				val album = fileProperties?.album?.value
 				val duration = fileProperties.durationInMs ?: -1
 
 				val metadataBuilder = MediaMetadataCompat.Builder(mediaMetadata)
@@ -163,13 +162,13 @@ class MediaSessionBroadcaster(
 				metadataBuilder.putString(MediaMetadata.METADATA_KEY_TITLE, name)
 				metadataBuilder.putLong(MediaMetadata.METADATA_KEY_DURATION, duration)
 
-				val trackNumberString = fileProperties[NormalizedFileProperties.Track]
+				val trackNumberString = fileProperties?.track?.value
 				val trackNumber = trackNumberString?.toLong()
 				if (trackNumber != null) {
 					metadataBuilder.putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, trackNumber)
 				}
 
-				val rating = fileProperties[NormalizedFileProperties.Rating]?.toFloatOrNull() ?: 0f
+				val rating = fileProperties.rating?.value?.toFloatOrNull() ?: 0f
 				metadataBuilder.putRating(
 					MediaMetadataCompat.METADATA_KEY_USER_RATING,
 					RatingCompat.newStarRating(RatingCompat.RATING_5_STARS, rating.coerceIn(0f, 5f))

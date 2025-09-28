@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.LookupFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -102,7 +102,7 @@ class ReusableFileViewModel(
 	}
 
 	private inner class PromisedTextViewUpdate(private val libraryId: LibraryId, private val serviceFile: ServiceFile) :
-		Promise<Unit>(), ImmediateResponse<Map<String, String>, Unit> {
+		Promise<Unit>(), ImmediateResponse<LookupFileProperties, Unit> {
 
 		private val cancellationProxy = CancellationProxy()
 
@@ -143,11 +143,11 @@ class ReusableFileViewModel(
 			cancellationProxy.doCancel(delayPromise)
 		}
 
-		override fun respond(properties: Map<String, String>) {
+		override fun respond(properties: LookupFileProperties) {
 			if (isNotCurrentServiceFile || isUpdateCancelled) return
 
-			mutableTitle.value = properties[NormalizedFileProperties.Name] ?: stringResources.unknownTrack
-			mutableArtist.value = properties[NormalizedFileProperties.Artist] ?: stringResources.unknownArtist
+			mutableTitle.value = properties.name?.value ?: stringResources.unknownTrack
+			mutableArtist.value = properties.artist?.value ?: stringResources.unknownArtist
 		}
 
 		private fun handleError(e: Throwable) {

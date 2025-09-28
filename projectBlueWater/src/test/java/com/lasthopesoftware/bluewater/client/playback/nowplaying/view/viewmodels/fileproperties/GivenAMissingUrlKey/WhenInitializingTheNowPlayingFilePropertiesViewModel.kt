@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.fileproperties.GivenAMissingUrlKey
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyNotReturnedException
 import com.lasthopesoftware.bluewater.client.connection.session.LibraryConnectionChangedMessage
@@ -63,7 +64,7 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 						LibraryId(libraryId),
 						ServiceFile(serviceFileId)
 					)
-				} returns Promise(emptyMap())
+				} returns Promise(MappedFilePropertiesLookup())
 			},
             mockk {
                 every { promiseGuaranteedUrlKey(LibraryId(libraryId), any<ServiceFile>()) } answers {

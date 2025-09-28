@@ -35,13 +35,14 @@ class MaxFileVolumeProvider(
 					.eventually { fileProperties ->
 						promisedPeakLevelEnabled
 							.then { isPeakLevelEnabled ->
-								fileProperties[NormalizedFileProperties.VolumeLevelReplayGain]
+								fileProperties.get(NormalizedFileProperties.VolumeLevelReplayGain)
+									?.value
 									?.let { replayGainString ->
 										// Formula based on Vanilla Player formula - https://github.com/vanilla-music/vanilla/blob/5eb97409ec4db866d5008ee92d9765bf7cf4ec8c/app/src/main/java/ch/blinkenlights/android/vanilla/PlaybackService.java#L758
 										try {
 											val replayGainVolumeLevel = replayGainString.toDouble()
 											val peakLevel =
-												if (isPeakLevelEnabled) fileProperties[NormalizedFileProperties.PeakLevel]?.toDoubleOrNull() ?: 1.0
+												if (isPeakLevelEnabled) fileProperties.get(NormalizedFileProperties.PeakLevel)?.value?.toDoubleOrNull() ?: 1.0
 												else 0.0
 											min(10.0.pow(replayGainVolumeLevel / 20.0), 1 / peakLevel)
 												.toFloat()

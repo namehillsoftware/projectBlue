@@ -16,8 +16,6 @@ import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicati
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.android.ui.ProjectBlueComposableApplication
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinitionProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -50,13 +48,6 @@ import java.io.IOException
 		LibraryConnectionRegistry(localApplicationDependencies)
 	}
 
-	private val filePropertiesProvider by lazy {
-		EditableLibraryFilePropertiesProvider(
-			libraryConnectedDependencies.freshLibraryFileProperties,
-			EditableFilePropertyDefinitionProvider(localApplicationDependencies.libraryConnectionProvider),
-		)
-	}
-
 	private val libraryFilePropertiesDependents by lazy {
 		LibraryFilePropertiesDependentsRegistry(localApplicationDependencies, libraryConnectedDependencies)
 	}
@@ -64,7 +55,7 @@ import java.io.IOException
 	private val vm by buildViewModelLazily {
 		FileDetailsViewModel(
 			libraryConnectedDependencies.connectionAuthenticationChecker,
-			filePropertiesProvider,
+			libraryConnectedDependencies.freshLibraryFileProperties,
 			libraryConnectedDependencies.filePropertiesStorage,
 			localApplicationDependencies.defaultImageProvider,
 			libraryFilePropertiesDependents.imageBytesProvider,
