@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyDefinition
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.PassThroughFilePropertiesLookup
@@ -88,7 +88,7 @@ class WhenAnotherPropertyIsEdited {
 	}
 
 	private val FileDetailsViewModel.propertyToEdit
-		get() = fileProperties.value.first { it.propertyName == EditableFilePropertyDefinition.Band.propertyName }
+		get() = fileProperties.value.first { it.propertyName == FilePropertyDefinition.EditableFilePropertyDefinition.Band.propertyName }
 
 	@BeforeAll
 	fun act() {

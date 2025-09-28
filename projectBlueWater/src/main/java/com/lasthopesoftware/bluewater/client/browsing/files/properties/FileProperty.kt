@@ -4,6 +4,7 @@ import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import org.apache.commons.io.FilenameUtils
 import org.joda.time.Duration
+import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
 
 interface FileProperty : Parcelable {
@@ -37,47 +38,64 @@ interface LookupFileProperties {
 }
 
 abstract class FilePropertiesLookup : LookupFileProperties {
-	private val lazyNullFileProperty: Lazy<FileProperty?> = lazy { null }
-
 	private val filePropertyMap by lazy {
-		mapOf(
-			lazyAssociation(NormalizedFileProperties.Key),
-			lazyAssociation(NormalizedFileProperties.Name),
-			lazyAssociation(NormalizedFileProperties.Artist),
-			lazyAssociation(NormalizedFileProperties.AlbumArtist),
-			lazyAssociation(NormalizedFileProperties.Album),
-			lazyAssociation(NormalizedFileProperties.Band),
-			lazyAssociation(NormalizedFileProperties.Date),
-			lazyAssociation(NormalizedFileProperties.DiscNumber),
-			lazyAssociation(NormalizedFileProperties.Track),
-			lazyAssociation(NormalizedFileProperties.Rating),
-			lazyAssociation(NormalizedFileProperties.Lyrics),
-			lazyAssociation(NormalizedFileProperties.Comment),
-			lazyAssociation(NormalizedFileProperties.Composer),
-			lazyAssociation(NormalizedFileProperties.Custom),
-			lazyAssociation(NormalizedFileProperties.Publisher),
-			lazyAssociation(NormalizedFileProperties.TotalDiscs),
-			lazyAssociation(NormalizedFileProperties.Genre),
-		).withDefault { lazyNullFileProperty }
+		ConcurrentHashMap(
+			mapOf(
+				lazyAssociation(NormalizedFileProperties.Key),
+				lazyAssociation(NormalizedFileProperties.Name),
+				lazyAssociation(NormalizedFileProperties.Artist),
+				lazyAssociation(NormalizedFileProperties.AlbumArtist),
+				lazyAssociation(NormalizedFileProperties.Album),
+				lazyAssociation(NormalizedFileProperties.Band),
+				lazyAssociation(NormalizedFileProperties.Date),
+				lazyAssociation(NormalizedFileProperties.DiscNumber),
+				lazyAssociation(NormalizedFileProperties.Track),
+				lazyAssociation(NormalizedFileProperties.Rating),
+				lazyAssociation(NormalizedFileProperties.Lyrics),
+				lazyAssociation(NormalizedFileProperties.Comment),
+				lazyAssociation(NormalizedFileProperties.Composer),
+				lazyAssociation(NormalizedFileProperties.Custom),
+				lazyAssociation(NormalizedFileProperties.Publisher),
+				lazyAssociation(NormalizedFileProperties.TotalDiscs),
+				lazyAssociation(NormalizedFileProperties.Genre),
+			)
+		)
 	}
 
-	final override val key: FileProperty by lazy { filePropertyMap.getValue(NormalizedFileProperties.Key).value!! }
-	final override val artist: FileProperty? by filePropertyMap.getValue(NormalizedFileProperties.Artist)
-	final override val albumArtist: FileProperty? by filePropertyMap.getValue(NormalizedFileProperties.AlbumArtist)
-	final override val album: FileProperty? by filePropertyMap.getValue(NormalizedFileProperties.Album)
-	final override val name: FileProperty? by filePropertyMap.getValue(NormalizedFileProperties.Name)
-	final override val band: FileProperty? by filePropertyMap.getValue(NormalizedFileProperties.Band)
-	final override val date: FileProperty? by filePropertyMap.getValue(NormalizedFileProperties.Date)
-	final override val discNumber: FileProperty? by filePropertyMap.getValue(NormalizedFileProperties.DiscNumber)
-	final override val track: FileProperty? by filePropertyMap.getValue(NormalizedFileProperties.Track)
-	final override val rating: FileProperty? by filePropertyMap.getValue(NormalizedFileProperties.Rating)
-	final override val lyrics: FileProperty? by filePropertyMap.getValue(NormalizedFileProperties.Lyrics)
-	final override val comment: FileProperty? by filePropertyMap.getValue(NormalizedFileProperties.Comment)
-	final override val composer: FileProperty? by filePropertyMap.getValue(NormalizedFileProperties.Composer)
-	final override val custom: FileProperty? by filePropertyMap.getValue(NormalizedFileProperties.Custom)
-	final override val publisher: FileProperty? by filePropertyMap.getValue(NormalizedFileProperties.Publisher)
-	final override val totalDiscs: FileProperty? by filePropertyMap.getValue(NormalizedFileProperties.TotalDiscs)
-	final override val genre: FileProperty? by filePropertyMap.getValue(NormalizedFileProperties.Genre)
+	final override val key: FileProperty
+		get() = get(NormalizedFileProperties.Key)!!
+	final override val artist: FileProperty?
+		get() = get(NormalizedFileProperties.Artist)
+	final override val albumArtist: FileProperty?
+		get() = get(NormalizedFileProperties.AlbumArtist)
+	final override val album: FileProperty?
+		get() = get(NormalizedFileProperties.Album)
+	final override val name: FileProperty?
+		get() = get(NormalizedFileProperties.Name)
+	final override val band: FileProperty?
+		get() = get(NormalizedFileProperties.Band)
+	final override val date: FileProperty?
+		get() = get(NormalizedFileProperties.Date)
+	final override val discNumber: FileProperty?
+		get() = get(NormalizedFileProperties.DiscNumber)
+	final override val track: FileProperty?
+		get() = get(NormalizedFileProperties.Track)
+	final override val rating: FileProperty?
+		get() = get(NormalizedFileProperties.Rating)
+	final override val lyrics: FileProperty?
+		get() = get(NormalizedFileProperties.Lyrics)
+	final override val comment: FileProperty?
+		get() = get(NormalizedFileProperties.Comment)
+	final override val composer: FileProperty?
+		get() = get(NormalizedFileProperties.Composer)
+	final override val custom: FileProperty?
+		get() = get(NormalizedFileProperties.Custom)
+	final override val publisher: FileProperty?
+		get() = get(NormalizedFileProperties.Publisher)
+	final override val totalDiscs: FileProperty?
+		get() = get(NormalizedFileProperties.TotalDiscs)
+	final override val genre: FileProperty?
+		get() = get(NormalizedFileProperties.Genre)
 
 	final override val allProperties: Sequence<FileProperty>
 		get() = sequence {
@@ -97,28 +115,38 @@ abstract class FilePropertiesLookup : LookupFileProperties {
 			}
 		}
 
-	final override fun get(name: String): FileProperty? {
-		val isEditable = isEditable(name)
-		val filePropertyType = EditableFilePropertyDefinition.fromName(name)?.type ?: FilePropertyType.ShortFormText
+	final override fun get(name: String): FileProperty? = filePropertyMap
+		.getOrElse(name, { lazyFileProperty(name) })
+		.value
 
-		val value = getValue(name) ?: if (!isEditable) return null else when (filePropertyType) {
-			FilePropertyType.Integer -> "0"
-			else -> ""
-		}
-
-		return if (isEditable(name)) EditableFileProperty(name, value, filePropertyType) else ReadOnlyFileProperty(name, value, filePropertyType)
+	final override fun update(name: String, value: String) {
+		updateValue(name, value)
+		filePropertyMap.put(name, lazyFileProperty(name))
 	}
 
 	protected abstract val availableProperties: Set<String>
 
 	protected abstract fun getValue(name: String): String?
 
+	protected abstract fun updateValue(name: String, value: String)
+
 	protected abstract fun isEditable(name: String): Boolean
 
 	private fun lazyAssociation(name: String): Pair<String, Lazy<FileProperty?>> =
 		Pair(name, lazyFileProperty(name))
 
-	private fun lazyFileProperty(name: String): Lazy<FileProperty?> = lazy { get(name) }
+	private fun lazyFileProperty(name: String) = lazy {
+		val isEditable = isEditable(name)
+		val filePropertyType = FilePropertyDefinition.fromName(name)?.type ?: FilePropertyType.ShortFormText
+
+		val value = getValue(name) ?: if (!isEditable) return@lazy null else when (filePropertyType) {
+			FilePropertyType.Integer -> "0"
+			else -> ""
+		}
+
+		if (isEditable(name)) EditableFileProperty(name, value, filePropertyType)
+		else ReadOnlyFileProperty(name, value, filePropertyType)
+	}
 }
 
 @Parcelize
@@ -149,8 +177,8 @@ object FilePropertyHelpers {
 		val postExtension: String
 	)
 
-	val FileProperty.editableFilePropertyDefinition: EditableFilePropertyDefinition?
-		get() = EditableFilePropertyDefinition.fromName(name)
+	val FileProperty.editableFilePropertyDefinition: FilePropertyDefinition.EditableFilePropertyDefinition?
+		get() = FilePropertyDefinition.EditableFilePropertyDefinition.fromName(name)
 
 	val LookupFileProperties.durationInMs: Long?
 		get() = this.get(NormalizedFileProperties.Duration)?.value?.toDoubleOrNull()?.let { it * 1000 }?.toLong()

@@ -7,8 +7,8 @@ import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesLookup
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyDefinition
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LookupFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
@@ -74,7 +74,7 @@ class LiveSubsonicConnection(
 		private val playlistsItem = ItemId(playlistsItemKey)
 		private val artistsItem = ItemId(artistsItemKey)
 
-		private val editableFilePropertyDefinitions by lazy { setOf(EditableFilePropertyDefinition.Rating).toPromise() }
+		private val editableFilePropertyDefinitions by lazy { setOf(FilePropertyDefinition.EditableFilePropertyDefinition.Rating).toPromise() }
 	}
 
 	private object KnownFileProperties {
@@ -188,7 +188,7 @@ class LiveSubsonicConnection(
 			httpResponse.body.use { it.readBytes() }
 		}
 
-	override fun promiseEditableFilePropertyDefinitions(): Promise<Set<EditableFilePropertyDefinition>> = editableFilePropertyDefinitions
+	override fun promiseEditableFilePropertyDefinitions(): Promise<Set<FilePropertyDefinition.EditableFilePropertyDefinition>> = editableFilePropertyDefinitions
 
 	override fun promiseFileStringList(itemId: ItemId?): Promise<String> = itemId
 		?.let(::promiseFiles)
@@ -296,7 +296,7 @@ class LiveSubsonicConnection(
 
 		override fun isEditable(name: String): Boolean = name == NormalizedFileProperties.Rating
 
-		override fun update(name: String, value: String) {
+		override fun updateValue(name: String, value: String) {
 			filePropertiesMap[name] = value
 		}
 	}

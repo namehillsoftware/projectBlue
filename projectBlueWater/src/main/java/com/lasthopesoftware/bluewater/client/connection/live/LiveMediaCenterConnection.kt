@@ -6,8 +6,8 @@ import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesLookup
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyDefinition
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LookupFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
@@ -75,7 +75,7 @@ class LiveMediaCenterConnection(
 		private const val serializedFileListParameter = "Action=Serialize"
 		private const val shuffleFileListParameter = "Shuffle=1"
 
-		private val editableFilePropertyDefinitions by lazy { EditableFilePropertyDefinition.entries.toSet() }
+		private val editableFilePropertyDefinitions by lazy { FilePropertyDefinition.EditableFilePropertyDefinition.entries.toSet() }
 		private val promisedEditableFilePropertyDefinitions by lazy { editableFilePropertyDefinitions.toPromise() }
 	}
 
@@ -262,7 +262,7 @@ class LiveMediaCenterConnection(
 			}
 		}
 
-	override fun promiseEditableFilePropertyDefinitions(): Promise<Set<EditableFilePropertyDefinition>> =
+	override fun promiseEditableFilePropertyDefinitions(): Promise<Set<FilePropertyDefinition.EditableFilePropertyDefinition>> =
 		promisedEditableFilePropertyDefinitions
 
 	override fun promiseFileStringList(itemId: ItemId?): Promise<String> =
@@ -373,7 +373,7 @@ class LiveMediaCenterConnection(
 
 		override fun isEditable(name: String): Boolean = editableFileProperties.contains(name)
 
-		override fun update(name: String, value: String) {
+		override fun updateValue(name: String, value: String) {
 			filePropertiesMap[name] = value
 		}
 	}

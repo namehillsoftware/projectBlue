@@ -11,7 +11,7 @@ open class MappedFilePropertiesLookup(filePropertiesMap: Map<String, String> = m
 
 	override fun isEditable(name: String): Boolean = false
 
-	override fun update(name: String, value: String) {
+	override fun updateValue(name: String, value: String) {
 		filePropertiesMap[name] = value
 	}
 }
