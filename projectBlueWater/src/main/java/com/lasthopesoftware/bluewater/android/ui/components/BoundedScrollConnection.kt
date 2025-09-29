@@ -23,8 +23,8 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.unit.Velocity
 import com.lasthopesoftware.compilation.DebugFlag
+import kotlinx.coroutines.flow.drop
 import kotlinx.parcelize.Parcelize
-import kotlin.math.abs
 
 interface BoundedScrollConnection : NestedScrollConnection {
 	fun goToMax()
@@ -90,6 +90,7 @@ class AnchoredProgressScrollConnectionDispatcher(
 			LaunchedEffect(dispatcher) {
 				if (state is MutableAnchoredScrollConnectionState) {
 					snapshotFlow { dispatcher.selectedProgressState }
+						.drop(1)
 						.collect { state.selectedProgress = it }
 				}
 			}
@@ -98,6 +99,7 @@ class AnchoredProgressScrollConnectionDispatcher(
 				if (state is MutableAnchoredScrollConnectionState) {
 					if (fullDistance != 0f) {
 						snapshotFlow { dispatcher.totalDistanceTraveled }
+							.drop(1)
 							.collect {
 								state.progress = (it / fullDistance).coerceIn(0f, 1f)
 							}
@@ -186,6 +188,7 @@ fun rememberFullScreenScrollConnectedScalerState(min: Float, max: Float): Scaler
 
 class FullScreenScrollConnectedScaler(
 	private val state: ScalerState,
+	start: Float = 0f,
 	maxTravelDistance: Float = Float.MAX_VALUE,
 ) : BoundedScrollConnection {
 
@@ -197,21 +200,22 @@ class FullScreenScrollConnectedScaler(
 		 * https://developer.android.com/reference/kotlin/androidx/compose/ui/input/nestedscroll/package-summary#extension-functions
 		 */
 		@Composable
-		fun remember(min: Float, max: Float, maxTravelDistance: Float = Float.MAX_VALUE): FullScreenScrollConnectedScaler {
+		fun remember(min: Float, max: Float, start: Float = 0f, maxTravelDistance: Float = Float.MAX_VALUE): FullScreenScrollConnectedScaler {
 			val scalerState = rememberFullScreenScrollConnectedScalerState(min, max)
 
-			return remember(scalerState, maxTravelDistance)
+			return remember(scalerState, start, maxTravelDistance)
 		}
 
 		@Composable
-		fun remember(scalerState: ScalerState, maxTravelDistance: Float = Float.MAX_VALUE): FullScreenScrollConnectedScaler {
-			val scaler = remember(scalerState, maxTravelDistance) {
-				FullScreenScrollConnectedScaler(scalerState, maxTravelDistance)
+		fun remember(scalerState: ScalerState, start: Float = 0f, maxTravelDistance: Float = Float.MAX_VALUE): FullScreenScrollConnectedScaler {
+			val scaler = remember(scalerState, start, maxTravelDistance) {
+				FullScreenScrollConnectedScaler(scalerState, start, maxTravelDistance)
 			}
 
 			LaunchedEffect(scaler) {
 				if (scalerState is MutableScalerState) {
-					snapshotFlow { scaler.totalDistanceTraveled }
+					snapshotFlow { scaler.totalDistanceTraveled.floatValue }
+						.drop(1)
 						.collect {
 							scalerState.totalDistanceTraveled = it
 						}
@@ -222,14 +226,15 @@ class FullScreenScrollConnectedScaler(
 		}
 	}
 
-	private val absoluteMax = abs(maxTravelDistance)
+	private val negativeStart = -start
+	private val negativeMax = -maxTravelDistance
 	private val fullDistance = state.max - state.min
 
-	private var totalDistanceTraveled by mutableFloatStateOf(keepWithinMaxTravelDistance(state.totalDistanceTraveled))
+	private val totalDistanceTraveled by lazy { mutableFloatStateOf(keepWithinMaxTravelDistance(state.totalDistanceTraveled)) }
 
 	val valueState by lazy {
 		derivedStateOf {
-			(state.max + totalDistanceTraveled).coerceIn(state.min, state.max)
+			(state.max + totalDistanceTraveled.floatValue).coerceIn(state.min, state.max)
 		}
 	}
 
@@ -239,10 +244,10 @@ class FullScreenScrollConnectedScaler(
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
 		// try to consume before LazyColumn to collapse toolbar if needed, hence pre-scroll
 		val originalValue = valueState.value
-		totalDistanceTraveled = keepWithinMaxTravelDistance(totalDistanceTraveled + available.y)
+		totalDistanceTraveled.floatValue = totalDistanceTraveled.floatValue + available.y
 
 		if (DebugFlag.isDebugCompilation) {
-			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
+			Log.d(logTag, "totalDistanceTraveled: ${totalDistanceTraveled.floatValue}")
 			Log.d(logTag, "valueState.value: ${valueState.value}")
 		}
 
@@ -252,7 +257,7 @@ class FullScreenScrollConnectedScaler(
 	@SuppressLint("LongLogTag")
 	override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
 		val originalValue = valueState.value
-		totalDistanceTraveled = keepWithinMaxTravelDistance(totalDistanceTraveled - available.y)
+		totalDistanceTraveled.floatValue = keepWithinMaxTravelDistance(totalDistanceTraveled.floatValue - available.y)
 
 		if (DebugFlag.isDebugCompilation) {
 			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
@@ -264,16 +269,16 @@ class FullScreenScrollConnectedScaler(
 	}
 
 	override fun goToMax() {
-		totalDistanceTraveled = keepWithinMaxTravelDistance(0f)
+		totalDistanceTraveled.floatValue = keepWithinMaxTravelDistance(0f)
 	}
 
 	override fun goToMin() {
-		totalDistanceTraveled = keepWithinMaxTravelDistance(-fullDistance)
+		totalDistanceTraveled.floatValue = keepWithinMaxTravelDistance(-fullDistance)
 	}
 
 	private fun calculateProgress(value: Float) = if (fullDistance == 0f) 1f else (state.max - value) / fullDistance
 
-	private fun keepWithinMaxTravelDistance(value: Float): Float = value.coerceIn(-absoluteMax, absoluteMax)
+	private fun keepWithinMaxTravelDistance(value: Float): Float = value.coerceIn(negativeMax, negativeStart)
 }
 
 /**
