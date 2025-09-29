@@ -1,18 +1,45 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties
 
 import android.os.Parcelable
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.apache.commons.io.FilenameUtils
 import org.joda.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
 
-interface FileProperty : Parcelable {
+sealed interface FileProperty : Parcelable {
 	val name: String
 	val value: String
 	val filePropertyType: FilePropertyType
 		get() = FilePropertyType.ShortFormText
 }
+
+sealed interface ConstantFileProperty : FileProperty
+
+@Parcelize
+data class KeyFileProperty(
+	override val value: String
+) : ConstantFileProperty {
+	@IgnoredOnParcel
+	override val name = NormalizedFileProperties.Key
+}
+
+sealed interface MutableFileProperty : FileProperty
+
+@Parcelize
+data class ReadOnlyFileProperty(
+	override val name: String,
+	override val value: String,
+	override val filePropertyType: FilePropertyType = FilePropertyType.ShortFormText,
+) : MutableFileProperty, Parcelable
+
+@Parcelize
+data class EditableFileProperty(
+	override val name: String,
+	override val value: String,
+	override val filePropertyType: FilePropertyType = FilePropertyType.ShortFormText,
+) : MutableFileProperty, Parcelable
 
 interface LookupFileProperties {
 	val key: FileProperty
@@ -144,24 +171,13 @@ abstract class FilePropertiesLookup : LookupFileProperties {
 			else -> ""
 		}
 
-		if (isEditable(name)) EditableFileProperty(name, value, filePropertyType)
-		else ReadOnlyFileProperty(name, value, filePropertyType)
+		when {
+			name == NormalizedFileProperties.Key -> KeyFileProperty(value)
+			isEditable(name) -> EditableFileProperty(name, value, filePropertyType)
+			else -> ReadOnlyFileProperty(name, value, filePropertyType)
+		}
 	}
 }
-
-@Parcelize
-data class ReadOnlyFileProperty(
-	override val name: String,
-	override val value: String,
-	override val filePropertyType: FilePropertyType = FilePropertyType.ShortFormText,
-) : FileProperty, Parcelable
-
-@Parcelize
-data class EditableFileProperty(
-	override val name: String,
-	override val value: String,
-	override val filePropertyType: FilePropertyType = FilePropertyType.ShortFormText,
-) : FileProperty, Parcelable
 
 object FilePropertyHelpers {
 
@@ -238,4 +254,54 @@ object FilePropertyHelpers {
 				}
 			}
 
+}
+
+sealed interface FilePropertyDefinition {
+	val propertyName: String
+	val type: FilePropertyType
+
+	enum class ReadOnlyFilePropertyDefinition(override val propertyName: String, override val type: FilePropertyType): FilePropertyDefinition {
+		LastPlayed(NormalizedFileProperties.LastPlayed, FilePropertyType.Date);
+
+		override fun toString() = propertyName
+	}
+
+	enum class EditableFilePropertyDefinition(override val propertyName: String, override val type: FilePropertyType) : FilePropertyDefinition {
+		Artist(NormalizedFileProperties.Artist, FilePropertyType.ShortFormText),
+		AlbumArtist(NormalizedFileProperties.AlbumArtist, FilePropertyType.ShortFormText),
+		Album(NormalizedFileProperties.Album, FilePropertyType.ShortFormText),
+		Band(NormalizedFileProperties.Band, FilePropertyType.ShortFormText),
+		Date(NormalizedFileProperties.Date, FilePropertyType.Date),
+		DiscNumber(NormalizedFileProperties.DiscNumber, FilePropertyType.Integer),
+		Name(NormalizedFileProperties.Name, FilePropertyType.ShortFormText),
+		Track(NormalizedFileProperties.Track, FilePropertyType.Integer),
+		Rating(NormalizedFileProperties.Rating, FilePropertyType.Integer),
+		Lyrics(NormalizedFileProperties.Lyrics, FilePropertyType.LongFormText),
+		Comment(NormalizedFileProperties.Comment, FilePropertyType.LongFormText),
+		Composer(NormalizedFileProperties.Composer, FilePropertyType.ShortFormText),
+		Custom(NormalizedFileProperties.Custom, FilePropertyType.LongFormText),
+		Publisher(NormalizedFileProperties.Publisher, FilePropertyType.ShortFormText),
+		TotalDiscs(NormalizedFileProperties.TotalDiscs, FilePropertyType.Integer),
+		Genre(NormalizedFileProperties.Genre, FilePropertyType.ShortFormText);
+
+		override fun toString() = propertyName
+
+		companion object {
+			private val propertyLookup by lazy { entries.associateBy { fp -> fp.propertyName } }
+
+			fun fromName(name: String) = propertyLookup[name]
+		}
+	}
+
+	companion object {
+		private val propertyLookup by lazy {
+			(ReadOnlyFilePropertyDefinition.entries + EditableFilePropertyDefinition.entries).associate { it.propertyName to it as FilePropertyDefinition }
+		}
+
+		fun fromName(name: String) = propertyLookup[name]
+	}
+}
+
+enum class FilePropertyType {
+	ShortFormText, LongFormText, Date, Integer,
 }
