@@ -4,6 +4,7 @@ import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.KeyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
@@ -63,10 +64,7 @@ class WhenGettingFileProperties {
     @Test
     fun `then files property key is retrieved`() {
         assertThat(fileProperties?.key).isEqualTo(
-			ReadOnlyFileProperty(
-				NormalizedFileProperties.Key,
-				"3c00a4d5a48b0790d8e2288faf6fc93c",
-			)
+			KeyFileProperty("3c00a4d5a48b0790d8e2288faf6fc93c",)
 		)
     }
 

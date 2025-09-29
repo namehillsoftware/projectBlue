@@ -5,6 +5,7 @@ import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.KeyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
@@ -116,10 +117,7 @@ Some more valid text... la di da..."""),
     @Test
     fun `then files property key is retrieved`() {
         assertThat(fileProperties?.key).isEqualTo(
-			ReadOnlyFileProperty(
-				NormalizedFileProperties.Key,
-				"45"
-			)
+			KeyFileProperty("45")
 		)
     }
 
