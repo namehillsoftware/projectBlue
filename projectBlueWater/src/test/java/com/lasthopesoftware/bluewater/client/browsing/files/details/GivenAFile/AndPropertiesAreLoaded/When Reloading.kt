@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.PassThroughFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
@@ -35,24 +36,28 @@ class `When Reloading` {
 			},
 			mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
-					sequenceOf(
-						ReadOnlyFileProperty(NormalizedFileProperties.Rating, "3"),
-						ReadOnlyFileProperty("too", "prevent"),
-						ReadOnlyFileProperty("shirt", "wind"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Name, "holiday"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Artist, "board"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Album, "virtue"),
-						ReadOnlyFileProperty(NormalizedFileProperties.DateCreated, "1592510356")
+					PassThroughFilePropertiesLookup(
+						listOf(
+							ReadOnlyFileProperty(NormalizedFileProperties.Rating, "3"),
+							ReadOnlyFileProperty("too", "prevent"),
+							ReadOnlyFileProperty("shirt", "wind"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Name, "holiday"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Artist, "board"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Album, "virtue"),
+							ReadOnlyFileProperty(NormalizedFileProperties.DateCreated, "1592510356")
+						)
 					)
 				) andThen Promise(
-					sequenceOf(
-						ReadOnlyFileProperty(NormalizedFileProperties.Rating, "729"),
-						ReadOnlyFileProperty("gCaqE9Z", "I03s2HREwCY"),
-						ReadOnlyFileProperty("n2naBbP", "1TcgZ1nsRN"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Name, "Namfusce"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Artist, "EkaterinaYu"),
-						ReadOnlyFileProperty(NormalizedFileProperties.Album, "Quisquecras"),
-						ReadOnlyFileProperty(NormalizedFileProperties.DateCreated, "2272510356")
+					PassThroughFilePropertiesLookup(
+						listOf(
+							ReadOnlyFileProperty(NormalizedFileProperties.Rating, "729"),
+							ReadOnlyFileProperty("gCaqE9Z", "I03s2HREwCY"),
+							ReadOnlyFileProperty("n2naBbP", "1TcgZ1nsRN"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Name, "Namfusce"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Artist, "EkaterinaYu"),
+							ReadOnlyFileProperty(NormalizedFileProperties.Album, "Quisquecras"),
+							ReadOnlyFileProperty(NormalizedFileProperties.DateCreated, "2272510356")
+						)
 					)
 				)
 			},
@@ -97,7 +102,7 @@ class `When Reloading` {
 
 	@Test
 	fun `then the properties are correct`() {
-		assertThat(viewModel.fileProperties.value.map { Pair(it.property, it.committedValue.value) }).hasSameElementsAs(
+		assertThat(viewModel.fileProperties.value.map { Pair(it.propertyName, it.committedValue.value) }).hasSameElementsAs(
 			listOf(
 				Pair(NormalizedFileProperties.Rating, "729"),
 				Pair("gCaqE9Z", "I03s2HREwCY"),

@@ -6,6 +6,7 @@ import android.net.Uri
 import android.provider.MediaStore
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.DataFileUriProvider
@@ -31,14 +32,14 @@ class `When Getting The Uri Using the File Path` : AndroidContext() {
                             ServiceFile(serviceFileId)
                         )
                     } returns Promise(
-                        mapOf(
+						MappedFilePropertiesLookup(mapOf(
                             Pair(
                                 NormalizedFileProperties.Filename,
                                 "N4CVqBLbUx. 4WwF4s4E.txt;geop7SLBFQ"
                             ),
                             Pair(NormalizedFileProperties.Album, "DHgcnUk08jl"),
                             Pair(NormalizedFileProperties.Artist, "Nasceturaugue"),
-                        )
+                        ))
                     )
                 },
                 mockk {

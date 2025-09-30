@@ -701,7 +701,7 @@ fun ScreenDimensionsScope.ItemListView(
 				}
 			}
 
-			val titleHeightScaler = FullScreenScrollConnectedScaler.remember(collapsedHeightPx, expandedHeightPx, fullListSize)
+			val titleHeightScaler = FullScreenScrollConnectedScaler.remember(collapsedHeightPx, expandedHeightPx, 0f, fullListSize)
 
 			val compositeScrollConnection = remember(titleHeightScaler, menuHeightScaler) {
 				titleHeightScaler

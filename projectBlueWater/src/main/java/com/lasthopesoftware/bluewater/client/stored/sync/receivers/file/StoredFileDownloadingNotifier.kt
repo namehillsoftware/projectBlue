@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.stored.sync.receivers.file
 import android.content.Context
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
@@ -32,7 +31,7 @@ class StoredFileDownloadingNotifier(
 
 	private fun notifyOfFileDownload(storedFile: StoredFile): Promise<Unit> {
 		return fileProperties.promiseFileProperties(LibraryId(storedFile.libraryId), ServiceFile(storedFile.serviceId))
-			.then { fileProperties -> syncNotification.notify(String.format(downloadingStatusLabel, fileProperties[NormalizedFileProperties.Name])) }
+			.then { fileProperties -> syncNotification.notify(String.format(downloadingStatusLabel, fileProperties.name?.value)) }
 			.excuse { _ -> syncNotification.notify(String.format(downloadingStatusLabel, context.getString(R.string.unknown_file))) }
 	}
 }

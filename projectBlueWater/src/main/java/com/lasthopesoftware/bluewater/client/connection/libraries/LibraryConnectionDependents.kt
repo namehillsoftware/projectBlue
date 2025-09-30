@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibrar
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.DelegatingFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FreshestRevisionFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFreshLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
@@ -58,14 +59,19 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 	override val connectionAuthenticationChecker by lazy { ConnectionAuthenticationChecker(application.libraryConnectionProvider) }
 
 	override val freshLibraryFileProperties: ProvideFreshLibraryFileProperties by lazy {
-		FilePropertiesProvider(guaranteedLibraryConnectionProvider, revisionProvider, FilePropertyCache)
+		FreshestRevisionFilePropertiesProvider(
+			FilePropertiesProvider(guaranteedLibraryConnectionProvider),
+			urlKeyProvider,
+			revisionProvider,
+			FilePropertyCache,
+		)
 	}
 
 	override val libraryFilePropertiesProvider by lazy {
 		CachedFilePropertiesProvider(
 			urlKeyProvider,
-			FilePropertyCache,
 			freshLibraryFileProperties,
+			FilePropertyCache,
 		)
 	}
 
@@ -138,8 +144,8 @@ class RetryingLibraryConnectionRegistry(inner: LibraryConnectionDependents) : Li
 	override val libraryFilePropertiesProvider by lazy {
 		CachedFilePropertiesProvider(
 			urlKeyProvider,
-			FilePropertyCache,
 			freshLibraryFileProperties,
+			FilePropertyCache,
 		)
 	}
 
@@ -165,8 +171,8 @@ class RateLimitedFilePropertiesDependencies(
 	override val libraryFilePropertiesProvider by lazy {
 		CachedFilePropertiesProvider(
 			urlKeyProvider,
-			FilePropertyCache,
 			freshLibraryFileProperties,
+			FilePropertyCache,
 		)
 	}
 }

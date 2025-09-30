@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.connection.live.eventuallyFromDataA
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.lasthopesoftware.promises.extensions.cancelBackEventually
+import com.lasthopesoftware.promises.extensions.cancelBackThen
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -40,30 +41,29 @@ class FilePropertyStorage(
 				else Unit.toPromise()
 			}
 
-	private fun RemoteLibraryAccess.promiseFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> {
-		val promisedUpdate = promiseFilePropertyUpdate(serviceFile, property, value, isFormatted)
-
-		urlKeyProvider
-			.promiseUrlKey(libraryId, serviceFile)
-			.eventually { maybeUrlKey ->
-				maybeUrlKey?.let { urlKey ->
-					checkRevisions
-						.promiseRevision(libraryId)
-						.then { revision ->
-							filePropertiesContainerRepository.getFilePropertiesContainer(urlKey)
-								?.takeIf { it.revision == revision }
-								?.updateProperty(property, value)
-							sendApplicationMessages.sendMessage(FilePropertiesUpdatedMessage(urlKey))
-						}
-				}.keepPromise()
+	private fun RemoteLibraryAccess.promiseFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> =
+		promiseFilePropertyUpdate(serviceFile, property, value, isFormatted)
+			.cancelBackThen { it, _ ->
+				urlKeyProvider
+					.promiseUrlKey(libraryId, serviceFile)
+					.eventually { maybeUrlKey ->
+						maybeUrlKey?.let { urlKey ->
+							checkRevisions
+								.promiseRevision(libraryId)
+								.then { revision ->
+									filePropertiesContainerRepository.getFilePropertiesContainer(urlKey)
+										?.takeIf { it.revision == revision }
+										?.updateProperty(property, value)
+									sendApplicationMessages.sendMessage(FilePropertiesUpdatedMessage(urlKey))
+								}
+						}.keepPromise()
+					}
+					.excuse { e ->
+						logger.warn(
+							"${serviceFile.key}'s property cache item $property was not updated with the new value of $value",
+							e
+						)
+					}
+				it
 			}
-			.excuse { e ->
-				logger.warn(
-					"${serviceFile.key}'s property cache item $property was not updated with the new value of $value",
-					e
-				)
-			}
-
-		return promisedUpdate
-	}
 }

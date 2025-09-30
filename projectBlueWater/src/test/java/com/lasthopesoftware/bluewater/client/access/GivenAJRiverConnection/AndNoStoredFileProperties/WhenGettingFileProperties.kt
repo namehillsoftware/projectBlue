@@ -3,7 +3,11 @@ package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnecti
 import com.lasthopesoftware.TestMcwsUrl
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFileProperty
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.KeyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.LiveMediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
@@ -112,22 +116,37 @@ Some more valid text... la di da..."""),
 
     @Test
     fun `then files property key is retrieved`() {
-        assertThat(fileProperties!![NormalizedFileProperties.Key]).isEqualTo("45")
+        assertThat(fileProperties?.key).isEqualTo(
+			KeyFileProperty("45")
+		)
     }
 
 	@Test
 	fun `then the peak level is correct`() {
-		assertThat(fileProperties!![NormalizedFileProperties.PeakLevel]).isEqualTo(10.0.pow(308.99 / 20).toString())
+		assertThat(fileProperties?.get(NormalizedFileProperties.PeakLevel)).isEqualTo(
+			ReadOnlyFileProperty(
+				NormalizedFileProperties.PeakLevel,
+				10.0.pow(308.99 / 20).toString(),
+			)
+		)
 	}
 
 	@Test
 	fun `then the peak level sample property is correct`() {
-		assertThat(fileProperties!!["Peak Level (Sample)"]).isEqualTo("308.99 dB; -0.3 Left; -0.5 Right")
+		assertThat(fileProperties?.get("Peak Level (Sample)")).isEqualTo(
+			ReadOnlyFileProperty(
+				"Peak Level (Sample)",
+				"308.99 dB; -0.3 Left; -0.5 Right",
+			)
+		)
 	}
 
 	@Test
 	fun `then lyric files property is retrieved`() {
-		assertThat(fileProperties!![NormalizedFileProperties.Lyrics]).isEqualTo("""[In the Fade]
+		assertThat(fileProperties?.get(NormalizedFileProperties.Lyrics)).isEqualTo(
+			EditableFileProperty(
+				NormalizedFileProperties.Lyrics,
+				"""[In the Fade]
 
 [Verse 1: Josh Homme]
 Cracks in the ceiling, crooked pictures in the hall
@@ -195,6 +214,9 @@ Woo hoo
 <span jsname="Bil8Ae" class="xTFaxe z1asCe SaPW2b" style="height:18px;line-height:18px;width:18px"><svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path></svg>
 <span jsname="Bil8Ae" class="xTFaxe z1asCe SaPW2b" style="height:18px;line-height:18px;width:18px"><svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path></svg>
 
-Some more valid text... la di da...""")
+Some more valid text... la di da...""",
+				FilePropertyType.LongFormText
+			)
+		)
 	}
 }

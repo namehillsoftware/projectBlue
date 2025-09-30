@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.PassThroughFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
@@ -29,23 +30,25 @@ class WhenHighlightingTheProperty {
 				},
 				mockk {
 					every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
-						sequenceOf(
-							ReadOnlyFileProperty(NormalizedFileProperties.Rating, "947"),
-							ReadOnlyFileProperty("sound", "wave"),
-							ReadOnlyFileProperty("creature", "concern"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Name, "mat"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Artist, "send"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Genre, "rush"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Lyrics, "reach"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Comment, "police"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Composer, "present"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Custom, "steel"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Publisher, "lipstick"),
-							ReadOnlyFileProperty(NormalizedFileProperties.TotalDiscs, "small"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Track, "anxious"),
-							ReadOnlyFileProperty(NormalizedFileProperties.AlbumArtist, "date"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Album, "ever"),
-							ReadOnlyFileProperty(NormalizedFileProperties.Date, "9"),
+						PassThroughFilePropertiesLookup(
+							listOf(
+								ReadOnlyFileProperty(NormalizedFileProperties.Rating, "947"),
+								ReadOnlyFileProperty("sound", "wave"),
+								ReadOnlyFileProperty("creature", "concern"),
+								ReadOnlyFileProperty(NormalizedFileProperties.Name, "mat"),
+								ReadOnlyFileProperty(NormalizedFileProperties.Artist, "send"),
+								ReadOnlyFileProperty(NormalizedFileProperties.Genre, "rush"),
+								ReadOnlyFileProperty(NormalizedFileProperties.Lyrics, "reach"),
+								ReadOnlyFileProperty(NormalizedFileProperties.Comment, "police"),
+								ReadOnlyFileProperty(NormalizedFileProperties.Composer, "present"),
+								ReadOnlyFileProperty(NormalizedFileProperties.Custom, "steel"),
+								ReadOnlyFileProperty(NormalizedFileProperties.Publisher, "lipstick"),
+								ReadOnlyFileProperty(NormalizedFileProperties.TotalDiscs, "small"),
+								ReadOnlyFileProperty(NormalizedFileProperties.Track, "anxious"),
+								ReadOnlyFileProperty(NormalizedFileProperties.AlbumArtist, "date"),
+								ReadOnlyFileProperty(NormalizedFileProperties.Album, "ever"),
+								ReadOnlyFileProperty(NormalizedFileProperties.Date, "9"),
+							)
 						)
 					)
 				},
@@ -82,13 +85,13 @@ class WhenHighlightingTheProperty {
 	fun act() {
 		viewModel.apply {
 			load(LibraryId(libraryId), ServiceFile(serviceFileId)).toExpiringFuture().get()
-			fileProperties.value.first { it.property == NormalizedFileProperties.Publisher }.highlight()
+			fileProperties.value.first { it.propertyName == NormalizedFileProperties.Publisher }.highlight()
 		}
 	}
 
 	@Test
 	fun `then the highlighted property is correct`() {
-		assertThat(viewModel.highlightedProperty.value?.property).isEqualTo(NormalizedFileProperties.Publisher)
+		assertThat(viewModel.highlightedProperty.value?.propertyName).isEqualTo(NormalizedFileProperties.Publisher)
 	}
 
 	@Test

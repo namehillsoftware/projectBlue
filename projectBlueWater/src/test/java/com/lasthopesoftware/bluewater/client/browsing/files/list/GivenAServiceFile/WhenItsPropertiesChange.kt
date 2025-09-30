@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAServiceF
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
@@ -34,13 +35,13 @@ class WhenItsPropertiesChange {
 
 	private val viewModel by lazy {
 		val filePropertiesProvider = mockk<ProvideLibraryFileProperties>().apply {
-			every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns mapOf(
+			every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns MappedFilePropertiesLookup(mutableMapOf(
 				Pair("Artist", "give"),
 				Pair("Name", "although"),
-			).toPromise() andThen mapOf(
+			)).toPromise() andThen MappedFilePropertiesLookup(mutableMapOf(
 				Pair("Artist", "pupil"),
 				Pair("Name", "classify"),
-			).toPromise()
+			)).toPromise()
 		}
 
 		val stringResource = mockk<GetStringResources>().apply {

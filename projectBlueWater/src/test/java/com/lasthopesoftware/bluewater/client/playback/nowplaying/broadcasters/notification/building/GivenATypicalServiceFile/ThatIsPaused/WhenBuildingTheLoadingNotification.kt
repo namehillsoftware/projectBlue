@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
@@ -44,10 +45,10 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 			},
 			mockk(),
 			mockk {
-				every { promiseFileProperties(libraryId, any()) } returns mapOf(
+				every { promiseFileProperties(libraryId, any()) } returns MappedFilePropertiesLookup(mapOf(
 					Pair(NormalizedFileProperties.Artist, "test-artist"),
 					Pair(NormalizedFileProperties.Name, "song")
-				).toPromise()
+				)).toPromise()
 			},
 			mockk {
 				every { promiseImageBytes(libraryId, any<ServiceFile>()) } returns Promise(expectedBitmap)

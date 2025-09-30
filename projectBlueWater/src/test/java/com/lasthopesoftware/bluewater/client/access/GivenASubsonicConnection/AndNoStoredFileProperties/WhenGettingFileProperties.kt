@@ -2,7 +2,11 @@ package com.lasthopesoftware.bluewater.client.access.subsonic.GivenASubsonicConn
 
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFileProperty
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.KeyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.LiveSubsonicConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
@@ -59,32 +63,65 @@ class WhenGettingFileProperties {
 
     @Test
     fun `then files property key is retrieved`() {
-        assertThat(fileProperties!![NormalizedFileProperties.Key]).isEqualTo("3c00a4d5a48b0790d8e2288faf6fc93c")
+        assertThat(fileProperties?.key).isEqualTo(
+			KeyFileProperty("3c00a4d5a48b0790d8e2288faf6fc93c",)
+		)
     }
 
 	@Test
 	fun `then the track name is correct`() {
-		assertThat(fileProperties!![NormalizedFileProperties.Name]).isEqualTo("How Will You Meet Your End")
+		assertThat(fileProperties?.name).isEqualTo(
+			ReadOnlyFileProperty(
+				NormalizedFileProperties.Name,
+				"How Will You Meet Your End"
+			)
+		)
 	}
 
 	@Test
 	fun `then the artist is correct`() {
-		assertThat(fileProperties!![NormalizedFileProperties.Artist]).isEqualTo("A.A. Bondy")
+		assertThat(fileProperties?.artist).isEqualTo(
+			ReadOnlyFileProperty(
+				NormalizedFileProperties.Artist,
+				"A.A. Bondy"
+			)
+		)
 	}
 
 	@Test
 	fun `then the replay gain is correct`() {
-		assertThat(fileProperties!![NormalizedFileProperties.VolumeLevelReplayGain]).isEqualTo("-2.34")
+		assertThat(fileProperties?.get(NormalizedFileProperties.VolumeLevelReplayGain)).isEqualTo(
+			ReadOnlyFileProperty(
+				NormalizedFileProperties.VolumeLevelReplayGain,
+				"-2.34"
+			)
+		)
 	}
 
 	@Test
 	fun `then the peak level is correct`() {
-		assertThat(fileProperties!![NormalizedFileProperties.PeakLevel]).isEqualTo("0.933")
+		assertThat(fileProperties?.get(NormalizedFileProperties.PeakLevel)).isEqualTo(
+			ReadOnlyFileProperty(
+				NormalizedFileProperties.PeakLevel,
+				"0.933"
+			)
+		)
+	}
+
+	@Test
+	fun `then the rating is editable`() {
+		assertThat(fileProperties?.rating).isEqualTo(
+			EditableFileProperty(
+				NormalizedFileProperties.Rating,
+				"0",
+				FilePropertyType.Integer,
+			)
+		)
 	}
 
 	@Test
 	fun `then lyric files property is retrieved`() {
-		assertThat(fileProperties!![NormalizedFileProperties.Lyrics]).isEqualToIgnoringWhitespace("""And they took me around
+		assertThat(fileProperties?.get(NormalizedFileProperties.Lyrics)?.value).isEqualToIgnoringWhitespace("""And they took me around
   They showed me the Seven Wonders
   The sights and the sounds
   There was a man with cinders for eyes

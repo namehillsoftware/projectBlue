@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.fileproperties.GivenAPlayingFile.AndTheLibraryConnectionIsReadOnly
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFreshLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
@@ -56,14 +57,14 @@ class WhenItsPropertiesChanges {
 
 		val filePropertiesProvider = mockk<ProvideFreshLibraryFileProperties> {
 			every { promiseFileProperties(LibraryId(libraryId), playlist[playlistPosition]) } returnsMany listOf(
-				mapOf(
+				MappedFilePropertiesLookup(mapOf(
 					Pair(NormalizedFileProperties.Artist, "english"),
 					Pair(NormalizedFileProperties.Name, "FALSE"),
-				).toPromise(),
-				mapOf(
+				)).toPromise(),
+				MappedFilePropertiesLookup(mapOf(
 					Pair(NormalizedFileProperties.Artist, "defend"),
 					Pair(NormalizedFileProperties.Name, "sorrow"),
-				).toPromise(),
+				)).toPromise(),
 			)
 		}
 
