@@ -7,6 +7,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.getValue
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
 import com.lasthopesoftware.bluewater.ActivityDependencies
@@ -19,11 +21,13 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlaying
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.registerResultActivityLauncher
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
@@ -85,7 +89,17 @@ class EntryActivity :
 
 		setContent {
 			if (!isInLeanbackMode) {
-				ProjectBlueComposableApplication {
+				val theme by browserViewDependencies.applicationSettingsViewModel.run {
+					loadSettings()
+					theme.subscribeAsState()
+				}
+				ProjectBlueComposableApplication(
+					darkTheme = when (theme) {
+						ApplicationSettings.Theme.SYSTEM -> isSystemInDarkTheme()
+						ApplicationSettings.Theme.DARK -> true
+						ApplicationSettings.Theme.LIGHT -> false
+					}
+				) {
 					HandheldApplication(
 						entryDependencies = browserViewDependencies,
 						permissionsDependencies = this,
