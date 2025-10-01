@@ -37,6 +37,7 @@ class ApplicationSettingsViewModel(
 	private val mutableIsSyncOnWifiOnly = MutableInteractionState(false)
 	private val mutableIsVolumeLevelingEnabled = MutableInteractionState(false)
 	private val mutableIsPeakLevelNormalizeEnabled = MutableInteractionState(false)
+	private val mutableTheme = MutableInteractionState(ApplicationSettings.Theme.SYSTEM)
 
 	val isSyncOnWifiOnly = mutableIsSyncOnWifiOnly.asInteractionState()
 	val isSyncOnPowerOnly = mutableIsSyncOnPowerOnly.asInteractionState()
@@ -46,6 +47,7 @@ class ApplicationSettingsViewModel(
 	val playbackEngineType = MutableInteractionState(PlaybackEngineType.ExoPlayer)
 	val chosenLibraryId = mutableChosenLibraryId.asInteractionState()
 	val libraries = mutableLibraries.asInteractionState()
+	val theme = mutableTheme.asInteractionState()
 	override val isLoading = mutableIsLoading.asInteractionState()
 
 	override fun onCleared() {
@@ -66,6 +68,7 @@ class ApplicationSettingsViewModel(
 				mutableIsSyncOnPowerOnly.value = s.isSyncOnPowerOnly
 				mutableIsVolumeLevelingEnabled.value = s.isVolumeLevelingEnabled
 				mutableIsPeakLevelNormalizeEnabled.value = s.isPeakLevelNormalizeEnabled
+				mutableTheme.value = s.theme
 				mutableChosenLibraryId.value = LibraryId(s.chosenLibraryId)
 			}
 
@@ -120,6 +123,11 @@ class ApplicationSettingsViewModel(
 		return saveSettings()
 	}
 
+	fun promiseThemeChange(theme: ApplicationSettings.Theme): Promise<*> {
+		mutableTheme.value = theme
+		return saveSettings()
+	}
+
 	private fun saveSettings(): Promise<*> =
 		applicationSettingsRepository
 			.promiseUpdatedSettings(
@@ -129,7 +137,8 @@ class ApplicationSettingsViewModel(
 					isPeakLevelNormalizeEnabled = isPeakLevelNormalizeEnabled.value,
 					isSyncOnWifiOnly = isSyncOnWifiOnly.value,
 					playbackEngineTypeName = playbackEngineType.value.name,
-					chosenLibraryId = chosenLibraryId.value.id
+					chosenLibraryId = chosenLibraryId.value.id,
+					theme = theme.value
 				)
 			)
 }

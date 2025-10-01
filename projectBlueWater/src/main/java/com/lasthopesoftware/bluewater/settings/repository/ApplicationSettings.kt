@@ -12,4 +12,11 @@ data class ApplicationSettings(
 	var isLoggingToFile: Boolean = false,
 	var playbackEngineTypeName: String? = null,
 	var chosenLibraryId: Int = -1,
-) : Entity
+	var theme: Theme = Theme.SYSTEM,
+) : Entity {
+
+	@Keep
+	enum class Theme {
+		SYSTEM, LIGHT, DARK
+	}
+}

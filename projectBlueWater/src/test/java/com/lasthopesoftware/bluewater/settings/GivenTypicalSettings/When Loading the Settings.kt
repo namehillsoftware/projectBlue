@@ -27,6 +27,7 @@ class `When Loading the Settings` {
 						isPeakLevelNormalizeEnabled = true,
 						chosenLibraryId = 304,
 						playbackEngineTypeName = PlaybackEngineType.ExoPlayer.name,
+						theme = ApplicationSettings.Theme.DARK,
 					)
 				)
 			},
@@ -87,6 +88,11 @@ class `When Loading the Settings` {
 	@Test
 	fun `then isPeakLevelNormalized is correct`() {
 		assertThat(mutt.isPeakLevelNormalizeEnabled.value).isTrue
+	}
+
+	@Test
+	fun `then the theme is correct`() {
+		assertThat(mutt.theme.value).isEqualTo(ApplicationSettings.Theme.DARK)
 	}
 
 	@Test

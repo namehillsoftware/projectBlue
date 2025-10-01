@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEnt
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isVolumeLevelingEnabledColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.playbackEngineTypeNameColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.tableName
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.themeColumn
 
 class ApplicationSettingsUpdater(private val applicationSettingsMigrator: ApplicationSettingsMigrator) : IEntityUpdater {
 	override fun onUpdate(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -64,6 +65,10 @@ class ApplicationSettingsUpdater(private val applicationSettingsMigrator: Applic
 
 		if (oldVersion < 21) {
 			db.execSQL("ALTER table `$tableName` ADD COLUMN `$isPeakLevelNormalizeEnabledColumn` SMALLINT DEFAULT 0 NOT NULL")
+		}
+
+		if (oldVersion < 22) {
+			db.execSQL("ALTER table `$tableName` ADD COLUMN `$themeColumn` VARCHAR")
 		}
 	}
 }
