@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import com.lasthopesoftware.bluewater.ApplicationDependencies
+import com.lasthopesoftware.bluewater.ApplicationViewModel
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
@@ -19,6 +20,7 @@ import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBu
 import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 
 interface EntryDependencies : ApplicationDependencies {
+	val applicationViewModel: ApplicationViewModel
 	val selectedLibraryViewModel: SelectedLibraryViewModel
 	val libraryRemoval: RemoveLibraries
 	val menuMessageBus: ViewModelMessageBus<ItemListMenuMessage>

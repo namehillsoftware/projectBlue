@@ -181,7 +181,7 @@ private fun LazyListScope.settingsList(
 		) {
 			ProvideTextStyle(value = MaterialTheme.typography.h6) {
 				Text(
-					text = "Theme:",
+					text = stringResource(R.string.theme),
 				)
 			}
 		}
@@ -198,7 +198,7 @@ private fun LazyListScope.settingsList(
 			val theme by applicationSettingsViewModel.theme.subscribeAsState()
 			Row {
 				LabeledSelection(
-					label = "System",
+					label = stringResource(R.string.system),
 					selected = theme == ApplicationSettings.Theme.SYSTEM,
 					onSelected = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.SYSTEM) },
 					role = Role.RadioButton,
@@ -212,7 +212,7 @@ private fun LazyListScope.settingsList(
 
 			Row {
 				LabeledSelection(
-					label = "Light",
+					label = stringResource(R.string.light),
 					selected = theme == ApplicationSettings.Theme.LIGHT,
 					onSelected = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.LIGHT) },
 					role = Role.RadioButton,
@@ -226,7 +226,7 @@ private fun LazyListScope.settingsList(
 
 			Row {
 				LabeledSelection(
-					label = "Dark",
+					label = stringResource(R.string.dark),
 					selected = theme == ApplicationSettings.Theme.DARK,
 					onSelected = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.DARK) },
 					role = Role.RadioButton,

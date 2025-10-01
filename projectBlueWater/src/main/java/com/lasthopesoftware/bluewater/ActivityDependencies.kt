@@ -99,6 +99,13 @@ class ActivityDependencies(
 
 	override val applicationSettingsRepository by lazy { applicationContext.getApplicationSettingsRepository() }
 
+	override val applicationViewModel by activity.buildViewModelLazily {
+		ApplicationViewModel(
+			applicationSettingsRepository,
+			messageBus,
+		)
+	}
+
 	override val selectedLibraryViewModel: SelectedLibraryViewModel by activity.buildViewModelLazily {
 		SelectedLibraryViewModel(
 			selectedLibraryIdProvider,

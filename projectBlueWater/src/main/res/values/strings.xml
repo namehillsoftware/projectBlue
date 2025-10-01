@@ -154,4 +154,8 @@
     <string name="bottom">Bottom</string>
     <string name="end">End</string>
     <string name="enable_peak_level_normalize">Enable Peak Level Normalize</string>
+    <string name="theme">Theme:</string>
+    <string name="system">System</string>
+    <string name="light">Light</string>
+    <string name="dark">Dark</string>
 </resources>
