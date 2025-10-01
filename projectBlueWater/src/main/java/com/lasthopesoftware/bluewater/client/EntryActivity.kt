@@ -89,16 +89,12 @@ class EntryActivity :
 
 		setContent {
 			if (!isInLeanbackMode) {
-				val theme by browserViewDependencies.applicationSettingsViewModel.run {
+				val theme by browserViewDependencies.applicationViewModel.run {
 					loadSettings()
 					theme.subscribeAsState()
 				}
 				ProjectBlueComposableApplication(
-					darkTheme = when (theme) {
-						ApplicationSettings.Theme.SYSTEM -> isSystemInDarkTheme()
-						ApplicationSettings.Theme.DARK -> true
-						ApplicationSettings.Theme.LIGHT -> false
-					}
+					darkTheme = theme == ApplicationSettings.Theme.DARK || (theme == ApplicationSettings.Theme.SYSTEM && isSystemInDarkTheme())
 				) {
 					HandheldApplication(
 						entryDependencies = browserViewDependencies,
