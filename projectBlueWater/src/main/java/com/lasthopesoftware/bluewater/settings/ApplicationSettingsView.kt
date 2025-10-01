@@ -28,11 +28,13 @@ import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.Button
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
+import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,6 +47,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
@@ -59,6 +62,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 
 private val horizontalOptionsPadding = 32.dp
@@ -165,6 +169,72 @@ private fun LazyListScope.settingsList(
 					onSelected = { applicationSettingsViewModel.promisePeakLevelNormalizeEnabledChange(!isPeakLevelNormalizeEnabled) }
 				) {
 					Checkbox(checked = isPeakLevelNormalizeEnabled, onCheckedChange = null, enabled = isPeakLevelNormalizeEditable && !isLoading)
+				}
+			}
+		}
+	}
+
+	item {
+		Row(
+			modifier = standardRowModifier,
+			verticalAlignment = Alignment.CenterVertically,
+		) {
+			ProvideTextStyle(value = MaterialTheme.typography.h6) {
+				Text(
+					text = "Theme:",
+				)
+			}
+		}
+	}
+
+	item {
+		Column(
+			modifier = Modifier
+				.padding(horizontal = horizontalOptionsPadding)
+				.fillMaxWidth()
+				.selectableGroup(),
+			horizontalAlignment = Alignment.Start,
+		) {
+			val theme by applicationSettingsViewModel.theme.subscribeAsState()
+			Row {
+				LabeledSelection(
+					label = "System",
+					selected = theme == ApplicationSettings.Theme.SYSTEM,
+					onSelected = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.SYSTEM) },
+					role = Role.RadioButton,
+				) {
+					RadioButton(
+						selected = theme == ApplicationSettings.Theme.SYSTEM,
+						onClick = null,
+					)
+				}
+			}
+
+			Row {
+				LabeledSelection(
+					label = "Light",
+					selected = theme == ApplicationSettings.Theme.LIGHT,
+					onSelected = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.LIGHT) },
+					role = Role.RadioButton,
+				) {
+					RadioButton(
+						selected = theme == ApplicationSettings.Theme.LIGHT,
+						onClick = null,
+					)
+				}
+			}
+
+			Row {
+				LabeledSelection(
+					label = "Dark",
+					selected = theme == ApplicationSettings.Theme.DARK,
+					onSelected = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.DARK) },
+					role = Role.RadioButton,
+				) {
+					RadioButton(
+						selected = theme == ApplicationSettings.Theme.DARK,
+						onClick = null,
+					)
 				}
 			}
 		}
