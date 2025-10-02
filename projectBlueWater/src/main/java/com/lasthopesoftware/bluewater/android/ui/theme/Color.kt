@@ -13,12 +13,12 @@ object SharedColors {
 
 object Light {
 	val ProjectBlue = Color(0xFF97ACEC)
-	val ProjectBlueLight = Color(0xFFCADEFF)
-	val ProjectBlueDark = Color(0xFF667DB9)
+	val ProjectBlueLight = Color(0xFFabbcef)
+	val ProjectBlueDark = Color(0xFF6978a5)
 }
 
 object Dark {
 	val ProjectBlue = Color(0xFF303F9F)
-	val ProjectBlueLight = Color(0xFF666AD1)
-	val ProjectBlueDark = Color(0xFF001970)
+	val ProjectBlueLight = Color(0xFF5965b2)
+	val ProjectBlueDark = Color(0xFF212c6f)
 }
