@@ -91,27 +91,29 @@ private fun LazyListScope.settingsList(
 		) {
 			val isVolumeLevelingEnabled by applicationSettingsViewModel.isVolumeLevelingEnabled.subscribeAsState()
 			LabeledSelection(
-				label = stringResource(id = R.string.use_volume_leveling_setting),
-				selected = isVolumeLevelingEnabled,
-				onSelected = { applicationSettingsViewModel.promiseVolumeLevelingEnabledChange(!isVolumeLevelingEnabled) }
-			) {
-				Checkbox(checked = isVolumeLevelingEnabled, onCheckedChange = null, enabled = !isLoading)
-			}
+                label = stringResource(id = R.string.use_volume_leveling_setting),
+                selected = isVolumeLevelingEnabled,
+                onSelected = { applicationSettingsViewModel.promiseVolumeLevelingEnabledChange(!isVolumeLevelingEnabled) },
+                {
+                    Checkbox(checked = isVolumeLevelingEnabled, onCheckedChange = null, enabled = !isLoading)
+                }
+            )
 
-			Box(
+            Box(
 				modifier = standardRowModifier.padding(start = horizontalOptionsPadding),
 				contentAlignment = Alignment.CenterStart,
 			) {
 				val isPeakLevelNormalizeEnabled by applicationSettingsViewModel.isPeakLevelNormalizeEnabled.subscribeAsState()
 				val isPeakLevelNormalizeEditable by applicationSettingsViewModel.isPeakLevelNormalizeEditable.subscribeAsState()
 				LabeledSelection(
-					label = stringResource(id = R.string.enable_peak_level_normalize),
-					selected = isPeakLevelNormalizeEnabled,
-					onSelected = { applicationSettingsViewModel.promisePeakLevelNormalizeEnabledChange(!isPeakLevelNormalizeEnabled) }
-				) {
-					Checkbox(checked = isPeakLevelNormalizeEnabled, onCheckedChange = null, enabled = isPeakLevelNormalizeEditable && !isLoading)
-				}
-			}
+                    label = stringResource(id = R.string.enable_peak_level_normalize),
+                    selected = isPeakLevelNormalizeEnabled,
+                    onSelected = { applicationSettingsViewModel.promisePeakLevelNormalizeEnabledChange(!isPeakLevelNormalizeEnabled) },
+                    {
+                        Checkbox(checked = isPeakLevelNormalizeEnabled, onCheckedChange = null, enabled = isPeakLevelNormalizeEditable && !isLoading)
+                    }
+                )
+            }
 		}
 	}
 

@@ -2,6 +2,13 @@
 
 package com.lasthopesoftware.bluewater.settings
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -23,33 +30,38 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.Button
 import androidx.compose.material.Checkbox
+import androidx.compose.material.Chip
+import androidx.compose.material.ChipDefaults
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
-import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.BuildConfig
@@ -60,6 +72,9 @@ import com.lasthopesoftware.bluewater.android.ui.components.ApplicationLogo
 import com.lasthopesoftware.bluewater.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
+import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
@@ -67,6 +82,54 @@ import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 
 private val horizontalOptionsPadding = 32.dp
 
+@Composable
+private fun SettingsSection(
+	headerText: String,
+	modifier: Modifier = Modifier,
+	headerModifier: Modifier = Modifier,
+	body: @Composable () -> Unit,
+) {
+	var expanded by remember { mutableStateOf(false) }
+	val degrees by animateFloatAsState(if (expanded) 0f else 180f)
+
+	Column(modifier = modifier) {
+		Row(
+			modifier = Modifier.fillMaxWidth().then(headerModifier).clickable {
+				expanded = !expanded
+			},
+			verticalAlignment = Alignment.CenterVertically,
+		) {
+			ProvideTextStyle(value = MaterialTheme.typography.h6) {
+				Text(text = headerText, modifier = Modifier.weight(1f))
+			}
+
+			Icon(
+				painter = painterResource(id = R.drawable.chevron_up_white_36dp),
+				tint = LocalControlColor.current,
+				contentDescription = headerText,
+				modifier = Modifier
+					.padding(horizontal = viewPaddingUnit * 2)
+					.size(topMenuIconSize)
+					.rotate(degrees),
+			)
+		}
+
+		AnimatedVisibility(
+			visible = expanded,
+			enter = expandVertically(
+				spring(
+					stiffness = Spring.StiffnessMediumLow,
+					visibilityThreshold = IntSize.VisibilityThreshold
+				)
+			),
+			exit = shrinkVertically()
+		) {
+			body()
+		}
+	}
+}
+
+@OptIn(ExperimentalMaterialApi::class)
 private fun LazyListScope.settingsList(
 	standardRowModifier: Modifier,
 	rowFontSize: TextUnit,
@@ -83,158 +146,123 @@ private fun LazyListScope.settingsList(
 				.fillMaxWidth()
 				.background(MaterialTheme.colors.surface)
 		) {
-			ProvideTextStyle(MaterialTheme.typography.h5) {
+			ProvideTextStyle(MaterialTheme.typography.h4) {
 				Text(text = stringResource(id = R.string.app_name))
 			}
 		}
 	}
 
 	item {
-		Row(
-			modifier = standardRowModifier,
-			verticalAlignment = Alignment.CenterVertically,
+		SettingsSection(
+			headerText = stringResource(id = R.string.app_sync_settings),
+			modifier = Modifier.fillMaxWidth(),
+			headerModifier = standardRowModifier,
 		) {
-			ProvideTextStyle(value = MaterialTheme.typography.h6) {
-				Text(text = stringResource(id = R.string.app_sync_settings))
-			}
-		}
-	}
-
-	item {
-		Row(
-			modifier = standardRowModifier.padding(horizontal = horizontalOptionsPadding),
-			verticalAlignment = Alignment.CenterVertically,
-		) {
-			val isSyncOnWifiOnly by applicationSettingsViewModel.isSyncOnWifiOnly.subscribeAsState()
-			LabeledSelection(
-				label = stringResource(id = R.string.app_only_sync_on_wifi),
-				selected = isSyncOnWifiOnly,
-				onSelected = { applicationSettingsViewModel.promiseSyncOnWifiChange(!isSyncOnWifiOnly) }
-			) {
-				Checkbox(checked = isSyncOnWifiOnly, onCheckedChange = null, enabled = !isLoading)
-			}
-		}
-	}
-
-	item {
-		Row(
-			modifier = standardRowModifier.padding(horizontal = horizontalOptionsPadding),
-			verticalAlignment = Alignment.CenterVertically,
-		) {
-			val isSyncOnPowerOnly by applicationSettingsViewModel.isSyncOnPowerOnly.subscribeAsState()
-			LabeledSelection(
-				label = stringResource(id = R.string.app_only_sync_ext_power),
-				selected = isSyncOnPowerOnly,
-				onSelected = { applicationSettingsViewModel.promiseSyncOnPowerChange(!isSyncOnPowerOnly) }
-			) {
-				Checkbox(checked = isSyncOnPowerOnly, onCheckedChange = null, enabled = !isLoading)
-			}
-		}
-	}
-
-	item {
-		Row(
-			modifier = standardRowModifier,
-			verticalAlignment = Alignment.CenterVertically,
-		) {
-			ProvideTextStyle(value = MaterialTheme.typography.h6) {
-				Text(text = stringResource(id = R.string.app_audio_settings))
-			}
-		}
-	}
-
-	item {
-		Column(
-			modifier = standardRowModifier.padding(horizontal = horizontalOptionsPadding),
-			verticalArrangement = Arrangement.SpaceEvenly,
-		) {
-			val isVolumeLevelingEnabled by applicationSettingsViewModel.isVolumeLevelingEnabled.subscribeAsState()
-			LabeledSelection(
-				label = stringResource(id = R.string.use_volume_leveling_setting),
-				selected = isVolumeLevelingEnabled,
-				onSelected = { applicationSettingsViewModel.promiseVolumeLevelingEnabledChange(!isVolumeLevelingEnabled) }
-			) {
-				Checkbox(checked = isVolumeLevelingEnabled, onCheckedChange = null, enabled = !isLoading)
-			}
-
-			Box(
-				modifier = standardRowModifier.padding(start = horizontalOptionsPadding),
-				contentAlignment = Alignment.CenterStart,
-			) {
-				val isPeakLevelNormalizeEnabled by applicationSettingsViewModel.isPeakLevelNormalizeEnabled.subscribeAsState()
-				val isPeakLevelNormalizeEditable by applicationSettingsViewModel.isPeakLevelNormalizeEditable.subscribeAsState()
+			Column {
+				val isSyncOnWifiOnly by applicationSettingsViewModel.isSyncOnWifiOnly.subscribeAsState()
 				LabeledSelection(
-					label = stringResource(id = R.string.enable_peak_level_normalize),
-					selected = isPeakLevelNormalizeEnabled,
-					onSelected = { applicationSettingsViewModel.promisePeakLevelNormalizeEnabledChange(!isPeakLevelNormalizeEnabled) }
-				) {
-					Checkbox(checked = isPeakLevelNormalizeEnabled, onCheckedChange = null, enabled = isPeakLevelNormalizeEditable && !isLoading)
-				}
-			}
-		}
-	}
+					label = stringResource(id = R.string.app_only_sync_on_wifi),
+					selected = isSyncOnWifiOnly,
+					onSelected = { applicationSettingsViewModel.promiseSyncOnWifiChange(!isSyncOnWifiOnly) },
+					{
+						Checkbox(checked = isSyncOnWifiOnly, onCheckedChange = null, enabled = !isLoading)
+					},
+					enabled = !isLoading,
+					modifier = standardRowModifier.padding(horizontal = horizontalOptionsPadding)
+				)
 
-	item {
-		Row(
-			modifier = standardRowModifier,
-			verticalAlignment = Alignment.CenterVertically,
-		) {
-			ProvideTextStyle(value = MaterialTheme.typography.h6) {
-				Text(
-					text = stringResource(R.string.theme),
+				val isSyncOnPowerOnly by applicationSettingsViewModel.isSyncOnPowerOnly.subscribeAsState()
+				LabeledSelection(
+					label = stringResource(id = R.string.app_only_sync_ext_power),
+					selected = isSyncOnPowerOnly,
+					onSelected = { applicationSettingsViewModel.promiseSyncOnPowerChange(!isSyncOnPowerOnly) },
+					{
+						Checkbox(checked = isSyncOnPowerOnly, onCheckedChange = null, enabled = !isLoading)
+					},
+					enabled = !isLoading,
+					modifier = standardRowModifier.padding(horizontal = horizontalOptionsPadding),
 				)
 			}
 		}
 	}
 
 	item {
-		Column(
-			modifier = Modifier
-				.padding(horizontal = horizontalOptionsPadding)
-				.fillMaxWidth()
-				.selectableGroup(),
-			horizontalAlignment = Alignment.Start,
+		SettingsSection(
+			headerText = stringResource(id = R.string.app_audio_settings),
+			headerModifier = standardRowModifier,
+			modifier = Modifier.fillMaxWidth(),
 		) {
-			val theme by applicationSettingsViewModel.theme.subscribeAsState()
-			Row {
+			Column(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(horizontal = horizontalOptionsPadding),
+			) {
+				val isVolumeLevelingEnabled by applicationSettingsViewModel.isVolumeLevelingEnabled.subscribeAsState()
 				LabeledSelection(
-					label = stringResource(R.string.system),
-					selected = theme == ApplicationSettings.Theme.SYSTEM,
-					onSelected = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.SYSTEM) },
-					role = Role.RadioButton,
-				) {
-					RadioButton(
-						selected = theme == ApplicationSettings.Theme.SYSTEM,
-						onClick = null,
-					)
-				}
-			}
+					label = stringResource(id = R.string.use_volume_leveling_setting),
+					selected = isVolumeLevelingEnabled,
+					onSelected = { applicationSettingsViewModel.promiseVolumeLevelingEnabledChange(!isVolumeLevelingEnabled) },
+					{
+						Checkbox(checked = isVolumeLevelingEnabled, onCheckedChange = null, enabled = !isLoading)
+					},
+					modifier = standardRowModifier,
+					enabled = !isLoading,
+				)
 
-			Row {
+				val isPeakLevelNormalizeEnabled by applicationSettingsViewModel.isPeakLevelNormalizeEnabled.subscribeAsState()
+				val isPeakLevelNormalizeEditable by applicationSettingsViewModel.isPeakLevelNormalizeEditable.subscribeAsState()
 				LabeledSelection(
-					label = stringResource(R.string.light),
-					selected = theme == ApplicationSettings.Theme.LIGHT,
-					onSelected = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.LIGHT) },
-					role = Role.RadioButton,
-				) {
-					RadioButton(
-						selected = theme == ApplicationSettings.Theme.LIGHT,
-						onClick = null,
-					)
-				}
+					label = stringResource(id = R.string.enable_peak_level_normalize),
+					selected = isPeakLevelNormalizeEnabled,
+					onSelected = { applicationSettingsViewModel.promisePeakLevelNormalizeEnabledChange(!isPeakLevelNormalizeEnabled) },
+					{
+						Checkbox(
+							checked = isPeakLevelNormalizeEnabled,
+							onCheckedChange = null,
+							enabled = isPeakLevelNormalizeEditable && !isLoading
+						)
+					},
+					modifier = standardRowModifier.padding(start = horizontalOptionsPadding),
+					enabled = isPeakLevelNormalizeEditable && !isLoading
+				)
 			}
+		}
+	}
 
-			Row {
-				LabeledSelection(
-					label = stringResource(R.string.dark),
-					selected = theme == ApplicationSettings.Theme.DARK,
-					onSelected = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.DARK) },
-					role = Role.RadioButton,
+	item {
+		SettingsSection(
+			headerText = stringResource(id = R.string.theme),
+			headerModifier = standardRowModifier,
+			modifier = Modifier.fillMaxWidth(),
+		) {
+			Row(
+				modifier = standardRowModifier.padding(horizontal = horizontalOptionsPadding),
+				horizontalArrangement = Arrangement.SpaceEvenly,
+			) {
+				val theme by applicationSettingsViewModel.theme.subscribeAsState()
+				val selectedChipColors = ChipDefaults.chipColors(
+					backgroundColor = MaterialTheme.colors.primary,
+					contentColor = MaterialTheme.colors.onPrimary,
+				)
+				Chip(
+					colors = if (theme == ApplicationSettings.Theme.SYSTEM) selectedChipColors else ChipDefaults.chipColors() ,
+					onClick = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.SYSTEM) }
 				) {
-					RadioButton(
-						selected = theme == ApplicationSettings.Theme.DARK,
-						onClick = null,
-					)
+					Text(stringResource(R.string.system))
+				}
+
+				Chip(
+					colors = if (theme == ApplicationSettings.Theme.LIGHT) selectedChipColors else ChipDefaults.chipColors() ,
+					onClick = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.LIGHT) }
+				) {
+					Text(stringResource(R.string.light))
+				}
+
+				Chip(
+					colors = if (theme == ApplicationSettings.Theme.DARK) selectedChipColors else ChipDefaults.chipColors() ,
+					onClick = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.DARK) }
+				) {
+					Text(stringResource(R.string.dark))
 				}
 			}
 		}
@@ -269,7 +297,7 @@ private fun LazyListScope.settingsList(
 				text = name,
 				modifier = Modifier
 					.weight(1f)
-					.padding(Dimensions.viewPaddingUnit),
+					.padding(viewPaddingUnit),
 				maxLines = 1,
 				overflow = TextOverflow.Ellipsis,
 				fontWeight = if (libraryId == selectedLibraryId) FontWeight.Bold else FontWeight.Normal,
@@ -278,7 +306,7 @@ private fun LazyListScope.settingsList(
 
 			Row(
 				modifier = Modifier
-					.padding(Dimensions.viewPaddingUnit),
+					.padding(viewPaddingUnit),
 				verticalAlignment = Alignment.CenterVertically,
 			) {
 				Icon(
@@ -346,7 +374,7 @@ private fun ApplicationSettingsViewVertical(
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
-					.padding(Dimensions.viewPaddingUnit * 8)
+					.padding(viewPaddingUnit * 8)
 			) {
 				ApplicationLogo(modifier = Modifier
 					.fillMaxWidth(.5f)
@@ -408,7 +436,7 @@ private fun ApplicationSettingsViewHorizontal(
 		LazyColumn(
 			modifier = Modifier
 				.fillMaxHeight()
-				.padding(start = Dimensions.viewPaddingUnit * 2)
+				.padding(start = viewPaddingUnit * 2)
 		) {
 			settingsList(
 				standardRowModifier,
@@ -457,7 +485,7 @@ fun ApplicationSettingsView(
 				BoxWithConstraints(
 					modifier = Modifier
 						.fillMaxSize()
-						.padding(Dimensions.viewPaddingUnit)
+						.padding(viewPaddingUnit)
 				) {
 					if (maxWidth < maxHeight) ApplicationSettingsViewVertical(
 						applicationSettingsViewModel,
