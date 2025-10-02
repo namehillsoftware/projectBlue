@@ -8,10 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val DarkColorPalette = darkColors(
-	primary = Dark.ProjectBlueDark,
+	primary = Dark.ProjectBlueLight,
 	onPrimary = Color.White,
-	primaryVariant = Dark.ProjectBlue,
-	secondary = Dark.ProjectBlueLight,
+	primaryVariant = Dark.ProjectBlueDark,
+	secondary = Dark.ProjectBlue,
 	onSecondary = Color.White,
 	onError = Color.White,
 )
