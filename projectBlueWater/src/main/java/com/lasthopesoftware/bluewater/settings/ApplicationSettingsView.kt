@@ -241,8 +241,8 @@ private fun LazyListScope.settingsList(
 			) {
 				val theme by applicationSettingsViewModel.theme.subscribeAsState()
 				val selectedChipColors = ChipDefaults.chipColors(
-					backgroundColor = MaterialTheme.colors.primary,
-					contentColor = MaterialTheme.colors.onPrimary,
+					backgroundColor = MaterialTheme.colors.secondary,
+					contentColor = MaterialTheme.colors.onSecondary,
 				)
 				Chip(
 					colors = if (theme == ApplicationSettings.Theme.SYSTEM) selectedChipColors else ChipDefaults.chipColors() ,
