@@ -263,7 +263,7 @@ private fun SettingsList(
 private fun ServersList(
 	applicationNavigation: NavigateApplication,
 	libraries: List<Pair<LibraryId, String>>,
-	selectedLibraryId: LibraryId
+	selectedLibraryId: LibraryId?
 ) {
 	val rowHeight = Dimensions.standardRowHeight
 	val standardRowModifier = Modifier
@@ -306,7 +306,7 @@ private fun ApplicationSettingsMenu(
 	onViewServersClick: () -> Unit,
 	onViewSettingsClick: () -> Unit,
 	applicationNavigation: NavigateApplication,
-	selectedLibraryId: LibraryId,
+	selectedLibraryId: LibraryId?,
 	modifier: Modifier = Modifier,
 ) {
 	ListMenuRow(
@@ -350,13 +350,14 @@ private fun ApplicationSettingsMenu(
 		val connectText = "Active Server"
 		ColumnMenuIcon(
 			onClick = {
-				applicationNavigation.viewLibrary(selectedLibraryId)
+				selectedLibraryId?.also(applicationNavigation::viewLibrary)
 			},
 			iconPainter = painterResource(id = R.drawable.arrow_right_24dp),
 			contentDescription = connectText,
 			modifier = modifier,
 			label = connectText,
 			labelMaxLines = 2,
+			enabled = selectedLibraryId != null
 		)
 	}
 }
