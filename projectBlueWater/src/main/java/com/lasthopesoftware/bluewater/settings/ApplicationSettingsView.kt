@@ -2,13 +2,6 @@
 
 package com.lasthopesoftware.bluewater.settings
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.VisibilityThreshold
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,7 +24,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsTopHeight
@@ -55,7 +47,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
@@ -65,7 +56,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.NavigateApplication
@@ -80,10 +70,8 @@ import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreS
 import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
-import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconWidth
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
-import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
@@ -99,46 +87,19 @@ private fun SettingsSection(
 	headerModifier: Modifier = Modifier,
 	body: @Composable () -> Unit,
 ) {
-	var expanded by remember { mutableStateOf(false) }
-	val degrees by animateFloatAsState(if (expanded) 0f else 180f)
-
 	Column(modifier = modifier) {
 		Row(
 			modifier = Modifier
 				.fillMaxWidth()
-				.then(headerModifier)
-				.clickable {
-					expanded = !expanded
-				},
+				.then(headerModifier),
 			verticalAlignment = Alignment.CenterVertically,
 		) {
 			ProvideTextStyle(value = MaterialTheme.typography.h6) {
 				Text(text = headerText, modifier = Modifier.weight(1f))
 			}
-
-			Icon(
-				painter = painterResource(id = R.drawable.chevron_up_white_36dp),
-				tint = LocalControlColor.current,
-				contentDescription = headerText,
-				modifier = Modifier
-					.padding(horizontal = viewPaddingUnit * 2)
-					.size(topMenuIconSize)
-					.rotate(degrees),
-			)
 		}
 
-		AnimatedVisibility(
-			visible = expanded,
-			enter = expandVertically(
-				spring(
-					stiffness = Spring.StiffnessMediumLow,
-					visibilityThreshold = IntSize.VisibilityThreshold
-				)
-			),
-			exit = shrinkVertically()
-		) {
-			body()
-		}
+		body()
 	}
 }
 
