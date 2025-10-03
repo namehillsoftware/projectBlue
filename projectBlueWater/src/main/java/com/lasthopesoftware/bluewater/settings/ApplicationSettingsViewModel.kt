@@ -30,9 +30,13 @@ class ApplicationSettingsViewModel(
 		mutableChosenLibraryId.value = m.chosenLibraryId
 	}
 
+	enum class SelectedTab {
+		ViewServers, ViewSettings
+	}
+
 	private val mutableLibraries = MutableInteractionState(emptyList<Pair<LibraryId, String>>())
 	private val mutableIsLoading = MutableInteractionState(false)
-	private val mutableChosenLibraryId = MutableInteractionState(LibraryId(-1))
+	private val mutableChosenLibraryId = MutableInteractionState<LibraryId?>(null)
 	private val mutableIsSyncOnPowerOnly = MutableInteractionState(false)
 	private val mutableIsSyncOnWifiOnly = MutableInteractionState(false)
 	private val mutableIsVolumeLevelingEnabled = MutableInteractionState(false)
@@ -48,6 +52,7 @@ class ApplicationSettingsViewModel(
 	val chosenLibraryId = mutableChosenLibraryId.asInteractionState()
 	val libraries = mutableLibraries.asInteractionState()
 	val theme = mutableTheme.asInteractionState()
+	val selectedTab = MutableInteractionState(SelectedTab.ViewServers)
 	override val isLoading = mutableIsLoading.asInteractionState()
 
 	override fun onCleared() {
@@ -69,7 +74,7 @@ class ApplicationSettingsViewModel(
 				mutableIsVolumeLevelingEnabled.value = s.isVolumeLevelingEnabled
 				mutableIsPeakLevelNormalizeEnabled.value = s.isPeakLevelNormalizeEnabled
 				mutableTheme.value = s.theme
-				mutableChosenLibraryId.value = LibraryId(s.chosenLibraryId)
+				mutableChosenLibraryId.value = s.chosenLibraryId.takeIf { it > -1 }?.let(::LibraryId)
 			}
 
 		val promisedEngineTypeUpdate = selectedPlaybackEngineTypeAccess
@@ -137,7 +142,7 @@ class ApplicationSettingsViewModel(
 					isPeakLevelNormalizeEnabled = isPeakLevelNormalizeEnabled.value,
 					isSyncOnWifiOnly = isSyncOnWifiOnly.value,
 					playbackEngineTypeName = playbackEngineType.value.name,
-					chosenLibraryId = chosenLibraryId.value.id,
+					chosenLibraryId = chosenLibraryId.value?.id ?: -1,
 					theme = theme.value
 				)
 			)

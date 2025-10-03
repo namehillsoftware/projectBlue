@@ -158,4 +158,7 @@
     <string name="system">System</string>
     <string name="light">Light</string>
     <string name="dark">Dark</string>
+    <string name="view_servers">View Servers</string>
+    <string name="application_settings">Application Settings</string>
+    <string name="active_server">Active Server</string>
 </resources>

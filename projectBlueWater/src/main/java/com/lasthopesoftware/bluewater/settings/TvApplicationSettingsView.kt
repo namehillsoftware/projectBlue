@@ -57,7 +57,7 @@ private fun LazyListScope.settingsList(
 	applicationNavigation: NavigateApplication,
 	playbackService: ControlPlaybackService,
 	libraries: List<Pair<LibraryId, String>>,
-	selectedLibraryId: LibraryId,
+	selectedLibraryId: LibraryId?,
 	isLoading: Boolean
 ) {
 	stickyHeader {
