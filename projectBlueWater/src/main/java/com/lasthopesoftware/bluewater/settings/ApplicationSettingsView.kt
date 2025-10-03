@@ -315,7 +315,7 @@ private fun ApplicationSettingsMenu(
 	) {
 		val modifier = Modifier.requiredWidth(topMenuIconWidth)
 
-		val viewServersLabel = "View Servers"
+		val viewServersLabel = stringResource(R.string.view_servers)
 		ColumnMenuIcon(
 			onClick = onViewServersClick,
 			iconPainter = painterResource(id = R.drawable.select_library_36dp),
@@ -325,7 +325,7 @@ private fun ApplicationSettingsMenu(
 			modifier = modifier,
 		)
 
-		val settingsButtonLabel = "Application Settings"
+		val settingsButtonLabel = stringResource(R.string.application_settings)
 		ColumnMenuIcon(
 			onClick = onViewSettingsClick,
 			iconPainter = painterResource(id = R.drawable.ic_action_settings),
@@ -347,7 +347,7 @@ private fun ApplicationSettingsMenu(
 			modifier = modifier,
 		)
 
-		val connectText = "Active Server"
+		val connectText = stringResource(R.string.active_server)
 		ColumnMenuIcon(
 			onClick = {
 				selectedLibraryId?.also(applicationNavigation::viewLibrary)
