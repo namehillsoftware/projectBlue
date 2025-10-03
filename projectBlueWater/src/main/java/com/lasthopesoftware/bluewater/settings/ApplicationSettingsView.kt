@@ -41,6 +41,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -49,6 +50,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
@@ -64,7 +67,9 @@ import com.lasthopesoftware.bluewater.android.ui.components.ApplicationInfoText
 import com.lasthopesoftware.bluewater.android.ui.components.ApplicationLogo
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
+import com.lasthopesoftware.bluewater.android.ui.components.FullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.LabeledSelection
+import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.remember
@@ -363,8 +368,17 @@ private fun ApplicationSettingsViewVertical(
 	playbackService: ControlPlaybackService,
 ) {
 	val expandedMenuHeightPx = LocalDensity.current.remember { expandedMenuHeight.toPx() }
+	var menuOffsetY by remember { mutableFloatStateOf(Float.MAX_VALUE) }
+	val paddingScaler = FullScreenScrollConnectedScaler.remember(
+		min = 0f,
+		max = menuOffsetY
+	)
 	val menuScaler = rememberDeferredPreScrollConnectedScaler(expandedMenuHeightPx, 0f)
-	val scrollConnection = remember(menuScaler) { ConsumedOffsetErasingNestedScrollConnection(menuScaler) }
+	val scrollConnection = remember(paddingScaler, menuScaler) {
+		ConsumedOffsetErasingNestedScrollConnection(
+			LinkedNestedScrollConnection(paddingScaler,menuScaler)
+		)
+	}
 
 	val libraries by applicationSettingsViewModel.libraries.subscribeAsState()
 	val selectedLibraryId by applicationSettingsViewModel.chosenLibraryId.subscribeAsState()
@@ -375,6 +389,7 @@ private fun ApplicationSettingsViewVertical(
 		.fillMaxSize()
 		.nestedScroll(scrollConnection)
 	) {
+		var isViewingServers by remember { mutableStateOf(true) }
 		Column(
 			modifier = Modifier
 				.fillMaxSize()
@@ -399,31 +414,11 @@ private fun ApplicationSettingsViewVertical(
 				)
 			}
 
-			Row(
-				modifier = Modifier
-					.fillMaxWidth()
-					.height(Dimensions.appBarHeight)
-					.background(MaterialTheme.colors.surface)
-			) {
-				ProvideTextStyle(MaterialTheme.typography.h4) {
-					Text(text = stringResource(id = R.string.app_name))
+			Spacer(modifier = Modifier
+				.height(expandedMenuHeight + Dimensions.appBarHeight)
+				.onPlaced { bounds ->
+					menuOffsetY = bounds.positionInParent().y
 				}
-			}
-
-			var isViewingServers by remember { mutableStateOf(true) }
-
-			val menuHeightPx by menuScaler.valueState
-			val menuHeightDp by LocalDensity.current.remember { derivedStateOf { menuHeightPx.toDp() } }
-			ApplicationSettingsMenu(
-				onViewServersClick = { isViewingServers = true },
-				onViewSettingsClick = { isViewingServers = false },
-				applicationNavigation = applicationNavigation,
-				selectedLibraryId = selectedLibraryId,
-				modifier = Modifier
-					.fillMaxWidth()
-					.height(menuHeightDp)
-					.clipToBounds()
-					.align(Alignment.Start),
 			)
 
 			if (isViewingServers) {
@@ -439,6 +434,36 @@ private fun ApplicationSettingsViewVertical(
 					isLoading
 				)
 			}
+		}
+
+		val menuHeightDp by LocalDensity.current.remember(menuScaler) { derivedStateOf { menuScaler.valueState.floatValue.toDp() } }
+		val paddingDp by LocalDensity.current.remember(paddingScaler) { derivedStateOf { paddingScaler.valueState.value.toDp() } }
+		Column(
+			modifier = Modifier
+				.padding(top = paddingDp)
+		) {
+			Row(
+				modifier = Modifier
+					.fillMaxWidth()
+					.height(Dimensions.appBarHeight)
+					.background(MaterialTheme.colors.surface)
+			) {
+				ProvideTextStyle(MaterialTheme.typography.h4) {
+					Text(text = stringResource(id = R.string.app_name))
+				}
+			}
+
+			ApplicationSettingsMenu(
+				onViewServersClick = { isViewingServers = true },
+				onViewSettingsClick = { isViewingServers = false },
+				applicationNavigation = applicationNavigation,
+				selectedLibraryId = selectedLibraryId,
+				modifier = Modifier
+					.fillMaxWidth()
+					.height(menuHeightDp)
+					.background(MaterialTheme.colors.surface)
+					.clipToBounds(),
+			)
 		}
 	}
 }
