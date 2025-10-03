@@ -386,8 +386,8 @@ private fun ApplicationSettingsViewVertical(
 
 	Box(
 		modifier = Modifier
-		.fillMaxSize()
-		.nestedScroll(scrollConnection)
+			.fillMaxSize()
+			.nestedScroll(scrollConnection)
 	) {
 		var isViewingServers by remember { mutableStateOf(true) }
 		Column(
@@ -454,8 +454,14 @@ private fun ApplicationSettingsViewVertical(
 			}
 
 			ApplicationSettingsMenu(
-				onViewServersClick = { isViewingServers = true },
-				onViewSettingsClick = { isViewingServers = false },
+				onViewServersClick = {
+					isViewingServers = true
+					scrollConnection.goToMax()
+				},
+				onViewSettingsClick = {
+					isViewingServers = false
+					scrollConnection.goToMax()
+			  	},
 				applicationNavigation = applicationNavigation,
 				selectedLibraryId = selectedLibraryId,
 				modifier = Modifier
