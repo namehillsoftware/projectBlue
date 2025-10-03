@@ -30,6 +30,10 @@ class ApplicationSettingsViewModel(
 		mutableChosenLibraryId.value = m.chosenLibraryId
 	}
 
+	enum class SelectedTab {
+		ViewServers, ViewSettings
+	}
+
 	private val mutableLibraries = MutableInteractionState(emptyList<Pair<LibraryId, String>>())
 	private val mutableIsLoading = MutableInteractionState(false)
 	private val mutableChosenLibraryId = MutableInteractionState<LibraryId?>(null)
@@ -48,6 +52,7 @@ class ApplicationSettingsViewModel(
 	val chosenLibraryId = mutableChosenLibraryId.asInteractionState()
 	val libraries = mutableLibraries.asInteractionState()
 	val theme = mutableTheme.asInteractionState()
+	val selectedTab = MutableInteractionState(SelectedTab.ViewServers)
 	override val isLoading = mutableIsLoading.asInteractionState()
 
 	override fun onCleared() {

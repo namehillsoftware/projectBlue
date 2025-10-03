@@ -42,7 +42,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -80,6 +79,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUni
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsMutableState
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 
 private val horizontalOptionsPadding = 32.dp
@@ -303,8 +303,7 @@ private fun ServersList(
 
 @Composable
 private fun ApplicationSettingsMenu(
-	onViewServersClick: () -> Unit,
-	onViewSettingsClick: () -> Unit,
+	applicationSettingsViewModel: ApplicationSettingsViewModel,
 	applicationNavigation: NavigateApplication,
 	selectedLibraryId: LibraryId?,
 	modifier: Modifier = Modifier,
@@ -315,24 +314,32 @@ private fun ApplicationSettingsMenu(
 	) {
 		val modifier = Modifier.requiredWidth(topMenuIconWidth)
 
+		var selectedTab by applicationSettingsViewModel.selectedTab.subscribeAsMutableState()
+
 		val viewServersLabel = stringResource(R.string.view_servers)
 		ColumnMenuIcon(
-			onClick = onViewServersClick,
+			onClick = {
+				selectedTab = ApplicationSettingsViewModel.SelectedTab.ViewServers
+			},
 			iconPainter = painterResource(id = R.drawable.select_library_36dp),
 			contentDescription = viewServersLabel,
 			label = viewServersLabel,
 			labelMaxLines = 2,
 			modifier = modifier,
+			enabled = selectedTab != ApplicationSettingsViewModel.SelectedTab.ViewServers
 		)
 
 		val settingsButtonLabel = stringResource(R.string.application_settings)
 		ColumnMenuIcon(
-			onClick = onViewSettingsClick,
+			onClick = {
+				selectedTab = ApplicationSettingsViewModel.SelectedTab.ViewSettings
+			},
 			iconPainter = painterResource(id = R.drawable.ic_action_settings),
 			contentDescription = settingsButtonLabel,
 			label = settingsButtonLabel,
 			labelMaxLines = 2,
 			modifier = modifier,
+			enabled = selectedTab != ApplicationSettingsViewModel.SelectedTab.ViewSettings
 		)
 
 		val addServerButtonLabel = stringResource(R.string.btn_add_server)
@@ -383,14 +390,12 @@ private fun ApplicationSettingsViewVertical(
 
 	val libraries by applicationSettingsViewModel.libraries.subscribeAsState()
 	val selectedLibraryId by applicationSettingsViewModel.chosenLibraryId.subscribeAsState()
-	val isLoading by applicationSettingsViewModel.isLoading.subscribeAsState()
 
 	Box(
 		modifier = Modifier
 			.fillMaxSize()
 			.nestedScroll(scrollConnection)
 	) {
-		var isViewingServers by remember { mutableStateOf(true) }
 		Column(
 			modifier = Modifier
 				.fillMaxSize()
@@ -422,18 +427,21 @@ private fun ApplicationSettingsViewVertical(
 				}
 			)
 
-			if (isViewingServers) {
-				ServersList(
+			val selectedTab by applicationSettingsViewModel.selectedTab.subscribeAsState()
+			when (selectedTab) {
+				ApplicationSettingsViewModel.SelectedTab.ViewServers -> ServersList(
 					applicationNavigation,
 					libraries,
 					selectedLibraryId,
 				)
-			} else {
-				SettingsList(
-					applicationSettingsViewModel,
-					playbackService,
-					isLoading
-				)
+				ApplicationSettingsViewModel.SelectedTab.ViewSettings -> {
+					val isLoading by applicationSettingsViewModel.isLoading.subscribeAsState()
+					SettingsList(
+						applicationSettingsViewModel,
+						playbackService,
+						isLoading
+					)
+				}
 			}
 		}
 
@@ -455,14 +463,7 @@ private fun ApplicationSettingsViewVertical(
 			}
 
 			ApplicationSettingsMenu(
-				onViewServersClick = {
-					isViewingServers = true
-					scrollConnection.goToMax()
-				},
-				onViewSettingsClick = {
-					isViewingServers = false
-					scrollConnection.goToMax()
-			  	},
+				applicationSettingsViewModel,
 				applicationNavigation = applicationNavigation,
 				selectedLibraryId = selectedLibraryId,
 				modifier = Modifier
@@ -485,7 +486,6 @@ private fun BoxWithConstraintsScope.ApplicationSettingsViewHorizontal(
 		modifier = Modifier.fillMaxSize(),
 		horizontalArrangement = Arrangement.SpaceEvenly,
 	) {
-		var isViewingServers by remember { mutableStateOf(true) }
 		val libraries by applicationSettingsViewModel.libraries.subscribeAsState()
 		val selectedLibraryId by applicationSettingsViewModel.chosenLibraryId.subscribeAsState()
 
@@ -516,8 +516,7 @@ private fun BoxWithConstraintsScope.ApplicationSettingsViewHorizontal(
 			)
 
 			ApplicationSettingsMenu(
-				onViewServersClick = { isViewingServers = true },
-				onViewSettingsClick = { isViewingServers = false },
+				applicationSettingsViewModel,
 				applicationNavigation = applicationNavigation,
 				selectedLibraryId = selectedLibraryId,
 				modifier = Modifier
@@ -535,19 +534,21 @@ private fun BoxWithConstraintsScope.ApplicationSettingsViewHorizontal(
 				.verticalScroll(rememberScrollState()),
 			horizontalAlignment = Alignment.CenterHorizontally,
 		) {
-			val isLoading by applicationSettingsViewModel.isLoading.subscribeAsState()
-			if (isViewingServers) {
-				ServersList(
+			val selectedTab by applicationSettingsViewModel.selectedTab.subscribeAsState()
+			when (selectedTab) {
+				ApplicationSettingsViewModel.SelectedTab.ViewServers -> ServersList(
 					applicationNavigation,
 					libraries,
 					selectedLibraryId,
 				)
-			} else {
-				SettingsList(
-					applicationSettingsViewModel,
-					playbackService,
-					isLoading
-				)
+				ApplicationSettingsViewModel.SelectedTab.ViewSettings -> {
+					val isLoading by applicationSettingsViewModel.isLoading.subscribeAsState()
+					SettingsList(
+						applicationSettingsViewModel,
+						playbackService,
+						isLoading
+					)
+				}
 			}
 		}
 	}
