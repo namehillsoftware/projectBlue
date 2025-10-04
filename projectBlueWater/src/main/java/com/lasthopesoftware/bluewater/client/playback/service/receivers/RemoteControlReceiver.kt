@@ -5,8 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.view.KeyEvent
 import androidx.media3.common.util.UnstableApi
+import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.next
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pause
@@ -20,7 +20,8 @@ private val logger by lazyLogger<RemoteControlReceiver>()
 @UnstableApi class RemoteControlReceiver : BroadcastReceiver() {
 	override fun onReceive(context: Context, intent: Intent) {
 		fun withSelectedLibraryId(action: (LibraryId) -> Unit) =
-			context.getCachedSelectedLibraryIdProvider()
+			context.applicationDependencies
+				.selectedLibraryIdProvider
 				.promiseSelectedLibraryId()
 				.then { it -> it?.also(action) }
 

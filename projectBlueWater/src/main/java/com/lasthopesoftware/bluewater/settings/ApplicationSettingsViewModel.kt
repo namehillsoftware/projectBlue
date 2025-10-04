@@ -26,10 +26,6 @@ class ApplicationSettingsViewModel(
 	private val syncScheduler: ScheduleSyncs,
 ) : ViewModel(), TrackLoadedViewState, ImmediateAction
 {
-	private val libraryChosenSubscription = receiveMessages.registerReceiver { m: BrowserLibrarySelection.LibraryChosenMessage ->
-		mutableChosenLibraryId.value = m.chosenLibraryId
-	}
-
 	enum class SelectedTab {
 		ViewServers, ViewSettings
 	}
@@ -55,8 +51,10 @@ class ApplicationSettingsViewModel(
 	val selectedTab = MutableInteractionState(SelectedTab.ViewServers)
 	override val isLoading = mutableIsLoading.asInteractionState()
 
-	override fun onCleared() {
-		libraryChosenSubscription.close()
+	init {
+	    addCloseable(receiveMessages.registerReceiver { m: BrowserLibrarySelection.LibraryChosenMessage ->
+			mutableChosenLibraryId.value = m.chosenLibraryId
+		})
 	}
 
 	override fun act() {
@@ -73,7 +71,7 @@ class ApplicationSettingsViewModel(
 				mutableIsSyncOnPowerOnly.value = s.isSyncOnPowerOnly
 				mutableIsVolumeLevelingEnabled.value = s.isVolumeLevelingEnabled
 				mutableIsPeakLevelNormalizeEnabled.value = s.isPeakLevelNormalizeEnabled
-				mutableTheme.value = s.theme
+				mutableTheme.value = s.theme ?: ApplicationSettings.Theme.SYSTEM
 				mutableChosenLibraryId.value = s.chosenLibraryId.takeIf { it > -1 }?.let(::LibraryId)
 			}
 

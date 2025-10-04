@@ -83,10 +83,10 @@ import com.lasthopesoftware.bluewater.shared.observables.subscribeAsMutableState
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 
 private val horizontalOptionsPadding = 32.dp
-private val expandedMenuHeight = Dimensions.topMenuHeight + viewPaddingUnit * 6
+val expandedMenuHeight = Dimensions.topMenuHeight + viewPaddingUnit * 6
 
 @Composable
-private fun SettingsSection(
+fun SettingsSection(
 	headerText: String,
 	modifier: Modifier = Modifier,
 	headerModifier: Modifier = Modifier,
@@ -260,7 +260,7 @@ private fun SettingsList(
 }
 
 @Composable
-private fun ServersList(
+fun ServersList(
 	applicationNavigation: NavigateApplication,
 	libraries: List<Pair<LibraryId, String>>,
 	selectedLibraryId: LibraryId?
@@ -302,7 +302,7 @@ private fun ServersList(
 }
 
 @Composable
-private fun ApplicationSettingsMenu(
+fun ApplicationSettingsMenu(
 	applicationSettingsViewModel: ApplicationSettingsViewModel,
 	applicationNavigation: NavigateApplication,
 	selectedLibraryId: LibraryId?,
@@ -484,7 +484,7 @@ private fun BoxWithConstraintsScope.ApplicationSettingsViewHorizontal(
 ) {
 	Row(
 		modifier = Modifier.fillMaxSize(),
-		horizontalArrangement = Arrangement.SpaceEvenly,
+		horizontalArrangement = Arrangement.Start,
 	) {
 		val libraries by applicationSettingsViewModel.libraries.subscribeAsState()
 		val selectedLibraryId by applicationSettingsViewModel.chosenLibraryId.subscribeAsState()

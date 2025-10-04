@@ -27,6 +27,6 @@ class ApplicationViewModel(
 		applicationSettingsRepository
 			.promiseApplicationSettings()
 			.then { settings ->
-				mutableTheme.value = settings.theme
+				mutableTheme.value = settings.theme ?: ApplicationSettings.Theme.SYSTEM
 			}
 }

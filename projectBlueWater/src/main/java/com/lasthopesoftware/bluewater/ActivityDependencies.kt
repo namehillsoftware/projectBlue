@@ -18,7 +18,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBro
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
@@ -39,7 +38,7 @@ class ActivityDependencies(
 
 	private val selectedPlaybackEngineTypeAccess by lazy {
 		SelectedPlaybackEngineTypeAccess(
-			applicationSettingsRepository,
+			applicationSettings,
 			DefaultPlaybackEngineLookup
 		)
 	}
@@ -48,7 +47,7 @@ class ActivityDependencies(
 
 	private val libraryBrowserSelection by lazy {
 		BrowserLibrarySelection(
-			applicationSettingsRepository,
+			applicationSettings,
 			messageBus,
 			libraryProvider,
 		)
@@ -97,11 +96,9 @@ class ActivityDependencies(
 
 	override val navigationMessages by activity.buildViewModelLazily { ViewModelMessageBus<NavigationMessage>() }
 
-	override val applicationSettingsRepository by lazy { applicationContext.getApplicationSettingsRepository() }
-
 	override val applicationViewModel by activity.buildViewModelLazily {
 		ApplicationViewModel(
-			applicationSettingsRepository,
+			applicationSettings,
 			messageBus,
 		)
 	}
@@ -122,7 +119,7 @@ class ActivityDependencies(
 
 	override val applicationSettingsViewModel by activity.buildViewModelLazily {
 		ApplicationSettingsViewModel(
-			applicationSettingsRepository,
+			applicationSettings,
 			selectedPlaybackEngineTypeAccess,
 			librarySettingsProvider,
 			libraryNameLookup,
@@ -132,7 +129,7 @@ class ActivityDependencies(
 	}
 
 	override val hiddenSettingsViewModel by activity.buildViewModelLazily {
-		HiddenSettingsViewModel(applicationSettingsRepository)
+		HiddenSettingsViewModel(applicationSettings)
 	}
 
 	override val userSslCertificateProvider by lazy {
