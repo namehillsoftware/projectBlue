@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.Checkbox
@@ -159,8 +160,8 @@ fun AudioSettingsSection(
 	}
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
+@OptIn(ExperimentalMaterialApi::class)
 fun ThemeSettingsSection(
 	applicationSettingsViewModel: ApplicationSettingsViewModel,
 ) {
@@ -170,9 +171,10 @@ fun ThemeSettingsSection(
 		modifier = Modifier.fillMaxWidth(),
 	) {
 		Row(
-			modifier = standardRowModifier.padding(horizontal = horizontalOptionsPadding),
+			modifier = standardRowModifier.padding(horizontal = horizontalOptionsPadding).selectableGroup(),
 			horizontalArrangement = Arrangement.SpaceEvenly,
 		) {
+			val isLoading by applicationSettingsViewModel.isLoading.subscribeAsState()
 			val theme by applicationSettingsViewModel.theme.subscribeAsState()
 			val selectedChipColors = ChipDefaults.chipColors(
 				backgroundColor = MaterialTheme.colors.secondary,
@@ -180,21 +182,24 @@ fun ThemeSettingsSection(
 			)
 			Chip(
 				colors = if (theme == ApplicationSettings.Theme.SYSTEM) selectedChipColors else ChipDefaults.chipColors() ,
-				onClick = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.SYSTEM) }
+				onClick = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.SYSTEM) },
+				enabled = !isLoading
 			) {
 				Text(stringResource(R.string.system))
 			}
 
 			Chip(
 				colors = if (theme == ApplicationSettings.Theme.LIGHT) selectedChipColors else ChipDefaults.chipColors() ,
-				onClick = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.LIGHT) }
+				onClick = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.LIGHT) },
+				enabled = !isLoading
 			) {
 				Text(stringResource(R.string.light))
 			}
 
 			Chip(
 				colors = if (theme == ApplicationSettings.Theme.DARK) selectedChipColors else ChipDefaults.chipColors() ,
-				onClick = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.DARK) }
+				onClick = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.DARK) },
+				enabled = !isLoading
 			) {
 				Text(stringResource(R.string.dark))
 			}
@@ -234,7 +239,6 @@ fun AboutApplication(
 }
 
 @Composable
-@OptIn(ExperimentalMaterialApi::class)
 private fun SettingsList(
 	applicationSettingsViewModel: ApplicationSettingsViewModel,
 	playbackService: ControlPlaybackService,
