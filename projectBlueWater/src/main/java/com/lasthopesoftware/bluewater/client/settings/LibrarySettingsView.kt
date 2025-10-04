@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.settings
 
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
@@ -717,7 +715,7 @@ private fun ColumnScope.LibrarySettings(
 			librarySettingsViewModel = librarySettingsViewModel,
 			undoBackStack = undoBackStack,
 			onServerTypeSelectionFinished = onServerTypeSelectionFinished,
-			modifier = Modifier.wrapContentHeight().weight(1f)
+			modifier = Modifier.weight(1f)
 		)
 	} else {
 		val connectionSettingsViewModelState by librarySettingsViewModel.savedConnectionSettingsViewModel.subscribeAsState()
@@ -741,7 +739,7 @@ private fun ColumnScope.LibrarySettings(
 				librarySettingsViewModel = librarySettingsViewModel,
 				undoBackStack = undoBackStack,
 				onServerTypeSelectionFinished = onServerTypeSelectionFinished,
-				modifier = Modifier.wrapContentHeight().weight(1f)
+				modifier = Modifier.weight(1f)
 			)
 		}
 	}
@@ -1014,7 +1012,7 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 
 			if (!isLoadingState) {
 				Column(
-					modifier = Modifier.fillMaxWidth().verticalScroll(remember { ScrollState(0) }),
+					modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
 					horizontalAlignment = Alignment.CenterHorizontally,
 				) {
 					LibrarySettings(
