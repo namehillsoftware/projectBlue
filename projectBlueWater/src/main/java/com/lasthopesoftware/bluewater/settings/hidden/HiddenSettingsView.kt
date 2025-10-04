@@ -69,13 +69,14 @@ fun HiddenSettingsView(hiddenSettingsViewModel: HiddenSettingsViewModel) {
 					val isLoggingToFile by hiddenSettingsViewModel.isLoggingToFile.subscribeAsState()
 					val isLoading by hiddenSettingsViewModel.isLoading.subscribeAsState()
 					LabeledSelection(
-						label = stringResource(R.string.log_to_file),
-						selected = isLoggingToFile,
-						onSelected = { hiddenSettingsViewModel.promiseIsLoggingToFile(!isLoggingToFile) }
-					) {
-						Checkbox(checked = isLoggingToFile, onCheckedChange = null, enabled = !isLoading)
-					}
-				}
+                        label = stringResource(R.string.log_to_file),
+                        selected = isLoggingToFile,
+                        onSelected = { hiddenSettingsViewModel.promiseIsLoggingToFile(!isLoggingToFile) },
+                        {
+                            Checkbox(checked = isLoggingToFile, onCheckedChange = null, enabled = !isLoading)
+                        }
+                    )
+                }
 			}
 		}
 	}

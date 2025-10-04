@@ -1,8 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.access.session
 
-import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -14,13 +12,6 @@ class CachedSelectedLibraryIdProvider(
 	private val selectedLibraryIdCache: HoldSelectedLibraryId = SelectedLibraryIdCache
 ) : ProvideSelectedLibraryId
 {
-	companion object {
-		fun Context.getCachedSelectedLibraryIdProvider() = CachedSelectedLibraryIdProvider(
-			SelectedLibraryIdProvider(getApplicationSettingsRepository()),
-			SelectedLibraryIdCache
-		)
-	}
-
 	private object SelectedLibraryIdCache : HoldSelectedLibraryId, (BrowserLibrarySelection.LibraryChosenMessage) -> Unit {
 		private val cachedPromisedLibrary = AtomicReference<Promise<LibraryId?>?>(null)
 

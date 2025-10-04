@@ -15,7 +15,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class `When Changing isSyncOnPowerOnly` {
+class `When Changing the theme` {
 	private var savedApplicationSettings: ApplicationSettings? = null
 	private var isSyncScheduled = false
 
@@ -71,18 +71,18 @@ class `When Changing isSyncOnPowerOnly` {
 		mutt.apply {
 			loadSettings().toExpiringFuture().get()
 
-			promiseSyncOnPowerChange(!isSyncOnPowerOnly.value).toExpiringFuture().get()
+			promiseThemeChange(ApplicationSettings.Theme.DARK).toExpiringFuture().get()
 		}
 	}
 
 	@Test
-	fun `then a sync is scheduled`() {
-		assertThat(isSyncScheduled).isTrue
+	fun `then a sync is not scheduled`() {
+		assertThat(isSyncScheduled).isFalse
 	}
 
 	@Test
 	fun `then isSyncOnPowerOnly is correct`() {
-		assertThat(savedApplicationSettings?.isSyncOnPowerOnly).isTrue
+		assertThat(savedApplicationSettings?.isSyncOnPowerOnly).isFalse
 	}
 
 	@Test
@@ -112,7 +112,7 @@ class `When Changing isSyncOnPowerOnly` {
 
 	@Test
 	fun `then the theme is correct`() {
-		assertThat(savedApplicationSettings?.theme).isEqualTo(ApplicationSettings.Theme.LIGHT)
+		assertThat(savedApplicationSettings?.theme).isEqualTo(ApplicationSettings.Theme.DARK)
 	}
 
 	@Test

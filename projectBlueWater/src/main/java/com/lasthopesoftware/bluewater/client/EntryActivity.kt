@@ -7,10 +7,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.getValue
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
 import com.lasthopesoftware.bluewater.ActivityDependencies
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
+import com.lasthopesoftware.bluewater.TvApplicationDependencies
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.android.ui.ProjectBlueComposableApplication
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
@@ -19,11 +22,13 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlaying
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.registerResultActivityLauncher
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
@@ -42,7 +47,17 @@ class EntryActivity :
 	PermissionsDependencies,
 	ActivitySuppliedDependencies
 {
-	private val browserViewDependencies by lazy { ActivityDependencies(this, this, applicationDependencies) }
+	private val activityApplicationDependencies by lazy {
+		if (!isInLeanbackMode) applicationDependencies
+		else TvApplicationDependencies(applicationDependencies)
+	}
+	private val browserViewDependencies by lazy {
+		ActivityDependencies(
+			this,
+			this,
+			activityApplicationDependencies
+		)
+	}
 
 	override val registeredActivityResultsLauncher = registerResultActivityLauncher()
 
@@ -84,8 +99,13 @@ class EntryActivity :
 		enableEdgeToEdge()
 
 		setContent {
+			val theme by browserViewDependencies.applicationViewModel.run {
+				loadSettings()
+				theme.subscribeAsState()
+			}
+			val isDarkTheme = theme == ApplicationSettings.Theme.DARK || (theme == ApplicationSettings.Theme.SYSTEM && isSystemInDarkTheme())
 			if (!isInLeanbackMode) {
-				ProjectBlueComposableApplication {
+				ProjectBlueComposableApplication(darkTheme = isDarkTheme) {
 					HandheldApplication(
 						entryDependencies = browserViewDependencies,
 						permissionsDependencies = this,
@@ -94,7 +114,7 @@ class EntryActivity :
 				}
 			} else {
 				AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-				ProjectBlueComposableApplication(darkTheme = true) {
+				ProjectBlueComposableApplication(darkTheme = isDarkTheme) {
 					NowPlayingTvApplication(
 						entryDependencies = browserViewDependencies,
 						permissionsDependencies = this,

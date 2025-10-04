@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEnt
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isVolumeLevelingEnabledColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.playbackEngineTypeNameColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.tableName
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.themeColumn
 import com.namehillsoftware.querydroid.SqLiteAssistants
 import com.namehillsoftware.querydroid.SqLiteCommand
 
@@ -42,6 +43,7 @@ class ApplicationSettingsMigrator(private val context: Context) {
 			`$isPeakLevelNormalizeEnabledColumn` SMALLINT DEFAULT 0 NOT NULL,
 			`$isLoggingToFile` SMALLINT DEFAULT 0 NOT NULL,
 			`$playbackEngineTypeNameColumn` VARCHAR ,
+			`$themeColumn` VARCHAR ,
 			`$chosenLibraryIdColumn` INTEGER DEFAULT -1 NOT NULL )""")
 
 		val insertQuery = SqLiteAssistants.InsertBuilder.fromTable(tableName)

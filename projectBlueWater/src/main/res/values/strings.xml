@@ -80,7 +80,7 @@
     <string name="select_view_title">Select view</string>
     <string name="screen_is_off">Screen Off</string>
     <string name="screen_is_on">Screen On</string>
-    <string name="app_sync_settings">Sync Settings:</string>
+    <string name="app_sync_settings">Sync Settings</string>
     <string name="app_only_sync_on_wifi">Only sync on Wi-Fi</string>
     <string name="app_only_sync_ext_power">Only sync on external power</string>
     <string name="start_sync_button">Start Sync</string>
@@ -90,7 +90,7 @@
     <string name="unknown_artist">Unknown Artist</string>
     <string name="unknown_track">Unknown Track</string>
     <string name="lbl_connect">Connect</string>
-    <string name="app_audio_settings">Audio Settings:</string>
+    <string name="app_audio_settings">Audio Settings</string>
     <string name="use_volume_leveling_setting">Use Volume Leveling (ReplayGain)</string>
     <string name="permissions_must_be_granted_for_settings">In order for the library settings to be changed, the requested permissions must be granted!</string>
     <string name="permissions_needed">Permissions needed</string>
@@ -154,4 +154,11 @@
     <string name="bottom">Bottom</string>
     <string name="end">End</string>
     <string name="enable_peak_level_normalize">Enable Peak Level Normalize</string>
+    <string name="theme">Theme</string>
+    <string name="system">System</string>
+    <string name="light">Light</string>
+    <string name="dark">Dark</string>
+    <string name="view_servers">View Servers</string>
+    <string name="application_settings">Application Settings</string>
+    <string name="active_server">Active Server</string>
 </resources>

@@ -8,5 +8,6 @@ object ApplicationSettingsEntityInformation {
 	const val isLoggingToFile = "isLoggingToFile"
 	const val playbackEngineTypeNameColumn = "playbackEngineTypeName"
 	const val chosenLibraryIdColumn = "chosenLibraryId"
+	const val themeColumn = "theme"
 	const val tableName = "ApplicationSettings"
 }

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.settings
 
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
@@ -338,17 +336,18 @@ private fun LibrarySettingsList(
 			SpacedOutRow {
 				var isLocalOnlyState by isLocalOnly.subscribeAsMutableState()
 				LabeledSelection(
-					label = stringResource(id = R.string.lbl_local_only),
-					selected = isLocalOnlyState,
-					onSelected = { isLocalOnlyState = !isLocalOnlyState },
-					role = Role.Checkbox,
-				) {
-					Checkbox(
-						checked = isLocalOnlyState,
-						onCheckedChange = null,
-					)
-				}
-			}
+                    label = stringResource(id = R.string.lbl_local_only),
+                    selected = isLocalOnlyState,
+                    onSelected = { isLocalOnlyState = !isLocalOnlyState },
+                    {
+                        Checkbox(
+                            checked = isLocalOnlyState,
+                            onCheckedChange = null,
+                        )
+                    },
+                    role = Role.Checkbox,
+				)
+            }
 
 			Column(
 				modifier = Modifier
@@ -357,18 +356,19 @@ private fun LibrarySettingsList(
 			) {
 				var isWolEnabledState by isWakeOnLanEnabled.subscribeAsMutableState()
 				LabeledSelection(
-					label = stringResource(id = R.string.wake_on_lan_setting),
-					selected = isWolEnabledState,
-					onSelected = { isWolEnabledState = !isWolEnabledState },
-					role = Role.Checkbox,
-				) {
-					Checkbox(
-						checked = isWolEnabledState,
-						onCheckedChange = null,
-					)
-				}
+                    label = stringResource(id = R.string.wake_on_lan_setting),
+                    selected = isWolEnabledState,
+                    onSelected = { isWolEnabledState = !isWolEnabledState },
+                    {
+                        Checkbox(
+                            checked = isWolEnabledState,
+                            onCheckedChange = null,
+                        )
+                    },
+                    role = Role.Checkbox,
+				)
 
-				if (isWolEnabledState) {
+                if (isWolEnabledState) {
 					var macAddressState by macAddress.subscribeAsMutableState()
 					StandardTextField(
 						placeholder = stringResource(R.string.optional_mac_address),
@@ -394,33 +394,35 @@ private fun LibrarySettingsList(
 					modifier = Modifier.padding(innerGroupPadding)
 				) {
 					LabeledSelection(
-						label = stringResource(id = R.string.rbPrivateToApp),
-						selected = syncedFileLocationState == SyncedFileLocation.INTERNAL,
-						onSelected = { syncedFileLocationState = SyncedFileLocation.INTERNAL },
-						role = Role.RadioButton,
-					) {
-						RadioButton(
-							selected = syncedFileLocationState == SyncedFileLocation.INTERNAL,
-							onClick = null,
-						)
-					}
-				}
+                        label = stringResource(id = R.string.rbPrivateToApp),
+                        selected = syncedFileLocationState == SyncedFileLocation.INTERNAL,
+                        onSelected = { syncedFileLocationState = SyncedFileLocation.INTERNAL },
+                        {
+                            RadioButton(
+                                selected = syncedFileLocationState == SyncedFileLocation.INTERNAL,
+                                onClick = null,
+                            )
+                        },
+                        role = Role.RadioButton,
+					)
+                }
 
 				Row(
 					modifier = Modifier.padding(innerGroupPadding)
 				) {
 					LabeledSelection(
-						label = stringResource(id = R.string.rbPublicLocation),
-						selected = syncedFileLocationState == SyncedFileLocation.EXTERNAL,
-						onSelected = { syncedFileLocationState = SyncedFileLocation.EXTERNAL },
-						role = Role.RadioButton,
-					) {
-						RadioButton(
-							selected = syncedFileLocationState == SyncedFileLocation.EXTERNAL,
-							onClick = null,
-						)
-					}
-				}
+                        label = stringResource(id = R.string.rbPublicLocation),
+                        selected = syncedFileLocationState == SyncedFileLocation.EXTERNAL,
+                        onSelected = { syncedFileLocationState = SyncedFileLocation.EXTERNAL },
+                        {
+                            RadioButton(
+                                selected = syncedFileLocationState == SyncedFileLocation.EXTERNAL,
+                                onClick = null,
+                            )
+                        },
+                        role = Role.RadioButton,
+					)
+                }
 
 				val isStoragePermissionsNeeded by isStoragePermissionsNeeded.subscribeAsState()
 				if (isStoragePermissionsNeeded) {
@@ -436,32 +438,34 @@ private fun LibrarySettingsList(
 			SpacedOutRow {
 				var isSyncLocalConnectionsOnlyState by isSyncLocalConnectionsOnly.subscribeAsMutableState()
 				LabeledSelection(
-					label = stringResource(id = R.string.lbl_sync_local_connection),
-					selected = isSyncLocalConnectionsOnlyState,
-					onSelected = { isSyncLocalConnectionsOnlyState = !isSyncLocalConnectionsOnlyState },
-					role = Role.Checkbox,
-				) {
-					Checkbox(
-						checked = isSyncLocalConnectionsOnlyState,
-						null,
-					)
-				}
-			}
+                    label = stringResource(id = R.string.lbl_sync_local_connection),
+                    selected = isSyncLocalConnectionsOnlyState,
+                    onSelected = { isSyncLocalConnectionsOnlyState = !isSyncLocalConnectionsOnlyState },
+                    {
+                        Checkbox(
+                            checked = isSyncLocalConnectionsOnlyState,
+                            null,
+                        )
+                    },
+                    role = Role.Checkbox,
+				)
+            }
 
 			SpacedOutRow {
 				var isUsingExistingFilesState by isUsingExistingFiles.subscribeAsMutableState()
 				LabeledSelection(
-					label = stringResource(id = R.string.lbl_use_existing_music),
-					selected = isUsingExistingFilesState,
-					onSelected = { isUsingExistingFilesState = !isUsingExistingFilesState },
-					role = Role.Checkbox,
-				) {
-					Checkbox(
-						checked = isUsingExistingFilesState,
-						null,
-					)
-				}
-			}
+                    label = stringResource(id = R.string.lbl_use_existing_music),
+                    selected = isUsingExistingFilesState,
+                    onSelected = { isUsingExistingFilesState = !isUsingExistingFilesState },
+                    {
+                        Checkbox(
+                            checked = isUsingExistingFilesState,
+                            null,
+                        )
+                    },
+                    role = Role.Checkbox,
+				)
+            }
 
 			val isSavingState by isSaving.subscribeAsState()
 			Button(
@@ -587,18 +591,19 @@ private fun LibrarySettingsList(
 			) {
 				var isWolEnabledState by isWakeOnLanEnabled.subscribeAsMutableState()
 				LabeledSelection(
-					label = stringResource(id = R.string.wake_on_lan_setting),
-					selected = isWolEnabledState,
-					onSelected = { isWolEnabledState = !isWolEnabledState },
-					role = Role.Checkbox,
-				) {
-					Checkbox(
-						checked = isWolEnabledState,
-						onCheckedChange = null,
-					)
-				}
+                    label = stringResource(id = R.string.wake_on_lan_setting),
+                    selected = isWolEnabledState,
+                    onSelected = { isWolEnabledState = !isWolEnabledState },
+                    {
+                        Checkbox(
+                            checked = isWolEnabledState,
+                            onCheckedChange = null,
+                        )
+                    },
+                    role = Role.Checkbox,
+				)
 
-				if (isWolEnabledState) {
+                if (isWolEnabledState) {
 					var macAddressState by macAddress.subscribeAsMutableState()
 					StandardTextField(
 						placeholder = stringResource(R.string.optional_mac_address),
@@ -624,33 +629,35 @@ private fun LibrarySettingsList(
 					modifier = Modifier.padding(innerGroupPadding)
 				) {
 					LabeledSelection(
-						label = stringResource(id = R.string.rbPrivateToApp),
-						selected = syncedFileLocationState == SyncedFileLocation.INTERNAL,
-						onSelected = { syncedFileLocationState = SyncedFileLocation.INTERNAL },
-						role = Role.RadioButton,
-					) {
-						RadioButton(
-							selected = syncedFileLocationState == SyncedFileLocation.INTERNAL,
-							onClick = null,
-						)
-					}
-				}
+                        label = stringResource(id = R.string.rbPrivateToApp),
+                        selected = syncedFileLocationState == SyncedFileLocation.INTERNAL,
+                        onSelected = { syncedFileLocationState = SyncedFileLocation.INTERNAL },
+                        {
+                            RadioButton(
+                                selected = syncedFileLocationState == SyncedFileLocation.INTERNAL,
+                                onClick = null,
+                            )
+                        },
+                        role = Role.RadioButton,
+					)
+                }
 
 				Row(
 					modifier = Modifier.padding(innerGroupPadding)
 				) {
 					LabeledSelection(
-						label = stringResource(id = R.string.rbPublicLocation),
-						selected = syncedFileLocationState == SyncedFileLocation.EXTERNAL,
-						onSelected = { syncedFileLocationState = SyncedFileLocation.EXTERNAL },
-						role = Role.RadioButton,
-					) {
-						RadioButton(
-							selected = syncedFileLocationState == SyncedFileLocation.EXTERNAL,
-							onClick = null,
-						)
-					}
-				}
+                        label = stringResource(id = R.string.rbPublicLocation),
+                        selected = syncedFileLocationState == SyncedFileLocation.EXTERNAL,
+                        onSelected = { syncedFileLocationState = SyncedFileLocation.EXTERNAL },
+                        {
+                            RadioButton(
+                                selected = syncedFileLocationState == SyncedFileLocation.EXTERNAL,
+                                onClick = null,
+                            )
+                        },
+                        role = Role.RadioButton,
+					)
+                }
 
 				val isStoragePermissionsNeeded by isStoragePermissionsNeeded.subscribeAsState()
 				if (isStoragePermissionsNeeded) {
@@ -666,17 +673,18 @@ private fun LibrarySettingsList(
 			SpacedOutRow {
 				var isUsingExistingFilesState by isUsingExistingFiles.subscribeAsMutableState()
 				LabeledSelection(
-					label = stringResource(id = R.string.lbl_use_existing_music),
-					selected = isUsingExistingFilesState,
-					onSelected = { isUsingExistingFilesState = !isUsingExistingFilesState },
-					role = Role.Checkbox,
-				) {
-					Checkbox(
-						checked = isUsingExistingFilesState,
-						null,
-					)
-				}
-			}
+                    label = stringResource(id = R.string.lbl_use_existing_music),
+                    selected = isUsingExistingFilesState,
+                    onSelected = { isUsingExistingFilesState = !isUsingExistingFilesState },
+                    {
+                        Checkbox(
+                            checked = isUsingExistingFilesState,
+                            null,
+                        )
+                    },
+                    role = Role.Checkbox,
+				)
+            }
 
 			val isSavingState by isSaving.subscribeAsState()
 			Button(
@@ -707,7 +715,7 @@ private fun ColumnScope.LibrarySettings(
 			librarySettingsViewModel = librarySettingsViewModel,
 			undoBackStack = undoBackStack,
 			onServerTypeSelectionFinished = onServerTypeSelectionFinished,
-			modifier = Modifier.wrapContentHeight().weight(1f)
+			modifier = Modifier.weight(1f)
 		)
 	} else {
 		val connectionSettingsViewModelState by librarySettingsViewModel.savedConnectionSettingsViewModel.subscribeAsState()
@@ -731,7 +739,7 @@ private fun ColumnScope.LibrarySettings(
 				librarySettingsViewModel = librarySettingsViewModel,
 				undoBackStack = undoBackStack,
 				onServerTypeSelectionFinished = onServerTypeSelectionFinished,
-				modifier = Modifier.wrapContentHeight().weight(1f)
+				modifier = Modifier.weight(1f)
 			)
 		}
 	}
@@ -771,18 +779,19 @@ fun ServerTypeSelection(
 					modifier = Modifier.padding(innerGroupPadding),
 				) {
 					LabeledSelection(
-						label = connectionType.connectionTypeName,
-						selected = connectionSettingsViewModelState == connectionType,
-						onSelected = { connectionSettingsViewModelState = connectionType },
-						enabled = !isLoadingState,
-						role = Role.RadioButton,
-					) {
-						RadioButton(
-							selected = connectionSettingsViewModelState == connectionType,
-							onClick = null,
-						)
-					}
-				}
+                        label = connectionType.connectionTypeName,
+                        selected = connectionSettingsViewModelState == connectionType,
+                        onSelected = { connectionSettingsViewModelState = connectionType },
+                        {
+                            RadioButton(
+                                selected = connectionSettingsViewModelState == connectionType,
+                                onClick = null,
+                            )
+                        },
+                        role = Role.RadioButton,
+                        enabled = !isLoadingState,
+					)
+                }
 			}
 
 			Row(
@@ -1003,7 +1012,7 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 
 			if (!isLoadingState) {
 				Column(
-					modifier = Modifier.fillMaxWidth().verticalScroll(remember { ScrollState(0) }),
+					modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
 					horizontalAlignment = Alignment.CenterHorizontally,
 				) {
 					LibrarySettings(

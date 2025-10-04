@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEnt
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isVolumeLevelingEnabledColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.playbackEngineTypeNameColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.tableName
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.themeColumn
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
@@ -30,6 +31,7 @@ class ApplicationSettingsRepository(private val context: Context, private val me
 				.addSetter(isLoggingToFile)
 				.addSetter(playbackEngineTypeNameColumn)
 				.addSetter(chosenLibraryIdColumn)
+				.addSetter(themeColumn)
 				.buildQuery()
 		}
 	}
@@ -55,6 +57,7 @@ class ApplicationSettingsRepository(private val context: Context, private val me
 						.addParameter(isLoggingToFile, applicationSettings.isLoggingToFile)
 						.addParameter(playbackEngineTypeNameColumn, applicationSettings.playbackEngineTypeName)
 						.addParameter(chosenLibraryIdColumn, applicationSettings.chosenLibraryId)
+						.addParameter(themeColumn, applicationSettings.theme)
 						.execute()
 					it.setTransactionSuccessful()
 				}
