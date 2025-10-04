@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
@@ -17,10 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Button
-import androidx.compose.material.Checkbox
-import androidx.compose.material.Chip
-import androidx.compose.material.ChipDefaults
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
@@ -31,142 +26,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
-import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.android.ui.components.ApplicationInfoText
 import com.lasthopesoftware.bluewater.android.ui.components.ApplicationLogo
-import com.lasthopesoftware.bluewater.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
-import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
-
-private val horizontalOptionsPadding = 32.dp
 
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
 private fun SettingsList(
 	applicationSettingsViewModel: ApplicationSettingsViewModel,
-	playbackService: ControlPlaybackService,
-	isLoading: Boolean
+	playbackService: ControlPlaybackService
 ) {
-	val rowHeight = Dimensions.standardRowHeight
-	val standardRowModifier = Modifier
-		.fillMaxWidth()
-		.height(rowHeight)
-	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
+	AudioSettingsSection(applicationSettingsViewModel)
 
-	SettingsSection(
-		headerText = stringResource(id = R.string.app_audio_settings),
-		headerModifier = standardRowModifier,
-		modifier = Modifier.fillMaxWidth(),
-	) {
-		Column(
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(horizontal = horizontalOptionsPadding),
-		) {
-			val isVolumeLevelingEnabled by applicationSettingsViewModel.isVolumeLevelingEnabled.subscribeAsState()
-			LabeledSelection(
-				label = stringResource(id = R.string.use_volume_leveling_setting),
-				selected = isVolumeLevelingEnabled,
-				onSelected = { applicationSettingsViewModel.promiseVolumeLevelingEnabledChange(!isVolumeLevelingEnabled) },
-				{
-					Checkbox(checked = isVolumeLevelingEnabled, onCheckedChange = null, enabled = !isLoading)
-				},
-				modifier = standardRowModifier,
-				enabled = !isLoading,
-			)
+	ThemeSettingsSection(applicationSettingsViewModel)
 
-			val isPeakLevelNormalizeEnabled by applicationSettingsViewModel.isPeakLevelNormalizeEnabled.subscribeAsState()
-			val isPeakLevelNormalizeEditable by applicationSettingsViewModel.isPeakLevelNormalizeEditable.subscribeAsState()
-			LabeledSelection(
-				label = stringResource(id = R.string.enable_peak_level_normalize),
-				selected = isPeakLevelNormalizeEnabled,
-				onSelected = { applicationSettingsViewModel.promisePeakLevelNormalizeEnabledChange(!isPeakLevelNormalizeEnabled) },
-				{
-					Checkbox(
-						checked = isPeakLevelNormalizeEnabled,
-						onCheckedChange = null,
-						enabled = isPeakLevelNormalizeEditable && !isLoading
-					)
-				},
-				modifier = standardRowModifier.padding(start = horizontalOptionsPadding),
-				enabled = isPeakLevelNormalizeEditable && !isLoading
-			)
-		}
-	}
-
-	SettingsSection(
-		headerText = stringResource(id = R.string.theme),
-		headerModifier = standardRowModifier,
-		modifier = Modifier.fillMaxWidth(),
-	) {
-		Row(
-			modifier = standardRowModifier.padding(horizontal = horizontalOptionsPadding),
-			horizontalArrangement = Arrangement.SpaceEvenly,
-		) {
-			val theme by applicationSettingsViewModel.theme.subscribeAsState()
-			val selectedChipColors = ChipDefaults.chipColors(
-				backgroundColor = MaterialTheme.colors.secondary,
-				contentColor = MaterialTheme.colors.onSecondary,
-			)
-			Chip(
-				colors = if (theme == ApplicationSettings.Theme.SYSTEM) selectedChipColors else ChipDefaults.chipColors() ,
-				onClick = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.SYSTEM) }
-			) {
-				Text(stringResource(R.string.system))
-			}
-
-			Chip(
-				colors = if (theme == ApplicationSettings.Theme.LIGHT) selectedChipColors else ChipDefaults.chipColors() ,
-				onClick = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.LIGHT) }
-			) {
-				Text(stringResource(R.string.light))
-			}
-
-			Chip(
-				colors = if (theme == ApplicationSettings.Theme.DARK) selectedChipColors else ChipDefaults.chipColors() ,
-				onClick = { applicationSettingsViewModel.promiseThemeChange(ApplicationSettings.Theme.DARK) }
-			) {
-				Text(stringResource(R.string.dark))
-			}
-		}
-	}
-
-	Box(
-		modifier = Modifier
-			.fillMaxWidth()
-			.padding(top = Dimensions.topMenuHeight)
-	) {
-		ApplicationInfoText(
-			versionName = BuildConfig.VERSION_NAME,
-			versionCode = BuildConfig.VERSION_CODE,
-			modifier = Modifier
-				.fillMaxWidth()
-				.align(Alignment.Center)
-		)
-	}
-
-	Button(
-		modifier = Modifier
-			.padding(top = Dimensions.topMenuHeight),
-		onClick = {
-			playbackService.kill()
-		}
-	) {
-		Text(
-			text = stringResource(id = R.string.kill_playback),
-			fontSize = rowFontSize,
-		)
-	}
+	AboutApplication(playbackService)
 }
 
 @Composable
@@ -234,14 +114,10 @@ private fun BoxWithConstraintsScope.ApplicationSettingsViewHorizontal(
 					libraries,
 					selectedLibraryId,
 				)
-				ApplicationSettingsViewModel.SelectedTab.ViewSettings -> {
-					val isLoading by applicationSettingsViewModel.isLoading.subscribeAsState()
-					SettingsList(
-						applicationSettingsViewModel,
-						playbackService,
-						isLoading
-					)
-				}
+				ApplicationSettingsViewModel.SelectedTab.ViewSettings -> SettingsList(
+					applicationSettingsViewModel,
+					playbackService
+				)
 			}
 		}
 	}

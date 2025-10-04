@@ -47,11 +47,17 @@ class EntryActivity :
 	PermissionsDependencies,
 	ActivitySuppliedDependencies
 {
-	private val determinedApplicationDependencies by lazy {
+	private val activityApplicationDependencies by lazy {
 		if (!isInLeanbackMode) applicationDependencies
 		else TvApplicationDependencies(applicationDependencies)
 	}
-	private val browserViewDependencies by lazy { ActivityDependencies(this, this, determinedApplicationDependencies) }
+	private val browserViewDependencies by lazy {
+		ActivityDependencies(
+			this,
+			this,
+			activityApplicationDependencies
+		)
+	}
 
 	override val registeredActivityResultsLauncher = registerResultActivityLauncher()
 
