@@ -83,10 +83,14 @@ import com.lasthopesoftware.bluewater.shared.observables.subscribeAsMutableState
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 
 private val horizontalOptionsPadding = 32.dp
-private val expandedMenuHeight = Dimensions.topMenuHeight + viewPaddingUnit * 6
+val expandedMenuHeight = Dimensions.topMenuHeight + viewPaddingUnit * 6
+
+val standardRowModifier = Modifier
+	.fillMaxWidth()
+	.height(Dimensions.standardRowHeight)
 
 @Composable
-private fun SettingsSection(
+fun SettingsSection(
 	headerText: String,
 	modifier: Modifier = Modifier,
 	headerModifier: Modifier = Modifier,
@@ -109,50 +113,9 @@ private fun SettingsSection(
 }
 
 @Composable
-@OptIn(ExperimentalMaterialApi::class)
-private fun SettingsList(
+fun AudioSettingsSection(
 	applicationSettingsViewModel: ApplicationSettingsViewModel,
-	playbackService: ControlPlaybackService,
-	isLoading: Boolean
 ) {
-	val rowHeight = Dimensions.standardRowHeight
-	val standardRowModifier = Modifier
-		.fillMaxWidth()
-		.height(rowHeight)
-	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
-
-	SettingsSection(
-		headerText = stringResource(id = R.string.app_sync_settings),
-		modifier = Modifier.fillMaxWidth(),
-		headerModifier = standardRowModifier,
-	) {
-		Column {
-			val isSyncOnWifiOnly by applicationSettingsViewModel.isSyncOnWifiOnly.subscribeAsState()
-			LabeledSelection(
-				label = stringResource(id = R.string.app_only_sync_on_wifi),
-				selected = isSyncOnWifiOnly,
-				onSelected = { applicationSettingsViewModel.promiseSyncOnWifiChange(!isSyncOnWifiOnly) },
-				{
-					Checkbox(checked = isSyncOnWifiOnly, onCheckedChange = null, enabled = !isLoading)
-				},
-				enabled = !isLoading,
-				modifier = standardRowModifier.padding(horizontal = horizontalOptionsPadding)
-			)
-
-			val isSyncOnPowerOnly by applicationSettingsViewModel.isSyncOnPowerOnly.subscribeAsState()
-			LabeledSelection(
-				label = stringResource(id = R.string.app_only_sync_ext_power),
-				selected = isSyncOnPowerOnly,
-				onSelected = { applicationSettingsViewModel.promiseSyncOnPowerChange(!isSyncOnPowerOnly) },
-				{
-					Checkbox(checked = isSyncOnPowerOnly, onCheckedChange = null, enabled = !isLoading)
-				},
-				enabled = !isLoading,
-				modifier = standardRowModifier.padding(horizontal = horizontalOptionsPadding),
-			)
-		}
-	}
-
 	SettingsSection(
 		headerText = stringResource(id = R.string.app_audio_settings),
 		headerModifier = standardRowModifier,
@@ -163,6 +126,7 @@ private fun SettingsList(
 				.fillMaxWidth()
 				.padding(horizontal = horizontalOptionsPadding),
 		) {
+			val isLoading by applicationSettingsViewModel.isLoading.subscribeAsState()
 			val isVolumeLevelingEnabled by applicationSettingsViewModel.isVolumeLevelingEnabled.subscribeAsState()
 			LabeledSelection(
 				label = stringResource(id = R.string.use_volume_leveling_setting),
@@ -193,7 +157,13 @@ private fun SettingsList(
 			)
 		}
 	}
+}
 
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun ThemeSettingsSection(
+	applicationSettingsViewModel: ApplicationSettingsViewModel,
+) {
 	SettingsSection(
 		headerText = stringResource(id = R.string.theme),
 		headerModifier = standardRowModifier,
@@ -230,7 +200,12 @@ private fun SettingsList(
 			}
 		}
 	}
+}
 
+@Composable
+fun AboutApplication(
+	playbackService: ControlPlaybackService,
+) {
 	Box(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -248,10 +223,9 @@ private fun SettingsList(
 	Button(
 		modifier = Modifier
 			.padding(top = Dimensions.topMenuHeight),
-		onClick = {
-			playbackService.kill()
-		}
+		onClick = { playbackService.kill() }
 	) {
+		val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
 		Text(
 			text = stringResource(id = R.string.kill_playback),
 			fontSize = rowFontSize,
@@ -260,15 +234,57 @@ private fun SettingsList(
 }
 
 @Composable
-private fun ServersList(
+@OptIn(ExperimentalMaterialApi::class)
+private fun SettingsList(
+	applicationSettingsViewModel: ApplicationSettingsViewModel,
+	playbackService: ControlPlaybackService,
+) {
+	val isLoading by applicationSettingsViewModel.isLoading.subscribeAsState()
+	SettingsSection(
+		headerText = stringResource(id = R.string.app_sync_settings),
+		modifier = Modifier.fillMaxWidth(),
+		headerModifier = standardRowModifier,
+	) {
+		Column {
+			val isSyncOnWifiOnly by applicationSettingsViewModel.isSyncOnWifiOnly.subscribeAsState()
+			LabeledSelection(
+				label = stringResource(id = R.string.app_only_sync_on_wifi),
+				selected = isSyncOnWifiOnly,
+				onSelected = { applicationSettingsViewModel.promiseSyncOnWifiChange(!isSyncOnWifiOnly) },
+				{
+					Checkbox(checked = isSyncOnWifiOnly, onCheckedChange = null, enabled = !isLoading)
+				},
+				enabled = !isLoading,
+				modifier = standardRowModifier.padding(horizontal = horizontalOptionsPadding)
+			)
+
+			val isSyncOnPowerOnly by applicationSettingsViewModel.isSyncOnPowerOnly.subscribeAsState()
+			LabeledSelection(
+				label = stringResource(id = R.string.app_only_sync_ext_power),
+				selected = isSyncOnPowerOnly,
+				onSelected = { applicationSettingsViewModel.promiseSyncOnPowerChange(!isSyncOnPowerOnly) },
+				{
+					Checkbox(checked = isSyncOnPowerOnly, onCheckedChange = null, enabled = !isLoading)
+				},
+				enabled = !isLoading,
+				modifier = standardRowModifier.padding(horizontal = horizontalOptionsPadding),
+			)
+		}
+	}
+
+	AudioSettingsSection(applicationSettingsViewModel)
+
+	ThemeSettingsSection(applicationSettingsViewModel)
+
+	AboutApplication(playbackService)
+}
+
+@Composable
+fun ServersList(
 	applicationNavigation: NavigateApplication,
 	libraries: List<Pair<LibraryId, String>>,
 	selectedLibraryId: LibraryId?
 ) {
-	val rowHeight = Dimensions.standardRowHeight
-	val standardRowModifier = Modifier
-		.fillMaxWidth()
-		.height(rowHeight)
 	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
 
 	for ((libraryId, name) in libraries) {
@@ -302,7 +318,7 @@ private fun ServersList(
 }
 
 @Composable
-private fun ApplicationSettingsMenu(
+fun ApplicationSettingsMenu(
 	applicationSettingsViewModel: ApplicationSettingsViewModel,
 	applicationNavigation: NavigateApplication,
 	selectedLibraryId: LibraryId?,
@@ -434,14 +450,10 @@ private fun ApplicationSettingsViewVertical(
 					libraries,
 					selectedLibraryId,
 				)
-				ApplicationSettingsViewModel.SelectedTab.ViewSettings -> {
-					val isLoading by applicationSettingsViewModel.isLoading.subscribeAsState()
-					SettingsList(
-						applicationSettingsViewModel,
-						playbackService,
-						isLoading
-					)
-				}
+				ApplicationSettingsViewModel.SelectedTab.ViewSettings -> SettingsList(
+					applicationSettingsViewModel,
+					playbackService
+				)
 			}
 		}
 
@@ -484,7 +496,7 @@ private fun BoxWithConstraintsScope.ApplicationSettingsViewHorizontal(
 ) {
 	Row(
 		modifier = Modifier.fillMaxSize(),
-		horizontalArrangement = Arrangement.SpaceEvenly,
+		horizontalArrangement = Arrangement.Start,
 	) {
 		val libraries by applicationSettingsViewModel.libraries.subscribeAsState()
 		val selectedLibraryId by applicationSettingsViewModel.chosenLibraryId.subscribeAsState()
@@ -541,14 +553,10 @@ private fun BoxWithConstraintsScope.ApplicationSettingsViewHorizontal(
 					libraries,
 					selectedLibraryId,
 				)
-				ApplicationSettingsViewModel.SelectedTab.ViewSettings -> {
-					val isLoading by applicationSettingsViewModel.isLoading.subscribeAsState()
-					SettingsList(
-						applicationSettingsViewModel,
-						playbackService,
-						isLoading
-					)
-				}
+				ApplicationSettingsViewModel.SelectedTab.ViewSettings -> SettingsList(
+					applicationSettingsViewModel,
+					playbackService
+				)
 			}
 		}
 	}

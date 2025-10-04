@@ -15,7 +15,6 @@ import com.lasthopesoftware.bluewater.client.connection.trust.ProvideUserSslCert
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
-import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 
@@ -28,7 +27,6 @@ interface EntryDependencies : ApplicationDependencies {
 	val applicationNavigation: NavigateApplication
 	val storedFileAccess: StoredFileAccess
 	val navigationMessages: RegisterForTypedMessages<NavigationMessage>
-	val applicationSettingsRepository: HoldApplicationSettings
 	val reusableChildItemViewModelProvider: ReusableChildItemViewModelProvider
 	val applicationSettingsViewModel: ApplicationSettingsViewModel
 	val hiddenSettingsViewModel: HiddenSettingsViewModel

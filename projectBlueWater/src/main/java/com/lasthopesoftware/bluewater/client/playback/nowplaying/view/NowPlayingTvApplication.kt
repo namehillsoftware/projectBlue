@@ -749,7 +749,7 @@ fun NowPlayingTvApplication(
 						LaunchedEffect(key1 = Unit) {
 							try {
 								val settings =
-									applicationSettingsRepository.promiseApplicationSettings().suspend()
+									applicationSettings.promiseApplicationSettings().suspend()
 								if (settings.chosenLibraryId > -1) {
 									val libraryId = LibraryId(settings.chosenLibraryId)
 									applicationNavigation.viewLibrary(libraryId).suspend()
@@ -768,7 +768,7 @@ fun NowPlayingTvApplication(
 						LaunchedEffect(key1 = Unit) {
 							try {
 								val settings =
-									applicationSettingsRepository.promiseApplicationSettings().suspend()
+									applicationSettings.promiseApplicationSettings().suspend()
 								if (settings.chosenLibraryId > -1) {
 									val libraryId = LibraryId(settings.chosenLibraryId)
 									applicationNavigation.viewLibrary(libraryId).suspend()

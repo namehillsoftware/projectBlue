@@ -12,7 +12,7 @@ data class ApplicationSettings(
 	var isLoggingToFile: Boolean = false,
 	var playbackEngineTypeName: String? = null,
 	var chosenLibraryId: Int = -1,
-	var theme: Theme = Theme.SYSTEM,
+	var theme: Theme? = null,
 ) : Entity {
 
 	@Keep
