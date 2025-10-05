@@ -1,3 +1,4 @@
+import groovy.json.JsonBuilder
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -24,6 +25,35 @@ if (!hasAndroidStorePassword()) {
 }
 
 def isSignedExternally = { hasKeyStorePassword() && hasAndroidStorePassword() }
+
+def printDependenciesTask = tasks.register("printDependencies") {
+	group = "build"
+	final def outputFile = file("$temporaryDir/raw/dependencies.json")
+
+	outputs.dir(temporaryDir)
+
+	// 2. Use a Provider to get the configuration and .map() to transform it
+	//    into a simple, serializable list of maps. This happens lazily.
+	def dependenciesProvider = project.configurations.releaseRuntimeClasspath.incoming.artifacts.resolvedArtifacts
+		.map { artifacts ->
+			artifacts.collect { artifact ->
+				def componentId = artifact.id.componentIdentifier
+				return [group: componentId.group, name: componentId.displayName.tokenize(' ')[0], version: componentId.version]
+			}
+		}
+
+	doLast {
+		// 3. In the execution phase, get the final value from the provider.
+		def dependenciesList = dependenciesProvider.get()
+
+		def json = new JsonBuilder([dependencies: dependenciesList])
+		def prettyJson = json.toPrettyString() // Or json.toString() for a compact version
+
+		def indexFile = outputFile
+		indexFile.parentFile.mkdirs()
+		indexFile << prettyJson
+	}
+}
 
 android {
     compileSdk 36
@@ -68,6 +98,12 @@ android {
 
 	kotlinOptions {
 		jvmTarget = '11'
+	}
+
+	sourceSets {
+		main {
+			res.srcDirs += printDependenciesTask.map { it.temporaryDir }
+		}
 	}
 
 	buildTypes {
@@ -127,6 +163,8 @@ tasks.withType(KotlinCompile).configureEach {
 		freeCompilerArgs.add("-opt-in=kotlin.RequiresOptIn")
 	}
 }
+
+preBuild.dependsOn("printDependencies")
 
 def gitVersion() {
 	try {
