@@ -1,0 +1,27 @@
+project blue is possible because of the amazing work of hundreds of other developers. A non-exhaustive
+list of the work of others that project blue depends on: 
+
+- [JRiver Media Center](https://jriver.com/)
+- [Navidrome](https://www.navidrome.org/)
+- [ExoPlayer](https://github.com/google/ExoPlayer)
+- [Compose Navigation Reimagined](https://olshevski.github.io/compose-navigation-reimagined/)
+- [RxJava](https://github.com/ReactiveX/RxJava)
+- [OkHttp](https://square.github.io/okhttp/)
+- [Okio](https://github.com/square/okio)
+- [Joda-Time](https://www.joda.org/joda-time/)
+- [SLF4J](http://www.slf4j.org/)
+- [JUnit](https://junit.org/)
+- [Kotlin Multiplatform Markdown Renderer](https://github.com/mikepenz/multiplatform-markdown-renderer)
+- [MockK](https://mockk.io/)
+- [AssertJ](https://assertj.github.io/doc/)
+- [Robolectric](http://robolectric.org/)
+- [Apache Commons](https://commons.apache.org/)
+    - [commons-io](https://commons.apache.org/proper/commons-io/)
+    - [commons-codec](https://commons.apache.org/proper/commons-codec/)
+- Google, of course:
+  - [Jetpack Compose](https://developer.android.com/compose)
+  - [media3](https://developer.android.com/media/media3)
+  - [AndroidX](https://developer.android.com/jetpack/androidx/)
+  - [guava](https://github.com/google/guava)
+  - [gson](https://github.com/google/gson)
+- [Jetbrains Kotlin](https://kotlinlang.org/)

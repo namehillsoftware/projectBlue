@@ -40,11 +40,9 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -85,6 +83,10 @@ import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackSer
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsMutableState
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.promises.extensions.preparePromise
+import com.lasthopesoftware.promises.extensions.toState
+import com.lasthopesoftware.resources.executors.ThreadPools
+import com.mikepenz.markdown.m2.Markdown
 
 private val horizontalOptionsPadding = 32.dp
 val expandedMenuHeight = Dimensions.topMenuHeight + viewPaddingUnit * 6
@@ -229,15 +231,14 @@ fun AboutApplication(
 	}
 
 	Box {
-		var dependenciesString by remember { mutableStateOf("") }
 		val localResources = LocalResources.current
-		LaunchedEffect(localResources) {
-			localResources.openRawResource(R.raw.dependencies).bufferedReader().use {
-				dependenciesString = it.readText()
+		val dependenciesString by ThreadPools.io.preparePromise {
+			localResources.openRawResource(R.raw.acknowledgements).use { stream ->
+				stream.bufferedReader().use { it.readText() }
 			}
-		}
+		}.toState("", localResources)
 
-		Text(dependenciesString)
+		Markdown(dependenciesString)
 	}
 
 	Button(
