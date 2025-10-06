@@ -2,8 +2,8 @@ import groovy.json.JsonBuilder
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-	id "de.mannodermaus.android-junit5" version "1.13.4.0"
-	id 'org.jetbrains.kotlin.plugin.serialization' version '2.2.20'
+	alias(libs.plugins.androidJUnit5)
+	alias(libs.plugins.kotlinSerialization)
 }
 
 apply plugin: 'com.android.application'
@@ -34,20 +34,38 @@ def printDependenciesTask = tasks.register("printDependencies") {
 
 	// 2. Use a Provider to get the configuration and .map() to transform it
 	//    into a simple, serializable list of maps. This happens lazily.
-	def dependenciesProvider = project.configurations.releaseRuntimeClasspath.incoming.artifacts.resolvedArtifacts
-		.map { artifacts ->
-			artifacts.collect { artifact ->
-				def componentId = artifact.id.componentIdentifier
-				return [group: componentId.group, name: componentId.displayName.tokenize(' ')[0], version: componentId.version]
+//	def dependenciesProvider = project.configurations.allDependencies
+//		.map { artifacts ->
+//			artifacts.collect { artifact ->
+//				def componentId = artifact.id.componentIdentifier
+//				return [group: componentId.group, name: componentId.displayName, version: componentId.version]
+//			}
+//		}
+
+	// 1. Define project group and name outside the provider block.
+	def projectGroup = project.group
+	def projectName = project.name
+
+	def dependenciesProvider = project.provider {
+		// 2. Iterate over all configurations and their declared dependencies.
+		project.configurations
+			.collect { config ->
+				config.allDependencies.collect { dep ->
+					// 3. Create a map for each dependency with its details.
+					return [group: dep.group, name: dep.name, version: dep.version]
+				}
 			}
-		}
+			.flatten()
+			.findAll { it.group != projectGroup || it.name != projectName || !it.group.startsWith("com.android") } // Filter out nulls and the project itself.
+			.unique() // 4. Flatten the list and remove duplicates.
+	}
 
 	doLast {
 		// 3. In the execution phase, get the final value from the provider.
 		def dependenciesList = dependenciesProvider.get()
 
 		def json = new JsonBuilder([dependencies: dependenciesList])
-		def prettyJson = json.toPrettyString() // Or json.toString() for a compact version
+		def prettyJson = json.toString() // Or json.toString() for a compact version
 
 		def indexFile = outputFile
 		indexFile.parentFile.mkdirs()
@@ -205,61 +223,54 @@ def getGeneratedVersionCode() {
 }
 
 dependencies {
-	def compose_version = '1.9.2'
-	def media3_version = '1.8.0'
-	def lifecycle_version = '2.9.4'
-	def junit5_version = '5.13.4'
+	coreLibraryDesugaring libs.desugar.jdk.libs
 
-	coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
-
-	implementation "org.jetbrains.kotlin:kotlin-reflect:2.2.20"
-	implementation 'androidx.core:core-ktx:1.17.0'
-	implementation 'androidx.annotation:annotation:1.9.1'
-	implementation 'androidx.work:work-runtime:2.10.5'
-	implementation 'androidx.media:media:1.7.1'
-	implementation 'androidx.palette:palette-ktx:1.0.0'
-	implementation 'androidx.preference:preference-ktx:1.2.1'
-	implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
-	implementation "androidx.lifecycle:lifecycle-process:$lifecycle_version"
-	implementation "androidx.lifecycle:lifecycle-service:$lifecycle_version"
-	implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
-	implementation "androidx.startup:startup-runtime:1.2.0"
-	implementation 'com.google.android.material:material:1.13.0'
-	implementation 'com.google.guava:guava:33.5.0-android'
-	implementation 'joda-time:joda-time:2.14.0'
-	implementation 'commons-io:commons-io:2.20.0'
-	implementation 'org.slf4j:slf4j-api:2.0.17'
-	implementation 'com.github.tony19:logback-android:3.0.0'
-	implementation 'com.namehillsoftware:handoff:0.30.1'
-	implementation 'io.reactivex.rxjava3:rxjava:3.1.12'
-	implementation 'com.namehillsoftware:lazy-j:0.11.0'
-	implementation 'org.jsoup:jsoup:1.21.2'
-	implementation "androidx.media3:media3-exoplayer:$media3_version"
-	implementation "androidx.media3:media3-datasource-okhttp:$media3_version"
-	implementation 'com.squareup.okio:okio:3.16.0'
-	implementation 'com.squareup.okhttp3:okhttp:5.1.0'
-	implementation 'com.namehillsoftware:querydroid:0.6.0'
-	implementation "androidx.compose.ui:ui:$compose_version"
-	implementation "androidx.compose.material:material:$compose_version"
-	implementation "androidx.compose.ui:ui-tooling:$compose_version"
-	implementation "androidx.compose.runtime:runtime-rxjava3:$compose_version"
-	implementation 'androidx.activity:activity-compose:1.11.0'
-	implementation 'dev.olshevski.navigation:reimagined:1.5.0'
-	implementation 'com.google.code.gson:gson:2.13.2'
-	implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-rx3:1.10.2'
-	debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
-	debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
-	testCompileOnly 'junit:junit:4.13.2'
-	testImplementation 'commons-codec:commons-codec:1.19.0'
-	testImplementation "org.junit.jupiter:junit-jupiter-api:$junit5_version"
-	testImplementation 'org.assertj:assertj-core:3.27.6'
-	testImplementation 'org.robolectric:robolectric:4.16'
-	testImplementation 'androidx.test.ext:junit-ktx:1.3.0'
-	testImplementation 'androidx.test:core:1.7.0'
-	testImplementation 'androidx.test:runner:1.7.0'
-	testImplementation 'io.mockk:mockk:1.14.5'
-	testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2'
-	testImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
-	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
-	testRuntimeOnly "org.junit.vintage:junit-vintage-engine"
+	implementation libs.core.ktx
+	implementation libs.annotation
+	implementation libs.work.runtime
+	implementation libs.media
+	implementation libs.palette.ktx
+	implementation libs.preference.ktx
+	implementation libs.lifecycle.viewmodel.ktx
+	implementation libs.lifecycle.process
+	implementation libs.lifecycle.service
+	implementation libs.lifecycle.runtime.ktx
+	implementation libs.startup.runtime
+	implementation libs.material
+	implementation libs.guava
+	implementation libs.joda.time
+	implementation libs.commons.io
+	implementation libs.slf4j.api
+	implementation libs.logback.android
+	implementation libs.handoff
+	implementation libs.rxjava
+	implementation libs.lazy.j
+	implementation libs.jsoup
+	implementation libs.media3.exoplayer
+	implementation libs.media3.datasource.okhttp
+	implementation libs.okio
+	implementation libs.okhttp
+	implementation libs.querydroid
+	implementation libs.compose.ui
+	implementation libs.compose.material
+	implementation libs.compose.runtime.rxjava3
+	implementation libs.activity.compose
+	implementation libs.reimagined
+	implementation libs.gson
+	implementation libs.kotlinx.coroutines.rx3
+	implementation libs.compose.ui.tooling
+	debugImplementation libs.compose.ui.test.manifest
+	testCompileOnly libs.junit
+	testImplementation libs.commons.codec
+	testImplementation libs.junit.jupiter.api
+	testImplementation libs.assertj.core
+	testImplementation libs.robolectric
+	testImplementation libs.junit.ktx
+	testImplementation libs.core
+	testImplementation libs.runner
+	testImplementation libs.mockk
+	testImplementation libs.kotlinx.coroutines.test
+	testImplementation libs.compose.ui.test.junit4
+	testRuntimeOnly libs.junit.platform.launcher
+	testRuntimeOnly libs.junit.vintage.engine
 }
