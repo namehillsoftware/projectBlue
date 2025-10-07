@@ -216,21 +216,23 @@ fun ThemeSettingsSection(
 fun AboutApplication(
 	playbackService: ControlPlaybackService,
 ) {
-	Box(
-		modifier = Modifier
-			.fillMaxWidth()
-			.padding(top = Dimensions.topMenuHeight)
+	SettingsSection(
+		headerText = stringResource(id = R.string.title_activity_about, stringResource(R.string.app_name)),
+		headerModifier = standardRowModifier,
+		modifier = Modifier.fillMaxWidth(),
 	) {
 		ApplicationInfoText(
 			versionName = BuildConfig.VERSION_NAME,
 			versionCode = BuildConfig.VERSION_CODE,
-			modifier = Modifier
-				.fillMaxWidth()
-				.align(Alignment.Center)
+			modifier = Modifier.fillMaxWidth()
 		)
 	}
 
-	Box {
+	SettingsSection(
+		headerText = stringResource(id = R.string.acknowledgements_title),
+		headerModifier = standardRowModifier,
+		modifier = Modifier.fillMaxWidth(),
+	) {
 		val localResources = LocalResources.current
 		val dependenciesString by ThreadPools.io.preparePromise {
 			localResources.openRawResource(R.raw.acknowledgements).use { stream ->
