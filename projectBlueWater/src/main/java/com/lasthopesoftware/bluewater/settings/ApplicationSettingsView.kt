@@ -54,6 +54,7 @@ import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -82,6 +83,10 @@ import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackSer
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsMutableState
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.promises.extensions.preparePromise
+import com.lasthopesoftware.promises.extensions.toState
+import com.lasthopesoftware.resources.executors.ThreadPools
+import com.mikepenz.markdown.m2.Markdown
 
 private val horizontalOptionsPadding = 32.dp
 val expandedMenuHeight = Dimensions.topMenuHeight + viewPaddingUnit * 6
@@ -211,18 +216,31 @@ fun ThemeSettingsSection(
 fun AboutApplication(
 	playbackService: ControlPlaybackService,
 ) {
-	Box(
-		modifier = Modifier
-			.fillMaxWidth()
-			.padding(top = Dimensions.topMenuHeight)
+	SettingsSection(
+		headerText = stringResource(id = R.string.title_activity_about, stringResource(R.string.app_name)),
+		headerModifier = standardRowModifier,
+		modifier = Modifier.fillMaxWidth(),
 	) {
 		ApplicationInfoText(
 			versionName = BuildConfig.VERSION_NAME,
 			versionCode = BuildConfig.VERSION_CODE,
-			modifier = Modifier
-				.fillMaxWidth()
-				.align(Alignment.Center)
+			modifier = Modifier.fillMaxWidth()
 		)
+	}
+
+	SettingsSection(
+		headerText = stringResource(id = R.string.acknowledgements_title),
+		headerModifier = standardRowModifier,
+		modifier = Modifier.fillMaxWidth(),
+	) {
+		val localResources = LocalResources.current
+		val dependenciesString by ThreadPools.io.preparePromise {
+			localResources.openRawResource(R.raw.acknowledgements).use { stream ->
+				stream.bufferedReader().use { it.readText() }
+			}
+		}.toState("", localResources)
+
+		Markdown(dependenciesString)
 	}
 
 	Button(

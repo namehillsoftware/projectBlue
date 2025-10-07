@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.F
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.promiseFirstResult
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
@@ -20,7 +21,7 @@ import org.junit.jupiter.api.Test
 import java.net.URL
 
 
-class WhenTheFilePropertiesChange {
+class `When the file properties change` {
 	companion object {
 		private const val libraryId = 856
 		private const val serviceFileId = "491"
@@ -95,7 +96,10 @@ class WhenTheFilePropertiesChange {
 			ServiceFile(serviceFileId),
 		).toExpiringFuture().get()
 
+		val currentFileProperties = viewModel.fileProperties.value
+		val nextResult = viewModel.fileProperties.skipWhile { it.value === currentFileProperties }.promiseFirstResult()
 		messageBus.sendMessage(FilePropertiesUpdatedMessage(UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId))))
+		nextResult.toExpiringFuture().get()
 	}
 
 	@Test

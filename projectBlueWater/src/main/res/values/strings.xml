@@ -161,4 +161,5 @@
     <string name="view_servers">View Servers</string>
     <string name="application_settings">Application Settings</string>
     <string name="active_server">Active Server</string>
+    <string name="acknowledgements_title">Acknowledgements</string>
 </resources>

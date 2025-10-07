@@ -105,16 +105,8 @@ file for details.
 
 ## Acknowledgments
 
-- [JRiver Media Center](https://jriver.com/)
-- [Navidrome](https://www.navidrome.org/)
-- [ExoPlayer](https://github.com/google/ExoPlayer)
-- [Lightweight Stream API](https://github.com/aNNiMON/Lightweight-Stream-API)
-- [RxJava](https://github.com/ReactiveX/RxJava)
-- [OkHttp](https://square.github.io/okhttp/)
-- [Okio](https://github.com/square/okio)
-- [Joda-Time](https://www.joda.org/joda-time/)
-- [SLF4J](http://www.slf4j.org/)
-- [JUnt](https://junit.org/)
-- [Mockito](https://site.mockito.org/)
-- [AssertJ](https://assertj.github.io/doc/)
-- [Robolectric](http://robolectric.org/)
+***Cue public broadcasting voice***
+
+While project blue is maintained by one person, it is only possible because of the amazing work of
+hundreds of other developers. A non-exhaustive list of the work of others that project
+blue depends on is viewable here [acknowledgements.md](./acknowledgements.md).
