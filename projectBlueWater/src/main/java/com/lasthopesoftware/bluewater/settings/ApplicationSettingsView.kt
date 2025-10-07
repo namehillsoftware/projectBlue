@@ -345,6 +345,7 @@ fun ApplicationSettingsMenu(
 	applicationNavigation: NavigateApplication,
 	selectedLibraryId: LibraryId?,
 	modifier: Modifier = Modifier,
+	onTabChange: (() -> Unit)? = null,
 ) {
 	ListMenuRow(
 		modifier = modifier,
@@ -358,6 +359,7 @@ fun ApplicationSettingsMenu(
 		ColumnMenuIcon(
 			onClick = {
 				selectedTab = ApplicationSettingsViewModel.SelectedTab.ViewServers
+				onTabChange?.invoke()
 			},
 			iconPainter = painterResource(id = R.drawable.select_library_36dp),
 			contentDescription = viewServersLabel,
@@ -371,6 +373,7 @@ fun ApplicationSettingsMenu(
 		ColumnMenuIcon(
 			onClick = {
 				selectedTab = ApplicationSettingsViewModel.SelectedTab.ViewSettings
+				onTabChange?.invoke()
 			},
 			iconPainter = painterResource(id = R.drawable.ic_action_settings),
 			contentDescription = settingsButtonLabel,
@@ -505,6 +508,9 @@ private fun ApplicationSettingsViewVertical(
 					.height(menuHeightDp)
 					.background(MaterialTheme.colors.surface)
 					.clipToBounds(),
+				onTabChange = {
+					scrollConnection.goToMax()
+				}
 			)
 		}
 	}
