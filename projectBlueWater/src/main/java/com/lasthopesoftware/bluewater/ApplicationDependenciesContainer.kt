@@ -110,7 +110,7 @@ object ApplicationDependenciesContainer {
 
 		override val okHttpClients by lazy { OkHttpFactory(context) }
 
-		override val mediaCenterHttpClients by lazy { okHttpClients.MediaCenterHttpPromiseServerClient() }
+		override val mediaCenterHttpClients by lazy { okHttpClients.MediaCenterClient() }
 
 		override val mediaCenterDataFactories by lazy {
 			ServerHttpDataSourceProvider(
@@ -120,7 +120,7 @@ object ApplicationDependenciesContainer {
 			)
 		}
 
-		override val subsonicHttpClients by lazy { okHttpClients.SubsonicHttpPromiseServerClient() }
+		override val subsonicHttpClients by lazy { okHttpClients.SubsonicClient() }
 
 		override val subsonicDataFactories by lazy {
 			ServerHttpDataSourceProvider(

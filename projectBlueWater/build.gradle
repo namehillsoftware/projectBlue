@@ -208,6 +208,8 @@ dependencies {
 	implementation libs.joda.time
 	implementation libs.commons.io
 	implementation libs.slf4j.api
+	implementation libs.ktor.client
+	implementation libs.ktor.core
 	implementation libs.logback.android
 	implementation libs.handoff
 	implementation libs.rxjava
