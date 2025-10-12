@@ -35,8 +35,7 @@ class `When Cancelling During Lookup` {
 				every { promiseConnectionSettings(LibraryId(55)) } returns MediaCenterConnectionSettings(accessCode = "gooPc").toPromise()
 			},
 			mockk(),
-			mockk(),
-			JsonEncoderDecoder,
+            JsonEncoderDecoder,
 			mockk(),
 		)
 

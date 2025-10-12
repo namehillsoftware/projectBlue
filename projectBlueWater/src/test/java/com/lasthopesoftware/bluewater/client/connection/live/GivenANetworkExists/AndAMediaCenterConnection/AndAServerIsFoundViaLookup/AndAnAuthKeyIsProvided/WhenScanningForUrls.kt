@@ -64,8 +64,7 @@ class WhenScanningForUrls {
 					}
 				}
 			},
-			mockk(),
-			JsonEncoderDecoder,
+            JsonEncoderDecoder,
 			mockk(),
 		)
 

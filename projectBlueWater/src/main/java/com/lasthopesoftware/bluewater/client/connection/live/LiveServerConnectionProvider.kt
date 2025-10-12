@@ -4,7 +4,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.lookup.LookupServers
-import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupValidConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
@@ -26,7 +25,6 @@ class LiveServerConnectionProvider(
 	private val serverLookup: LookupServers,
 	private val connectionSettingsLookup: LookupValidConnectionSettings,
 	private val httpClients: ProvideHttpPromiseClients,
-	private val okHttpClients: ProvideOkHttpClients,
 	private val jsonTranslator: TranslateJson,
 	private val stringResources: GetStringResources,
 ) : ProvideLiveServerConnection {
@@ -59,7 +57,7 @@ class LiveServerConnectionProvider(
 					fun testUrls(): Promise<LiveServerConnection?> {
 						if (cp.isCancelled) return Promise.empty()
 						val serverConnection = mediaCenterConnectionDetails.poll() ?: return Promise.empty()
-						val potentialConnection = LiveMediaCenterConnection(serverConnection, httpClients, okHttpClients)
+						val potentialConnection = LiveMediaCenterConnection(serverConnection, httpClients)
 						return potentialConnection
 							.promiseIsConnectionPossible()
 							.also(cp::doCancel)
@@ -127,7 +125,6 @@ class LiveServerConnectionProvider(
 						val potentialConnection = LiveSubsonicConnection(
 							serverConnection,
 							httpClients,
-							okHttpClients,
 							jsonTranslator,
 							stringResources,
 						)

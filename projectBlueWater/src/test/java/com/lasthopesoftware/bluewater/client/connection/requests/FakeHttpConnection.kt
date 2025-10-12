@@ -71,6 +71,9 @@ class FakeHttpConnection(
 		}
 	}
 
+	override fun promiseResponse(method: String, headers: Map<String, String>, url: URL): Promise<HttpResponse> =
+		promiseResponse(url)
+
 	private fun getResponse(url: URL): HttpResponse {
 		val mappedResponse = mappedResponses[UrlParts(url)]
 			?: return PassThroughHttpResponse(

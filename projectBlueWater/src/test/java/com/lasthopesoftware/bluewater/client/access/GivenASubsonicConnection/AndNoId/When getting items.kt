@@ -13,7 +13,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFutur
 import com.lasthopesoftware.resources.PassThroughHttpResponse
 import com.lasthopesoftware.resources.strings.FakeStringResources
 import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
-import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -81,8 +80,7 @@ class `When getting items` {
 		LiveSubsonicConnection(
 			SubsonicConnectionDetails(TestUrl, "Xtbyp9lhSJY", "WVe5KSj"),
 			FakeHttpConnectionProvider(httpConnection),
-			mockk(),
-			JsonEncoderDecoder,
+            JsonEncoderDecoder,
 			FakeStringResources(
 				artists = "Artistes",
 				playlists = "Playalists"

@@ -36,8 +36,7 @@ class WhenGettingFileProperties {
 					every { promiseResponse(TestUrl.withSubsonicApi().addPath("getSong").addParams("f=json").addParams("id=$serviceFileId")) } returns deferredReject
 				}
 			),
-			mockk(),
-			JsonEncoderDecoder,
+            JsonEncoderDecoder,
 			mockk(),
 		)
     }

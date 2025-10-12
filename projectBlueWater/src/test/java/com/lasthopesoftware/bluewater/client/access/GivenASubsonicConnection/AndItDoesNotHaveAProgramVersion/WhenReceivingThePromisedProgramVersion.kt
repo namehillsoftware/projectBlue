@@ -29,8 +29,7 @@ class WhenReceivingThePromisedProgramVersion {
 		val access = LiveSubsonicConnection(
 			SubsonicConnectionDetails(TestUrl, "kqn12NiBXq", "J47koHV"),
 			FakeHttpConnectionProvider(httpConnection),
-			mockk(),
-			JsonEncoderDecoder,
+            JsonEncoderDecoder,
 			mockk(),
 		)
 		access.promiseServerVersion().toExpiringFuture().get()

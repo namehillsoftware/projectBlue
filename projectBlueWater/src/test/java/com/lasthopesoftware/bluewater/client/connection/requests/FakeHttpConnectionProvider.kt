@@ -5,6 +5,9 @@ import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetail
 
 class FakeHttpConnectionProvider(private val client: HttpPromiseClient) : ProvideHttpPromiseClients {
 	override fun getServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails): HttpPromiseClient = client
+	override fun getServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails, clientOptions: HttpPromiseClientOptions): HttpPromiseClient = client
+
 	override fun getServerClient(subsonicConnectionDetails: SubsonicConnectionDetails): HttpPromiseClient = client
 	override fun getClient(): HttpPromiseClient = client
+	override fun getServerClient(subsonicConnectionDetails: SubsonicConnectionDetails, clientOptions: HttpPromiseClientOptions): HttpPromiseClient = client
 }

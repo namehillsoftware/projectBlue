@@ -15,7 +15,6 @@ import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnect
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import kotlin.math.pow
@@ -105,8 +104,7 @@ Some more valid text... la di da..."""),
 		val connection = LiveMediaCenterConnection(
 			MediaCenterConnectionDetails(TestUrl),
 			FakeHttpConnectionProvider(httpConnection),
-			mockk(),
-		)
+        )
 
 		connection
 			.promiseFileProperties(ServiceFile("15"))

@@ -35,8 +35,7 @@ class `When Downloading the File` {
 					PassThroughHttpResponse(202, "Not found", emptyByteArray.inputStream())
 				}
 			}),
-			mockk(),
-			JsonEncoderDecoder,
+            JsonEncoderDecoder,
 			mockk(),
 		)
 		downloader.promiseFile(ServiceFile("af6f5ae0b3b94ac4a5a8d9480b207bb7")).toExpiringFuture().get()

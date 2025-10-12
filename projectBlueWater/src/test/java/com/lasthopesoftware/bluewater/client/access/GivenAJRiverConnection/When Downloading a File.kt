@@ -12,7 +12,6 @@ import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
-import io.mockk.mockk
 import org.apache.commons.io.IOUtils
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -45,8 +44,7 @@ class `When Downloading a File` {
 					)
 				}
 			}),
-			mockk(),
-		)
+        )
 
 		downloader.promiseFile(ServiceFile("4")).toExpiringFuture().get()
 	}

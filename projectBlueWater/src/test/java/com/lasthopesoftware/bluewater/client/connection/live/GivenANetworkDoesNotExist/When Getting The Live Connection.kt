@@ -18,8 +18,7 @@ class `When Getting The Live Connection` {
 			mockk(),
 			mockk(),
 			mockk(),
-			mockk(),
-			JsonEncoderDecoder,
+            JsonEncoderDecoder,
 			mockk(),
 		)
 		liveUrlProvider.promiseLiveServerConnection(LibraryId(23)).toExpiringFuture().get()

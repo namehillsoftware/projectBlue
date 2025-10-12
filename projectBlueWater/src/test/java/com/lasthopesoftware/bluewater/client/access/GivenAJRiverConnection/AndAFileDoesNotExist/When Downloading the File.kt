@@ -18,8 +18,7 @@ class `When Downloading the File` {
 			mockk {
 				every { getServerClient(any<MediaCenterConnectionDetails>()) } returns FakeHttpConnection()
 			},
-			mockk(),
-		)
+        )
 		downloader.promiseFile(ServiceFile("4")).toExpiringFuture().get()
 	}
 

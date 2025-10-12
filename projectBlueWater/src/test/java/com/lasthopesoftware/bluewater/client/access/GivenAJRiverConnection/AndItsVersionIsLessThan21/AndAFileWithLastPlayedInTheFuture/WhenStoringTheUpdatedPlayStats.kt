@@ -75,8 +75,7 @@ class WhenStoringTheUpdatedPlayStats {
 					}
 				}
 			),
-			mockk(),
-		)
+        )
 
 		Pair(connection, fileProperties)
 	}

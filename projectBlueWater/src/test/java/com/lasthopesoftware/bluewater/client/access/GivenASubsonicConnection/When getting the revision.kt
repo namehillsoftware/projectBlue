@@ -33,8 +33,7 @@ class `When getting the revision` {
 		LiveSubsonicConnection(
 			SubsonicConnectionDetails(TestUrl, "Xtbyp9lhSJY", "WVe5KSj"),
 			FakeHttpConnectionProvider(httpConnection),
-			mockk(),
-			JsonEncoderDecoder,
+            JsonEncoderDecoder,
 			mockk(),
 		)
 	}

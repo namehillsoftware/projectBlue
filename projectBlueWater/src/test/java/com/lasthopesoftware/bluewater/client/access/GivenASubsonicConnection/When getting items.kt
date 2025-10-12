@@ -249,8 +249,7 @@ class `When getting items` {
 		LiveSubsonicConnection(
 			SubsonicConnectionDetails(TestUrl, "Xtbyp9lhSJY", "WVe5KSj"),
 			FakeHttpConnectionProvider(httpConnection),
-			mockk(),
-			JsonEncoderDecoder,
+            JsonEncoderDecoder,
 			mockk(),
 		)
 	}

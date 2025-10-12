@@ -46,8 +46,7 @@ class `When getting an item image` {
 					)
 				}
 			}),
-			mockk(),
-			JsonEncoderDecoder,
+            JsonEncoderDecoder,
 			mockk(),
 		)
 

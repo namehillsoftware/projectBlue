@@ -62,8 +62,7 @@ class `When Cancelling During Connection Test` {
 					}
 				}
 			},
-			mockk(),
-			JsonEncoderDecoder,
+            JsonEncoderDecoder,
 			mockk(),
 		)
 

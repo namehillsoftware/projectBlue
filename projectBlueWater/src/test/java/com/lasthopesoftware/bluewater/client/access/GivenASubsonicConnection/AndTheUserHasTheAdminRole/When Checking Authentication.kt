@@ -56,8 +56,7 @@ class `When Checking Authentication` {
 		val access = LiveSubsonicConnection(
 			SubsonicConnectionDetails(TestUrl, "XjEdXrsEUA", "bNI1AuryTD"),
 			FakeHttpConnectionProvider(httpConnection),
-			mockk(),
-			JsonEncoderDecoder,
+            JsonEncoderDecoder,
 			mockk(),
 		)
 		access.promiseIsReadOnly().toExpiringFuture().get()

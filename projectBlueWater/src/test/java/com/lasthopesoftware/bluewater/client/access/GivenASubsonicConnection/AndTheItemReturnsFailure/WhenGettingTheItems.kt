@@ -51,8 +51,7 @@ class WhenGettingTheItems {
 		LiveSubsonicConnection(
 			SubsonicConnectionDetails(TestUrl, "MNYsut3Z", "MWKzloOd"),
 			FakeHttpConnectionProvider(httpConnection),
-			mockk(),
-			JsonEncoderDecoder,
+            JsonEncoderDecoder,
 			mockk(),
 		)
 	}

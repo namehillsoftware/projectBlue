@@ -30,8 +30,7 @@ class WhenGettingFileProperties {
 			FakeHttpConnectionProvider(mockk {
 				every { promiseResponse(TestUrl.withSubsonicApi().addPath("getSong").addParams("f=json").addParams("id=$serviceFileId")) } returns Promise(IOException("Canceled"))
 			}),
-			mockk(),
-			JsonEncoderDecoder,
+            JsonEncoderDecoder,
 			mockk(),
 		)
     }
