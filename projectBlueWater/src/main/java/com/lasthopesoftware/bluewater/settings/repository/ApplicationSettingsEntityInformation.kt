@@ -7,6 +7,7 @@ object ApplicationSettingsEntityInformation {
 	const val isPeakLevelNormalizeEnabledColumn = "isPeakLevelNormalizeEnabled"
 	const val isLoggingToFile = "isLoggingToFile"
 	const val playbackEngineTypeNameColumn = "playbackEngineTypeName"
+	const val httpClientTypeNameColumn = "httpClientTypeName"
 	const val chosenLibraryIdColumn = "chosenLibraryId"
 	const val themeColumn = "theme"
 	const val tableName = "ApplicationSettings"

@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.settings.repository
 import android.database.sqlite.SQLiteDatabase
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.chosenLibraryIdColumn
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.httpClientTypeNameColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isLoggingToFile
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isPeakLevelNormalizeEnabledColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnPowerOnlyColumn
@@ -69,6 +70,10 @@ class ApplicationSettingsUpdater(private val applicationSettingsMigrator: Applic
 
 		if (oldVersion < 22) {
 			db.execSQL("ALTER table `$tableName` ADD COLUMN `$themeColumn` VARCHAR")
+		}
+
+		if (oldVersion < 23) {
+			db.execSQL("ALTER table `$tableName` ADD COLUMN `$httpClientTypeNameColumn` VARCHAR")
 		}
 	}
 }

@@ -11,6 +11,7 @@ data class ApplicationSettings(
 	var isPeakLevelNormalizeEnabled: Boolean = false,
 	var isLoggingToFile: Boolean = false,
 	var playbackEngineTypeName: String? = null,
+	var httpClientTypeName: String? = null,
 	var chosenLibraryId: Int = -1,
 	var theme: Theme? = null,
 ) : Entity {

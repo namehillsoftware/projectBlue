@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.settings.hidden
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
+import com.lasthopesoftware.bluewater.client.connection.okhttp.HttpClientType
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
@@ -12,8 +13,10 @@ class HiddenSettingsViewModel(private val applicationSettingsRepository: HoldApp
 
 	private val mutableIsLoading = MutableInteractionState(false)
 	private val mutableIsLoggingToFile = MutableInteractionState(false)
+	private val mutableHttpClientType = MutableInteractionState(HttpClientType.OkHttp)
 
 	val isLoggingToFile = mutableIsLoggingToFile.asInteractionState()
+	val httpClientType = mutableHttpClientType.asInteractionState()
 
 	override val isLoading = mutableIsLoading.asInteractionState()
 
@@ -23,6 +26,7 @@ class HiddenSettingsViewModel(private val applicationSettingsRepository: HoldApp
 			.promiseApplicationSettings()
 			.then { it ->
 				mutableIsLoggingToFile.value = it.isLoggingToFile
+				mutableHttpClientType.value = it.httpClientTypeName?.let(HttpClientType::valueOf) ?: HttpClientType.OkHttp
 			}
 			.must { _ ->
 				mutableIsLoading.value = false
@@ -31,6 +35,11 @@ class HiddenSettingsViewModel(private val applicationSettingsRepository: HoldApp
 
 	fun promiseIsLoggingToFile(isLoggingToFile: Boolean): Promise<ApplicationSettings> {
 		mutableIsLoggingToFile.value = isLoggingToFile
+		return saveSettings()
+	}
+
+	fun promiseHttpClientType(httpClientType: HttpClientType): Promise<ApplicationSettings> {
+		mutableHttpClientType.value = httpClientType
 		return saveSettings()
 	}
 

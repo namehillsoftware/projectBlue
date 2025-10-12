@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.live
 
 import androidx.annotation.Keep
+import androidx.media3.datasource.DataSource
 import com.google.gson.JsonParser
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
@@ -92,7 +93,7 @@ class LiveSubsonicConnection(
 
 	private val subsonicApiUrl by lazy { subsonicConnectionDetails.baseUrl.withSubsonicApi().addParams("f=json") }
 
-	private val httpClient by lazy { httpPromiseClients.getServerClient(subsonicConnectionDetails) }
+	private val httpClient by lazy { httpPromiseClients.promiseServerClient(subsonicConnectionDetails) }
 
 	private val cachedVersion by RetryOnRejectionLazyPromise {
 		PingViewPromise().cancelBackThen { r, _ ->
@@ -113,17 +114,18 @@ class LiveSubsonicConnection(
 				"maxBitRate=$bitrate",
 			)
 
-	override val dataSourceFactory by lazy {
-		HttpPromiseClientDataSource.Factory(
-			httpPromiseClients
-				.getServerClient(
-					subsonicConnectionDetails,
-					HttpPromiseClientOptions(
-						readTimeout = 45.seconds,
-						retryOnConnectionFailure = false,
-					)
+	override val dataSourceFactory: Promise<DataSource.Factory> by lazy {
+		httpPromiseClients
+			.promiseServerClient(
+				subsonicConnectionDetails,
+				HttpPromiseClientOptions(
+					readTimeout = 45.seconds,
+					retryOnConnectionFailure = false,
 				)
-		)
+			)
+			.then { client ->
+				HttpPromiseClientDataSource.Factory(client)
+			}
 	}
 
 	override val dataAccess = this
@@ -171,8 +173,7 @@ class LiveSubsonicConnection(
 
 	override fun promiseFile(serviceFile: ServiceFile): Promise<InputStream> = Promise.Proxy { cp ->
 		httpClient
-			.promiseResponse(getFileUrl(serviceFile))
-			.also(cp::doCancel)
+			.eventually { it.promiseResponse(getFileUrl(serviceFile)).also(cp::doCancel) }
 			.then(HttpStreamedResponse())
 	}
 
@@ -232,12 +233,12 @@ class LiveSubsonicConnection(
 
 	private fun promiseResponse(path: String, vararg params: String): Promise<HttpResponse> {
 		val url = subsonicApiUrl.addPath(path).addParams(*params)
-		return httpClient.promiseResponse(url)
+		return httpClient.eventually { it.promiseResponse(url) }
 	}
 
 	private inline fun <reified T> promiseSubsonicResponse(path: String, vararg params: String): Promise<T?> {
 		val url = subsonicApiUrl.addPath(path).addParams(*params)
-		return httpClient.promiseResponse(url).cancelBackEventually { it.promiseSubsonicResponse() }
+		return httpClient.eventually { it.promiseResponse(url) }.cancelBackEventually { it.promiseSubsonicResponse() }
 	}
 
 	private inline fun <reified T> Promise<HttpResponse>.promiseSubsonicResponse(): Promise<T?> = eventually { r ->

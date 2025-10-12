@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.preference.PreferenceManager
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.chosenLibraryIdColumn
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.httpClientTypeNameColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isLoggingToFile
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isPeakLevelNormalizeEnabledColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnPowerOnlyColumn
@@ -43,6 +44,7 @@ class ApplicationSettingsMigrator(private val context: Context) {
 			`$isPeakLevelNormalizeEnabledColumn` SMALLINT DEFAULT 0 NOT NULL,
 			`$isLoggingToFile` SMALLINT DEFAULT 0 NOT NULL,
 			`$playbackEngineTypeNameColumn` VARCHAR ,
+			`$httpClientTypeNameColumn` VARCHAR,
 			`$themeColumn` VARCHAR ,
 			`$chosenLibraryIdColumn` INTEGER DEFAULT -1 NOT NULL )""")
 

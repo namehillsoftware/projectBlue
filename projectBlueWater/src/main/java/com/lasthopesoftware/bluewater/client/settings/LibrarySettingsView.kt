@@ -65,6 +65,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPa
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconWidth
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topRowOuterPadding
@@ -85,7 +86,7 @@ import kotlinx.coroutines.launch
 private val expandedTitleHeight = Dimensions.expandedTitleHeight
 private val appBarHeight = Dimensions.appBarHeight
 private val boxHeight = expandedTitleHeight + appBarHeight
-private val innerGroupPadding = viewPaddingUnit * 2
+private val innerGroupPadding = rowPadding
 private const val inputRowMaxWidth = .8f
 
 @Composable

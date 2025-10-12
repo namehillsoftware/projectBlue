@@ -31,7 +31,9 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgres
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfoXmlRequest
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerLookup
+import com.lasthopesoftware.bluewater.client.connection.okhttp.ApplicationSettingsHttpClient
 import com.lasthopesoftware.bluewater.client.connection.okhttp.KtorFactory
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
@@ -105,7 +107,13 @@ object ApplicationDependenciesContainer {
 
 		private val audioCacheFilesProvider by lazy { CachedFilesProvider(context, AudioCacheConfiguration) }
 
-		override val httpClients by lazy { KtorFactory(context) }
+		override val httpClients by lazy {
+			ApplicationSettingsHttpClient(
+				applicationSettings,
+				OkHttpFactory(context),
+				KtorFactory(context),
+			)
+		}
 
 		override val audioCacheStreamSupplier by lazy {
 			DiskFileCacheStreamSupplier(

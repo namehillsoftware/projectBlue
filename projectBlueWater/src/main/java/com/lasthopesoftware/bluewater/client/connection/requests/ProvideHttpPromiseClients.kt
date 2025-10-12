@@ -2,19 +2,20 @@ package com.lasthopesoftware.bluewater.client.connection.requests
 
 import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
+import com.namehillsoftware.handoff.promises.Promise
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 interface ProvideHttpPromiseClients {
-	fun getServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails): HttpPromiseClient
-	fun getServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails, clientOptions: HttpPromiseClientOptions): HttpPromiseClient
-	fun getServerClient(subsonicConnectionDetails: SubsonicConnectionDetails): HttpPromiseClient
+	fun promiseServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails): Promise<HttpPromiseClient>
+	fun promiseServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails, clientOptions: HttpPromiseClientOptions): Promise<HttpPromiseClient>
+	fun promiseServerClient(subsonicConnectionDetails: SubsonicConnectionDetails): Promise<HttpPromiseClient>
 
-	fun getClient(): HttpPromiseClient
-	fun getServerClient(
+	fun promiseClient(): Promise<HttpPromiseClient>
+	fun promiseServerClient(
 		subsonicConnectionDetails: SubsonicConnectionDetails,
 		clientOptions: HttpPromiseClientOptions
-	): HttpPromiseClient
+	): Promise<HttpPromiseClient>
 }
 
 data class HttpPromiseClientOptions(

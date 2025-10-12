@@ -9,7 +9,7 @@ import java.net.URL
 
 interface LiveServerConnection {
 	val dataAccess: RemoteLibraryAccess
-	val dataSourceFactory: DataSource.Factory
+	val dataSourceFactory: Promise<DataSource.Factory>
 
 	fun <T> getConnectionKey(key: T): UrlKeyHolder<T>
 	fun getFileUrl(serviceFile: ServiceFile): URL

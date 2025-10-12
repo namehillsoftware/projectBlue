@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.repository.fetchFirst
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsUpdated
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.chosenLibraryIdColumn
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.httpClientTypeNameColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isLoggingToFile
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isPeakLevelNormalizeEnabledColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnPowerOnlyColumn
@@ -32,6 +33,7 @@ class ApplicationSettingsRepository(private val context: Context, private val me
 				.addSetter(playbackEngineTypeNameColumn)
 				.addSetter(chosenLibraryIdColumn)
 				.addSetter(themeColumn)
+				.addSetter(httpClientTypeNameColumn)
 				.buildQuery()
 		}
 	}
@@ -58,6 +60,7 @@ class ApplicationSettingsRepository(private val context: Context, private val me
 						.addParameter(playbackEngineTypeNameColumn, applicationSettings.playbackEngineTypeName)
 						.addParameter(chosenLibraryIdColumn, applicationSettings.chosenLibraryId)
 						.addParameter(themeColumn, applicationSettings.theme)
+						.addParameter(httpClientTypeNameColumn, applicationSettings.httpClientTypeName)
 						.execute()
 					it.setTransactionSuccessful()
 				}

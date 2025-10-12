@@ -76,10 +76,10 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 		}
 	}
 
-	override fun getServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails): HttpPromiseClient =
+	override fun promiseServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails): Promise<HttpPromiseClient> =
 		KtorPromiseClient(scope, CIO, getHttpConfiguration(mediaCenterConnectionDetails))
 
-	override fun getServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails, clientOptions: HttpPromiseClientOptions): HttpPromiseClient {
+	override fun promiseServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails, clientOptions: HttpPromiseClientOptions): Promise<HttpPromiseClient> {
 		val clientConfig = getHttpConfiguration(mediaCenterConnectionDetails)
 			.clone()
 			.apply {
@@ -93,10 +93,10 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 		return KtorPromiseClient(scope, CIO, clientConfig)
 	}
 
-	override fun getServerClient(subsonicConnectionDetails: SubsonicConnectionDetails): HttpPromiseClient =
+	override fun promiseServerClient(subsonicConnectionDetails: SubsonicConnectionDetails): Promise<HttpPromiseClient> =
 		KtorPromiseClient(scope, CIO, getHttpConfiguration(subsonicConnectionDetails))
 
-	override fun getServerClient(subsonicConnectionDetails: SubsonicConnectionDetails, clientOptions: HttpPromiseClientOptions): HttpPromiseClient {
+	override fun promiseServerClient(subsonicConnectionDetails: SubsonicConnectionDetails, clientOptions: HttpPromiseClientOptions): Promise<HttpPromiseClient> {
 		val clientConfig = getHttpConfiguration(subsonicConnectionDetails)
 			.clone()
 			.apply {
@@ -111,7 +111,7 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 		return KtorPromiseClient(scope, CIO,clientConfig)
 	}
 
-	override fun getClient(): HttpPromiseClient = KtorPromiseClient(scope,CIO, getHttpConfiguration())
+	override fun promiseClient(): Promise<HttpPromiseClient> = KtorPromiseClient(scope,CIO, getHttpConfiguration())
 
 	private fun getHttpConfiguration(mediaCenterConnectionDetails: MediaCenterConnectionDetails) = commonConfiguration.clone().apply {
 		engine {
@@ -241,7 +241,11 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 	}
 
 	@OptIn(ExperimentalCoroutinesApi::class)
-	private class KtorPromiseClient<T : HttpClientEngineConfig>(private val scope: CoroutineScope, private val engineFactory: HttpClientEngineFactory<T>, private val httpClientConfig: HttpClientConfig<T>) : HttpPromiseClient {
+	private class KtorPromiseClient<T : HttpClientEngineConfig>(private val scope: CoroutineScope, private val engineFactory: HttpClientEngineFactory<T>, private val httpClientConfig: HttpClientConfig<T>) : Promise<HttpPromiseClient>(), HttpPromiseClient {
+		init {
+		    resolve(this)
+		}
+
 		override fun promiseResponse(url: URL): Promise<HttpResponse> =
 			scope.async {
 				val httpClient = getClient()

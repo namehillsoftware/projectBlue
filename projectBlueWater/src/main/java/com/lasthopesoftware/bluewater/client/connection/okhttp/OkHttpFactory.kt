@@ -72,10 +72,10 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 			.build()
 	}
 
-	override fun getServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails): HttpPromiseClient =
+	override fun promiseServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails): Promise<HttpPromiseClient> =
 		OkHttpPromiseClient(getOkHttpClient(mediaCenterConnectionDetails))
 
-	override fun getServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails, clientOptions: HttpPromiseClientOptions): HttpPromiseClient {
+	override fun promiseServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails, clientOptions: HttpPromiseClientOptions): Promise<HttpPromiseClient> {
 		val okHttpClient = getOkHttpClient(mediaCenterConnectionDetails)
 			.newBuilder()
 			.readTimeout(clientOptions.readTimeout)
@@ -84,10 +84,10 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 		return OkHttpPromiseClient(okHttpClient)
 	}
 
-	override fun getServerClient(subsonicConnectionDetails: SubsonicConnectionDetails): HttpPromiseClient =
+	override fun promiseServerClient(subsonicConnectionDetails: SubsonicConnectionDetails): Promise<HttpPromiseClient> =
 		OkHttpPromiseClient(getOkHttpClient(subsonicConnectionDetails))
 
-	override fun getServerClient(subsonicConnectionDetails: SubsonicConnectionDetails, clientOptions: HttpPromiseClientOptions): HttpPromiseClient {
+	override fun promiseServerClient(subsonicConnectionDetails: SubsonicConnectionDetails, clientOptions: HttpPromiseClientOptions): Promise<HttpPromiseClient> {
 		val okHttpClient = getOkHttpClient(subsonicConnectionDetails)
 			.newBuilder()
 			.readTimeout(clientOptions.readTimeout)
@@ -96,7 +96,7 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 		return OkHttpPromiseClient(okHttpClient)
 	}
 
-	override fun getClient(): HttpPromiseClient = OkHttpPromiseClient(getOkHttpClient())
+	override fun promiseClient(): Promise<HttpPromiseClient> = OkHttpPromiseClient(getOkHttpClient())
 
 	private fun getOkHttpClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails): OkHttpClient {
 		val authHeaderValue = mediaCenterConnectionDetails.authCode.takeUnless { it.isNullOrEmpty() }?.let { "basic $it" }
@@ -314,7 +314,11 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 		override fun cancellationRequested() = call.cancel()
 	}
 
-	private class OkHttpPromiseClient(private val okHttpClient: OkHttpClient) : HttpPromiseClient {
+	private class OkHttpPromiseClient(private val okHttpClient: OkHttpClient) : Promise<HttpPromiseClient>(), HttpPromiseClient {
+		init {
+		    resolve(this)
+		}
+
 		override fun promiseResponse(url: URL): Promise<HttpResponse> =
 			try {
 				HttpResponsePromise(okHttpClient.newCall(Request.Builder().url(url).build()))

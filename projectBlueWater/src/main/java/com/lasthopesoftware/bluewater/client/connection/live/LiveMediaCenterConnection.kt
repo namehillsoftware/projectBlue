@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.live
 
 import android.os.Build
+import androidx.media3.datasource.DataSource
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
@@ -83,7 +84,7 @@ class LiveMediaCenterConnection(
 
 	private val mcApiUrl by lazy { mediaCenterConnectionDetails.baseUrl.withMcApi() }
 
-	private val httpClient by lazy { httpPromiseClients.getServerClient(mediaCenterConnectionDetails) }
+	private val httpClient by lazy { httpPromiseClients.promiseServerClient(mediaCenterConnectionDetails) }
 
 	private val cachedServerVersionPromise by RetryOnRejectionLazyPromise {
 		Promise.Proxy { cp ->
@@ -120,17 +121,18 @@ class LiveMediaCenterConnection(
 					"AndroidVersion=${Build.VERSION.RELEASE}"
 				)
 
-	override val dataSourceFactory by lazy {
-		HttpPromiseClientDataSource.Factory(
-			httpPromiseClients
-				.getServerClient(
-					mediaCenterConnectionDetails,
-					HttpPromiseClientOptions(
-						readTimeout = 45.seconds,
-						retryOnConnectionFailure = false,
-					)
+	override val dataSourceFactory: Promise<DataSource.Factory> by lazy {
+		httpPromiseClients
+			.promiseServerClient(
+				mediaCenterConnectionDetails,
+				HttpPromiseClientOptions(
+					readTimeout = 45.seconds,
+					retryOnConnectionFailure = false,
 				)
-		)
+			)
+			.then { client ->
+				HttpPromiseClientDataSource.Factory(client)
+			}
 	}
 
 	override val dataAccess: RemoteLibraryAccess
@@ -218,7 +220,7 @@ class LiveMediaCenterConnection(
 	override fun promiseFile(serviceFile: ServiceFile): Promise<InputStream> =
 		Promise.Proxy { cp ->
 			httpClient
-				.promiseResponse(getFileUrl(serviceFile))
+				.eventually { it.promiseResponse(getFileUrl(serviceFile)) }
 				.also(cp::doCancel)
 				.then(HttpStreamedResponse())
 		}
@@ -343,7 +345,7 @@ class LiveMediaCenterConnection(
 
 	private fun promiseResponse(path: String, vararg params: String): Promise<HttpResponse> {
 		val url = mcApiUrl.addPath(path).addParams(*params)
-		return httpClient.promiseResponse(url)
+		return httpClient.eventually { it.promiseResponse(url) }
 	}
 
 	private class MediaCenterFilePropertiesLookup(
