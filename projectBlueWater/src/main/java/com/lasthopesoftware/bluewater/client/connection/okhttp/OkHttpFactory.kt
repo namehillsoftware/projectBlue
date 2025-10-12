@@ -99,7 +99,7 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 		return "$applicationName/$versionName (Linux;Android ${Build.VERSION.RELEASE})"
 	}
 
-	inner class MediaCenterHttpPromiseServerClient() : ProvideHttpPromiseServerClients<MediaCenterConnectionDetails>, ProvideOkHttpServerClients<MediaCenterConnectionDetails> {
+	inner class MediaCenterClient() : ProvideHttpPromiseServerClients<MediaCenterConnectionDetails>, ProvideOkHttpServerClients<MediaCenterConnectionDetails> {
 		override fun getServerClient(connectionDetails: MediaCenterConnectionDetails): HttpPromiseClient =
 			OkHttpPromiseClient(getOkHttpClient(connectionDetails))
 
@@ -187,7 +187,7 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 		}
 	}
 
-	inner class SubsonicHttpPromiseServerClient() : ProvideHttpPromiseServerClients<SubsonicConnectionDetails>, ProvideOkHttpServerClients<SubsonicConnectionDetails> {
+	inner class SubsonicClient() : ProvideHttpPromiseServerClients<SubsonicConnectionDetails>, ProvideOkHttpServerClients<SubsonicConnectionDetails> {
 		override fun getServerClient(connectionDetails: SubsonicConnectionDetails): HttpPromiseClient =
 			OkHttpPromiseClient(getOkHttpClient(connectionDetails))
 
