@@ -55,9 +55,8 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 	companion object {
 		private val buildConnectionTime = 10.seconds
 		private val dispatcher by lazy { ThreadPools.io.asCoroutineDispatcher() +  CoroutineName("KtorFactory") }
+		private val scope by lazy { CoroutineScope(dispatcher) }
 	}
-
-	private val scope by lazy { CoroutineScope(dispatcher) }
 
 	private val commonConfiguration by lazy {
 		HttpClientConfig<CIOEngineConfig>().apply {
