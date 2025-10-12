@@ -11,13 +11,14 @@ import com.lasthopesoftware.bluewater.client.connection.requests.HttpPromiseClie
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpPromiseClientOptions
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
-import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
+import io.ktor.client.engine.HttpClientEngineConfig
+import io.ktor.client.engine.HttpClientEngineFactory
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.engine.cio.CIOEngineConfig
 import io.ktor.client.plugins.HttpTimeout
@@ -38,19 +39,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
 import java.io.InputStream
 import java.net.URL
-import java.security.KeyManagementException
 import java.security.KeyStore
 import java.security.KeyStoreException
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.HttpsURLConnection
-import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import kotlin.text.Charsets.UTF_8
@@ -84,7 +78,7 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 	}
 
 	override fun getServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails): HttpPromiseClient =
-		KtorPromiseClient(scope, getHttpConfiguration(mediaCenterConnectionDetails).getClient())
+		KtorPromiseClient(scope, CIO, getHttpConfiguration(mediaCenterConnectionDetails))
 
 	override fun getServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails, clientOptions: HttpPromiseClientOptions): HttpPromiseClient {
 		val clientConfig = getHttpConfiguration(mediaCenterConnectionDetails)
@@ -97,11 +91,11 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 					requestTimeoutMillis = clientOptions.readTimeout.inWholeMilliseconds
 				}
 			}
-		return KtorPromiseClient(scope, clientConfig.getClient())
+		return KtorPromiseClient(scope, CIO, clientConfig)
 	}
 
 	override fun getServerClient(subsonicConnectionDetails: SubsonicConnectionDetails): HttpPromiseClient =
-		KtorPromiseClient(scope, getHttpConfiguration(subsonicConnectionDetails).getClient())
+		KtorPromiseClient(scope, CIO, getHttpConfiguration(subsonicConnectionDetails))
 
 	override fun getServerClient(subsonicConnectionDetails: SubsonicConnectionDetails, clientOptions: HttpPromiseClientOptions): HttpPromiseClient {
 		val clientConfig = getHttpConfiguration(subsonicConnectionDetails)
@@ -115,16 +109,17 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 					requestTimeoutMillis = clientOptions.readTimeout.inWholeMilliseconds
 				}
 			}
-		return KtorPromiseClient(scope, clientConfig.getClient())
+		return KtorPromiseClient(scope, CIO,clientConfig)
 	}
 
-	override fun getClient(): HttpPromiseClient = KtorPromiseClient(scope,getHttpConfiguration().getClient())
+	override fun getClient(): HttpPromiseClient = KtorPromiseClient(scope,CIO, getHttpConfiguration())
 
 	private fun getHttpConfiguration(mediaCenterConnectionDetails: MediaCenterConnectionDetails) = commonConfiguration.clone().apply {
 		engine {
 
 			// Hostname verifier?
 			https {
+				serverName = mediaCenterConnectionDetails.baseUrl.host
 				trustManager = getTrustManager(mediaCenterConnectionDetails)
 			}
 		}
@@ -143,6 +138,7 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 		engine {
 			// Hostname verifier?
 			https {
+				serverName = subsonicConnectionDetails.baseUrl.host
 				trustManager = getTrustManager(subsonicConnectionDetails)
 			}
 		}
@@ -168,24 +164,6 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 			}
 		}
 
-	private fun HttpClientConfig<CIOEngineConfig>.getClient() = HttpClient(CIO) { this@HttpClient += this@getClient }
-
-	private fun getSslSocketFactory(mediaCenterConnectionDetails: MediaCenterConnectionDetails): SSLSocketFactory {
-		val sslContext = try {
-			SSLContext.getInstance("TLS")
-		} catch (e: NoSuchAlgorithmException) {
-			throw RuntimeException(e)
-		}
-
-		try {
-			sslContext.init(null, arrayOf<TrustManager>(getTrustManager(mediaCenterConnectionDetails)), null)
-		} catch (e: KeyManagementException) {
-			throw RuntimeException(e)
-		}
-
-		return sslContext.socketFactory
-	}
-
 	private fun getTrustManager(mediaCenterConnectionDetails: MediaCenterConnectionDetails): X509TrustManager {
 		val trustManagerFactory = try {
 			TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
@@ -209,34 +187,6 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 			.takeIf { it.isNotEmpty() }
 			?.let { fingerprint -> SelfSignedTrustManager(fingerprint, trustManager) }
 			?: trustManager
-	}
-
-	private fun getHostnameVerifier(mediaCenterConnectionDetails: MediaCenterConnectionDetails): HostnameVerifier {
-		val defaultHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier()
-		return mediaCenterConnectionDetails.certificateFingerprint
-			.takeIf { it.isNotEmpty() }
-			?.let {
-				mediaCenterConnectionDetails.baseUrl.host?.let { host ->
-					AdditionalHostnameVerifier(host, defaultHostnameVerifier)
-				}
-			}
-			?: defaultHostnameVerifier
-	}
-
-	private fun getSslSocketFactory(subsonicConnectionDetails: SubsonicConnectionDetails): SSLSocketFactory {
-		val sslContext = try {
-			SSLContext.getInstance("TLS")
-		} catch (e: NoSuchAlgorithmException) {
-			throw RuntimeException(e)
-		}
-
-		try {
-			sslContext.init(null, arrayOf<TrustManager>(getTrustManager(subsonicConnectionDetails)), null)
-		} catch (e: KeyManagementException) {
-			throw RuntimeException(e)
-		}
-
-		return sslContext.socketFactory
 	}
 
 	private fun getTrustManager(subsonicConnectionDetails: SubsonicConnectionDetails): X509TrustManager {
@@ -264,18 +214,6 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 			?: trustManager
 	}
 
-	private fun getHostnameVerifier(subsonicConnectionDetails: SubsonicConnectionDetails): HostnameVerifier {
-		val defaultHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier()
-		return subsonicConnectionDetails.certificateFingerprint
-			.takeIf { it.isNotEmpty() }
-			?.let {
-				subsonicConnectionDetails.baseUrl.host?.let { host ->
-					AdditionalHostnameVerifier(host, defaultHostnameVerifier)
-				}
-			}
-			?: defaultHostnameVerifier
-	}
-
 	private fun String.hashString(algorithm: String): ByteArray =
 		MessageDigest.getInstance(algorithm).digest(toByteArray(UTF_8))
 
@@ -292,35 +230,39 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 		return "$applicationName/$versionName (Linux;Android ${Build.VERSION.RELEASE})"
 	}
 
-	private class KtorHttpResponse(private val response: io.ktor.client.statement.HttpResponse, override val body: InputStream) : HttpResponse {
+	private class KtorHttpResponse(private val client: HttpClient, private val response: io.ktor.client.statement.HttpResponse, override val body: InputStream) : HttpResponse {
 		override val code: Int
 			get() = response.status.value
 		override val message: String = ""
 		override val headers by lazy { response.headers.toMap() }
-//		override val body: InputStream
-//			get() = response.bodyAsChannel().toInputStream()
 		override val contentLength: Long
 			get() = response.contentLength() ?: 0L
 
-		override fun close() = response.cancel()
+		override fun close() = client.close()
 	}
 
 	@OptIn(ExperimentalCoroutinesApi::class)
-	private class KtorPromiseClient(private val scope: CoroutineScope, private val httpClient: HttpClient) : HttpPromiseClient {
+	private class KtorPromiseClient<T : HttpClientEngineConfig>(private val scope: CoroutineScope, private val engineFactory: HttpClientEngineFactory<T>, private val httpClientConfig: HttpClientConfig<T>) : HttpPromiseClient {
 		override fun promiseResponse(url: URL): Promise<HttpResponse> =
 			scope.async {
+				val httpClient = getClient()
 				val response = httpClient.request(url = url)
-				KtorHttpResponse(response, response.bodyAsChannel().toInputStream())
+				KtorHttpResponse(httpClient, response, response.bodyAsChannel().toInputStream())
 			}.toPromise()
 
 		override fun promiseResponse(method: String, headers: Map<String, String>, url: URL): Promise<HttpResponse> =
 			scope.async {
+				val httpClient = getClient()
 				val response = httpClient.request {
 					url(url)
 					this.method = HttpMethod(method)
 					this.headers.appendAll(headers)
 				}
-				KtorHttpResponse(response, response.bodyAsChannel().toInputStream())
+				KtorHttpResponse(httpClient, response, response.bodyAsChannel().toInputStream())
 			}.toPromise()
+
+		private fun getClient() = HttpClient(engineFactory) {
+			this += httpClientConfig
+		}
 	}
 }
