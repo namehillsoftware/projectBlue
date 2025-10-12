@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.Pr
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.StoreLibrarySettings
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgressingLibraryConnections
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
+import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
@@ -58,7 +58,7 @@ interface ApplicationDependencies {
 	val audioFileCache: DiskFileCache
 	val connectionSettingsLookup: LookupConnectionSettings
     val audioCacheStreamSupplier: DiskFileCacheStreamSupplier
-	val okHttpClients: OkHttpFactory
+	val httpClients: ProvideHttpPromiseClients
 	val libraryNameLookup: LibraryNameLookup
 	val exceptionAnnouncer: AnnounceExceptions
 }

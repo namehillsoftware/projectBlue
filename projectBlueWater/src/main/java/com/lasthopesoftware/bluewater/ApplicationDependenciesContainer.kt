@@ -31,7 +31,7 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgres
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfoXmlRequest
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerLookup
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
+import com.lasthopesoftware.bluewater.client.connection.okhttp.KtorFactory
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
@@ -105,7 +105,7 @@ object ApplicationDependenciesContainer {
 
 		private val audioCacheFilesProvider by lazy { CachedFilesProvider(context, AudioCacheConfiguration) }
 
-		override val okHttpClients by lazy { OkHttpFactory(context) }
+		override val httpClients by lazy { KtorFactory(context) }
 
 		override val audioCacheStreamSupplier by lazy {
 			DiskFileCacheStreamSupplier(
@@ -203,7 +203,7 @@ object ApplicationDependenciesContainer {
 		override val connectionSessions by lazy {
 			val serverLookup = ServerLookup(
 				connectionSettingsLookup,
-				ServerInfoXmlRequest(connectionSettingsLookup, okHttpClients),
+				ServerInfoXmlRequest(connectionSettingsLookup, httpClients),
 			)
 
 			val activeNetwork = ActiveNetworkFinder(context)
@@ -217,7 +217,7 @@ object ApplicationDependenciesContainer {
 							Base64Encoder,
 							serverLookup,
 							connectionSettingsLookup,
-							okHttpClients,
+							httpClients,
                             JsonEncoderDecoder,
 							stringResources,
 						),
