@@ -41,7 +41,6 @@ import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencie
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsView
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryDestination
@@ -377,19 +376,18 @@ fun HandheldApplication(
 				is SelectedLibraryReRouter -> {
 					routedNavigationDependencies.apply {
 						LaunchedEffect(key1 = Unit) {
-							try {
-								val settings =
-									applicationSettings.promiseApplicationSettings().suspend()
-								if (settings.chosenLibraryId > -1) {
-									val libraryId = LibraryId(settings.chosenLibraryId)
-									applicationNavigation.viewLibrary(libraryId).suspend()
-									return@LaunchedEffect
-								}
+							val selectedLibraryId = try {
+								selectedLibraryIdProvider.promiseSelectedLibraryId().suspend()
 							} catch (e: Throwable) {
 								logger.error("An error occurred initializing the library", e)
+								null
 							}
 
-							applicationNavigation.backOut().suspend()
+							if (selectedLibraryId != null && selectedLibraryId.id > -1) {
+								applicationNavigation.viewLibrary(selectedLibraryId).suspend()
+							} else {
+								applicationNavigation.backOut().suspend()
+							}
 						}
 					}
 				}
@@ -397,20 +395,19 @@ fun HandheldApplication(
 				is ActiveLibraryDownloadsScreen -> {
 					routedNavigationDependencies.apply {
 						LaunchedEffect(key1 = Unit) {
-							try {
-								val settings =
-									applicationSettings.promiseApplicationSettings().suspend()
-								if (settings.chosenLibraryId > -1) {
-									val libraryId = LibraryId(settings.chosenLibraryId)
-									applicationNavigation.viewLibrary(libraryId).suspend()
-									applicationNavigation.viewActiveDownloads(libraryId).suspend()
-									return@LaunchedEffect
-								}
+							val selectedLibraryId = try {
+								selectedLibraryIdProvider.promiseSelectedLibraryId().suspend()
 							} catch (e: Throwable) {
 								logger.error("An error occurred initializing the library", e)
+								null
 							}
 
-							applicationNavigation.backOut().suspend()
+							if (selectedLibraryId != null && selectedLibraryId.id > -1) {
+								applicationNavigation.viewLibrary(selectedLibraryId).suspend()
+								applicationNavigation.viewActiveDownloads(selectedLibraryId).suspend()
+							} else {
+								applicationNavigation.backOut().suspend()
+							}
 						}
 					}
 				}
