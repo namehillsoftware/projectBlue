@@ -49,6 +49,7 @@ class HiddenSettingsViewModel(private val applicationSettingsRepository: HoldApp
 			.promiseApplicationSettings()
 			.eventually { settings ->
 				settings.isLoggingToFile = isLoggingToFile.value
+				settings.httpClientTypeName = httpClientType.value.name
 				applicationSettingsRepository.promiseUpdatedSettings(settings)
 			}
 			.must { _ ->
