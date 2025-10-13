@@ -35,7 +35,7 @@ sealed interface LibraryDestination : Destination {
 class ConnectionSettingsScreen(override val libraryId: LibraryId) : LibraryDestination
 
 @Parcelize
-class NowPlayingScreen(override val libraryId: LibraryId) : LibraryDestination
+data class NowPlayingScreen(override val libraryId: LibraryId) : LibraryDestination
 
 @Parcelize
 class ListedFileDetailsScreen(
