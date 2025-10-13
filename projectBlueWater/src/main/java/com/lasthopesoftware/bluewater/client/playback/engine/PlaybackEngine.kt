@@ -420,7 +420,7 @@ class PlaybackEngine(
 							maybeNp
 								?.takeIf {
 									playerId.isCurrentPlayerId() &&
-										attachedLibraryId == activeLibraryId.get() &&
+										it.libraryId == activeLibraryId.get() &&
 										it.playlistPosition == p.playlistPosition &&
 										it.filePosition == progress.millis
 								}
