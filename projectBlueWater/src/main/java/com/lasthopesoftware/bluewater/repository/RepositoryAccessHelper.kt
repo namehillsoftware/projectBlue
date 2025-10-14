@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsCre
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsMigrator
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsUpdater
 import com.lasthopesoftware.bluewater.tutorials.TutorialMigrator
+import com.lasthopesoftware.compilation.DebugFlag
 import com.namehillsoftware.querydroid.SqLiteCommand
 import java.io.Closeable
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -48,6 +49,15 @@ class RepositoryAccessHelper(private val context: Context) : SQLiteOpenHelper(co
 	override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
 		databaseSynchronization.write {
 			for (entityUpdater in entityUpdaters) entityUpdater.onUpdate(db, oldVersion, newVersion)
+		}
+	}
+
+	override fun onDowngrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
+		if (!DebugFlag.isDebugCompilation) {
+			// Downgrading can have destructive effects so it's only allowed on debug builds (which should theoretically
+			// only be used during development).
+			super.onDowngrade(db, oldVersion, newVersion)
+			return
 		}
 	}
 
