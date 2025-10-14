@@ -32,7 +32,7 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 	override fun buildLibrarySettingsIntent(libraryId: LibraryId): Intent = getBrowserActivityIntent(ConnectionSettingsScreen(libraryId))
 	override fun buildLibraryServerSettingsPendingIntent(libraryId: LibraryId): PendingIntent {
 		val baseIntent = buildLibrarySettingsIntent(libraryId)
-		return PendingIntent.getActivity(context, 0, baseIntent, 0.makePendingIntentImmutable())
+		return PendingIntent.getActivity(context, 0, baseIntent, PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 	}
 
 	@OptIn(UnstableApi::class)
@@ -45,7 +45,7 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 
 	override fun buildPendingNowPlayingIntent(libraryId: LibraryId): PendingIntent {
 		val intent = buildNowPlayingIntent(libraryId)
-		return PendingIntent.getActivity(context, 0, intent, 0.makePendingIntentImmutable())
+		return PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 	}
 
 	@OptIn(UnstableApi::class)
@@ -53,7 +53,7 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 
 	override fun buildPendingShowDownloadsIntent(): PendingIntent {
 		val baseIntent = buildShowDownloadsIntent()
-		return PendingIntent.getActivity(context, 0, baseIntent, 0.makePendingIntentImmutable())
+		return PendingIntent.getActivity(context, 0, baseIntent, PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 	}
 
 	private fun buildShowDownloadsIntent(): Intent = getBrowserActivityIntent(ActiveLibraryDownloadsScreen)

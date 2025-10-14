@@ -20,6 +20,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ManageLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ProvideLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdCache
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.CachedLibrarySettingsAccess
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.LibrarySettingsAccess
@@ -56,6 +57,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApp
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.lasthopesoftware.resources.bitmaps.DefaultAwareCachingBitmapProducer
 import com.lasthopesoftware.resources.bitmaps.QueuedBitmapProducer
+import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder
 import com.lasthopesoftware.resources.strings.Base64Encoder
 import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
@@ -82,13 +84,16 @@ object ApplicationDependenciesContainer {
 					?.takeIf { it.context == applicationContext }
 					?: run {
 						val newDependencies = AttachedDependencies(applicationContext)
+						attachedDependencies?.close()
 						attachedDependencies = newDependencies
 						newDependencies
 					}
 			}
 
 	@UnstableApi
-	private class AttachedDependencies(val context: Context) : ApplicationDependencies {
+	private class AttachedDependencies(val context: Context) : ApplicationDependencies, AutoCloseable {
+
+		private val autoCloseableManager = AutoCloseableManager()
 
 		private val libraryRepository by lazy { LibraryRepository(context) }
 
@@ -135,7 +140,12 @@ object ApplicationDependenciesContainer {
 		}
 
 		override val selectedLibraryIdProvider by lazy {
-			CachedSelectedLibraryIdProvider(SelectedLibraryIdProvider(applicationSettings))
+			CachedSelectedLibraryIdProvider(
+				SelectedLibraryIdProvider(applicationSettings),
+				autoCloseableManager.manage(
+					SelectedLibraryIdCache(registerForApplicationMessages)
+				),
+			)
 		}
 
 		override val nowPlayingStateMaintenance by lazy {
@@ -260,5 +270,9 @@ object ApplicationDependenciesContainer {
 		override val stringResources by lazy { StringResources(context) }
 
 		override val nowPlayingDisplaySettings by lazy { InMemoryNowPlayingDisplaySettings() }
+
+		override fun close() {
+			autoCloseableManager.close()
+		}
 	}
 }
