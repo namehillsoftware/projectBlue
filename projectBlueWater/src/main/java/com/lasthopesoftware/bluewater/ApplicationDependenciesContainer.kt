@@ -50,6 +50,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAcce
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncSchedulerInitializer
 import com.lasthopesoftware.bluewater.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.features.access.ApplicationFeatureConfigurationRepository
+import com.lasthopesoftware.bluewater.features.access.CachedFeatureConfigurationRepository
 import com.lasthopesoftware.bluewater.settings.repository.access.ApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.cls
@@ -162,7 +163,9 @@ object ApplicationDependenciesContainer {
 		}
 
 		override val applicationFeatureConfiguration by lazy {
-			ApplicationFeatureConfigurationRepository(context, JsonEncoderDecoder)
+			CachedFeatureConfigurationRepository(
+				ApplicationFeatureConfigurationRepository(context, JsonEncoderDecoder)
+			)
 		}
 
 		override val selectedLibraryIdProvider by lazy {
