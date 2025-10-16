@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackSer
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.client.stored.sync.ScheduleSyncs
 import com.lasthopesoftware.bluewater.exceptions.AnnounceExceptions
+import com.lasthopesoftware.bluewater.features.access.HoldApplicationFeatureConfiguration
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
@@ -52,6 +53,7 @@ interface ApplicationDependencies {
 	val selectedLibraryIdProvider: ProvideSelectedLibraryId
 	val stringResources: GetStringResources
 	val applicationSettings: HoldApplicationSettings
+	val applicationFeatureConfiguration: HoldApplicationFeatureConfiguration
 	val nowPlayingState: GetNowPlayingState
 	val nowPlayingStateMaintenance: ManageNowPlayingState
 	val nowPlayingDisplaySettings: StoreNowPlayingDisplaySettings

@@ -1,4 +1,4 @@
-FROM gradle:8.14.2-jdk17
+FROM gradle:8.14.3-jdk17
 
 # Install system dependencies
 RUN apt-get update -qq && apt-get install -qq -y --no-install-recommends \

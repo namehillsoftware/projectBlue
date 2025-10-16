@@ -48,6 +48,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceCon
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncSchedulerInitializer
 import com.lasthopesoftware.bluewater.exceptions.UnexpectedExceptionToaster
+import com.lasthopesoftware.bluewater.features.access.ApplicationFeatureConfigurationRepository
 import com.lasthopesoftware.bluewater.settings.repository.access.ApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.cls
@@ -137,6 +138,10 @@ object ApplicationDependenciesContainer {
 			CachingApplicationSettingsRepository(
 				ApplicationSettingsRepository(context, sendApplicationMessages)
 			)
+		}
+
+		override val applicationFeatureConfiguration by lazy {
+			ApplicationFeatureConfigurationRepository(context, JsonEncoderDecoder)
 		}
 
 		override val selectedLibraryIdProvider by lazy {

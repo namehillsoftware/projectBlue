@@ -6,8 +6,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LookupLibra
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.ProvideLibrarySettings
-import com.lasthopesoftware.bluewater.client.playback.engine.selection.LookupSelectedPlaybackEngineType
-import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.client.stored.sync.ScheduleSyncs
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
@@ -19,7 +17,6 @@ import com.namehillsoftware.handoff.promises.response.ImmediateAction
 
 class ApplicationSettingsViewModel(
 	private val applicationSettingsRepository: HoldApplicationSettings,
-	private val selectedPlaybackEngineTypeAccess: LookupSelectedPlaybackEngineType,
 	private val librarySettingsProvider: ProvideLibrarySettings,
 	private val libraryNameLookup: LookupLibraryName,
 	receiveMessages: RegisterForApplicationMessages,
@@ -44,7 +41,6 @@ class ApplicationSettingsViewModel(
 	val isVolumeLevelingEnabled = mutableIsVolumeLevelingEnabled.asInteractionState()
 	val isPeakLevelNormalizeEditable = isVolumeLevelingEnabled
 	val isPeakLevelNormalizeEnabled = mutableIsPeakLevelNormalizeEnabled.asInteractionState()
-	val playbackEngineType = MutableInteractionState(PlaybackEngineType.ExoPlayer)
 	val chosenLibraryId = mutableChosenLibraryId.asInteractionState()
 	val libraries = mutableLibraries.asInteractionState()
 	val theme = mutableTheme.asInteractionState()
@@ -75,10 +71,6 @@ class ApplicationSettingsViewModel(
 				mutableChosenLibraryId.value = s.chosenLibraryId.takeIf { it > -1 }?.let(::LibraryId)
 			}
 
-		val promisedEngineTypeUpdate = selectedPlaybackEngineTypeAccess
-			.promiseSelectedPlaybackEngineType()
-			.then { it -> playbackEngineType.value = it }
-
 		val promisedLibrariesUpdate = librarySettingsProvider
 			.promiseAllLibrarySettings()
 			.eventually {
@@ -96,7 +88,7 @@ class ApplicationSettingsViewModel(
 			.then { it -> mutableLibraries.value = it.sortedBy { it.first.id } }
 
 		return Promise
-			.whenAll(promisedSimpleValuesUpdate, promisedEngineTypeUpdate, promisedLibrariesUpdate)
+			.whenAll(promisedSimpleValuesUpdate, promisedLibrariesUpdate)
 			.must(this)
 	}
 
@@ -139,7 +131,6 @@ class ApplicationSettingsViewModel(
 					isVolumeLevelingEnabled = isVolumeLevelingEnabled.value,
 					isPeakLevelNormalizeEnabled = isPeakLevelNormalizeEnabled.value,
 					isSyncOnWifiOnly = isSyncOnWifiOnly.value,
-					playbackEngineTypeName = playbackEngineType.value.name,
 					chosenLibraryId = chosenLibraryId.value?.id ?: -1,
 					theme = theme.value
 				)

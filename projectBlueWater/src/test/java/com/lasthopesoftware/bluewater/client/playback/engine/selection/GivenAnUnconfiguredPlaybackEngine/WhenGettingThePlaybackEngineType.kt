@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.playback.engine.selection.GivenAnU
 
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
-import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
-import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
+import com.lasthopesoftware.bluewater.features.ApplicationFeatureConfiguration
+import com.lasthopesoftware.bluewater.features.access.HoldApplicationFeatureConfiguration
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -14,10 +14,10 @@ import org.junit.jupiter.api.Test
 class WhenGettingThePlaybackEngineType {
 
 	private val playbackEngineType by lazy {
-		val applicationSettings = mockk<HoldApplicationSettings>()
-		every { applicationSettings.promiseApplicationSettings() } returns Promise(ApplicationSettings())
-		every { applicationSettings.promiseUpdatedSettings(any()) } answers { Promise(firstArg<ApplicationSettings>()) }
-
+		val applicationSettings = mockk<HoldApplicationFeatureConfiguration> {
+			every { promiseFeatureConfiguration() } returns Promise(ApplicationFeatureConfiguration())
+			every { promiseUpdatedFeatureConfiguration(any()) } answers { Promise(firstArg<ApplicationFeatureConfiguration>()) }
+		}
 		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(
 			applicationSettings,
 			mockk {

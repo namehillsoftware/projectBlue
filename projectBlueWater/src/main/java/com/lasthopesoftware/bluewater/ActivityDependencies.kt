@@ -38,7 +38,7 @@ class ActivityDependencies(
 
 	private val selectedPlaybackEngineTypeAccess by lazy {
 		SelectedPlaybackEngineTypeAccess(
-			applicationSettings,
+			applicationFeatureConfiguration,
 			DefaultPlaybackEngineLookup
 		)
 	}
@@ -120,7 +120,6 @@ class ActivityDependencies(
 	override val applicationSettingsViewModel by activity.buildViewModelLazily {
 		ApplicationSettingsViewModel(
 			applicationSettings,
-			selectedPlaybackEngineTypeAccess,
 			librarySettingsProvider,
 			libraryNameLookup,
 			messageBus,
