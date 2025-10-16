@@ -16,8 +16,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.Checkbox
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.RadioButton
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -25,10 +28,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
+import com.lasthopesoftware.bluewater.client.playback.exoplayer.HttpDataSourceType
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 
 private val optionsPadding = PaddingValues(start = 32.dp, end = 32.dp)
@@ -77,6 +83,54 @@ fun HiddenSettingsView(hiddenSettingsViewModel: HiddenSettingsViewModel) {
                         }
                     )
                 }
+
+				Column(
+					modifier = Modifier
+						.padding(optionsPadding)
+						.selectableGroup()
+				) {
+					Text(
+						text = "HTTP Client Type",
+						modifier = Modifier.padding(rowPadding),
+					)
+
+					val dataSourceType by hiddenSettingsViewModel.dataSourceType.subscribeAsState()
+					Row(
+						modifier = Modifier.padding(rowPadding)
+					) {
+						val dataSourceOption = HttpDataSourceType.OkHttp
+						LabeledSelection(
+							label = dataSourceOption.name,
+							selected = dataSourceType == dataSourceOption,
+							onSelected = { hiddenSettingsViewModel.promiseDataSourceUpdate(dataSourceOption) },
+							{
+								RadioButton(
+									selected = dataSourceType == dataSourceOption,
+									onClick = null,
+								)
+							},
+							role = Role.RadioButton,
+						)
+					}
+
+					Row(
+						modifier = Modifier.padding(rowPadding)
+					) {
+						val dataSourceOption = HttpDataSourceType.HttpPromiseClient
+						LabeledSelection(
+							label = dataSourceOption.name,
+							selected = dataSourceType == dataSourceOption,
+							onSelected = { hiddenSettingsViewModel.promiseDataSourceUpdate(dataSourceOption) },
+							{
+								RadioButton(
+									selected = dataSourceType == dataSourceOption,
+									onClick = null,
+								)
+							},
+							role = Role.RadioButton,
+						)
+					}
+				}
 			}
 		}
 	}
