@@ -39,6 +39,7 @@ class `When Cancelling During Lookup` {
 				).toPromise()
 			},
 			mockk(),
+			mockk(),
             JsonEncoderDecoder,
 			mockk(),
 		)

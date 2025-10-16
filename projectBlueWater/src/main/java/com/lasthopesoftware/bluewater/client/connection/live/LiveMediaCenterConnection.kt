@@ -16,9 +16,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
-import com.lasthopesoftware.bluewater.client.connection.requests.HttpPromiseClientOptions
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
-import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
+import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseServerClients
 import com.lasthopesoftware.bluewater.client.connection.requests.bodyString
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
@@ -57,11 +56,10 @@ import java.io.InputStream
 import java.net.URL
 import java.util.concurrent.CancellationException
 import kotlin.math.pow
-import kotlin.time.Duration.Companion.seconds
 
 class LiveMediaCenterConnection(
 	private val mediaCenterConnectionDetails: MediaCenterConnectionDetails,
-	private val httpPromiseClients: ProvideHttpPromiseClients,
+	private val httpPromiseClients: ProvideHttpPromiseServerClients<MediaCenterConnectionDetails>,
 ) : LiveServerConnection, RemoteLibraryAccess
 {
 	companion object {
@@ -123,12 +121,8 @@ class LiveMediaCenterConnection(
 	override val dataSourceFactory by lazy {
 		HttpPromiseClientDataSource.Factory(
 			httpPromiseClients
-				.getServerClient(
-					mediaCenterConnectionDetails,
-					HttpPromiseClientOptions(
-						readTimeout = 45.seconds,
-						retryOnConnectionFailure = false,
-					)
+				.getStreamingServerClient(
+					mediaCenterConnectionDetails
 				)
 		)
 	}

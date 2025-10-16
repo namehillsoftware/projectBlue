@@ -63,5 +63,7 @@ interface ApplicationDependencies {
 	val okHttpClients: OkHttpFactory
 	val libraryNameLookup: LibraryNameLookup
 	val exceptionAnnouncer: AnnounceExceptions
+	val mediaCenterHttpClients: OkHttpFactory.MediaCenterHttpPromiseServerClient
+	val subsonicHttpClients: OkHttpFactory.SubsonicHttpPromiseServerClient
 }
 

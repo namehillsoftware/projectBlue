@@ -108,6 +108,10 @@ object ApplicationDependenciesContainer {
 
 		override val okHttpClients by lazy { OkHttpFactory(context) }
 
+		override val mediaCenterHttpClients by lazy { okHttpClients.MediaCenterHttpPromiseServerClient() }
+
+		override val subsonicHttpClients by lazy { okHttpClients.SubsonicHttpPromiseServerClient() }
+
 		override val audioCacheStreamSupplier by lazy {
 			DiskFileCacheStreamSupplier(
 				audioDiskCacheDirectoryProvider,
@@ -222,7 +226,8 @@ object ApplicationDependenciesContainer {
 							Base64Encoder,
 							serverLookup,
 							connectionSettingsLookup,
-							okHttpClients,
+							mediaCenterHttpClients,
+							subsonicHttpClients,
                             JsonEncoderDecoder,
 							stringResources,
 						),

@@ -49,6 +49,7 @@ class `When Getting The Live Connection` {
 					password = "9EIZHyoPY",
 				).toPromise()
 			},
+			mockk(),
 			mockk {
 				every {
 					getServerClient(match<SubsonicConnectionDetails> { a ->

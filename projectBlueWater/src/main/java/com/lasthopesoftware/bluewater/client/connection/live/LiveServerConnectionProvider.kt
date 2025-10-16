@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.lookup.LookupServers
-import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
+import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseServerClients
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupValidConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.SubsonicConnectionSettings
@@ -24,7 +24,8 @@ class LiveServerConnectionProvider(
 	private val base64: EncodeToBase64,
 	private val serverLookup: LookupServers,
 	private val connectionSettingsLookup: LookupValidConnectionSettings,
-	private val httpClients: ProvideHttpPromiseClients,
+	private val httpMediaCenterClients: ProvideHttpPromiseServerClients<MediaCenterConnectionDetails>,
+	private val httpSubsonicClients: ProvideHttpPromiseServerClients<SubsonicConnectionDetails>,
 	private val jsonTranslator: TranslateJson,
 	private val stringResources: GetStringResources,
 ) : ProvideLiveServerConnection {
@@ -57,7 +58,7 @@ class LiveServerConnectionProvider(
 					fun testUrls(): Promise<LiveServerConnection?> {
 						if (cp.isCancelled) return Promise.empty()
 						val serverConnection = mediaCenterConnectionDetails.poll() ?: return Promise.empty()
-						val potentialConnection = LiveMediaCenterConnection(serverConnection, httpClients)
+						val potentialConnection = LiveMediaCenterConnection(serverConnection, httpMediaCenterClients)
 						return potentialConnection
 							.promiseIsConnectionPossible()
 							.also(cp::doCancel)
@@ -124,7 +125,7 @@ class LiveServerConnectionProvider(
 						val serverConnection = subsonicConnectionDetails.poll() ?: return Promise.empty()
 						val potentialConnection = LiveSubsonicConnection(
 							serverConnection,
-							httpClients,
+							httpSubsonicClients,
 							jsonTranslator,
 							stringResources,
 						)

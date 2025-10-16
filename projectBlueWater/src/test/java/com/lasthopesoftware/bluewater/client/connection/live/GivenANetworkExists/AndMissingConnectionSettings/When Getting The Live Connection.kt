@@ -25,6 +25,7 @@ class `When Getting The Live Connection` {
 				every { promiseConnectionSettings(any()) } returns Promise.empty()
 			},
 			mockk(),
+			mockk(),
             JsonEncoderDecoder,
 			mockk(),
 		)
