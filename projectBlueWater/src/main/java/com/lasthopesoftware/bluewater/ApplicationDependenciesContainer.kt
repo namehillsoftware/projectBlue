@@ -40,6 +40,7 @@ import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguratio
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.CachedDataSourceServerConnectionProvider
+import com.lasthopesoftware.bluewater.client.playback.exoplayer.ServerHttpDataSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.CachingNowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookupInitializer
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
@@ -110,7 +111,23 @@ object ApplicationDependenciesContainer {
 
 		override val mediaCenterHttpClients by lazy { okHttpClients.MediaCenterHttpPromiseServerClient() }
 
+		override val mediaCenterDataFactories by lazy {
+			ServerHttpDataSourceProvider(
+				mediaCenterHttpClients,
+				mediaCenterHttpClients,
+				applicationFeatureConfiguration
+			)
+		}
+
 		override val subsonicHttpClients by lazy { okHttpClients.SubsonicHttpPromiseServerClient() }
+
+		override val subsonicDataFactories by lazy {
+			ServerHttpDataSourceProvider(
+				subsonicHttpClients,
+				subsonicHttpClients,
+				applicationFeatureConfiguration
+			)
+		}
 
 		override val audioCacheStreamSupplier by lazy {
 			DiskFileCacheStreamSupplier(
@@ -227,7 +244,9 @@ object ApplicationDependenciesContainer {
 							serverLookup,
 							connectionSettingsLookup,
 							mediaCenterHttpClients,
+							mediaCenterDataFactories,
 							subsonicHttpClients,
+							subsonicDataFactories,
                             JsonEncoderDecoder,
 							stringResources,
 						),

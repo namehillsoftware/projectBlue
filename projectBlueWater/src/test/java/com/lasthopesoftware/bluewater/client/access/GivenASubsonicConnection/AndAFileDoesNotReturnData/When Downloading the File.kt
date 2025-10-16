@@ -35,6 +35,7 @@ class `When Downloading the File` {
 					PassThroughHttpResponse(202, "Not found", emptyByteArray.inputStream())
 				}
 			}),
+			mockk(),
             JsonEncoderDecoder,
 			mockk(),
 		)

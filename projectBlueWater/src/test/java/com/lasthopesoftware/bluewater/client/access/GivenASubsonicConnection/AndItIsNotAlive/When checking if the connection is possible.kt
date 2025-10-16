@@ -36,7 +36,8 @@ class `When checking if the connection is possible` {
 					}
 				}
 			},
-            JsonEncoderDecoder,
+			mockk(),
+			JsonEncoderDecoder,
 			mockk(),
 		).promiseIsConnectionPossible().toExpiringFuture().get()!!
 	}

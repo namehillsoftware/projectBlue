@@ -310,6 +310,7 @@ class `When getting the file string list` {
 		LiveSubsonicConnection(
 			SubsonicConnectionDetails(TestUrl, "Xtbyp9lhSJY", "WVe5KSj"),
 			FakeHttpConnectionProvider(httpConnection),
+			mockk(),
             JsonEncoderDecoder,
 			mockk(),
 		)

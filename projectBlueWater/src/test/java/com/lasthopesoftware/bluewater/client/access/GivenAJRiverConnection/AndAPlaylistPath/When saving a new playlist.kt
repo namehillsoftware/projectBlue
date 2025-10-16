@@ -46,6 +46,7 @@ class `When saving a new playlist` {
 				mockk {
 					every { getServerClient(any<MediaCenterConnectionDetails>()) } returns httpConnection
 				},
+				mockk(),
             )
 		)
 	}

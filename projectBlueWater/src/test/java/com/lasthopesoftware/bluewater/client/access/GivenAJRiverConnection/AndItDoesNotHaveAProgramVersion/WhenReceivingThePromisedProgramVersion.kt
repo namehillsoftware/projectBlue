@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnect
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.PassThroughHttpResponse
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -27,6 +28,7 @@ class WhenReceivingThePromisedProgramVersion {
 		val access = LiveMediaCenterConnection(
 			MediaCenterConnectionDetails(TestUrl),
 			FakeHttpConnectionProvider(httpConnection),
+			mockk(),
         )
 		access.promiseServerVersion().toExpiringFuture().get()
 	}

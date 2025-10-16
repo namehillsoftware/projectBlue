@@ -195,6 +195,7 @@ dependencies {
 	implementation libs.androidx.lifecycle.service
 	implementation libs.androidx.lifecycle.runtime.ktx
 	implementation libs.androidx.media3.exoplayer
+	implementation libs.androidx.media3.datasource.okhttp
 	implementation libs.androidx.startup.runtime
 	implementation libs.androidx.compose.ui
 	implementation libs.androidx.compose.material

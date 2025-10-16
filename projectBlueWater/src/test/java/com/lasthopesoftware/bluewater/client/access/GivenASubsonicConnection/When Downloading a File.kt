@@ -48,6 +48,7 @@ class `When Downloading a File` {
 					)
 				}
 			}),
+			mockk(),
             JsonEncoderDecoder,
 			mockk(),
 		)

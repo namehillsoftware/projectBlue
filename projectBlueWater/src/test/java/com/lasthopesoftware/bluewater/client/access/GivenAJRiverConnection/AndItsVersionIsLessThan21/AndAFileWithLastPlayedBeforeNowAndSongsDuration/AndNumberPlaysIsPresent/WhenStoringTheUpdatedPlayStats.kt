@@ -79,6 +79,7 @@ class WhenStoringTheUpdatedPlayStats {
 					}
 				}
 			),
+			mockk(),
         )
 
 		Pair(

@@ -35,6 +35,7 @@ class WhenGettingFileProperties {
 					every { promiseResponse(TestMcwsUrl.addPath("File/GetInfo").addParams("File=$serviceFileId")) } returns deferredReject
 				}
 			),
+			mockk(),
         )
     }
 

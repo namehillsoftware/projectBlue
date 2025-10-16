@@ -20,9 +20,15 @@ class CachedDataSourceServerConnection(
 	private val cacheStreamSupplier: SupplyCacheStreams,
 ) : LiveServerConnection by inner {
 	@OptIn(UnstableApi::class)
-	override val dataSourceFactory: DataSource.Factory by lazy {
-		EntireFileCachedDataSource.Factory(libraryId, inner.dataSourceFactory, cacheStreamSupplier)
+	private val dataSourceFactory: Promise<DataSource.Factory> by lazy {
+		inner.promiseDataSourceFactory()
+			.then { factory ->
+				EntireFileCachedDataSource.Factory(libraryId, factory, cacheStreamSupplier)
+			}
 	}
+
+	override fun promiseDataSourceFactory(): Promise<DataSource.Factory> =
+		dataSourceFactory
 }
 
 class CachedDataSourceServerConnectionProvider(

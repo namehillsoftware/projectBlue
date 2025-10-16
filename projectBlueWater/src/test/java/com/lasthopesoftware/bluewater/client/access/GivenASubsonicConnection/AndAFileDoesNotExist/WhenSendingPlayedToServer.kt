@@ -23,6 +23,7 @@ class WhenSendingPlayedToServer {
 			mockk {
 				every { getServerClient(any<SubsonicConnectionDetails>()) } returns FakeHttpConnection()
 			},
+			mockk(),
             JsonEncoderDecoder,
 			mockk(),
 		)

@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpProm
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupValidConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.SubsonicConnectionSettings
+import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideServerHttpDataSource
 import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.network.LookupActiveNetwork
@@ -25,7 +26,9 @@ class LiveServerConnectionProvider(
 	private val serverLookup: LookupServers,
 	private val connectionSettingsLookup: LookupValidConnectionSettings,
 	private val httpMediaCenterClients: ProvideHttpPromiseServerClients<MediaCenterConnectionDetails>,
+	private val mediaCenterDataSources: ProvideServerHttpDataSource<MediaCenterConnectionDetails>,
 	private val httpSubsonicClients: ProvideHttpPromiseServerClients<SubsonicConnectionDetails>,
+	private val subsonicDataSources: ProvideServerHttpDataSource<SubsonicConnectionDetails>,
 	private val jsonTranslator: TranslateJson,
 	private val stringResources: GetStringResources,
 ) : ProvideLiveServerConnection {
@@ -58,7 +61,11 @@ class LiveServerConnectionProvider(
 					fun testUrls(): Promise<LiveServerConnection?> {
 						if (cp.isCancelled) return Promise.empty()
 						val serverConnection = mediaCenterConnectionDetails.poll() ?: return Promise.empty()
-						val potentialConnection = LiveMediaCenterConnection(serverConnection, httpMediaCenterClients)
+						val potentialConnection = LiveMediaCenterConnection(
+							serverConnection,
+							httpMediaCenterClients,
+							mediaCenterDataSources,
+						)
 						return potentialConnection
 							.promiseIsConnectionPossible()
 							.also(cp::doCancel)
@@ -126,6 +133,7 @@ class LiveServerConnectionProvider(
 						val potentialConnection = LiveSubsonicConnection(
 							serverConnection,
 							httpSubsonicClients,
+							subsonicDataSources,
 							jsonTranslator,
 							stringResources,
 						)

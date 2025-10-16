@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.live
 
 import androidx.annotation.Keep
+import androidx.media3.datasource.DataSource
 import com.google.gson.JsonParser
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
@@ -22,7 +23,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withSubsonicApi
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
-import com.lasthopesoftware.bluewater.client.playback.exoplayer.HttpPromiseClientDataSource
+import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideServerHttpDataSource
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
 import com.lasthopesoftware.bluewater.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.lazyLogger
@@ -53,6 +54,7 @@ import java.util.concurrent.CancellationException
 class LiveSubsonicConnection(
 	private val subsonicConnectionDetails: SubsonicConnectionDetails,
 	private val httpPromiseClients: ProvideHttpPromiseServerClients<SubsonicConnectionDetails>,
+	private val serverHttpDataSource: ProvideServerHttpDataSource<SubsonicConnectionDetails>,
 	private val jsonTranslator: TranslateJson,
 	private val stringResources: GetStringResources,
 ) : LiveServerConnection, RemoteLibraryAccess
@@ -100,6 +102,10 @@ class LiveSubsonicConnection(
 		}
 	}
 
+	private val promisedDataSourceFactory by RetryOnRejectionLazyPromise {
+		serverHttpDataSource.promiseDataSourceFactory(subsonicConnectionDetails)
+	}
+
 	override fun <T> getConnectionKey(key: T): UrlKeyHolder<T> = UrlKeyHolder(subsonicConnectionDetails.baseUrl, key)
 
 	override fun getFileUrl(serviceFile: ServiceFile): URL =
@@ -111,11 +117,7 @@ class LiveSubsonicConnection(
 				"maxBitRate=$bitrate",
 			)
 
-	override val dataSourceFactory by lazy {
-		HttpPromiseClientDataSource.Factory(
-			httpPromiseClients.getStreamingServerClient(subsonicConnectionDetails)
-		)
-	}
+	override fun promiseDataSourceFactory(): Promise<DataSource.Factory> = promisedDataSourceFactory
 
 	override val dataAccess = this
 

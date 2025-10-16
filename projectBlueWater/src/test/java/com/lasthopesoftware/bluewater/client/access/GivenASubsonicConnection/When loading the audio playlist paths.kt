@@ -79,6 +79,7 @@ class `When loading the audio playlist paths` {
 		LiveSubsonicConnection(
 			SubsonicConnectionDetails(TestUrl, "Xtbyp9lhSJY", "WVe5KSj"),
 			FakeHttpConnectionProvider(httpConnection),
+			mockk(),
             JsonEncoderDecoder,
 			mockk(),
 		)

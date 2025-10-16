@@ -29,6 +29,7 @@ class WhenGettingFileProperties {
 			FakeHttpConnectionProvider(mockk {
 				every { promiseResponse(TestMcwsUrl.addPath("File/GetInfo").addParams("File=$serviceFileId")) } returns Promise(IOException("Canceled"))
 			}),
+			mockk(),
         )
     }
 

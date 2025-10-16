@@ -99,17 +99,18 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 		return "$applicationName/$versionName (Linux;Android ${Build.VERSION.RELEASE})"
 	}
 
-	inner class MediaCenterHttpPromiseServerClient() : ProvideHttpPromiseServerClients<MediaCenterConnectionDetails> {
+	inner class MediaCenterHttpPromiseServerClient() : ProvideHttpPromiseServerClients<MediaCenterConnectionDetails>, ProvideOkHttpServerClients<MediaCenterConnectionDetails> {
 		override fun getServerClient(connectionDetails: MediaCenterConnectionDetails): HttpPromiseClient =
 			OkHttpPromiseClient(getOkHttpClient(connectionDetails))
 
-		override fun getStreamingServerClient(connectionDetails: MediaCenterConnectionDetails): HttpPromiseClient {
-			val okHttpClient = getOkHttpClient(connectionDetails)
+		override fun getStreamingServerClient(connectionDetails: MediaCenterConnectionDetails): HttpPromiseClient =
+			OkHttpPromiseClient(getStreamingOkHttpClient(connectionDetails))
+
+		override fun getStreamingOkHttpClient(connectionDetails: MediaCenterConnectionDetails): OkHttpClient =
+			getOkHttpClient(connectionDetails)
 				.newBuilder()
 				.configureForStreaming()
 				.build()
-			return OkHttpPromiseClient(okHttpClient)
-		}
 
 		private fun getOkHttpClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails): OkHttpClient {
 			val authHeaderValue = mediaCenterConnectionDetails.authCode.takeUnless { it.isNullOrEmpty() }?.let { "basic $it" }
@@ -186,17 +187,18 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 		}
 	}
 
-	inner class SubsonicHttpPromiseServerClient() : ProvideHttpPromiseServerClients<SubsonicConnectionDetails> {
+	inner class SubsonicHttpPromiseServerClient() : ProvideHttpPromiseServerClients<SubsonicConnectionDetails>, ProvideOkHttpServerClients<SubsonicConnectionDetails> {
 		override fun getServerClient(connectionDetails: SubsonicConnectionDetails): HttpPromiseClient =
 			OkHttpPromiseClient(getOkHttpClient(connectionDetails))
 
-		override fun getStreamingServerClient(connectionDetails: SubsonicConnectionDetails): HttpPromiseClient {
-			val okHttpClient = getOkHttpClient(connectionDetails)
+		override fun getStreamingServerClient(connectionDetails: SubsonicConnectionDetails): HttpPromiseClient =
+			OkHttpPromiseClient(getStreamingOkHttpClient(connectionDetails))
+
+		override fun getStreamingOkHttpClient(connectionDetails: SubsonicConnectionDetails): OkHttpClient =
+			getOkHttpClient(connectionDetails)
 				.newBuilder()
 				.configureForStreaming()
 				.build()
-			return OkHttpPromiseClient(okHttpClient)
-		}
 
 		@OptIn(ExperimentalStdlibApi::class)
 		private fun getOkHttpClient(subsonicConnectionDetails: SubsonicConnectionDetails): OkHttpClient {

@@ -41,6 +41,7 @@ class WhenSendingPlayedToServer {
 		LiveSubsonicConnection(
 			SubsonicConnectionDetails(TestUrl, "48CMGdBD6JS", "KkIapoI"),
 			FakeHttpConnectionProvider(httpConnection),
+			mockk(),
             JsonEncoderDecoder,
 			mockk(),
 		)

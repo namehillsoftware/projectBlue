@@ -39,6 +39,7 @@ class WhenCheckingIfTheMediaCenterConnectionDetailsIsPossible {
 					}
 				}
 			},
+			mockk(),
         ).promiseIsConnectionPossible().toExpiringFuture().get()!!
 	}
 

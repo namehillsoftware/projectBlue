@@ -45,6 +45,7 @@ class WhenSendingPlayedToServer {
 					).toPromise()
 				}
 			},
+			mockk(),
 		)
 	}
 

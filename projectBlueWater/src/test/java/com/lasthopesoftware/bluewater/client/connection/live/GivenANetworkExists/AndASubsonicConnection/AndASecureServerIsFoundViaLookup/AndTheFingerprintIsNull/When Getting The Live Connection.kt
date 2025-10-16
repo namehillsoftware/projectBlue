@@ -48,6 +48,7 @@ class `When Getting The Live Connection` {
 				).toPromise()
 			},
 			mockk(),
+			mockk(),
 			mockk {
 				every {
 					getServerClient(match<SubsonicConnectionDetails> { a -> "https://4oTZRaNMF:924" == a.baseUrl.toString() })
@@ -65,6 +66,7 @@ class `When Getting The Live Connection` {
 					}
 				}
 			},
+			mockk(),
             JsonEncoderDecoder,
 			mockk(),
 		)

@@ -45,6 +45,7 @@ class WhenCancellingCheckingIfTheMediaCenterConnectionDetailsIsPossible {
 					}
 				}
 			},
+			mockk(),
         ).promiseIsConnectionPossible()
 		promisedTest.cancel()
 		deferredResponse.resolve()

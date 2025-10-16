@@ -11,11 +11,15 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ProvideLibr
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.ProvideLibrarySettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.StoreLibrarySettings
+import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
+import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgressingLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
+import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseServerClients
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
+import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideServerHttpDataSource
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.ManageNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.StoreNowPlayingDisplaySettings
@@ -63,7 +67,9 @@ interface ApplicationDependencies {
 	val okHttpClients: OkHttpFactory
 	val libraryNameLookup: LibraryNameLookup
 	val exceptionAnnouncer: AnnounceExceptions
-	val mediaCenterHttpClients: OkHttpFactory.MediaCenterHttpPromiseServerClient
-	val subsonicHttpClients: OkHttpFactory.SubsonicHttpPromiseServerClient
+	val mediaCenterHttpClients: ProvideHttpPromiseServerClients<MediaCenterConnectionDetails>
+	val mediaCenterDataFactories: ProvideServerHttpDataSource<MediaCenterConnectionDetails>
+	val subsonicHttpClients: ProvideHttpPromiseServerClients<SubsonicConnectionDetails>
+	val subsonicDataFactories: ProvideServerHttpDataSource<SubsonicConnectionDetails>
 }
 

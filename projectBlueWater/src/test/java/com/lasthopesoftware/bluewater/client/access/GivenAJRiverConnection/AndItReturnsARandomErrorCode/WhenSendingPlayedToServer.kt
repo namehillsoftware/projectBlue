@@ -51,6 +51,7 @@ class WhenSendingPlayedToServer {
 					).toPromise()
 				}
 			),
+			mockk(),
         )
 	}
 	private var httpResponseException: HttpResponseException? = null

@@ -49,6 +49,7 @@ class `When Getting The Live Connection` {
 				).toPromise()
 			},
 			mockk(),
+			mockk(),
 			mockk {
 				every {
 					getServerClient(match<SubsonicConnectionDetails> { a ->
@@ -68,6 +69,7 @@ class `When Getting The Live Connection` {
 					}
 				}
 			},
+			mockk(),
             JsonEncoderDecoder,
 			mockk(),
 		)

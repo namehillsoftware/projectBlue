@@ -46,6 +46,7 @@ class `When getting a file image` {
 					)
 				}
 			}),
+			mockk(),
             JsonEncoderDecoder,
 			mockk(),
 		)

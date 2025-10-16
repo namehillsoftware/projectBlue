@@ -38,6 +38,7 @@ class WhenReceivingThePromisedProgramVersion {
 		val connection = LiveSubsonicConnection(
 			SubsonicConnectionDetails(TestUrl, "hi5ZMj3i", "7O1rsa2Yl"),
 			FakeHttpConnectionProvider(httpConnection),
+			mockk(),
             JsonEncoderDecoder,
 			mockk(),
 		)
