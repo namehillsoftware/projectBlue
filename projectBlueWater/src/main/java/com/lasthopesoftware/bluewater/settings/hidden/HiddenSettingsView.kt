@@ -25,7 +25,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -34,6 +33,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
+import com.lasthopesoftware.bluewater.android.ui.theme.LocalSurfaceColor
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.HttpDataSourceType
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 
@@ -43,7 +43,7 @@ private val optionsPadding = PaddingValues(start = 32.dp, end = 32.dp)
 fun HiddenSettingsView(hiddenSettingsViewModel: HiddenSettingsViewModel) {
 	Box(modifier = Modifier
 		.fillMaxSize()
-		.background(Color.Black)
+		.background(LocalSurfaceColor.current)
 	) {
 
 		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
