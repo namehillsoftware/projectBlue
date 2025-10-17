@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.PromiseLatch
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
+import java.util.LinkedList
 
 open class FakeNowPlayingRepository(
 	private var selectedLibraryId: LibraryId? = null,
@@ -61,4 +62,25 @@ class AlwaysOpenNowPlayingRepository<T>(inner: T) : ManageNowPlayingState by inn
 	override fun open() = this
 
 	override fun close() {}
+}
+
+class RecordingNowPlayingRepository(private val inner: ManageNowPlayingState) : ManageNowPlayingState by inner {
+	val states = LinkedList<NowPlaying>()
+
+	override fun updateNowPlaying(nowPlaying: NowPlaying): Promise<NowPlaying> {
+		states.push(nowPlaying)
+		return inner.updateNowPlaying(nowPlaying)
+	}
+}
+
+class LoggingNowPlayingRepository(private val inner: ManageNowPlayingState) : ManageNowPlayingState by inner {
+	override fun updateNowPlaying(nowPlaying: NowPlaying): Promise<NowPlaying> {
+		println("updateNowPlaying($nowPlaying)")
+		return inner
+			.updateNowPlaying(nowPlaying)
+			.then { np ->
+				println("return $np")
+				np
+			}
+	}
 }
