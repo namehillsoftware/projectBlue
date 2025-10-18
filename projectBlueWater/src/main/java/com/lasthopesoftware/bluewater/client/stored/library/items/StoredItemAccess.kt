@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem.Ite
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemHelpers.storedItemType
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.repository.fetch
-import com.lasthopesoftware.bluewater.repository.fetchFirst
+import com.lasthopesoftware.bluewater.repository.fetchFirstOrNull
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.querydroid.SqLiteAssistants
@@ -180,7 +180,7 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 				.addParameter(StoredItem.serviceIdColumnName, item.key)
 				.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
 				.addParameter(StoredItem.itemTypeColumnName, itemType)
-				.fetchFirst()
+				.fetchFirstOrNull()
 
 		private fun getStoredItem(helper: RepositoryAccessHelper, libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType): StoredItem? =
 			helper.mapSql("""
@@ -191,7 +191,7 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 				.addParameter(StoredItem.serviceIdColumnName, item.id)
 				.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
 				.addParameter(StoredItem.itemTypeColumnName, itemType)
-				.fetchFirst()
+				.fetchFirstOrNull()
 
 		private fun inferItem(item: IItem): IItem {
 			if (item is Item) {

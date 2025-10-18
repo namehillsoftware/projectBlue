@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryNowPlayingValues
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.repository.fetch
-import com.lasthopesoftware.bluewater.repository.fetchFirst
+import com.lasthopesoftware.bluewater.repository.fetchFirstOrNull
 import com.lasthopesoftware.bluewater.repository.insert
 import com.lasthopesoftware.bluewater.repository.update
 import com.lasthopesoftware.bluewater.shared.lazyLogger
@@ -26,22 +26,22 @@ import kotlin.coroutines.cancellation.CancellationException
 
 class LibraryRepository(private val context: Context) : ManageLibraries, ProvideLibraries {
 	override fun promiseLibrary(libraryId: LibraryId): Promise<Library?> =
-		promiseTableMessage<Library?>(GetLibraryWriter(context, libraryId))
+		promiseTableMessage(GetLibraryWriter(context, libraryId))
 
 	override fun promiseAllLibraries(): Promise<Collection<Library>> =
-		promiseTableMessage<Collection<Library>>(GetAllLibrariesWriter(context))
+		promiseTableMessage(GetAllLibrariesWriter(context))
 
 	override fun saveLibrary(library: Library): Promise<Library> =
-		promiseTableMessage<Library>(SaveLibraryWriter(context, library))
+		promiseTableMessage(SaveLibraryWriter(context, library))
 
 	override fun updateNowPlaying(values: LibraryNowPlayingValues): Promise<Unit> =
-		promiseTableMessage<Unit>(UpdateNowPlayingLibraryWriter(context, values))
+		promiseTableMessage(UpdateNowPlayingLibraryWriter(context, values))
 
 	override fun promiseNowPlayingValues(libraryId: LibraryId): Promise<LibraryNowPlayingValues?> =
-		promiseTableMessage<LibraryNowPlayingValues?>(GetNowPlayingValuesWriter(context, libraryId))
+		promiseTableMessage(GetNowPlayingValuesWriter(context, libraryId))
 
 	override fun removeLibrary(libraryId: LibraryId): Promise<Unit> =
-		promiseTableMessage<Unit>(RemoveLibraryWriter(context, libraryId))
+		promiseTableMessage(RemoveLibraryWriter(context, libraryId))
 
 	private class GetAllLibrariesWriter(private val context: Context) : CancellableMessageWriter<Collection<Library>> {
 		override fun prepareMessage(cancellationSignal: CancellationSignal): Collection<Library> {
@@ -68,7 +68,7 @@ class LibraryRepository(private val context: Context) : ManageLibraries, Provide
 					repositoryAccessHelper
 						.mapSql("SELECT * FROM $tableName WHERE id = @id")
 						.addParameter("id", libraryInt)
-						.fetchFirst()
+						.fetchFirstOrNull()
 				}
 			}
 		}
@@ -86,7 +86,7 @@ class LibraryRepository(private val context: Context) : ManageLibraries, Provide
 					repositoryAccessHelper
 						.mapSql("SELECT id, $nowPlayingIdColumn, $nowPlayingProgressColumn, $savedTracksStringColumn, $isRepeatingColumn FROM $tableName WHERE id = @id")
 						.addParameter("id", libraryInt)
-						.fetchFirst()
+						.fetchFirstOrNull()
 				}
 			}
 		}

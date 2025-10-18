@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.features.access
 import android.content.Context
 import com.lasthopesoftware.bluewater.features.ApplicationFeatureConfiguration
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
-import com.lasthopesoftware.bluewater.repository.fetchFirst
+import com.lasthopesoftware.bluewater.repository.fetchFirstOrNull
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.applicationFeatureConfigurationColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.tableName
 import com.lasthopesoftware.promises.extensions.preparePromise
@@ -17,7 +17,7 @@ class ApplicationFeatureConfigurationRepository(private val context: Context, pr
 	override fun promiseFeatureConfiguration(): Promise<ApplicationFeatureConfiguration> = promiseTableMessage {
 		RepositoryAccessHelper(context).use { helper ->
 			helper.beginNonExclusiveTransaction().use {
-				helper.mapSql("SELECT $applicationFeatureConfigurationColumn FROM $tableName").fetchFirst<String>()
+				helper.mapSql("SELECT $applicationFeatureConfigurationColumn FROM $tableName").fetchFirstOrNull<String>()
 			}
 		}
 	}.eventually { configuration ->

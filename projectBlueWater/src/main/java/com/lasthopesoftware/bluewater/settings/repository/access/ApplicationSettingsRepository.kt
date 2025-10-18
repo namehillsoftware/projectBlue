@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.settings.repository.access
 
 import android.content.Context
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
-import com.lasthopesoftware.bluewater.repository.fetchFirst
+import com.lasthopesoftware.bluewater.repository.fetchFirstOrNull
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsUpdated
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.chosenLibraryIdColumn
@@ -38,7 +38,7 @@ class ApplicationSettingsRepository(private val context: Context, private val me
 		promiseTableMessage {
 			RepositoryAccessHelper(context).use { helper ->
 				helper.beginNonExclusiveTransaction().use {
-					helper.mapSql("SELECT * FROM $tableName").fetchFirst()
+					helper.mapSql("SELECT * FROM $tableName").fetchFirstOrNull() ?: ApplicationSettings()
 				}
 			}
 		}

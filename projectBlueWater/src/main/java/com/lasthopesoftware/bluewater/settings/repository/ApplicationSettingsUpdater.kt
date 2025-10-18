@@ -6,7 +6,7 @@ import com.google.gson.Gson
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.features.ApplicationFeatureConfiguration
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
-import com.lasthopesoftware.bluewater.repository.fetchFirst
+import com.lasthopesoftware.bluewater.repository.fetchFirstOrNull
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings.Theme
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.applicationFeatureConfigurationColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.chosenLibraryIdColumn
@@ -89,15 +89,16 @@ class ApplicationSettingsUpdater(private val applicationSettingsMigrator: Applic
 			val createTempTableSql = createTableSql.replaceFirst("`${tableName}`", "`$tempTableName`")
 			db.execSQL(createTempTableSql)
 
-			val oldApplicationSettings = SqLiteCommand(db, "SELECT * FROM $tableName").fetchFirst<Version22ApplicationSettings>()
-			val applicationSettings = oldApplicationSettings.toApplicationSettings()
-			SqLiteAssistants.insertValue(db, tempTableName, applicationSettings)
+			val oldApplicationSettings = SqLiteCommand(db, "SELECT * FROM $tableName").fetchFirstOrNull<Version22ApplicationSettings>()
+			oldApplicationSettings?.toApplicationSettings()?.also { applicationSettings ->
+				SqLiteAssistants.insertValue(db, tempTableName, applicationSettings)
+			}
 
 			SqLiteCommand(db, "UPDATE $tempTableName SET $applicationFeatureConfigurationColumn = @$applicationFeatureConfigurationColumn")
 				.addParameter(
 					applicationFeatureConfigurationColumn, gson.toJson(
 						ApplicationFeatureConfiguration(
-							playbackEngineType = oldApplicationSettings.playbackEngineTypeName?.let(PlaybackEngineType::valueOf)
+							playbackEngineType = oldApplicationSettings?.playbackEngineTypeName?.let(PlaybackEngineType::valueOf)
 								?: PlaybackEngineType.ExoPlayer
 						)
 					)
