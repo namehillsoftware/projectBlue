@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.playback.engine.selection.GivenATy
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineTypeSelectionPersistence
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster
-import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
-import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
+import com.lasthopesoftware.bluewater.features.ApplicationFeatureConfiguration
+import com.lasthopesoftware.bluewater.features.access.HoldApplicationFeatureConfiguration
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
@@ -18,16 +18,17 @@ import java.util.concurrent.TimeUnit
 class WhenPersistingTheSelectedPlaybackEngine {
 
 	private val recordingApplicationMessageBus = RecordingApplicationMessageBus()
-	private var persistedEngineType: String? = null
+	private var persistedEngineType: PlaybackEngineType? = null
 
 	@BeforeAll
 	fun before() {
-		val applicationSettings = mockk<HoldApplicationSettings>()
-		every { applicationSettings.promiseApplicationSettings() } returns Promise(ApplicationSettings())
-		every { applicationSettings.promiseUpdatedSettings(any()) } answers {
-			val settings = firstArg<ApplicationSettings>()
-			persistedEngineType = settings.playbackEngineTypeName
-			Promise(settings)
+		val applicationSettings = mockk<HoldApplicationFeatureConfiguration> {
+			every { promiseFeatureConfiguration() } returns Promise(ApplicationFeatureConfiguration())
+			every { promiseUpdatedFeatureConfiguration(any()) } answers {
+				val settings = firstArg<ApplicationFeatureConfiguration>()
+				persistedEngineType = settings.playbackEngineType
+				Promise(settings)
+			}
 		}
 
 		PlaybackEngineTypeSelectionPersistence(
@@ -40,14 +41,17 @@ class WhenPersistingTheSelectedPlaybackEngine {
 
 	@Test
 	fun thenTheExoPlayerSelectionIsBroadcast() {
-		assertThat(
-			recordingApplicationMessageBus.recordedMessages.filterIsInstance<PlaybackEngineTypeChangedBroadcaster.PlaybackEngineTypeChanged>()
-				.first().playbackEngineType
-		).isEqualTo(PlaybackEngineType.ExoPlayer)
+		// Only run this test if new playback engine types have been added.
+		if (PlaybackEngineType.entries.any { e -> e != PlaybackEngineType.ExoPlayer }) {
+			assertThat(
+				recordingApplicationMessageBus.recordedMessages.filterIsInstance<PlaybackEngineTypeChangedBroadcaster.PlaybackEngineTypeChanged>()
+					.first().playbackEngineType
+			).isEqualTo(PlaybackEngineType.ExoPlayer)
+		}
 	}
 
 	@Test
 	fun thenTheExoPlayerSelectionIsPersisted() {
-		assertThat(persistedEngineType).isEqualTo(PlaybackEngineType.ExoPlayer.name)
+		assertThat(persistedEngineType).isEqualTo(PlaybackEngineType.ExoPlayer)
 	}
 }

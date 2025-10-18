@@ -12,8 +12,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.connection.trust.UserSslCertificateProvider
-import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
-import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
@@ -35,13 +33,6 @@ class ActivityDependencies(
 	private val applicationContext by lazy { activity.applicationContext }
 
 	private val viewModelScope by activity.buildViewModelLazily { ViewModelCloseableManager() }
-
-	private val selectedPlaybackEngineTypeAccess by lazy {
-		SelectedPlaybackEngineTypeAccess(
-			applicationSettings,
-			DefaultPlaybackEngineLookup
-		)
-	}
 
 	private val messageBus by lazy { ApplicationMessageBus.getApplicationMessageBus().getScopedMessageBus().also(viewModelScope::manage) }
 
@@ -120,7 +111,6 @@ class ActivityDependencies(
 	override val applicationSettingsViewModel by activity.buildViewModelLazily {
 		ApplicationSettingsViewModel(
 			applicationSettings,
-			selectedPlaybackEngineTypeAccess,
 			librarySettingsProvider,
 			libraryNameLookup,
 			messageBus,
@@ -129,7 +119,7 @@ class ActivityDependencies(
 	}
 
 	override val hiddenSettingsViewModel by activity.buildViewModelLazily {
-		HiddenSettingsViewModel(applicationSettings)
+		HiddenSettingsViewModel(applicationSettings, applicationFeatureConfiguration)
 	}
 
 	override val userSslCertificateProvider by lazy {

@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation.tableName
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.repository.fetch
-import com.lasthopesoftware.bluewater.repository.fetchFirst
+import com.lasthopesoftware.bluewater.repository.fetchFirstOrNull
 import com.lasthopesoftware.bluewater.repository.insert
 import com.lasthopesoftware.bluewater.repository.update
 import com.lasthopesoftware.bluewater.shared.lazyLogger
@@ -96,7 +96,7 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 			mapSql(" SELECT *  FROM $tableName WHERE $serviceIdColumnName = @$serviceIdColumnName AND $libraryIdColumnName = @$libraryIdColumnName")
 				.addParameter(serviceIdColumnName, serviceFile.key)
 				.addParameter(libraryIdColumnName, library.id)
-				.fetchFirst()
+				.fetchFirstOrNull()
 		}
 
 	private fun getStoredFile(helper: RepositoryAccessHelper, storedFileId: Int): StoredFile? =
@@ -104,7 +104,7 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 			helper
 				.mapSql("SELECT * FROM $tableName WHERE id = @id")
 				.addParameter("id", storedFileId)
-				.fetchFirst()
+				.fetchFirstOrNull()
 		}
 
 	private fun RepositoryAccessHelper.createStoredFile(libraryId: LibraryId, serviceFile: ServiceFile): StoredFile =

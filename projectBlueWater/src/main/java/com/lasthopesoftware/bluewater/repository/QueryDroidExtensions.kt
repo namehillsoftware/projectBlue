@@ -5,7 +5,7 @@ import com.namehillsoftware.querydroid.SqLiteAssistants
 import com.namehillsoftware.querydroid.SqLiteCommand
 import java.io.IOException
 
-inline fun <reified T> SqLiteCommand.fetchFirst(): T = fetchFirst(T::class.java)
+inline fun <reified T> SqLiteCommand.fetchFirstOrNull(): T? = fetchFirst(T::class.java)
 
 inline fun <reified T> SqLiteCommand.fetch(): List<T> = fetch(T::class.java)
 

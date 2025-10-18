@@ -50,7 +50,7 @@ class WhenSendingPlayedToServer {
 				}
 			),
 			mockk(),
-		)
+        )
 	}
 
 	@BeforeAll

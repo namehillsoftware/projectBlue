@@ -1,10 +1,8 @@
 package com.lasthopesoftware.bluewater.client.connection.requests
 
-import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
-import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
+class FakeHttpConnectionProvider<TConnectionDetails>(private val client: HttpPromiseClient) : ProvideHttpPromiseClients, ProvideHttpPromiseServerClients<TConnectionDetails> {
+	override fun getServerClient(connectionDetails: TConnectionDetails): HttpPromiseClient = client
+	override fun getStreamingServerClient(connectionDetails: TConnectionDetails): HttpPromiseClient = client
 
-class FakeHttpConnectionProvider(private val client: HttpPromiseClient) : ProvideHttpPromiseClients {
-	override fun getServerClient(mediaCenterConnectionDetails: MediaCenterConnectionDetails): HttpPromiseClient = client
-	override fun getServerClient(subsonicConnectionDetails: SubsonicConnectionDetails): HttpPromiseClient = client
 	override fun getClient(): HttpPromiseClient = client
 }

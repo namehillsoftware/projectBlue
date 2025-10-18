@@ -52,7 +52,7 @@ class WhenGettingTheItems {
 			SubsonicConnectionDetails(TestUrl, "MNYsut3Z", "MWKzloOd"),
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
-			JsonEncoderDecoder,
+            JsonEncoderDecoder,
 			mockk(),
 		)
 	}

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.settings.GivenDefaultSettings
 
-import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -18,9 +17,6 @@ class `When Loading the Settings` {
 		ApplicationSettingsViewModel(
 			mockk {
 				every { promiseApplicationSettings() } returns ApplicationSettings().toPromise()
-			},
-			mockk {
-				every { promiseSelectedPlaybackEngineType() } returns PlaybackEngineType.ExoPlayer.toPromise()
 			},
 			mockk {
 				every { promiseAllLibrarySettings() } returns Promise(emptyList())
@@ -54,11 +50,6 @@ class `When Loading the Settings` {
 	@Test
 	fun `then chosenLibraryId is correct`() {
 		assertThat(mutt.chosenLibraryId.value).isNull()
-	}
-
-	@Test
-	fun `then the playbackEngineType is correct`() {
-		assertThat(mutt.playbackEngineType.value).isEqualTo(PlaybackEngineType.ExoPlayer)
 	}
 
 	@Test

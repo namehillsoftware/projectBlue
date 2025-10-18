@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.live
 
 import android.os.Build
-import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.datasource.DataSource
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
@@ -17,14 +17,14 @@ import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
-import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
-import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
+import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseServerClients
 import com.lasthopesoftware.bluewater.client.connection.requests.bodyString
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withMcApi
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
+import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideServerHttpDataSource
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
 import com.lasthopesoftware.bluewater.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.StandardResponse.Companion.toStandardResponse
@@ -56,13 +56,12 @@ import java.io.IOException
 import java.io.InputStream
 import java.net.URL
 import java.util.concurrent.CancellationException
-import java.util.concurrent.TimeUnit
 import kotlin.math.pow
 
 class LiveMediaCenterConnection(
 	private val mediaCenterConnectionDetails: MediaCenterConnectionDetails,
-	private val httpPromiseClients: ProvideHttpPromiseClients,
-	private val okHttpClients: ProvideOkHttpClients,
+	private val httpPromiseClients: ProvideHttpPromiseServerClients<MediaCenterConnectionDetails>,
+	private val serverHttpDataSource: ProvideServerHttpDataSource<MediaCenterConnectionDetails>,
 ) : LiveServerConnection, RemoteLibraryAccess
 {
 	companion object {
@@ -108,6 +107,10 @@ class LiveMediaCenterConnection(
 		}
 	}
 
+	private val promisedDataSourceFactory by RetryOnRejectionLazyPromise {
+		serverHttpDataSource.promiseDataSourceFactory(mediaCenterConnectionDetails)
+	}
+
 	override fun <T> getConnectionKey(key: T): UrlKeyHolder<T> = UrlKeyHolder(mediaCenterConnectionDetails.baseUrl, key)
 
 	override fun getFileUrl(serviceFile: ServiceFile): URL =
@@ -121,15 +124,7 @@ class LiveMediaCenterConnection(
 					"AndroidVersion=${Build.VERSION.RELEASE}"
 				)
 
-	override val dataSourceFactory by lazy {
-		OkHttpDataSource.Factory(
-			okHttpClients
-				.getOkHttpClient(mediaCenterConnectionDetails)
-				.newBuilder()
-				.readTimeout(45, TimeUnit.SECONDS)
-				.retryOnConnectionFailure(false)
-				.build())
-	}
+	override fun promiseDataSourceFactory(): Promise<DataSource.Factory> = promisedDataSourceFactory
 
 	override val dataAccess: RemoteLibraryAccess
 		get() = this

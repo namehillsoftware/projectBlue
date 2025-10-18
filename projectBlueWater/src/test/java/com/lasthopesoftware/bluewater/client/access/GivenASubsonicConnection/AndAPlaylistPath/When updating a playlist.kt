@@ -93,7 +93,7 @@ class `When updating a playlist` {
 					every { getServerClient(any<SubsonicConnectionDetails>()) } returns httpConnection
 				},
 				mockk(),
-				JsonEncoderDecoder,
+                JsonEncoderDecoder,
 				mockk(),
 			)
 		)

@@ -34,7 +34,7 @@ class `When getting files` {
 			MediaCenterConnectionDetails(TestUrl),
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
-		)
+        )
 	}
 
 	private var items = emptyList<ServiceFile>()

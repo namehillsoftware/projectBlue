@@ -37,7 +37,7 @@ class WhenSendingPlayedToServer {
 				}
 			),
 			mockk(),
-			JsonEncoderDecoder,
+            JsonEncoderDecoder,
 			mockk(),
 		)
 	}

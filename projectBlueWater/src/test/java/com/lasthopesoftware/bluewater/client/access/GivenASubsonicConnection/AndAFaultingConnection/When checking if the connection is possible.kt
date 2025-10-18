@@ -32,7 +32,7 @@ class `When checking if the connection is possible` {
 				}
 			},
 			mockk(),
-			JsonEncoderDecoder,
+            JsonEncoderDecoder,
 			mockk(),
 		).promiseIsConnectionPossible().toExpiringFuture().get()!!
 	}

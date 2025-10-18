@@ -70,7 +70,7 @@ class `When saving a new playlist` {
 					every { getServerClient(any<SubsonicConnectionDetails>()) } returns httpConnection
 				},
 				mockk(),
-				JsonEncoderDecoder,
+                JsonEncoderDecoder,
 				mockk(),
 			)
 		)

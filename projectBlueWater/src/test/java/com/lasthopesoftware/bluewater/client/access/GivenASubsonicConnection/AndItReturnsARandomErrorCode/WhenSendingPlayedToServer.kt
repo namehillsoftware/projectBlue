@@ -42,7 +42,7 @@ class WhenSendingPlayedToServer {
 			SubsonicConnectionDetails(TestUrl, "48CMGdBD6JS", "KkIapoI"),
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
-			JsonEncoderDecoder,
+            JsonEncoderDecoder,
 			mockk(),
 		)
 	}

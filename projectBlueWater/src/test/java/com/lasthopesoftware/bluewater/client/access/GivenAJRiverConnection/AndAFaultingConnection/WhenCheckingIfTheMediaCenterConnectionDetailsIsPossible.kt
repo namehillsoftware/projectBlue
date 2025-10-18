@@ -28,7 +28,7 @@ class WhenCheckingIfTheMediaCenterConnectionDetailsIsPossible {
 				}
 			},
 			mockk(),
-		).promiseIsConnectionPossible().toExpiringFuture().get()!!
+        ).promiseIsConnectionPossible().toExpiringFuture().get()!!
 	}
 
 	@Test

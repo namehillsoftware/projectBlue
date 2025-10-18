@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.settings.GivenTypicalSettings.AndTheSetti
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
-import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -28,7 +27,6 @@ class `When Changing the theme` {
 						isSyncOnWifiOnly = true,
 						isVolumeLevelingEnabled = true,
 						chosenLibraryId = 95,
-						playbackEngineTypeName = PlaybackEngineType.ExoPlayer.name,
 						theme = ApplicationSettings.Theme.LIGHT,
 					)
 				)
@@ -39,10 +37,7 @@ class `When Changing the theme` {
 					Promise(settings)
 				}
 			},
-			mockk {
-				every { promiseSelectedPlaybackEngineType() } returns PlaybackEngineType.ExoPlayer.toPromise()
-			},
-			mockk {
+            mockk {
 				every { promiseAllLibrarySettings() } returns Promise(
 					listOf(
 						LibrarySettings(libraryId = LibraryId(585)),
@@ -98,11 +93,6 @@ class `When Changing the theme` {
 	@Test
 	fun `then chosenLibraryId is correct`() {
 		assertThat(savedApplicationSettings?.chosenLibraryId).isEqualTo(95)
-	}
-
-	@Test
-	fun `then the playbackEngineType is correct`() {
-		assertThat(savedApplicationSettings?.playbackEngineTypeName).isEqualTo(PlaybackEngineType.ExoPlayer.name)
 	}
 
 	@Test

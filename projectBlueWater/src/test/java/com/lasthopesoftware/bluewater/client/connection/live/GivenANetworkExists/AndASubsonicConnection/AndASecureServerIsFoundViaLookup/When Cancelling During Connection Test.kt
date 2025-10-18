@@ -48,6 +48,8 @@ class `When Cancelling During Connection Test` {
 					password = "",
 				).toPromise()
 			},
+			mockk(),
+			mockk(),
 			mockk {
 				every {
 					getServerClient(match<SubsonicConnectionDetails> { a ->
@@ -63,7 +65,7 @@ class `When Cancelling During Connection Test` {
 				}
 			},
 			mockk(),
-			JsonEncoderDecoder,
+            JsonEncoderDecoder,
 			mockk(),
 		)
 

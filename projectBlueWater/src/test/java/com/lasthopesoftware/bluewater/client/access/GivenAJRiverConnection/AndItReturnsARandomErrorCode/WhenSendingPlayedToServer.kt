@@ -52,7 +52,7 @@ class WhenSendingPlayedToServer {
 				}
 			),
 			mockk(),
-		)
+        )
 	}
 	private var httpResponseException: HttpResponseException? = null
 

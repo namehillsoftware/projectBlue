@@ -61,7 +61,9 @@ class `When Cancelling During Lookup` {
 				}
 			},
 			mockk(),
-			JsonEncoderDecoder,
+			mockk(),
+			mockk(),
+            JsonEncoderDecoder,
 			mockk(),
 		)
 

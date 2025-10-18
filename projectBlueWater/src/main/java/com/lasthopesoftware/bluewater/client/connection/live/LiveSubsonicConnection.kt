@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.live
 
 import androidx.annotation.Keep
-import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.datasource.DataSource
 import com.google.gson.JsonParser
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
@@ -17,13 +17,13 @@ import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
-import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
-import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
+import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseServerClients
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withSubsonicApi
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
+import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideServerHttpDataSource
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
 import com.lasthopesoftware.bluewater.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.lazyLogger
@@ -50,12 +50,11 @@ import java.io.IOException
 import java.io.InputStream
 import java.net.URL
 import java.util.concurrent.CancellationException
-import java.util.concurrent.TimeUnit
 
 class LiveSubsonicConnection(
 	private val subsonicConnectionDetails: SubsonicConnectionDetails,
-	private val httpPromiseClients: ProvideHttpPromiseClients,
-	private val okHttpClients: ProvideOkHttpClients,
+	private val httpPromiseClients: ProvideHttpPromiseServerClients<SubsonicConnectionDetails>,
+	private val serverHttpDataSource: ProvideServerHttpDataSource<SubsonicConnectionDetails>,
 	private val jsonTranslator: TranslateJson,
 	private val stringResources: GetStringResources,
 ) : LiveServerConnection, RemoteLibraryAccess
@@ -103,6 +102,10 @@ class LiveSubsonicConnection(
 		}
 	}
 
+	private val promisedDataSourceFactory by RetryOnRejectionLazyPromise {
+		serverHttpDataSource.promiseDataSourceFactory(subsonicConnectionDetails)
+	}
+
 	override fun <T> getConnectionKey(key: T): UrlKeyHolder<T> = UrlKeyHolder(subsonicConnectionDetails.baseUrl, key)
 
 	override fun getFileUrl(serviceFile: ServiceFile): URL =
@@ -114,15 +117,7 @@ class LiveSubsonicConnection(
 				"maxBitRate=$bitrate",
 			)
 
-	override val dataSourceFactory by lazy {
-		OkHttpDataSource.Factory(
-			okHttpClients
-				.getOkHttpClient(subsonicConnectionDetails)
-				.newBuilder()
-				.readTimeout(45, TimeUnit.SECONDS)
-				.retryOnConnectionFailure(false)
-				.build())
-	}
+	override fun promiseDataSourceFactory(): Promise<DataSource.Factory> = promisedDataSourceFactory
 
 	override val dataAccess = this
 

@@ -38,7 +38,7 @@ class `When setting the rating` {
 					every { getServerClient(any<SubsonicConnectionDetails>()) } returns httpConnection
 				},
 				mockk(),
-				JsonEncoderDecoder,
+                JsonEncoderDecoder,
 				mockk(),
 			)
 		)

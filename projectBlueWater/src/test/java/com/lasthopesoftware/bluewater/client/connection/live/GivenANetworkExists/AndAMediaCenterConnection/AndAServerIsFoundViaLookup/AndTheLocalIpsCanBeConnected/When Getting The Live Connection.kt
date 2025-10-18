@@ -80,7 +80,9 @@ class `When Getting The Live Connection` {
 				}
 			},
 			mockk(),
-			JsonEncoderDecoder,
+			mockk(),
+			mockk(),
+            JsonEncoderDecoder,
 			mockk(),
 		)
 

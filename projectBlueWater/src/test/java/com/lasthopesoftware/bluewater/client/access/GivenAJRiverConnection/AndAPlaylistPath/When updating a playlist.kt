@@ -45,7 +45,7 @@ class `When updating a playlist` {
 				MediaCenterConnectionDetails(TestUrl),
 				FakeHttpConnectionProvider(httpConnection),
 				mockk(),
-			)
+            )
         )
 	}
 

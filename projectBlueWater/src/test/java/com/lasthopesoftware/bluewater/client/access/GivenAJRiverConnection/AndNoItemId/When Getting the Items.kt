@@ -40,7 +40,7 @@ class `When Getting the Items` {
 			MediaCenterConnectionDetails(TestUrl),
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
-		)
+        )
 	}
 
 	private var items = emptyList<IItem>()

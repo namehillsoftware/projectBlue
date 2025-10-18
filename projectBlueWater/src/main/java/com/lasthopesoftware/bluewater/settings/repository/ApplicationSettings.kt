@@ -10,7 +10,6 @@ data class ApplicationSettings(
 	var isVolumeLevelingEnabled: Boolean = false,
 	var isPeakLevelNormalizeEnabled: Boolean = false,
 	var isLoggingToFile: Boolean = false,
-	var playbackEngineTypeName: String? = null,
 	var chosenLibraryId: Int = -1,
 	var theme: Theme? = null,
 ) : Entity {

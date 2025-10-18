@@ -30,7 +30,7 @@ class WhenGettingFileProperties {
 				every { promiseResponse(TestMcwsUrl.addPath("File/GetInfo").addParams("File=$serviceFileId")) } returns Promise(IOException("Canceled"))
 			}),
 			mockk(),
-		)
+        )
     }
 
 	private var ioException: IOException? = null

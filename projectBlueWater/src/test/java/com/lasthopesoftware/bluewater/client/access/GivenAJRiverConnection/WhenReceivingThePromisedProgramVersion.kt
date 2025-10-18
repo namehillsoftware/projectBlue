@@ -42,7 +42,7 @@ class WhenReceivingThePromisedProgramVersion {
 			MediaCenterConnectionDetails(TestUrl),
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
-		)
+        )
 
 		connection.promiseServerVersion().toExpiringFuture().get()
 	}

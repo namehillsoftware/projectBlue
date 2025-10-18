@@ -46,7 +46,7 @@ class `When Downloading a File` {
 				}
 			}),
 			mockk(),
-		)
+        )
 
 		downloader.promiseFile(ServiceFile("4")).toExpiringFuture().get()
 	}

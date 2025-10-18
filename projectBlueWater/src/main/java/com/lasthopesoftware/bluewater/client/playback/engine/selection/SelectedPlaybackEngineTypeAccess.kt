@@ -1,30 +1,30 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.selection
 
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.LookupDefaultPlaybackEngine
-import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
+import com.lasthopesoftware.bluewater.features.access.HoldApplicationFeatureConfiguration
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class SelectedPlaybackEngineTypeAccess
 (
-	private val applicationSettings: HoldApplicationSettings,
+	private val applicationFeatureConfiguration: HoldApplicationFeatureConfiguration,
 	private val defaultPlaybackEngineLookup: LookupDefaultPlaybackEngine
 ) : LookupSelectedPlaybackEngineType {
 	private val engineTypes by lazy { PlaybackEngineType.entries.toTypedArray() }
 
 	override fun promiseSelectedPlaybackEngineType(): Promise<PlaybackEngineType> =
-		applicationSettings
-			.promiseApplicationSettings()
+		applicationFeatureConfiguration
+			.promiseFeatureConfiguration()
 			.eventually { s ->
-				engineTypes.firstOrNull { e -> e.name == s.playbackEngineTypeName }
+				engineTypes.firstOrNull { e -> e == s.playbackEngineType }
 					?.toPromise()
 					?: defaultPlaybackEngineLookup.promiseDefaultEngineType()
 						.eventually { t ->
-							s.playbackEngineTypeName = t.name
-							applicationSettings
-								.promiseUpdatedSettings(s)
+							val newConfiguration = s.copy(playbackEngineType = t)
+							applicationFeatureConfiguration
+								.promiseUpdatedFeatureConfiguration(newConfiguration)
 								.then { ns ->
-									engineTypes.first { e -> e.name == ns.playbackEngineTypeName }
+									engineTypes.first { e -> e == ns.playbackEngineType }
 								}
 						}
 					}

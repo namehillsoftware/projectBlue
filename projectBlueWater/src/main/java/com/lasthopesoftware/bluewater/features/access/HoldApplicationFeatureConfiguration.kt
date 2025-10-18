@@ -1,0 +1,9 @@
+package com.lasthopesoftware.bluewater.features.access
+
+import com.lasthopesoftware.bluewater.features.ApplicationFeatureConfiguration
+import com.namehillsoftware.handoff.promises.Promise
+
+interface HoldApplicationFeatureConfiguration {
+	fun promiseFeatureConfiguration(): Promise<ApplicationFeatureConfiguration>
+	fun promiseUpdatedFeatureConfiguration(applicationFeatureConfiguration: ApplicationFeatureConfiguration): Promise<ApplicationFeatureConfiguration>
+}

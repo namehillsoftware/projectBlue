@@ -106,7 +106,7 @@ Some more valid text... la di da..."""),
 			MediaCenterConnectionDetails(TestUrl),
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
-		)
+        )
 
 		connection
 			.promiseFileProperties(ServiceFile("15"))

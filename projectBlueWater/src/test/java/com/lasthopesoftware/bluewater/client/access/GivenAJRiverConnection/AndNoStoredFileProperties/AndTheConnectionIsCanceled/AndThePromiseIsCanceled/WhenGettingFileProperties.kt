@@ -36,7 +36,7 @@ class WhenGettingFileProperties {
 				}
 			),
 			mockk(),
-		)
+        )
     }
 
 	private var cancellationException: CancellationException? = null

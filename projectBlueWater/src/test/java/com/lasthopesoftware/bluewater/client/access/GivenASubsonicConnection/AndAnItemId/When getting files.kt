@@ -312,7 +312,7 @@ class `When getting files` {
 			SubsonicConnectionDetails(TestUrl, "Xtbyp9lhSJY", "WVe5KSj"),
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
-			JsonEncoderDecoder,
+            JsonEncoderDecoder,
 			mockk(),
 		)
 	}

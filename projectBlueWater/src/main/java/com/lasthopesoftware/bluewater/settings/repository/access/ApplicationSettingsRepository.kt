@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.settings.repository.access
 
 import android.content.Context
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
-import com.lasthopesoftware.bluewater.repository.fetchFirst
+import com.lasthopesoftware.bluewater.repository.fetchFirstOrNull
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsUpdated
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.chosenLibraryIdColumn
@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEnt
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnPowerOnlyColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnWifiOnlyColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isVolumeLevelingEnabledColumn
-import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.playbackEngineTypeNameColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.tableName
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.themeColumn
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
@@ -29,7 +28,6 @@ class ApplicationSettingsRepository(private val context: Context, private val me
 				.addSetter(isVolumeLevelingEnabledColumn)
 				.addSetter(isPeakLevelNormalizeEnabledColumn)
 				.addSetter(isLoggingToFile)
-				.addSetter(playbackEngineTypeNameColumn)
 				.addSetter(chosenLibraryIdColumn)
 				.addSetter(themeColumn)
 				.buildQuery()
@@ -40,7 +38,7 @@ class ApplicationSettingsRepository(private val context: Context, private val me
 		promiseTableMessage {
 			RepositoryAccessHelper(context).use { helper ->
 				helper.beginNonExclusiveTransaction().use {
-					helper.mapSql("SELECT * FROM $tableName").fetchFirst()
+					helper.mapSql("SELECT * FROM $tableName").fetchFirstOrNull() ?: ApplicationSettings()
 				}
 			}
 		}
@@ -55,7 +53,6 @@ class ApplicationSettingsRepository(private val context: Context, private val me
 						.addParameter(isVolumeLevelingEnabledColumn, applicationSettings.isVolumeLevelingEnabled)
 						.addParameter(isPeakLevelNormalizeEnabledColumn, applicationSettings.isPeakLevelNormalizeEnabled)
 						.addParameter(isLoggingToFile, applicationSettings.isLoggingToFile)
-						.addParameter(playbackEngineTypeNameColumn, applicationSettings.playbackEngineTypeName)
 						.addParameter(chosenLibraryIdColumn, applicationSettings.chosenLibraryId)
 						.addParameter(themeColumn, applicationSettings.theme)
 						.execute()

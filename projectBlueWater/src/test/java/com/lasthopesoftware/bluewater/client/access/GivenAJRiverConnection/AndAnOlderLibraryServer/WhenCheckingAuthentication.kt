@@ -34,7 +34,7 @@ class WhenCheckingAuthentication {
 			MediaCenterConnectionDetails(TestUrl),
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
-		)
+        )
 		access.promiseIsReadOnly().toExpiringFuture().get()
 	}
 

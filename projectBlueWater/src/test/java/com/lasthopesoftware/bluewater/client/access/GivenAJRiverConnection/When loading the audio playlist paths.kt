@@ -71,7 +71,7 @@ class `When loading the audio playlist paths` {
 			MediaCenterConnectionDetails(TestUrl),
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
-		)
+        )
 	}
 
 	private var audioPlaylist: List<String>? = null

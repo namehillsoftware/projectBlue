@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.tutorials
 
 import android.content.Context
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
-import com.lasthopesoftware.bluewater.repository.fetchFirst
+import com.lasthopesoftware.bluewater.repository.fetchFirstOrNull
 import com.lasthopesoftware.bluewater.tutorials.DisplayedTutorialEntityInformation.tableName
 import com.lasthopesoftware.bluewater.tutorials.DisplayedTutorialEntityInformation.tutorialKeyColumn
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -55,7 +55,7 @@ class TutorialManager(private val context: Context, private val tutorialCache: C
 				h.beginNonExclusiveTransaction().use {
 					h.mapSql("SELECT * FROM $tableName WHERE $tutorialKeyColumn = @$tutorialKeyColumn")
 						.addParameter(tutorialKeyColumn, tutorialKey)
-						.fetchFirst()
+						.fetchFirstOrNull()
 				}
 			}
 		}

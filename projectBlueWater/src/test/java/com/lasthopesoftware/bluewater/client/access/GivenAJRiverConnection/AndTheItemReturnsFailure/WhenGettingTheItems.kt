@@ -40,7 +40,7 @@ class WhenGettingTheItems {
 			MediaCenterConnectionDetails(TestUrl),
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
-		)
+        )
 	}
 
 	private var exception: IOException? = null
