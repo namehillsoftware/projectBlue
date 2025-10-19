@@ -6,5 +6,4 @@ import com.namehillsoftware.handoff.promises.Promise
 interface NowPlayingFileDetailsState {
 	val isInPosition: InteractionState<Boolean>
 	fun removeFile(): Promise<Unit>
-	val isRemoving: InteractionState<Boolean>
 }

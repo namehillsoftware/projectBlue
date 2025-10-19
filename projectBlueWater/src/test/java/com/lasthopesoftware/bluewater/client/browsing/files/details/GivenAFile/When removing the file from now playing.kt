@@ -52,7 +52,7 @@ class `When removing the file from now playing` {
 			mockk {
 				every { promiseNowPlaying(LibraryId(libraryId)) } returns NowPlaying(
 					libraryId = LibraryId(libraryId),
-					playlist = emptyList(),
+					playlist = listOf(ServiceFile(serviceFileId)),
 					playlistPosition = 0,
 					filePosition = 0,
 					isRepeating = false,
@@ -63,20 +63,17 @@ class `When removing the file from now playing` {
 	}
 
 	private var isLoadingStates = mutableListOf<Boolean>()
-	private var isRemovingStates = mutableListOf<Boolean>()
 	private var isInPositionStates = mutableListOf<Boolean>()
 
 	@BeforeAll
 	fun act() {
 		viewModel.isLoading.mapNotNull().subscribe(isLoadingStates::add).toCloseable().use {
-			viewModel.isRemoving.mapNotNull().subscribe(isRemovingStates::add).toCloseable().use {
-				viewModel.isInPosition.mapNotNull().subscribe(isInPositionStates::add).toCloseable().use {
-					viewModel
-						.load(LibraryId(libraryId), PositionedFile(501, ServiceFile(serviceFileId)))
-						.toExpiringFuture()
-						.get()
-					viewModel.removeFile().toExpiringFuture().get()
-				}
+			viewModel.isInPosition.mapNotNull().subscribe(isInPositionStates::add).toCloseable().use {
+				viewModel
+					.load(LibraryId(libraryId), PositionedFile(0, ServiceFile(serviceFileId)))
+					.toExpiringFuture()
+					.get()
+				viewModel.removeFile().toExpiringFuture().get()
 			}
 		}
 	}
@@ -87,19 +84,15 @@ class `When removing the file from now playing` {
 	}
 
 	@Test
-	fun `then is removing changes correctly`() {
-		assertThat(isRemovingStates).isEqualTo(
+	fun `then the file is in position changes correctly`() {
+		assertThat(isInPositionStates).isEqualTo(
 			listOf(
 				false,
 				true,
 				false,
+				true,
 			)
 		)
-	}
-
-	@Test
-	fun `then the file is in position changes correctly`() {
-		assertThat(isInPositionStates).isEqualTo(listOf(false))
 	}
 
 	@Test
@@ -109,6 +102,6 @@ class `When removing the file from now playing` {
 
 	@Test
 	fun `then the file is removed to now playing`() {
-		assertThat(removedPosition).isEqualTo(501)
+		assertThat(removedPosition).isEqualTo(0)
 	}
 }

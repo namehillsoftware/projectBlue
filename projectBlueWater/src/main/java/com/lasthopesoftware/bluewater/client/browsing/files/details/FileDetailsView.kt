@@ -195,7 +195,6 @@ private fun NowPlayingFileMenu(
 	)
 
 	val isInPosition by nowPlayingFileDetailsState.isInPosition.subscribeAsState()
-	val isRemoving by nowPlayingFileDetailsState.isRemoving.subscribeAsState()
 	val removeFileLabel = stringResource(id = R.string.btn_remove_file)
 	ColumnMenuIcon(
 		onClick = { nowPlayingFileDetailsState.removeFile() },
@@ -204,7 +203,7 @@ private fun NowPlayingFileMenu(
 		label = removeFileLabel,
 		labelMaxLines = 1,
 		modifier = modifier,
-		enabled = !isLoading && !isRemoving && isInPosition
+		enabled = !isLoading && isInPosition
 	)
 
 	val playLabel = stringResource(id = R.string.skip_to)
@@ -224,7 +223,7 @@ private fun NowPlayingFileMenu(
 }
 
 @Composable
-fun FileRating(viewModel: FileDetailsState, mediaStylePalette: MediaStylePalette, modifier: Modifier) {
+private fun FileRating(viewModel: FileDetailsState, mediaStylePalette: MediaStylePalette, modifier: Modifier) {
 	val rating by viewModel.rating.subscribeAsState()
 
 	RatingBar(
@@ -236,7 +235,7 @@ fun FileRating(viewModel: FileDetailsState, mediaStylePalette: MediaStylePalette
 }
 
 @Composable
-fun rememberComputedColorPalette(
+private fun rememberComputedColorPalette(
 	paletteProvider: MediaStylePaletteProvider,
 	coverArt: Bitmap?
 ): State<MediaStylePalette> {
@@ -259,7 +258,7 @@ fun rememberComputedColorPalette(
 }
 
 @Composable
-fun FilePropertyHeader(
+private fun FilePropertyHeader(
 	viewModel: FileDetailsState,
 	palette: MediaStylePalette,
 	modifier: Modifier = Modifier,
@@ -298,7 +297,7 @@ fun FilePropertyHeader(
 }
 
 @Composable
-fun FilePropertyRow(
+private fun FilePropertyRow(
 	viewModel: FileDetailsState,
 	property: FileDetailsViewModel.FilePropertyViewModel,
 	palette: MediaStylePalette
@@ -543,7 +542,7 @@ private fun FileDetailsEditor(
 }
 
 @Composable
-fun FileDetailsSingleColumn(
+private fun FileDetailsSingleColumn(
 	viewModel: FileDetailsState,
 	navigateApplication: NavigateApplication,
 	coverArtBitmap: Bitmap?,
@@ -765,7 +764,7 @@ fun FileDetailsSingleColumn(
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun BoxWithConstraintsScope.FileDetailsTwoColumn(
+private fun BoxWithConstraintsScope.FileDetailsTwoColumn(
 	viewModel: FileDetailsState,
 	navigateApplication: NavigateApplication,
 	coverArtBitmap: Bitmap?,

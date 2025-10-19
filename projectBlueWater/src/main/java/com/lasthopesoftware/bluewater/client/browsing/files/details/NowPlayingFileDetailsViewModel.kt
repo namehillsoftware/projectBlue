@@ -13,12 +13,13 @@ import com.lasthopesoftware.bluewater.shared.observables.LiftedInteractionState
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.bluewater.shared.observables.asInteractionState
 import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.response.EventualAction
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
-import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import io.reactivex.rxjava3.core.Observable
 
 class NowPlayingFileDetailsViewModel(
@@ -32,9 +33,9 @@ class NowPlayingFileDetailsViewModel(
 	NowPlayingFileDetailsState,
 	PlayableFileDetailsState,
 	FileDetailsState by fileDetailsState,
+	EventualAction,
 	ImmediateAction,
-	ImmediateResponse<NowPlaying?, Unit>,
-	PromisedResponse<Unit, Unit>
+	ImmediateResponse<NowPlaying?, Unit>
 {
 	private var activePositionedFile: PositionedFile? = null
 
@@ -42,11 +43,9 @@ class NowPlayingFileDetailsViewModel(
 		AutoCloseableManager().also(::addCloseable)
 	}
 
-	private val mutableIsRemoving = MutableInteractionState(false)
 	private val mutableIsLoading = MutableInteractionState(false)
 	private val mutableIsInPosition = MutableInteractionState(false)
 
-	override val isRemoving = mutableIsRemoving.asInteractionState()
 	override val isInPosition = mutableIsInPosition.asInteractionState()
 	override val isLoading = autoCloseableManager.manage(LiftedInteractionState(
 		Observable.combineLatest(listOf(mutableIsLoading.mapNotNull(), fileDetailsState.isLoading.mapNotNull())) { source -> source.any { loading -> loading as Boolean } },
@@ -64,7 +63,7 @@ class NowPlayingFileDetailsViewModel(
 		activePositionedFile = positionedFile
 		return loadFileDetailsState
 			.load(libraryId, positionedFile.serviceFile)
-			.eventually(this)
+			.inevitably(this)
 			.must(this)
 	}
 
@@ -72,10 +71,10 @@ class NowPlayingFileDetailsViewModel(
 		val libraryId = activeLibraryId ?: return Unit.toPromise()
 		val positionedFile = activePositionedFile ?: return Unit.toPromise()
 
-		mutableIsRemoving.value = true
+		mutableIsInPosition.value = false
 		return controlPlayback
 			.removeFromPlaylistAtPosition(libraryId, positionedFile.playlistPosition)
-			.must { _ -> mutableIsRemoving.value = false }
+			.inevitably(this)
 	}
 
 	override fun play() {
@@ -89,10 +88,8 @@ class NowPlayingFileDetailsViewModel(
 		mutableIsLoading.value = false
 	}
 
-	override fun promiseResponse(resolution: Unit): Promise<Unit> {
-		val libraryId = activeLibraryId ?: return Unit.toPromise()
-		return loadIsInPosition(libraryId)
-	}
+	override fun promiseAction(): Promise<*>? =
+		activeLibraryId?.let(::loadIsInPosition).keepPromise()
 
 	override fun respond(nowPlaying: NowPlaying?) {
 		val currentLibraryId = activeLibraryId
