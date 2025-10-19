@@ -227,12 +227,13 @@ fun LibraryDestination.Navigate(
 			}
 
 			is FileDetailsFromNowPlayingScreen -> {
-				val viewModel = fileDetailsFromNowPlayingViewModel
+				val viewModel = nowPlayingFileDetailsViewModel
 
 				FileDetailsView(
 					viewModel = viewModel,
 					navigateApplication = applicationNavigation,
 					bitmapProducer = bitmapProducer,
+					nowPlayingFileDetailsSate = viewModel,
 					playableFileDetailsState = viewModel,
 				)
 
