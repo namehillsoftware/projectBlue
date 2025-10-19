@@ -42,9 +42,8 @@ class PlaybackServiceController(private val context: Context) : ControlPlaybackS
 		PlaybackService.addAfterNowPlayingFile(context, libraryId, serviceFile)
 	}
 
-	override fun removeFromPlaylistAtPosition(libraryId: LibraryId, position: Int) {
+	override fun removeFromPlaylistAtPosition(libraryId: LibraryId, position: Int): Promise<Unit> =
 		PlaybackService.removeFileAtPositionFromPlaylist(context, libraryId, position)
-	}
 
 	override fun setRepeating(libraryId: LibraryId) = PlaybackService.setRepeating(context, libraryId)
 

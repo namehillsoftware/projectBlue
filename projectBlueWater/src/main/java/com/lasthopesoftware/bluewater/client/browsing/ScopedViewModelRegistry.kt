@@ -102,6 +102,8 @@ class ScopedViewModelRegistry(
 			playbackServiceController,
 			fileDetailsViewModel,
 			fileDetailsViewModel,
+			nowPlayingState,
+			registerForApplicationMessages,
 		)
 	}
 
