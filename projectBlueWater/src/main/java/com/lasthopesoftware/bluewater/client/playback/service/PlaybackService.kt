@@ -677,6 +677,15 @@ import java.util.concurrent.TimeoutException
 						.then { _ ->
 							applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
 						}
+						.eventually {
+							mainLoopHandlerExecutor.preparePromise {
+								Toast.makeText(
+									this,
+									getText(R.string.lbl_song_removed_from_now_playing),
+									Toast.LENGTH_SHORT
+								).show()
+							}
+						}
 						.unitResponse()
 				}
 				is PlaybackEngineAction.MoveFile -> {
