@@ -42,9 +42,11 @@ class NowPlayingFileDetailsViewModel(
 		AutoCloseableManager().also(::addCloseable)
 	}
 
+	private val mutableIsRemoving = MutableInteractionState(false)
 	private val mutableIsLoading = MutableInteractionState(false)
 	private val mutableIsInPosition = MutableInteractionState(false)
 
+	override val isRemoving = mutableIsRemoving.asInteractionState()
 	override val isInPosition = mutableIsInPosition.asInteractionState()
 	override val isLoading = autoCloseableManager.manage(LiftedInteractionState(
 		Observable.combineLatest(listOf(mutableIsLoading.mapNotNull(), fileDetailsState.isLoading.mapNotNull())) { source -> source.any { loading -> loading as Boolean } },
@@ -66,11 +68,14 @@ class NowPlayingFileDetailsViewModel(
 			.must(this)
 	}
 
-	override fun removeFile() {
-		val libraryId = activeLibraryId ?: return
-		val positionedFile = activePositionedFile ?: return
+	override fun removeFile(): Promise<Unit> {
+		val libraryId = activeLibraryId ?: return Unit.toPromise()
+		val positionedFile = activePositionedFile ?: return Unit.toPromise()
 
-		controlPlayback.removeFromPlaylistAtPosition(libraryId, positionedFile.playlistPosition)
+		mutableIsRemoving.value = true
+		return controlPlayback
+			.removeFromPlaylistAtPosition(libraryId, positionedFile.playlistPosition)
+			.must { _ -> mutableIsRemoving.value = false }
 	}
 
 	override fun play() {

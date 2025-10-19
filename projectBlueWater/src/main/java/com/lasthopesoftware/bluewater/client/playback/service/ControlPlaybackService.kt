@@ -30,7 +30,7 @@ interface ControlPlaybackService {
 
 	fun addAfterNowPlayingFile(libraryId: LibraryId, serviceFile: ServiceFile)
 
-	fun removeFromPlaylistAtPosition(libraryId: LibraryId, position: Int)
+	fun removeFromPlaylistAtPosition(libraryId: LibraryId, position: Int): Promise<Unit>
 
 	fun setRepeating(libraryId: LibraryId)
 

@@ -238,14 +238,13 @@ import java.util.concurrent.TimeoutException
 			)
 		}
 
-		fun removeFileAtPositionFromPlaylist(context: Context, libraryId: LibraryId, filePosition: Int) {
-			context.safelyStartService(
-				getNewSelfIntent(
-					context,
-					PlaybackEngineAction.RemoveFileAtPosition(libraryId, filePosition)
-				)
-			)
-		}
+		fun removeFileAtPositionFromPlaylist(context: Context, libraryId: LibraryId, filePosition: Int): Promise<Unit> =
+			context.promiseBoundService<PlaybackService>()
+				.eventually { h ->
+					h.service
+						.removeFileAtPosition(libraryId, filePosition)
+						.must { _ -> h.close() }
+				}
 
 		fun moveFile(context: Context, libraryId: LibraryId, filePosition: Int, newPosition: Int) {
 			context.safelyStartService(
@@ -669,25 +668,6 @@ import java.util.concurrent.TimeoutException
 							}
 						}
 				}
-				is PlaybackEngineAction.RemoveFileAtPosition -> {
-					val (libraryId, filePosition) = playbackEngineAction
-
-					restorePlaybackServices(libraryId)
-						.eventually { it.playlistFiles.removeFileAtPosition(filePosition) }
-						.then { _ ->
-							applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
-						}
-						.eventually {
-							mainLoopHandlerExecutor.preparePromise {
-								Toast.makeText(
-									this,
-									getText(R.string.lbl_song_removed_from_now_playing),
-									Toast.LENGTH_SHORT
-								).show()
-							}
-						}
-						.unitResponse()
-				}
 				is PlaybackEngineAction.MoveFile -> {
 					val (libraryId, filePosition, newPosition) = playbackEngineAction
 
@@ -832,6 +812,23 @@ import java.util.concurrent.TimeoutException
 	}
 
 	override fun onBind(intent: Intent): IBinder? = binder
+
+	private fun removeFileAtPosition(libraryId: LibraryId, playlistPosition: Int) =
+		restorePlaybackServices(libraryId)
+			.eventually { it.playlistFiles.removeFileAtPosition(playlistPosition) }
+			.then { _ ->
+				applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
+			}
+			.eventually {
+				mainLoopHandlerExecutor.preparePromise {
+					Toast.makeText(
+						this,
+						getText(R.string.lbl_song_removed_from_now_playing),
+						Toast.LENGTH_SHORT
+					).show()
+				}
+			}
+			.unitResponse()
 
 	private fun startNewPlaylist(libraryId: LibraryId, playlist: List<ServiceFile>, playlistPosition: Int): Promise<Unit> {
 		activeLibraryId = libraryId
@@ -1090,12 +1087,6 @@ import java.util.concurrent.TimeoutException
 		data class AddFileToPlaylist(override val libraryId: LibraryId, val serviceFile: ServiceFile) : PlaybackEngineAction {
 			@IgnoredOnParcel
 			override val requestCode = 9
-		}
-
-		@Parcelize
-		data class RemoveFileAtPosition(override val libraryId: LibraryId, val position: Int) : PlaybackEngineAction {
-			@IgnoredOnParcel
-			override val requestCode = 10
 		}
 
 		@Parcelize

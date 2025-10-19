@@ -34,6 +34,7 @@ class `When removing the file from now playing` {
 				every { removeFromPlaylistAtPosition(any(), any()) } answers {
 					removedLibraryId = firstArg()
 					removedPosition = lastArg()
+					Unit.toPromise()
 				}
 			},
 			mockk {
@@ -62,17 +63,20 @@ class `When removing the file from now playing` {
 	}
 
 	private var isLoadingStates = mutableListOf<Boolean>()
+	private var isRemovingStates = mutableListOf<Boolean>()
 	private var isInPositionStates = mutableListOf<Boolean>()
 
 	@BeforeAll
 	fun act() {
 		viewModel.isLoading.mapNotNull().subscribe(isLoadingStates::add).toCloseable().use {
-			viewModel.isInPosition.mapNotNull().subscribe(isInPositionStates::add).toCloseable().use {
-				viewModel
-					.load(LibraryId(libraryId), PositionedFile(501, ServiceFile(serviceFileId)))
-					.toExpiringFuture()
-					.get()
-				viewModel.removeFile()
+			viewModel.isRemoving.mapNotNull().subscribe(isRemovingStates::add).toCloseable().use {
+				viewModel.isInPosition.mapNotNull().subscribe(isInPositionStates::add).toCloseable().use {
+					viewModel
+						.load(LibraryId(libraryId), PositionedFile(501, ServiceFile(serviceFileId)))
+						.toExpiringFuture()
+						.get()
+					viewModel.removeFile().toExpiringFuture().get()
+				}
 			}
 		}
 	}
@@ -80,6 +84,17 @@ class `When removing the file from now playing` {
 	@Test
 	fun `then is loading changes correctly`() {
 		assertThat(isLoadingStates).isEqualTo(listOf(true))
+	}
+
+	@Test
+	fun `then is removing changes correctly`() {
+		assertThat(isRemovingStates).isEqualTo(
+			listOf(
+				false,
+				true,
+				false,
+			)
+		)
 	}
 
 	@Test

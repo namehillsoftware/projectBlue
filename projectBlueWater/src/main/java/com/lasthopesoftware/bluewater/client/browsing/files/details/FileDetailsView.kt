@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredWidth
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -113,9 +112,40 @@ private val viewPadding = viewPaddingUnit
 private val maxMenuHeight = topMenuHeight + rowPadding
 
 @Composable
+private fun PlayLastButton(
+	fileDetailsState: FileDetailsState,
+	modifier: Modifier = Modifier,
+) {
+	val addFileToPlaybackLabel = stringResource(id = R.string.btn_add_file_to_playback)
+	ColumnMenuIcon(
+		onClick = { fileDetailsState.addToNowPlaying() },
+		iconPainter = painterResource(id = R.drawable.playlist_plus),
+		contentDescription = addFileToPlaybackLabel,
+		label = addFileToPlaybackLabel,
+		labelMaxLines = 1,
+		modifier = modifier,
+	)
+}
+
+@Composable
+private fun PlayNextButton(
+	fileDetailsState: FileDetailsState,
+	modifier: Modifier = Modifier,
+) {
+	val playFileNextPlaybackLabel = stringResource(id = R.string.btn_play_file_next)
+	ColumnMenuIcon(
+		onClick = { fileDetailsState.playNext() },
+		iconPainter = painterResource(id = R.drawable.playlist_inner_plus),
+		contentDescription = playFileNextPlaybackLabel,
+		label = playFileNextPlaybackLabel,
+		labelMaxLines = 1,
+		modifier = modifier,
+	)
+}
+
+@Composable
 private fun PlayableFileMenu(
 	fileDetailsState: FileDetailsState,
-	mediaStylePalette: MediaStylePalette,
 	playableFileDetailsState: PlayableFileDetailsState?,
 ) {
 	val modifier = Modifier.requiredWidth(topMenuIconWidth)
@@ -129,37 +159,9 @@ private fun PlayableFileMenu(
 		enabled = !isLoading,
 	)
 
-	val addFileToPlaybackLabel = stringResource(id = R.string.btn_add_file_to_playback)
-	ColumnMenuIcon(
-		onClick = { fileDetailsState.addToNowPlaying() },
-		icon = {
-			Image(
-				painter = painterResource(id = R.drawable.playlist_plus),
-				colorFilter = ColorFilter.tint(mediaStylePalette.secondaryTextColor),
-				contentDescription = addFileToPlaybackLabel,
-				modifier = Modifier.size(topMenuIconSize),
-			)
-		},
-		label = addFileToPlaybackLabel,
-		labelMaxLines = 1,
-		modifier = modifier,
-	)
+	PlayLastButton(fileDetailsState, modifier)
 
-	val playFileNextPlaybackLabel = stringResource(id = R.string.btn_play_file_next)
-	ColumnMenuIcon(
-		onClick = { fileDetailsState.playNext() },
-		icon = {
-			Image(
-				painter = painterResource(id = R.drawable.playlist_inner_plus),
-				colorFilter = ColorFilter.tint(mediaStylePalette.secondaryTextColor),
-				contentDescription = playFileNextPlaybackLabel,
-				modifier = Modifier.size(topMenuIconSize),
-			)
-		},
-		label = playFileNextPlaybackLabel,
-		labelMaxLines = 1,
-		modifier = modifier,
-	)
+	PlayNextButton(fileDetailsState, modifier)
 
 	if (playableFileDetailsState != null) {
 		val playLabel = stringResource(id = R.string.btn_play)
@@ -179,7 +181,7 @@ private fun PlayableFileMenu(
 private fun NowPlayingFileMenu(
 	fileDetailsState: FileDetailsState,
 	nowPlayingFileDetailsState: NowPlayingFileDetailsState,
-	playableFileDetailsState: PlayableFileDetailsState?,
+	playableFileDetailsState: PlayableFileDetailsState,
 ) {
 	val modifier = Modifier.requiredWidth(topMenuIconWidth)
 	val isLoading by fileDetailsState.isLoading.subscribeAsState()
@@ -193,6 +195,7 @@ private fun NowPlayingFileMenu(
 	)
 
 	val isInPosition by nowPlayingFileDetailsState.isInPosition.subscribeAsState()
+	val isRemoving by nowPlayingFileDetailsState.isRemoving.subscribeAsState()
 	val removeFileLabel = stringResource(id = R.string.btn_remove_file)
 	ColumnMenuIcon(
 		onClick = { nowPlayingFileDetailsState.removeFile() },
@@ -201,21 +204,23 @@ private fun NowPlayingFileMenu(
 		label = removeFileLabel,
 		labelMaxLines = 1,
 		modifier = modifier,
-		enabled = !isLoading && isInPosition
+		enabled = !isLoading && !isRemoving && isInPosition
 	)
 
-	if (playableFileDetailsState != null) {
-		val playLabel = stringResource(id = R.string.skip_to)
-		ColumnMenuIcon(
-			onClick = { playableFileDetailsState.play() },
-			iconPainter = painterResource(id = R.drawable.av_next_white),
-			contentDescription = playLabel,
-			label = playLabel,
-			labelMaxLines = 1,
-			modifier = Modifier.requiredWidth(topMenuIconWidth),
-			enabled = isInPosition
-		)
-	}
+	val playLabel = stringResource(id = R.string.skip_to)
+	ColumnMenuIcon(
+		onClick = { playableFileDetailsState.play() },
+		iconPainter = painterResource(id = R.drawable.av_next_white),
+		contentDescription = playLabel,
+		label = playLabel,
+		labelMaxLines = 1,
+		modifier = Modifier.requiredWidth(topMenuIconWidth),
+		enabled = isInPosition
+	)
+
+	PlayLastButton(fileDetailsState, modifier)
+
+	PlayNextButton(fileDetailsState, modifier)
 }
 
 @Composable
@@ -913,7 +918,6 @@ fun FileDetailsView(
 					menuIcons = {
 						PlayableFileMenu(
 							viewModel,
-							coverArtColorState,
 							playableFileDetailsState
 						)
 					}
@@ -925,7 +929,6 @@ fun FileDetailsView(
 					menuIcons = {
 						PlayableFileMenu(
 							viewModel,
-							coverArtColorState,
 							playableFileDetailsState,
 						)
 					}
