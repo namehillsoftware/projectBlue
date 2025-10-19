@@ -119,12 +119,14 @@ private fun PlayableFileMenu(
 	playableFileDetailsState: PlayableFileDetailsState?,
 ) {
 	val modifier = Modifier.requiredWidth(topMenuIconWidth)
+	val isLoading by fileDetailsState.isLoading.subscribeAsState()
 
 	LabelledRefreshButton(
 		onClick = {
 			fileDetailsState.promiseLoadedActiveFile()
 		},
 		modifier = modifier,
+		enabled = !isLoading,
 	)
 
 	val addFileToPlaybackLabel = stringResource(id = R.string.btn_add_file_to_playback)
@@ -163,17 +165,12 @@ private fun PlayableFileMenu(
 		val playLabel = stringResource(id = R.string.btn_play)
 		ColumnMenuIcon(
 			onClick = { playableFileDetailsState.play() },
-			icon = {
-				Image(
-					painter = painterResource(id = R.drawable.av_play_white),
-					colorFilter = ColorFilter.tint(mediaStylePalette.secondaryTextColor),
-					contentDescription = playLabel,
-					modifier = Modifier.size(topMenuIconSize),
-				)
-			},
+			iconPainter = painterResource(id = R.drawable.av_next_white),
+			contentDescription = playLabel,
 			label = playLabel,
 			labelMaxLines = 1,
-			modifier = Modifier.requiredWidth(topMenuIconWidth)
+			modifier = Modifier.requiredWidth(topMenuIconWidth),
+			enabled = !isLoading
 		)
 	}
 }
@@ -181,50 +178,42 @@ private fun PlayableFileMenu(
 @Composable
 private fun NowPlayingFileMenu(
 	fileDetailsState: FileDetailsState,
-	mediaStylePalette: MediaStylePalette,
 	nowPlayingFileDetailsState: NowPlayingFileDetailsState,
 	playableFileDetailsState: PlayableFileDetailsState?,
 ) {
 	val modifier = Modifier.requiredWidth(topMenuIconWidth)
+	val isLoading by fileDetailsState.isLoading.subscribeAsState()
 
 	LabelledRefreshButton(
 		onClick = {
 			fileDetailsState.promiseLoadedActiveFile()
 		},
 		modifier = modifier,
+		enabled = !isLoading,
 	)
 
+	val isInPosition by nowPlayingFileDetailsState.isInPosition.subscribeAsState()
 	val removeFileLabel = stringResource(id = R.string.btn_remove_file)
 	ColumnMenuIcon(
 		onClick = { nowPlayingFileDetailsState.removeFile() },
-		icon = {
-			Image(
-				painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
-				colorFilter = ColorFilter.tint(mediaStylePalette.secondaryTextColor),
-				contentDescription = removeFileLabel,
-				modifier = Modifier.size(topMenuIconSize),
-			)
-		},
+		iconPainter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+		contentDescription = removeFileLabel,
 		label = removeFileLabel,
 		labelMaxLines = 1,
 		modifier = modifier,
+		enabled = !isLoading && isInPosition
 	)
 
 	if (playableFileDetailsState != null) {
 		val playLabel = stringResource(id = R.string.skip_to)
 		ColumnMenuIcon(
 			onClick = { playableFileDetailsState.play() },
-			icon = {
-				Image(
-					painter = painterResource(id = R.drawable.av_next_white),
-					colorFilter = ColorFilter.tint(mediaStylePalette.secondaryTextColor),
-					contentDescription = playLabel,
-					modifier = Modifier.size(topMenuIconSize),
-				)
-			},
+			iconPainter = painterResource(id = R.drawable.av_next_white),
+			contentDescription = playLabel,
 			label = playLabel,
 			labelMaxLines = 1,
-			modifier = Modifier.requiredWidth(topMenuIconWidth)
+			modifier = Modifier.requiredWidth(topMenuIconWidth),
+			enabled = isInPosition
 		)
 	}
 }
@@ -992,7 +981,6 @@ fun FileDetailsView(
 					menuIcons = {
 						NowPlayingFileMenu(
 							viewModel,
-							coverArtColorState,
 							nowPlayingFileDetailsSate,
 							playableFileDetailsState,
 						)
@@ -1005,7 +993,6 @@ fun FileDetailsView(
 					menuIcons = {
 						NowPlayingFileMenu(
 							viewModel,
-							coverArtColorState,
 							nowPlayingFileDetailsSate,
 							playableFileDetailsState,
 						)
