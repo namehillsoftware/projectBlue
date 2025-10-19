@@ -6,16 +6,23 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.namehillsoftware.handoff.promises.Promise
 
-class FileDetailsFromNowPlayingViewModel(
+class NowPlayingFileDetailsViewModel(
 	private val controlPlayback: ControlPlaybackService,
 	private val loadFileDetailsState: LoadFileDetailsState,
 	private val fileDetailsState: FileDetailsState
-) : ViewModel(), PlayableFileDetailsState, FileDetailsState by fileDetailsState {
+) : ViewModel(), NowPlayingFileDetailsState, PlayableFileDetailsState, FileDetailsState by fileDetailsState {
 	private var activePositionedFile: PositionedFile? = null
 
 	fun load(libraryId: LibraryId, positionedFile: PositionedFile): Promise<Unit> {
 		activePositionedFile = positionedFile
 		return loadFileDetailsState.load(libraryId, positionedFile.serviceFile)
+	}
+
+	override fun removeFile() {
+		val libraryId = activeLibraryId ?: return
+		val positionedFile = activePositionedFile ?: return
+
+		controlPlayback.removeFromPlaylistAtPosition(libraryId, positionedFile.playlistPosition)
 	}
 
 	override fun play() {

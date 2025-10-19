@@ -36,10 +36,9 @@
     <string name="btn_previous">Previous</string>
     <string name="btn_next">Next</string>
     <string name="btn_cancel">Cancel</string>
+    <string name="skip_to">Skip To</string>
     <string name="lbl_connection_lost_title">Connection Lost</string>
     <string name="lbl_attempting_to_reconnect">The connection with the server has been lost. %1$s is attempting to reconnect.</string>
-    <string name="drawer_open">Open Drawer</string>
-    <string name="drawer_close">Close Drawer</string>
     <string name="action_settings">Settings</string>
     <string name="lbl_waiting_for_connection">Waiting for Connection</string>
     <string name="lbl_click_to_cancel">Click here to cancel.</string>
@@ -51,6 +50,7 @@
     <string name="btn_add_file_to_playback">Play Last</string>
     <string name="btn_play_file_next">Play Next</string>
     <string name="lbl_song_added_to_now_playing">Song added to Now Playing</string>
+    <string name="lbl_song_removed_from_now_playing">Song removed from Now Playing</string>
     <string name="lbl_getting_library_details">Getting library details</string>
     <string name="lbl_connecting_to_server_library">Connecting to server library</string>
     <string name="lbl_please_connect_to_valid_server">Please connect to a valid server</string>

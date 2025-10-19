@@ -522,12 +522,13 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedViewModel
 		}
 
 		is FileDetailsFromNowPlayingScreen -> {
-			val viewModel = browserViewDependencies.fileDetailsFromNowPlayingViewModel
+			val viewModel = browserViewDependencies.nowPlayingFileDetailsViewModel
 
 			FileDetailsView(
 				viewModel = viewModel,
 				navigateApplication = browserViewDependencies.applicationNavigation,
 				bitmapProducer = browserViewDependencies.bitmapProducer,
+				nowPlayingFileDetailsSate = viewModel,
 				playableFileDetailsState = viewModel,
 			)
 
