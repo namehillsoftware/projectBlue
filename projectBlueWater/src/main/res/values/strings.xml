@@ -36,10 +36,9 @@
     <string name="btn_previous">Previous</string>
     <string name="btn_next">Next</string>
     <string name="btn_cancel">Cancel</string>
+    <string name="skip_to">Skip To</string>
     <string name="lbl_connection_lost_title">Connection Lost</string>
     <string name="lbl_attempting_to_reconnect">The connection with the server has been lost. %1$s is attempting to reconnect.</string>
-    <string name="drawer_open">Open Drawer</string>
-    <string name="drawer_close">Close Drawer</string>
     <string name="action_settings">Settings</string>
     <string name="lbl_waiting_for_connection">Waiting for Connection</string>
     <string name="lbl_click_to_cancel">Click here to cancel.</string>

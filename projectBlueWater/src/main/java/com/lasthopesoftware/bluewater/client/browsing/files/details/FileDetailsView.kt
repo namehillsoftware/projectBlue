@@ -211,7 +211,7 @@ private fun NowPlayingFileMenu(
 	)
 
 	if (playableFileDetailsState != null) {
-		val playLabel = stringResource(id = R.string.btn_play)
+		val playLabel = stringResource(id = R.string.skip_to)
 		ColumnMenuIcon(
 			onClick = { playableFileDetailsState.play() },
 			icon = {
