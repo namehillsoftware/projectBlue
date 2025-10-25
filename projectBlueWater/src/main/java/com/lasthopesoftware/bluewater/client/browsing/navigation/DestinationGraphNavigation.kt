@@ -29,13 +29,13 @@ class DestinationGraphNavigation(
 ) : NavigateApplication by inner {
 
 	override fun launchSearch(libraryId: LibraryId) = coroutineScope.launch {
-		popUpToBrowserScreen()
+		ensureBrowserIsOnStack(libraryId)
 
 		navController.navigate(SearchScreen(libraryId))
 	}.toPromise()
 
 	override fun search(libraryId: LibraryId, filePropertyFilter: FileProperty): Promise<Unit> = coroutineScope.launch {
-		popUpToBrowserScreen()
+		ensureBrowserIsOnStack(libraryId)
 
 		navController.navigate(SearchScreen(libraryId, filePropertyFilter))
 	}.toPromise()
@@ -55,13 +55,13 @@ class DestinationGraphNavigation(
 	}.toPromise()
 
 	override fun viewServerSettings(libraryId: LibraryId) = coroutineScope.launch {
-		popUpToBrowserScreen()
+		ensureBrowserIsOnStack(libraryId)
 
 		navController.navigate(ConnectionSettingsScreen(libraryId))
 	}.toPromise()
 
 	override fun viewActiveDownloads(libraryId: LibraryId) = coroutineScope.launch {
-		popUpToBrowserScreen()
+		ensureBrowserIsOnStack(libraryId)
 
 		navController.navigate(DownloadsScreen(libraryId))
 	}.toPromise()
@@ -86,6 +86,7 @@ class DestinationGraphNavigation(
 
 	override fun viewNowPlaying(libraryId: LibraryId) = coroutineScope.launch {
 		if (!navController.moveToTop { it is NowPlayingScreen }) {
+			ensureBrowserIsOnStack(libraryId)
 			navController.navigate(NowPlayingScreen(libraryId))
 		}
 	}.toPromise()
@@ -98,7 +99,9 @@ class DestinationGraphNavigation(
 		itemListMenuBackPressedHandler.hideAllMenus() || navigateUp().suspend()
 	}.toPromise()
 
-	private fun popUpToBrowserScreen() {
-		navController.popUpTo { it is ItemScreen || it is LibraryScreen }
+	private suspend fun ensureBrowserIsOnStack(libraryId: LibraryId) {
+		if (!navController.popUpTo { it is ItemScreen || it is LibraryScreen }) {
+			viewLibrary(libraryId).suspend()
+		}
 	}
 }
