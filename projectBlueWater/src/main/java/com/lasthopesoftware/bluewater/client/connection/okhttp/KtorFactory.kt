@@ -25,7 +25,7 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.request.header
-import io.ktor.client.request.request
+import io.ktor.client.request.prepareRequest
 import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.http.HttpHeaders
@@ -33,13 +33,17 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.contentLength
 import io.ktor.util.appendAll
 import io.ktor.util.toMap
-import io.ktor.utils.io.jvm.javaio.toInputStream
+import io.ktor.utils.io.exhausted
+import io.ktor.utils.io.readRemaining
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.io.asSink
 import java.io.InputStream
+import java.io.PipedInputStream
+import java.io.PipedOutputStream
 import java.net.URL
 import java.security.KeyStore
 import java.security.KeyStoreException
@@ -242,7 +246,11 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 		return "$applicationName/$versionName (Linux;Android ${Build.VERSION.RELEASE})"
 	}
 
-	private class KtorHttpResponse(private val client: HttpClient, private val response: io.ktor.client.statement.HttpResponse, override val body: InputStream) : HttpResponse {
+	private class KtorHttpResponse(
+		private val client: HttpClient,
+		private val response: io.ktor.client.statement.HttpResponse,
+		override val body: InputStream
+	) : HttpResponse {
 		override val code: Int
 			get() = response.status.value
 		override val message: String = ""
@@ -250,31 +258,58 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 		override val contentLength: Long
 			get() = response.contentLength() ?: 0L
 
-		override fun close() = client.close()
+		override fun close() {
+			body.close()
+			client.close()
+		}
 	}
 
 	@OptIn(ExperimentalCoroutinesApi::class)
-	private class KtorPromiseClient<T : HttpClientEngineConfig>(private val scope: CoroutineScope, private val engineFactory: HttpClientEngineFactory<T>, private val httpClientConfig: HttpClientConfig<T>, private val engineConfig: (T.() -> Unit)? = null) : HttpPromiseClient {
-		override fun promiseResponse(url: URL): Promise<HttpResponse> =
-			scope.async {
-				val httpClient = getClient()
-				val response = httpClient.request(url = url)
-				KtorHttpResponse(httpClient, response, response.bodyAsChannel().toInputStream())
-			}.toPromise()
+	private class KtorPromiseClient<T : HttpClientEngineConfig>(private val scope: CoroutineScope, private val engineFactory: HttpClientEngineFactory<T>, private val httpClientConfig: HttpClientConfig<T>, private val engineConfig: T.() -> Unit = {}) : HttpPromiseClient {
+		override fun promiseResponse(url: URL): Promise<HttpResponse> = promiseResponse(HttpMethod.Get.value, emptyMap(), url)
 
-		override fun promiseResponse(method: String, headers: Map<String, String>, url: URL): Promise<HttpResponse> =
-			scope.async {
-				val httpClient = getClient()
-				val response = httpClient.request {
-					url(url)
-					this.method = HttpMethod(method)
-					this.headers.appendAll(headers)
+		override fun promiseResponse(method: String, headers: Map<String, String>, url: URL): Promise<HttpResponse> = Promise { m ->
+			val job = scope.launch {
+				try {
+					val httpClient = getClient()
+					val request = httpClient.prepareRequest {
+						url(url)
+						this.method = HttpMethod(method)
+						this.headers.appendAll(headers)
+					}
+
+					request.execute { response ->
+						val pipedInputStream = PipedInputStream()
+						val pipedOutputStream = PipedOutputStream(pipedInputStream)
+
+						ThreadPools.io.execute {
+							m.sendResolution(
+								KtorHttpResponse(httpClient, response, pipedInputStream)
+							)
+						}
+
+						pipedOutputStream.use { pipedOutputStream ->
+							val sink = pipedOutputStream.asSink()
+
+							sink.use {
+								val channel = response.bodyAsChannel()
+								while (!channel.exhausted()) {
+									val chunk = channel.readRemaining(8192)
+									chunk.transferTo(it)
+								}
+							}
+						}
+					}
+				} catch (e: Throwable) {
+					m.sendRejection(e)
 				}
-				KtorHttpResponse(httpClient, response, response.bodyAsChannel().toInputStream())
-			}.toPromise()
+			}
+
+			m.awaitCancellation { job.cancel() }
+		}
 
 		private fun getClient() = HttpClient(engineFactory) {
-			engineConfig?.also(::engine)
+			engine(engineConfig)
 			this += httpClientConfig
 		}
 	}
