@@ -59,13 +59,33 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 		private fun HttpClientConfig<CIOEngineConfig>.configureForStreaming() =
 			clone()
 				.apply {
-					engine {
-						endpoint.connectAttempts = 2
-					}
 					install(HttpTimeout) {
 						requestTimeoutMillis = 45.seconds.inWholeMilliseconds
 					}
 				}
+		private fun CIOEngineConfig.configureForStreaming() = {
+			endpoint.connectAttempts = 2
+		}
+		private val trustManager by lazy {
+			val trustManagerFactory = try {
+				TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+			} catch (e: NoSuchAlgorithmException) {
+				throw RuntimeException(e)
+			}
+
+			try {
+				trustManagerFactory.init(null as KeyStore?)
+			} catch (e: KeyStoreException) {
+				throw RuntimeException(e)
+			}
+
+			val trustManagers = trustManagerFactory.trustManagers
+			check(!(trustManagers.size != 1 || trustManagers[0] !is X509TrustManager)) {
+				("Unexpected default trust managers:" + trustManagers.contentToString())
+			}
+
+			trustManagers[0] as X509TrustManager
+		}
 	}
 
 	private val commonConfiguration by lazy {
@@ -99,25 +119,30 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 	inner class MediaCenterClient() : ProvideHttpPromiseServerClients<MediaCenterConnectionDetails> {
 
 		override fun promiseServerClient(connectionDetails: MediaCenterConnectionDetails): Promise<HttpPromiseClient> =
-			KtorPromiseClient(scope, CIO, getHttpConfiguration(connectionDetails)).toPromise()
+			KtorPromiseClient(scope, CIO, getHttpConfiguration(connectionDetails), getEngineConfig(connectionDetails)).toPromise()
 
 		override fun promiseStreamingServerClient(connectionDetails: MediaCenterConnectionDetails): Promise<HttpPromiseClient> {
-			val clientConfig = getHttpConfiguration(connectionDetails)
-				.configureForStreaming()
-			return KtorPromiseClient(scope, CIO, clientConfig).toPromise()
+			return KtorPromiseClient(
+				scope,
+				CIO,
+				getHttpConfiguration(connectionDetails).configureForStreaming(),
+				{
+					getEngineConfig(connectionDetails)(this)
+					configureForStreaming()
+				}
+			).toPromise()
+		}
+
+		private fun getEngineConfig(mediaCenterConnectionDetails: MediaCenterConnectionDetails): CIOEngineConfig.() -> Unit = {
+			// Hostname verifier?
+			https {
+				// Ktor TLS network `HostnameUtils` scans for this host in the certificate if it is set
+				serverName = mediaCenterConnectionDetails.baseUrl.host
+				trustManager = getTrustManager(mediaCenterConnectionDetails)
+			}
 		}
 
 		private fun getHttpConfiguration(mediaCenterConnectionDetails: MediaCenterConnectionDetails) = commonConfiguration.clone().apply {
-			engine {
-
-				// Hostname verifier?
-				https {
-					// Ktor TLS network `HostnameUtils` scans for this host in the certificate if it is set
-					serverName = mediaCenterConnectionDetails.baseUrl.host
-					trustManager = getTrustManager(mediaCenterConnectionDetails)
-				}
-			}
-
 			mediaCenterConnectionDetails.authCode.takeUnless { it.isNullOrEmpty() }?.let { "basic $it" }.also {
 				install(createClientPlugin("BasicAuth") {
 					onRequest { request, _ ->
@@ -128,24 +153,6 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 		}
 
 		private fun getTrustManager(mediaCenterConnectionDetails: MediaCenterConnectionDetails): X509TrustManager {
-			val trustManagerFactory = try {
-				TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-			} catch (e: NoSuchAlgorithmException) {
-				throw RuntimeException(e)
-			}
-
-			try {
-				trustManagerFactory.init(null as KeyStore?)
-			} catch (e: KeyStoreException) {
-				throw RuntimeException(e)
-			}
-
-			val trustManagers = trustManagerFactory.trustManagers
-			check(!(trustManagers.size != 1 || trustManagers[0] !is X509TrustManager)) {
-				("Unexpected default trust managers:" + trustManagers.contentToString())
-			}
-
-			val trustManager = trustManagers[0] as X509TrustManager
 			return mediaCenterConnectionDetails.certificateFingerprint
 				.takeIf { it.isNotEmpty() }
 				?.let { fingerprint -> SelfSignedTrustManager(fingerprint, trustManager) }
@@ -155,12 +162,34 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 
 	inner class SubsonicClient() : ProvideHttpPromiseServerClients<SubsonicConnectionDetails> {
 		override fun promiseServerClient(connectionDetails: SubsonicConnectionDetails): Promise<HttpPromiseClient> =
-			KtorPromiseClient(scope, CIO, getHttpConfiguration(connectionDetails))
-				.toPromise()
+			KtorPromiseClient(
+				scope,
+				CIO,
+				getHttpConfiguration(connectionDetails),
+				getEngineConfig(connectionDetails)
+
+			).toPromise()
 
 		override fun promiseStreamingServerClient(connectionDetails: SubsonicConnectionDetails): Promise<HttpPromiseClient> {
 			val clientConfig = getHttpConfiguration(connectionDetails).configureForStreaming()
-			return KtorPromiseClient(scope, CIO,  clientConfig).toPromise()
+			return KtorPromiseClient(
+				scope,
+				CIO,
+				clientConfig,
+				{
+					getEngineConfig(connectionDetails)(this)
+					configureForStreaming()
+				}
+			).toPromise()
+		}
+
+		private fun getEngineConfig(subsonicConnectionDetails: SubsonicConnectionDetails): CIOEngineConfig.() -> Unit = {
+			// Hostname verifier?
+			https {
+				// Ktor TLS network `HostnameUtils` scans for this host in the certificate if it is set
+				serverName = subsonicConnectionDetails.baseUrl.host
+				trustManager = getTrustManager(subsonicConnectionDetails)
+			}
 		}
 
 		@OptIn(ExperimentalStdlibApi::class)
@@ -190,24 +219,6 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 		}
 
 		private fun getTrustManager(subsonicConnectionDetails: SubsonicConnectionDetails): X509TrustManager {
-			val trustManagerFactory = try {
-				TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-			} catch (e: NoSuchAlgorithmException) {
-				throw RuntimeException(e)
-			}
-
-			try {
-				trustManagerFactory.init(null as KeyStore?)
-			} catch (e: KeyStoreException) {
-				throw RuntimeException(e)
-			}
-
-			val trustManagers = trustManagerFactory.trustManagers
-			check(!(trustManagers.size != 1 || trustManagers[0] !is X509TrustManager)) {
-				("Unexpected default trust managers:" + trustManagers.contentToString())
-			}
-
-			val trustManager = trustManagers[0] as X509TrustManager
 			return subsonicConnectionDetails.certificateFingerprint
 				.takeIf { it.isNotEmpty() }
 				?.let { fingerprint -> SelfSignedTrustManager(fingerprint, trustManager) }
@@ -243,7 +254,7 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 	}
 
 	@OptIn(ExperimentalCoroutinesApi::class)
-	private class KtorPromiseClient<T : HttpClientEngineConfig>(private val scope: CoroutineScope, private val engineFactory: HttpClientEngineFactory<T>, private val httpClientConfig: HttpClientConfig<T>) : HttpPromiseClient {
+	private class KtorPromiseClient<T : HttpClientEngineConfig>(private val scope: CoroutineScope, private val engineFactory: HttpClientEngineFactory<T>, private val httpClientConfig: HttpClientConfig<T>, private val engineConfig: (T.() -> Unit)? = null) : HttpPromiseClient {
 		override fun promiseResponse(url: URL): Promise<HttpResponse> =
 			scope.async {
 				val httpClient = getClient()
@@ -263,6 +274,7 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 			}.toPromise()
 
 		private fun getClient() = HttpClient(engineFactory) {
+			engineConfig?.also(::engine)
 			this += httpClientConfig
 		}
 	}
