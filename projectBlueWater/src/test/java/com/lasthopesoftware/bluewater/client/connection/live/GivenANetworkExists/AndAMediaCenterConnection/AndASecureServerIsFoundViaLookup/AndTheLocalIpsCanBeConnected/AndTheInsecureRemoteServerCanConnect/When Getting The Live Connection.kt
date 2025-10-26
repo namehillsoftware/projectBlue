@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectio
 import com.lasthopesoftware.bluewater.client.connection.live.PassThroughBase64Encoder
 import com.lasthopesoftware.bluewater.client.connection.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfo
+import com.lasthopesoftware.bluewater.client.connection.requests.HttpPromiseClient
 import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -50,7 +51,7 @@ class `When Getting The Live Connection` {
 				).toPromise()
 			},
 			mockk {
-				every { getServerClient(any<MediaCenterConnectionDetails>()) } returns mockk {
+				every { promiseServerClient(any<MediaCenterConnectionDetails>()) } returns mockk<HttpPromiseClient> {
 					every { promiseResponse(any()) } returns Promise(
 						PassThroughHttpResponse(
 							200,
@@ -60,10 +61,10 @@ class `When Getting The Live Connection` {
 							""".trimIndent().toByteArray().inputStream()
 						)
 					)
-				}
+				}.toPromise()
 
 				every {
-					getServerClient(match<MediaCenterConnectionDetails> { a ->
+					promiseServerClient(match<MediaCenterConnectionDetails> { a ->
 						listOf(
 							"https://192.168.1.56:452",
 							"http://1.2.3.4:143"
@@ -72,7 +73,7 @@ class `When Getting The Live Connection` {
 				} answers {
 					val urlProvider = firstArg<MediaCenterConnectionDetails>()
 					selectedConnectionDetails = urlProvider
-					mockk {
+					mockk<HttpPromiseClient> {
 						every { promiseResponse(URL(urlProvider.baseUrl, "MCWS/v1/Alive")) } returns Promise(
 							PassThroughHttpResponse(
 								200,
@@ -81,7 +82,7 @@ class `When Getting The Live Connection` {
 									<Response Status="OK"></Response>""".toByteArray().inputStream()
 							)
 						)
-					}
+					}.toPromise()
 				}
 			},
 			mockk(),

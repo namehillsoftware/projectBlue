@@ -15,7 +15,7 @@ import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDet
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgressingLibraryConnections
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
+import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseServerClients
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
@@ -64,7 +64,7 @@ interface ApplicationDependencies {
 	val audioFileCache: DiskFileCache
 	val connectionSettingsLookup: LookupConnectionSettings
     val audioCacheStreamSupplier: DiskFileCacheStreamSupplier
-	val okHttpClients: OkHttpFactory
+	val httpClients: ProvideHttpPromiseClients
 	val libraryNameLookup: LibraryNameLookup
 	val exceptionAnnouncer: AnnounceExceptions
 	val mediaCenterHttpClients: ProvideHttpPromiseServerClients<MediaCenterConnectionDetails>

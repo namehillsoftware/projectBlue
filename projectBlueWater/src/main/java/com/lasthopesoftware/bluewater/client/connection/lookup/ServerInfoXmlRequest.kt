@@ -22,7 +22,13 @@ class ServerInfoXmlRequest(
 			.eventually { library ->
 				library
 					?.let { it as? MediaCenterConnectionSettings }
-					?.run { clientFactory.getClient().promiseResponse(URL("https://webplay.jriver.com/libraryserver/lookup?id=$accessCode")) }
+					?.run {
+						clientFactory
+							.promiseClient()
+							.eventually {
+								it.promiseResponse(URL("https://webplay.jriver.com/libraryserver/lookup?id=$accessCode"))
+							}
+					}
 					?.also(cp::doCancel)
 					?.promiseStringBody()
 					?.also(cp::doCancel)

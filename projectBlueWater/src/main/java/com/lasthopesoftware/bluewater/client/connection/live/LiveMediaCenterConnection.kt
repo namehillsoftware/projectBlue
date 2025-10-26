@@ -83,7 +83,7 @@ class LiveMediaCenterConnection(
 
 	private val mcApiUrl by lazy { mediaCenterConnectionDetails.baseUrl.withMcApi() }
 
-	private val httpClient by lazy { httpPromiseClients.getServerClient(mediaCenterConnectionDetails) }
+	private val httpClient by RetryOnRejectionLazyPromise { httpPromiseClients.promiseServerClient(mediaCenterConnectionDetails) }
 
 	private val cachedServerVersionPromise by RetryOnRejectionLazyPromise {
 		Promise.Proxy { cp ->
@@ -211,7 +211,7 @@ class LiveMediaCenterConnection(
 	override fun promiseFile(serviceFile: ServiceFile): Promise<InputStream> =
 		Promise.Proxy { cp ->
 			httpClient
-				.promiseResponse(getFileUrl(serviceFile))
+				.eventually { it.promiseResponse(getFileUrl(serviceFile)) }
 				.also(cp::doCancel)
 				.then(HttpStreamedResponse())
 		}
@@ -336,7 +336,7 @@ class LiveMediaCenterConnection(
 
 	private fun promiseResponse(path: String, vararg params: String): Promise<HttpResponse> {
 		val url = mcApiUrl.addPath(path).addParams(*params)
-		return httpClient.promiseResponse(url)
+		return httpClient.eventually { it.promiseResponse(url) }
 	}
 
 	private class MediaCenterFilePropertiesLookup(

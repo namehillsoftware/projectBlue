@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.live.LiveSubsonicConnect
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
 import com.lasthopesoftware.bluewater.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.every
 import io.mockk.mockk
@@ -21,7 +22,7 @@ class WhenSendingPlayedToServer {
 		LiveSubsonicConnection(
 			SubsonicConnectionDetails(TestUrl, "QPHECo994dk", "vkuJJub1Zw"),
 			mockk {
-				every { getServerClient(any<SubsonicConnectionDetails>()) } returns FakeHttpConnection()
+				every { promiseServerClient(any<SubsonicConnectionDetails>()) } returns FakeHttpConnection().toPromise()
 			},
 			mockk(),
             JsonEncoderDecoder,

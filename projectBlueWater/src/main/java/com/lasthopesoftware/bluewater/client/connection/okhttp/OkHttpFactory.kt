@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustMan
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.compilation.DebugFlag
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.promises.Promise
@@ -75,7 +76,7 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 			.build()
 	}
 
-	override fun getClient(): HttpPromiseClient = OkHttpPromiseClient(getOkHttpClient())
+	override fun promiseClient(): Promise<HttpPromiseClient> = OkHttpPromiseClient(getOkHttpClient()).toPromise()
 
 	private fun getOkHttpClient(): OkHttpClient =
 		commonClient
@@ -100,11 +101,11 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 	}
 
 	inner class MediaCenterClient() : ProvideHttpPromiseServerClients<MediaCenterConnectionDetails>, ProvideOkHttpServerClients<MediaCenterConnectionDetails> {
-		override fun getServerClient(connectionDetails: MediaCenterConnectionDetails): HttpPromiseClient =
-			OkHttpPromiseClient(getOkHttpClient(connectionDetails))
+		override fun promiseServerClient(connectionDetails: MediaCenterConnectionDetails): Promise<HttpPromiseClient> =
+			OkHttpPromiseClient(getOkHttpClient(connectionDetails)).toPromise()
 
-		override fun getStreamingServerClient(connectionDetails: MediaCenterConnectionDetails): HttpPromiseClient =
-			OkHttpPromiseClient(getStreamingOkHttpClient(connectionDetails))
+		override fun promiseStreamingServerClient(connectionDetails: MediaCenterConnectionDetails): Promise<HttpPromiseClient> =
+			OkHttpPromiseClient(getStreamingOkHttpClient(connectionDetails)).toPromise()
 
 		override fun getStreamingOkHttpClient(connectionDetails: MediaCenterConnectionDetails): OkHttpClient =
 			getOkHttpClient(connectionDetails)
@@ -188,11 +189,11 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 	}
 
 	inner class SubsonicClient() : ProvideHttpPromiseServerClients<SubsonicConnectionDetails>, ProvideOkHttpServerClients<SubsonicConnectionDetails> {
-		override fun getServerClient(connectionDetails: SubsonicConnectionDetails): HttpPromiseClient =
-			OkHttpPromiseClient(getOkHttpClient(connectionDetails))
+		override fun promiseServerClient(connectionDetails: SubsonicConnectionDetails): Promise<HttpPromiseClient> =
+			OkHttpPromiseClient(getOkHttpClient(connectionDetails)).toPromise()
 
-		override fun getStreamingServerClient(connectionDetails: SubsonicConnectionDetails): HttpPromiseClient =
-			OkHttpPromiseClient(getStreamingOkHttpClient(connectionDetails))
+		override fun promiseStreamingServerClient(connectionDetails: SubsonicConnectionDetails): Promise<HttpPromiseClient> =
+			OkHttpPromiseClient(getStreamingOkHttpClient(connectionDetails)).toPromise()
 
 		override fun getStreamingOkHttpClient(connectionDetails: SubsonicConnectionDetails): OkHttpClient =
 			getOkHttpClient(connectionDetails)

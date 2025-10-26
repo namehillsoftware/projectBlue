@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectio
 import com.lasthopesoftware.bluewater.client.connection.live.PassThroughBase64Encoder
 import com.lasthopesoftware.bluewater.client.connection.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfo
+import com.lasthopesoftware.bluewater.client.connection.requests.HttpPromiseClient
 import com.lasthopesoftware.bluewater.client.connection.settings.SubsonicConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
@@ -52,16 +53,16 @@ class `When Cancelling During Connection Test` {
 			mockk(),
 			mockk {
 				every {
-					getServerClient(match<SubsonicConnectionDetails> { a ->
+					promiseServerClient(match<SubsonicConnectionDetails> { a ->
 						a.baseUrl.toString() == "https://LD1kt8LI7aC:461"
 					})
 				} answers {
 					val urlProvider = firstArg<SubsonicConnectionDetails>()
-					mockk {
+					mockk<HttpPromiseClient> {
 						every { promiseResponse(urlProvider.baseUrl.addPath("rest/ping.view").addParams("f=json")) } returns Promise(
 							CancellationException("Maybe later!")
 						)
-					}
+					}.toPromise()
 				}
 			},
 			mockk(),
