@@ -1,8 +1,11 @@
 package com.lasthopesoftware.bluewater.client.connection.requests
 
-class FakeHttpConnectionProvider<TConnectionDetails>(private val client: HttpPromiseClient) : ProvideHttpPromiseClients, ProvideHttpPromiseServerClients<TConnectionDetails> {
-	override fun getServerClient(connectionDetails: TConnectionDetails): HttpPromiseClient = client
-	override fun getStreamingServerClient(connectionDetails: TConnectionDetails): HttpPromiseClient = client
+import com.lasthopesoftware.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
 
-	override fun getClient(): HttpPromiseClient = client
+class FakeHttpConnectionProvider<TConnectionDetails>(private val client: HttpPromiseClient) : ProvideHttpPromiseClients, ProvideHttpPromiseServerClients<TConnectionDetails> {
+	override fun promiseServerClient(connectionDetails: TConnectionDetails): Promise<HttpPromiseClient> = client.toPromise()
+	override fun promiseStreamingServerClient(connectionDetails: TConnectionDetails): Promise<HttpPromiseClient> = client.toPromise()
+
+	override fun promiseClient(): Promise<HttpPromiseClient> = client.toPromise()
 }

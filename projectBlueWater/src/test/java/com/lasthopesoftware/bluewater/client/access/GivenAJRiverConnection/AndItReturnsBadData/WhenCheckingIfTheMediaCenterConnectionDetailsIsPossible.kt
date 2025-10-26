@@ -2,7 +2,9 @@ package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnecti
 
 import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.LiveMediaCenterConnection
+import com.lasthopesoftware.bluewater.client.connection.requests.HttpPromiseClient
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.PassThroughHttpResponse
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -19,12 +21,12 @@ class WhenCheckingIfTheMediaCenterConnectionDetailsIsPossible {
 			mediaCenterConnectionDetails,
 			mockk {
 				every {
-					getServerClient(match<MediaCenterConnectionDetails> { a ->
+					promiseServerClient(match<MediaCenterConnectionDetails> { a ->
 						"http://test:80" == a.baseUrl.toString()
 					})
 				} answers {
 					val urlProvider = firstArg<MediaCenterConnectionDetails>()
-					mockk {
+					mockk<HttpPromiseClient> {
 						every { promiseResponse(URL(urlProvider.baseUrl, "MCWS/v1/Alive")) } returns Promise(
 							PassThroughHttpResponse(
 								200,
@@ -37,7 +39,7 @@ class WhenCheckingIfTheMediaCenterConnectionDetailsIsPossible {
 									).toByteArray().inputStream()
 							)
 						)
-					}
+					}.toPromise()
 				}
 			},
 			mockk(),

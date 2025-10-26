@@ -3,9 +3,11 @@ package com.lasthopesoftware.bluewater.client.access.subsonic.GivenASubsonicConn
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.LiveSubsonicConnection
+import com.lasthopesoftware.bluewater.client.connection.requests.HttpPromiseClient
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.PassThroughHttpResponse
 import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import com.namehillsoftware.handoff.promises.Promise
@@ -22,10 +24,10 @@ class `When checking if the connection is possible` {
 			connectionDetails,
 			mockk {
 				every {
-					getServerClient(connectionDetails)
+					promiseServerClient(connectionDetails)
 				} answers {
 					val urlProvider = firstArg<SubsonicConnectionDetails>()
-					mockk {
+					mockk<HttpPromiseClient> {
 						every { promiseResponse(urlProvider.baseUrl.addPath("rest/ping.view").addParams("f=json")) } returns Promise(
 							PassThroughHttpResponse(
 								200,
@@ -33,7 +35,7 @@ class `When checking if the connection is possible` {
 								"""{"subsonic-response":{"status":"ok","version":"1.16.1","type":"navidrome","serverVersion":"0.53.3 (13af8ed4)","openSubsonic":true}}""".toByteArray().inputStream()
 							)
 						)
-					}
+					}.toPromise()
 				}
 			},
 			mockk(),

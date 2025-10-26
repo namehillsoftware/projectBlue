@@ -31,6 +31,10 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgres
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfoXmlRequest
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerLookup
+import com.lasthopesoftware.bluewater.client.connection.okhttp.ApplicationSettingsHttpClient
+import com.lasthopesoftware.bluewater.client.connection.okhttp.ApplicationSettingsMediaCenterClient
+import com.lasthopesoftware.bluewater.client.connection.okhttp.ApplicationSettingsSubsonicClient
+import com.lasthopesoftware.bluewater.client.connection.okhttp.KtorFactory
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
@@ -108,24 +112,45 @@ object ApplicationDependenciesContainer {
 
 		private val audioCacheFilesProvider by lazy { CachedFilesProvider(context, AudioCacheConfiguration) }
 
-		override val okHttpClients by lazy { OkHttpFactory(context) }
+		private val okHttpClients by lazy { OkHttpFactory(context) }
+		private val ktorClients by lazy { KtorFactory(context) }
 
-		override val mediaCenterHttpClients by lazy { okHttpClients.MediaCenterClient() }
+		override val httpClients by lazy {
+			ApplicationSettingsHttpClient(
+				applicationFeatureConfiguration,
+				okHttpClients,
+				ktorClients
+			)
+		}
+
+		override val mediaCenterHttpClients by lazy {
+			ApplicationSettingsMediaCenterClient(
+				applicationFeatureConfiguration,
+				okHttpClients.MediaCenterClient(),
+				ktorClients.MediaCenterClient()
+			)
+		}
 
 		override val mediaCenterDataFactories by lazy {
 			ServerHttpDataSourceProvider(
 				mediaCenterHttpClients,
-				mediaCenterHttpClients,
+				okHttpClients.MediaCenterClient(),
 				applicationFeatureConfiguration
 			)
 		}
 
-		override val subsonicHttpClients by lazy { okHttpClients.SubsonicClient() }
+		override val subsonicHttpClients by lazy {
+			ApplicationSettingsSubsonicClient(
+				applicationFeatureConfiguration,
+				okHttpClients.SubsonicClient(),
+				ktorClients.SubsonicClient()
+			)
+		}
 
 		override val subsonicDataFactories by lazy {
 			ServerHttpDataSourceProvider(
 				subsonicHttpClients,
-				subsonicHttpClients,
+				okHttpClients.SubsonicClient(),
 				applicationFeatureConfiguration
 			)
 		}
@@ -232,7 +257,7 @@ object ApplicationDependenciesContainer {
 		override val connectionSessions by lazy {
 			val serverLookup = ServerLookup(
 				connectionSettingsLookup,
-				ServerInfoXmlRequest(connectionSettingsLookup, okHttpClients),
+				ServerInfoXmlRequest(connectionSettingsLookup, httpClients),
 			)
 
 			val activeNetwork = ActiveNetworkFinder(context)

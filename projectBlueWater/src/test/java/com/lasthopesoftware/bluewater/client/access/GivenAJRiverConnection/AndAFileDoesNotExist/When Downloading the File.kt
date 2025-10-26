@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDet
 import com.lasthopesoftware.bluewater.client.connection.live.LiveMediaCenterConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -16,7 +17,7 @@ class `When Downloading the File` {
 		val downloader = LiveMediaCenterConnection(
 			MediaCenterConnectionDetails(TestUrl),
 			mockk {
-				every { getServerClient(any<MediaCenterConnectionDetails>()) } returns FakeHttpConnection()
+				every { promiseServerClient(any<MediaCenterConnectionDetails>()) } returns FakeHttpConnection().toPromise()
 			},
 			mockk(),
         )

@@ -4,6 +4,7 @@ import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.LiveMediaCenterConnection
+import com.lasthopesoftware.bluewater.client.connection.requests.HttpPromiseClient
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withMcApi
@@ -25,7 +26,7 @@ class WhenSendingPlayedToServer {
         LiveMediaCenterConnection(
 			MediaCenterConnectionDetails(TestUrl),
 			mockk {
-				every { getServerClient(any<MediaCenterConnectionDetails>()) } returns mockk {
+				every { promiseServerClient(any<MediaCenterConnectionDetails>()) } returns mockk<HttpPromiseClient> {
 					every { promiseResponse(TestUrl.withMcApi().addPath("Alive")) } returns PassThroughHttpResponse(
 						200,
 						"OK",
@@ -43,7 +44,7 @@ class WhenSendingPlayedToServer {
 						"OK",
 						emptyByteArray.inputStream()
 					).toPromise()
-				}
+				}.toPromise()
 			},
 			mockk(),
 		)

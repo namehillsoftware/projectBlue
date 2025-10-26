@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetail
 import com.lasthopesoftware.bluewater.client.connection.live.LiveSubsonicConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.every
 import io.mockk.mockk
@@ -17,7 +18,7 @@ class `When Downloading the File` {
 		val downloader = LiveSubsonicConnection(
 			SubsonicConnectionDetails(TestUrl, "v2oabCzaDZ", "vOAhLOYu"),
 			mockk {
-				every { getServerClient(any<SubsonicConnectionDetails>()) } returns FakeHttpConnection()
+				every { promiseServerClient(any<SubsonicConnectionDetails>()) } returns FakeHttpConnection().toPromise()
 			},
 			mockk(),
             JsonEncoderDecoder,

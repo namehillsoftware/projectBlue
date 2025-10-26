@@ -1,11 +1,13 @@
 package com.lasthopesoftware.bluewater.client.connection.requests
 
+import com.namehillsoftware.handoff.promises.Promise
+
 interface ProvideHttpPromiseClients {
-	fun getClient(): HttpPromiseClient
+	fun promiseClient(): Promise<HttpPromiseClient>
 }
 
 interface ProvideHttpPromiseServerClients<TConnectionDetails> {
-	fun getServerClient(connectionDetails: TConnectionDetails): HttpPromiseClient
-	fun getStreamingServerClient(connectionDetails: TConnectionDetails): HttpPromiseClient
+	fun promiseServerClient(connectionDetails: TConnectionDetails): Promise<HttpPromiseClient>
+	fun promiseStreamingServerClient(connectionDetails: TConnectionDetails): Promise<HttpPromiseClient>
 }
 

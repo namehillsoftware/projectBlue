@@ -86,7 +86,7 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 		}
 	}
 
-	override fun getClient(): HttpPromiseClient = KtorPromiseClient(
+	override fun promiseClient(): Promise<HttpPromiseClient> = KtorPromiseClient(
 		scope,
 		CIO,
 		commonConfiguration.clone().apply {
@@ -94,17 +94,17 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 				connectTimeoutMillis = buildConnectionTime.inWholeMilliseconds
 			}
 		}
-	)
+	).toPromise()
 
 	inner class MediaCenterClient() : ProvideHttpPromiseServerClients<MediaCenterConnectionDetails> {
 
-		override fun getServerClient(connectionDetails: MediaCenterConnectionDetails): HttpPromiseClient =
-			KtorPromiseClient(scope, CIO, getHttpConfiguration(connectionDetails))
+		override fun promiseServerClient(connectionDetails: MediaCenterConnectionDetails): Promise<HttpPromiseClient> =
+			KtorPromiseClient(scope, CIO, getHttpConfiguration(connectionDetails)).toPromise()
 
-		override fun getStreamingServerClient(connectionDetails: MediaCenterConnectionDetails): HttpPromiseClient {
+		override fun promiseStreamingServerClient(connectionDetails: MediaCenterConnectionDetails): Promise<HttpPromiseClient> {
 			val clientConfig = getHttpConfiguration(connectionDetails)
 				.configureForStreaming()
-			return KtorPromiseClient(scope, CIO, clientConfig)
+			return KtorPromiseClient(scope, CIO, clientConfig).toPromise()
 		}
 
 		private fun getHttpConfiguration(mediaCenterConnectionDetails: MediaCenterConnectionDetails) = commonConfiguration.clone().apply {
@@ -154,12 +154,13 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 	}
 
 	inner class SubsonicClient() : ProvideHttpPromiseServerClients<SubsonicConnectionDetails> {
-		override fun getServerClient(connectionDetails: SubsonicConnectionDetails): HttpPromiseClient =
+		override fun promiseServerClient(connectionDetails: SubsonicConnectionDetails): Promise<HttpPromiseClient> =
 			KtorPromiseClient(scope, CIO, getHttpConfiguration(connectionDetails))
+				.toPromise()
 
-		override fun getStreamingServerClient(connectionDetails: SubsonicConnectionDetails): HttpPromiseClient {
+		override fun promiseStreamingServerClient(connectionDetails: SubsonicConnectionDetails): Promise<HttpPromiseClient> {
 			val clientConfig = getHttpConfiguration(connectionDetails).configureForStreaming()
-			return KtorPromiseClient(scope, CIO,  clientConfig)
+			return KtorPromiseClient(scope, CIO,  clientConfig).toPromise()
 		}
 
 		@OptIn(ExperimentalStdlibApi::class)

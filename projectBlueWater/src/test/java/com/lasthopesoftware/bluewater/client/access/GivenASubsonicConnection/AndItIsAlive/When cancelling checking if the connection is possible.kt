@@ -3,11 +3,13 @@ package com.lasthopesoftware.bluewater.client.access.subsonic.GivenASubsonicConn
 import com.lasthopesoftware.TestUrl
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.LiveSubsonicConnection
+import com.lasthopesoftware.bluewater.client.connection.requests.HttpPromiseClient
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.PassThroughHttpResponse
 import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.every
@@ -36,12 +38,12 @@ class `When cancelling checking if the connection is possible` {
 			connectionDetails,
 			mockk {
 				every {
-					getServerClient(connectionDetails)
+					promiseServerClient(connectionDetails)
 				} answers {
 					val sc = firstArg<SubsonicConnectionDetails>()
-					mockk {
+					mockk<HttpPromiseClient> {
 						every { promiseResponse(sc.baseUrl.addPath("rest/ping.view").addParams("f=json")) } returns deferredResponse
-					}
+					}.toPromise()
 				}
 			},
 			mockk(),

@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.exoplayer.GivenHttpPromiseClientIsSelectedDataSource
 
 import androidx.media3.datasource.DataSource
+import com.lasthopesoftware.bluewater.client.connection.requests.HttpPromiseClient
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.HttpDataSourceType
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.HttpPromiseClientDataSource
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.ServerHttpDataSourceProvider
@@ -19,7 +20,7 @@ class `When getting the http data source provider` {
 	private val mut by lazy {
 		ServerHttpDataSourceProvider<Any>(
 			mockk {
-				every { getStreamingServerClient(any()) } returns mockk()
+				every { promiseStreamingServerClient(any()) } returns mockk<HttpPromiseClient>().toPromise()
 			},
 			mockk(),
 			mockk {

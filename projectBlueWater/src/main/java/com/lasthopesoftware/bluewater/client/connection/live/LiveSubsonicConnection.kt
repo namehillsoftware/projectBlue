@@ -92,7 +92,7 @@ class LiveSubsonicConnection(
 
 	private val subsonicApiUrl by lazy { subsonicConnectionDetails.baseUrl.withSubsonicApi().addParams("f=json") }
 
-	private val httpClient by lazy { httpPromiseClients.getServerClient(subsonicConnectionDetails) }
+	private val httpClient by RetryOnRejectionLazyPromise { httpPromiseClients.promiseServerClient(subsonicConnectionDetails) }
 
 	private val cachedVersion by RetryOnRejectionLazyPromise {
 		PingViewPromise().cancelBackThen { r, _ ->
@@ -164,8 +164,7 @@ class LiveSubsonicConnection(
 
 	override fun promiseFile(serviceFile: ServiceFile): Promise<InputStream> = Promise.Proxy { cp ->
 		httpClient
-			.promiseResponse(getFileUrl(serviceFile))
-			.also(cp::doCancel)
+			.eventually { it.promiseResponse(getFileUrl(serviceFile)).also(cp::doCancel) }
 			.then(HttpStreamedResponse())
 	}
 
@@ -225,12 +224,14 @@ class LiveSubsonicConnection(
 
 	private fun promiseResponse(path: String, vararg params: String): Promise<HttpResponse> {
 		val url = subsonicApiUrl.addPath(path).addParams(*params)
-		return httpClient.promiseResponse(url)
+		return httpClient.eventually { it.promiseResponse(url) }
 	}
 
 	private inline fun <reified T> promiseSubsonicResponse(path: String, vararg params: String): Promise<T?> {
 		val url = subsonicApiUrl.addPath(path).addParams(*params)
-		return httpClient.promiseResponse(url).cancelBackEventually { it.promiseSubsonicResponse() }
+		return httpClient
+			.eventually { it.promiseResponse(url) }
+			.cancelBackEventually { it.promiseSubsonicResponse() }
 	}
 
 	private inline fun <reified T> Promise<HttpResponse>.promiseSubsonicResponse(): Promise<T?> = eventually { r ->
