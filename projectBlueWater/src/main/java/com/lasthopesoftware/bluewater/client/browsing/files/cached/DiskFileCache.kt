@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.configuration
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.disk.ProvideDiskCacheDirectory
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.UpdateDiskFileAccessTime
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheOutputStream
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheWritableStream
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.SupplyCacheStreams
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
@@ -47,7 +47,7 @@ class DiskFileCache(
 		return putPromise
 	}
 
-	private fun writeCachedFileWithRetries(libraryId: LibraryId, uniqueKey: String, cachedFileOutputStream: CacheOutputStream, fileData: ByteArray): Promise<CachedFile?> {
+	private fun writeCachedFileWithRetries(libraryId: LibraryId, uniqueKey: String, cachedFileOutputStream: CacheWritableStream, fileData: ByteArray): Promise<CachedFile?> {
 		return cachedFileOutputStream
 			.promiseWrite(fileData, 0, fileData.size)
 			.eventually { obj -> obj.flush() }

@@ -15,21 +15,27 @@ object PromiseMachines {
 		}
 	}
 
-	fun <Resolution> loop(function: (Continuable<Resolution>, Cancellable) -> Promise<Resolution>) : Promise<Resolution> {
+	fun <Resolution> loop(function: (Resolution?, Cancellable) -> Promise<Resolution>) : Promise<Resolution> {
 		return LoopMachine(function)
 	}
 
-	private class LoopMachine<Resolution>(private val function: (Continuable<Resolution>, Cancellable) -> Promise<Resolution>) :
+	private class LoopMachine<Resolution>(private val function: (Resolution?, Cancellable) -> Promise<Resolution>) :
 		ContinuableMachine<Resolution>(), PromisedResponse<Resolution, Resolution> {
+
+		@Volatile
+		private var currentValue: Resolution? = null
+
 		init {
 			start()
 		}
 
-		override fun next(): Promise<Resolution> = function(this, this).eventually(this)
+		override fun next(): Promise<Resolution> = function(currentValue, this).eventually(this)
 
-		override fun promiseResponse(resolution: Resolution): Promise<Resolution> =
-			if (!isCancelled) next()
+		override fun promiseResponse(resolution: Resolution): Promise<Resolution> {
+			currentValue = resolution
+			return if (!isCancelled) next()
 			else resolution.toPromise()
+		}
 	}
 
 	abstract class ContinuableMachine<Resolution> : Promise.Proxy<Resolution>(), Continuable<Resolution> {

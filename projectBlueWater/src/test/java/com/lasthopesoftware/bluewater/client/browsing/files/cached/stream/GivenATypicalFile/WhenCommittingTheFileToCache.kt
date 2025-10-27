@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.GivenATypicalFile
 
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CachedFileOutputStream
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CachedFileWritableStream
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
@@ -19,7 +19,7 @@ class WhenCommittingTheFileToCache {
 
 	@BeforeAll
 	fun act() {
-		val cachedFileOutputStream = CachedFileOutputStream(
+		val cachedFileOutputStream = CachedFileWritableStream(
 			LibraryId(156),
 			"unique-test",
 			mockedFile,

@@ -5,7 +5,7 @@ import androidx.media3.common.C
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.HttpDataSource
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheOutputStream
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheWritableStream
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.SupplyCacheStreams
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.EntireFileCachedDataSource
@@ -30,35 +30,35 @@ class WhenOpeningTheStreamManyTimes {
 		private var writtenLibraryId: LibraryId? = null
 		private val bytesWritten = ByteArray(512 * 1024)
 		private val bytes by lazy { ByteArray(512 * 1024).also { Random().nextBytes(it) } }
-		private val committedOutputStreams = ArrayList<CacheOutputStream>()
+		private val committedOutputStreams = ArrayList<CacheWritableStream>()
 
 		@BeforeClass
 		@JvmStatic
 		fun context() {
 			val fakeCacheStreamSupplier =
 				object : SupplyCacheStreams {
-					override fun promiseCachedFileOutputStream(libraryId: LibraryId, uniqueKey: String): Promise<CacheOutputStream> {
+					override fun promiseCachedFileOutputStream(libraryId: LibraryId, uniqueKey: String): Promise<CacheWritableStream> {
 						writtenLibraryId = libraryId
-						return Promise<CacheOutputStream>(object : CacheOutputStream {
+						return Promise<CacheWritableStream>(object : CacheWritableStream {
 							var numberOfBytesWritten = 0
 							override fun promiseWrite(
 								buffer: ByteArray,
 								offset: Int,
 								length: Int
-							): Promise<CacheOutputStream> =
-								Promise<CacheOutputStream>(this)
+							): Promise<CacheWritableStream> =
+								Promise<CacheWritableStream>(this)
 
-							override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheOutputStream> {
+							override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheWritableStream> {
 								while (numberOfBytesWritten < bytesWritten.size) {
 									val read = bufferedSource.read(
 										bytesWritten,
 										numberOfBytesWritten,
 										bytesWritten.size - numberOfBytesWritten
 									)
-									if (read == -1) return Promise<CacheOutputStream>(this)
+									if (read == -1) return Promise<CacheWritableStream>(this)
 									numberOfBytesWritten += read
 								}
-								return Promise<CacheOutputStream>(this)
+								return Promise<CacheWritableStream>(this)
 							}
 
 							override fun commitToCache(): Promise<CachedFile?> {
@@ -66,8 +66,8 @@ class WhenOpeningTheStreamManyTimes {
 								return Promise(CachedFile())
 							}
 
-							override fun flush(): Promise<CacheOutputStream> {
-								return Promise<CacheOutputStream>(this)
+							override fun flush(): Promise<CacheWritableStream> {
+								return Promise<CacheWritableStream>(this)
 							}
 
 							override fun promiseClose(): Promise<Unit> = Unit.toPromise()

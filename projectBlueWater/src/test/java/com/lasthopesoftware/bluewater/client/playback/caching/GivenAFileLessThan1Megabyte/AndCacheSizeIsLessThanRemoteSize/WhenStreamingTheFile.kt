@@ -5,7 +5,7 @@ import androidx.media3.common.C
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.HttpDataSource
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheOutputStream
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheWritableStream
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.SupplyCacheStreams
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.EntireFileCachedDataSource
@@ -42,14 +42,14 @@ class WhenStreamingTheFile {
 			val fakeCacheStreamSupplier = object : SupplyCacheStreams {
 				private var committedToCache = false
 
-				override fun promiseCachedFileOutputStream(libraryId: LibraryId, uniqueKey: String): Promise<CacheOutputStream> {
-					return Promise<CacheOutputStream>(object : CacheOutputStream {
+				override fun promiseCachedFileOutputStream(libraryId: LibraryId, uniqueKey: String): Promise<CacheWritableStream> {
+					return Promise<CacheWritableStream>(object : CacheWritableStream {
 						var numberOfBytesWritten = 0
 
-						override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<CacheOutputStream> =
-							Promise<CacheOutputStream>(this)
+						override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<CacheWritableStream> =
+							Promise<CacheWritableStream>(this)
 
-						override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheOutputStream> {
+						override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheWritableStream> {
 							bytesWritten?.also {
 								while (numberOfBytesWritten < it.size) {
 									val read = bufferedSource.read(
@@ -57,11 +57,11 @@ class WhenStreamingTheFile {
 										numberOfBytesWritten,
 										it.size - numberOfBytesWritten
 									)
-									if (read == -1) return Promise<CacheOutputStream>(this)
+									if (read == -1) return Promise<CacheWritableStream>(this)
 									numberOfBytesWritten += read
 								}
 							}
-							return Promise<CacheOutputStream>(this)
+							return Promise<CacheWritableStream>(this)
 						}
 
 						override fun commitToCache(): Promise<CachedFile?> {
@@ -70,7 +70,7 @@ class WhenStreamingTheFile {
 							return deferredCommit
 						}
 
-						override fun flush(): Promise<CacheOutputStream> = Promise<CacheOutputStream>(this)
+						override fun flush(): Promise<CacheWritableStream> = Promise<CacheWritableStream>(this)
 
 						override fun promiseClose(): Promise<Unit> {
 							closedBeforeCommittingToCache = !committedToCache

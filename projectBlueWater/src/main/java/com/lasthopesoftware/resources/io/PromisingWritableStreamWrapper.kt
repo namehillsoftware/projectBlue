@@ -8,13 +8,13 @@ import java.io.InputStream
 import java.io.OutputStream
 import kotlin.coroutines.cancellation.CancellationException
 
-class PromisingOutputStreamWrapper(private val outputStream: OutputStream) : PromisingOutputStream<PromisingOutputStreamWrapper> {
+class PromisingWritableStreamWrapper(private val outputStream: OutputStream) : PromisingWritableStream<PromisingWritableStreamWrapper> {
 	override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int) = ThreadPools.io.preparePromise {
 		outputStream.write(buffer, offset, length)
 		this
 	}
 
-	override fun flush(): Promise<PromisingOutputStreamWrapper> = ThreadPools.io.preparePromise {
+	override fun flush(): Promise<PromisingWritableStreamWrapper> = ThreadPools.io.preparePromise {
 		outputStream.flush()
 		this
 	}
