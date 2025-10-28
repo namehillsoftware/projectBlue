@@ -16,10 +16,10 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 	private val sync = Any()
 
 	@Volatile
-	private var closedByWriter: Boolean = false
+	private var closedByWriter = false
 
 	@Volatile
-	private var closedByReader: Boolean = false
+	private var closedByReader = false
 
 	/**
 	 * The circular buffer into which incoming data is placed.
@@ -59,15 +59,15 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 	 * [ `broken`](#BROKEN), closed,
 	 * or if an I/O error occurs.
 	 */
-	override fun promiseRead(): Promise<Int> {
-		if (closedByReader) {
-			throw IOException("Pipe closed")
+	override fun promiseRead(): Promise<Int> = when {
+		closedByReader -> throw IOException("Pipe closed")
+		closedByWriter && tryFeeding() -> (-1).toPromise()
+		else -> {
+			val sipper = Sipper()
+			feeders.add(sipper)
+			tryFeeding()
+			sipper
 		}
-
-		val sipper = Sipper()
-		feeders.add(sipper)
-		tryFeeding()
-		return sipper
 	}
 
 	/**
@@ -94,17 +94,19 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 	 * [unconnected][.connect],
 	 * closed, or if an I/O error occurs.
 	 */
-	override fun promiseRead(b: ByteArray, off: Int, len: Int): Promise<Int> {
-		if (off < 0 || len < 0 || len > b.size - off) {
+	override fun promiseRead(b: ByteArray, off: Int, len: Int): Promise<Int> = when {
+		closedByReader -> throw IOException("Pipe closed")
+		off < 0 || len < 0 || len > b.size - off -> {
 			throw IndexOutOfBoundsException()
-		} else if (len == 0) {
-			return 0.toPromise()
 		}
-
-		val feeder = Feeder(b, off, len)
-		feeders.add(feeder)
-		tryFeeding()
-		return feeder
+		len == 0 -> 0.toPromise()
+		closedByWriter && tryFeeding() -> (-1).toPromise()
+		else -> {
+			val feeder = Feeder(b, off, len)
+			feeders.add(feeder)
+			tryFeeding()
+			feeder
+		}
 	}
 
 	/**
@@ -140,7 +142,7 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 		}
 	}
 
-	private fun tryFeeding() {
+	private fun tryFeeding(): Boolean {
 		synchronized(sync) {
 			var fed = 0
 			while (`in` >= 0) {
@@ -162,6 +164,8 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 				if (out >= buffer.size) out = 0
 				if (`in` == out) `in` = -1
 			}
+
+			return feeders.isEmpty()
 		}
 	}
 
@@ -184,7 +188,8 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 				when {
 					bytesToTransfer <= 0 -> {
 						cancellable.cancel()
-						tryFeeding().toPromise()
+						tryFeeding()
+						Unit.toPromise()
 					}
 
 					`in` == out -> awaitSpace()
@@ -229,10 +234,13 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 					cancellable.cancel()
 					Unit.toPromise()
 				} else {
-					val taster = Taster()
-					feeders.offer(taster)
-					tryFeeding()
-					taster.unitResponse()
+					if (!tryFeeding()) Unit.toPromise()
+					else {
+						val taster = Taster()
+						feeders.offer(taster)
+						tryFeeding()
+						taster.unitResponse()
+					}
 				}
 			}
 		}
