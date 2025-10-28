@@ -1,7 +1,7 @@
 package com.lasthopesoftware.resources.io.GivenBytes
 
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.resources.closables.promiseUse
+import com.lasthopesoftware.resources.closables.eventuallyUse
 import com.lasthopesoftware.resources.io.PromisingChannel
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -22,9 +22,9 @@ class `When reading all promised bytes` {
 	@BeforeAll
 	fun act() {
 		val pipingInputStream = PromisingChannel()
-		val promisedBytes = pipingInputStream.promiseUse { it.promiseReadAllBytes() }
+		val promisedBytes = pipingInputStream.eventuallyUse { it.promiseReadAllBytes() }
 
-		pipingInputStream.writableStream.promiseUse {
+		pipingInputStream.writableStream.eventuallyUse {
 			it.promiseWrite(bytes, 0, bytes.size)
 		}.toExpiringFuture().get()
 
