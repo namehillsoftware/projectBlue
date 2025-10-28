@@ -14,7 +14,6 @@ import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpProm
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
-import com.lasthopesoftware.resources.closables.eventuallyUse
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.PromisingChannel
 import com.lasthopesoftware.resources.io.PromisingReadableStream
@@ -286,16 +285,17 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 							KtorHttpResponse(httpClient, response, promisingChannel)
 						)
 
-						promisingChannel.writableStream.eventuallyUse { stream ->
-							launch {
-								val channel = response.bodyAsChannel()
-								while (!channel.exhausted()) {
-									val chunk = channel.readRemaining(8192)
-									val bytes = chunk.readByteArray()
-									stream.promiseWrite(bytes, 0, bytes.size).suspend()
-								}
-							}.toPromise()
-						}.suspend()
+						val stream = promisingChannel.writableStream
+						try {
+							val channel = response.bodyAsChannel()
+							while (!channel.exhausted()) {
+								val chunk = channel.readRemaining(8192)
+								val bytes = chunk.readByteArray()
+								stream.promiseWrite(bytes, 0, bytes.size).suspend()
+							}
+						} finally {
+						    stream.promiseClose().suspend()
+						}
 					}
 				} catch (e: Throwable) {
 					m.sendRejection(e)
