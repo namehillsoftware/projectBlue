@@ -129,17 +129,6 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 		}
 	}
 
-	/**
-	 * Closes this piped input stream and releases any system resources
-	 * associated with the stream.
-	 *
-	 * @exception  IOException  if an I/O error occurs.
-	 */
-	@Throws(IOException::class)
-	override fun close() {
-		promiseClose()
-	}
-
 	override fun promiseClose(): Promise<Unit> {
 		closedByReader = !closedByWriter
 		synchronized(sync) {
@@ -253,10 +242,10 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 	 * Notifies all waiting threads that the last byte of data has been
 	 * received.
 	 */
-	private fun receivedLast() {
+	private fun receivedLast(): Promise<Unit> {
 		tryFeeding()
 		closedByWriter = true
-		close()
+		return promiseClose()
 	}
 
 	private inner class ConnectedWritableStream() : PromisingWritableStream<ConnectedWritableStream>,
@@ -266,16 +255,17 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 
 		override fun flush(): Promise<ConnectedWritableStream> = awaitSpace().then(this)
 
-		override fun promiseClose(): Promise<Unit> {
-			receivedLast()
-			return Unit.toPromise()
-		}
+		override fun promiseClose(): Promise<Unit> = receivedLast()
 
 		override fun respond(resolution: Unit?): ConnectedWritableStream = this
 	}
 
 
 	private abstract class AbstractFeeder() : Promise<Int>() {
+		init {
+			awaitCancellation { resolve(0) }
+		}
+
 		abstract val capacity: Int
 		abstract fun feed(byteArray: ByteArray, offset: Int, maxAmount: Int): Int
 	}
@@ -286,21 +276,25 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 		override val capacity: Int,
 	) : AbstractFeeder() {
 
-		init {
-			awaitCancellation { resolve(0) }
-		}
-
 		@Volatile
 		private var read = 0
 
+		@Volatile
+		private var isCancelled = false
+
 		init {
-			awaitCancellation { resolve(read) }
+			awaitCancellation {
+				isCancelled = true
+				resolve(read)
+			}
 		}
 
-		override fun feed(byteArray: ByteArray, offset: Int, maxAmount: Int): Int =
-			try {
+		override fun feed(byteArray: ByteArray, offset: Int, maxAmount: Int): Int {
+			return try {
+				if (isCancelled) return read
 				val amountToRead = (capacity - read).coerceAtMost(byteArray.size - offset).coerceAtMost(maxAmount)
 				val endIndex = offset + amountToRead
+				if (isCancelled) return read
 				byteArray.copyInto(destination, destinationOffset + read, startIndex = offset, endIndex = endIndex)
 				read += amountToRead
 				if (read >= capacity) {
@@ -311,6 +305,7 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 				reject(e)
 				0
 			}
+		}
 	}
 
 	private class Sipper() : AbstractFeeder() {

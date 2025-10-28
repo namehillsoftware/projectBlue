@@ -10,6 +10,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.io.PromisingReadableStream
+import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -20,7 +22,6 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.io.InputStream
 import java.net.URI
 
 class WhenProcessingTheJob {
@@ -30,7 +31,7 @@ class WhenProcessingTheJob {
 
 	@BeforeAll
 	fun before() {
-		val deferredPromise = DeferredPromise<InputStream>(ByteArrayInputStream(ByteArray(0)))
+		val deferredPromise = DeferredPromise<PromisingReadableStream>(PromisingReadableStreamWrapper(ByteArrayInputStream(ByteArray(0))))
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
 				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()

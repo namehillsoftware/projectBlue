@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -37,7 +38,7 @@ class WhenProcessingTheJob {
 			},
 			mockk {
 				every { promiseDownload(any(), any()) } answers {
-					"590d88fbd4994ee0a7d03ed155e6c969".hexToByteArray().inputStream().toPromise()
+					PromisingReadableStreamWrapper("590d88fbd4994ee0a7d03ed155e6c969".hexToByteArray().inputStream()).toPromise()
 				}
 			},
 			updateStoredFiles,

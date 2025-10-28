@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -77,7 +78,13 @@ class WhenProcessingTheQueue {
 					every { write(any(), any(), any()) } throws UnexpectedException()
 				})
 			},
-			mockk { every { promiseDownload(any(), any()) } answers { Promise(ByteArrayInputStream(byteArrayOf(5, 10))) } },
+			mockk {
+				every { promiseDownload(any(), any()) } answers {
+					Promise(
+						PromisingReadableStreamWrapper(ByteArrayInputStream(byteArrayOf(5, 10)))
+					)
+				}
+			},
 			storedFilesUpdater,
 		)
 

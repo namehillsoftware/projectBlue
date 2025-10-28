@@ -19,6 +19,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseServerClients
+import com.lasthopesoftware.bluewater.client.connection.requests.bodyString
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withSubsonicApi
@@ -35,19 +36,19 @@ import com.lasthopesoftware.promises.extensions.cancelBackThen
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.unitResponse
-import com.lasthopesoftware.resources.emptyByteArray
+import com.lasthopesoftware.resources.closables.eventuallyUse
+import com.lasthopesoftware.resources.closables.thenUse
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.InvalidResponseCodeException
 import com.lasthopesoftware.resources.io.NonStandardResponseException
+import com.lasthopesoftware.resources.io.PromisingReadableStream
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.lasthopesoftware.resources.strings.TranslateJson
 import com.lasthopesoftware.resources.strings.parseJson
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
-import java.io.ByteArrayInputStream
 import java.io.IOException
-import java.io.InputStream
 import java.net.URL
 import java.util.concurrent.CancellationException
 
@@ -162,20 +163,20 @@ class LiveSubsonicConnection(
 
 	override fun promiseServerVersion(): Promise<SemanticVersion?> = ServerVersionPromise()
 
-	override fun promiseFile(serviceFile: ServiceFile): Promise<InputStream> = Promise.Proxy { cp ->
+	override fun promiseFile(serviceFile: ServiceFile): Promise<PromisingReadableStream> = Promise.Proxy { cp ->
 		httpClient
 			.eventually { it.promiseResponse(getFileUrl(serviceFile)).also(cp::doCancel) }
 			.then(HttpStreamedResponse())
 	}
 
 	override fun promiseImageBytes(serviceFile: ServiceFile): Promise<ByteArray> = promiseResponse("getCoverArt", "id=${serviceFile.key}")
-		.cancelBackThen { httpResponse, _ ->
-			httpResponse.body.use { it.readBytes() }
+		.cancelBackEventually { httpResponse ->
+			httpResponse.body.eventuallyUse { it.promiseReadAllBytes() }
 		}
 
 	override fun promiseImageBytes(itemId: ItemId): Promise<ByteArray> = promiseResponse("getCoverArt", "id=${itemId.id}")
-		.cancelBackThen { httpResponse, _ ->
-			httpResponse.body.use { it.readBytes() }
+		.cancelBackEventually { httpResponse ->
+			httpResponse.body.eventuallyUse { it.promiseReadAllBytes() }
 		}
 
 	override fun promiseFileStringList(itemId: ItemId?): Promise<String> = itemId
@@ -208,8 +209,8 @@ class LiveSubsonicConnection(
 	override fun promisePlaystatsUpdate(serviceFile: ServiceFile): Promise<*> = promiseResponse(
 		"scrobble",
 		"id=${serviceFile.key}"
-	).cancelBackThen { response, _ ->
-		response.use {
+	).cancelBackEventually { response ->
+		response.thenUse {
 			val responseCode = it.code
 
 			if (BuildConfig.DEBUG) {
@@ -238,24 +239,19 @@ class LiveSubsonicConnection(
 		r.promiseSubsonicResponse<T>()
 	}
 
-	private inline fun <reified T> HttpResponse.promiseSubsonicResponse(): Promise<T?> =
-		ThreadPools.compute.preparePromise { cs ->
-			if (cs.isCancelled) throw CancellationException("Cancelled before parsing response.")
-			parseSubsonicResponse()
-		}
+	private inline fun <reified T> HttpResponse.promiseSubsonicResponse(): Promise<T?> = bodyString
+		.eventually {
+			ThreadPools.compute.preparePromise { cs ->
+				val json = JsonParser.parseString(it).asJsonObject.get("subsonic-response")
+					?: throw NonStandardResponseException()
 
-	private inline fun <reified T> HttpResponse.parseSubsonicResponse(): T? {
-		body.use {
-			it.reader().use { r ->
-				val json = JsonParser.parseReader(r).asJsonObject.get("subsonic-response") ?: throw NonStandardResponseException()
 				if (json.asJsonObject.get("status")?.asString == "failed") {
 					throw SubsonicServerException(jsonTranslator.parseJson<ErrorResponse>(json))
 				}
 
-				return jsonTranslator.parseJson<T>(json)
+				jsonTranslator.parseJson<T>(json)
 			}
 		}
-	}
 
 	private class SubsonicFilePropertiesLookup(
 		private val filePropertiesMap: MutableMap<String, String>
@@ -299,15 +295,12 @@ class LiveSubsonicConnection(
 				promiseResponse("getSong", "id=${serviceFile.key}")
 					.also(::doCancel)
 					.eventually({ httpResponse ->
-						ThreadPools.compute.preparePromise { cs ->
-							if (cs.isCancelled) {
-								throw filePropertiesCancellationException(serviceFile)
-							}
-
-							httpResponse.body.use { b ->
-								b.reader().use { r ->
+						httpResponse
+							.bodyString
+							.eventually { b ->
+								ThreadPools.compute.preparePromise { cs ->
 									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-									val subsonicResponse = JsonParser.parseReader(r).asJsonObject.get("subsonic-response")
+									val subsonicResponse = JsonParser.parseString(b).asJsonObject.get("subsonic-response")
 
 									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
 									val song = subsonicResponse?.asJsonObject?.get("song")
@@ -335,7 +328,6 @@ class LiveSubsonicConnection(
 									returnElements
 								}
 							}
-						}
 					}, ::handleException)
 					.also(::doCancel)
 					.eventually({ props ->
@@ -603,35 +595,6 @@ class LiveSubsonicConnection(
 		}
 
 		override fun respond(resolution: Throwable?): SemanticVersion? = null
-	}
-
-	private class HttpStreamedResponse : ImmediateResponse<HttpResponse?, InputStream>, InputStream() {
-		private var savedResponse: HttpResponse? = null
-		private lateinit var byteStream: InputStream
-
-		override fun respond(response: HttpResponse?): InputStream {
-			savedResponse = response
-
-			byteStream = response
-				?.takeIf { it.code != 404 }
-				?.run { body }
-				?: ByteArrayInputStream(emptyByteArray)
-
-			return this
-		}
-
-		override fun read(): Int = byteStream.read()
-
-		override fun read(b: ByteArray, off: Int, len: Int): Int = byteStream.read(b, off, len)
-
-		override fun available(): Int = byteStream.available()
-
-		override fun close() {
-			byteStream.close()
-			savedResponse?.close()
-		}
-
-		override fun toString(): String = byteStream.toString()
 	}
 
 	@Keep

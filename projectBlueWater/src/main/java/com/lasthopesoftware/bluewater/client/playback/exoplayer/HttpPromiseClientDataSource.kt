@@ -19,10 +19,9 @@ import com.lasthopesoftware.bluewater.client.connection.requests.HttpPromiseClie
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.client.connection.requests.isSuccessful
 import com.lasthopesoftware.promises.extensions.toFuture
+import com.lasthopesoftware.resources.io.PromisingReadableStream
 import com.lasthopesoftware.resources.uri.toURL
-import okhttp3.internal.closeQuietly
 import java.io.IOException
-import java.io.InputStream
 import java.io.InterruptedIOException
 import java.util.concurrent.ExecutionException
 import kotlin.math.min
@@ -63,7 +62,7 @@ class HttpPromiseClientDataSource private constructor(
 	private val requestProperties = RequestProperties()
 	private var dataSpec: DataSpec? = null
 	private var response: HttpResponse? = null
-	private var responseByteStream: InputStream? = null
+	private var responseByteStream: PromisingReadableStream? = null
 	private var connectionEstablished = false
 	private var bytesToRead: Long = 0
 	private var bytesRead: Long = 0
@@ -141,7 +140,7 @@ class HttpPromiseClientDataSource private constructor(
 			}
 			val errorResponseBody = responseByteStream?.let {
 				try {
-					it.readBytes()
+					it.promiseReadAllBytes().toFuture().get()
 				} catch (_: IOException) {
 					Util.EMPTY_BYTE_ARRAY
 				}
@@ -246,11 +245,11 @@ class HttpPromiseClientDataSource private constructor(
 		try {
 			while (bytesToSkip > 0) {
 				val readLength = min(bytesToSkip, skipBuffer.size.toLong()).toInt()
-				val read = responseByteStream?.read(skipBuffer, 0, readLength)
+				val read = responseByteStream?.promiseRead(skipBuffer, 0, readLength)?.toFuture()?.get()
 				if (Thread.currentThread().isInterrupted) {
 					throw InterruptedIOException()
 				}
-				if (read == -1 || read == null) {
+				if (read == null || read == -1) {
 					throw HttpDataSourceException(
 						dataSpec,
 						PlaybackException.ERROR_CODE_IO_READ_POSITION_OUT_OF_RANGE,
@@ -304,7 +303,7 @@ class HttpPromiseClientDataSource private constructor(
 			readLength = min(readLength.toLong(), bytesRemaining).toInt()
 		}
 
-		val read = responseByteStream?.read(buffer, offset, readLength)
+		val read = responseByteStream?.promiseRead(buffer, offset, readLength)?.toFuture()?.get()
 		if (read == -1 || read == null) {
 			return C.RESULT_END_OF_INPUT
 		}
@@ -316,7 +315,7 @@ class HttpPromiseClientDataSource private constructor(
 
 	/** Closes the current connection quietly, if there is one.  */
 	private fun closeConnectionQuietly() {
-		response?.body?.closeQuietly()
+		response?.body?.promiseClose()
 		responseByteStream = null
 	}
 }

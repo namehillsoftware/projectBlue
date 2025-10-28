@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -84,8 +85,8 @@ class WhenProcessingTheQueue {
 			mockk {
 				every { promiseDownload(any(), any()) } answers {
 					val f = lastArg<StoredFile>()
-					if (expectedDownloadedStoredFiles.contains(f)) byteArrayOf(39.toByte()).inputStream().toPromise()
-					else DeferredPromise(byteArrayOf(805.toByte()).inputStream())
+					if (expectedDownloadedStoredFiles.contains(f)) PromisingReadableStreamWrapper(byteArrayOf(39.toByte()).inputStream()).toPromise()
+					else DeferredPromise(PromisingReadableStreamWrapper(byteArrayOf(805.toByte()).inputStream()))
 				}
 			},
 			storedFilesUpdater,

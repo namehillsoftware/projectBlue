@@ -1,12 +1,13 @@
 package com.lasthopesoftware.bluewater.client.connection.requests
 
-import java.io.InputStream
+import com.lasthopesoftware.resources.closables.PromisingCloseable
+import com.lasthopesoftware.resources.io.PromisingReadableStream
 
-interface HttpResponse : AutoCloseable {
+interface HttpResponse : PromisingCloseable {
 	val code: Int
 	val message: String
 	val headers: Map<String, List<String>>
-	val body: InputStream
+	val body: PromisingReadableStream
 	val contentLength: Long
 }
 
@@ -14,4 +15,4 @@ val HttpResponse.isSuccessful
 	get() = code in 200..299
 
 val HttpResponse.bodyString
-	get() = body.readBytes().decodeToString()
+	get() = body.promiseReadAllBytes().then { it.decodeToString() }

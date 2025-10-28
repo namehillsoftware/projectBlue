@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -26,7 +27,9 @@ class WhenProcessingTheJob {
 			mockk {
 				every { promiseOutputStream(any()) } throws StorageCreatePathException(File("JN7DGC9O"))
 			},
-			mockk { every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0))) },
+			mockk {
+				every { promiseDownload(any(), any()) } returns Promise(PromisingReadableStreamWrapper(ByteArrayInputStream(ByteArray(0))))
+			},
 			mockk(),
 		)
         try {

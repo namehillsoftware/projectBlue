@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.emptyByteArray
+import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -31,7 +32,7 @@ class WhenProcessingTheJob {
 			},
 			mockk {
 				every { promiseDownload(any(), any()) } returns Promise(
-					ByteArrayInputStream(emptyByteArray)
+					PromisingReadableStreamWrapper(ByteArrayInputStream(emptyByteArray))
 				)
 			},
 			mockk {

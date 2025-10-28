@@ -18,6 +18,8 @@ import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.lasthopesoftware.resources.io.PromisingReadableStream
+import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.promises.Promise
 import okhttp3.Call
@@ -30,7 +32,6 @@ import okhttp3.Response
 import okhttp3.internal.closeQuietly
 import org.joda.time.Duration
 import java.io.IOException
-import java.io.InputStream
 import java.net.URL
 import java.security.KeyManagementException
 import java.security.KeyStore
@@ -290,12 +291,12 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 		override val message: String
 			get() = response.message
 		override val headers by lazy { response.headers.toMultimap() }
-		override val body: InputStream
-			get() = response.body.byteStream()
+		override val body: PromisingReadableStream
+			get() = PromisingReadableStreamWrapper(response.body.byteStream())
 		override val contentLength: Long
 			get() = response.body.contentLength()
 
-		override fun close() = response.closeQuietly()
+		override fun promiseClose(): Promise<Unit> = response.closeQuietly().toPromise()
 	}
 
 	private class HttpResponsePromise(private val call: Call) : Promise<HttpResponse>(), Callback, CancellationResponse {
