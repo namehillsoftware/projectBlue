@@ -4,9 +4,11 @@ import com.lasthopesoftware.promises.PromiseMachines
 import com.lasthopesoftware.promises.extensions.cancelBackThen
 import com.lasthopesoftware.promises.extensions.guaranteedUnitResponse
 import com.lasthopesoftware.promises.extensions.preparePromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import java.io.OutputStream
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
 
 class PromisingWritableStreamWrapper(private val outputStream: OutputStream) : PromisingWritableStream<PromisingWritableStreamWrapper> {
@@ -24,20 +26,24 @@ class PromisingWritableStreamWrapper(private val outputStream: OutputStream) : P
 
 	fun promiseCopyFrom(inputStream: PromisingReadableStream, bufferSize: Int = DEFAULT_BUFFER_SIZE): Promise<Int> {
 		val buffer = ByteArray(bufferSize)
+		val isFinished = AtomicBoolean()
 		return PromiseMachines.loop { totalBytes, cancellable ->
-			inputStream
+			val currentTotal = totalBytes ?: 0
+			if (isFinished.get()) currentTotal.toPromise()
+			else inputStream
 				.promiseRead(buffer, 0, bufferSize)
 				.cancelBackThen { bytes, ct ->
-					if (bytes == 0) {
+					if (bytes <= 0) {
+						isFinished.set(true)
 						cancellable.cancel()
-						return@cancelBackThen totalBytes ?: 0
+						return@cancelBackThen currentTotal
 					}
 
 					if (ct.isCancelled) throw CancellationException("promiseCopyFrom was cancelled.")
 					outputStream.write(buffer, 0, bytes)
 
 					if (ct.isCancelled) throw CancellationException("promiseCopyFrom was cancelled.")
-					totalBytes?.plus(bytes) ?: bytes
+					currentTotal + bytes
 				}
 		}
 	}

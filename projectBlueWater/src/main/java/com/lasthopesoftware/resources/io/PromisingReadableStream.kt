@@ -39,7 +39,7 @@ interface PromisingReadableStream : PromisingCloseable {
 
 					PromiseMachines
 						.loop<Int> { n, cancellable ->
-							if (n != null && n < 0) {
+							if (n != null && n <= 0) {
 								cancellable.cancel()
 								n.toPromise()
 							} else {
