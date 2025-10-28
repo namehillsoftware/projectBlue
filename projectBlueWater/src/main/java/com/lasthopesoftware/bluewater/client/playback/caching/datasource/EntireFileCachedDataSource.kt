@@ -6,7 +6,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.TransferListener
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheOutputStream
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheWritableStream
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.SupplyCacheStreams
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.drainQueue
@@ -88,7 +88,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 		cacheWriter?.clear()
 	}
 
-	private class CacheWriter(private val promisedOutputStream: Promise<CacheOutputStream?>) {
+	private class CacheWriter(private val promisedOutputStream: Promise<CacheWritableStream?>) {
 		companion object {
 			private const val goodBufferSize = 2 * 1024L * 1024L // 2MB
 		}
@@ -96,13 +96,13 @@ import java.util.concurrent.ConcurrentLinkedQueue
 		private val buffersToTransfer = ConcurrentLinkedQueue<Buffer>()
 		private val activePromiseSync = Any()
 		private val bufferSync = Any()
-		private val rateLimiter = PromisingRateLimiter<CacheOutputStream?>(1)
+		private val rateLimiter = PromisingRateLimiter<CacheWritableStream?>(1)
 
 		@Volatile
 		private var isFaulted = false
 
 		@Volatile
-		private var activePromise: Promise<CacheOutputStream?> = promisedOutputStream
+		private var activePromise: Promise<CacheWritableStream?> = promisedOutputStream
 
 		@Volatile
 		private var workingBuffer = Buffer()
@@ -124,11 +124,11 @@ import java.util.concurrent.ConcurrentLinkedQueue
 			}
 		}
 
-		private fun processQueue() : Promise<CacheOutputStream?> = rateLimiter.limit {
+		private fun processQueue() : Promise<CacheWritableStream?> = rateLimiter.limit {
 			promisedOutputStream.eventually { outputStream ->
 				if (outputStream == null) isFaulted = true
 
-				if (outputStream == null || isFaulted) Promise.empty<CacheOutputStream?>()
+				if (outputStream == null || isFaulted) Promise.empty<CacheWritableStream?>()
 				else buffersToTransfer.drainQueue()
 					.reduceOrNull { sink, source -> sink.also(source::readAll) }
 					?.takeUnless { it.exhausted() }

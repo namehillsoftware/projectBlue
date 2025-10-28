@@ -1,6 +1,7 @@
 package com.lasthopesoftware.resources.io.GivenBytes
 
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.resources.closables.thenUse
 import com.lasthopesoftware.resources.io.PromisingChannel
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -25,7 +26,7 @@ class `When reading the promised bytes` {
 			.promiseRead(readBytes, 1, 20)
 			.inevitably { pipingInputStream.promiseClose() }
 
-		pipingInputStream.writableStream.use { os ->
+		pipingInputStream.writableStream.thenUse { os ->
 			for (i in 0 until bytes.size step chunkSize) {
 				val len = (bytes.size - i).coerceAtMost(chunkSize)
 				if (len <= 0) break

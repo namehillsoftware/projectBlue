@@ -43,7 +43,7 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 	 */
 	private var out = 0
 
-	val writableStream: PromisingOutputStream<*> by lazy { ConnectedOutputStream() }
+	val writableStream: PromisingWritableStream<*> by lazy { ConnectedWritableStream() }
 
 	/**
 	 * Reads the next byte of data from this piped input stream. The
@@ -259,18 +259,19 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 		close()
 	}
 
-	private inner class ConnectedOutputStream() : PromisingOutputStream<ConnectedOutputStream>,
-        ImmediateResponse<Unit, ConnectedOutputStream> {
-		override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<ConnectedOutputStream> =
+	private inner class ConnectedWritableStream() : PromisingWritableStream<ConnectedWritableStream>,
+        ImmediateResponse<Unit, ConnectedWritableStream> {
+		override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<ConnectedWritableStream> =
 			promiseReceive(buffer, offset, length).then(this)
 
-		override fun flush(): Promise<ConnectedOutputStream> = awaitSpace().then(this)
+		override fun flush(): Promise<ConnectedWritableStream> = awaitSpace().then(this)
 
-		override fun close() {
+		override fun promiseClose(): Promise<Unit> {
 			receivedLast()
+			return Unit.toPromise()
 		}
 
-		override fun respond(resolution: Unit?): ConnectedOutputStream = this
+		override fun respond(resolution: Unit?): ConnectedWritableStream = this
 	}
 
 

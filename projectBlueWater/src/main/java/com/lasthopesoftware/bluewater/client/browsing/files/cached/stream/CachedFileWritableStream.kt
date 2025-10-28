@@ -12,12 +12,12 @@ import okio.sink
 import java.io.File
 import java.io.FileOutputStream
 
-class CachedFileOutputStream(
+class CachedFileWritableStream(
 	private val libraryId: LibraryId,
     private val uniqueKey: String,
     private val file: File,
     private val diskFileCachePersistence: IDiskFileCachePersistence
-) : CacheOutputStream {
+) : CacheWritableStream {
 
 	@Volatile
 	private var isClosed = false
@@ -28,7 +28,7 @@ class CachedFileOutputStream(
         buffer: ByteArray,
         offset: Int,
         length: Int
-    ): Promise<CacheOutputStream> {
+    ): Promise<CacheWritableStream> {
         return ThreadPools.io.preparePromise {
 			if (!isClosed)
             	lazyFileOutputStream.value.write(buffer, offset, length)
@@ -36,7 +36,7 @@ class CachedFileOutputStream(
         }
     }
 
-    override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheOutputStream> {
+    override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheWritableStream> {
         return ThreadPools.io.preparePromise {
 			if (!isClosed)
             	bufferedSource.readAll(lazyFileOutputStream.value.sink())
@@ -44,7 +44,7 @@ class CachedFileOutputStream(
         }
     }
 
-    override fun flush(): Promise<CacheOutputStream> {
+    override fun flush(): Promise<CacheWritableStream> {
         return ThreadPools.io.preparePromise {
             if (!isClosed && lazyFileOutputStream.isInitialized()) lazyFileOutputStream.value.flush()
             this

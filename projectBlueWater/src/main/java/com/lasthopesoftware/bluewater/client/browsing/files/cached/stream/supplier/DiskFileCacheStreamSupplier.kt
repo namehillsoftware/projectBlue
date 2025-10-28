@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.suppl
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.access.ProvideCachedFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.disk.ProvideDiskCacheDirectory
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.IDiskFileCachePersistence
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheOutputStream
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CachedFileOutputStream
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheWritableStream
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CachedFileWritableStream
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.namehillsoftware.handoff.promises.Promise
 import java.io.File
@@ -14,12 +14,12 @@ class DiskFileCacheStreamSupplier(
     private val diskFileCachePersistence: IDiskFileCachePersistence,
     private val cachedFilesProvider: ProvideCachedFiles
 ) : SupplyCacheStreams {
-    override fun promiseCachedFileOutputStream(libraryId: LibraryId, uniqueKey: String): Promise<CacheOutputStream> {
+    override fun promiseCachedFileOutputStream(libraryId: LibraryId, uniqueKey: String): Promise<CacheWritableStream> {
         return cachedFilesProvider
             .promiseCachedFile(libraryId, uniqueKey)
             .then { cachedFile ->
                 val file = cachedFile?.fileName?.let(::File) ?: generateCacheFile(libraryId, uniqueKey)
-                CachedFileOutputStream(libraryId, uniqueKey, file, diskFileCachePersistence)
+                CachedFileWritableStream(libraryId, uniqueKey, file, diskFileCachePersistence)
             }
     }
 

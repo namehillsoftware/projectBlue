@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.GivenATypicalFile.AndABufferedSource
 
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CachedFileOutputStream
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CachedFileWritableStream
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.mockk
@@ -24,7 +24,7 @@ class WhenWritingToAFileMultipleTimes {
 
     @BeforeAll
     fun before() {
-        val cachedFileOutputStream = CachedFileOutputStream(
+        val cachedFileOutputStream = CachedFileWritableStream(
             LibraryId(500),"unique-test", file, mockk()
         )
         cachedFileOutputStream.promiseTransfer(firstBuffer)

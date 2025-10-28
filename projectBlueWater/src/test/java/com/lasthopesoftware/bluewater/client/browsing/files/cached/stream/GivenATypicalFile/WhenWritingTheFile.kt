@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.GivenATypicalFile
 
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CachedFileOutputStream
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CachedFileWritableStream
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.mockk
@@ -18,7 +18,7 @@ class WhenWritingTheFile {
 
     @BeforeAll
     fun act() {
-        val cachedFileOutputStream = CachedFileOutputStream(LibraryId(100), "unique-test", file, mockk())
+        val cachedFileOutputStream = CachedFileWritableStream(LibraryId(100), "unique-test", file, mockk())
         cachedFileOutputStream.promiseWrite(bytes, 0, bytes.size).toExpiringFuture().get()
 		FileInputStream(file).use { fis ->
 			fis.read(bytesWritten, 0, bytes.size)
