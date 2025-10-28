@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -74,7 +75,9 @@ class WhenSyncingTheStoredItems {
 				},
 				mockk {
 					every { promiseDownload(any(), any()) } answers {
-						byteArrayOf(211.toByte(), 210.toByte(), 170.toByte()).inputStream().toPromise()
+						PromisingReadableStreamWrapper(
+							byteArrayOf(211.toByte(), 210.toByte(), 170.toByte()).inputStream()
+						).toPromise()
 					}
 					every { promiseDownload(any(), match { it.serviceId == "2" }) } returns Promise(IOException())
 				},

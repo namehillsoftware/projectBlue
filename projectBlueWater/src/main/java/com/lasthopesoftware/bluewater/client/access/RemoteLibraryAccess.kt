@@ -7,8 +7,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
+import com.lasthopesoftware.resources.io.PromisingReadableStream
 import com.namehillsoftware.handoff.promises.Promise
-import java.io.InputStream
 
 interface RemoteLibraryAccess {
 	fun promiseFileProperties(serviceFile: ServiceFile): Promise<LookupFileProperties>
@@ -25,7 +25,7 @@ interface RemoteLibraryAccess {
 	fun promiseIsReadOnly(): Promise<Boolean>
 	fun promiseServerVersion(): Promise<SemanticVersion?>
 	fun promiseRevision(): Promise<Long?>
-	fun promiseFile(serviceFile: ServiceFile): Promise<InputStream>
+	fun promiseFile(serviceFile: ServiceFile): Promise<PromisingReadableStream>
 	fun promisePlaystatsUpdate(serviceFile: ServiceFile): Promise<*>
 	fun promiseFiles(): Promise<List<ServiceFile>>
 	fun promiseFiles(query: String): Promise<List<ServiceFile>>

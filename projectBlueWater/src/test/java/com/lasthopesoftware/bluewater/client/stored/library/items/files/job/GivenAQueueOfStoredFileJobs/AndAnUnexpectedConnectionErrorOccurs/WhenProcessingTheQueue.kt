@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -76,7 +77,7 @@ class WhenProcessingTheQueue {
 			},
 			mockk {
 				every { promiseDownload(any(), any()) } answers {
-					ByteArrayInputStream(byteArrayOf(663.toByte(), 40)).toPromise()
+					PromisingReadableStreamWrapper(ByteArrayInputStream(byteArrayOf(663.toByte(), 40))).toPromise()
 				}
 				every { promiseDownload(any(), match { it.serviceId == "4" }) } returns Promise(UnexpectedException())
 			},

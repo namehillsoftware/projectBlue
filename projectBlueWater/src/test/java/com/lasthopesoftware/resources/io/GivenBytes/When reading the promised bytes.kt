@@ -33,7 +33,7 @@ class `When reading the promised bytes` {
 				os.promiseWrite(bytes, i, len).toExpiringFuture().get()
 			}
 			os.flush().toExpiringFuture().get()
-		}
+		}.toExpiringFuture().get()
 
 		promisedRead.toExpiringFuture().get()
 	}

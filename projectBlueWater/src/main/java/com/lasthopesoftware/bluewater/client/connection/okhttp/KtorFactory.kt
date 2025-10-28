@@ -12,8 +12,12 @@ import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseServerClients
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager
+import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.closables.eventuallyUse
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.lasthopesoftware.resources.io.PromisingChannel
+import com.lasthopesoftware.resources.io.PromisingReadableStream
 import com.namehillsoftware.handoff.promises.Promise
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
@@ -40,10 +44,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
-import kotlinx.io.asSink
-import java.io.InputStream
-import java.io.PipedInputStream
-import java.io.PipedOutputStream
+import kotlinx.io.readByteArray
 import java.net.URL
 import java.security.KeyStore
 import java.security.KeyStoreException
@@ -249,7 +250,7 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 	private class KtorHttpResponse(
 		private val client: HttpClient,
 		private val response: io.ktor.client.statement.HttpResponse,
-		override val body: InputStream
+		override val body: PromisingReadableStream
 	) : HttpResponse {
 		override val code: Int
 			get() = response.status.value
@@ -258,10 +259,10 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 		override val contentLength: Long
 			get() = response.contentLength() ?: 0L
 
-		override fun close() {
-			body.close()
-			client.close()
-		}
+		override fun promiseClose(): Promise<Unit> =
+			body
+				.promiseClose()
+				.must { _ -> client.close() }
 	}
 
 	@OptIn(ExperimentalCoroutinesApi::class)
@@ -279,26 +280,22 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 					}
 
 					request.execute { response ->
-						val pipedInputStream = PipedInputStream()
-						val pipedOutputStream = PipedOutputStream(pipedInputStream)
+						val promisingChannel = PromisingChannel()
 
-						ThreadPools.io.execute {
-							m.sendResolution(
-								KtorHttpResponse(httpClient, response, pipedInputStream)
-							)
-						}
+						m.sendResolution(
+							KtorHttpResponse(httpClient, response, promisingChannel)
+						)
 
-						pipedOutputStream.use { pipedOutputStream ->
-							val sink = pipedOutputStream.asSink()
-
-							sink.use {
+						promisingChannel.writableStream.eventuallyUse { stream ->
+							launch {
 								val channel = response.bodyAsChannel()
 								while (!channel.exhausted()) {
 									val chunk = channel.readRemaining(8192)
-									chunk.transferTo(it)
+									val bytes = chunk.readByteArray()
+									stream.promiseWrite(bytes, 0, bytes.size).suspend()
 								}
-							}
-						}
+							}.toPromise()
+						}.suspend()
 					}
 				} catch (e: Throwable) {
 					m.sendRejection(e)
