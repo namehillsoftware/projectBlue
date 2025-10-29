@@ -14,20 +14,20 @@ class LibraryFileProvider(private val libraryConnections: ProvideLibraryConnecti
 	override fun promiseFiles(libraryId: LibraryId): Promise<List<ServiceFile>> =
 		libraryConnections
 			.promiseLibraryConnection(libraryId)
-			.eventuallyFromDataAccess { it?.promiseFiles().keepPromise(emptyList()) }
+			.eventuallyFromDataAccess { it?.promiseFiles().keepPromise { emptyList() } }
 
 	override fun promiseFiles(libraryId: LibraryId, itemId: ItemId): Promise<List<ServiceFile>> =
 		libraryConnections
 			.promiseLibraryConnection(libraryId)
-			.eventuallyFromDataAccess { it?.promiseFiles(itemId).keepPromise(emptyList()) }
+			.eventuallyFromDataAccess { it?.promiseFiles(itemId).keepPromise { emptyList() } }
 
 	override fun promiseFiles(libraryId: LibraryId, playlistId: PlaylistId): Promise<List<ServiceFile>> =
 		libraryConnections
 			.promiseLibraryConnection(libraryId)
-			.eventuallyFromDataAccess { it?.promiseFiles(playlistId).keepPromise(emptyList()) }
+			.eventuallyFromDataAccess { it?.promiseFiles(playlistId).keepPromise { emptyList() } }
 
 	override fun promiseAudioFiles(libraryId: LibraryId, query: String): Promise<List<ServiceFile>> =
 		libraryConnections
 			.promiseLibraryConnection(libraryId)
-			.eventuallyFromDataAccess { it?.promiseFiles(query).keepPromise(emptyList()) }
+			.eventuallyFromDataAccess { it?.promiseFiles(query).keepPromise { emptyList() } }
 }

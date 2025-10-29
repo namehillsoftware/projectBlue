@@ -33,7 +33,7 @@ class RemoteImageAccess(private val libraryConnections: ProvideLibraryConnection
 			}
 
 			override fun promiseResponse(connection: LiveServerConnection?): Promise<ByteArray> =
-				connection?.dataAccess?.promiseImageBytes(serviceFile).keepPromise(emptyByteArray)
+				connection?.dataAccess?.promiseImageBytes(serviceFile).keepPromise { emptyByteArray }
 
 			override fun respond(error: Throwable): ByteArray =
 				when (error) {

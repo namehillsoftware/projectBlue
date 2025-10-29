@@ -1,5 +1,6 @@
 package com.lasthopesoftware.resources.io
 
+import com.lasthopesoftware.promises.extensions.guaranteedUnitResponse
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
@@ -18,9 +19,7 @@ class PromisingOutputStreamWrapper(private val outputStream: OutputStream) : Pro
 		this
 	}
 
-	override fun close() {
-		outputStream.close()
-	}
+	override fun promiseClose(): Promise<Unit> = flush().must(outputStream::close).guaranteedUnitResponse()
 
 	fun promiseCopyFrom(inputStream: InputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE) = ThreadPools.io.preparePromise { ct ->
 		val buffer = ByteArray(bufferSize)

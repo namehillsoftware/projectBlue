@@ -18,7 +18,7 @@ class ItemProvider(private val connectionProvider: ProvideGuaranteedLibraryConne
 			.eventually { access ->
 				access
 					?.promiseItems(itemId)
-					.keepPromise(emptyList())
+					.keepPromise { emptyList() }
 			}
 	}
 }

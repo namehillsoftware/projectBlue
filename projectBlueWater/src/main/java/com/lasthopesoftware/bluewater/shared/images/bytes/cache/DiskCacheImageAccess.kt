@@ -14,7 +14,6 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.propagation.ProvideProxyablePromise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -70,12 +69,7 @@ class DiskCacheImageAccess(
 			if (cancellationToken.isCancelled) return null
 
 			try {
-				FileInputStream(imageCacheFile).use { fis ->
-					ByteArrayOutputStream(fis.available()).use { buffer ->
-						fis.copyTo(buffer)
-						return buffer.toByteArray()
-					}
-				}
+				return FileInputStream(imageCacheFile).use { it.readBytes() }
 			} catch (e: FileNotFoundException) {
 				logger.error("Could not find cached file.", e)
 				return null

@@ -16,7 +16,6 @@ import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.uri.PathAndQuery.pathAndQuery
 import com.namehillsoftware.handoff.promises.Promise
-import okhttp3.internal.closeQuietly
 import okio.Buffer
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -161,17 +160,20 @@ import java.util.concurrent.ConcurrentLinkedQueue
 						processQueue()
 					}
 					.eventually { it?.flush().keepPromise() }
-					.eventually { os -> os?.commitToCache()?.must { _ -> os.close() }?.then { _ -> os }.keepPromise() }
+					.eventually { os -> os?.commitToCache()?.inevitably { os.promiseClose() }?.then { _ -> os }.keepPromise() }
 			}
 		}
 
 		fun clear() {
 			synchronized(activePromiseSync) {
 				activePromise.must { _ ->
-					promisedOutputStream.then {	os ->
-						os?.closeQuietly()
-						buffersToTransfer.drainQueue().forEach { it.clear() }
-					}
+					promisedOutputStream
+						.eventually { os ->
+							os?.promiseClose().keepPromise(Unit)
+						}
+						.then {
+							buffersToTransfer.drainQueue().forEach { it.clear() }
+						}
 				}
 			}
 		}

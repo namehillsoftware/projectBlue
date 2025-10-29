@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.cached.stream
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.IDiskFileCachePersistence
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.promises.extensions.guaranteedUnitResponse
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
@@ -54,8 +55,10 @@ class CachedFileOutputStream(
 		if (!isClosed) diskFileCachePersistence.putIntoDatabase(libraryId, uniqueKey, file)
 		else Promise.empty()
 
-	override fun close() {
-		isClosed = true
-		if (lazyFileOutputStream.isInitialized()) lazyFileOutputStream.value.close()
+	override fun promiseClose(): Promise<Unit> {
+		return flush().must { _ ->
+			isClosed = true
+			if (lazyFileOutputStream.isInitialized()) lazyFileOutputStream.value.close()
+		}.guaranteedUnitResponse()
 	}
 }
