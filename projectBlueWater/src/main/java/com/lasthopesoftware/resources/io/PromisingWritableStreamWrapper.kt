@@ -11,18 +11,18 @@ import java.io.OutputStream
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
 
-class PromisingWritableStreamWrapper(private val outputStream: OutputStream) : PromisingWritableStream<PromisingWritableStreamWrapper> {
+class PromisingWritableStreamWrapper(private val outputStream: OutputStream) : PromisingWritableStream {
 	override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int) = ThreadPools.io.preparePromise {
 		outputStream.write(buffer, offset, length)
-		this
+		length
 	}
 
-	override fun flush(): Promise<PromisingWritableStreamWrapper> = ThreadPools.io.preparePromise {
+	override fun promiseFlush(): Promise<Unit> = ThreadPools.io.preparePromise {
 		outputStream.flush()
 		this
 	}
 
-	override fun promiseClose(): Promise<Unit> = flush().must(outputStream::close).guaranteedUnitResponse()
+	override fun promiseClose(): Promise<Unit> = promiseFlush().must(outputStream::close).guaranteedUnitResponse()
 
 	fun promiseCopyFrom(inputStream: PromisingReadableStream, bufferSize: Int = DEFAULT_BUFFER_SIZE): Promise<Int> {
 		val buffer = ByteArray(bufferSize)

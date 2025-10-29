@@ -1,111 +1,56 @@
 package com.lasthopesoftware.resources.io
 
-import com.lasthopesoftware.bluewater.shared.drainQueue
-import com.lasthopesoftware.promises.PromiseMachines
+import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.promises.extensions.guaranteedUnitResponse
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
+import com.lasthopesoftware.resources.io.PromisingReadableStream.Companion.readingCancelledException
+import com.namehillsoftware.handoff.cancellation.CancellationResponse
+import com.namehillsoftware.handoff.cancellation.CancellationToken
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import java.io.IOException
+import java.io.OutputStream
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.Volatile
 
-class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStream {
+class PromisingChannel() : PromisingReadableStream {
 
-	private val feeders = ConcurrentLinkedQueue<AbstractFeeder>()
+	companion object {
+		private val logger by lazyLogger<PromisingChannel>()
+	}
+
+	private val consumers = ConcurrentLinkedQueue<Consumer>()
+	private val servers = ConcurrentLinkedQueue<Server>()
 	private val sync = Any()
 
 	@Volatile
-	private var closedByWriter = false
+	private var writerClosed = false
 
 	@Volatile
-	private var closedByReader = false
+	private var readerClosed = false
 
-	/**
-	 * The circular buffer into which incoming data is placed.
-	 * @since   1.1
-	 */
-	private val buffer = ByteArray(pipeSize)
+	private val connectableWritableStream by lazy { ConnectedWritableStream() }
 
-	/**
-	 * The index of the position in the circular buffer at which the
-	 * next byte of data will be stored when received from the connected
-	 * piped output stream. `in<0` implies the buffer is empty,
-	 * `in==out` implies the buffer is full
-	 * @since   1.1
-	 */
-	private var `in` = -1
+	val writableStream: PromisingWritableStream
+		get() = connectableWritableStream
 
-	/**
-	 * The index of the position in the circular buffer at which the next
-	 * byte of data will be read by this piped input stream.
-	 * @since   1.1
-	 */
-	private var out = 0
+	val outputStream: OutputStream
+		get() = connectableWritableStream
 
-	val writableStream: PromisingWritableStream<*> by lazy { ConnectedWritableStream() }
-
-	/**
-	 * Reads the next byte of data from this piped input stream. The
-	 * value byte is returned as an `int` in the range
-	 * `0` to `255`.
-	 * This method blocks until input data is available, the end of the
-	 * stream is detected, or an exception is thrown.
-	 *
-	 * @return     the next byte of data, or `-1` if the end of the
-	 * stream is reached.
-	 * @exception  java.io.IOException  if the pipe is
-	 * [unconnected][.connect],
-	 * [ `broken`](#BROKEN), closed,
-	 * or if an I/O error occurs.
-	 */
-	override fun promiseRead(): Promise<Int> = when {
-		closedByReader -> throw IOException("Pipe closed")
-		closedByWriter && tryFeeding() -> (-1).toPromise()
-		else -> {
-			val sipper = Sipper()
-			feeders.add(sipper)
-			tryFeeding()
-			sipper
-		}
-	}
-
-	/**
-	 * Reads up to `len` bytes of data from this piped input
-	 * stream into an array of bytes. Less than `len` bytes
-	 * will be read if the end of the data stream is reached or if
-	 * `len` exceeds the pipe's buffer size.
-	 * If `len ` is zero, then no bytes are read and 0 is returned;
-	 * otherwise, the method blocks until at least 1 byte of input is
-	 * available, end of the stream has been detected, or an exception is
-	 * thrown.
-	 *
-	 * @param      b     the buffer into which the data is read.
-	 * @param      off   the start offset in the destination array `b`
-	 * @param      len   the maximum number of bytes read.
-	 * @return     the total number of bytes read into the buffer, or
-	 * `-1` if there is no more data because the end of
-	 * the stream has been reached.
-	 * @exception  NullPointerException If `b` is `null`.
-	 * @exception  IndexOutOfBoundsException If `off` is negative,
-	 * `len` is negative, or `len` is greater than
-	 * `b.length - off`
-	 * @exception  IOException if the pipe is [ `broken`](#BROKEN),
-	 * [unconnected][.connect],
-	 * closed, or if an I/O error occurs.
-	 */
 	override fun promiseRead(b: ByteArray, off: Int, len: Int): Promise<Int> = when {
-		closedByReader -> throw IOException("Pipe closed")
-		off < 0 || len < 0 || len > b.size - off -> {
-			throw IndexOutOfBoundsException()
-		}
+		readerClosed -> throw ChannelClosedException()
+		off < 0 || len < 0 || len > b.size - off -> throw IndexOutOfBoundsException()
 		len == 0 -> 0.toPromise()
-		closedByWriter && tryFeeding() -> (-1).toPromise()
+		// Closed by writer and queue flushed
+		writerClosed && servers.isEmpty() -> {
+			(-1).toPromise()
+		}
 		else -> {
-			val feeder = Feeder(b, off, len)
-			feeders.add(feeder)
-			tryFeeding()
-			feeder
+			val consumer = Consumer(b, off, len)
+			consumers.offer(consumer)
+			tryConsuming()
+			consumer
 		}
 	}
 
@@ -123,49 +68,40 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 	 * @since   1.0.2
 	 */
 	override fun available(): Int {
-		return when {
-			`in` < 0 -> 0
-			`in` == out -> buffer.size
-			`in` > out -> `in` - out
-			else -> `in` + buffer.size - out
-		}
+		return servers.sumOf { servers -> servers.bytesToTransfer }
 	}
 
 	override fun promiseClose(): Promise<Unit> {
-		closedByReader = !closedByWriter
-		synchronized(sync) {
-			val promisedClosed = Promise.whenAll(
-				feeders.drainQueue().map { it.apply { cancel() } }
-			)
-			`in` = -1
-			return promisedClosed.unitResponse()
-		}
+		logger.debug("Closing PromisingChannel for reading.")
+		readerClosed = true
+		tryConsuming()
+		return Promise.whenAll(consumers.toList()).guaranteedUnitResponse()
 	}
 
-	private fun tryFeeding(): Boolean {
-		synchronized(sync) {
-			var fed = 0
-			while (`in` >= 0) {
-				val feeder = feeders.peek()
-				if (feeder == null) {
-					break
-				}
+	private fun tryConsuming(): Unit = synchronized(sync) {
+		while (true) {
+			val consumer = consumers.peek()
+			if (consumer == null) break
 
-				val maxAmount =
-					if (`in` > out) (buffer.size - out).coerceAtMost(`in` - out)
-					else buffer.size - out
-
-				fed += feeder.feed(buffer, out, maxAmount)
-				if (fed >= feeder.capacity) {
-					fed = 0
-					feeders.poll()
+			val server = servers.peek()
+			if (server == null) {
+				if (writerClosed) {
+					// Drain consumers
+					consumer.servingComplete()
+					if (consumers.peek() == consumer)
+						consumers.poll()
+					continue
 				}
-				out += fed
-				if (out >= buffer.size) out = 0
-				if (`in` == out) `in` = -1
+				break
 			}
 
-			return feeders.isEmpty()
+			consumer.consume(server)
+
+			if (consumer.isFed && consumers.peek() == consumer)
+				consumers.poll()
+
+			if (server.isEmpty && servers.peek() == server)
+				servers.poll()
 		}
 	}
 
@@ -179,70 +115,17 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 	 * [unconnected][.connect],
 	 * closed,or if an I/O error occurs.
 	 */
-	private fun promiseReceive(b: ByteArray, off: Int, len: Int): Promise<Unit> {
-		var off = off
+	private fun promiseReceive(b: ByteArray, off: Int, len: Int): Promise<Int> {
 		checkStateForReceive()
-		var bytesToTransfer = len
-		return PromiseMachines.loop { _, cancellable ->
-			synchronized(sync) {
-				when {
-					bytesToTransfer <= 0 -> {
-						cancellable.cancel()
-						tryFeeding()
-						Unit.toPromise()
-					}
-
-					`in` == out -> awaitSpace()
-					else -> synchronized(sync) {
-						val nextTransferAmount = when {
-							out < `in` -> buffer.size - `in`
-							`in` == -1 -> {
-								out = 0
-								`in` = 0
-								buffer.size
-							}
-
-							else -> out - `in`
-						}.coerceAtMost(bytesToTransfer)
-
-						assert(nextTransferAmount > 0)
-						b.copyInto(buffer, `in`, off, off + nextTransferAmount)
-						bytesToTransfer -= nextTransferAmount
-						off += nextTransferAmount
-						`in` += nextTransferAmount
-						if (`in` >= buffer.size) {
-							`in` = 0
-						}
-						Unit.toPromise()
-					}
-				}
-			}
-		}
+		val server = Server(b, off, len)
+		servers.offer(server)
+		tryConsuming()
+		return server
 	}
 
-	@Throws(IOException::class)
 	private fun checkStateForReceive() {
-		if (closedByWriter || closedByReader) {
-			throw IOException("Pipe closed")
-		}
-	}
-
-	private fun awaitSpace(): Promise<Unit> {
-		return PromiseMachines.loop { _, cancellable ->
-			synchronized(sync) {
-				if (`in` != out) {
-					cancellable.cancel()
-					Unit.toPromise()
-				} else {
-					if (!tryFeeding()) Unit.toPromise()
-					else {
-						val taster = Taster()
-						feeders.offer(taster)
-						tryFeeding()
-						taster.unitResponse()
-					}
-				}
-			}
+		if (writerClosed || readerClosed) {
+			throw ChannelClosedException()
 		}
 	}
 
@@ -250,39 +133,83 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 	 * Notifies all waiting threads that the last byte of data has been
 	 * received.
 	 */
-	private fun receivedLast(): Promise<Unit> {
-		tryFeeding()
-		closedByWriter = true
-		return promiseClose()
+	private fun receivedLast() {
+		logger.debug("Closing PromisingChannel for writing.")
+		writerClosed = true
+		tryConsuming()
 	}
 
-	private inner class ConnectedWritableStream() : PromisingWritableStream<ConnectedWritableStream>,
-        ImmediateResponse<Unit, ConnectedWritableStream> {
-		override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<ConnectedWritableStream> =
-			promiseReceive(buffer, offset, length).then(this)
+	private inner class ConnectedWritableStream() : OutputStream(), PromisingWritableStream,
+		ImmediateResponse<Unit, ConnectedWritableStream> {
+		override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<Int> =
+			promiseReceive(buffer, offset, length)
 
-		override fun flush(): Promise<ConnectedWritableStream> = awaitSpace().then(this)
-
-		override fun promiseClose(): Promise<Unit> = receivedLast()
-
-		override fun respond(resolution: Unit?): ConnectedWritableStream = this
-	}
-
-
-	private abstract class AbstractFeeder() : Promise<Int>() {
-		init {
-			awaitCancellation { resolve(0) }
+		override fun promiseFlush(): Promise<Unit> {
+			tryConsuming()
+			return Promise.whenAll(servers.toList()).unitResponse()
 		}
 
-		abstract val capacity: Int
-		abstract fun feed(byteArray: ByteArray, offset: Int, maxAmount: Int): Int
+		override fun promiseClose(): Promise<Unit> = receivedLast().toPromise()
+
+		override fun respond(resolution: Unit?): ConnectedWritableStream = this
+
+		override fun write(b: Int) {
+			write(byteArrayOf(b.toByte()), 0, 1)
+		}
+
+		override fun write(b: ByteArray, off: Int, len: Int) {
+			promiseReceive(b, off, len)
+		}
+
+		override fun close() {
+			receivedLast()
+		}
 	}
 
-	private class Feeder(
+	private class Server(
+		private val bytes: ByteArray,
+		@Volatile private var offset: Int,
+		bytesToTransfer: Int
+	) : Promise<Int>() {
+		private val cs = CancellationToken()
+		private val sync = Any()
+		private val startingOffset = offset
+
+		@Volatile
+		var bytesToTransfer = bytesToTransfer
+			private set
+
+		val isEmpty: Boolean
+			get() = cs.isCancelled || bytesToTransfer <= 0
+
+		init {
+		    awaitCancellation(cs)
+		}
+
+		fun serve(destination: ByteArray, destinationOffset: Int, nextTransferAmount: Int): Int = synchronized(sync) {
+			if (isEmpty) return 0
+
+			val nextTransferAmount = nextTransferAmount.coerceAtMost(bytesToTransfer)
+			if (nextTransferAmount < 0) return 0
+
+			bytes.copyInto(destination, destinationOffset, offset, offset + nextTransferAmount)
+			bytesToTransfer -= nextTransferAmount
+			offset += nextTransferAmount
+
+			if (isEmpty)
+				resolve(offset - startingOffset)
+
+			return nextTransferAmount
+		}
+	}
+
+	private inner class Consumer(
 		private val destination: ByteArray,
 		private val destinationOffset: Int,
-		override val capacity: Int,
-	) : AbstractFeeder() {
+		val capacity: Int,
+	) : Promise<Int>(), CancellationResponse {
+
+		private val sync = Any()
 
 		@Volatile
 		private var read = 0
@@ -290,54 +217,48 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 		@Volatile
 		private var isCancelled = false
 
+		val isFed
+			get() = isCancelled || read >= capacity
+
 		init {
-			awaitCancellation {
-				isCancelled = true
+		    awaitCancellation(this)
+		}
+
+		override fun cancellationRequested() {
+			isCancelled = true
+			synchronized(sync) {
+				reject(readingCancelledException())
+			}
+		}
+
+		fun servingComplete() {
+			synchronized(sync) {
 				resolve(read)
 			}
 		}
 
-		override fun feed(byteArray: ByteArray, offset: Int, maxAmount: Int): Int {
-			return try {
-				if (isCancelled) return read
-				val amountToRead = (capacity - read).coerceAtMost(byteArray.size - offset).coerceAtMost(maxAmount)
-				val endIndex = offset + amountToRead
-				if (isCancelled) return read
-				byteArray.copyInto(destination, destinationOffset + read, startIndex = offset, endIndex = endIndex)
-				read += amountToRead
-				if (read >= capacity) {
-					resolve(read)
-				}
-				amountToRead
-			} catch (e: Throwable) {
-				reject(e)
-				0
-			}
-		}
-	}
-
-	private class Sipper() : AbstractFeeder() {
-		override val capacity: Int = 1
-
-		override fun feed(byteArray: ByteArray, offset: Int, maxAmount: Int) =
+		fun consume(server: Server): Int {
 			try {
-				resolve(if (byteArray.isEmpty()) -1 else byteArray[0].toInt())
-				1
+				if (isFed) return 0
+
+				synchronized(sync) {
+					if (isFed) return 0
+
+					val offset = destinationOffset + read
+					val fed = server.serve(destination, offset, capacity - read)
+					read += fed
+
+					if (isFed)
+						resolve(read)
+
+					return fed
+				}
 			} catch (e: Throwable) {
 				reject(e)
-				0
+				throw e
 			}
-	}
-
-	private class Taster() : AbstractFeeder() {
-		override val capacity: Int = 0
-		override fun feed(byteArray: ByteArray, offset: Int, maxAmount: Int): Int {
-			resolve(0)
-			return 0
 		}
 	}
 
-	companion object {
-		private const val DEFAULT_PIPE_SIZE = 1024
-	}
+	class ChannelClosedException() : IOException("Channel Closed")
 }

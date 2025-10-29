@@ -12,6 +12,8 @@ import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseClients
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseServerClients
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager
+import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
@@ -37,13 +39,11 @@ import io.ktor.http.contentLength
 import io.ktor.util.appendAll
 import io.ktor.util.toMap
 import io.ktor.utils.io.exhausted
-import io.ktor.utils.io.readRemaining
+import io.ktor.utils.io.read
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
-import kotlinx.io.readByteArray
 import java.net.URL
 import java.security.KeyStore
 import java.security.KeyStoreException
@@ -57,6 +57,7 @@ import kotlin.time.Duration.Companion.seconds
 
 class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 	companion object {
+		private val logger by lazyLogger<KtorFactory>()
 		private val buildConnectionTime = 10.seconds
 		private val dispatcher by lazy { ThreadPools.io.asCoroutineDispatcher() +  CoroutineName("KtorFactory") }
 		private val scope by lazy { CoroutineScope(dispatcher) }
@@ -247,7 +248,6 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 	}
 
 	private class KtorHttpResponse(
-		private val client: HttpClient,
 		private val response: io.ktor.client.statement.HttpResponse,
 		override val body: PromisingReadableStream
 	) : HttpResponse {
@@ -259,42 +259,56 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 			get() = response.contentLength() ?: 0L
 
 		override fun promiseClose(): Promise<Unit> =
-			body
-				.promiseClose()
-				.must { _ -> client.close() }
+			body.promiseClose()
+
+		override fun toString(): String {
+			return "KtorHttpResponse(response=$response, code=$code, message='$message', headers=$headers, contentLength=$contentLength)"
+		}
 	}
 
-	@OptIn(ExperimentalCoroutinesApi::class)
 	private class KtorPromiseClient<T : HttpClientEngineConfig>(private val scope: CoroutineScope, private val engineFactory: HttpClientEngineFactory<T>, private val httpClientConfig: HttpClientConfig<T>, private val engineConfig: T.() -> Unit = {}) : HttpPromiseClient {
 		override fun promiseResponse(url: URL): Promise<HttpResponse> = promiseResponse(HttpMethod.Get.value, emptyMap(), url)
 
 		override fun promiseResponse(method: String, headers: Map<String, String>, url: URL): Promise<HttpResponse> = Promise { m ->
 			val job = scope.launch {
 				try {
-					val httpClient = getClient()
-					val request = httpClient.prepareRequest {
-						url(url)
-						this.method = HttpMethod(method)
-						this.headers.appendAll(headers)
-					}
+					getClient().use { httpClient ->
 
-					request.execute { response ->
-						val promisingChannel = PromisingChannel()
+						val request = httpClient.prepareRequest {
+							url(url)
+							this.method = HttpMethod(method)
+							this.headers.appendAll(headers)
+						}
 
-						m.sendResolution(
-							KtorHttpResponse(httpClient, response, promisingChannel)
-						)
+						logger.debug("Executing request for URL {}...", url)
+						request.execute { response ->
+							val promisingChannel = PromisingChannel()
 
-						val stream = promisingChannel.writableStream
-						try {
-							val channel = response.bodyAsChannel()
-							while (!channel.exhausted()) {
-								val chunk = channel.readRemaining(8192)
-								val bytes = chunk.readByteArray()
-								stream.promiseWrite(bytes, 0, bytes.size).suspend()
+							val httpResponse = KtorHttpResponse(response, promisingChannel)
+							if (DebugFlag.isDebugCompilation) {
+								logger.debug("Resolving response for URL {}: {}", url, httpResponse)
 							}
-						} finally {
-						    stream.promiseClose().suspend()
+							m.sendResolution(httpResponse)
+
+							val stream = promisingChannel.writableStream
+							try {
+								val channel = response.bodyAsChannel()
+								while (!channel.exhausted()) {
+									channel.read { bytes, start, end ->
+										val length = end - start
+										logger.debug("Writing {} bytes to stream...", length)
+										val written = stream.promiseWrite(
+											bytes,
+											start,
+											length
+										).suspend()
+										logger.debug("{} bytes written to stream.", written)
+										written
+									}
+								}
+							} finally {
+								stream.promiseClose().suspend()
+							}
 						}
 					}
 				} catch (e: Throwable) {

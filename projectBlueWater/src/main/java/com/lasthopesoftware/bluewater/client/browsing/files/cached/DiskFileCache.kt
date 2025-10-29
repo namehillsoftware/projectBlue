@@ -50,9 +50,9 @@ class DiskFileCache(
 	private fun writeCachedFileWithRetries(libraryId: LibraryId, uniqueKey: String, cachedFileOutputStream: CacheWritableStream, fileData: ByteArray): Promise<CachedFile?> {
 		return cachedFileOutputStream
 			.promiseWrite(fileData, 0, fileData.size)
-			.eventually { obj -> obj.flush() }
+			.eventually { cachedFileOutputStream.promiseFlush() }
 			.eventually(
-				{ fos -> fos.commitToCache() },
+				{ cachedFileOutputStream.commitToCache() },
 				{ e ->
 				logger.error("Unable to write to file!", e)
 

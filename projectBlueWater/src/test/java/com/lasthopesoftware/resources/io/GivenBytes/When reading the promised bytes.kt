@@ -1,8 +1,11 @@
 package com.lasthopesoftware.resources.io.GivenBytes
 
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.resources.closables.thenUse
+import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.closables.eventuallyUse
 import com.lasthopesoftware.resources.io.PromisingChannel
+import com.lasthopesoftware.resources.io.PromisingWritableStream
+import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -17,25 +20,33 @@ class `When reading the promised bytes` {
 		"Hello there".toByteArray()
 	}
 
+	fun PromisingWritableStream.writeChunk(chunkIndex: Int): Promise<Int> {
+		val chunkOffset = chunkSize * chunkIndex
+		val len = (bytes.size - chunkOffset).coerceAtMost(chunkSize)
+		if (len <= 0) return 0.toPromise()
+		return promiseWrite(bytes, chunkOffset, len)
+	}
+
 	private val readBytes = ByteArray(100)
 
 	@BeforeAll
 	fun act() {
-		val pipingInputStream = PromisingChannel(4)
-		val promisedRead = pipingInputStream
-			.promiseRead(readBytes, 1, 20)
-			.inevitably { pipingInputStream.promiseClose() }
+		val pipingInputStream = PromisingChannel()
+		var promisedRead: Promise<Int> = 0.toPromise()
 
-		pipingInputStream.writableStream.thenUse { os ->
-			for (i in 0 until bytes.size step chunkSize) {
-				val len = (bytes.size - i).coerceAtMost(chunkSize)
-				if (len <= 0) break
-				os.promiseWrite(bytes, i, len).toExpiringFuture().get()
-			}
-			os.flush().toExpiringFuture().get()
+		pipingInputStream.writableStream.eventuallyUse { os ->
+
+			os.writeChunk(0)
+			os.writeChunk(1)
+
+			promisedRead = pipingInputStream.promiseRead(readBytes, 1, 20)
+
+			os.writeChunk(2)
+			os.writeChunk(3)
+			os.promiseFlush()
 		}.toExpiringFuture().get()
 
-		promisedRead.toExpiringFuture().get()
+		promisedRead.inevitably { pipingInputStream.promiseClose() }.toExpiringFuture().get()
 	}
 
 	@Test

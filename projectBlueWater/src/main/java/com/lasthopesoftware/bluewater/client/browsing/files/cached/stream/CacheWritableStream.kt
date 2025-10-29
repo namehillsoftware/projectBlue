@@ -5,7 +5,7 @@ import com.lasthopesoftware.resources.io.PromisingWritableStream
 import com.namehillsoftware.handoff.promises.Promise
 import okio.BufferedSource
 
-interface CacheWritableStream : PromisingWritableStream<CacheWritableStream> {
+interface CacheWritableStream : PromisingWritableStream {
 	fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheWritableStream>
     fun commitToCache(): Promise<CachedFile?>
 }

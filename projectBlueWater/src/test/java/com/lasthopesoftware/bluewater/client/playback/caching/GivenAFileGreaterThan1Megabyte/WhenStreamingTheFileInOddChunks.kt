@@ -47,8 +47,8 @@ class WhenStreamingTheFileInOddChunks {
 						cacheKey = uniqueKey
 						return Promise<CacheWritableStream>(object : CacheWritableStream {
 							var numberOfBytesWritten = 0
-							override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<CacheWritableStream> =
-								Promise<CacheWritableStream>(this)
+							override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<Int> =
+								Promise(length)
 
 							override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheWritableStream> {
 								bytesWritten?.also {
@@ -71,8 +71,8 @@ class WhenStreamingTheFileInOddChunks {
 								return deferredCommit
 							}
 
-							override fun flush(): Promise<CacheWritableStream> {
-								return Promise<CacheWritableStream>(this)
+							override fun promiseFlush(): Promise<Unit> {
+								return Unit.toPromise()
 							}
 
 							override fun promiseClose(): Promise<Unit> = Unit.toPromise()

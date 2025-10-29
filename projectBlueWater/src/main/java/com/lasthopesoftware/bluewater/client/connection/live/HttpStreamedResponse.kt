@@ -24,7 +24,6 @@ class HttpStreamedResponse : ImmediateResponse<HttpResponse?, PromisingReadableS
 		return this
 	}
 
-	override fun promiseRead(): Promise<Int> = byteStream.promiseRead()
 	override fun promiseRead(b: ByteArray, off: Int, len: Int): Promise<Int> = byteStream.promiseRead(b, off, len)
 
 	override fun available(): Int = byteStream.available()

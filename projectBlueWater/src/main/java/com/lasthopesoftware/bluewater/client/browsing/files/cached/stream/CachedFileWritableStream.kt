@@ -28,11 +28,12 @@ class CachedFileWritableStream(
         buffer: ByteArray,
         offset: Int,
         length: Int
-    ): Promise<CacheWritableStream> {
+    ): Promise<Int> {
         return ThreadPools.io.preparePromise {
-			if (!isClosed)
-            	lazyFileOutputStream.value.write(buffer, offset, length)
-            this
+			if (!isClosed) {
+				lazyFileOutputStream.value.write(buffer, offset, length)
+				length
+			} else 0
         }
     }
 
@@ -44,10 +45,9 @@ class CachedFileWritableStream(
         }
     }
 
-    override fun flush(): Promise<CacheWritableStream> {
+    override fun promiseFlush(): Promise<Unit> {
         return ThreadPools.io.preparePromise {
             if (!isClosed && lazyFileOutputStream.isInitialized()) lazyFileOutputStream.value.flush()
-            this
         }
     }
 
@@ -56,7 +56,7 @@ class CachedFileWritableStream(
 		else Promise.empty()
 
 	override fun promiseClose(): Promise<Unit> {
-		return flush().must { _ ->
+		return promiseFlush().must { _ ->
 			isClosed = true
 			if (lazyFileOutputStream.isInitialized()) lazyFileOutputStream.value.close()
 		}.guaranteedUnitResponse()
