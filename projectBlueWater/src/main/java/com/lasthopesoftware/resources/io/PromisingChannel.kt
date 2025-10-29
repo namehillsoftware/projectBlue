@@ -4,15 +4,19 @@ import com.lasthopesoftware.bluewater.shared.drainQueue
 import com.lasthopesoftware.promises.PromiseMachines
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
+import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import java.io.IOException
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.Volatile
 
 class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStream {
 
 	private val feeders = ConcurrentLinkedQueue<AbstractFeeder>()
+	private val currentTaster = AtomicReference(Taster())
 	private val sync = Any()
 
 	@Volatile
@@ -105,6 +109,7 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 			else -> {
 				val feeder = Feeder(b, off, len)
 				feeders.add(feeder)
+				if (`in` < 0) `in` = 0
 				tryFeeding()
 				feeder
 			}
@@ -144,29 +149,42 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 		}
 	}
 
-	private fun tryFeeding(): Boolean {
-		synchronized(sync) {
-			while (`in` >= 0) {
-				val feeder = feeders.peek()
-				if (feeder == null) {
-					break
-				}
-
-				val maxAmount =
-					if (`in` > out) (buffer.size - out).coerceAtMost(`in` - out)
-					else buffer.size - out
-
-				out += feeder.feed(buffer, out, maxAmount)
-				if (feeder.isFed) {
-					feeders.poll()
-				}
-
-				if (out >= buffer.size) out = 0
-				if (`in` == out) `in` = -1
+	private fun tryFeeding(): Boolean = synchronized(sync) {
+		var taster: AbstractFeeder? = null
+		while (`in` >= 0) {
+			val feeder = feeders.peek()
+			if (feeder == null) {
+				break
 			}
 
-			return feeders.isEmpty()
+			val maxAmount =
+				if (`in` > out) (buffer.size - out).coerceAtMost(`in` - out)
+				else buffer.size - out
+
+			val fed = feeder.feed(buffer, out, maxAmount)
+			out += fed
+			if (fed > 0) {
+				taster?.apply {
+					feed(buffer, out, maxAmount)
+					taster = null
+				}
+			}
+
+			when {
+				feeder.isFed -> feeders.poll()
+				feeder == currentTaster.get() -> {
+					taster = feeders.poll()
+					if (feeders.peek() != null) continue
+				}
+			}
+
+			if (out >= buffer.size) out = 0
+			if (`in` == out) `in` = -1
 		}
+
+		taster?.takeUnless { it.isFed }?.also(feeders::offer)
+
+		return feeders.isEmpty()
 	}
 
 	/**
@@ -180,20 +198,20 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 	 * closed,or if an I/O error occurs.
 	 */
 	private fun promiseReceive(b: ByteArray, off: Int, len: Int): Promise<Unit> {
-		var off = off
+		val offRef = AtomicInteger(off)
 		checkStateForReceive()
-		var bytesToTransfer = len
+		val bytesToTransferRef = AtomicInteger(len)
 		return PromiseMachines.loop { _, cancellable ->
 			synchronized(sync) {
 				when {
-					bytesToTransfer <= 0 -> {
+					bytesToTransferRef.get() <= 0 -> {
 						cancellable.cancel()
 						tryFeeding()
 						Unit.toPromise()
 					}
-
+					// Channel is full, wait for space to be released
 					`in` == out -> awaitSpace()
-					else -> synchronized(sync) {
+					else -> {
 						val nextTransferAmount = when {
 							out < `in` -> buffer.size - `in`
 							`in` == -1 -> {
@@ -202,12 +220,13 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 								buffer.size
 							}
 							else -> out - `in`
-						}.coerceAtMost(bytesToTransfer)
+						}.coerceAtMost(bytesToTransferRef.get())
 
 						assert(nextTransferAmount > 0)
-						b.copyInto(buffer, `in`, off, off + nextTransferAmount)
-						bytesToTransfer -= nextTransferAmount
-						off += nextTransferAmount
+						val currentOffset = offRef.get()
+						b.copyInto(buffer, `in`, currentOffset, currentOffset + nextTransferAmount)
+						bytesToTransferRef.addAndGet(-nextTransferAmount)
+						offRef.addAndGet(nextTransferAmount)
 						`in` += nextTransferAmount
 						if (`in` >= buffer.size) {
 							`in` = 0
@@ -229,15 +248,21 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 	private fun awaitSpace(): Promise<Unit> {
 		return PromiseMachines.loop { _, cancellable ->
 			synchronized(sync) {
-				if (`in` != out) {
-					cancellable.cancel()
-					Unit.toPromise()
-				} else {
-					if (!tryFeeding()) Unit.toPromise()
-					else {
-						val taster = Taster()
+				when {
+					// Space available
+					`in` != out -> {
+						cancellable.cancel()
+						Unit.toPromise()
+					}
+					!tryFeeding() -> Unit.toPromise()
+					else -> {
+						val taster = currentTaster.updateAndGet {
+							if (it.isFed) Taster()
+							else it
+						}
 						feeders.offer(taster)
 						tryFeeding()
+						// Wait to get a taste, once you have a result check again for space.
 						taster.unitResponse()
 					}
 				}
@@ -268,9 +293,13 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 	}
 
 
-	private abstract class AbstractFeeder() : Promise<Int>() {
+	private abstract class AbstractFeeder() : Promise<Int>(), CancellationResponse {
 		init {
-			awaitCancellation { resolve(0) }
+			awaitCancellation(this)
+		}
+
+		override fun cancellationRequested() {
+			resolve(0)
 		}
 
 		abstract val isFed: Boolean
@@ -284,6 +313,8 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 		override val capacity: Int,
 	) : AbstractFeeder() {
 
+		private val sync = Any()
+
 		@Volatile
 		private var read = 0
 
@@ -293,25 +324,27 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 		override val isFed
 			get() = read >= capacity
 
-		init {
-			awaitCancellation {
-				isCancelled = true
+		override fun cancellationRequested() {
+			isCancelled = true
+			synchronized(sync) {
 				resolve(read)
 			}
 		}
 
 		override fun feed(byteArray: ByteArray, offset: Int, maxAmount: Int): Int {
 			return try {
-				if (isCancelled) return read
-				val amountToRead = (capacity - read).coerceAtMost(byteArray.size - offset).coerceAtMost(maxAmount)
-				val endIndex = offset + amountToRead
-				if (isCancelled) return read
-				byteArray.copyInto(destination, destinationOffset + read, startIndex = offset, endIndex = endIndex)
-				read += amountToRead
-				if (isFed) {
-					resolve(read)
+				synchronized(sync) {
+					if (isCancelled) return 0
+					val amountToRead = (capacity - read).coerceAtMost(byteArray.size - offset).coerceAtMost(maxAmount)
+					val endIndex = offset + amountToRead
+					if (isCancelled) return 0
+					byteArray.copyInto(destination, destinationOffset + read, startIndex = offset, endIndex = endIndex)
+					read += amountToRead
+					if (isFed) {
+						resolve(read)
+					}
+					amountToRead
 				}
-				amountToRead
 			} catch (e: Throwable) {
 				reject(e)
 				0
@@ -320,28 +353,41 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 	}
 
 	private class Sipper() : AbstractFeeder() {
+		private val sync = Any()
+
 		@Volatile
 		override var isFed = false
 			private set
 		override val capacity: Int = 1
 
-		override fun feed(byteArray: ByteArray, offset: Int, maxAmount: Int) =
+		override fun feed(byteArray: ByteArray, offset: Int, maxAmount: Int) = synchronized(sync) {
 			try {
-				resolve(if (byteArray.isEmpty()) -1 else byteArray[0].toInt())
+				val result = when {
+					byteArray.isEmpty() -> -1
+					offset >= byteArray.size -> 0
+					else -> byteArray[0].toInt()
+				}
+				resolve(result)
 				isFed = true
-				1
+				result.coerceAtLeast(0)
 			} catch (e: Throwable) {
 				reject(e)
 				0
 			}
+		}
 	}
 
-	private class Taster() : AbstractFeeder() {
+	private inner class Taster() : AbstractFeeder() {
+		private val sync = Any()
+
 		@Volatile
 		override var isFed = false
 			private set
 		override val capacity = 0
-		override fun feed(byteArray: ByteArray, offset: Int, maxAmount: Int): Int {
+
+		override fun feed(byteArray: ByteArray, offset: Int, maxAmount: Int): Int = synchronized(sync) {
+			if (`in` == out) return 0
+
 			resolve(0)
 			isFed = true
 			return 0

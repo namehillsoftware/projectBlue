@@ -247,7 +247,6 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 	}
 
 	private class KtorHttpResponse(
-		private val client: HttpClient,
 		private val response: io.ktor.client.statement.HttpResponse,
 		override val body: PromisingReadableStream
 	) : HttpResponse {
@@ -259,9 +258,7 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 			get() = response.contentLength() ?: 0L
 
 		override fun promiseClose(): Promise<Unit> =
-			body
-				.promiseClose()
-				.must { _ -> client.close() }
+			body.promiseClose()
 	}
 
 	@OptIn(ExperimentalCoroutinesApi::class)
@@ -271,30 +268,31 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 		override fun promiseResponse(method: String, headers: Map<String, String>, url: URL): Promise<HttpResponse> = Promise { m ->
 			val job = scope.launch {
 				try {
-					val httpClient = getClient()
-					val request = httpClient.prepareRequest {
-						url(url)
-						this.method = HttpMethod(method)
-						this.headers.appendAll(headers)
-					}
+					getClient().use { httpClient ->
+						val request = httpClient.prepareRequest {
+							url(url)
+							this.method = HttpMethod(method)
+							this.headers.appendAll(headers)
+						}
 
-					request.execute { response ->
-						val promisingChannel = PromisingChannel()
+						request.execute { response ->
+							val promisingChannel = PromisingChannel()
 
-						m.sendResolution(
-							KtorHttpResponse(httpClient, response, promisingChannel)
-						)
+							m.sendResolution(
+								KtorHttpResponse(response, promisingChannel)
+							)
 
-						val stream = promisingChannel.writableStream
-						try {
-							val channel = response.bodyAsChannel()
-							while (!channel.exhausted()) {
-								val chunk = channel.readRemaining(8192)
-								val bytes = chunk.readByteArray()
-								stream.promiseWrite(bytes, 0, bytes.size).suspend()
+							val stream = promisingChannel.writableStream
+							try {
+								val channel = response.bodyAsChannel()
+								while (!channel.exhausted()) {
+									val chunk = channel.readRemaining(8192)
+									val bytes = chunk.use { chunk.readByteArray() }
+									stream.promiseWrite(bytes, 0, bytes.size).suspend()
+								}
+							} finally {
+								stream.promiseClose().suspend()
 							}
-						} finally {
-						    stream.promiseClose().suspend()
 						}
 					}
 				} catch (e: Throwable) {
