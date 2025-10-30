@@ -1,8 +1,11 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAPlaylist
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.details.ListedFileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.details.BrowsedFileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
@@ -25,7 +28,7 @@ class WhenPlayingFromFileDetails {
 	private var startedPosition = -1
 
 	private val mut by lazy {
-		ListedFileDetailsViewModel(
+		BrowsedFileDetailsViewModel(
 			mockk {
 				every { startPlaylist(LibraryId(libraryId), any<List<ServiceFile>>(), any()) } answers {
 					startedLibraryId = firstArg()
@@ -42,15 +45,8 @@ class WhenPlayingFromFileDetails {
 			mockk {
 				every { activeLibraryId } answers { loadedLibraryId }
 			},
-		)
-	}
-
-	@BeforeAll
-	fun act() {
-		mut.apply {
-			load(
-				LibraryId(libraryId),
-				listOf(
+			mockk {
+				every { promiseFiles(LibraryId(libraryId), ItemId("567.37")) } returns listOf(
 					ServiceFile("830"),
 					ServiceFile(serviceFileId),
 					ServiceFile("628"),
@@ -59,8 +55,18 @@ class WhenPlayingFromFileDetails {
 					ServiceFile("419"),
 					ServiceFile("36"),
 					ServiceFile("396"),
-				),
-				1,
+				).toPromise()
+			}
+		)
+	}
+
+	@BeforeAll
+	fun act() {
+		mut.apply {
+			load(
+				LibraryId(libraryId),
+				Item("567.37"),
+				PositionedFile(1, ServiceFile(serviceFileId)),
 			).toExpiringFuture().get()
 
 			play()

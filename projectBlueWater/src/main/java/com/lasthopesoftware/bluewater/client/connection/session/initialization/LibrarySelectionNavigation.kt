@@ -1,11 +1,11 @@
 package com.lasthopesoftware.bluewater.client.connection.session.initialization
 
 import com.lasthopesoftware.bluewater.NavigateApplication
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.TrackSelectedLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 
@@ -36,8 +36,8 @@ class LibrarySelectionNavigation(
 	override fun search(libraryId: LibraryId, filePropertyFilter: FileProperty): Promise<Unit> =
 		selectConnection(libraryId) { inner.search(libraryId, filePropertyFilter) }
 
-	override fun viewFileDetails(libraryId: LibraryId, files: List<ServiceFile>, position: Int): Promise<Unit> =
-		selectConnection(libraryId) { inner.viewFileDetails(libraryId, files, position) }
+	override fun viewFileDetails(libraryId: LibraryId, item: IItem?, positionedFile: PositionedFile): Promise<Unit> =
+		selectConnection(libraryId) { inner.viewFileDetails(libraryId, item, positionedFile) }
 
 	override fun viewNowPlaying(libraryId: LibraryId): Promise<Unit> =
 		selectConnection(libraryId) { inner.viewNowPlaying(libraryId) }

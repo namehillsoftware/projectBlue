@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater
 
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -19,7 +18,9 @@ interface NavigateApplication {
 
 	fun viewServerSettings(libraryId: LibraryId) = Unit.toPromise()
 
-	fun viewFileDetails(libraryId: LibraryId, files: List<ServiceFile>, position: Int) = Unit.toPromise()
+	fun viewFileDetails(libraryId: LibraryId, searchQuery: String, positionedFile: PositionedFile) = Unit.toPromise()
+
+	fun viewFileDetails(libraryId: LibraryId, item: IItem?, positionedFile: PositionedFile) = Unit.toPromise()
 
 	fun viewNowPlayingFileDetails(libraryId: LibraryId, positionedFile: PositionedFile) = Unit.toPromise()
 
