@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.toPromise
-import com.lasthopesoftware.resources.closables.useEventually
+import com.lasthopesoftware.resources.closables.eventuallyUse
 import com.lasthopesoftware.resources.io.PromisingOutputStreamWrapper
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
@@ -80,24 +80,26 @@ class StoredFileJobProcessor(
 									.promiseDownload(libraryId, storedFile)
 									.also(cancellationProxy::doCancel)
 								PromisingOutputStreamWrapper(it)
-									.useEventually { outputStreamWrapper ->
+									.eventuallyUse { outputStreamWrapper ->
 										promisedDownload
 											.eventually { inputStream ->
-												if (cancellationProxy.isCancelled) getCancelledStoredFileJobResult(storedFile).toPromise()
-												else outputStreamWrapper
-													.promiseCopyFrom(inputStream)
-													.also(cancellationProxy::doCancel)
-													.eventually { downloadedBytes ->
-														if (downloadedBytes > 0) updateStoredFiles.markStoredFileAsDownloaded(storedFile)
-														else storedFile.toPromise()
-													}
-													.then { sf ->
-														StoredFileJobStatus(
-															sf,
-															if (sf.isDownloadComplete) StoredFileJobState.Downloaded
-															else StoredFileJobState.Queued
-														)
-													}
+												inputStream.eventuallyUse { s ->
+													if (cancellationProxy.isCancelled) getCancelledStoredFileJobResult(storedFile).toPromise()
+													else outputStreamWrapper
+														.promiseCopyFrom(s)
+														.also(cancellationProxy::doCancel)
+														.eventually { downloadedBytes ->
+															if (downloadedBytes > 0) updateStoredFiles.markStoredFileAsDownloaded(storedFile)
+															else storedFile.toPromise()
+														}
+														.then { sf ->
+															StoredFileJobStatus(
+																sf,
+																if (sf.isDownloadComplete) StoredFileJobState.Downloaded
+																else StoredFileJobState.Queued
+															)
+														}
+												}
 											}
 									}
 							}

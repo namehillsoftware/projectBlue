@@ -109,6 +109,8 @@ fun <T> Promise<T>?.keepPromise(): Promise<T?> = this as? Promise<T?> ?: Promise
 
 fun <T> Promise<T>?.keepPromise(default: T): Promise<T> = this ?: default.toPromise()
 
+inline fun <T> Promise<T>?.keepPromise(defaultFactory: () -> T): Promise<T> = this ?: defaultFactory().toPromise()
+
 fun <T> Promise<T>.unitResponse(): Promise<Unit> = this.then(UnitResponse.respond())
 
 fun <T> Promise<T>.guaranteedUnitResponse(): Promise<Unit> = this.then(

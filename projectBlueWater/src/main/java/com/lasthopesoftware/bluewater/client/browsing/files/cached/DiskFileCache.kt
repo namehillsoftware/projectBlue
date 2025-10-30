@@ -14,10 +14,10 @@ import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.preparePromise
+import com.lasthopesoftware.resources.closables.eventuallyUse
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import java.io.File
 import java.io.IOException
 
@@ -35,7 +35,11 @@ class DiskFileCache(
 	override fun put(libraryId: LibraryId, uniqueKey: String, fileData: ByteArray): Promise<CachedFile?> {
 		val putPromise = cacheStreamSupplier
 			.promiseCachedFileOutputStream(libraryId, uniqueKey)
-			.eventually { cachedFileOutputStream -> writeCachedFileWithRetries(libraryId, uniqueKey, cachedFileOutputStream, fileData) }
+			.eventually { cachedFileOutputStream ->
+				cachedFileOutputStream.eventuallyUse {
+					writeCachedFileWithRetries(libraryId, uniqueKey, cachedFileOutputStream, fileData)
+				}
+			}
 
 		putPromise.excuse { e ->
 			logger.error("There was an error putting the cached file with the unique key $uniqueKey into the cache.", e)
@@ -72,7 +76,6 @@ class DiskFileCache(
 					else -> Promise.empty()
 				}
 			})
-			.must(ImmediateAction{ cachedFileOutputStream.close() })
 	}
 
 	override fun promiseCachedFile(libraryId: LibraryId, uniqueKey: String): Promise<File?> {
@@ -126,7 +129,7 @@ class DiskFileCache(
 	}
 
 	private fun deleteCachedFile(cachedFileId: Long): Promise<Long> =
-		promiseTableMessage<Long> {
+		promiseTableMessage {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				try {
 					repositoryAccessHelper.beginTransaction().use { closeableTransaction ->

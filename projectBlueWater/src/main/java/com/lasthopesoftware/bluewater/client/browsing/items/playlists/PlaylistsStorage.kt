@@ -11,7 +11,7 @@ class PlaylistsStorage(private val libraryConnections: ProvideLibraryConnections
 	override fun promiseAudioPlaylistPaths(libraryId: LibraryId): Promise<List<String>> = libraryConnections
 			.promiseLibraryConnection(libraryId)
 			.eventuallyFromDataAccess { libraryAccess ->
-				libraryAccess?.promiseAudioPlaylistPaths().keepPromise(emptyList())
+				libraryAccess?.promiseAudioPlaylistPaths().keepPromise { emptyList() }
 			}
 
 	override fun promiseStoredPlaylist(libraryId: LibraryId, playlistPath: String, playlist: List<ServiceFile>): Promise<*> =

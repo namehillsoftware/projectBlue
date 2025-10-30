@@ -164,15 +164,16 @@ private fun PlayableFileMenu(
 	PlayNextButton(fileDetailsState, modifier)
 
 	if (playableFileDetailsState != null) {
+		val isPlayable by playableFileDetailsState.isPlayableWithPlaylist.subscribeAsState()
 		val playLabel = stringResource(id = R.string.btn_play)
 		ColumnMenuIcon(
 			onClick = { playableFileDetailsState.play() },
-			iconPainter = painterResource(id = R.drawable.av_next_white),
+			iconPainter = painterResource(id = R.drawable.av_play_white),
 			contentDescription = playLabel,
 			label = playLabel,
 			labelMaxLines = 1,
 			modifier = Modifier.requiredWidth(topMenuIconWidth),
-			enabled = !isLoading
+			enabled = isPlayable && !isLoading
 		)
 	}
 }

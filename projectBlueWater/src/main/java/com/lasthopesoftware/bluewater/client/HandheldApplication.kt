@@ -43,6 +43,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsV
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSettingsScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowsedFileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
@@ -51,11 +52,11 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsFrom
 import com.lasthopesoftware.bluewater.client.browsing.navigation.HiddenSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryMenu
-import com.lasthopesoftware.bluewater.client.browsing.navigation.ListedFileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigateToLibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NewConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.RoutedNavigationDependencies
+import com.lasthopesoftware.bluewater.client.browsing.navigation.SearchedFileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SelectedLibraryReRouter
 import com.lasthopesoftware.bluewater.client.browsing.registerBackNav
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
@@ -213,8 +214,8 @@ fun LibraryDestination.Navigate(
 				)
 			}
 
-			is ListedFileDetailsScreen -> {
-				val viewModel = listedFileDetailsViewModel
+			is BrowsedFileDetailsScreen -> {
+				val viewModel = browsedFileDetailsViewModel
 
 				FileDetailsView(
 					viewModel = viewModel,
@@ -223,7 +224,20 @@ fun LibraryDestination.Navigate(
 					playableFileDetailsState = viewModel,
 				)
 
-				viewModel.load(libraryId, files, position)
+				viewModel.load(libraryId, item, positionedFile)
+			}
+
+			is SearchedFileDetailsScreen -> {
+				val viewModel = searchedFileDetailsViewModel
+
+				FileDetailsView(
+					viewModel = viewModel,
+					navigateApplication = applicationNavigation,
+					bitmapProducer = bitmapProducer,
+					playableFileDetailsState = viewModel,
+				)
+
+				viewModel.load(libraryId, query, positionedFile)
 			}
 
 			is FileDetailsFromNowPlayingScreen -> {

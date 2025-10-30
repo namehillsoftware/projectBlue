@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.navigation
 
 import com.lasthopesoftware.bluewater.NavigateApplication
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
@@ -29,13 +28,13 @@ class DestinationGraphNavigation(
 ) : NavigateApplication by inner {
 
 	override fun launchSearch(libraryId: LibraryId) = coroutineScope.launch {
-		popUpToBrowserScreen()
+		ensureBrowserIsOnStack(libraryId)
 
 		navController.navigate(SearchScreen(libraryId))
 	}.toPromise()
 
 	override fun search(libraryId: LibraryId, filePropertyFilter: FileProperty): Promise<Unit> = coroutineScope.launch {
-		popUpToBrowserScreen()
+		ensureBrowserIsOnStack(libraryId)
 
 		navController.navigate(SearchScreen(libraryId, filePropertyFilter))
 	}.toPromise()
@@ -55,13 +54,13 @@ class DestinationGraphNavigation(
 	}.toPromise()
 
 	override fun viewServerSettings(libraryId: LibraryId) = coroutineScope.launch {
-		popUpToBrowserScreen()
+		ensureBrowserIsOnStack(libraryId)
 
 		navController.navigate(ConnectionSettingsScreen(libraryId))
 	}.toPromise()
 
 	override fun viewActiveDownloads(libraryId: LibraryId) = coroutineScope.launch {
-		popUpToBrowserScreen()
+		ensureBrowserIsOnStack(libraryId)
 
 		navController.navigate(DownloadsScreen(libraryId))
 	}.toPromise()
@@ -72,8 +71,8 @@ class DestinationGraphNavigation(
 		navController.navigate(LibraryScreen(libraryId))
 	}.toPromise()
 
-	override fun viewFileDetails(libraryId: LibraryId, files: List<ServiceFile>, position: Int) = coroutineScope.launch {
-		navController.navigate(ListedFileDetailsScreen(libraryId, files, position))
+	override fun viewFileDetails(libraryId: LibraryId, item: IItem?, positionedFile: PositionedFile) = coroutineScope.launch {
+		navController.navigate(BrowsedFileDetailsScreen(libraryId, item, positionedFile))
 	}.toPromise()
 
 	override fun viewNowPlayingFileDetails(libraryId: LibraryId, positionedFile: PositionedFile) = coroutineScope.launch {
@@ -86,6 +85,7 @@ class DestinationGraphNavigation(
 
 	override fun viewNowPlaying(libraryId: LibraryId) = coroutineScope.launch {
 		if (!navController.moveToTop { it is NowPlayingScreen }) {
+			ensureBrowserIsOnStack(libraryId)
 			navController.navigate(NowPlayingScreen(libraryId))
 		}
 	}.toPromise()
@@ -98,7 +98,9 @@ class DestinationGraphNavigation(
 		itemListMenuBackPressedHandler.hideAllMenus() || navigateUp().suspend()
 	}.toPromise()
 
-	private fun popUpToBrowserScreen() {
-		navController.popUpTo { it is ItemScreen || it is LibraryScreen }
+	private suspend fun ensureBrowserIsOnStack(libraryId: LibraryId) {
+		if (!navController.popUpTo { it is ItemScreen || it is LibraryScreen }) {
+			viewLibrary(libraryId).suspend()
+		}
 	}
 }

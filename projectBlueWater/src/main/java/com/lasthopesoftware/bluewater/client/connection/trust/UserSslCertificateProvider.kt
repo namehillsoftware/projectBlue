@@ -46,5 +46,5 @@ class UserSslCertificateProvider(
 						?: emptyByteArray
 				}
 			}
-			.keepPromise(emptyByteArray)
+			.keepPromise { emptyByteArray }
 }

@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.suppli
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.EntireFileCachedDataSource
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -22,7 +23,7 @@ import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import java.util.*
+import java.util.Random
 
 @RunWith(RobolectricTestRunner::class)
 class WhenStreamingTheFile {
@@ -71,8 +72,9 @@ class WhenStreamingTheFile {
 
 						override fun flush(): Promise<CacheOutputStream> = Promise<CacheOutputStream>(this)
 
-						override fun close() {
+						override fun promiseClose(): Promise<Unit> {
 							closedBeforeCommittingToCache = !committedToCache
+							return Unit.toPromise()
 						}
 					})
 				}

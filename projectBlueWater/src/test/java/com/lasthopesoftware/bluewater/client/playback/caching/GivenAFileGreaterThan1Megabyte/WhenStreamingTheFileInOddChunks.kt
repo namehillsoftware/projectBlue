@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.EntireFileCachedDataSource
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -23,7 +24,7 @@ import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import java.util.*
+import java.util.Random
 
 private const val libraryId = 568
 
@@ -74,7 +75,7 @@ class WhenStreamingTheFileInOddChunks {
 								return Promise<CacheOutputStream>(this)
 							}
 
-							override fun close() {}
+							override fun promiseClose(): Promise<Unit> = Unit.toPromise()
 						})
 					}
 				}

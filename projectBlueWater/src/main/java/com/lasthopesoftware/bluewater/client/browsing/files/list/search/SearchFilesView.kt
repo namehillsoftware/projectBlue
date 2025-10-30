@@ -92,6 +92,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledA
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSettingsButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
@@ -165,7 +166,11 @@ private fun RenderTrackTitleItem(
 
 	val viewFilesClickHandler = {
 		searchFilesViewModel.loadedLibraryId?.also {
-			applicationNavigation.viewFileDetails(it, searchFilesViewModel.files.value, position)
+			applicationNavigation.viewFileDetails(
+				it,
+				searchFilesViewModel.query.value,
+				PositionedFile(position, serviceFile)
+			)
 		}
 		Unit
 	}

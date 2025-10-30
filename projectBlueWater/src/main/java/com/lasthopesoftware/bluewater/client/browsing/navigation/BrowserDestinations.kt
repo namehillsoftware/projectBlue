@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.navigation
 
 import android.os.Parcelable
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -38,16 +37,23 @@ class ConnectionSettingsScreen(override val libraryId: LibraryId) : LibraryDesti
 data class NowPlayingScreen(override val libraryId: LibraryId) : LibraryDestination
 
 @Parcelize
-class ListedFileDetailsScreen(
+class BrowsedFileDetailsScreen(
 	override val libraryId: LibraryId,
-	val files: List<ServiceFile>,
-	val position: Int
+	val item: IItem?,
+	val positionedFile: PositionedFile,
+) : LibraryDestination
+
+@Parcelize
+class SearchedFileDetailsScreen(
+	override val libraryId: LibraryId,
+	val query: String,
+	val positionedFile: PositionedFile,
 ) : LibraryDestination
 
 @Parcelize
 class FileDetailsFromNowPlayingScreen(
 	override val libraryId: LibraryId,
-	val positionedFile: PositionedFile
+	val positionedFile: PositionedFile,
 ) : LibraryDestination
 
 sealed interface BrowserLibraryDestination : LibraryDestination

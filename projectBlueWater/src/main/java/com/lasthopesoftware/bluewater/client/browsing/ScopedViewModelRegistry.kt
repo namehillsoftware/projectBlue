@@ -1,10 +1,10 @@
 package com.lasthopesoftware.bluewater.client.browsing
 
 import androidx.lifecycle.ViewModelStoreOwner
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsFromItemViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.details.BrowsedFileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.details.ListedFileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.details.NowPlayingFileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.details.SearchedFileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.search.SearchFilesViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.AggregateItemViewModel
@@ -81,19 +81,20 @@ class ScopedViewModelRegistry(
 		)
 	}
 
-	override val fileDetailsFromItemViewModel by viewModelStoreOwner.buildViewModelLazily {
-		FileDetailsFromItemViewModel(
-			playbackLibraryItems,
-			fileDetailsViewModel,
-			fileDetailsViewModel,
-		)
-	}
-
-	override val listedFileDetailsViewModel by viewModelStoreOwner.buildViewModelLazily {
-		ListedFileDetailsViewModel(
+	override val browsedFileDetailsViewModel by viewModelStoreOwner.buildViewModelLazily {
+		BrowsedFileDetailsViewModel(
 			playbackServiceController,
 			fileDetailsViewModel,
 			fileDetailsViewModel,
+			libraryFilesProvider,
+		)
+	}
+	override val searchedFileDetailsViewModel by viewModelStoreOwner.buildViewModelLazily {
+		SearchedFileDetailsViewModel(
+			playbackServiceController,
+			fileDetailsViewModel,
+			fileDetailsViewModel,
+			libraryFilesProvider,
 		)
 	}
 

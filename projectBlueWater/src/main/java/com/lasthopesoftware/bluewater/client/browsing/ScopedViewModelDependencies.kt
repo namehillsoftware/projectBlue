@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.browsing
 
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsFromItemViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.details.BrowsedFileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.details.ListedFileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.details.NowPlayingFileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.details.SearchedFileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.search.SearchFilesViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.LoadItemData
@@ -23,8 +23,8 @@ interface ScopedViewModelDependencies : ReusedViewModelDependencies {
 	val searchFilesViewModel: SearchFilesViewModel
 	val librarySettingsViewModel: LibrarySettingsViewModel
 	val fileDetailsViewModel: FileDetailsViewModel
-	val fileDetailsFromItemViewModel: FileDetailsFromItemViewModel
-	val listedFileDetailsViewModel: ListedFileDetailsViewModel
+	val browsedFileDetailsViewModel: BrowsedFileDetailsViewModel
+	val searchedFileDetailsViewModel: SearchedFileDetailsViewModel
 	val nowPlayingFileDetailsViewModel: NowPlayingFileDetailsViewModel
 	val undoBackStackBuilder: UndoStack
 }

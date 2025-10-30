@@ -79,7 +79,7 @@ class MediaItemsBrowser(
 							}
 						}
 				}
-				.keepPromise(emptyList())
+				.keepPromise { emptyList() }
 		}
 
 	override fun promiseItems(playlistId: PlaylistId): Promise<Collection<MediaBrowserCompat.MediaItem>> =
@@ -116,7 +116,7 @@ class MediaItemsBrowser(
 								}
 						}
 				}
-				.keepPromise(emptyList())
+				.keepPromise { emptyList() }
 		}
 
 
@@ -124,7 +124,7 @@ class MediaItemsBrowser(
 		selectedLibraryIdProvider.promiseSelectedLibraryId().eventually { maybeId ->
 			maybeId
 				?.let { libraryId -> itemProvider.promiseItems(libraryId).then { v -> v.map(::toMediaItem) } }
-				.keepPromise(emptyList())
+				.keepPromise { emptyList() }
 		}
 
 	override fun promiseItems(query: String): Promise<Collection<MediaBrowserCompat.MediaItem>> {
@@ -138,7 +138,7 @@ class MediaItemsBrowser(
 								Promise.whenAll(files.map { mediaItemServiceFileLookup.promiseMediaItem(libraryId, it) })
 							}
 					}
-					.keepPromise(emptyList())
+					.keepPromise { emptyList() }
 			}
 	}
 }
