@@ -1,9 +1,7 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndAPlaylist
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAFile.AndASearchQuery
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.details.BrowsedFileDetailsViewModel
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
-import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
+import com.lasthopesoftware.bluewater.client.browsing.files.details.SearchedFileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -15,11 +13,11 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 // Needed for image bytes
-class WhenPlayingFromFileDetails {
+class `When playing from file details` {
 
 	companion object {
-		private const val libraryId = 591
-		private const val serviceFileId = "338"
+		private const val libraryId = 901
+		private const val serviceFileId = "Pxp8s7MXI"
 	}
 
 	private var loadedLibraryId: LibraryId? = null
@@ -28,7 +26,7 @@ class WhenPlayingFromFileDetails {
 	private var startedPosition = -1
 
 	private val mut by lazy {
-		BrowsedFileDetailsViewModel(
+		SearchedFileDetailsViewModel(
 			mockk {
 				every { startPlaylist(LibraryId(libraryId), any<List<ServiceFile>>(), any()) } answers {
 					startedLibraryId = firstArg()
@@ -46,15 +44,13 @@ class WhenPlayingFromFileDetails {
 				every { activeLibraryId } answers { loadedLibraryId }
 			},
 			mockk {
-				every { promiseFiles(LibraryId(libraryId), ItemId("567.37")) } returns listOf(
-					ServiceFile("830"),
+				every { promiseAudioFiles(LibraryId(libraryId), "nKqZO0RldS3") } returns listOf(
+					ServiceFile("ooOjqFjkB"),
+					ServiceFile("432.36"),
+					ServiceFile("10005f0c-3208-4a1c-8ff2-4337f1c6b0f1"),
 					ServiceFile(serviceFileId),
-					ServiceFile("628"),
-					ServiceFile("537"),
-					ServiceFile("284"),
-					ServiceFile("419"),
-					ServiceFile("36"),
-					ServiceFile("396"),
+					ServiceFile("Cs9YycTDkx"),
+					ServiceFile("ffZRcsT"),
 				).toPromise()
 			}
 		)
@@ -65,8 +61,8 @@ class WhenPlayingFromFileDetails {
 		mut.apply {
 			load(
 				LibraryId(libraryId),
-				Item("567.37"),
-				PositionedFile(1, ServiceFile(serviceFileId)),
+				"nKqZO0RldS3",
+				PositionedFile(0, ServiceFile(serviceFileId)),
 			).toExpiringFuture().get()
 
 			play()
@@ -79,26 +75,22 @@ class WhenPlayingFromFileDetails {
 	}
 
 	@Test
+	fun `then the file is not playable with playlist`() {
+		assertThat(mut.isPlayableWithPlaylist.value).isFalse
+	}
+
+	@Test
 	fun `then the started library id is correct`() {
-		assertThat(startedLibraryId).isEqualTo(LibraryId(libraryId))
+		assertThat(::startedLibraryId.isInitialized).isFalse
 	}
 
 	@Test
-	fun `then the correct playlist is started`() {
-		assertThat(startedList).containsExactlyInAnyOrder(
-			ServiceFile("830"),
-			ServiceFile(serviceFileId),
-			ServiceFile("628"),
-			ServiceFile("537"),
-			ServiceFile("284"),
-			ServiceFile("419"),
-			ServiceFile("36"),
-			ServiceFile("396"),
-		)
+	fun `then the playlist is not started`() {
+		assertThat(::startedList.isInitialized).isFalse
 	}
 
 	@Test
-	fun `then the playlist is started at the correct position`() {
-		assertThat(startedPosition).isEqualTo(1)
+	fun `then the playlist is not started at any position`() {
+		assertThat(startedPosition).isEqualTo(-1)
 	}
 }

@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing
 
 import com.lasthopesoftware.bluewater.client.browsing.files.details.BrowsedFileDetailsViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsFromItemViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.details.NowPlayingFileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.details.SearchedFileDetailsViewModel
@@ -24,7 +23,6 @@ interface ScopedViewModelDependencies : ReusedViewModelDependencies {
 	val searchFilesViewModel: SearchFilesViewModel
 	val librarySettingsViewModel: LibrarySettingsViewModel
 	val fileDetailsViewModel: FileDetailsViewModel
-	val fileDetailsFromItemViewModel: FileDetailsFromItemViewModel
 	val browsedFileDetailsViewModel: BrowsedFileDetailsViewModel
 	val searchedFileDetailsViewModel: SearchedFileDetailsViewModel
 	val nowPlayingFileDetailsViewModel: NowPlayingFileDetailsViewModel

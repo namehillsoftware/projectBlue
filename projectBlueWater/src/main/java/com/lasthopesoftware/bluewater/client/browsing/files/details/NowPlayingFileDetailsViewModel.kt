@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApp
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.LiftedInteractionState
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
+import com.lasthopesoftware.bluewater.shared.observables.StaticInteractionState
 import com.lasthopesoftware.bluewater.shared.observables.asInteractionState
 import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
 import com.lasthopesoftware.promises.extensions.keepPromise
@@ -83,6 +84,8 @@ class NowPlayingFileDetailsViewModel(
 
 		controlPlayback.seekTo(libraryId, positionedFile.playlistPosition)
 	}
+
+	override val isPlayableWithPlaylist = StaticInteractionState(true)
 
 	override fun act() {
 		mutableIsLoading.value = false

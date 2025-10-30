@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.browsing
 
 import androidx.lifecycle.ViewModelStoreOwner
 import com.lasthopesoftware.bluewater.client.browsing.files.details.BrowsedFileDetailsViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsFromItemViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.details.NowPlayingFileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.details.SearchedFileDetailsViewModel
@@ -79,14 +78,6 @@ class ScopedViewModelRegistry(
 			controlPlayback = playbackServiceController,
 			registerForApplicationMessages = registerForApplicationMessages,
 			urlKeyProvider = urlKeyProvider,
-		)
-	}
-
-	override val fileDetailsFromItemViewModel by viewModelStoreOwner.buildViewModelLazily {
-		FileDetailsFromItemViewModel(
-			playbackLibraryItems,
-			fileDetailsViewModel,
-			fileDetailsViewModel,
 		)
 	}
 
