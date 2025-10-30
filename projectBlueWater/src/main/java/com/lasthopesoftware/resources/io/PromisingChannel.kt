@@ -15,7 +15,7 @@ import kotlin.concurrent.Volatile
 
 class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStream {
 
-	private val feeders = ConcurrentLinkedQueue<AbstractFeeder>()
+	private val eaters = ConcurrentLinkedQueue<AbstractEater>()
 	private val currentTaster = AtomicReference(Taster())
 	private val sync = Any()
 
@@ -66,12 +66,12 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 	override fun promiseRead(): Promise<Int> = synchronized(sync) {
 		when {
 			closedByReader -> throw IOException("Pipe closed")
-			closedByWriter && tryFeeding() -> (-1).toPromise()
+			closedByWriter && tryEating() -> (-1).toPromise()
 			else -> {
-				val sipper = Sipper()
-				feeders.add(sipper)
-				tryFeeding()
-				sipper
+				val snacker = Snacker()
+				eaters.add(snacker)
+				tryEating()
+				snacker
 			}
 		}
 	}
@@ -105,12 +105,12 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 			closedByReader -> throw IOException("Pipe closed")
 			off < 0 || len < 0 || len > b.size - off -> throw IndexOutOfBoundsException()
 			len == 0 -> 0.toPromise()
-			closedByWriter && tryFeeding() -> (-1).toPromise()
+			closedByWriter && tryEating() -> (-1).toPromise()
 			else -> {
-				val feeder = Feeder(b, off, len)
-				feeders.add(feeder)
+				val feeder = Eater(b, off, len)
+				eaters.add(feeder)
 				if (`in` < 0) `in` = 0
-				tryFeeding()
+				tryEating()
 				feeder
 			}
 		}
@@ -142,17 +142,17 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 		closedByReader = !closedByWriter
 		synchronized(sync) {
 			val promisedClosed = Promise.whenAll(
-				feeders.drainQueue().map { it.apply { cancel() } }
+				eaters.drainQueue().map { it.apply { cancel() } }
 			)
 			`in` = -1
 			return promisedClosed.unitResponse()
 		}
 	}
 
-	private fun tryFeeding(): Boolean = synchronized(sync) {
-		var taster: AbstractFeeder? = null
+	private fun tryEating(): Boolean = synchronized(sync) {
+		var taster: AbstractEater? = null
 		while (`in` >= 0) {
-			val feeder = feeders.peek()
+			val feeder = eaters.peek()
 			if (feeder == null) {
 				break
 			}
@@ -161,20 +161,20 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 				if (`in` > out) (buffer.size - out).coerceAtMost(`in` - out)
 				else buffer.size - out
 
-			val fed = feeder.feed(buffer, out, maxAmount)
+			val fed = feeder.eat(buffer, out, maxAmount)
 			out += fed
 			if (fed > 0) {
 				taster?.apply {
-					feed(buffer, out, maxAmount)
+					eat(buffer, out, maxAmount)
 					taster = null
 				}
 			}
 
 			when {
-				feeder.isFed -> feeders.poll()
+				feeder.isFed -> eaters.poll()
 				feeder == currentTaster.get() -> {
-					taster = feeders.poll()
-					if (feeders.peek() != null) continue
+					taster = eaters.poll()
+					if (eaters.peek() != null) continue
 				}
 			}
 
@@ -182,9 +182,9 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 			if (`in` == out) `in` = -1
 		}
 
-		taster?.takeUnless { it.isFed }?.also(feeders::offer)
+		taster?.takeUnless { it.isFed }?.also(eaters::offer)
 
-		return feeders.isEmpty()
+		return eaters.isEmpty()
 	}
 
 	/**
@@ -206,7 +206,7 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 				when {
 					bytesToTransferRef.get() <= 0 -> {
 						cancellable.cancel()
-						tryFeeding()
+						tryEating()
 						Unit.toPromise()
 					}
 					// Channel is full, wait for space to be released
@@ -254,14 +254,14 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 						cancellable.cancel()
 						Unit.toPromise()
 					}
-					!tryFeeding() -> Unit.toPromise()
+					!tryEating() -> Unit.toPromise()
 					else -> {
 						val taster = currentTaster.updateAndGet {
 							if (it.isFed) Taster()
 							else it
 						}
-						feeders.offer(taster)
-						tryFeeding()
+						eaters.offer(taster)
+						tryEating()
 						// Wait to get a taste, once you have a result check again for space.
 						taster.unitResponse()
 					}
@@ -275,7 +275,7 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 	 * received.
 	 */
 	private fun receivedLast(): Promise<Unit> {
-		tryFeeding()
+		tryEating()
 		closedByWriter = !closedByReader
 		return promiseClose()
 	}
@@ -293,7 +293,7 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 	}
 
 
-	private abstract class AbstractFeeder() : Promise<Int>(), CancellationResponse {
+	private abstract class AbstractEater() : Promise<Int>(), CancellationResponse {
 		init {
 			awaitCancellation(this)
 		}
@@ -304,14 +304,14 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 
 		abstract val isFed: Boolean
 		abstract val capacity: Int
-		abstract fun feed(byteArray: ByteArray, offset: Int, maxAmount: Int): Int
+		abstract fun eat(byteArray: ByteArray, offset: Int, maxAmount: Int): Int
 	}
 
-	private class Feeder(
+	private class Eater(
 		private val destination: ByteArray,
 		private val destinationOffset: Int,
 		override val capacity: Int,
-	) : AbstractFeeder() {
+	) : AbstractEater() {
 
 		private val sync = Any()
 
@@ -331,7 +331,7 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 			}
 		}
 
-		override fun feed(byteArray: ByteArray, offset: Int, maxAmount: Int): Int {
+		override fun eat(byteArray: ByteArray, offset: Int, maxAmount: Int): Int {
 			return try {
 				synchronized(sync) {
 					if (isCancelled) return 0
@@ -352,7 +352,7 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 		}
 	}
 
-	private class Sipper() : AbstractFeeder() {
+	private class Snacker() : AbstractEater() {
 		private val sync = Any()
 
 		@Volatile
@@ -360,7 +360,7 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 			private set
 		override val capacity: Int = 1
 
-		override fun feed(byteArray: ByteArray, offset: Int, maxAmount: Int) = synchronized(sync) {
+		override fun eat(byteArray: ByteArray, offset: Int, maxAmount: Int) = synchronized(sync) {
 			try {
 				val result = when {
 					byteArray.isEmpty() -> -1
@@ -377,7 +377,7 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 		}
 	}
 
-	private inner class Taster() : AbstractFeeder() {
+	private inner class Taster() : AbstractEater() {
 		private val sync = Any()
 
 		@Volatile
@@ -385,7 +385,7 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 			private set
 		override val capacity = 0
 
-		override fun feed(byteArray: ByteArray, offset: Int, maxAmount: Int): Int = synchronized(sync) {
+		override fun eat(byteArray: ByteArray, offset: Int, maxAmount: Int): Int = synchronized(sync) {
 			if (`in` == out) return 0
 
 			resolve(0)
