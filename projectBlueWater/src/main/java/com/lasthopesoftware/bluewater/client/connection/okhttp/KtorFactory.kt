@@ -278,9 +278,11 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 						request.execute { response ->
 							val promisingChannel = PromisingChannel()
 
-							m.sendResolution(
-								KtorHttpResponse(response, promisingChannel)
-							)
+							ThreadPools.io.execute {
+								m.sendResolution(
+									KtorHttpResponse(response, promisingChannel)
+								)
+							}
 
 							val stream = promisingChannel.writableStream
 							try {

@@ -20,7 +20,7 @@ interface PromisingReadableStream : PromisingCloseable {
 	fun promiseRead(b: ByteArray, off: Int, len: Int): Promise<Int>
 	fun promiseReadAllBytes(): Promise<ByteArray> {
 		val len = Int.MAX_VALUE
-		var bufs: MutableList<ByteArray>? = null
+		val bufsRef = AtomicReference<MutableList<ByteArray>?>(null)
 		val resultRef = AtomicReference<ByteArray?>()
 		val totalRef = AtomicInteger()
 		val remainingRef = AtomicInteger(len)
@@ -69,13 +69,9 @@ interface PromisingReadableStream : PromisingCloseable {
 									else b.copyOfRange(0, localNread)
 								}
 
-								if (!resultRef.compareAndSet(null, buf)) {
+								if (resultRef.getAndSet( buf) != null) {
 									if (cs.isCancelled) throw CancellationException()
-									if (bufs == null) {
-										bufs = ArrayList()
-										resultRef.get()?.also { bufs.add(it) }
-									}
-									bufs.add(buf)
+									bufsRef.updateAndGet { b -> b ?: ArrayList() }?.add(buf)
 								}
 							}
 
@@ -85,6 +81,7 @@ interface PromisingReadableStream : PromisingCloseable {
 			}.then {
 				val result = resultRef.get()
 				val total = totalRef.get()
+				val bufs = bufsRef.get()
 				when {
 					cs.isCancelled -> throw CancellationException()
 					bufs != null -> {

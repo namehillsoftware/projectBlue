@@ -20,10 +20,11 @@ class `When reading the promised bytes` {
 		"Hello there".toByteArray()
 	}
 
-	fun PromisingWritableStream<*>.writeChunk(offset: Int): Promise<out PromisingWritableStream<*>> {
-		val len = (bytes.size - offset).coerceAtMost(chunkSize)
+	fun PromisingWritableStream<*>.writeChunk(chunkIndex: Int): Promise<out PromisingWritableStream<*>> {
+		val chunkOffset = chunkSize * chunkIndex
+		val len = (bytes.size - chunkOffset).coerceAtMost(chunkSize)
 		if (len <= 0) return this.toPromise()
-		return promiseWrite(bytes, offset, len)
+		return promiseWrite(bytes, chunkOffset, len)
 	}
 
 	private val readBytes = ByteArray(100)
@@ -45,14 +46,6 @@ class `When reading the promised bytes` {
 			os.writeChunk(2).toExpiringFuture().get()
 			os.writeChunk(3).toExpiringFuture().get()
 			os.flush().toExpiringFuture().get()
-//
-//
-//			for (i in 0 until bytes.size step chunkSize) {
-//				val len = (bytes.size - i).coerceAtMost(chunkSize)
-//				if (len <= 0) break
-//				os.promiseWrite(bytes, i, len).toExpiringFuture().get()
-//			}
-//			os.flush().toExpiringFuture().get()
 		}.toExpiringFuture().get()
 
 		promisedRead.inevitably { pipingInputStream.promiseClose() }.toExpiringFuture().get()
