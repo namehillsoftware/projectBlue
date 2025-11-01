@@ -36,6 +36,9 @@ class LibrarySelectionNavigation(
 	override fun search(libraryId: LibraryId, filePropertyFilter: FileProperty): Promise<Unit> =
 		selectConnection(libraryId) { inner.search(libraryId, filePropertyFilter) }
 
+	override fun viewFileDetails(libraryId: LibraryId, searchQuery: String, positionedFile: PositionedFile): Promise<Unit> =
+		selectConnection(libraryId) { inner.viewFileDetails(libraryId, searchQuery, positionedFile) }
+
 	override fun viewFileDetails(libraryId: LibraryId, item: IItem?, positionedFile: PositionedFile): Promise<Unit> =
 		selectConnection(libraryId) { inner.viewFileDetails(libraryId, item, positionedFile) }
 
