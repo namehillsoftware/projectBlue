@@ -26,7 +26,7 @@ interface PromisingReadableStream : PromisingCloseable {
 		val remainingRef = AtomicInteger(len)
 		return Promise.Proxy { cs ->
 			PromiseMachines.loop<Int> { outer, cancellable ->
-				if (remainingRef.get() == 0 || (outer != null && outer < 0)) {
+				if (remainingRef.get() <= 0 || (outer != null && outer < 0)) {
 					cancellable.cancel()
 					return@loop 0.toPromise()
 				} else {
@@ -44,16 +44,12 @@ interface PromisingReadableStream : PromisingCloseable {
 								n.toPromise()
 							} else {
 								if (cs.isCancelled) throw CancellationException()
-								var remaining = remainingRef.get()
-								val localNRead = if (n != null) {
-									remaining = remainingRef.addAndGet(-n)
-									nread.addAndGet(n)
-								} else {
-									nread.get()
-								}
+								val n = n ?: 0
+								val remaining = remainingRef.addAndGet(-n)
+								val localNRead = nread.addAndGet(n)
 								val buf = bufRef.get()
 								if (cs.isCancelled) throw CancellationException()
-								promiseRead(buf, localNRead, min(buf.size - localNRead, remaining))
+								promiseRead(buf, localNRead, (buf.size - localNRead).coerceAtMost(remaining))
 							}
 						}
 						.then {
@@ -69,9 +65,9 @@ interface PromisingReadableStream : PromisingCloseable {
 									else b.copyOfRange(0, localNread)
 								}
 
-								if (resultRef.getAndSet( buf) != null) {
-									if (cs.isCancelled) throw CancellationException()
-									bufsRef.updateAndGet { b -> b ?: ArrayList() }?.add(buf)
+								val oldBuf = resultRef.getAndSet( buf)
+								if (oldBuf != null) {
+									bufsRef.updateAndGet { b -> b ?: ArrayList() }?.add(oldBuf)
 								}
 							}
 

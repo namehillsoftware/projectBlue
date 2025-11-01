@@ -105,7 +105,8 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 			closedByReader -> throw IOException("Pipe closed")
 			off < 0 || len < 0 || len > b.size - off -> throw IndexOutOfBoundsException()
 			len == 0 -> 0.toPromise()
-			closedByWriter -> {
+			// Closed by writer and queue flushed
+			closedByWriter && (`in` < 0 || `in` == out) -> {
 				tryConsuming()
 				(-1).toPromise()
 			}
@@ -157,6 +158,7 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 			`in` = -1
 			return false
 		}
+
 		while (`in` >= 0) {
 			val consumer = consumers.peek()
 			if (consumer == null) {
@@ -240,7 +242,6 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 		return feeders.isEmpty()
 	}
 
-	@Throws(IOException::class)
 	private fun checkStateForReceive() {
 		if (closedByWriter || closedByReader) {
 			throw IOException("Pipe closed")
@@ -344,11 +345,12 @@ class PromisingChannel(pipeSize: Int = DEFAULT_PIPE_SIZE) : PromisingReadableStr
 		override fun consume(byteArray: ByteArray, offset: Int, maxAmount: Int): Int {
 			return try {
 				synchronized(sync) {
-					if (isCancelled) return 0
+//					if (isCancelled) return 0
 					val amountToRead = (capacity - read).coerceAtMost(byteArray.size - offset).coerceAtMost(maxAmount)
 					val endIndex = offset + amountToRead
-					if (isCancelled) return 0
-					byteArray.copyInto(destination, destinationOffset + read, startIndex = offset, endIndex = endIndex)
+//					if (isCancelled) return 0
+					if (amountToRead > 0)
+						byteArray.copyInto(destination, destinationOffset + read, startIndex = offset, endIndex = endIndex)
 					read += amountToRead
 					if (isFed) {
 						resolve(read)
