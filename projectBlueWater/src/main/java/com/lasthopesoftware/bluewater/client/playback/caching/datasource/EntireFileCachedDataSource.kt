@@ -159,8 +159,11 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 						processQueue()
 					}
-					.eventually { it?.flush().keepPromise() }
-					.eventually { os -> os?.commitToCache()?.inevitably { os.promiseClose() }?.then { _ -> os }.keepPromise() }
+					.eventually { os ->
+						os?.promiseFlush()
+							?.eventually { os.commitToCache().inevitably { os.promiseClose() }?.then { _ -> os }.keepPromise() }
+							.keepPromise()
+					}
 			}
 		}
 

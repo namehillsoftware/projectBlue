@@ -18,6 +18,9 @@ interface PromisingReadableStream : PromisingCloseable {
 		const val DefaultBufferSize = 8192
 		const val MaxBufferSize = Int.MAX_VALUE - 8
 		private val logger by lazyLogger<PromisingReadableStream>()
+
+		fun PromisingReadableStream.readingCancelledException() =
+			CancellationException("Reading stream was cancelled with ${available()} bytes remaining.")
 	}
 
 	fun promiseRead(b: ByteArray, off: Int, len: Int): Promise<Int>
@@ -46,12 +49,12 @@ interface PromisingReadableStream : PromisingCloseable {
 								cancellable.cancel()
 								n.toPromise()
 							} else {
-								if (cs.isCancelled) throw CancellationException()
+								if (cs.isCancelled) throw readingCancelledException()
 								val n = n ?: 0
 								val remaining = remainingRef.addAndGet(-n)
 								val localNRead = nread.addAndGet(n)
 								val buf = bufRef.get()
-								if (cs.isCancelled) throw CancellationException()
+								if (cs.isCancelled) throw readingCancelledException()
 
 								val readLength = (buf.size - localNRead).coerceAtMost(remaining)
 								if (readLength <= 0) {
@@ -60,7 +63,7 @@ interface PromisingReadableStream : PromisingCloseable {
 									0.toPromise()
 								} else {
 									logger.debug("Reading {} bytes from stream...", readLength)
-									promiseRead(buf, localNRead, readLength)
+									promiseRead(buf, localNRead, readLength).also(cs::doCancel)
 								}
 							}
 						}
@@ -72,7 +75,7 @@ interface PromisingReadableStream : PromisingCloseable {
 									throw OutOfMemoryError("Required array size too large")
 								}
 
-								if (cs.isCancelled) throw CancellationException()
+								if (cs.isCancelled) throw readingCancelledException()
 								val buf = bufRef.updateAndGet { b ->
 									if (localNread >= b.size) b
 									else b.copyOfRange(0, localNread)
@@ -92,14 +95,14 @@ interface PromisingReadableStream : PromisingCloseable {
 				val total = totalRef.get()
 				val bufs = bufsRef.get()
 				when {
-					cs.isCancelled -> throw CancellationException()
+					cs.isCancelled -> throw readingCancelledException()
 					bufs != null -> {
 						resultRef.set(null)
 						val result = ByteArray(total)
 						var offset = 0
 						var remaining = total
 						for (b in bufs.drainQueue()) {
-							if (cs.isCancelled) throw CancellationException()
+							if (cs.isCancelled) throw readingCancelledException()
 
 							val count = min(b.size, remainingRef.get())
 							System.arraycopy(b, 0, result, offset, count)

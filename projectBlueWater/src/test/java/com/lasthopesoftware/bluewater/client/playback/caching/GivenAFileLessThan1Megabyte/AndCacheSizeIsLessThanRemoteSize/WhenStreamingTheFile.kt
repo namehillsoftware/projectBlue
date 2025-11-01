@@ -46,8 +46,8 @@ class WhenStreamingTheFile {
 					return Promise<CacheWritableStream>(object : CacheWritableStream {
 						var numberOfBytesWritten = 0
 
-						override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<CacheWritableStream> =
-							Promise<CacheWritableStream>(this)
+						override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<Int> =
+							length.toPromise()
 
 						override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheWritableStream> {
 							bytesWritten?.also {
@@ -70,7 +70,7 @@ class WhenStreamingTheFile {
 							return deferredCommit
 						}
 
-						override fun flush(): Promise<CacheWritableStream> = Promise<CacheWritableStream>(this)
+						override fun promiseFlush(): Promise<Unit> = Unit.toPromise()
 
 						override fun promiseClose(): Promise<Unit> {
 							closedBeforeCommittingToCache = !committedToCache

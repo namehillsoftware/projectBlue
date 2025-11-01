@@ -20,7 +20,9 @@ class `When reading all promised bytes` {
 		val pipingInputStream = PromisingChannel()
 		val promisedBytes = pipingInputStream.eventuallyUse { it.promiseReadAllBytes() }
 
-		pipingInputStream.writableStream.use { it.write(bytes, 0, bytes.size) }
+		pipingInputStream.writableStream.eventuallyUse {
+			it.promiseWrite(bytes, 0, bytes.size)
+		}.toExpiringFuture().get()
 
 		readBytes = promisedBytes.toExpiringFuture().get()
 	}

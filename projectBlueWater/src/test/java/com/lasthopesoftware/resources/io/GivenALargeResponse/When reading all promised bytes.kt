@@ -2,6 +2,7 @@ package com.lasthopesoftware.resources.io.GivenALargeResponse
 
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.closables.eventuallyUse
+import com.lasthopesoftware.resources.closables.thenUse
 import com.lasthopesoftware.resources.io.PromisingChannel
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -20,9 +21,9 @@ class `When reading all promised bytes` {
 		val pipingInputStream = PromisingChannel()
 		val promisedBytes = pipingInputStream.eventuallyUse { it.promiseReadAllBytes() }
 
-		pipingInputStream.writableStream.use {
+		pipingInputStream.writableStream.thenUse {
 			for (i in 0 until bytes.size step 8192)
-				it.write(bytes, i, 8192.coerceAtMost(bytes.size - i))
+				it.promiseWrite(bytes, i, 8192.coerceAtMost(bytes.size - i)).toExpiringFuture().get()
 		}
 
 		readBytes = promisedBytes.toExpiringFuture().get()

@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpProm
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.compilation.DebugFlag
+import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.PromisingChannel
@@ -36,16 +37,13 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.contentLength
 import io.ktor.util.appendAll
-import io.ktor.util.cio.use
 import io.ktor.util.toMap
-import io.ktor.utils.io.asByteWriteChannel
-import io.ktor.utils.io.copyTo
+import io.ktor.utils.io.exhausted
+import io.ktor.utils.io.read
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
-import kotlinx.io.asSink
 import java.net.URL
 import java.security.KeyStore
 import java.security.KeyStoreException
@@ -268,7 +266,6 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 		}
 	}
 
-	@OptIn(ExperimentalCoroutinesApi::class)
 	private class KtorPromiseClient<T : HttpClientEngineConfig>(private val scope: CoroutineScope, private val engineFactory: HttpClientEngineFactory<T>, private val httpClientConfig: HttpClientConfig<T>, private val engineConfig: T.() -> Unit = {}) : HttpPromiseClient {
 		override fun promiseResponse(url: URL): Promise<HttpResponse> = promiseResponse(HttpMethod.Get.value, emptyMap(), url)
 
@@ -276,6 +273,7 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 			val job = scope.launch {
 				try {
 					getClient().use { httpClient ->
+
 						val request = httpClient.prepareRequest {
 							url(url)
 							this.method = HttpMethod(method)
@@ -292,10 +290,24 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 							}
 							m.sendResolution(httpResponse)
 
-							promisingChannel.writableStream.asSink().use { sink ->
-								sink.asByteWriteChannel().use {
-									response.bodyAsChannel().copyTo(this)
+							val stream = promisingChannel.writableStream
+							try {
+								val channel = response.bodyAsChannel()
+								while (!channel.exhausted()) {
+									channel.read { bytes, start, end ->
+										val length = end - start
+										logger.debug("Writing {} bytes to stream...", length)
+										val written = stream.promiseWrite(
+											bytes,
+											start,
+											length
+										).suspend()
+										logger.debug("{} bytes written to stream.", written)
+										written
+									}
 								}
+							} finally {
+								stream.promiseClose().suspend()
 							}
 						}
 					}

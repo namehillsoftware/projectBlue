@@ -291,10 +291,11 @@ class HttpPromiseClientDataSource private constructor(
 	@OptIn(UnstableApi::class)
 	@Throws(IOException::class)
 	private fun readInternal(buffer: ByteArray, offset: Int, readLength: Int): Int {
-		var readLength = readLength
 		if (readLength == 0) {
 			return 0
 		}
+
+		var readLength = readLength
 		if (bytesToRead != C.LENGTH_UNSET.toLong()) {
 			val bytesRemaining = bytesToRead - bytesRead
 			if (bytesRemaining == 0L) {

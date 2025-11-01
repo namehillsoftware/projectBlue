@@ -3,8 +3,12 @@ package com.lasthopesoftware.resources.io
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.guaranteedUnitResponse
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.unitResponse
+import com.lasthopesoftware.resources.io.PromisingReadableStream.Companion.readingCancelledException
 import com.namehillsoftware.handoff.cancellation.CancellationResponse
+import com.namehillsoftware.handoff.cancellation.CancellationToken
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import java.io.IOException
 import java.io.OutputStream
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -26,10 +30,16 @@ class PromisingChannel() : PromisingReadableStream {
 	@Volatile
 	private var readerClosed = false
 
-	val writableStream: OutputStream by lazy { ConnectedWritableStream() }
+	private val connectableWritableStream by lazy { ConnectedWritableStream() }
+
+	val writableStream: PromisingWritableStream
+		get() = connectableWritableStream
+
+	val outputStream: OutputStream
+		get() = connectableWritableStream
 
 	override fun promiseRead(b: ByteArray, off: Int, len: Int): Promise<Int> = when {
-		readerClosed -> throw IOException("Pipe closed")
+		readerClosed -> throw ChannelClosedException()
 		off < 0 || len < 0 || len > b.size - off -> throw IndexOutOfBoundsException()
 		len == 0 -> 0.toPromise()
 		// Closed by writer and queue flushed
@@ -105,17 +115,17 @@ class PromisingChannel() : PromisingReadableStream {
 	 * [unconnected][.connect],
 	 * closed,or if an I/O error occurs.
 	 */
-	private fun receive(b: ByteArray, off: Int, len: Int) {
+	private fun promiseReceive(b: ByteArray, off: Int, len: Int): Promise<Int> {
 		checkStateForReceive()
-//		synchronized(sync) {
-			servers.offer(Server(b, off, len))
-			tryConsuming()
-//		}
+		val server = Server(b, off, len)
+		servers.offer(server)
+		tryConsuming()
+		return server
 	}
 
 	private fun checkStateForReceive() {
 		if (writerClosed || readerClosed) {
-			throw IOException("Pipe closed")
+			throw ChannelClosedException()
 		}
 	}
 
@@ -129,14 +139,26 @@ class PromisingChannel() : PromisingReadableStream {
 		tryConsuming()
 	}
 
-	private inner class ConnectedWritableStream() : OutputStream() {
+	private inner class ConnectedWritableStream() : OutputStream(), PromisingWritableStream,
+		ImmediateResponse<Unit, ConnectedWritableStream> {
+		override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<Int> =
+			promiseReceive(buffer, offset, length)
+
+		override fun promiseFlush(): Promise<Unit> {
+			tryConsuming()
+			return Promise.whenAll(servers.toList()).unitResponse()
+		}
+
+		override fun promiseClose(): Promise<Unit> = receivedLast().toPromise()
+
+		override fun respond(resolution: Unit?): ConnectedWritableStream = this
 
 		override fun write(b: Int) {
 			write(byteArrayOf(b.toByte()), 0, 1)
 		}
 
 		override fun write(b: ByteArray, off: Int, len: Int) {
-			receive(b, off, len)
+			promiseReceive(b, off, len)
 		}
 
 		override fun close() {
@@ -148,17 +170,25 @@ class PromisingChannel() : PromisingReadableStream {
 		private val bytes: ByteArray,
 		@Volatile private var offset: Int,
 		bytesToTransfer: Int
-	) {
+	) : Promise<Int>() {
+		private val cs = CancellationToken()
 		private val sync = Any()
+		private val startingOffset = offset
 
 		@Volatile
 		var bytesToTransfer = bytesToTransfer
 			private set
 
 		val isEmpty: Boolean
-			get() = bytesToTransfer <= 0
+			get() = cs.isCancelled || bytesToTransfer <= 0
+
+		init {
+		    awaitCancellation(cs)
+		}
 
 		fun serve(destination: ByteArray, destinationOffset: Int, nextTransferAmount: Int): Int = synchronized(sync) {
+			if (isEmpty) return 0
+
 			val nextTransferAmount = nextTransferAmount.coerceAtMost(bytesToTransfer)
 			if (nextTransferAmount < 0) return 0
 
@@ -166,25 +196,14 @@ class PromisingChannel() : PromisingReadableStream {
 			bytesToTransfer -= nextTransferAmount
 			offset += nextTransferAmount
 
+			if (isEmpty)
+				resolve(offset - startingOffset)
+
 			return nextTransferAmount
 		}
 	}
 
-//	private abstract class AbstractConsumer() : Promise<Int>(), CancellationResponse {
-//		init {
-//			awaitCancellation(this)
-//		}
-//
-//		override fun cancellationRequested() {
-//			resolve(0)
-//		}
-//
-//		abstract val isFed: Boolean
-//		abstract val capacity: Int
-//		abstract fun consume(server: Server): Int
-//	}
-
-	private class Consumer(
+	private inner class Consumer(
 		private val destination: ByteArray,
 		private val destinationOffset: Int,
 		val capacity: Int,
@@ -208,7 +227,7 @@ class PromisingChannel() : PromisingReadableStream {
 		override fun cancellationRequested() {
 			isCancelled = true
 			synchronized(sync) {
-				resolve(read)
+				reject(readingCancelledException())
 			}
 		}
 
@@ -240,4 +259,6 @@ class PromisingChannel() : PromisingReadableStream {
 			}
 		}
 	}
+
+	class ChannelClosedException() : IOException("Channel Closed")
 }
