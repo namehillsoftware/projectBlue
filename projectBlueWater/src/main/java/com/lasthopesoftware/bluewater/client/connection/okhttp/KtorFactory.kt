@@ -37,6 +37,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.contentLength
 import io.ktor.util.appendAll
 import io.ktor.util.toMap
+import io.ktor.utils.io.core.remaining
 import io.ktor.utils.io.exhausted
 import io.ktor.utils.io.readRemaining
 import kotlinx.coroutines.CoroutineName
@@ -44,7 +45,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
-import kotlinx.io.readByteArray
+import kotlinx.io.asSink
 import java.net.URL
 import java.security.KeyStore
 import java.security.KeyStoreException
@@ -291,13 +292,12 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 							}
 							m.sendResolution(httpResponse)
 
-							promisingChannel.writableStream.use { stream ->
+							promisingChannel.writableStream.asSink().use { sink ->
 								val channel = response.bodyAsChannel()
 								while (!channel.exhausted()) {
 									val chunk = channel.readRemaining(8192)
-									val bytes = chunk.use { chunk.readByteArray() }
-									logger.debug("Writing {} bytes to stream...", bytes.size)
-									stream.write(bytes, 0, bytes.size)
+									logger.debug("Writing {} bytes to stream...", chunk.remaining)
+									chunk.transferTo(sink)
 								}
 							}
 						}
