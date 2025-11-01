@@ -13,12 +13,12 @@ class `When reading all promised bytes` {
 		byteArrayOf(919.toByte(), 141.toByte(), 160.toByte(), 568.toByte(), 919.toByte(), 141.toByte(), 160.toByte(), 568.toByte(), )
 	}
 
-	private var readBytes: ByteArray = ByteArray(8)
+	private var readBytes: ByteArray = ByteArray(12)
 
 	@BeforeAll
 	fun act() {
 		val pipingInputStream = PromisingChannel(2)
-		val promisedBytes = pipingInputStream.eventuallyUse { it.promiseRead(readBytes, 0, 8) }
+		val promisedBytes = pipingInputStream.eventuallyUse { it.promiseRead(readBytes, 0, readBytes.size) }
 
 		pipingInputStream.writableStream.eventuallyUse {
 			it.promiseWrite(bytes, 0, bytes.size)
@@ -33,14 +33,8 @@ class `When reading all promised bytes` {
 	}
 
 	@Test
-	fun `then the initial read bytes are correct`() {
-		assertThat(readBytes.dropWhile { it == 0.toByte() })
-			.isEqualTo(bytes.dropWhile { it == 0.toByte() })
-	}
-
-	@Test
 	fun `then all read bytes are correct`() {
 		assertThat(readBytes.filterNot { it == 0.toByte() })
-			.isEqualTo(bytes.dropWhile { it == 0.toByte() })
+			.isEqualTo(bytes.toList())
 	}
 }
