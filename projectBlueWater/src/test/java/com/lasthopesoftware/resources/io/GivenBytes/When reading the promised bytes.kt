@@ -2,13 +2,12 @@ package com.lasthopesoftware.resources.io.GivenBytes
 
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
-import com.lasthopesoftware.resources.closables.thenUse
 import com.lasthopesoftware.resources.io.PromisingChannel
-import com.lasthopesoftware.resources.io.PromisingWritableStream
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.io.OutputStream
 
 class `When reading the promised bytes` {
 
@@ -20,33 +19,31 @@ class `When reading the promised bytes` {
 		"Hello there".toByteArray()
 	}
 
-	fun PromisingWritableStream<*>.writeChunk(chunkIndex: Int): Promise<out PromisingWritableStream<*>> {
+	fun OutputStream.writeChunk(chunkIndex: Int) {
 		val chunkOffset = chunkSize * chunkIndex
 		val len = (bytes.size - chunkOffset).coerceAtMost(chunkSize)
-		if (len <= 0) return this.toPromise()
-		return promiseWrite(bytes, chunkOffset, len)
+		if (len > 0)
+			write(bytes, chunkOffset, len)
 	}
 
 	private val readBytes = ByteArray(100)
 
 	@BeforeAll
 	fun act() {
-		val pipingInputStream = PromisingChannel(4)
+		val pipingInputStream = PromisingChannel()
 		var promisedRead: Promise<Int> = 0.toPromise()
 
-		pipingInputStream.writableStream.thenUse { os ->
+		pipingInputStream.writableStream.use { os ->
 
-			os.writeChunk(0).toExpiringFuture().get()
-			val promisedWrite = os.writeChunk(1)
+			os.writeChunk(0)
+			os.writeChunk(1)
 
 			promisedRead = pipingInputStream.promiseRead(readBytes, 1, 20)
 
-			promisedWrite.toExpiringFuture().get()
-
-			os.writeChunk(2).toExpiringFuture().get()
-			os.writeChunk(3).toExpiringFuture().get()
-			os.flush().toExpiringFuture().get()
-		}.toExpiringFuture().get()
+			os.writeChunk(2)
+			os.writeChunk(3)
+			os.flush()
+		}
 
 		promisedRead.inevitably { pipingInputStream.promiseClose() }.toExpiringFuture().get()
 	}

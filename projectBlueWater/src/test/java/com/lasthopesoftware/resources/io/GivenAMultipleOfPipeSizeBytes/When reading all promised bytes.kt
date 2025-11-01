@@ -17,14 +17,16 @@ class `When reading all promised bytes` {
 
 	@BeforeAll
 	fun act() {
-		val pipingInputStream = PromisingChannel(2)
-		val promisedBytes = pipingInputStream.eventuallyUse { it.promiseRead(readBytes, 0, readBytes.size) }
-
-		pipingInputStream.writableStream.eventuallyUse {
-			it.promiseWrite(bytes, 0, bytes.size)
+		val pipingInputStream = PromisingChannel()
+		pipingInputStream.eventuallyUse { `is` ->
+			val promisedBytes = `is`.promiseRead(readBytes, 0, 4)
+			pipingInputStream.writableStream.use {
+				it.write(bytes, 0, bytes.size)
+			}
+			promisedBytes.eventually {
+				`is`.promiseRead(readBytes, 4, 4)
+			}
 		}.toExpiringFuture().get()
-
-		promisedBytes.toExpiringFuture().get()
 	}
 
 	@Test

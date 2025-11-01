@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpProm
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseServerClients
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.promises.extensions.suspend
+import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.PromisingChannel
@@ -286,21 +286,19 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 							val promisingChannel = PromisingChannel()
 
 							val httpResponse = KtorHttpResponse(response, promisingChannel)
-							logger.debug("Resolving response for URL {}: {}", url, httpResponse)
+							if (DebugFlag.isDebugCompilation) {
+								logger.debug("Resolving response for URL {}: {}", url, httpResponse)
+							}
 							m.sendResolution(httpResponse)
 
-							val stream = promisingChannel.writableStream
-							try {
+							promisingChannel.writableStream.use { stream ->
 								val channel = response.bodyAsChannel()
 								while (!channel.exhausted()) {
 									val chunk = channel.readRemaining(8192)
 									val bytes = chunk.use { chunk.readByteArray() }
 									logger.debug("Writing {} bytes to stream...", bytes.size)
-									stream.promiseWrite(bytes, 0, bytes.size).suspend()
-									logger.debug("{} bytes written to stream.", bytes.size)
+									stream.write(bytes, 0, bytes.size)
 								}
-							} finally {
-								stream.promiseClose().suspend()
 							}
 						}
 					}

@@ -1,11 +1,14 @@
 package com.lasthopesoftware.resources.io
 
+import com.lasthopesoftware.bluewater.shared.drainQueue
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.PromiseMachines
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.closables.PromisingCloseable
 import com.lasthopesoftware.resources.emptyByteArray
 import com.namehillsoftware.handoff.promises.Promise
 import io.ktor.utils.io.CancellationException
+import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.min
@@ -14,13 +17,13 @@ interface PromisingReadableStream : PromisingCloseable {
 	companion object {
 		const val DefaultBufferSize = 8192
 		const val MaxBufferSize = Int.MAX_VALUE - 8
+		private val logger by lazyLogger<PromisingReadableStream>()
 	}
 
-	fun promiseRead(): Promise<Int>
 	fun promiseRead(b: ByteArray, off: Int, len: Int): Promise<Int>
 	fun promiseReadAllBytes(): Promise<ByteArray> {
 		val len = Int.MAX_VALUE
-		val bufsRef = AtomicReference<MutableList<ByteArray>?>(null)
+		val bufsRef = AtomicReference<LinkedList<ByteArray>?>(null)
 		val resultRef = AtomicReference<ByteArray?>()
 		val totalRef = AtomicInteger()
 		val remainingRef = AtomicInteger(len)
@@ -49,11 +52,21 @@ interface PromisingReadableStream : PromisingCloseable {
 								val localNRead = nread.addAndGet(n)
 								val buf = bufRef.get()
 								if (cs.isCancelled) throw CancellationException()
-								promiseRead(buf, localNRead, (buf.size - localNRead).coerceAtMost(remaining))
+
+								val readLength = (buf.size - localNRead).coerceAtMost(remaining)
+								if (readLength <= 0) {
+									logger.debug("Buffer full, continuing.")
+									cancellable.cancel()
+									0.toPromise()
+								} else {
+									logger.debug("Reading {} bytes from stream...", readLength)
+									promiseRead(buf, localNRead, readLength)
+								}
 							}
 						}
 						.then {
 							val localNread = nread.get()
+							logger.debug("Read {} bytes from stream.", localNread)
 							if (localNread > 0) {
 								if (totalRef.addAndGet(localNread) > MaxBufferSize) {
 									throw OutOfMemoryError("Required array size too large")
@@ -67,7 +80,7 @@ interface PromisingReadableStream : PromisingCloseable {
 
 								val oldBuf = resultRef.getAndSet( buf)
 								if (oldBuf != null) {
-									bufsRef.updateAndGet { b -> b ?: ArrayList() }?.add(oldBuf)
+									bufsRef.updateAndGet { b -> b ?: LinkedList<ByteArray>().apply { add(oldBuf) } }?.add(buf)
 								}
 							}
 
@@ -84,14 +97,14 @@ interface PromisingReadableStream : PromisingCloseable {
 						resultRef.set(null)
 						val result = ByteArray(total)
 						var offset = 0
-						remainingRef.set(total)
-						for (b in bufs) {
+						var remaining = total
+						for (b in bufs.drainQueue()) {
 							if (cs.isCancelled) throw CancellationException()
 
 							val count = min(b.size, remainingRef.get())
 							System.arraycopy(b, 0, result, offset, count)
 							offset += count
-							remainingRef.addAndGet(-count)
+							remaining -= count
 						}
 
 						result
