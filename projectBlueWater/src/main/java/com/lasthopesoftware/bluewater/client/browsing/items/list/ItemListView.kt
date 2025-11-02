@@ -414,8 +414,8 @@ fun ItemListMenu(
 			enabled = isFileControlsEnabled
 		)
 
-		LabelledActiveDownloadsButton(
-			loadedLibraryState = itemListViewModel,
+		LabelledSearchButton(
+			itemListViewModel = itemListViewModel,
 			applicationNavigation = applicationNavigation,
 			modifier = modifier,
 		)
@@ -426,8 +426,8 @@ fun ItemListMenu(
 			modifier = modifier,
 		)
 
-		LabelledSearchButton(
-			itemListViewModel = itemListViewModel,
+		LabelledActiveDownloadsButton(
+			loadedLibraryState = itemListViewModel,
 			applicationNavigation = applicationNavigation,
 			modifier = modifier,
 		)
