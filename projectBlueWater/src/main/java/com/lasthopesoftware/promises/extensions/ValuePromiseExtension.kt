@@ -93,11 +93,20 @@ fun <T> Deferred<T>.toPromise(): Promise<T> = PromiseDeferred(this)
 fun <T> T.toPromise(): Promise<T> = when (this) {
 	null -> Promise.empty()
 	is Unit -> UnitPromise as Promise<T>
+	is Int -> when (this) {
+		0 -> ZeroPromise
+		1 -> OnePromise
+		-1 -> NegativeOnePromise
+		else -> Promise(this)
+	} as Promise<T>
 	is Boolean -> (if (this) TruePromise else FalsePromise) as Promise<T>
 	is String -> if (isEmpty()) EmptyStringPromise as Promise<T> else Promise(this)
 	else -> Promise(this)
 }
 
+private object ZeroPromise : Promise<Int>(0)
+private object OnePromise : Promise<Int>(1)
+private object NegativeOnePromise : Promise<Int>(-1)
 private object TruePromise : Promise<Boolean>(true)
 private object FalsePromise: Promise<Boolean>(false)
 private object EmptyStringPromise: Promise<String>("")
@@ -205,8 +214,8 @@ private class PromisedListenableFuture<Resolution>(private val listenableFuture:
 
 private class PromiseJob(private val job: Job) : Promise<Unit>(), CancellationResponse, CompletionHandler {
 	init {
-		job.invokeOnCompletion(this)
 		awaitCancellation(this)
+		job.invokeOnCompletion(this)
 	}
 
 	override fun cancellationRequested() {

@@ -27,26 +27,35 @@ class `When reading the promised bytes` {
 		return promiseWrite(bytes, chunkOffset, len)
 	}
 
+	private var postClosedBytes = 0
+
 	private val readBytes = ByteArray(100)
 
 	@BeforeAll
 	fun act() {
 		val pipingInputStream = PromisingChannel()
-		var promisedRead: Promise<Int> = 0.toPromise()
+		pipingInputStream.eventuallyUse {
+			var promisedRead: Promise<Int> = 0.toPromise()
 
-		pipingInputStream.writableStream.eventuallyUse { os ->
+			pipingInputStream.writableStream.eventuallyUse { os ->
 
-			os.writeChunk(0)
-			os.writeChunk(1)
+				os.writeChunk(0)
+				os.writeChunk(1)
 
-			promisedRead = pipingInputStream.promiseRead(readBytes, 1, 20)
+				promisedRead = pipingInputStream.promiseRead(readBytes, 1, 20)
 
-			os.writeChunk(2)
-			os.writeChunk(3)
-			os.promiseFlush()
+				os.writeChunk(2)
+				os.writeChunk(3)
+				os.promiseFlush()
+			}.eventually { promisedRead }
 		}.toExpiringFuture().get()
 
-		promisedRead.inevitably { pipingInputStream.promiseClose() }.toExpiringFuture().get()
+		postClosedBytes = pipingInputStream.writableStream.promiseWrite(byteArrayOf(35.toByte()), 0, 1).toExpiringFuture().get() ?: 0
+	}
+
+	@Test
+	fun `then no bytes are written after the channel is closed`() {
+		assertThat(postClosedBytes).isZero
 	}
 
 	@Test

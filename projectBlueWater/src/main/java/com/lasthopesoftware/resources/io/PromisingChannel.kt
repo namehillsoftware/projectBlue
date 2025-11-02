@@ -1,12 +1,12 @@
 package com.lasthopesoftware.resources.io
 
+import com.lasthopesoftware.bluewater.shared.drainQueue
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.guaranteedUnitResponse
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.io.PromisingReadableStream.Companion.readingCancelledException
 import com.namehillsoftware.handoff.cancellation.CancellationResponse
-import com.namehillsoftware.handoff.cancellation.CancellationToken
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import java.io.IOException
@@ -25,10 +25,10 @@ class PromisingChannel() : PromisingReadableStream {
 	private val sync = Any()
 
 	@Volatile
-	private var writerClosed = false
+	private var isWriterClosed = false
 
 	@Volatile
-	private var readerClosed = false
+	private var isReaderClosed = false
 
 	private val connectableWritableStream by lazy { ConnectedWritableStream() }
 
@@ -39,11 +39,11 @@ class PromisingChannel() : PromisingReadableStream {
 		get() = connectableWritableStream
 
 	override fun promiseRead(b: ByteArray, off: Int, len: Int): Promise<Int> = when {
-		readerClosed -> throw ChannelClosedException()
+		isReaderClosed -> throw ChannelClosedException()
 		off < 0 || len < 0 || len > b.size - off -> throw IndexOutOfBoundsException()
 		len == 0 -> 0.toPromise()
 		// Closed by writer and queue flushed
-		writerClosed && servers.isEmpty() -> {
+		isWriterClosed && servers.isEmpty() -> {
 			(-1).toPromise()
 		}
 		else -> {
@@ -71,11 +71,18 @@ class PromisingChannel() : PromisingReadableStream {
 		return servers.sumOf { servers -> servers.bytesToTransfer }
 	}
 
-	override fun promiseClose(): Promise<Unit> {
+	override fun promiseClose(): Promise<Unit> = synchronized(sync) {
 		logger.debug("Closing PromisingChannel for reading.")
-		readerClosed = true
-		tryConsuming()
-		return Promise.whenAll(consumers.toList()).guaranteedUnitResponse()
+		isReaderClosed = true
+		if (consumers.isEmpty()) {
+			for (server in servers.drainQueue())
+				server.cancel()
+			Unit.toPromise()
+		} else {
+			val openConsumers = consumers.toList()
+			tryConsuming()
+			Promise.whenAll(openConsumers).guaranteedUnitResponse()
+		}
 	}
 
 	private fun tryConsuming(): Unit = synchronized(sync) {
@@ -85,7 +92,7 @@ class PromisingChannel() : PromisingReadableStream {
 
 			val server = servers.peek()
 			if (server == null) {
-				if (writerClosed) {
+				if (isWriterClosed) {
 					// Drain consumers
 					consumer.servingComplete()
 					if (consumers.peek() == consumer)
@@ -116,26 +123,17 @@ class PromisingChannel() : PromisingReadableStream {
 	 * closed,or if an I/O error occurs.
 	 */
 	private fun promiseReceive(b: ByteArray, off: Int, len: Int): Promise<Int> {
-		checkStateForReceive()
+		if (isReaderClosed || isWriterClosed) return 0.toPromise()
+
 		val server = Server(b, off, len)
 		servers.offer(server)
 		tryConsuming()
 		return server
 	}
 
-	private fun checkStateForReceive() {
-		if (writerClosed || readerClosed) {
-			throw ChannelClosedException()
-		}
-	}
-
-	/**
-	 * Notifies all waiting threads that the last byte of data has been
-	 * received.
-	 */
 	private fun receivedLast() {
 		logger.debug("Closing PromisingChannel for writing.")
-		writerClosed = true
+		isWriterClosed = true
 		tryConsuming()
 	}
 
@@ -170,20 +168,27 @@ class PromisingChannel() : PromisingReadableStream {
 		private val bytes: ByteArray,
 		@Volatile private var offset: Int,
 		bytesToTransfer: Int
-	) : Promise<Int>() {
-		private val cs = CancellationToken()
+	) : Promise<Int>(), CancellationResponse {
 		private val sync = Any()
 		private val startingOffset = offset
+
+		@Volatile
+		private var isCancelled = false
 
 		@Volatile
 		var bytesToTransfer = bytesToTransfer
 			private set
 
 		val isEmpty: Boolean
-			get() = cs.isCancelled || bytesToTransfer <= 0
+			get() = isCancelled || bytesToTransfer <= 0
 
 		init {
-		    awaitCancellation(cs)
+			awaitCancellation(this)
+		}
+
+		override fun cancellationRequested() {
+			isCancelled = true
+			resolve(offset - startingOffset)
 		}
 
 		fun serve(destination: ByteArray, destinationOffset: Int, nextTransferAmount: Int): Int = synchronized(sync) {
