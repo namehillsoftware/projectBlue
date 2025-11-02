@@ -1,5 +1,6 @@
 package com.lasthopesoftware.resources.io
 
+import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.shared.drainQueue
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.PromiseMachines
@@ -18,6 +19,18 @@ interface PromisingReadableStream : PromisingCloseable {
 		const val DefaultBufferSize = 8192
 		const val MaxBufferSize = Int.MAX_VALUE - 8
 		private val logger by lazyLogger<PromisingReadableStream>()
+
+		private fun logDebug(message: String) {
+			if (BuildConfig.DEBUG) {
+				logger.debug(message)
+			}
+		}
+
+		private fun logDebug(message: String, firstArg: Any) {
+			if (BuildConfig.DEBUG) {
+				logger.debug(message, firstArg)
+			}
+		}
 
 		fun PromisingReadableStream.readingCancelledException() =
 			CancellationException("Reading stream was cancelled with ${available()} bytes remaining.")
@@ -58,18 +71,18 @@ interface PromisingReadableStream : PromisingCloseable {
 
 								val readLength = (buf.size - localNRead).coerceAtMost(remaining)
 								if (readLength <= 0) {
-									logger.debug("Buffer full, continuing.")
+									logDebug("Buffer full, continuing.")
 									cancellable.cancel()
 									0.toPromise()
 								} else {
-									logger.debug("Reading {} bytes from stream...", readLength)
+									logDebug("Reading {} bytes from stream...", readLength)
 									promiseRead(buf, localNRead, readLength).also(cs::doCancel)
 								}
 							}
 						}
 						.then {
 							val localNread = nread.get()
-							logger.debug("Read {} bytes from stream.", localNread)
+							logDebug("Read {} bytes from stream.", localNread)
 							if (localNread > 0) {
 								if (totalRef.addAndGet(localNread) > MaxBufferSize) {
 									throw OutOfMemoryError("Required array size too large")

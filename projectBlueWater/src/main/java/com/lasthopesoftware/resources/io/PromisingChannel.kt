@@ -1,5 +1,6 @@
 package com.lasthopesoftware.resources.io
 
+import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.shared.drainQueue
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.guaranteedUnitResponse
@@ -18,6 +19,12 @@ class PromisingChannel() : PromisingReadableStream {
 
 	companion object {
 		private val logger by lazyLogger<PromisingChannel>()
+
+		private fun logDebug(message: String) {
+			if (BuildConfig.DEBUG) {
+				logger.debug(message)
+			}
+		}
 	}
 
 	private val consumers = ConcurrentLinkedQueue<Consumer>()
@@ -72,7 +79,7 @@ class PromisingChannel() : PromisingReadableStream {
 	}
 
 	override fun promiseClose(): Promise<Unit> = synchronized(sync) {
-		logger.debug("Closing PromisingChannel for reading.")
+		logDebug("Closing PromisingChannel for reading.")
 		isReaderClosed = true
 		if (consumers.isEmpty()) {
 			for (server in servers.drainQueue())
@@ -132,7 +139,7 @@ class PromisingChannel() : PromisingReadableStream {
 	}
 
 	private fun receivedLast() {
-		logger.debug("Closing PromisingChannel for writing.")
+		logDebug("Closing PromisingChannel for writing.")
 		isWriterClosed = true
 		tryConsuming()
 	}
