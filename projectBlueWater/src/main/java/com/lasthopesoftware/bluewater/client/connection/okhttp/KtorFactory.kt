@@ -40,11 +40,13 @@ import io.ktor.util.appendAll
 import io.ktor.util.toMap
 import io.ktor.utils.io.CancellationException
 import io.ktor.utils.io.exhausted
-import io.ktor.utils.io.read
+import io.ktor.utils.io.readAvailable
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
+import okio.Pipe
+import okio.buffer
 import java.net.URL
 import java.security.KeyStore
 import java.security.KeyStoreException
@@ -88,12 +90,6 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 			}
 
 			trustManagers[0] as X509TrustManager
-		}
-
-		private fun logDebug(message: String, firstArg: Any) {
-			if (BuildConfig.DEBUG) {
-				logger.debug(message, firstArg)
-			}
 		}
 	}
 
@@ -286,6 +282,11 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 			makeRequest()
 		}
 
+		private val promisingChannel by lazy { PromisingChannel() }
+
+		private val promisingStream
+			get() = promisingChannel.writableStream
+
 		init {
 			awaitCancellation(this)
 		}
@@ -306,30 +307,44 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 						this.headers.appendAll(this@KtorPromiseRequest.headers)
 					}
 
-					logDebug("Executing request for URL {}...", url)
+					if (BuildConfig.DEBUG) {
+						logger.debug("Executing request for URL {}...", url)
+					}
+					val pipe = Pipe(8192)
+					pipe.source.buffer().inputStream()
 					request.execute { response ->
-						val promisingChannel = PromisingChannel()
-
 						val httpResponse = KtorHttpResponse(response, promisingChannel)
 						if (BuildConfig.DEBUG) {
 							logger.debug("Resolving response for URL {}: {}", url, httpResponse)
 						}
 						resolve(httpResponse)
 
-						val stream = promisingChannel.writableStream
 						try {
 							val channel = response.bodyAsChannel()
-							while (!channel.exhausted()) {
-								channel.read { buffer, offset, end ->
-									val length = end - offset
-									logDebug("Writing {} bytes to stream...", length)
-									val written = stream.promiseWrite(buffer, offset, length).suspend()
-									logDebug("{} bytes written to stream.", written)
-									written
+							with (channel) {
+								val contentLength = response.contentLength()?.coerceAtMost(Int.MAX_VALUE.toLong())?.toInt()
+								val bufferSize = contentLength?.coerceAtMost(DEFAULT_BUFFER_SIZE) ?: DEFAULT_BUFFER_SIZE
+								val buffer = ByteArray(bufferSize)
+								val offset = 0
+								while (!isClosedForRead && !exhausted()) {
+									val length = channel.readAvailable(buffer)
+									if (length < 0) break
+
+									if (BuildConfig.DEBUG) {
+										logger.debug("Writing {} bytes to stream...", length)
+									}
+
+									val written = promisingStream.promiseWrite(buffer, offset, length).suspend()
+
+									if (BuildConfig.DEBUG) {
+										logger.debug("{} bytes written to stream.", written)
+									}
 								}
 							}
+
+							channel.closedCause?.also { throw it }
 						} finally {
-							stream.promiseClose().suspend()
+							promisingStream.promiseClose().suspend()
 						}
 					}
 				}
