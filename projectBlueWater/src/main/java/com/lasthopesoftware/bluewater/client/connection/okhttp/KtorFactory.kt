@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.closables.eventuallyUse
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.PromisingChannel
 import com.lasthopesoftware.resources.io.PromisingReadableStream
@@ -38,6 +39,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.contentLength
 import io.ktor.util.appendAll
 import io.ktor.util.toMap
+import io.ktor.utils.io.CancellationException
 import io.ktor.utils.io.exhausted
 import io.ktor.utils.io.read
 import kotlinx.coroutines.CoroutineName
@@ -273,7 +275,6 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 			val job = scope.launch {
 				try {
 					getClient().use { httpClient ->
-
 						val request = httpClient.prepareRequest {
 							url(url)
 							this.method = HttpMethod(method)
@@ -290,25 +291,22 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 							}
 							m.sendResolution(httpResponse)
 
-							val stream = promisingChannel.writableStream
-							try {
-								val channel = response.bodyAsChannel()
-								while (!channel.exhausted()) {
-									channel.read { bytes, start, end ->
-										val length = end - start
-										logger.debug("Writing {} bytes to stream...", length)
-										val written = stream.promiseWrite(
-											bytes,
-											start,
-											length
-										).suspend()
-										logger.debug("{} bytes written to stream.", written)
-										written
+							promisingChannel.writableStream.eventuallyUse { stream ->
+								launch {
+									val channel = response.bodyAsChannel()
+									while (!channel.exhausted()) {
+										val writtenBytes = channel.read { buffer, offset, end ->
+											val length = end - offset
+											logger.debug("Writing {} bytes to stream...", length)
+											val written = stream.promiseWrite(buffer, offset, length).suspend()
+											logger.debug("{} bytes written to stream.", written)
+											written
+										}
+
+										if (writtenBytes == 0) break
 									}
-								}
-							} finally {
-								stream.promiseClose().suspend()
-							}
+								}.toPromise()
+							}.suspend()
 						}
 					}
 				} catch (e: Throwable) {
@@ -316,12 +314,17 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 				}
 			}
 
-			m.awaitCancellation { job.cancel() }
+			m.awaitCancellation {
+				job.cancel()
+				m.sendRejection(requestCancelledException())
+			}
 		}
 
 		private fun getClient() = HttpClient(engineFactory) {
 			engine(engineConfig)
 			this += httpClientConfig
 		}
+
+		private fun requestCancelledException() = CancellationException("Request cancelled.")
 	}
 }
