@@ -16,7 +16,6 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import okio.Buffer
-import okio.BufferedSource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.AfterClass
 import org.junit.Assert.assertArrayEquals
@@ -47,25 +46,21 @@ class WhenStreamingTheFileInOddChunks {
 						cacheKey = uniqueKey
 						return Promise<CacheWritableStream>(object : CacheWritableStream {
 							var numberOfBytesWritten = 0
-							override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<Int> =
-								Promise(length)
-
-							override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheWritableStream> {
-								bytesWritten?.also {
-									while (numberOfBytesWritten < it.size) {
-										val read = bufferedSource.read(
-											it,
-											numberOfBytesWritten,
-											it.size - numberOfBytesWritten
-										)
-										if (read == -1) return Promise<CacheWritableStream>(this)
-										numberOfBytesWritten += read
-									}
+							override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<Int> {
+								val bytesWritten = bytesWritten ?: return numberOfBytesWritten.toPromise()
+								if (numberOfBytesWritten < bytesWritten.size) {
+									buffer.copyInto(
+										bytesWritten,
+										numberOfBytesWritten,
+										offset,
+										(offset + bytesWritten.size - numberOfBytesWritten).coerceAtMost(offset + length)
+									)
+									numberOfBytesWritten += length
 								}
-								return Promise<CacheWritableStream>(this)
+								return numberOfBytesWritten.toPromise()
 							}
 
-							override fun commitToCache(): Promise<CachedFile?> {
+                            override fun commitToCache(): Promise<CachedFile?> {
 								committedToCache = true
 								deferredCommit.resolve()
 								return deferredCommit

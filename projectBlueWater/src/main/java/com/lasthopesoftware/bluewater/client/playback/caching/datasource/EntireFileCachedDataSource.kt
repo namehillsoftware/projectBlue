@@ -13,7 +13,12 @@ import com.lasthopesoftware.bluewater.shared.drainQueue
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
+import com.lasthopesoftware.promises.extensions.guaranteedUnitResponse
 import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.closables.eventuallyUse
+import com.lasthopesoftware.resources.io.BufferedSourcePromisingStream
+import com.lasthopesoftware.resources.io.PromisingWritableStream
 import com.lasthopesoftware.resources.uri.PathAndQuery.pathAndQuery
 import com.namehillsoftware.handoff.promises.Promise
 import okio.Buffer
@@ -47,7 +52,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 		val key = dataSpec.uri.pathAndQuery()
 
-		cacheWriter?.clear()
+		cacheWriter?.promiseClose()
 		cacheWriter = CacheWriter(
 			cacheStreamSupplier.promiseCachedFileOutputStream(libraryId, key)
 				.then(forward()) { e ->
@@ -64,11 +69,11 @@ import java.util.concurrent.ConcurrentLinkedQueue
 		val writer = cacheWriter ?: return result
 
 		if (result == C.RESULT_END_OF_INPUT && downloadBytes != expectedFileSize) {
-			writer.clear()
+			writer.promiseClose()
 			return result
 		}
 
-		if (result > 0) writer.queueAndProcess(bytes, offset, result)
+		if (result > 0) writer.promiseWrite(bytes, offset, result)
 
 		downloadBytes += result.coerceAtLeast(0).toLong()
 		if (downloadBytes == expectedFileSize) {
@@ -85,10 +90,10 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 	override fun close() {
 		innerDataSource.close()
-		cacheWriter?.clear()
+		cacheWriter?.promiseClose()
 	}
 
-	private class CacheWriter(private val promisedOutputStream: Promise<CacheWritableStream?>) {
+	private class CacheWriter(private val promisedOutputStream: Promise<CacheWritableStream?>): PromisingWritableStream {
 		companion object {
 			private const val goodBufferSize = 2 * 1024L * 1024L // 2MB
 		}
@@ -107,12 +112,12 @@ import java.util.concurrent.ConcurrentLinkedQueue
 		@Volatile
 		private var workingBuffer = Buffer()
 
-		fun queueAndProcess(bytes: ByteArray, offset: Int, length: Int) {
-			if (isFaulted) return
+		override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<Int> {
+			if (isFaulted) return (-1).toPromise()
 
 			synchronized(bufferSync) {
-				workingBuffer.write(bytes, offset, length)
-				if (workingBuffer.size < goodBufferSize) return
+				workingBuffer.write(buffer, offset, length)
+				if (workingBuffer.size < goodBufferSize) return length.toPromise()
 
 				buffersToTransfer.offer(workingBuffer)
 
@@ -122,7 +127,11 @@ import java.util.concurrent.ConcurrentLinkedQueue
 			synchronized(activePromiseSync) {
 				activePromise = processQueue()
 			}
+
+			return length.toPromise()
 		}
+
+		override fun promiseFlush(): Promise<Unit> = Unit.toPromise()
 
 		private fun processQueue() : Promise<CacheWritableStream?> = rateLimiter.limit {
 			promisedOutputStream.eventually { outputStream ->
@@ -132,21 +141,23 @@ import java.util.concurrent.ConcurrentLinkedQueue
 				else buffersToTransfer.drainQueue()
 					.reduceOrNull { sink, source -> sink.also(source::readAll) }
 					?.takeUnless { it.exhausted() }
-					?.let(outputStream::promiseTransfer)
+					?.let(::BufferedSourcePromisingStream)
+					?.eventuallyUse(outputStream::promiseCopyFrom)
 					?.apply {
-						excuse { it ->
+						eventuallyExcuse {
 							isFaulted = true
 							logger.warn("An error occurred copying the buffer, closing the output stream", it)
-							clear()
+							promiseClose()
 						}
 					}
-					.keepPromise(outputStream)
+					.keepPromise()
+					.then { outputStream }
 			}
 		}
 
 		fun commit() {
 			if (isFaulted) {
-				clear()
+				promiseClose()
 				return
 			}
 
@@ -167,18 +178,16 @@ import java.util.concurrent.ConcurrentLinkedQueue
 			}
 		}
 
-		fun clear() {
-			synchronized(activePromiseSync) {
-				activePromise.must { _ ->
-					promisedOutputStream
-						.eventually { os ->
-							os?.promiseClose().keepPromise(Unit)
-						}
-						.then {
-							buffersToTransfer.drainQueue().forEach { it.clear() }
-						}
-				}
-			}
+		override fun promiseClose(): Promise<Unit> = synchronized(activePromiseSync) {
+			activePromise.must { _ ->
+				promisedOutputStream
+					.eventually { os ->
+						os?.promiseClose().keepPromise(Unit)
+					}
+					.then {
+						buffersToTransfer.drainQueue().forEach { it.clear() }
+					}
+			}.guaranteedUnitResponse()
 		}
 	}
 

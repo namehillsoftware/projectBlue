@@ -14,7 +14,6 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import okio.Buffer
-import okio.BufferedSource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.AfterClass
 import org.junit.BeforeClass
@@ -38,23 +37,20 @@ class WhenTheDataSourceIsAbruptlyClosed {
 						return Promise<CacheWritableStream>(object : CacheWritableStream {
 							var numberOfBytesWritten = 0
 							val bytesWritten = ByteArray(7 * 1024 * 1024)
-							override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<Int> =
-								length.toPromise()
-
-							override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheWritableStream> {
-								while (numberOfBytesWritten < bytesWritten.size) {
-									val read = bufferedSource.read(
+							override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<Int> {
+								if (numberOfBytesWritten < bytesWritten.size) {
+									buffer.copyInto(
 										bytesWritten,
 										numberOfBytesWritten,
-										bytesWritten.size - numberOfBytesWritten
+										offset,
+										(offset + bytesWritten.size - numberOfBytesWritten).coerceAtMost(offset + length)
 									)
-									if (read == -1) return Promise<CacheWritableStream>(this)
-									numberOfBytesWritten += read
+									numberOfBytesWritten += length
 								}
-								return Promise<CacheWritableStream>(this)
+								return numberOfBytesWritten.toPromise()
 							}
 
-							override fun commitToCache(): Promise<CachedFile?> {
+                            override fun commitToCache(): Promise<CachedFile?> {
 								committedToCache = true
 								return Promise(CachedFile())
 							}

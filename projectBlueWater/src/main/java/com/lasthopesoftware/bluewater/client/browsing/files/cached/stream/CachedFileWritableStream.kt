@@ -7,8 +7,6 @@ import com.lasthopesoftware.promises.extensions.guaranteedUnitResponse
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
-import okio.BufferedSource
-import okio.sink
 import java.io.File
 import java.io.FileOutputStream
 
@@ -37,15 +35,7 @@ class CachedFileWritableStream(
         }
     }
 
-    override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheWritableStream> {
-        return ThreadPools.io.preparePromise {
-			if (!isClosed)
-            	bufferedSource.readAll(lazyFileOutputStream.value.sink())
-            this
-        }
-    }
-
-    override fun promiseFlush(): Promise<Unit> {
+	override fun promiseFlush(): Promise<Unit> {
         return ThreadPools.io.preparePromise {
             if (!isClosed && lazyFileOutputStream.isInitialized()) lazyFileOutputStream.value.flush()
         }
