@@ -86,7 +86,6 @@ fun <T> Promise<T>.toListenableFuture(): ListenableFuture<T> = SettableFuture.cr
 
 fun Job.toPromise(): Promise<Unit> = PromiseJob(this)
 
-@ExperimentalCoroutinesApi
 fun <T> Deferred<T>.toPromise(): Promise<T> = PromiseDeferred(this)
 
 @Suppress("UNCHECKED_CAST")
@@ -233,7 +232,6 @@ private class PromiseJob(private val job: Job) : Promise<Unit>(), CancellationRe
 	}
 }
 
-@ExperimentalCoroutinesApi
 private class PromiseDeferred<T>(private val deferred: Deferred<T>) : Promise<T>(), CancellationResponse, CompletionHandler {
 	init {
 		deferred.invokeOnCompletion(this)
@@ -244,6 +242,7 @@ private class PromiseDeferred<T>(private val deferred: Deferred<T>) : Promise<T>
 		deferred.cancel()
 	}
 
+	@OptIn(ExperimentalCoroutinesApi::class)
 	override fun invoke(cause: Throwable?) {
 		if (cause == null) resolve(deferred.getCompleted())
 		else reject(cause)

@@ -8,7 +8,6 @@ import io.ktor.utils.io.availableForRead
 import io.ktor.utils.io.cancel
 import io.ktor.utils.io.readAvailable
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 
 class KtorIoReadableStream(
@@ -19,7 +18,6 @@ class KtorIoReadableStream(
 	    awaitCancellation(this)
 	}
 
-	@OptIn(ExperimentalCoroutinesApi::class)
 	override fun promiseRead(b: ByteArray, off: Int, len: Int): Promise<Int> = scope.async {
 		channel.readAvailable(b, off, len)
 	}.toPromise()
