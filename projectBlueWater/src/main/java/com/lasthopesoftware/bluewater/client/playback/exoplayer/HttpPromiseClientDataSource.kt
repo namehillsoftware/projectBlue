@@ -316,7 +316,7 @@ class HttpPromiseClientDataSource private constructor(
 
 	/** Closes the current connection quietly, if there is one.  */
 	private fun closeConnectionQuietly() {
-		response?.body?.promiseClose()
+		response?.promiseClose()
 		responseByteStream = null
 	}
 }

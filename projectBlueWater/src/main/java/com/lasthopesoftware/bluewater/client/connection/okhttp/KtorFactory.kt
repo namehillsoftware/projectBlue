@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.lasthopesoftware.resources.io.KtorIoReadableStream
 import com.lasthopesoftware.resources.io.PromisingChannel
 import com.lasthopesoftware.resources.io.PromisingReadableStream
 import com.namehillsoftware.handoff.cancellation.CancellationResponse
@@ -39,14 +40,11 @@ import io.ktor.http.contentLength
 import io.ktor.util.appendAll
 import io.ktor.util.toMap
 import io.ktor.utils.io.CancellationException
-import io.ktor.utils.io.exhausted
 import io.ktor.utils.io.readAvailable
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
-import okio.Pipe
-import okio.buffer
 import java.net.URL
 import java.security.KeyStore
 import java.security.KeyStoreException
@@ -68,7 +66,9 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 			clone()
 				.apply {
 					install(HttpTimeout) {
-						requestTimeoutMillis = 45.seconds.inWholeMilliseconds
+						requestTimeoutMillis = HttpTimeoutConfig.INFINITE_TIMEOUT_MS
+						socketTimeoutMillis = HttpTimeoutConfig.INFINITE_TIMEOUT_MS
+						connectTimeoutMillis = 45.seconds.inWholeMilliseconds
 					}
 				}
 		private val trustManager by lazy {
@@ -279,25 +279,6 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 		private var isStarted = false
 
 		private val job = scope.launch {
-			makeRequest()
-		}
-
-		private val promisingChannel by lazy { PromisingChannel() }
-
-		private val promisingStream
-			get() = promisingChannel.writableStream
-
-		init {
-			awaitCancellation(this)
-		}
-
-		override fun cancellationRequested() {
-			job.cancel()
-			if (!isStarted)
-				reject(requestCancelledException())
-		}
-
-		suspend fun makeRequest() {
 			isStarted = true
 			try {
 				client.use { httpClient ->
@@ -310,13 +291,74 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 					if (BuildConfig.DEBUG) {
 						logger.debug("Executing request for URL {}...", url)
 					}
-					val pipe = Pipe(8192)
-					pipe.source.buffer().inputStream()
+
 					request.execute { response ->
-						val httpResponse = KtorHttpResponse(response, promisingChannel)
+						val channel = response.bodyAsChannel()
+						val ktorIoReadableStream = KtorIoReadableStream(channel, this)
+						val httpResponse = KtorHttpResponse(response, ktorIoReadableStream)
 						if (BuildConfig.DEBUG) {
 							logger.debug("Resolving response for URL {}: {}", url, httpResponse)
 						}
+						resolve(httpResponse)
+
+						// Wait for stream to be closed before closing context
+						ktorIoReadableStream.suspend()
+					}
+				}
+			} catch (e: Throwable) {
+				reject(e)
+			}
+		}
+
+		init {
+			awaitCancellation(this)
+		}
+
+		override fun cancellationRequested() {
+			job.cancel()
+			if (!isStarted)
+				reject(requestCancelledException())
+		}
+	}
+
+	private class KtorChanneledRequest(
+		scope: CoroutineScope,
+		private val client: HttpClient,
+		private val method: String,
+		private val headers: Map<String, String>,
+		private val url: URL
+	) : Promise<HttpResponse>(), CancellationResponse {
+		companion object {
+			private fun requestCancelledException() = CancellationException("Request cancelled.")
+		}
+
+		@Volatile
+		private var isStarted = false
+
+		private val promisingChannel by lazy { PromisingChannel() }
+
+		private val promisingStream
+			get() = promisingChannel.writableStream
+
+		private val job = scope.launch {
+			isStarted = true
+			try {
+				client.use { httpClient ->
+					val request = httpClient.prepareRequest {
+						url(this@KtorChanneledRequest.url)
+						this.method = HttpMethod(this@KtorChanneledRequest.method)
+						this.headers.appendAll(this@KtorChanneledRequest.headers)
+					}
+
+					if (BuildConfig.DEBUG) {
+						logger.debug("Executing request for URL {}...", url)
+					}
+
+					request.execute { response ->
+						val httpResponse = KtorHttpResponse(response, promisingChannel)
+
+						if (BuildConfig.DEBUG) logger.debug("Resolving response for URL {}: {}", url, httpResponse)
+
 						resolve(httpResponse)
 
 						try {
@@ -326,7 +368,7 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 								val bufferSize = contentLength?.coerceAtMost(DEFAULT_BUFFER_SIZE) ?: DEFAULT_BUFFER_SIZE
 								val buffer = ByteArray(bufferSize)
 								val offset = 0
-								while (!isClosedForRead && !exhausted()) {
+								while (!isClosedForRead) {
 									val length = channel.readAvailable(buffer)
 									if (length < 0) break
 
@@ -342,15 +384,26 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 								}
 							}
 
-							channel.closedCause?.also { throw it }
-						} finally {
+							channel.closedCause?.let(promisingStream::closeWithCause) ?:
 							promisingStream.promiseClose().suspend()
+						} catch(e: Throwable) {
+							promisingStream.closeWithCause(e)
 						}
 					}
 				}
 			} catch (e: Throwable) {
 				reject(e)
 			}
+		}
+
+		init {
+			awaitCancellation(this)
+		}
+
+		override fun cancellationRequested() {
+			job.cancel()
+			if (!isStarted)
+				reject(requestCancelledException())
 		}
 	}
 

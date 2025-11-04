@@ -42,3 +42,5 @@ interface PromisingWritableStream : PromisingCloseable {
 		}
 	}
 }
+
+interface RejectablePromisingWritableStream : PromisingWritableStream, RejectableCloseable

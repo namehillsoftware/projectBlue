@@ -35,31 +35,36 @@ class PromisingChannel() : PromisingReadableStream {
 	private var isWriterClosed = false
 
 	@Volatile
+	var writerClosedReason: Throwable? = null
+		private set
+
+	@Volatile
 	private var isReaderClosed = false
 
 	private val connectableWritableStream by lazy { ConnectedWritableStream() }
 
-	val writableStream: PromisingWritableStream
+	val writableStream: RejectablePromisingWritableStream
 		get() = connectableWritableStream
 
 	val outputStream: OutputStream
 		get() = connectableWritableStream
 
-	override fun promiseRead(b: ByteArray, off: Int, len: Int): Promise<Int> = when {
-		isReaderClosed -> throw ChannelClosedException()
-		off < 0 || len < 0 || len > b.size - off -> throw IndexOutOfBoundsException()
-		len == 0 -> 0.toPromise()
-		// Closed by writer and queue flushed
-		isWriterClosed && servers.isEmpty() -> {
-			(-1).toPromise()
+	override fun promiseRead(b: ByteArray, off: Int, len: Int): Promise<Int> =
+		when {
+			isReaderClosed -> throw ChannelClosedException()
+			off < 0 || len < 0 || len > b.size - off -> throw IndexOutOfBoundsException()
+			len == 0 -> 0.toPromise()
+			// Closed by writer and queue flushed
+			isWriterClosed && servers.isEmpty() -> {
+				writerClosedReason?.let(::Promise) ?: (-1).toPromise()
+			}
+			else -> {
+				val consumer = Consumer(b, off, len)
+				consumers.offer(consumer)
+				tryConsuming()
+				consumer
+			}
 		}
-		else -> {
-			val consumer = Consumer(b, off, len)
-			consumers.offer(consumer)
-			tryConsuming()
-			consumer
-		}
-	}
 
 	/**
 	 * Returns the number of bytes that can be read from this input
@@ -94,14 +99,16 @@ class PromisingChannel() : PromisingReadableStream {
 
 	private fun tryConsuming(): Unit = synchronized(sync) {
 		while (true) {
-			val consumer = consumers.peek()
-			if (consumer == null) break
+			val consumer = consumers.peek() ?: break
 
 			val server = servers.peek()
 			if (server == null) {
 				if (isWriterClosed) {
 					// Drain consumers
-					consumer.servingComplete()
+					val reason = writerClosedReason
+					if (reason != null) consumer.servingHalted(reason)
+					else consumer.servingComplete()
+
 					if (consumers.peek() == consumer)
 						consumers.poll()
 					continue
@@ -144,8 +151,11 @@ class PromisingChannel() : PromisingReadableStream {
 		tryConsuming()
 	}
 
-	private inner class ConnectedWritableStream() : OutputStream(), PromisingWritableStream,
-		ImmediateResponse<Unit, ConnectedWritableStream> {
+	private inner class ConnectedWritableStream() :
+		OutputStream(),
+		RejectablePromisingWritableStream,
+		ImmediateResponse<Unit, ConnectedWritableStream>
+	{
 		override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<Int> =
 			promiseReceive(buffer, offset, length)
 
@@ -155,8 +165,6 @@ class PromisingChannel() : PromisingReadableStream {
 		}
 
 		override fun promiseClose(): Promise<Unit> = receivedLast().toPromise()
-
-		override fun respond(resolution: Unit?): ConnectedWritableStream = this
 
 		override fun write(b: Int) {
 			write(byteArrayOf(b.toByte()), 0, 1)
@@ -168,6 +176,19 @@ class PromisingChannel() : PromisingReadableStream {
 
 		override fun close() {
 			receivedLast()
+		}
+
+		override fun respond(resolution: Unit?): ConnectedWritableStream = this
+
+		override fun closeWithCause(reason: Throwable) {
+			if (writerClosedReason != null) return
+
+			synchronized(sync) {
+				if (writerClosedReason != null) return
+
+				writerClosedReason = reason
+				receivedLast()
+			}
 		}
 	}
 
@@ -246,6 +267,12 @@ class PromisingChannel() : PromisingReadableStream {
 		fun servingComplete() {
 			synchronized(sync) {
 				resolve(read)
+			}
+		}
+
+		fun servingHalted(reason: Throwable) {
+			synchronized(sync) {
+				reject(reason)
 			}
 		}
 
