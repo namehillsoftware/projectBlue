@@ -245,9 +245,15 @@ class HttpPromiseClientDataSource private constructor(
 		try {
 			while (bytesToSkip > 0) {
 				val readLength = min(bytesToSkip, skipBuffer.size.toLong()).toInt()
-				val read = responseByteStream?.promiseRead(skipBuffer, 0, readLength)?.toFuture()?.get()
-				if (Thread.currentThread().isInterrupted) {
-					throw InterruptedIOException()
+				val read = try {
+					val promisedRead = responseByteStream?.promiseRead(skipBuffer, 0, readLength)
+					if (Thread.currentThread().isInterrupted) {
+						promisedRead?.cancel()
+						throw InterruptedIOException()
+					}
+					promisedRead?.toFuture()?.get()
+				} catch (ee: ExecutionException) {
+					throw ee.cause ?: ee
 				}
 				if (read == null || read == -1) {
 					throw HttpDataSourceException(
@@ -304,7 +310,12 @@ class HttpPromiseClientDataSource private constructor(
 			readLength = min(readLength.toLong(), bytesRemaining).toInt()
 		}
 
-		val read = responseByteStream?.promiseRead(buffer, offset, readLength)?.toFuture()?.get()
+		val read = try {
+			responseByteStream?.promiseRead(buffer, offset, readLength)?.toFuture()?.get()
+		} catch (ee: ExecutionException) {
+			throw ee.cause ?: ee
+		}
+
 		if (read == -1 || read == null) {
 			return C.RESULT_END_OF_INPUT
 		}
