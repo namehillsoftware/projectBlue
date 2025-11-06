@@ -30,7 +30,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.closeQuietly
-import org.joda.time.Duration
 import java.io.IOException
 import java.net.URL
 import java.security.KeyManagementException
@@ -38,7 +37,6 @@ import java.security.KeyStore
 import java.security.KeyStoreException
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
-import java.util.concurrent.TimeUnit
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
@@ -47,11 +45,12 @@ import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import kotlin.text.Charsets.UTF_8
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 	companion object {
-		private val buildConnectionTime = Duration.standardSeconds(10)
+		private val buildConnectionTime = 10.seconds
 		private val dispatcher by lazy { Dispatcher(ThreadPools.io) }
 		private fun OkHttpClient.Builder.configureForStreaming() =
 			readTimeout(45.seconds).retryOnConnectionFailure(false)
@@ -71,7 +70,7 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 				chain.proceed(requestBuilder.build())
 			}
 			.cache(null)
-			.readTimeout(1, TimeUnit.MINUTES)
+			.readTimeout(1.minutes)
 			.retryOnConnectionFailure(false)
 			.dispatcher(dispatcher)
 			.build()
@@ -82,7 +81,7 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 	private fun getOkHttpClient(): OkHttpClient =
 		commonClient
 			.newBuilder()
-			.connectTimeout(buildConnectionTime.millis, TimeUnit.MILLISECONDS)
+			.connectTimeout(buildConnectionTime)
 			.build()
 
 	private fun String.hashString(algorithm: String): ByteArray =

@@ -66,8 +66,8 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 			clone()
 				.apply {
 					install(HttpTimeout) {
-						requestTimeoutMillis = HttpTimeoutConfig.INFINITE_TIMEOUT_MS
-						socketTimeoutMillis = HttpTimeoutConfig.INFINITE_TIMEOUT_MS
+						requestTimeoutMillis = null
+						socketTimeoutMillis = 45.seconds.inWholeMilliseconds
 						connectTimeoutMillis = 45.seconds.inWholeMilliseconds
 					}
 				}
