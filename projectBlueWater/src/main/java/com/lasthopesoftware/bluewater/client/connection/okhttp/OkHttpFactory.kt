@@ -18,8 +18,8 @@ import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.lasthopesoftware.resources.io.BufferedSourcePromisingStream
 import com.lasthopesoftware.resources.io.PromisingReadableStream
-import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.promises.Promise
 import okhttp3.Call
@@ -292,7 +292,7 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 			get() = response.message
 		override val headers by lazy { response.headers.toMultimap() }
 		override val body: PromisingReadableStream
-			get() = PromisingReadableStreamWrapper(response.body.byteStream())
+			get() = BufferedSourcePromisingStream(response.body.source())
 		override val contentLength: Long
 			get() = response.body.contentLength()
 
@@ -316,7 +316,6 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 			if (DebugFlag.isDebugCompilation && !response.isSuccessful && logger.isDebugEnabled) {
 				logger.debug("Response returned error code {}.", response.code)
 			}
-
 			resolve(OkHttpResponse(response))
 		}
 

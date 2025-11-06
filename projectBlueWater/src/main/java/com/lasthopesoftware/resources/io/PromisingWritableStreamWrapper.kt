@@ -11,18 +11,28 @@ import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
 
+/**
+ * An implementation of a [PromisingWritableStream] that is backed by an [OutputStream].
+ *
+ * This class adapts a standard OutputStream into a promise-based asynchronous stream.
+ * All read and close operations are performed asynchronously on a specified executor.
+ *
+ * @param outputStream The underlying [OutputStream] to read data from.
+ * @param transferExecutor The [Executor] on which the asynchronous I/O operations (read, close) will be performed.
+ *                         Defaults to [ThreadPools.io]. If null, will execute on calling thread.
+ */
 class PromisingWritableStreamWrapper(
 	private val outputStream: OutputStream,
-	private val transferExecutor: Executor = ThreadPools.io,
+	private val transferExecutor: Executor? = ThreadPools.io,
 ) : PromisingWritableStream {
-	override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int) = transferExecutor.preparePromise {
+	override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int) = transferExecutor?.preparePromise {
 		outputStream.write(buffer, offset, length)
 		length
-	}
+	} ?: outputStream.write(buffer, offset, length).run { length }.toPromise()
 
-	override fun promiseFlush(): Promise<Unit> = transferExecutor.preparePromise {
+	override fun promiseFlush(): Promise<Unit> = transferExecutor?.preparePromise {
 		outputStream.flush()
-	}
+	} ?: outputStream.flush().toPromise()
 
 	override fun promiseClose(): Promise<Unit> = promiseFlush().must(outputStream::close).guaranteedUnitResponse()
 
