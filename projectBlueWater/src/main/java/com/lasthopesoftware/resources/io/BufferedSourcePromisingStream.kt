@@ -25,6 +25,10 @@ class BufferedSourcePromisingStream(
 		bufferedSource.read(b, off, len)
 	} ?: bufferedSource.read(b, off, len).toPromise()
 
+	override fun promiseReadAllBytes(): Promise<ByteArray> = transferExecutor?.preparePromise {
+		bufferedSource.readByteArray()
+	} ?: bufferedSource.readByteArray().toPromise()
+
 	override fun available(): Int = bufferedSource.buffer.size.toInt()
 
 	override fun promiseClose(): Promise<Unit> = transferExecutor?.preparePromise {

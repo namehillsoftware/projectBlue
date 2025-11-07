@@ -7,6 +7,7 @@ import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.availableForRead
 import io.ktor.utils.io.cancel
 import io.ktor.utils.io.readAvailable
+import io.ktor.utils.io.toByteArray
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 
@@ -20,6 +21,10 @@ class KtorIoReadableStream(
 
 	override fun promiseRead(b: ByteArray, off: Int, len: Int): Promise<Int> = scope.async {
 		channel.readAvailable(b, off, len)
+	}.toPromise()
+
+	override fun promiseReadAllBytes(): Promise<ByteArray> = scope.async {
+		channel.toByteArray()
 	}.toPromise()
 
 	override fun available(): Int = channel.availableForRead
