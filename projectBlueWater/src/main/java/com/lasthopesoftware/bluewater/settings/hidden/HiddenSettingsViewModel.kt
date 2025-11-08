@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.settings.hidden
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
-import com.lasthopesoftware.bluewater.client.connection.okhttp.HttpClientType
+import com.lasthopesoftware.bluewater.client.connection.http.HttpClientType
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.HttpDataSourceType
 import com.lasthopesoftware.bluewater.features.access.HoldApplicationFeatureConfiguration
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
@@ -38,7 +38,7 @@ class HiddenSettingsViewModel(
 
 		val promisedApplicationSettingsUpdate = applicationSettingsRepository
 			.promiseApplicationSettings()
-			.then { it ->
+			.then {
 				mutableIsLoggingToFile.value = it.isLoggingToFile
 			}
 

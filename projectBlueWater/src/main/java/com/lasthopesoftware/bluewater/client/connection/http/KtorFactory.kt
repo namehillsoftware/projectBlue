@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.okhttp
+package com.lasthopesoftware.bluewater.client.connection.http
 
 import android.content.Context
 import android.content.pm.PackageManager

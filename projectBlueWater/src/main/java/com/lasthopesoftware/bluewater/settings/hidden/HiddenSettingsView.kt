@@ -34,7 +34,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.LocalSurfaceColor
-import com.lasthopesoftware.bluewater.client.connection.okhttp.HttpClientType
+import com.lasthopesoftware.bluewater.client.connection.http.HttpClientType
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.HttpDataSourceType
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 

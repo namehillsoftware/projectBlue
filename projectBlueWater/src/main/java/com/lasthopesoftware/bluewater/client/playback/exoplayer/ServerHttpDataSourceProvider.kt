@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.exoplayer
 
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
-import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpServerClients
+import com.lasthopesoftware.bluewater.client.connection.http.ProvideOkHttpServerClients
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseServerClients
 import com.lasthopesoftware.bluewater.features.access.HoldApplicationFeatureConfiguration
 import com.lasthopesoftware.promises.extensions.toPromise

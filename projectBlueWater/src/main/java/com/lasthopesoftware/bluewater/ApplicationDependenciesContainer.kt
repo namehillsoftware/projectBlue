@@ -26,16 +26,16 @@ import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.Ca
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.LibrarySettingsAccess
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.StoreLibrarySettings
 import com.lasthopesoftware.bluewater.client.connection.PacketSender
+import com.lasthopesoftware.bluewater.client.connection.http.ApplicationSettingsHttpClient
+import com.lasthopesoftware.bluewater.client.connection.http.ApplicationSettingsMediaCenterClient
+import com.lasthopesoftware.bluewater.client.connection.http.ApplicationSettingsSubsonicClient
+import com.lasthopesoftware.bluewater.client.connection.http.KtorFactory
+import com.lasthopesoftware.bluewater.client.connection.http.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgressingLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfoXmlRequest
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerLookup
-import com.lasthopesoftware.bluewater.client.connection.okhttp.ApplicationSettingsHttpClient
-import com.lasthopesoftware.bluewater.client.connection.okhttp.ApplicationSettingsMediaCenterClient
-import com.lasthopesoftware.bluewater.client.connection.okhttp.ApplicationSettingsSubsonicClient
-import com.lasthopesoftware.bluewater.client.connection.okhttp.KtorFactory
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
@@ -70,6 +70,7 @@ import com.lasthopesoftware.resources.strings.Base64Encoder
 import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import com.lasthopesoftware.resources.strings.StringResources
 
+@OptIn(UnstableApi::class)
 object ApplicationDependenciesContainer {
 
 	private val connectionsRepository by lazy { PromisedConnectionsRepository() }
@@ -78,7 +79,6 @@ object ApplicationDependenciesContainer {
 
 	@SuppressLint("StaticFieldLeak")
 	@Volatile
-	@OptIn(UnstableApi::class)
 	private var attachedDependencies: AttachedDependencies? = null
 
 	val Context.applicationDependencies: ApplicationDependencies
