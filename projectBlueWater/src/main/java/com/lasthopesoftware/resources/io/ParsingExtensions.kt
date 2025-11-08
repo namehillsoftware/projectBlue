@@ -6,10 +6,9 @@ import com.lasthopesoftware.bluewater.client.connection.requests.bodyString
 import com.lasthopesoftware.bluewater.shared.StandardResponse
 import com.lasthopesoftware.bluewater.shared.StandardResponse.Companion.toStandardResponse
 import com.lasthopesoftware.promises.extensions.preparePromise
+import com.lasthopesoftware.resources.closables.eventuallyUse
 import com.lasthopesoftware.resources.executors.ThreadPools
-import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.response.ImmediateCancellableResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -18,15 +17,12 @@ import kotlin.coroutines.cancellation.CancellationException
 
 inline fun <reified T> Gson.fromJson(value: String): T? = fromJson(value, T::class.java)
 
-fun Promise<HttpResponse>.promiseStringBody(): Promise<String> = then(HttpStringBodyResponse)
+fun Promise<HttpResponse>.promiseStringBody(): Promise<String> = eventually(HttpStringBodyResponse)
 fun Promise<String>.promiseXmlDocument(): Promise<Document> = eventually(ParsedXmlDocumentResponse)
 fun Promise<HttpResponse>.promiseStandardResponse(): Promise<StandardResponse> = HttpParsedStandardResponse(this)
 
-object HttpStringBodyResponse : ImmediateCancellableResponse<HttpResponse, String> {
-	override fun respond(response: HttpResponse, cancellationSignal: CancellationSignal): String = response.use {
-		if (cancellationSignal.isCancelled) throw CancellationException("Reading body into string cancelled.")
-		it.bodyString
-	}
+object HttpStringBodyResponse : PromisedResponse<HttpResponse, String> {
+	override fun promiseResponse(response: HttpResponse): Promise<String> = response.eventuallyUse { it.bodyString }
 }
 
 object ParsedXmlDocumentResponse : PromisedResponse<String, Document> {

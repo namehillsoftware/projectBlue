@@ -2,9 +2,11 @@ package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnecti
 
 import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.LiveMediaCenterConnection
+import com.lasthopesoftware.bluewater.client.connection.requests.HttpPromiseClient
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.PassThroughHttpResponse
 import io.mockk.every
 import io.mockk.mockk
@@ -37,12 +39,12 @@ class WhenCancellingCheckingIfTheMediaCenterConnectionDetailsIsPossible {
 			mediaCenterConnectionDetails,
 			mockk {
 				every {
-					getServerClient(mediaCenterConnectionDetails)
+					promiseServerClient(mediaCenterConnectionDetails)
 				} answers {
 					val sc = firstArg<MediaCenterConnectionDetails>()
-					mockk {
+					mockk<HttpPromiseClient> {
 						every { promiseResponse(URL(sc.baseUrl, "MCWS/v1/Alive")) } returns deferredResponse
-					}
+					}.toPromise()
 				}
 			},
 			mockk(),

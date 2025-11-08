@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.okhttp
+package com.lasthopesoftware.bluewater.client.connection.http
 
 import android.content.Context
 import android.content.pm.PackageManager
@@ -16,7 +16,10 @@ import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustMan
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.compilation.DebugFlag
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.lasthopesoftware.resources.io.BufferedSourcePromisingStream
+import com.lasthopesoftware.resources.io.PromisingReadableStream
 import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.promises.Promise
 import okhttp3.Call
@@ -27,16 +30,13 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.closeQuietly
-import org.joda.time.Duration
 import java.io.IOException
-import java.io.InputStream
 import java.net.URL
 import java.security.KeyManagementException
 import java.security.KeyStore
 import java.security.KeyStoreException
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
-import java.util.concurrent.TimeUnit
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
@@ -45,11 +45,12 @@ import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import kotlin.text.Charsets.UTF_8
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 	companion object {
-		private val buildConnectionTime = Duration.standardSeconds(10)
+		private val buildConnectionTime = 10.seconds
 		private val dispatcher by lazy { Dispatcher(ThreadPools.io) }
 		private fun OkHttpClient.Builder.configureForStreaming() =
 			readTimeout(45.seconds).retryOnConnectionFailure(false)
@@ -69,18 +70,18 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 				chain.proceed(requestBuilder.build())
 			}
 			.cache(null)
-			.readTimeout(1, TimeUnit.MINUTES)
+			.readTimeout(1.minutes)
 			.retryOnConnectionFailure(false)
 			.dispatcher(dispatcher)
 			.build()
 	}
 
-	override fun getClient(): HttpPromiseClient = OkHttpPromiseClient(getOkHttpClient())
+	override fun promiseClient(): Promise<HttpPromiseClient> = OkHttpPromiseClient(getOkHttpClient()).toPromise()
 
 	private fun getOkHttpClient(): OkHttpClient =
 		commonClient
 			.newBuilder()
-			.connectTimeout(buildConnectionTime.millis, TimeUnit.MILLISECONDS)
+			.connectTimeout(buildConnectionTime)
 			.build()
 
 	private fun String.hashString(algorithm: String): ByteArray =
@@ -99,12 +100,12 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 		return "$applicationName/$versionName (Linux;Android ${Build.VERSION.RELEASE})"
 	}
 
-	inner class MediaCenterHttpPromiseServerClient() : ProvideHttpPromiseServerClients<MediaCenterConnectionDetails>, ProvideOkHttpServerClients<MediaCenterConnectionDetails> {
-		override fun getServerClient(connectionDetails: MediaCenterConnectionDetails): HttpPromiseClient =
-			OkHttpPromiseClient(getOkHttpClient(connectionDetails))
+	inner class MediaCenterClient() : ProvideHttpPromiseServerClients<MediaCenterConnectionDetails>, ProvideOkHttpServerClients<MediaCenterConnectionDetails> {
+		override fun promiseServerClient(connectionDetails: MediaCenterConnectionDetails): Promise<HttpPromiseClient> =
+			OkHttpPromiseClient(getOkHttpClient(connectionDetails)).toPromise()
 
-		override fun getStreamingServerClient(connectionDetails: MediaCenterConnectionDetails): HttpPromiseClient =
-			OkHttpPromiseClient(getStreamingOkHttpClient(connectionDetails))
+		override fun promiseStreamingServerClient(connectionDetails: MediaCenterConnectionDetails): Promise<HttpPromiseClient> =
+			OkHttpPromiseClient(getStreamingOkHttpClient(connectionDetails)).toPromise()
 
 		override fun getStreamingOkHttpClient(connectionDetails: MediaCenterConnectionDetails): OkHttpClient =
 			getOkHttpClient(connectionDetails)
@@ -187,12 +188,12 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 		}
 	}
 
-	inner class SubsonicHttpPromiseServerClient() : ProvideHttpPromiseServerClients<SubsonicConnectionDetails>, ProvideOkHttpServerClients<SubsonicConnectionDetails> {
-		override fun getServerClient(connectionDetails: SubsonicConnectionDetails): HttpPromiseClient =
-			OkHttpPromiseClient(getOkHttpClient(connectionDetails))
+	inner class SubsonicClient() : ProvideHttpPromiseServerClients<SubsonicConnectionDetails>, ProvideOkHttpServerClients<SubsonicConnectionDetails> {
+		override fun promiseServerClient(connectionDetails: SubsonicConnectionDetails): Promise<HttpPromiseClient> =
+			OkHttpPromiseClient(getOkHttpClient(connectionDetails)).toPromise()
 
-		override fun getStreamingServerClient(connectionDetails: SubsonicConnectionDetails): HttpPromiseClient =
-			OkHttpPromiseClient(getStreamingOkHttpClient(connectionDetails))
+		override fun promiseStreamingServerClient(connectionDetails: SubsonicConnectionDetails): Promise<HttpPromiseClient> =
+			OkHttpPromiseClient(getStreamingOkHttpClient(connectionDetails)).toPromise()
 
 		override fun getStreamingOkHttpClient(connectionDetails: SubsonicConnectionDetails): OkHttpClient =
 			getOkHttpClient(connectionDetails)
@@ -289,12 +290,12 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 		override val message: String
 			get() = response.message
 		override val headers by lazy { response.headers.toMultimap() }
-		override val body: InputStream
-			get() = response.body.byteStream()
+		override val body: PromisingReadableStream
+			get() = BufferedSourcePromisingStream(response.body.source())
 		override val contentLength: Long
 			get() = response.body.contentLength()
 
-		override fun close() = response.closeQuietly()
+		override fun promiseClose(): Promise<Unit> = response.closeQuietly().toPromise()
 	}
 
 	private class HttpResponsePromise(private val call: Call) : Promise<HttpResponse>(), Callback, CancellationResponse {
@@ -314,7 +315,6 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 			if (DebugFlag.isDebugCompilation && !response.isSuccessful && logger.isDebugEnabled) {
 				logger.debug("Response returned error code {}.", response.code)
 			}
-
 			resolve(OkHttpResponse(response))
 		}
 

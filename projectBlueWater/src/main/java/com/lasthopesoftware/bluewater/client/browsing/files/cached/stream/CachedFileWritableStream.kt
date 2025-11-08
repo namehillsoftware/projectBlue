@@ -7,17 +7,15 @@ import com.lasthopesoftware.promises.extensions.guaranteedUnitResponse
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
-import okio.BufferedSource
-import okio.sink
 import java.io.File
 import java.io.FileOutputStream
 
-class CachedFileOutputStream(
+class CachedFileWritableStream(
 	private val libraryId: LibraryId,
     private val uniqueKey: String,
     private val file: File,
     private val diskFileCachePersistence: IDiskFileCachePersistence
-) : CacheOutputStream {
+) : CacheWritableStream {
 
 	@Volatile
 	private var isClosed = false
@@ -28,26 +26,18 @@ class CachedFileOutputStream(
         buffer: ByteArray,
         offset: Int,
         length: Int
-    ): Promise<CacheOutputStream> {
+    ): Promise<Int> {
         return ThreadPools.io.preparePromise {
-			if (!isClosed)
-            	lazyFileOutputStream.value.write(buffer, offset, length)
-            this
+			if (!isClosed) {
+				lazyFileOutputStream.value.write(buffer, offset, length)
+				length
+			} else 0
         }
     }
 
-    override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheOutputStream> {
-        return ThreadPools.io.preparePromise {
-			if (!isClosed)
-            	bufferedSource.readAll(lazyFileOutputStream.value.sink())
-            this
-        }
-    }
-
-    override fun flush(): Promise<CacheOutputStream> {
+	override fun promiseFlush(): Promise<Unit> {
         return ThreadPools.io.preparePromise {
             if (!isClosed && lazyFileOutputStream.isInitialized()) lazyFileOutputStream.value.flush()
-            this
         }
     }
 
@@ -56,7 +46,7 @@ class CachedFileOutputStream(
 		else Promise.empty()
 
 	override fun promiseClose(): Promise<Unit> {
-		return flush().must { _ ->
+		return promiseFlush().must { _ ->
 			isClosed = true
 			if (lazyFileOutputStream.isInitialized()) lazyFileOutputStream.value.close()
 		}.guaranteedUnitResponse()

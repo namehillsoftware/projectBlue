@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.closables.eventuallyUse
-import com.lasthopesoftware.resources.io.PromisingOutputStreamWrapper
+import com.lasthopesoftware.resources.io.PromisingWritableStreamWrapper
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
@@ -79,7 +79,7 @@ class StoredFileJobProcessor(
 								val promisedDownload = storedFiles
 									.promiseDownload(libraryId, storedFile)
 									.also(cancellationProxy::doCancel)
-								PromisingOutputStreamWrapper(it)
+								PromisingWritableStreamWrapper(it)
 									.eventuallyUse { outputStreamWrapper ->
 										promisedDownload
 											.eventually { inputStream ->

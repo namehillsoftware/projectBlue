@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withSubsonicApi
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.PassThroughHttpResponse
 import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.every
@@ -35,7 +36,7 @@ class `When setting the rating` {
 			LiveSubsonicConnection(
 				SubsonicConnectionDetails(TestUrl, "sr4qDP3", "eSbzvtAsP4P"),
 				mockk {
-					every { getServerClient(any<SubsonicConnectionDetails>()) } returns httpConnection
+					every { promiseServerClient(any<SubsonicConnectionDetails>()) } returns httpConnection.toPromise()
 				},
 				mockk(),
                 JsonEncoderDecoder,

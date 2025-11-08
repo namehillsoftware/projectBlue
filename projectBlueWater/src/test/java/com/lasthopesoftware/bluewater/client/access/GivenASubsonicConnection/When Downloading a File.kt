@@ -13,10 +13,8 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFutur
 import com.lasthopesoftware.resources.PassThroughHttpResponse
 import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.mockk
-import org.apache.commons.io.IOUtils
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.io.ByteArrayOutputStream
 import java.util.Random
 
 class `When Downloading a File` {
@@ -58,8 +56,6 @@ class `When Downloading a File` {
 
 	@Test
 	fun `then the input stream is returned`() {
-		val outputStream = ByteArrayOutputStream()
-		IOUtils.copy(inputStream, outputStream)
-		assertThat(outputStream.toByteArray()).containsExactly(*responseBytes)
+		assertThat(inputStream?.promiseReadAllBytes()?.toExpiringFuture()?.get()).containsExactly(*responseBytes)
 	}
 }

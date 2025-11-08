@@ -236,7 +236,7 @@ class PlaybackEngine(
 
 		return if (promisedPlayback.get() == null) {
 			val currentPlayerId = playerSessionCounter.get()
-			updatePlayerFromState().then { np -> np?.let { startPlayback(currentPlayerId, it) }; Unit }
+			updatePlayerFromState().then { np -> np?.let { startPlayback(currentPlayerId, it) } }
 		} else {
 			playlistPlayback
 				.resume()
@@ -425,6 +425,7 @@ class PlaybackEngine(
 										it.filePosition == progress.millis
 								}
 								?.run { onPlayingFileChanged?.onPlayingFileChanged(libraryId, p) }
+								?: Unit
 						}
 					}
 			}

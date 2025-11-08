@@ -86,22 +86,35 @@ fun <T> Promise<T>.toListenableFuture(): ListenableFuture<T> = SettableFuture.cr
 
 fun Job.toPromise(): Promise<Unit> = PromiseJob(this)
 
-@ExperimentalCoroutinesApi
 fun <T> Deferred<T>.toPromise(): Promise<T> = PromiseDeferred(this)
 
 @Suppress("UNCHECKED_CAST")
 fun <T> T.toPromise(): Promise<T> = when (this) {
 	null -> Promise.empty()
-	is Unit -> UnitPromise as Promise<T>
-	is Boolean -> (if (this) TruePromise else FalsePromise) as Promise<T>
+	is Unit -> toPromise() as Promise<T>
+	is Int -> toPromise() as Promise<T>
+	is Boolean -> toPromise() as Promise<T>
 	is String -> if (isEmpty()) EmptyStringPromise as Promise<T> else Promise(this)
 	else -> Promise(this)
 }
 
+fun Unit.toPromise(): Promise<Unit> = UnitPromise
+
+fun Int.toPromise(): Promise<Int> = when (this) {
+	0 -> ZeroPromise
+	1 -> OnePromise
+	-1 -> NegativeOnePromise
+	else -> Promise(this)
+}
+
+fun Boolean.toPromise(): Promise<Boolean> = if (this) TruePromise else FalsePromise
+
+private object ZeroPromise : Promise<Int>(0)
+private object OnePromise : Promise<Int>(1)
+private object NegativeOnePromise : Promise<Int>(-1)
 private object TruePromise : Promise<Boolean>(true)
 private object FalsePromise: Promise<Boolean>(false)
 private object EmptyStringPromise: Promise<String>("")
-
 private object UnitPromise : Promise<Unit>(Unit)
 
 @Suppress("UNCHECKED_CAST")
@@ -205,8 +218,8 @@ private class PromisedListenableFuture<Resolution>(private val listenableFuture:
 
 private class PromiseJob(private val job: Job) : Promise<Unit>(), CancellationResponse, CompletionHandler {
 	init {
-		job.invokeOnCompletion(this)
 		awaitCancellation(this)
+		job.invokeOnCompletion(this)
 	}
 
 	override fun cancellationRequested() {
@@ -219,7 +232,6 @@ private class PromiseJob(private val job: Job) : Promise<Unit>(), CancellationRe
 	}
 }
 
-@ExperimentalCoroutinesApi
 private class PromiseDeferred<T>(private val deferred: Deferred<T>) : Promise<T>(), CancellationResponse, CompletionHandler {
 	init {
 		deferred.invokeOnCompletion(this)
@@ -230,6 +242,7 @@ private class PromiseDeferred<T>(private val deferred: Deferred<T>) : Promise<T>
 		deferred.cancel()
 	}
 
+	@OptIn(ExperimentalCoroutinesApi::class)
 	override fun invoke(cause: Throwable?) {
 		if (cause == null) resolve(deferred.getCompleted())
 		else reject(cause)

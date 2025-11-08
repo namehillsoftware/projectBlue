@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.connection.live
 
 import android.os.Build
 import androidx.media3.datasource.DataSource
-import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
@@ -31,14 +30,17 @@ import com.lasthopesoftware.bluewater.shared.StandardResponse.Companion.toStanda
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.exceptions.isOkHttpCanceled
 import com.lasthopesoftware.policies.retries.RetryOnRejectionLazyPromise
-import com.lasthopesoftware.promises.extensions.cancelBackThen
+import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
+import com.lasthopesoftware.resources.closables.eventuallyUse
+import com.lasthopesoftware.resources.closables.thenUse
 import com.lasthopesoftware.resources.emptyByteArray
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.NonStandardResponseException
+import com.lasthopesoftware.resources.io.PromisingReadableStream
 import com.lasthopesoftware.resources.io.promiseStandardResponse
 import com.lasthopesoftware.resources.io.promiseStringBody
 import com.lasthopesoftware.resources.io.promiseXmlDocument
@@ -51,9 +53,7 @@ import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.parser.Parser
-import java.io.ByteArrayInputStream
 import java.io.IOException
-import java.io.InputStream
 import java.net.URL
 import java.util.concurrent.CancellationException
 import kotlin.math.pow
@@ -83,7 +83,7 @@ class LiveMediaCenterConnection(
 
 	private val mcApiUrl by lazy { mediaCenterConnectionDetails.baseUrl.withMcApi() }
 
-	private val httpClient by lazy { httpPromiseClients.getServerClient(mediaCenterConnectionDetails) }
+	private val httpClient by RetryOnRejectionLazyPromise { httpPromiseClients.promiseServerClient(mediaCenterConnectionDetails) }
 
 	private val cachedServerVersionPromise by RetryOnRejectionLazyPromise {
 		Promise.Proxy { cp ->
@@ -136,10 +136,8 @@ class LiveMediaCenterConnection(
 
 	override fun promiseFilePropertyUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> =
 		promiseResponse("File/SetInfo", "File=${serviceFile.key}", "Field=$property", "Value=$value", "formatted=" + if (isFormatted) "1" else "0")
-			.cancelBackThen { response, cs ->
-				if (cs.isCancelled && BuildConfig.DEBUG) logger.debug("File property update cancelled.")
-
-				response.use {
+			.cancelBackEventually { response ->
+				response.thenUse {
 					logger.info("api/v1/File/SetInfo responded with a response code of {}.", it.code)
 				}
 			}
@@ -208,10 +206,10 @@ class LiveMediaCenterConnection(
 
 	override fun promiseServerVersion(): Promise<SemanticVersion?> = cachedServerVersionPromise
 
-	override fun promiseFile(serviceFile: ServiceFile): Promise<InputStream> =
+	override fun promiseFile(serviceFile: ServiceFile): Promise<PromisingReadableStream> =
 		Promise.Proxy { cp ->
 			httpClient
-				.promiseResponse(getFileUrl(serviceFile))
+				.eventually { it.promiseResponse(getFileUrl(serviceFile)) }
 				.also(cp::doCancel)
 				.then(HttpStreamedResponse())
 		}
@@ -225,14 +223,14 @@ class LiveMediaCenterConnection(
 				"Pad=1",
 				"Format=$imageFormat",
 				"FillTransparency=ffffff"
-			).also(cp::doCancel).then { response ->
-				response?.use {
+			).also(cp::doCancel).eventually { response ->
+				response?.eventuallyUse {
 					if (cp.isCancelled) throw CancellationException("Cancelled while retrieving image")
 					else when (response.code) {
-						200 -> response.body.use { it.readBytes() }
-						else -> emptyByteArray
+						200 -> response.body.eventuallyUse { it.promiseReadAllBytes() }
+						else -> emptyByteArray.toPromise()
 					}
-				} ?: emptyByteArray
+				} ?: emptyByteArray.toPromise()
 			}
 		}
 
@@ -246,12 +244,11 @@ class LiveMediaCenterConnection(
 			"FillTransparency=ffffff",
 			"UseStackedImages=0",
 			"Version=2",
-		).cancelBackThen { response, cp ->
-			response.use {
-				if (cp.isCancelled) throw CancellationException("Cancelled while retrieving image")
-				else when (response.code) {
-					200 -> response.body.use { it.readBytes() }
-					else -> emptyByteArray
+		).cancelBackEventually { response ->
+			response.eventuallyUse {
+				when (response.code) {
+					200 -> response.body.eventuallyUse { it.promiseReadAllBytes() }
+					else -> emptyByteArray.toPromise()
 				}
 			}
 		}
@@ -293,8 +290,8 @@ class LiveMediaCenterConnection(
 			.eventually { v ->
 				if (v != null && v.major >= 22) promiseResponse("File/Played", "File=" + serviceFile.key, "FileType=Key")
 					.also(cp::doCancel)
-					.then { response ->
-						response.use {
+					.eventually { response ->
+						response.thenUse {
 							val responseCode = it.code
 							logger.debug("api/v1/File/Played responded with a response code of {}", responseCode)
 							if (responseCode < 200 || responseCode >= 300) throw HttpResponseException(responseCode)
@@ -336,7 +333,7 @@ class LiveMediaCenterConnection(
 
 	private fun promiseResponse(path: String, vararg params: String): Promise<HttpResponse> {
 		val url = mcApiUrl.addPath(path).addParams(*params)
-		return httpClient.promiseResponse(url)
+		return httpClient.eventually { it.promiseResponse(url) }
 	}
 
 	private class MediaCenterFilePropertiesLookup(
@@ -390,16 +387,17 @@ class LiveMediaCenterConnection(
 		}
 
 		override fun promiseResponse(response: HttpResponse): Promise<Unit> {
-			responseString = response.use {
+			return response.eventuallyUse {
 				if (cancellationProxy.isCancelled) {
 					reject(filePropertiesCancellationException(serviceFile))
 					return Unit.toPromise()
 				}
 
 				it.bodyString
+			}.eventually {
+				responseString = it
+				ThreadPools.compute.preparePromise(this)
 			}
-
-			return ThreadPools.compute.preparePromise(this)
 		}
 
 		override fun prepareMessage(cancellationSignal: CancellationSignal) {
@@ -500,9 +498,10 @@ class LiveMediaCenterConnection(
 
 			promiseResponse("Alive")
 				.also(cancellationProxy::doCancel)
+				.eventually { promiseTestedResponse(it, cancellationProxy) }
 				.then(
-					{ it, cp -> resolve(testResponse(it, cp)) },
-					{ e, _ ->
+					::resolve,
+					{ e ->
 						logger.error("Error checking connection at URL {}.", mediaCenterConnectionDetails.baseUrl, e)
 						resolve(false)
 					}
@@ -510,23 +509,27 @@ class LiveMediaCenterConnection(
 				.also(cancellationProxy::doCancel)
 		}
 
-		private fun testResponse(response: HttpResponse, cancellationSignal: CancellationSignal): Boolean {
-			response.use { r ->
-				if (cancellationSignal.isCancelled) return false
-
-				try {
-					return r.bodyString.let { Jsoup.parse(it, Parser.xmlParser()) }.toStandardResponse().isStatusOk
-				} catch (e: NonStandardResponseException) {
-					logger.warn("Non standard response received.", e)
-				} catch (e: IOException) {
-					logger.error("Error closing connection, device failure?", e)
-				} catch (e: IllegalArgumentException) {
-					logger.warn("Illegal argument passed in", e)
-				} catch (t: Throwable) {
-					logger.error("Unexpected error parsing response.", t)
+		private fun promiseTestedResponse(response: HttpResponse, cancellationSignal: CancellationSignal): Promise<Boolean> {
+			return response
+				.eventuallyUse { r -> r.bodyString }
+				.then {
+					if (cancellationSignal.isCancelled) false
+					else try {
+						Jsoup.parse(it, Parser.xmlParser()).toStandardResponse().isStatusOk
+					} catch (e: NonStandardResponseException) {
+						logger.warn("Non standard response received.", e)
+						false
+					} catch (e: IOException) {
+						logger.error("Error closing connection, device failure?", e)
+						false
+					} catch (e: IllegalArgumentException) {
+						logger.warn("Illegal argument passed in", e)
+						false
+					} catch (t: Throwable) {
+						logger.error("Unexpected error parsing response.", t)
+						false
+					}
 				}
-			}
-			return false
 		}
 	}
 
@@ -573,35 +576,6 @@ class LiveMediaCenterConnection(
 		}
 	}
 
-	private class HttpStreamedResponse : ImmediateResponse<HttpResponse?, InputStream>, InputStream() {
-		private var savedResponse: HttpResponse? = null
-		private lateinit var byteStream: InputStream
-
-		override fun respond(response: HttpResponse?): InputStream {
-			savedResponse = response
-
-			byteStream = response
-				?.takeIf { it.code != 404 }
-				?.run { body }
-				?: ByteArrayInputStream(emptyByteArray)
-
-			return this
-		}
-
-		override fun read(): Int = byteStream.read()
-
-		override fun read(b: ByteArray, off: Int, len: Int): Int = byteStream.read(b, off, len)
-
-		override fun available(): Int = byteStream.available()
-
-		override fun close() {
-			byteStream.close()
-			savedResponse?.close()
-		}
-
-		override fun toString(): String = byteStream.toString()
-	}
-
 	private object FileResponses : PromisedResponse<String, Collection<ServiceFile>>, ImmediateResponse<Collection<ServiceFile>, List<ServiceFile>> {
 		private val emptyListPromise by lazy { Promise<Collection<ServiceFile>>(emptyList()) }
 
@@ -614,3 +588,4 @@ class LiveMediaCenterConnection(
 		}
 	}
 }
+

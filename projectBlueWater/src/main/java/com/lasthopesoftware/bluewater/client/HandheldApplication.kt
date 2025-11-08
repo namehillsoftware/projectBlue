@@ -81,7 +81,6 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.rememberNavController
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import org.slf4j.LoggerFactory
 
@@ -90,7 +89,6 @@ private val logger by lazy { LoggerFactory.getLogger("HandheldApplication") }
 private val bottomAppBarHeight = Dimensions.appBarHeight
 private val bottomSheetElevation = 16.dp
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 private fun BrowserLibraryDestination.Navigate(
 	browserViewDependencies: ScopedViewModelDependencies,

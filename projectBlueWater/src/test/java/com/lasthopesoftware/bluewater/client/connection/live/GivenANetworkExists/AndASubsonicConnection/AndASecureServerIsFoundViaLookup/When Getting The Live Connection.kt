@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectio
 import com.lasthopesoftware.bluewater.client.connection.live.PassThroughBase64Encoder
 import com.lasthopesoftware.bluewater.client.connection.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfo
+import com.lasthopesoftware.bluewater.client.connection.requests.HttpPromiseClient
 import com.lasthopesoftware.bluewater.client.connection.settings.SubsonicConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
@@ -53,13 +54,13 @@ class `When Getting The Live Connection` {
 			mockk(),
 			mockk {
 				every {
-					getServerClient(match<SubsonicConnectionDetails> { a ->
+					promiseServerClient(match<SubsonicConnectionDetails> { a ->
 						a.baseUrl.toString() == "https://dR7ft3qmY99:118"
 					})
 				} answers {
 					val urlProvider = firstArg<SubsonicConnectionDetails>()
 					selectedConnectionDetails = urlProvider
-					mockk {
+					mockk<HttpPromiseClient> {
 						every { promiseResponse(urlProvider.baseUrl.addPath("rest/ping.view").addParams("f=json")) } returns Promise(
 							PassThroughHttpResponse(
 								200,
@@ -67,7 +68,7 @@ class `When Getting The Live Connection` {
 								"""{"subsonic-response":{"status":"ok","version":"1.16.1","type":"navidrome","serverVersion":"0.53.3 (13af8ed4)","openSubsonic":true}}""".toByteArray().inputStream()
 							)
 						)
-					}
+					}.toPromise()
 				}
 			},
 			mockk(),

@@ -6,8 +6,10 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybac
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
+import com.lasthopesoftware.bluewater.client.playback.engine.LinkedOnPlayingFileChangedListener
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
+import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlayingFileChanged
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
@@ -75,16 +77,35 @@ class WhenChangingTracks {
 	fun act() {
 		val (fakePlaybackPreparerProvider, playbackEngine) = mut
 
+		val changedFilesTracker = OnPlayingFileChanged{ _, p ->
+			startedFiles.add(p)
+			latestFile = p
+		}
+
+		lateinit var linkedOnPlayingFileChangedListener: LinkedOnPlayingFileChangedListener
+
+		val promisedFirstFile = Promise {
+			linkedOnPlayingFileChangedListener = LinkedOnPlayingFileChangedListener(
+				changedFilesTracker,
+				{ _, p ->
+					if (p?.serviceFile == ServiceFile("1"))
+						it.sendResolution(Unit)
+				}
+			)
+		}
+
 		val promisedLastFile = Promise {
-			playbackEngine
-				.setOnPlayingFileChanged { _, p ->
-					startedFiles.add(p)
-					latestFile = p
+			linkedOnPlayingFileChangedListener = LinkedOnPlayingFileChangedListener(
+				linkedOnPlayingFileChangedListener,
+			{ _, p ->
 					if (p?.serviceFile == ServiceFile("4"))
 						it.sendResolution(Unit)
 				}
+			)
 		}
+
 		val promisedStart = playbackEngine
+			.setOnPlayingFileChanged(linkedOnPlayingFileChangedListener)
 			.startPlaylist(
 				LibraryId(libraryId),
 				listOf(
@@ -99,6 +120,7 @@ class WhenChangingTracks {
 
 		val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("1")]?.resolve()
 		promisedStart.toExpiringFuture().get()
+		promisedFirstFile.toExpiringFuture().get()
 
 		fakePlaybackPreparerProvider.deferredResolutions[ServiceFile("4")]?.resolve()
 		val futurePositionChange = playbackEngine.changePosition(3, Duration.ZERO).toExpiringFuture()

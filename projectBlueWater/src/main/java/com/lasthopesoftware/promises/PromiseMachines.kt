@@ -1,9 +1,8 @@
 package com.lasthopesoftware.promises
 
-import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.cancellation.Cancellable
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.response.PromisedResponse
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 object PromiseMachines {
 	fun <Resolution> repeat(function: () -> Promise<Resolution>, repetitions: Int) : Promise<Resolution> {
@@ -15,21 +14,33 @@ object PromiseMachines {
 		}
 	}
 
-	fun <Resolution> loop(function: (Continuable<Resolution>, Cancellable) -> Promise<Resolution>) : Promise<Resolution> {
+	fun <Resolution> loop(function: (Resolution?, Cancellable) -> Promise<Resolution>) : Promise<Resolution> {
 		return LoopMachine(function)
 	}
 
-	private class LoopMachine<Resolution>(private val function: (Continuable<Resolution>, Cancellable) -> Promise<Resolution>) :
-		ContinuableMachine<Resolution>(), PromisedResponse<Resolution, Resolution> {
+	private class LoopMachine<Resolution>(private val function: (Resolution?, Cancellable) -> Promise<Resolution>) :
+		ContinuableMachine<Resolution>(), ImmediateResponse<Resolution, Unit> {
+
+		@Volatile
+		private var currentValue: Resolution? = null
+
 		init {
-			start()
+			next()
 		}
 
-		override fun next(): Promise<Resolution> = function(this, this).eventually(this)
+		override fun next(): Promise<Resolution> =
+			function(currentValue, this)
+				.also {
+					doCancel(it)
+					it.then(this)
+					proxyRejection(it)
+				}
 
-		override fun promiseResponse(resolution: Resolution): Promise<Resolution> =
+		override fun respond(resolution: Resolution) {
+			currentValue = resolution
 			if (!isCancelled) next()
-			else resolution.toPromise()
+			else resolve(resolution)
+		}
 	}
 
 	abstract class ContinuableMachine<Resolution> : Promise.Proxy<Resolution>(), Continuable<Resolution> {

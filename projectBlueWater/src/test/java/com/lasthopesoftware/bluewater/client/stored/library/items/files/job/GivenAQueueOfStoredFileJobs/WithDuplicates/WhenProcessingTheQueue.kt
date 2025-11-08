@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -57,7 +58,7 @@ class WhenProcessingTheQueue {
 			},
 			mockk {
 				every { promiseDownload(any(), any()) } answers {
-					byteArrayOf(310.toByte(), 153.toByte(), 120.toByte()).inputStream().toPromise()
+					PromisingReadableStreamWrapper(byteArrayOf(310.toByte(), 153.toByte(), 120.toByte()).inputStream()).toPromise()
 				}
 			},
 			storedFilesUpdater,

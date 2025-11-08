@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectio
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfo
+import com.lasthopesoftware.bluewater.client.connection.requests.HttpPromiseClient
 import com.lasthopesoftware.bluewater.client.connection.settings.MediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -46,13 +47,13 @@ class WhenScanningForUrls {
 			},
 			mockk {
 				every {
-					getServerClient(match<MediaCenterConnectionDetails> { a ->
+					promiseServerClient(match<MediaCenterConnectionDetails> { a ->
 						listOf("http://1.2.3.4:143").contains(a.baseUrl.toString()) && a.authCode == "gooey"
 					})
 				} answers {
 					val urlProvider = firstArg<MediaCenterConnectionDetails>()
 					selectedConnectionDetails = urlProvider
-					mockk {
+					mockk<HttpPromiseClient> {
 						every { promiseResponse(URL(urlProvider.baseUrl, "MCWS/v1/Alive")) } returns Promise(
 							PassThroughHttpResponse(
 								200,
@@ -61,7 +62,7 @@ class WhenScanningForUrls {
 									<Response Status="OK"></Response>""".toByteArray().inputStream()
 							)
 						)
-					}
+					}.toPromise()
 				}
 			},
 			mockk(),

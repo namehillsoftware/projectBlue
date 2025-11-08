@@ -7,15 +7,17 @@ import com.lasthopesoftware.bluewater.client.connection.live.eventuallyFromDataA
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.emptyByteArray
+import com.lasthopesoftware.resources.io.PromisingReadableStream
+import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import com.namehillsoftware.handoff.promises.Promise
 import java.io.ByteArrayInputStream
-import java.io.InputStream
 
 class StoredFileDownloader(private val libraryConnections: ProvideLibraryConnections) : DownloadStoredFiles {
-	override fun promiseDownload(libraryId: LibraryId, storedFile: StoredFile): Promise<InputStream> =
+	override fun promiseDownload(libraryId: LibraryId, storedFile: StoredFile): Promise<PromisingReadableStream> =
 		libraryConnections
 			.promiseLibraryConnection(libraryId)
 			.eventuallyFromDataAccess {
-				it?.promiseFile(ServiceFile(storedFile.serviceId)).keepPromise { ByteArrayInputStream(emptyByteArray) }
+				it?.promiseFile(ServiceFile(storedFile.serviceId))
+					.keepPromise { PromisingReadableStreamWrapper(ByteArrayInputStream(emptyByteArray)) }
 			}
 }

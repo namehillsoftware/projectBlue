@@ -120,7 +120,6 @@ import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.toState
 import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
@@ -543,7 +542,6 @@ private val collapsedControlsHeight = ProgressIndicatorDefaults.StrokeWidth + Di
 private val expandedControlsHeight = controlRowHeight + collapsedControlsHeight
 
 @Composable
-@OptIn(ExperimentalCoroutinesApi::class)
 fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
 	nowPlayingScreenViewModel: NowPlayingScreenViewModel,
