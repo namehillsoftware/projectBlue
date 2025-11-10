@@ -3,6 +3,7 @@ package com.lasthopesoftware.resources.io
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.lasthopesoftware.resources.io.PromisingReadableStream.Companion.readingCancelledException
 import com.namehillsoftware.handoff.promises.Promise
 import okio.BufferedSource
 import java.util.concurrent.Executor
@@ -21,13 +22,10 @@ class BufferedSourcePromisingStream(
 	private val bufferedSource: BufferedSource,
 	private val transferExecutor: Executor? = ThreadPools.io,
 ) : PromisingReadableStream {
-	override fun promiseRead(b: ByteArray, off: Int, len: Int): Promise<Int> = transferExecutor?.preparePromise {
-		bufferedSource.read(b, off, len)
+	override fun promiseRead(b: ByteArray, off: Int, len: Int): Promise<Int> = transferExecutor?.preparePromise { cs ->
+		if (!cs.isCancelled) bufferedSource.read(b, off, len)
+		else throw readingCancelledException()
 	} ?: bufferedSource.read(b, off, len).toPromise()
-
-	override fun promiseReadAllBytes(): Promise<ByteArray> = transferExecutor?.preparePromise {
-		bufferedSource.readByteArray()
-	} ?: bufferedSource.readByteArray().toPromise()
 
 	override fun available(): Int = bufferedSource.buffer.size.toInt()
 
