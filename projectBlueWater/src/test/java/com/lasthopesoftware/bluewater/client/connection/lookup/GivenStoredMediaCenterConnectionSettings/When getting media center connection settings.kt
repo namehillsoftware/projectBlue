@@ -34,7 +34,9 @@ class `When getting media center connection settings` {
 						sslCertificateFingerprint = "3f34c3f7fda04081bae8b5181a48fffd",
 					)
 				).toPromise()
-			}
+			},
+			mockk(),
+			mockk(),
 		)
 	}
 

@@ -1,5 +1,5 @@
 package com.lasthopesoftware.bluewater.shared
 
-interface IIntKeyStringValue : Key<IIntKeyStringValue> {
+interface IIntKeyStringValue : Key {
     val value: String?
 }

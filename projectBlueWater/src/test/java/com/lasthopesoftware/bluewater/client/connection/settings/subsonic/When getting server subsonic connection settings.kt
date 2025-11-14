@@ -30,10 +30,12 @@ class `When getting server subsonic connection settings` {
 						password = "G5gVek1fn",
 						isWakeOnLanEnabled = true,
 						sslCertificateFingerprint = "df6a6e32bdb440d0949b93a89796ac9e",
-						macAddress = "D5:38:83:8D:EE:7B"
+						macAddress = "D5:38:83:8D:EE:7B",
 					)
 				).toPromise()
-			}
+			},
+			mockk(),
+			mockk(),
 		)
 	}
 

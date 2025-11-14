@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.settings.access.GivenALibrary
 
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
@@ -7,8 +8,10 @@ import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySe
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.LibrarySettingsAccess
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.encryption.EncryptionConfiguration
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.gson
+import com.lasthopesoftware.resources.strings.EncryptedString
 import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.every
 import io.mockk.mockk
@@ -21,9 +24,10 @@ class `When getting the library settings` {
 	private val libraryId = LibraryId(698)
 
 	private val mutt by lazy {
+		val fakeLibraryRepository = FakeLibraryRepository()
 		LibrarySettingsAccess(
-			mockk {
-				every { promiseLibrary(libraryId) } returns Library(
+			FakeLibraryRepository(
+				Library(
 					id = libraryId.id,
 					libraryName = "cdtX4lVz",
 					isUsingExistingFiles = true,
@@ -44,9 +48,22 @@ class `When getting the library settings` {
 							isSyncLocalConnectionsOnly = true,
 						)
 					)
-				).toPromise()
-			},
+				)
+			),
 			JsonEncoderDecoder,
+			mockk {
+				val encryptedString = EncryptedString(
+					initializationVector = "H5FU96uOv",
+					protectedString = "jeWIZHPHA",
+					padding = "9LYqUKT0g",
+					blockMode = "CDaNFV9aIX2",
+					algorithm = "07IQKIPN6",
+				)
+
+				every { promiseEncryption("LKHPUXwrF") } returns encryptedString.toPromise()
+
+				every { promiseDecryption(encryptedString) } returns "7cEveBV".toPromise()
+			}
 		)
 	}
 
@@ -67,13 +84,19 @@ class `When getting the library settings` {
 				syncedFileLocation = SyncedFileLocation.EXTERNAL,
 				connectionSettings = StoredMediaCenterConnectionSettings(
 					accessCode = "DLKicYx",
-					password = "LKHPUXwrF",
+					password = "7cEveBV",
+					initializationVector = "H5FU96uOv",
 					userName = "UMm5g8jEN",
 					macAddress = "fh1Y3MWf",
 					isLocalOnly = true,
 					isWakeOnLanEnabled = true,
 					sslCertificateFingerprint = "8ZuBp6yyjiT",
 					isSyncLocalConnectionsOnly = true,
+					encryptionConfiguration = EncryptionConfiguration(
+						padding = "9LYqUKT0g",
+						blockMode = "CDaNFV9aIX2",
+						algorithm = "07IQKIPN6",
+					)
 				)
 			)
 		)

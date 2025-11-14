@@ -66,7 +66,7 @@ class LibrarySettingsViewModel(
 		)
 	}
 
-	private val autoCloseables = AutoCloseableManager()
+	private val autoCloseables = AutoCloseableManager().also(::addCloseable)
 
 	private val mediaCenterConnectionSettingsViewModel by lazy {
 		autoCloseables.manage(MediaCenterConnectionSettingsViewModel())
@@ -125,10 +125,6 @@ class LibrarySettingsViewModel(
 			mediaCenterConnectionSettingsViewModel,
 			subsonicConnectionSettingsViewModel,
 		)
-	}
-
-	override fun onCleared() {
-		autoCloseables.close()
 	}
 
 	fun loadLibrary(libraryId: LibraryId): Promise<*> {
@@ -258,7 +254,8 @@ class LibrarySettingsViewModel(
 
 	@OptIn(ExperimentalStdlibApi::class)
 	inner class MediaCenterConnectionSettingsViewModel :
-		ConnectionSettingsViewModel<StoredMediaCenterConnectionSettings>
+		ConnectionSettingsViewModel<StoredMediaCenterConnectionSettings>,
+		AutoCloseable by autoCloseables
 	{
 		private val autoCloseables = AutoCloseableManager()
 
@@ -312,10 +309,6 @@ class LibrarySettingsViewModel(
 			)
 		}
 
-		override fun close() {
-			autoCloseables.close()
-		}
-
 		private inline fun <T> observeConnectionSettingsChanges(observable: Observable<NullBox<T>>, crossinline connectionValue: StoredMediaCenterConnectionSettings.() -> T?) =
 			observeConnectionSettingsChanges<StoredMediaCenterConnectionSettings, T>(observable, connectionValue)
 
@@ -343,7 +336,10 @@ class LibrarySettingsViewModel(
 	}
 
 	@OptIn(ExperimentalStdlibApi::class)
-	inner class SubsonicConnectionSettingsViewModel : ConnectionSettingsViewModel<StoredSubsonicConnectionSettings> {
+	inner class SubsonicConnectionSettingsViewModel :
+		ConnectionSettingsViewModel<StoredSubsonicConnectionSettings>,
+		AutoCloseable by autoCloseables
+	{
 		private val autoCloseables = AutoCloseableManager()
 
 		override val connectionTypeName: String
@@ -392,10 +388,6 @@ class LibrarySettingsViewModel(
 			)
 		}
 
-		override fun close() {
-			autoCloseables.close()
-		}
-
 		private inline fun <T> observeConnectionSettingsChanges(observable: Observable<NullBox<T>>, crossinline connectionValue: StoredSubsonicConnectionSettings.() -> T?) =
 			observeConnectionSettingsChanges<StoredSubsonicConnectionSettings, T>(observable, connectionValue)
 
@@ -409,12 +401,12 @@ class LibrarySettingsViewModel(
 		}
 
 		override fun getCurrentConnectionSettings() = StoredSubsonicConnectionSettings(
-			isWakeOnLanEnabled = isWakeOnLanEnabled.value,
 			url = url.value,
 			userName = userName.value,
 			password = password.value,
-			macAddress = macAddress.value,
+			isWakeOnLanEnabled = isWakeOnLanEnabled.value,
 			sslCertificateFingerprint = mutableSslStringCertificate.value,
+			macAddress = macAddress.value,
 		)
 	}
 }

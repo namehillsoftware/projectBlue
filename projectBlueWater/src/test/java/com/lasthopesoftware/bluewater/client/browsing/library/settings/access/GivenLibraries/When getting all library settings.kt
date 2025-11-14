@@ -106,6 +106,7 @@ class `When getting all library settings` {
 				).toPromise()
 			},
 			JsonEncoderDecoder,
+			mockk(),
 		)
 	}
 

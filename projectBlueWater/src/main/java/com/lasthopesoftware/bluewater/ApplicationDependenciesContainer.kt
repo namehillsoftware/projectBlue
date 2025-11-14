@@ -40,6 +40,8 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidConnectionSettingsLookup
+import com.lasthopesoftware.bluewater.client.connection.settings.translation.StoredMediaCenterTranslator
+import com.lasthopesoftware.bluewater.client.connection.settings.translation.StoredSubsonicTranslator
 import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
@@ -62,11 +64,14 @@ import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
+import com.lasthopesoftware.encryption.AppEncryptionKeyLookup
+import com.lasthopesoftware.encryption.DefaultEncryptionConfiguration
 import com.lasthopesoftware.resources.bitmaps.DefaultAwareCachingBitmapProducer
 import com.lasthopesoftware.resources.bitmaps.QueuedBitmapProducer
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder
 import com.lasthopesoftware.resources.strings.Base64Encoder
+import com.lasthopesoftware.resources.strings.EncryptedStringGuard
 import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import com.lasthopesoftware.resources.strings.StringResources
 
@@ -114,6 +119,14 @@ object ApplicationDependenciesContainer {
 
 		private val okHttpClients by lazy { OkHttpFactory(context) }
 		private val ktorClients by lazy { KtorFactory(context) }
+
+		private val encryptedStringGuard by lazy {
+			EncryptedStringGuard(
+				context,
+				AppEncryptionKeyLookup,
+				DefaultEncryptionConfiguration
+			)
+		}
 
 		override val httpClients by lazy {
 			ApplicationSettingsHttpClient(
@@ -217,7 +230,11 @@ object ApplicationDependenciesContainer {
 			get() = libraryRepository
 
 		override val librarySettingsProvider by lazy {
-			val access = LibrarySettingsAccess(libraryStorage, JsonEncoderDecoder)
+			val access = LibrarySettingsAccess(
+				libraryStorage,
+				JsonEncoderDecoder,
+				encryptedStringGuard
+			)
 			CachedLibrarySettingsAccess(access, access)
 		}
 
@@ -243,7 +260,13 @@ object ApplicationDependenciesContainer {
 		}
 
 		override val connectionSettingsLookup by lazy {
-			ValidConnectionSettingsLookup(ConnectionSettingsLookup(librarySettingsProvider))
+			ValidConnectionSettingsLookup(
+				ConnectionSettingsLookup(
+					librarySettingsProvider,
+					StoredMediaCenterTranslator(encryptedStringGuard),
+					StoredSubsonicTranslator(encryptedStringGuard),
+				)
+			)
 		}
 
 		override val connectionSessions by lazy {

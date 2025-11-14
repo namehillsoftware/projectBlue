@@ -31,6 +31,7 @@ class `When saving the library settings` {
 				}
 			},
 			JsonEncoderDecoder,
+			mockk(),
 		)
 	}
 

@@ -23,6 +23,13 @@ if (!hasAndroidStorePassword()) {
 	androidStorePassword = System.getenv('ANDROID_STORE_PASSWORD')
 }
 
+def encryptionKey = hasProperty('encryptionKey') ? encryptionKey : ""
+if (encryptionKey == null || encryptionKey.isEmpty()) {
+	encryptionKey = System.getenv('ENCRYPTION_KEY')
+}
+
+if (encryptionKey == null) encryptionKey = "\"\""
+
 def isSignedExternally = { hasKeyStorePassword() && hasAndroidStorePassword() }
 
 def copyDependencyList = tasks.register("copyDependencyList", Copy) {
@@ -41,6 +48,7 @@ android {
         targetSdkVersion 36
 		versionName gitVersion()
 		base.archivesName = "project-blue-" + gitVersion()
+		buildConfigField("String", "ENCRYPTION_KEY", encryptionKey)
 	}
 
 	signingConfigs {

@@ -31,6 +31,7 @@ class `When saving the library settings` {
 				}
 			},
 			JsonEncoderDecoder,
+			mockk(),
 		)
 	}
 
@@ -46,11 +47,11 @@ class `When saving the library settings` {
 				syncedFileLocation = SyncedFileLocation.EXTERNAL,
 				connectionSettings = StoredSubsonicConnectionSettings(
 					url = "TqWmHYwkF",
-					macAddress = "IlcTP4W",
-					isWakeOnLanEnabled = true,
 					userName = "j7sRVmbpEg",
 					password = "nrI3ZQp5",
-					sslCertificateFingerprint = "nzMyG2g4abv"
+					isWakeOnLanEnabled = true,
+					sslCertificateFingerprint = "nzMyG2g4abv",
+					macAddress = "IlcTP4W",
 				)
 			)
 		).toExpiringFuture().get()
@@ -68,11 +69,11 @@ class `When saving the library settings` {
 				connectionSettings = gson.toJson(
 					StoredSubsonicConnectionSettings(
 						url = "TqWmHYwkF",
-						macAddress = "IlcTP4W",
-						isWakeOnLanEnabled = true,
 						userName = "j7sRVmbpEg",
 						password = "nrI3ZQp5",
-						sslCertificateFingerprint = "nzMyG2g4abv"
+						isWakeOnLanEnabled = true,
+						sslCertificateFingerprint = "nzMyG2g4abv",
+						macAddress = "IlcTP4W",
 					)
 				)
 			)
@@ -89,11 +90,11 @@ class `When saving the library settings` {
 				syncedFileLocation = SyncedFileLocation.EXTERNAL,
 				connectionSettings = StoredSubsonicConnectionSettings(
 					url = "TqWmHYwkF",
-					macAddress = "IlcTP4W",
-					isWakeOnLanEnabled = true,
 					userName = "j7sRVmbpEg",
 					password = "nrI3ZQp5",
-					sslCertificateFingerprint = "nzMyG2g4abv"
+					isWakeOnLanEnabled = true,
+					sslCertificateFingerprint = "nzMyG2g4abv",
+					macAddress = "IlcTP4W",
 				)
 			)
 		)

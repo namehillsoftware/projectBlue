@@ -24,8 +24,8 @@ class `When Getting the Library Name` {
 				every { promiseLibrarySettings(LibraryId(libraryId)) } returns LibrarySettings(
 					libraryName = null,
 					connectionSettings = StoredSubsonicConnectionSettings(
-						url = "7fQswJo"
-					)
+                        url = "7fQswJo",
+                    )
 				).toPromise()
 			},
 		)

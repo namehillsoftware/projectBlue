@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.Li
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.gson
+import com.lasthopesoftware.resources.strings.EncryptedString
 import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.every
 import io.mockk.mockk
@@ -53,6 +54,15 @@ class `When saving the library settings` {
 				}
 			},
 			JsonEncoderDecoder,
+			mockk {
+				every { promiseEncryption("kKLGulh") } returns EncryptedString(
+					initializationVector = "",
+					"TGII5zyt",
+					algorithm = "",
+					blockMode = "",
+					padding = "",
+				).toPromise()
+			}
 		)
 	}
 
@@ -69,11 +79,11 @@ class `When saving the library settings` {
 				syncedFileLocation = SyncedFileLocation.EXTERNAL,
 				connectionSettings = StoredSubsonicConnectionSettings(
 					url = "94NI0r9XP6x",
-					macAddress = "aRm4Zqh9O",
-					isWakeOnLanEnabled = true,
 					userName = "RsZ6mNFK",
-					password = "RZ5c4MGRC",
-					sslCertificateFingerprint = "KLSYONYutn"
+					password = "TGII5zyt",
+					isWakeOnLanEnabled = true,
+					sslCertificateFingerprint = "KLSYONYutn",
+					macAddress = "aRm4Zqh9O",
 				)
 			)
 		).toExpiringFuture().get()
@@ -94,11 +104,11 @@ class `When saving the library settings` {
 				connectionSettings = gson.toJson(
 					StoredSubsonicConnectionSettings(
 						url = "94NI0r9XP6x",
-						macAddress = "aRm4Zqh9O",
-						isWakeOnLanEnabled = true,
 						userName = "RsZ6mNFK",
 						password = "RZ5c4MGRC",
-						sslCertificateFingerprint = "KLSYONYutn"
+						isWakeOnLanEnabled = true,
+						sslCertificateFingerprint = "KLSYONYutn",
+						macAddress = "aRm4Zqh9O",
 					)
 				)
 			)
@@ -115,11 +125,11 @@ class `When saving the library settings` {
 				syncedFileLocation = SyncedFileLocation.EXTERNAL,
 				connectionSettings = StoredSubsonicConnectionSettings(
 					url = "94NI0r9XP6x",
-					macAddress = "aRm4Zqh9O",
-					isWakeOnLanEnabled = true,
 					userName = "RsZ6mNFK",
 					password = "RZ5c4MGRC",
-					sslCertificateFingerprint = "KLSYONYutn"
+					isWakeOnLanEnabled = true,
+					sslCertificateFingerprint = "KLSYONYutn",
+					macAddress = "aRm4Zqh9O",
 				)
 			)
 		)

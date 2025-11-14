@@ -5,4 +5,4 @@ import com.lasthopesoftware.bluewater.shared.Key
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
-data class ServiceFile(override val key: String = "") : Key<ServiceFile>, Parcelable
+data class ServiceFile(override val key: String = "") : Key, Parcelable

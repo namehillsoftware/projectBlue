@@ -1,5 +1,5 @@
 package com.lasthopesoftware.bluewater.shared
 
-interface Key<T> {
+interface Key {
     val key: String
 }

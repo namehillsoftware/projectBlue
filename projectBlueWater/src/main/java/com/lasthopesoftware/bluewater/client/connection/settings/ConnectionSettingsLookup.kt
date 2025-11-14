@@ -4,34 +4,25 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredSubsonicConnectionSettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.ProvideLibrarySettings
-import com.lasthopesoftware.resources.emptyByteArray
+import com.lasthopesoftware.bluewater.shared.TranslateTypes
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 
-class ConnectionSettingsLookup(private val librarySettings: ProvideLibrarySettings) : LookupConnectionSettings {
+class ConnectionSettingsLookup(
+	private val librarySettings: ProvideLibrarySettings,
+	private val mediaCenterTranslator: TranslateTypes<StoredMediaCenterConnectionSettings, ConnectionSettings>,
+	private val subsonicTranslator: TranslateTypes<StoredSubsonicConnectionSettings, ConnectionSettings>,
+) : LookupConnectionSettings {
 	@OptIn(ExperimentalStdlibApi::class)
 	override fun promiseConnectionSettings(libraryId: LibraryId): Promise<ConnectionSettings?> =
 		librarySettings
 			.promiseLibrarySettings(libraryId)
-			.then { it ->
-				it?.connectionSettings?.run {
-					when (this) {
-						is StoredMediaCenterConnectionSettings -> MediaCenterConnectionSettings(
-							accessCode = accessCode ?: "",
-							userName = userName,
-							password = password,
-							isLocalOnly = isLocalOnly,
-							isWakeOnLanEnabled = isWakeOnLanEnabled,
-							sslCertificateFingerprint = sslCertificateFingerprint?.hexToByteArray() ?: emptyByteArray,
-							macAddress = macAddress)
-						is StoredSubsonicConnectionSettings -> SubsonicConnectionSettings(
-							url = url ?: "",
-							userName = userName ?: "",
-							password = password ?: "",
-							isWakeOnLanEnabled = isWakeOnLanEnabled,
-							sslCertificateFingerprint = sslCertificateFingerprint?.hexToByteArray() ?: emptyByteArray,
-							macAddress = macAddress,
-						)
+			.eventually { it ->
+				it?.connectionSettings?.let {
+					when (it) {
+						is StoredMediaCenterConnectionSettings -> mediaCenterTranslator.promiseTranslation(it)
+						is StoredSubsonicConnectionSettings -> subsonicTranslator.promiseTranslation(it)
 					}
-				}
+				}.keepPromise()
 			}
 }
