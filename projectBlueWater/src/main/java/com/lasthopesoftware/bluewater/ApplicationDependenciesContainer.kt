@@ -132,11 +132,7 @@ object ApplicationDependenciesContainer {
 		}
 
 		override val mediaCenterDataFactories by lazy {
-			ServerHttpDataSourceProvider(
-				mediaCenterHttpClients,
-				okHttpClients.MediaCenterClient(),
-				applicationFeatureConfiguration
-			)
+			ServerHttpDataSourceProvider(mediaCenterHttpClients)
 		}
 
 		override val subsonicHttpClients by lazy {
@@ -148,11 +144,7 @@ object ApplicationDependenciesContainer {
 		}
 
 		override val subsonicDataFactories by lazy {
-			ServerHttpDataSourceProvider(
-				subsonicHttpClients,
-				okHttpClients.SubsonicClient(),
-				applicationFeatureConfiguration
-			)
+			ServerHttpDataSourceProvider(subsonicHttpClients)
 		}
 
 		override val audioCacheStreamSupplier by lazy {

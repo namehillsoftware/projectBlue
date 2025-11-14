@@ -35,7 +35,6 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.LocalSurfaceColor
 import com.lasthopesoftware.bluewater.client.connection.http.HttpClientType
-import com.lasthopesoftware.bluewater.client.playback.exoplayer.HttpDataSourceType
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 
 private val optionsPadding = PaddingValues(start = 32.dp, end = 32.dp)
@@ -91,22 +90,22 @@ fun HiddenSettingsView(hiddenSettingsViewModel: HiddenSettingsViewModel) {
 						.selectableGroup()
 				) {
 					Text(
-						text = "HTTP Data Source Factory",
+						text = "HTTP Client Type",
 						modifier = Modifier.padding(rowPadding),
 					)
 
-					val dataSourceType by hiddenSettingsViewModel.dataSourceType.subscribeAsState()
+					val httpClientType by hiddenSettingsViewModel.httpClientType.subscribeAsState()
 					Row(
 						modifier = Modifier.padding(rowPadding)
 					) {
-						val dataSourceOption = HttpDataSourceType.OkHttp
+						val httpClientOption = HttpClientType.OkHttp
 						LabeledSelection(
-							label = dataSourceOption.name,
-							selected = dataSourceType == dataSourceOption,
-							onSelected = { hiddenSettingsViewModel.promiseDataSourceUpdate(dataSourceOption) },
+							label = httpClientOption.name,
+							selected = httpClientType == httpClientOption,
+							onSelected = { hiddenSettingsViewModel.promiseHttpClientType(httpClientOption) },
 							{
 								RadioButton(
-									selected = dataSourceType == dataSourceOption,
+									selected = httpClientType == httpClientOption,
 									onClick = null,
 								)
 							},
@@ -117,71 +116,19 @@ fun HiddenSettingsView(hiddenSettingsViewModel: HiddenSettingsViewModel) {
 					Row(
 						modifier = Modifier.padding(rowPadding)
 					) {
-						Column {
-							val dataSourceOption = HttpDataSourceType.HttpPromiseClient
-							LabeledSelection(
-								label = dataSourceOption.name,
-								selected = dataSourceType == dataSourceOption,
-								onSelected = { hiddenSettingsViewModel.promiseDataSourceUpdate(dataSourceOption) },
-								{
-									RadioButton(
-										selected = dataSourceType == dataSourceOption,
-										onClick = null,
-									)
-								},
-								role = Role.RadioButton,
-							)
-
-							Column(
-								modifier = Modifier
-									.padding(optionsPadding)
-									.selectableGroup()
-							) {
-								Text(
-									text = "HTTP Client Type",
-									modifier = Modifier.padding(rowPadding),
+						val httpClientOption = HttpClientType.Ktor
+						LabeledSelection(
+							label = httpClientOption.name,
+							selected = httpClientType == httpClientOption,
+							onSelected = { hiddenSettingsViewModel.promiseHttpClientType(httpClientOption) },
+							{
+								RadioButton(
+									selected = httpClientType == httpClientOption,
+									onClick = null,
 								)
-
-								val httpClientType by hiddenSettingsViewModel.httpClientType.subscribeAsState()
-								Row(
-									modifier = Modifier.padding(rowPadding)
-								) {
-									val httpClientOption = HttpClientType.OkHttp
-									LabeledSelection(
-										label = httpClientOption.name,
-										selected = httpClientType == httpClientOption,
-										onSelected = { hiddenSettingsViewModel.promiseHttpClientType(httpClientOption) },
-										{
-											RadioButton(
-												selected = httpClientType == httpClientOption,
-												onClick = null,
-											)
-										},
-										role = Role.RadioButton,
-										enabled = dataSourceType == dataSourceOption
-									)
-								}
-
-								Row(
-									modifier = Modifier.padding(rowPadding)
-								) {
-									val httpClientOption = HttpClientType.Ktor
-									LabeledSelection(
-										label = httpClientOption.name,
-										selected = httpClientType == httpClientOption,
-										onSelected = { hiddenSettingsViewModel.promiseHttpClientType(httpClientOption) },
-										{
-											RadioButton(
-												selected = httpClientType == httpClientOption,
-												onClick = null,
-											)
-										},
-										role = Role.RadioButton,
-										enabled = dataSourceType == dataSourceOption
-									)
-								}
-							}
-						}
+							},
+							role = Role.RadioButton,
+						)
 					}
 				}
 			}
