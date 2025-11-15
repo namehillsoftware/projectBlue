@@ -7,15 +7,12 @@ import com.lasthopesoftware.resources.strings.EncryptedStringGuard
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import javax.crypto.SecretKey
-import javax.crypto.spec.SecretKeySpec
 
 class `When decrypting a string` {
 	private val mut by lazy {
 		EncryptedStringGuard(
 			object : LookupEncryptionKey {
-				override fun buildKeySpec(algorithm: String): SecretKey =
-					SecretKeySpec("TVXcQz0qQPcIbjlo".toByteArray(Charsets.UTF_8), algorithm)
+				override val encryptionKey: String = "TVXcQz0qQPcIbjlo"
 			},
 			DefaultEncryptionConfiguration,
 		)

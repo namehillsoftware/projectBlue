@@ -10,11 +10,12 @@ import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.SecretKeySpec
 
 // Credit to https://proandroiddev.com/shedding-light-on-android-encryption-android-crypto-api-part-2-cipher-147ff4411e1d#54f2
 class EncryptedStringGuard(
 	private val encryptionKeyLookup: LookupEncryptionKey,
-	private val configureEncryption: ConfigureEncryption
+	private val configureEncryption: ConfigureEncryption,
 ) : GuardStrings {
 	override fun promiseEncryption(plainText: String): Promise<EncryptedString> = ThreadPools.compute.preparePromise {
 		val keySpec = getKeySpec()
@@ -44,7 +45,7 @@ class EncryptedStringGuard(
 	}
 
 	private fun getKeySpec(): SecretKey {
-		return encryptionKeyLookup.buildKeySpec(configureEncryption.algorithm)
+		return SecretKeySpec(encryptionKeyLookup.encryptionKey.toByteArray(), configureEncryption.algorithm)
 	}
 
 	private fun generateRandomIv(size: Int): ByteArray {
