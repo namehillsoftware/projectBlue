@@ -13,7 +13,7 @@ import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 // Credit to https://proandroiddev.com/shedding-light-on-android-encryption-android-crypto-api-part-2-cipher-147ff4411e1d#54f2
-class EncryptedStringGuard(
+class ApplicationEncryptedStringGuard(
 	private val encryptionKeyLookup: LookupEncryptionKey,
 	private val configureEncryption: ConfigureEncryption,
 ) : GuardStrings {
