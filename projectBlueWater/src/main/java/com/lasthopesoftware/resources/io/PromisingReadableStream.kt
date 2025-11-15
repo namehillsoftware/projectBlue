@@ -21,7 +21,7 @@ interface PromisingReadableStream : PromisingCloseable {
 		private val logger by lazyLogger<PromisingReadableStream>()
 
 		fun PromisingReadableStream.readingCancelledException() =
-			CancellationException("Reading stream was cancelled with ${available()} bytes remaining.")
+			CancellationException("Reading stream cancelled with ${available()} bytes remaining.")
 	}
 
 	fun promiseRead(b: ByteArray, off: Int, len: Int): Promise<Int>

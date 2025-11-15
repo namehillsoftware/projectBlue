@@ -3,6 +3,7 @@ package com.lasthopesoftware.resources.io
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.lasthopesoftware.resources.io.PromisingReadableStream.Companion.readingCancelledException
 import com.namehillsoftware.handoff.promises.Promise
 import java.io.InputStream
 import java.util.concurrent.Executor
@@ -22,8 +23,9 @@ class PromisingReadableStreamWrapper(
 	private val transferExecutor: Executor? = ThreadPools.io,
 ) : PromisingReadableStream {
 
-    override fun promiseRead(b: ByteArray, off: Int, len: Int): Promise<Int> = transferExecutor?.preparePromise {
-		inputStream.read(b, off, len)
+    override fun promiseRead(b: ByteArray, off: Int, len: Int): Promise<Int> = transferExecutor?.preparePromise { cs ->
+		if (!cs.isCancelled) inputStream.read(b, off, len)
+		else throw readingCancelledException()
 	} ?: inputStream.read(b, off, len).toPromise()
 
 	override fun available(): Int = inputStream.available()

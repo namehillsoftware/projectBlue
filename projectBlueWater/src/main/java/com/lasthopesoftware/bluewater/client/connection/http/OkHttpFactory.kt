@@ -100,14 +100,14 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 		return "$applicationName/$versionName (Linux;Android ${Build.VERSION.RELEASE})"
 	}
 
-	inner class MediaCenterClient() : ProvideHttpPromiseServerClients<MediaCenterConnectionDetails>, ProvideOkHttpServerClients<MediaCenterConnectionDetails> {
+	inner class MediaCenterClient() : ProvideHttpPromiseServerClients<MediaCenterConnectionDetails> {
 		override fun promiseServerClient(connectionDetails: MediaCenterConnectionDetails): Promise<HttpPromiseClient> =
 			OkHttpPromiseClient(getOkHttpClient(connectionDetails)).toPromise()
 
 		override fun promiseStreamingServerClient(connectionDetails: MediaCenterConnectionDetails): Promise<HttpPromiseClient> =
 			OkHttpPromiseClient(getStreamingOkHttpClient(connectionDetails)).toPromise()
 
-		override fun getStreamingOkHttpClient(connectionDetails: MediaCenterConnectionDetails): OkHttpClient =
+		fun getStreamingOkHttpClient(connectionDetails: MediaCenterConnectionDetails): OkHttpClient =
 			getOkHttpClient(connectionDetails)
 				.newBuilder()
 				.configureForStreaming()
@@ -188,14 +188,14 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 		}
 	}
 
-	inner class SubsonicClient() : ProvideHttpPromiseServerClients<SubsonicConnectionDetails>, ProvideOkHttpServerClients<SubsonicConnectionDetails> {
+	inner class SubsonicClient() : ProvideHttpPromiseServerClients<SubsonicConnectionDetails> {
 		override fun promiseServerClient(connectionDetails: SubsonicConnectionDetails): Promise<HttpPromiseClient> =
 			OkHttpPromiseClient(getOkHttpClient(connectionDetails)).toPromise()
 
 		override fun promiseStreamingServerClient(connectionDetails: SubsonicConnectionDetails): Promise<HttpPromiseClient> =
 			OkHttpPromiseClient(getStreamingOkHttpClient(connectionDetails)).toPromise()
 
-		override fun getStreamingOkHttpClient(connectionDetails: SubsonicConnectionDetails): OkHttpClient =
+		fun getStreamingOkHttpClient(connectionDetails: SubsonicConnectionDetails): OkHttpClient =
 			getOkHttpClient(connectionDetails)
 				.newBuilder()
 				.configureForStreaming()

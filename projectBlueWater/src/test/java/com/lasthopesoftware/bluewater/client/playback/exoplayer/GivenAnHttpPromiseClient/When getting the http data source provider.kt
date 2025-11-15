@@ -1,11 +1,9 @@
-package com.lasthopesoftware.bluewater.client.playback.exoplayer.GivenHttpPromiseClientIsSelectedDataSource
+package com.lasthopesoftware.bluewater.client.playback.exoplayer.GivenAnHttpPromiseClient
 
 import androidx.media3.datasource.DataSource
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpPromiseClient
-import com.lasthopesoftware.bluewater.client.playback.exoplayer.HttpDataSourceType
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.HttpPromiseClientDataSource
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.ServerHttpDataSourceProvider
-import com.lasthopesoftware.bluewater.features.ApplicationFeatureConfiguration
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -21,12 +19,6 @@ class `When getting the http data source provider` {
 		ServerHttpDataSourceProvider<Any>(
 			mockk {
 				every { promiseStreamingServerClient(any()) } returns mockk<HttpPromiseClient>().toPromise()
-			},
-			mockk(),
-			mockk {
-				every { promiseFeatureConfiguration() } returns ApplicationFeatureConfiguration(
-					httpDataSourceType = HttpDataSourceType.HttpPromiseClient
-				).toPromise()
 			}
 		)
 	}

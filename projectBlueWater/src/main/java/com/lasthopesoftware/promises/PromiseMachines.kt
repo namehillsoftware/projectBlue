@@ -31,7 +31,6 @@ object PromiseMachines {
 		override fun next(): Promise<Resolution> =
 			function(currentValue, this)
 				.also {
-					doCancel(it)
 					it.then(this)
 					proxyRejection(it)
 				}

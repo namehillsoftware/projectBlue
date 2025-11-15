@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.settings.hidden
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
 import com.lasthopesoftware.bluewater.client.connection.http.HttpClientType
-import com.lasthopesoftware.bluewater.client.playback.exoplayer.HttpDataSourceType
 import com.lasthopesoftware.bluewater.features.access.HoldApplicationFeatureConfiguration
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
@@ -18,11 +17,9 @@ class HiddenSettingsViewModel(
 
 	private val mutableIsLoading = MutableInteractionState(false)
 	private val mutableIsLoggingToFile = MutableInteractionState(false)
-	private val mutableDataSourceType = MutableInteractionState(HttpDataSourceType.OkHttp)
 	private val mutableHttpClientType = MutableInteractionState(HttpClientType.OkHttp)
 
 	val isLoggingToFile = mutableIsLoggingToFile.asInteractionState()
-	val dataSourceType = mutableDataSourceType.asInteractionState()
 	val httpClientType = mutableHttpClientType.asInteractionState()
 
 	override val isLoading = mutableIsLoading.asInteractionState()
@@ -32,7 +29,6 @@ class HiddenSettingsViewModel(
 		val promisedApplicationFeatures = applicationFeatureConfiguration
 			.promiseFeatureConfiguration()
 			.then { f ->
-				mutableDataSourceType.value = f.httpDataSourceType ?: HttpDataSourceType.OkHttp
 				mutableHttpClientType.value = f.httpClientType ?: HttpClientType.OkHttp
 			}
 
@@ -51,11 +47,6 @@ class HiddenSettingsViewModel(
 
 	fun promiseIsLoggingToFile(isLoggingToFile: Boolean): Promise<*> {
 		mutableIsLoggingToFile.value = isLoggingToFile
-		return saveSettings()
-	}
-
-	fun promiseDataSourceUpdate(dataSourceType: HttpDataSourceType): Promise<*> {
-		mutableDataSourceType.value = dataSourceType
 		return saveSettings()
 	}
 
@@ -78,7 +69,7 @@ class HiddenSettingsViewModel(
 		val promisedFeaturesUpdate = applicationFeatureConfiguration
 			.promiseFeatureConfiguration()
 			.eventually { features ->
-				val newFeatures = features.copy(httpDataSourceType = mutableDataSourceType.value, httpClientType = mutableHttpClientType.value)
+				val newFeatures = features.copy(httpClientType = mutableHttpClientType.value)
 				applicationFeatureConfiguration.promiseUpdatedFeatureConfiguration(newFeatures)
 			}
 			.unitResponse()
