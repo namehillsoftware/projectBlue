@@ -4,10 +4,13 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredEncryptionSettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredSubsonicConnectionSettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.LibrarySettingsAccess
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.StoredSettingsAndEncryptionCombiner
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.encryption.EncryptionConfiguration
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.gson
 import com.lasthopesoftware.resources.strings.EncryptedString
@@ -54,6 +57,7 @@ class `When saving the library settings` {
 				}
 			},
 			JsonEncoderDecoder,
+			JsonEncoderDecoder,
 			mockk {
 				every { promiseEncryption("kKLGulh") } returns EncryptedString(
 					initializationVector = "",
@@ -62,6 +66,17 @@ class `When saving the library settings` {
 					blockMode = "",
 					padding = "",
 				).toPromise()
+
+				val encryptedString = EncryptedString(
+					initializationVector = "UylnoVbpoU",
+					"SFzoA3Aw",
+					algorithm = "68TeZkE4Pn",
+					blockMode = "JW3Q32gyv3",
+					padding = "XOAPwaYozTn",
+				)
+				every { promiseEncryption("urDDxiN") } returns encryptedString.toPromise()
+
+				every { promiseDecryption(encryptedString) } returns "V7MbHDd".toPromise()
 			}
 		)
 	}
@@ -80,7 +95,7 @@ class `When saving the library settings` {
 				connectionSettings = StoredSubsonicConnectionSettings(
 					url = "94NI0r9XP6x",
 					userName = "RsZ6mNFK",
-					password = "TGII5zyt",
+					password = "urDDxiN",
 					isWakeOnLanEnabled = true,
 					sslCertificateFingerprint = "KLSYONYutn",
 					macAddress = "aRm4Zqh9O",
@@ -91,6 +106,26 @@ class `When saving the library settings` {
 
 	@Test
 	fun `then the saved settings are correct`() {
+		val expectedJsonSettings = StoredSettingsAndEncryptionCombiner.combineStoredSettingsAndEncryption(
+			StoredSubsonicConnectionSettings(
+				url = "94NI0r9XP6x",
+				userName = "RsZ6mNFK",
+				password = "SFzoA3Aw",
+				isWakeOnLanEnabled = true,
+				sslCertificateFingerprint = "KLSYONYutn",
+				macAddress = "aRm4Zqh9O",
+			),
+			StoredEncryptionSettings(
+				initializationVector = "UylnoVbpoU",
+				password = "SFzoA3Aw",
+				encryptionConfiguration = EncryptionConfiguration(
+					algorithm = "68TeZkE4Pn",
+					blockMode = "JW3Q32gyv3",
+					padding = "XOAPwaYozTn",
+				),
+			)
+		)
+
 		assertThat(storedLibraries.single()).isEqualTo(
 			Library(
 				id = libraryId.id,
@@ -101,16 +136,7 @@ class `When saving the library settings` {
 				nowPlayingProgress = 234,
 				savedTracksString = "DSJaIU9",
 				syncedFileLocation = SyncedFileLocation.EXTERNAL,
-				connectionSettings = gson.toJson(
-					StoredSubsonicConnectionSettings(
-						url = "94NI0r9XP6x",
-						userName = "RsZ6mNFK",
-						password = "RZ5c4MGRC",
-						isWakeOnLanEnabled = true,
-						sslCertificateFingerprint = "KLSYONYutn",
-						macAddress = "aRm4Zqh9O",
-					)
-				)
+				connectionSettings = expectedJsonSettings
 			)
 		)
 	}
@@ -126,7 +152,7 @@ class `When saving the library settings` {
 				connectionSettings = StoredSubsonicConnectionSettings(
 					url = "94NI0r9XP6x",
 					userName = "RsZ6mNFK",
-					password = "RZ5c4MGRC",
+					password = "V7MbHDd",
 					isWakeOnLanEnabled = true,
 					sslCertificateFingerprint = "KLSYONYutn",
 					macAddress = "aRm4Zqh9O",

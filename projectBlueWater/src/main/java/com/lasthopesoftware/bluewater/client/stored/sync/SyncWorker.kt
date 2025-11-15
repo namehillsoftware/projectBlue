@@ -106,7 +106,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 							mediaCenterDataFactories,
 							subsonicHttpClients,
 							subsonicDataFactories,
-                            JsonEncoderDecoder,
+							JsonEncoderDecoder,
 							stringResources,
 						),
 						audioCacheStreamSupplier,

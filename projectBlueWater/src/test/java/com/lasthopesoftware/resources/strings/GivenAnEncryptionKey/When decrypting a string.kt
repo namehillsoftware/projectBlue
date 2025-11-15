@@ -1,6 +1,7 @@
 package com.lasthopesoftware.resources.strings.GivenAnEncryptionKey
 
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.encryption.DefaultEncryptionConfiguration
 import com.lasthopesoftware.encryption.LookupEncryptionKey
 import com.lasthopesoftware.resources.strings.EncryptedStringGuard
 import io.mockk.mockk
@@ -18,7 +19,7 @@ class `When decrypting a string` {
 				override fun buildKeySpec(algorithm: String): SecretKey =
 					SecretKeySpec("TVXcQz0qQPcIbjlo".toByteArray(Charsets.UTF_8), algorithm)
 			},
-			mockk(),
+			DefaultEncryptionConfiguration,
 		)
 	}
 

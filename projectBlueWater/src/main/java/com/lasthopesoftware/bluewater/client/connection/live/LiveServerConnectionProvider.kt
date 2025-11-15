@@ -14,7 +14,7 @@ import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.network.LookupActiveNetwork
 import com.lasthopesoftware.resources.strings.EncodeToBase64
 import com.lasthopesoftware.resources.strings.GetStringResources
-import com.lasthopesoftware.resources.strings.TranslateJson
+import com.lasthopesoftware.resources.strings.TranslateGson
 import com.namehillsoftware.handoff.promises.Promise
 import java.net.URL
 import java.util.LinkedList
@@ -29,7 +29,7 @@ class LiveServerConnectionProvider(
 	private val mediaCenterDataSources: ProvideServerHttpDataSource<MediaCenterConnectionDetails>,
 	private val httpSubsonicClients: ProvideHttpPromiseServerClients<SubsonicConnectionDetails>,
 	private val subsonicDataSources: ProvideServerHttpDataSource<SubsonicConnectionDetails>,
-	private val jsonTranslator: TranslateJson,
+	private val gsonTranslator: TranslateGson,
 	private val stringResources: GetStringResources,
 ) : ProvideLiveServerConnection {
 	override fun promiseLiveServerConnection(libraryId: LibraryId): Promise<LiveServerConnection?> =
@@ -134,7 +134,7 @@ class LiveServerConnectionProvider(
 							serverConnection,
 							httpSubsonicClients,
 							subsonicDataSources,
-							jsonTranslator,
+							gsonTranslator,
 							stringResources,
 						)
 						return potentialConnection

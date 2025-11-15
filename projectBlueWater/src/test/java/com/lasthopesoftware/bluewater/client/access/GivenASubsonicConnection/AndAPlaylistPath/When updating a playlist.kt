@@ -94,7 +94,7 @@ class `When updating a playlist` {
 					every { promiseServerClient(any<SubsonicConnectionDetails>()) } returns httpConnection.toPromise()
 				},
 				mockk(),
-                JsonEncoderDecoder,
+				JsonEncoderDecoder,
 				mockk(),
 			)
 		)

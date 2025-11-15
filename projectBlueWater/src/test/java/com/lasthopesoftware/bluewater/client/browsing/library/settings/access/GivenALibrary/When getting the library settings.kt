@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySe
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.LibrarySettingsAccess
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.encryption.EncryptionConfiguration
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.gson
 import com.lasthopesoftware.resources.strings.EncryptedString
@@ -24,7 +23,6 @@ class `When getting the library settings` {
 	private val libraryId = LibraryId(698)
 
 	private val mutt by lazy {
-		val fakeLibraryRepository = FakeLibraryRepository()
 		LibrarySettingsAccess(
 			FakeLibraryRepository(
 				Library(
@@ -50,6 +48,7 @@ class `When getting the library settings` {
 					)
 				)
 			),
+			JsonEncoderDecoder,
 			JsonEncoderDecoder,
 			mockk {
 				val encryptedString = EncryptedString(
@@ -85,18 +84,12 @@ class `When getting the library settings` {
 				connectionSettings = StoredMediaCenterConnectionSettings(
 					accessCode = "DLKicYx",
 					password = "7cEveBV",
-					initializationVector = "H5FU96uOv",
 					userName = "UMm5g8jEN",
 					macAddress = "fh1Y3MWf",
 					isLocalOnly = true,
 					isWakeOnLanEnabled = true,
 					sslCertificateFingerprint = "8ZuBp6yyjiT",
 					isSyncLocalConnectionsOnly = true,
-					encryptionConfiguration = EncryptionConfiguration(
-						padding = "9LYqUKT0g",
-						blockMode = "CDaNFV9aIX2",
-						algorithm = "07IQKIPN6",
-					)
 				)
 			)
 		)

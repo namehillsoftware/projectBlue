@@ -57,7 +57,7 @@ class `When Checking Authentication` {
 			SubsonicConnectionDetails(TestUrl, "XjEdXrsEUA", "bNI1AuryTD"),
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
-            JsonEncoderDecoder,
+			JsonEncoderDecoder,
 			mockk(),
 		)
 		access.promiseIsReadOnly().toExpiringFuture().get()

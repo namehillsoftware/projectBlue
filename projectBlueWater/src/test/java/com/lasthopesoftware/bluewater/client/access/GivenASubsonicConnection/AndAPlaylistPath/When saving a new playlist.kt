@@ -71,7 +71,7 @@ class `When saving a new playlist` {
 					every { promiseServerClient(any<SubsonicConnectionDetails>()) } returns httpConnection.toPromise()
 				},
 				mockk(),
-                JsonEncoderDecoder,
+				JsonEncoderDecoder,
 				mockk(),
 			)
 		)

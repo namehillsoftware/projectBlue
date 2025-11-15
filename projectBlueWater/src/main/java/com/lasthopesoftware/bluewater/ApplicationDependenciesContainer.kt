@@ -40,8 +40,6 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidConnectionSettingsLookup
-import com.lasthopesoftware.bluewater.client.connection.settings.translation.StoredMediaCenterTranslator
-import com.lasthopesoftware.bluewater.client.connection.settings.translation.StoredSubsonicTranslator
 import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
@@ -233,6 +231,7 @@ object ApplicationDependenciesContainer {
 			val access = LibrarySettingsAccess(
 				libraryStorage,
 				JsonEncoderDecoder,
+				JsonEncoderDecoder,
 				encryptedStringGuard
 			)
 			CachedLibrarySettingsAccess(access, access)
@@ -260,13 +259,7 @@ object ApplicationDependenciesContainer {
 		}
 
 		override val connectionSettingsLookup by lazy {
-			ValidConnectionSettingsLookup(
-				ConnectionSettingsLookup(
-					librarySettingsProvider,
-					StoredMediaCenterTranslator(encryptedStringGuard),
-					StoredSubsonicTranslator(encryptedStringGuard),
-				)
-			)
+			ValidConnectionSettingsLookup(ConnectionSettingsLookup(librarySettingsProvider))
 		}
 
 		override val connectionSessions by lazy {
@@ -290,7 +283,7 @@ object ApplicationDependenciesContainer {
 							mediaCenterDataFactories,
 							subsonicHttpClients,
 							subsonicDataFactories,
-                            JsonEncoderDecoder,
+							JsonEncoderDecoder,
 							stringResources,
 						),
 						audioCacheStreamSupplier,

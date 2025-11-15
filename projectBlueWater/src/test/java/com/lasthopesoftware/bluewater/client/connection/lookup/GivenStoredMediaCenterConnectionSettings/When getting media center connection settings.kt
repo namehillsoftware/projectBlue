@@ -35,8 +35,6 @@ class `When getting media center connection settings` {
 					)
 				).toPromise()
 			},
-			mockk(),
-			mockk(),
 		)
 	}
 

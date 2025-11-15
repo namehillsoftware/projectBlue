@@ -39,7 +39,7 @@ class `When setting the rating` {
 					every { promiseServerClient(any<SubsonicConnectionDetails>()) } returns httpConnection.toPromise()
 				},
 				mockk(),
-                JsonEncoderDecoder,
+				JsonEncoderDecoder,
 				mockk(),
 			)
 		)

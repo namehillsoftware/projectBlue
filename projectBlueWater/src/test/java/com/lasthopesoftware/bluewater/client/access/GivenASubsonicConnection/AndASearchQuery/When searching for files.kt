@@ -1152,7 +1152,7 @@ class `When searching for files` {
 			SubsonicConnectionDetails(TestUrl, "Xtbyp9lhSJY", "WVe5KSj"),
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
-            JsonEncoderDecoder,
+			JsonEncoderDecoder,
 			mockk(),
 		)
 	}

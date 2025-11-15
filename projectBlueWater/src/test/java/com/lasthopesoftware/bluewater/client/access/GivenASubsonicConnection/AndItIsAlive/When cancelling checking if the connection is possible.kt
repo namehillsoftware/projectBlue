@@ -47,7 +47,7 @@ class `When cancelling checking if the connection is possible` {
 				}
 			},
 			mockk(),
-            JsonEncoderDecoder,
+			JsonEncoderDecoder,
 			mockk(),
 		).promiseIsConnectionPossible()
 		promisedTest.cancel()

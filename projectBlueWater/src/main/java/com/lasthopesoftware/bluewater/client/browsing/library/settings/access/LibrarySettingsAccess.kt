@@ -6,6 +6,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.PasswordStoredConnectionSettings
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.PasswordStoredConnectionSettings.Companion.copy
+import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredEncryptionSettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredSubsonicConnectionSettings
 import com.lasthopesoftware.encryption.EncryptionConfiguration
@@ -13,10 +15,10 @@ import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.cancelBackThen
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.preparePromise
-import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.strings.EncryptedString
 import com.lasthopesoftware.resources.strings.GuardStrings
+import com.lasthopesoftware.resources.strings.TranslateGson
 import com.lasthopesoftware.resources.strings.TranslateJson
 import com.lasthopesoftware.resources.strings.parseJson
 import com.namehillsoftware.handoff.promises.Promise
@@ -25,6 +27,7 @@ import kotlin.coroutines.cancellation.CancellationException
 class LibrarySettingsAccess(
 	private val libraryManager: ManageLibraries,
 	private val jsonTranslator: TranslateJson,
+	private val gsonTranslator: TranslateGson,
 	private val stringGuard: GuardStrings,
 ) : ProvideLibrarySettings, StoreLibrarySettings {
 	companion object {
@@ -49,10 +52,11 @@ class LibrarySettingsAccess(
 					.keepPromise()
 			}
 
-	override fun promiseSavedLibrarySettings(librarySettings: LibrarySettings): Promise<LibrarySettings> =
-		(librarySettings.libraryId
+	override fun promiseSavedLibrarySettings(librarySettings: LibrarySettings): Promise<LibrarySettings> = Promise.Proxy { cs ->
+		librarySettings.libraryId
 			?.let(libraryManager::promiseLibrary)
-			?.cancelBackEventually { maybeLibrary ->
+			?.also(cs::doCancel)
+			?.eventually { maybeLibrary ->
 				maybeLibrary
 					?.let { l ->
 						val connectionSettings = librarySettings.connectionSettings
@@ -70,27 +74,25 @@ class LibrarySettingsAccess(
 						connectionSettings
 							?.let(::encryptPassword)
 							?.eventually { encryptedString ->
-								val encryptedSettings = when (connectionSettings) {
-									is StoredMediaCenterConnectionSettings -> {
-										connectionSettings.copy(
-											initializationVector = encryptedString?.initializationVector,
-											password = encryptedString?.protectedString,
-											encryptionConfiguration = encryptedString?.let(::EncryptionConfiguration)
-										)
-									}
-									is StoredSubsonicConnectionSettings -> {
-										connectionSettings.copy(
-											initializationVector = encryptedString?.initializationVector,
-											password = encryptedString?.protectedString,
-											encryptionConfiguration = encryptedString?.let(::EncryptionConfiguration)
-										)
-									}
+								val encryptionSettings = encryptedString?.run {
+									StoredEncryptionSettings(
+										initializationVector = initializationVector,
+										password = protectedString,
+										encryptionConfiguration = EncryptionConfiguration(this)
+									)
 								}
 
 								ThreadPools.compute.preparePromise { cs ->
 									if (cs.isCancelled) throw librarySettingsAccessCancelled()
 
-									l.connectionSettings = encryptedSettings.let(jsonTranslator::toJson)
+									val jsonSettings = gsonTranslator.toJsonElement(connectionSettings).asJsonObject
+									val encryptedJson =
+										encryptionSettings?.let { gsonTranslator.toJsonElement(it) }?.asJsonObject?.asMap()
+									if (encryptedJson != null) {
+										jsonSettings.asMap().putAll(encryptedJson)
+									}
+
+									l.connectionSettings = gsonTranslator.serializeJson(jsonSettings)
 									l
 								}
 							}
@@ -102,17 +104,27 @@ class LibrarySettingsAccess(
 								l
 							}
 					}
+					?.also(cs::doCancel)
+					?.eventually(libraryManager::saveLibrary)
+					?.also(cs::doCancel)
+					?.eventually { it.promiseDecryptedLibrarySettings() }
+					?.also(cs::doCancel)
 					?: ThreadPools.compute.preparePromise { cs ->
 						if (cs.isCancelled) throw librarySettingsAccessCancelled()
 						librarySettings.toNewLibrary()
-					}
+					}.also(cs::doCancel)
+						.eventually(libraryManager::saveLibrary)
+						.also(cs::doCancel)
+						.then { it.toLibrarySettings() }
 			}
 			?: ThreadPools.compute.preparePromise { cs ->
 				if (cs.isCancelled) throw librarySettingsAccessCancelled()
 				librarySettings.toNewLibrary()
-			})
-			.cancelBackEventually(libraryManager::saveLibrary)
-			.cancelBackEventually { it.promiseDecryptedLibrarySettings() }
+			}.also(cs::doCancel)
+				.eventually(libraryManager::saveLibrary)
+				.also(cs::doCancel)
+				.then { it.toLibrarySettings() }
+	}
 
 	private fun LibrarySettings.toNewLibrary() = Library(
 		libraryName = libraryName,
@@ -123,33 +135,29 @@ class LibrarySettingsAccess(
 			null -> null
 		},
 		syncedFileLocation = syncedFileLocation,
-		connectionSettings = connectionSettings?.let(jsonTranslator::toJson),
+		connectionSettings = connectionSettings?.let(jsonTranslator::serializeJson),
 	)
 
 	private fun Library.promiseDecryptedLibrarySettings(): Promise<LibrarySettings> =
 		ThreadPools.compute.preparePromise { cs ->
 			if (cs.isCancelled) throw librarySettingsAccessCancelled()
 
-			toLibrarySettings()
+			toLibrarySettings() to connectionSettings?.let { jsonTranslator.parseJson<StoredEncryptionSettings>(it) }
 		}
-		.cancelBackEventually { librarySettings ->
+		.cancelBackEventually { (librarySettings, encryptionSettings) ->
 			val connectionSettings = librarySettings.connectionSettings as? PasswordStoredConnectionSettings
-			connectionSettings
-				?.takeIf { it.password != null }
+			encryptionSettings
+				?.takeUnless { it.password.isNullOrEmpty() }
 				?.run {
-					if (initializationVector != null && encryptionConfiguration != null) librarySettings
-						.promiseDecryptedPassword()
+					if (initializationVector == null || encryptionConfiguration == null) promiseSavedLibrarySettings(librarySettings)
+					else promiseDecryptedPassword()
 						.cancelBackThen { decryptedPassword, _ ->
 							librarySettings.copy(
-								connectionSettings = when (connectionSettings) {
-									is StoredMediaCenterConnectionSettings -> connectionSettings.copy(password = decryptedPassword)
-									is StoredSubsonicConnectionSettings -> connectionSettings.copy(password = decryptedPassword)
-								}
+								connectionSettings = connectionSettings?.copy(password = decryptedPassword)
 							)
 						}
-					else promiseSavedLibrarySettings(librarySettings)
 				}
-				?: librarySettings.toPromise()
+				.keepPromise(librarySettings)
 		}
 
 	private fun Library.toLibrarySettings() = LibrarySettings(
@@ -170,15 +178,11 @@ class LibrarySettingsAccess(
 	)
 
 	@Suppress("UNCHECKED_CAST")
-	private fun LibrarySettings.promiseDecryptedPassword(): Promise<String?> {
-		val connectionSettings = connectionSettings as? PasswordStoredConnectionSettings ?: return Promise.empty()
-		val password = connectionSettings.password ?: return Promise.empty()
+	private fun StoredEncryptionSettings.promiseDecryptedPassword(): Promise<String?> {
+		val password = password ?: return Promise.empty()
 
-		val encryptionConfiguration = connectionSettings.encryptionConfiguration ?: return Promise.empty()
-		val initializationVector = connectionSettings.initializationVector ?: return Promise.empty()
-//		if (encryptionConfiguration == null || initializationVector == null) {
-//			return promiseSavedLibrarySettings(this).cancelBackEventually { it.promiseDecryptedPassword() }
-//		}
+		val encryptionConfiguration = encryptionConfiguration ?: return Promise.empty()
+		val initializationVector = initializationVector ?: return Promise.empty()
 
 		return stringGuard.promiseDecryption(
 			EncryptedString(

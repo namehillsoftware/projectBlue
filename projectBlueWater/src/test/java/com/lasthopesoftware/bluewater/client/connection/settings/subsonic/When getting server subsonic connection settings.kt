@@ -34,8 +34,6 @@ class `When getting server subsonic connection settings` {
 					)
 				).toPromise()
 			},
-			mockk(),
-			mockk(),
 		)
 	}
 

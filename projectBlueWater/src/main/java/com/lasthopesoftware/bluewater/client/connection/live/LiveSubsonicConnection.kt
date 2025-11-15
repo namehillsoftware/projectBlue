@@ -43,7 +43,7 @@ import com.lasthopesoftware.resources.io.InvalidResponseCodeException
 import com.lasthopesoftware.resources.io.NonStandardResponseException
 import com.lasthopesoftware.resources.io.PromisingReadableStream
 import com.lasthopesoftware.resources.strings.GetStringResources
-import com.lasthopesoftware.resources.strings.TranslateJson
+import com.lasthopesoftware.resources.strings.TranslateGson
 import com.lasthopesoftware.resources.strings.parseJson
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
@@ -56,7 +56,7 @@ class LiveSubsonicConnection(
 	private val subsonicConnectionDetails: SubsonicConnectionDetails,
 	private val httpPromiseClients: ProvideHttpPromiseServerClients<SubsonicConnectionDetails>,
 	private val serverHttpDataSource: ProvideServerHttpDataSource<SubsonicConnectionDetails>,
-	private val jsonTranslator: TranslateJson,
+	private val gsonTranslator: TranslateGson,
 	private val stringResources: GetStringResources,
 ) : LiveServerConnection, RemoteLibraryAccess
 {
@@ -241,15 +241,15 @@ class LiveSubsonicConnection(
 
 	private inline fun <reified T> HttpResponse.promiseSubsonicResponse(): Promise<T?> = bodyString
 		.eventually {
-			ThreadPools.compute.preparePromise { cs ->
-				val json = JsonParser.parseString(it).asJsonObject.get("subsonic-response")
+			ThreadPools.compute.preparePromise { _ ->
+				val json = gsonTranslator.parseJsonElement(it).asJsonObject.get("subsonic-response")
 					?: throw NonStandardResponseException()
 
 				if (json.asJsonObject.get("status")?.asString == "failed") {
-					throw SubsonicServerException(jsonTranslator.parseJson<ErrorResponse>(json))
+					throw SubsonicServerException(gsonTranslator.parseJson<ErrorResponse>(json))
 				}
 
-				jsonTranslator.parseJson<T>(json)
+				gsonTranslator.parseJson<T>(json)
 			}
 		}
 

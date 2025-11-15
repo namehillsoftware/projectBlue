@@ -31,7 +31,7 @@ class ApplicationFeatureConfigurationRepository(private val context: Context, pr
 			helper.beginTransaction().use {
 				helper
 					.mapSql("UPDATE $tableName SET $applicationFeatureConfigurationColumn = @$applicationFeatureConfigurationColumn")
-					.addParameter(applicationFeatureConfigurationColumn, jsonTranslator.toJson(applicationFeatureConfiguration))
+					.addParameter(applicationFeatureConfigurationColumn, jsonTranslator.serializeJson(applicationFeatureConfiguration))
 					.execute()
 				it.setTransactionSuccessful()
 			}

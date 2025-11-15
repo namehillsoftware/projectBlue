@@ -37,7 +37,7 @@ class WhenGettingFileProperties {
 				}
 			),
 			mockk(),
-            JsonEncoderDecoder,
+			JsonEncoderDecoder,
 			mockk(),
 		)
     }
