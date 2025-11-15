@@ -120,7 +120,6 @@ object ApplicationDependenciesContainer {
 
 		private val encryptedStringGuard by lazy {
 			EncryptedStringGuard(
-				context,
 				AppEncryptionKeyLookup,
 				DefaultEncryptionConfiguration
 			)
