@@ -127,7 +127,7 @@ private fun LabelledRemoveServerButton(
 ) {
 	ColumnMenuIcon(
 		onClick = librarySettingsViewModel::requestLibraryRemoval,
-		iconPainter = painterResource(id = R.drawable.ic_remove_item_36dp),
+		iconPainter = painterResource(id = R.drawable.remove_item_36dp),
 		contentDescription = stringResources.removeServer,
 		modifier = modifier,
 		label = stringResources.removeServer,
@@ -158,11 +158,8 @@ private fun LabelledSaveAndTestButton(
 	val isConnectionPossible by librarySettingsViewModel.isConnectionPossible.subscribeAsState()
 	val buttonIcon by remember {
 		derivedStateOf {
-			when {
-				isSettingsChanged -> R.drawable.refresh_36
-				isConnectionPossible -> R.drawable.baseline_check_36dp
-				else -> R.drawable.ic_remove_item_white_36dp
-			}
+			if (isTestingConnection) R.drawable.cancel_36dp
+			else R.drawable.refresh_36
 		}
 	}
 
@@ -950,7 +947,9 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 		) {
 			if (!isLoadingState) {
 				Column(
-					modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+					modifier = Modifier
+						.fillMaxSize()
+						.verticalScroll(rememberScrollState()),
 					horizontalAlignment = Alignment.CenterHorizontally,
 				) {
 					Spacer(
@@ -1020,7 +1019,10 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 					navigateApplication = navigateApplication,
 					stringResources = stringResources,
 					onChangeServerTypeClick = { isSelectingServerType = true },
-					modifier = Modifier.fillMaxWidth().height(menuHeightDp).clipToBounds()
+					modifier = Modifier
+						.fillMaxWidth()
+						.height(menuHeightDp)
+						.clipToBounds()
 				)
 			}
 		}
@@ -1063,7 +1065,9 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 
 			if (!isLoadingState) {
 				Column(
-					modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+					modifier = Modifier
+						.fillMaxSize()
+						.verticalScroll(rememberScrollState()),
 					horizontalAlignment = Alignment.CenterHorizontally,
 				) {
 					LibrarySettings(

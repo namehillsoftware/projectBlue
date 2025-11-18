@@ -234,7 +234,7 @@ fun PlaylistControls(
 		val isEditingPlaylist by playlistViewModel.isEditingPlaylist.subscribeAsState()
 		if (isEditingPlaylist) {
 			Image(
-				painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+				painter = painterResource(id = R.drawable.cancel_36dp),
 				contentDescription = stringResource(id = R.string.finish_edit_now_playing_list),
 				modifier = Modifier.navigable(onClick = playlistViewModel::finishPlaylistEdit),
 				alpha = playlistControlAlpha,
@@ -1193,7 +1193,7 @@ fun NowPlayingView(
 						}
 
 						Icon(
-							painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+							painter = painterResource(id = R.drawable.remove_item_36dp),
 							contentDescription = stringResource(id = R.string.btn_cancel),
 							modifier = Modifier
 								.clickable { playlistViewModel.disableSavingPlaylist() }

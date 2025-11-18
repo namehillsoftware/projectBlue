@@ -199,7 +199,7 @@ private fun NowPlayingFileMenu(
 	val removeFileLabel = stringResource(id = R.string.btn_remove_file)
 	ColumnMenuIcon(
 		onClick = { nowPlayingFileDetailsState.removeFile() },
-		iconPainter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+		iconPainter = painterResource(id = R.drawable.remove_item_36dp),
 		contentDescription = removeFileLabel,
 		label = removeFileLabel,
 		labelMaxLines = 1,
@@ -409,7 +409,7 @@ private fun FileDetailsEditor(
 						}
 
 						Image(
-							painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+							painter = painterResource(id = R.drawable.cancel_36dp),
 							colorFilter = ColorFilter.tint(palette.secondaryTextColor),
 							contentDescription = stringResource(id = R.string.btn_cancel),
 							modifier = Modifier
@@ -849,7 +849,7 @@ private fun BoxWithConstraintsScope.FileDetailsTwoColumn(
 					)
 
 					Image(
-						painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+						painter = painterResource(id = R.drawable.remove_item_36dp),
 						contentDescription = "Close",
 						colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
 						modifier = Modifier
