@@ -1,4 +1,4 @@
-package com.lasthopesoftware.resources.strings
+package com.lasthopesoftware.resources.strings.guards
 
 import com.lasthopesoftware.encryption.ConfigureEncryption
 

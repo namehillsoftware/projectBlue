@@ -1,6 +1,8 @@
 package com.lasthopesoftware.resources.strings
 
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.strings.guards.EncryptedString
+import com.lasthopesoftware.resources.strings.guards.GuardStrings
 import com.namehillsoftware.handoff.promises.Promise
 
 class FakeStringGuard(guardedStrings: Map<String, EncryptedString> = emptyMap()) : GuardStrings {

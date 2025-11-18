@@ -68,10 +68,10 @@ import com.lasthopesoftware.resources.bitmaps.DefaultAwareCachingBitmapProducer
 import com.lasthopesoftware.resources.bitmaps.QueuedBitmapProducer
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder
-import com.lasthopesoftware.resources.strings.ApplicationEncryptedStringGuard
 import com.lasthopesoftware.resources.strings.Base64Encoder
 import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import com.lasthopesoftware.resources.strings.StringResources
+import com.lasthopesoftware.resources.strings.guards.ApplicationEncryptedStringGuard
 
 @OptIn(UnstableApi::class)
 object ApplicationDependenciesContainer {

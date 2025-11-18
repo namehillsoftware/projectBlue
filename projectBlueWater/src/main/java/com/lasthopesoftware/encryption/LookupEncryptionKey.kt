@@ -1,5 +1,7 @@
 package com.lasthopesoftware.encryption
 
+import com.namehillsoftware.handoff.promises.Promise
+
 interface LookupEncryptionKey {
-	val encryptionKey: String
+	fun promiseEncryptionKey(): Promise<String>
 }

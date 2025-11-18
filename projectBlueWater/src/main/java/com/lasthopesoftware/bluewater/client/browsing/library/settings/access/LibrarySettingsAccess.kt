@@ -16,10 +16,10 @@ import com.lasthopesoftware.promises.extensions.cancelBackThen
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
-import com.lasthopesoftware.resources.strings.EncryptedString
-import com.lasthopesoftware.resources.strings.GuardStrings
 import com.lasthopesoftware.resources.strings.TranslateGson
 import com.lasthopesoftware.resources.strings.TranslateJson
+import com.lasthopesoftware.resources.strings.guards.EncryptedString
+import com.lasthopesoftware.resources.strings.guards.GuardStrings
 import com.lasthopesoftware.resources.strings.parseJson
 import com.namehillsoftware.handoff.promises.Promise
 import kotlin.coroutines.cancellation.CancellationException

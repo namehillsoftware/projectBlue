@@ -13,9 +13,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.St
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.encryption.EncryptionConfiguration
 import com.lasthopesoftware.resources.gson
-import com.lasthopesoftware.resources.strings.EncryptedString
 import com.lasthopesoftware.resources.strings.FakeStringGuard
 import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
+import com.lasthopesoftware.resources.strings.guards.EncryptedString
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
