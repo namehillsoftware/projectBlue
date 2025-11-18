@@ -173,25 +173,29 @@ class LibrarySettingsViewModel(
 			.must(this)
 	}
 
-	fun saveAndTestLibrary(): Promise<Boolean> {
+	fun saveAndTestLibrary(): Promise<Unit> {
 		isTestingConnectionState.value = true
 		isConnectionPossibleState.value = false
-		return saveLibrary()
-			.eventually { isSaved ->
-				if (!isSaved) false.toPromise()
-				else activeLibraryId
-					?.let(manageConnectionSessions::promiseTestedLibraryConnection)
-					?.onEach { status -> connectionStatusState.value = stringResources.getConnectionStatusString(status) }
-					?.then { c ->
-						val isPossible = c != null
-						isConnectionPossibleState.value = isPossible
-						isPossible
-					}
-					.keepPromise(false)
-			}
-			.must { _ ->
-				isTestingConnectionState.value = false
-			}
+		return Promise.Proxy { cs ->
+			saveLibrary()
+				.eventually { isSaved ->
+					if (!isSaved) Unit.toPromise()
+					else activeLibraryId
+						?.let(manageConnectionSessions::promiseTestedLibraryConnection)
+						?.also(cs::doCancel)
+						?.onEach { status ->
+							connectionStatusState.value = stringResources.getConnectionStatusString(status)
+						}
+						?.then { c ->
+							val isPossible = c != null
+							isConnectionPossibleState.value = isPossible
+						}
+						.keepPromise(Unit)
+				}
+				.must { _ ->
+					isTestingConnectionState.value = false
+				}
+		}
 	}
 
 	fun requestLibraryRemoval() {

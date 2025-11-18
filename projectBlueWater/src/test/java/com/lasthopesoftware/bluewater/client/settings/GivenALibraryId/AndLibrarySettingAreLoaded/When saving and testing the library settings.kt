@@ -76,7 +76,6 @@ class `When saving and testing the library settings` {
 
 	private val isTestingConnectionStates = mutableListOf<Boolean>()
 	private var savedLibrarySettings: LibrarySettings? = null
-	private var isSaved = false
 	private var settingsChangedAfterSaving = false
 	private var didSettingsChange = false
 	private var didSettingsChangeAfterLoad = false
@@ -121,7 +120,7 @@ class `When saving and testing the library settings` {
 						)
 						promise.sendResolution(mockk())
 
-						isSaved = promisedSaveAndTest.toExpiringFuture().get() == true
+						promisedSaveAndTest.toExpiringFuture().get()
 						settingsChangedAfterSaving = isSettingsChanged.value
 					}
 				}
@@ -147,11 +146,6 @@ class `When saving and testing the library settings` {
 	@Test
 	fun `then the settings changed`() {
 		assertThat(didSettingsChange).isTrue
-	}
-
-	@Test
-	fun `then the library is saved`() {
-		assertThat(isSaved).isTrue
 	}
 
 	@Test

@@ -148,14 +148,15 @@ private fun LabelledSaveAndTestButton(
 	val saveAndTestText by remember {
 		derivedStateOf {
 			when {
-				isTestingConnection -> connectionStatusText
 				isSettingsChanged -> stringResources.saveAndTestConnection
+				connectionStatusText.isNotEmpty() -> connectionStatusText
 				else -> stringResources.testConnection
 			}
 		}
 	}
 
-	val isConnectionPossible by librarySettingsViewModel.isConnectionPossible.subscribeAsState()
+	var promisedSaveAndTest by remember { mutableStateOf(Unit.toPromise()) }
+
 	val buttonIcon by remember {
 		derivedStateOf {
 			if (isTestingConnection) R.drawable.cancel_36dp
@@ -165,7 +166,11 @@ private fun LabelledSaveAndTestButton(
 
 	ColumnMenuIcon(
 		onClick = {
-			librarySettingsViewModel.saveAndTestLibrary()
+			if (!isTestingConnection) {
+				promisedSaveAndTest = librarySettingsViewModel.saveAndTestLibrary()
+			} else {
+				promisedSaveAndTest.cancel()
+			}
 		},
 		iconPainter = painterResource(id = buttonIcon),
 		contentDescription = saveAndTestText,
