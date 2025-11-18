@@ -3,14 +3,10 @@ package com.lasthopesoftware.bluewater.client.connection.session.initialization
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.BuildingConnection
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.BuildingConnectionComplete
-import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.BuildingConnectionFailed
-import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.GettingLibrary
-import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.GettingLibraryFailed
-import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.SendingWakeSignal
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgressingLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusExtensions.getConnectionStatusString
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
@@ -111,14 +107,7 @@ class ConnectionStatusViewModel(
 					testedLibraryId != null -> return
 				}
 
-				mutableConnectionStatus.value = when (status) {
-					GettingLibrary -> stringResources.gettingLibrary
-					GettingLibraryFailed -> stringResources.gettingLibraryFailed
-					SendingWakeSignal -> stringResources.sendingWakeSignal
-					BuildingConnection -> stringResources.connectingToServerLibrary
-					BuildingConnectionFailed -> stringResources.errorConnectingTryAgain
-					BuildingConnectionComplete -> stringResources.connected
-				}
+				mutableConnectionStatus.value = stringResources.getConnectionStatusString(status)
 			}
 		}
 

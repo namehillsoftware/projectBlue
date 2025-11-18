@@ -36,6 +36,7 @@ class WhenLoadingSubsonicLibrarySettings {
 			mockk(),
 			mockk(),
 			mockk(),
+			mockk(),
 			FakeStringResources(),
 		)
     }

@@ -39,6 +39,7 @@ class WhenLoadingMediacenterLibrarySettings {
 			mockk(),
 			mockk(),
 			mockk(),
+			mockk(),
 			FakeStringResources(),
 		)
     }

@@ -162,4 +162,6 @@
     <string name="application_settings">Application Settings</string>
     <string name="active_server">Active Server</string>
     <string name="acknowledgements_title">Acknowledgements</string>
+    <string name="test_connection">Test Connection</string>
+    <string name="save_and_test_connection">Save and Test</string>
 </resources>

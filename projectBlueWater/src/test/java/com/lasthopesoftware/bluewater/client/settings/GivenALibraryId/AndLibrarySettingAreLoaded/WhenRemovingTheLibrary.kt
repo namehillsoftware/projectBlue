@@ -36,6 +36,7 @@ class WhenRemovingTheLibrary {
 				}
 			},
 			mockk(),
+			mockk(),
 			FakeStringResources(),
 		)
     }

@@ -134,6 +134,39 @@ private fun LabelledRemoveServerButton(
 	)
 }
 
+
+
+@Composable
+private fun LabelledSaveAndTestButton(
+	librarySettingsViewModel: LibrarySettingsViewModel,
+	stringResources: GetStringResources,
+	modifier: Modifier = Modifier,
+) {
+	val isSettingsChanged by librarySettingsViewModel.isSettingsChanged.subscribeAsState()
+	val isTestingConnection by librarySettingsViewModel.isTestingConnection.subscribeAsState()
+	val connectionStatusText by librarySettingsViewModel.connectionStatus.subscribeAsState()
+	val saveAndTestText by remember {
+		derivedStateOf {
+			when {
+				isTestingConnection -> connectionStatusText
+				isSettingsChanged -> stringResources.saveAndTestConnection
+				else -> stringResources.testConnection
+			}
+		}
+	}
+
+	ColumnMenuIcon(
+		onClick = {
+			librarySettingsViewModel.saveAndTestLibrary()
+		},
+		iconPainter = painterResource(id = R.drawable.baseline_check_36dp),
+		contentDescription = saveAndTestText,
+		label = saveAndTestText,
+		labelModifier = modifier,
+		enabled = !isTestingConnection
+	)
+}
+
 @Composable
 private fun LabelledSaveAndConnectButton(
 	librarySettingsViewModel: LibrarySettingsViewModel,
@@ -848,6 +881,12 @@ private fun LibrarySettingsMenu(
 		)
 
 		LabelledRemoveServerButton(
+			librarySettingsViewModel = librarySettingsViewModel,
+			stringResources = stringResources,
+			modifier = buttonModifier,
+		)
+
+		LabelledSaveAndTestButton(
 			librarySettingsViewModel = librarySettingsViewModel,
 			stringResources = stringResources,
 			modifier = buttonModifier,

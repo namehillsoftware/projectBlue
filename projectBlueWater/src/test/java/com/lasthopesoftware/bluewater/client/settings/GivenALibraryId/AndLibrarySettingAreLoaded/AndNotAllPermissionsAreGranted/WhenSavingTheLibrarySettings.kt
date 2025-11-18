@@ -39,6 +39,7 @@ class WhenSavingTheLibrarySettings {
 			mockk {
 				every { promiseIsAllPermissionsGranted(any()) } returns false.toPromise()
 			},
+			mockk(),
 			FakeStringResources(),
 		)
     }

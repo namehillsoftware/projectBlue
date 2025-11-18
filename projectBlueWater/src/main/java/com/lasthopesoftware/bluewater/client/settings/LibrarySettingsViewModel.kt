@@ -11,6 +11,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMed
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredSubsonicConnectionSettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.ProvideLibrarySettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.StoreLibrarySettings
+import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusExtensions.getConnectionStatusString
 import com.lasthopesoftware.bluewater.permissions.RequestApplicationPermissions
 import com.lasthopesoftware.bluewater.shared.NullBox
 import com.lasthopesoftware.bluewater.shared.observables.InteractionState
@@ -19,6 +21,7 @@ import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
 import com.lasthopesoftware.bluewater.shared.observables.toCloseable
 import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.onEach
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import com.lasthopesoftware.resources.strings.GetStringResources
@@ -33,6 +36,7 @@ class LibrarySettingsViewModel(
 	private val librarySettingsStorage: StoreLibrarySettings,
 	private val libraryRemoval: RemoveLibraries,
 	private val applicationPermissions: RequestApplicationPermissions,
+	private val manageConnectionSessions: ManageConnectionSessions,
 	private val stringResources: GetStringResources,
 ) :
 	ViewModel(),
@@ -103,11 +107,16 @@ class LibrarySettingsViewModel(
 		))
 	}
 
+	private val isTestingConnectionState = MutableInteractionState(false)
+	private val connectionStatusState = MutableInteractionState("")
+
 	val savedConnectionSettingsViewModel = mutableSavedConnectionSettingsViewModel.asInteractionState()
 	val connectionSettingsViewModel = MutableInteractionState<ConnectionSettingsViewModel<*>?>(null)
 	val libraryName = MutableInteractionState(defaultLibrarySettings.libraryName ?: "")
 	val isUsingExistingFiles = MutableInteractionState(defaultLibrarySettings.isUsingExistingFiles)
 	val syncedFileLocation = MutableInteractionState(defaultLibrarySettings.syncedFileLocation ?: SyncedFileLocation.INTERNAL)
+	val connectionStatus = connectionStatusState.asInteractionState()
+	val isTestingConnection = isTestingConnectionState.asInteractionState()
 
 	override val isLoading = mutableIsLoading.asInteractionState()
 
@@ -156,6 +165,22 @@ class LibrarySettingsViewModel(
 			.promiseIsAllPermissionsGranted(localLibrary)
 			.eventually(this)
 			.must(this)
+	}
+
+	fun saveAndTestLibrary(): Promise<Boolean> {
+		isTestingConnectionState.value = true
+		return saveLibrary()
+			.eventually { isSaved ->
+				if (!isSaved) false.toPromise()
+				else activeLibraryId
+					?.let(manageConnectionSessions::promiseTestedLibraryConnection)
+					?.onEach { status -> connectionStatusState.value = stringResources.getConnectionStatusString(status) }
+					?.then { c -> c != null }
+					.keepPromise(false)
+			}
+			.must { _ ->
+				isTestingConnectionState.value = false
+			}
 	}
 
 	fun requestLibraryRemoval() {
@@ -212,7 +237,7 @@ class LibrarySettingsViewModel(
 
 		return librarySettingsStorage
 			.promiseSavedLibrarySettings(localLibrary)
-			.then { it ->
+			.then {
 				libraryState.value = it
 
 				mutableSavedConnectionSettingsViewModel.value = when (val parsedConnectionSettings = it?.connectionSettings) {

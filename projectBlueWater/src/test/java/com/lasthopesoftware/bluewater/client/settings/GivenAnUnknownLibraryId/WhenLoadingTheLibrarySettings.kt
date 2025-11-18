@@ -37,6 +37,7 @@ class WhenLoadingTheLibrarySettings {
 			mockk(),
 			mockk(),
 			mockk(),
+			mockk(),
 			FakeStringResources(),
 		)
     }
