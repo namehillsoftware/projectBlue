@@ -155,11 +155,22 @@ private fun LabelledSaveAndTestButton(
 		}
 	}
 
+	val isConnectionPossible by librarySettingsViewModel.isConnectionPossible.subscribeAsState()
+	val buttonIcon by remember {
+		derivedStateOf {
+			when {
+				isSettingsChanged -> R.drawable.refresh_36
+				isConnectionPossible -> R.drawable.baseline_check_36dp
+				else -> R.drawable.ic_remove_item_white_36dp
+			}
+		}
+	}
+
 	ColumnMenuIcon(
 		onClick = {
 			librarySettingsViewModel.saveAndTestLibrary()
 		},
-		iconPainter = painterResource(id = R.drawable.baseline_check_36dp),
+		iconPainter = painterResource(id = buttonIcon),
 		contentDescription = saveAndTestText,
 		label = saveAndTestText,
 		labelModifier = modifier,

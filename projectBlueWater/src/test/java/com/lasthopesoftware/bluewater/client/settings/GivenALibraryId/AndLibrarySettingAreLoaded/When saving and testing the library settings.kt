@@ -57,6 +57,7 @@ class `When saving and testing the library settings` {
 				},
 				mockk {
 					every { promiseTestedLibraryConnection(libraryId) } returns deferredTestedConnection
+					every { promiseIsConnectionActive(libraryId) } returns false.toPromise()
 				},
 				FakeStringResources(
 					connecting = "1iOiFTM6lg",
@@ -151,6 +152,11 @@ class `When saving and testing the library settings` {
 	@Test
 	fun `then the library is saved`() {
 		assertThat(isSaved).isTrue
+	}
+
+	@Test
+	fun `then the connection is possible`() {
+		assertThat(services.second.isConnectionPossible.value).isTrue
 	}
 
 	@Test

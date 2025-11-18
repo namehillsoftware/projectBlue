@@ -177,7 +177,7 @@ class LiveMediaCenterConnection(
 			.also(cp::doCancel)
 			.promiseStandardResponse()
 			.also(cp::doCancel)
-			.then { it -> it.items["PlaylistID"] }
+			.then { it.items["PlaylistID"] }
 			.eventually {
 				it?.let { playlistId ->
 					ThreadPools.compute

@@ -108,6 +108,7 @@ class LibrarySettingsViewModel(
 	}
 
 	private val isTestingConnectionState = MutableInteractionState(false)
+	private val isConnectionPossibleState = MutableInteractionState(false)
 	private val connectionStatusState = MutableInteractionState("")
 
 	val savedConnectionSettingsViewModel = mutableSavedConnectionSettingsViewModel.asInteractionState()
@@ -117,6 +118,7 @@ class LibrarySettingsViewModel(
 	val syncedFileLocation = MutableInteractionState(defaultLibrarySettings.syncedFileLocation ?: SyncedFileLocation.INTERNAL)
 	val connectionStatus = connectionStatusState.asInteractionState()
 	val isTestingConnection = isTestingConnectionState.asInteractionState()
+	val isConnectionPossible = isConnectionPossibleState.asInteractionState()
 
 	override val isLoading = mutableIsLoading.asInteractionState()
 
@@ -143,9 +145,13 @@ class LibrarySettingsViewModel(
 	fun loadLibrary(libraryId: LibraryId): Promise<*> {
 		mutableIsLoading.value = true
 
-		return librarySettingsProvider
-			.promiseLibrarySettings(libraryId)
-			.then(this)
+		val promiseIsConnectionPossible = manageConnectionSessions
+			.promiseIsConnectionActive(libraryId)
+			.then { isActive -> isConnectionPossibleState.value = isActive }
+
+		return Promise.whenAll(
+			librarySettingsProvider.promiseLibrarySettings(libraryId).then(this),
+			promiseIsConnectionPossible)
 			.must(this)
 	}
 
@@ -169,13 +175,18 @@ class LibrarySettingsViewModel(
 
 	fun saveAndTestLibrary(): Promise<Boolean> {
 		isTestingConnectionState.value = true
+		isConnectionPossibleState.value = false
 		return saveLibrary()
 			.eventually { isSaved ->
 				if (!isSaved) false.toPromise()
 				else activeLibraryId
 					?.let(manageConnectionSessions::promiseTestedLibraryConnection)
 					?.onEach { status -> connectionStatusState.value = stringResources.getConnectionStatusString(status) }
-					?.then { c -> c != null }
+					?.then { c ->
+						val isPossible = c != null
+						isConnectionPossibleState.value = isPossible
+						isPossible
+					}
 					.keepPromise(false)
 			}
 			.must { _ ->

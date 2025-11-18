@@ -37,7 +37,10 @@ class WhenLoadingTheLibrarySettings {
 			mockk(),
 			mockk(),
 			mockk(),
-			mockk(),
+			mockk {
+				every { promiseIsConnectionActive(any()) } returns false.toPromise()
+				every { promiseIsConnectionActive(libraryId) } returns true.toPromise()
+			},
 			FakeStringResources(),
 		)
     }
@@ -65,4 +68,9 @@ class WhenLoadingTheLibrarySettings {
     fun `then is using existing files is correct`() {
         assertThat(services.isUsingExistingFiles.value).isFalse
     }
+
+	@Test
+	fun `then the connection is not active`() {
+		assertThat(services.isConnectionPossible.value).isFalse
+	}
 }
