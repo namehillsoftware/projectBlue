@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.access.jriver.GivenAJRiverConnection.AndItIsAlive
+package com.lasthopesoftware.bluewater.client.access.GivenAJRiverConnection.AndItDoesNotHaveAccess
 
 import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.LiveMediaCenterConnection
@@ -41,13 +41,10 @@ class WhenCheckingIfTheMediaCenterConnectionDetailsIsPossible {
 
 						every { promiseResponse(URL(urlProvider.baseUrl, "MCWS/v1/Authenticate")) } returns Promise(
 							PassThroughHttpResponse(
-								200,
-								"K",
+								401,
+								"No",
 								"""<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 										<Response Status="OK">
-										<Item Name="Token">45tpH5JP1f</Item>
-										<Item Name="ReadOnly">0</Item>
-										<Item Name="PreLicensed">0</Item>
 										</Response>
 										""".toByteArray().inputStream()
 							)
@@ -61,6 +58,6 @@ class WhenCheckingIfTheMediaCenterConnectionDetailsIsPossible {
 
 	@Test
 	fun `then the result is correct`() {
-		assertThat(result).isTrue
+		assertThat(result).isFalse
 	}
 }

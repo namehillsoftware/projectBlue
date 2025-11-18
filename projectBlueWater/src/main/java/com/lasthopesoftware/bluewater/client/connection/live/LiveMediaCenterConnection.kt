@@ -19,6 +19,7 @@ import com.lasthopesoftware.bluewater.client.connection.MediaCenterConnectionDet
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseServerClients
 import com.lasthopesoftware.bluewater.client.connection.requests.bodyString
+import com.lasthopesoftware.bluewater.client.connection.requests.isSuccessful
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withMcApi
@@ -499,6 +500,15 @@ class LiveMediaCenterConnection(
 			promiseResponse("Alive")
 				.also(cancellationProxy::doCancel)
 				.eventually { promiseTestedResponse(it, cancellationProxy) }
+				.eventually { isPossible ->
+					when {
+						!isPossible -> false.toPromise()
+						mediaCenterConnectionDetails.authCode.isNullOrEmpty() -> true.toPromise()
+						else -> promiseResponse("Authenticate")
+							.also(cancellationProxy::doCancel)
+							.then { r -> r.isSuccessful }
+					}
+				}
 				.then(
 					::resolve,
 					{ e ->

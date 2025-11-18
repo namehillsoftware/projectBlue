@@ -163,6 +163,7 @@ private fun LabelledSaveAndTestButton(
 		contentDescription = saveAndTestText,
 		label = saveAndTestText,
 		labelModifier = modifier,
+		labelMaxLines = 2,
 		enabled = !isTestingConnection
 	)
 }
