@@ -10,7 +10,6 @@ import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import dev.olshevski.navigation.reimagined.NavController
-import dev.olshevski.navigation.reimagined.moveToTop
 import dev.olshevski.navigation.reimagined.navigate
 import dev.olshevski.navigation.reimagined.pop
 import dev.olshevski.navigation.reimagined.popUpTo
@@ -52,8 +51,7 @@ class DestinationGraphNavigation(
 	}.toPromise()
 
 	override fun viewServerSettings(libraryId: LibraryId) = coroutineScope.launch {
-		ensureBrowserIsOnStack(libraryId)
-
+		navController.popUpTo { it is ItemScreen || it is LibraryScreen }
 		navController.navigate(ConnectionSettingsScreen(libraryId))
 	}.toPromise()
 
@@ -86,7 +84,7 @@ class DestinationGraphNavigation(
 	}.toPromise()
 
 	override fun viewNowPlaying(libraryId: LibraryId) = coroutineScope.launch {
-		if (!navController.moveToTop { it is NowPlayingScreen }) {
+		if (!navController.popUpTo { it is NowPlayingScreen }) {
 			ensureBrowserIsOnStack(libraryId)
 			navController.navigate(NowPlayingScreen(libraryId))
 		}
