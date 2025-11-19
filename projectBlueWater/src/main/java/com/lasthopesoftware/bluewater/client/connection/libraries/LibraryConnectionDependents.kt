@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.ApplicationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.access.DelegatingLibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
+import com.lasthopesoftware.bluewater.client.browsing.files.access.RevisionCachedLibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.DelegatingFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
@@ -106,8 +107,9 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 	}
 
 	override val libraryFilesProvider by lazy {
-		DelegatingLibraryFileProvider(
+		RevisionCachedLibraryFileProvider(
 			LibraryFileProvider(application.libraryConnectionProvider),
+			revisionProvider,
 			object : CachingPolicyFactory() {
 				override fun <Input : Any, Output> getCache(): CachePromiseFunctions<Input, Output> =
 					LruPromiseCache(maxLibraryFiles)

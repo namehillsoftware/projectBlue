@@ -11,7 +11,7 @@ class DelegatingLibraryFileProvider(inner: ProvideLibraryFiles, policies: Execut
 	private val promiseLibraryFiles by lazy { policies.applyPolicy<LibraryId, List<ServiceFile>>(inner::promiseFiles) }
 	private val promiseItemFiles by lazy { policies.applyPolicy<LibraryId, ItemId, List<ServiceFile>>(inner::promiseFiles) }
 	private val promisePlaylistFiles by lazy { policies.applyPolicy<LibraryId, PlaylistId, List<ServiceFile>>(inner::promiseFiles) }
-	private val promiseAudioFilesPolicy by lazy { policies.applyPolicy<LibraryId, String, List<ServiceFile>>(inner::promiseAudioFiles) }
+	private val promiseAudioFilesPolicy by lazy { policies.applyPolicy(inner::promiseAudioFiles) }
 
 	override fun promiseFiles(libraryId: LibraryId): Promise<List<ServiceFile>> = promiseLibraryFiles(libraryId)
 
