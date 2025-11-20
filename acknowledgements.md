@@ -24,4 +24,6 @@ list of the work of others that project blue depends on:
   - [AndroidX](https://developer.android.com/jetpack/androidx/)
   - [guava](https://github.com/google/guava)
   - [gson](https://github.com/google/gson)
-- [Jetbrains Kotlin](https://kotlinlang.org/)
+- Jetbrains as well:
+  - [Jetbrains Kotlin](https://kotlinlang.org/)
+  - [Ktor](https://ktor.io/)
