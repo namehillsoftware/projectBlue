@@ -65,6 +65,20 @@ class `When Getting The Live Connection` {
 									<Response Status="OK"></Response>""".toByteArray().inputStream()
 							)
 						)
+
+						every { promiseResponse(URL(urlProvider.baseUrl, "MCWS/v1/Authenticate")) } returns Promise(
+							PassThroughHttpResponse(
+								200,
+								"K",
+								"""<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+										<Response Status="OK">
+										<Item Name="Token">45tpH5JP1f</Item>
+										<Item Name="ReadOnly">0</Item>
+										<Item Name="PreLicensed">0</Item>
+										</Response>
+										""".toByteArray().inputStream()
+							)
+						)
 					}.toPromise()
 				}
 			},

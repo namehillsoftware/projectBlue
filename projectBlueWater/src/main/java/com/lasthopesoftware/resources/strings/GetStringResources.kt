@@ -67,6 +67,12 @@ interface GetStringResources {
 	val connect: String
 		get() = ""
 
+	val saveAndTestConnection: String
+		get() = ""
+
+	val testConnection: String
+		get() = ""
+
 	val clear: String
 		get() = ""
 

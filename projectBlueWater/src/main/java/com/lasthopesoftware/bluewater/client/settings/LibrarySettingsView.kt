@@ -127,10 +127,57 @@ private fun LabelledRemoveServerButton(
 ) {
 	ColumnMenuIcon(
 		onClick = librarySettingsViewModel::requestLibraryRemoval,
-		iconPainter = painterResource(id = R.drawable.ic_remove_item_36dp),
+		iconPainter = painterResource(id = R.drawable.remove_item_36dp),
 		contentDescription = stringResources.removeServer,
 		modifier = modifier,
 		label = stringResources.removeServer,
+	)
+}
+
+
+
+@Composable
+private fun LabelledSaveAndTestButton(
+	librarySettingsViewModel: LibrarySettingsViewModel,
+	stringResources: GetStringResources,
+	modifier: Modifier = Modifier,
+) {
+	val isSettingsChanged by librarySettingsViewModel.isSettingsChanged.subscribeAsState()
+	val isTestingConnection by librarySettingsViewModel.isTestingConnection.subscribeAsState()
+	val connectionStatusText by librarySettingsViewModel.connectionStatus.subscribeAsState()
+	val saveAndTestText by remember {
+		derivedStateOf {
+			when {
+				isSettingsChanged -> stringResources.saveAndTestConnection
+				connectionStatusText.isNotEmpty() -> connectionStatusText
+				else -> stringResources.testConnection
+			}
+		}
+	}
+
+	var promisedSaveAndTest by remember { mutableStateOf(Unit.toPromise()) }
+
+	val buttonIcon by remember {
+		derivedStateOf {
+			if (isTestingConnection) R.drawable.cancel_36dp
+			else R.drawable.refresh_36
+		}
+	}
+
+	ColumnMenuIcon(
+		onClick = {
+			if (!isTestingConnection) {
+				promisedSaveAndTest = librarySettingsViewModel.saveAndTestLibrary()
+			} else {
+				promisedSaveAndTest.cancel()
+			}
+		},
+		iconPainter = painterResource(id = buttonIcon),
+		contentDescription = saveAndTestText,
+		label = saveAndTestText,
+		labelModifier = modifier,
+		labelMaxLines = 2,
+		enabled = !isTestingConnection
 	)
 }
 
@@ -853,6 +900,12 @@ private fun LibrarySettingsMenu(
 			modifier = buttonModifier,
 		)
 
+		LabelledSaveAndTestButton(
+			librarySettingsViewModel = librarySettingsViewModel,
+			stringResources = stringResources,
+			modifier = buttonModifier,
+		)
+
 		LabelledSaveAndConnectButton(
 			librarySettingsViewModel = librarySettingsViewModel,
 			navigateApplication = navigateApplication,
@@ -899,7 +952,9 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 		) {
 			if (!isLoadingState) {
 				Column(
-					modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+					modifier = Modifier
+						.fillMaxSize()
+						.verticalScroll(rememberScrollState()),
 					horizontalAlignment = Alignment.CenterHorizontally,
 				) {
 					Spacer(
@@ -969,7 +1024,10 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 					navigateApplication = navigateApplication,
 					stringResources = stringResources,
 					onChangeServerTypeClick = { isSelectingServerType = true },
-					modifier = Modifier.fillMaxWidth().height(menuHeightDp).clipToBounds()
+					modifier = Modifier
+						.fillMaxWidth()
+						.height(menuHeightDp)
+						.clipToBounds()
 				)
 			}
 		}
@@ -1012,7 +1070,9 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 
 			if (!isLoadingState) {
 				Column(
-					modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+					modifier = Modifier
+						.fillMaxSize()
+						.verticalScroll(rememberScrollState()),
 					horizontalAlignment = Alignment.CenterHorizontally,
 				) {
 					LibrarySettings(

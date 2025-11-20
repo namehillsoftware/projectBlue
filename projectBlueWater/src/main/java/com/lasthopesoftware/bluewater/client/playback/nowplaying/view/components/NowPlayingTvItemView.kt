@@ -102,7 +102,7 @@ fun NowPlayingTvItemView(
 			)
 
 			ListItemIcon(
-				painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+				painter = painterResource(id = R.drawable.remove_item_36dp),
 				contentDescription = stringResource(id = R.string.btn_remove_file),
 				modifier = Modifier
 					.navigable(onClick = onRemoveFromNowPlayingClick),

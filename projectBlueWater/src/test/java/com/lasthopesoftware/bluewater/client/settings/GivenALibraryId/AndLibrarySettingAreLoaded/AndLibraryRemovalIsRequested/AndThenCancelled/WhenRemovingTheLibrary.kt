@@ -35,6 +35,9 @@ class WhenRemovingTheLibrary {
 				}
 			},
 			mockk(),
+			mockk {
+				every { promiseIsConnectionActive(libraryId) } returns false.toPromise()
+			},
 			FakeStringResources(),
 		)
     }

@@ -39,13 +39,13 @@ class LibraryConnectionProvider(
 				lookupConnectionSettings
 					.promiseConnectionSettings(libraryId)
 					.eventually({ settings ->
-						when {
-							settings == null -> {
+						when (settings) {
+							null -> {
 								reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
 								resolve(null)
 								empty()
 							}
-							settings is MediaCenterConnectionSettings && settings.isWakeOnLanEnabled -> wakeAndBuildConnection()
+							is MediaCenterConnectionSettings if settings.isWakeOnLanEnabled -> wakeAndBuildConnection()
 							else -> buildConnection()
 						}
 					}, {

@@ -33,6 +33,9 @@ class WhenRemovingTheLibrary {
 				}
 			},
 			mockk(),
+			mockk {
+				every { promiseIsConnectionActive(libraryId) } returns false.toPromise()
+			},
 			FakeStringResources(),
 		)
     }
@@ -51,5 +54,10 @@ class WhenRemovingTheLibrary {
 	@Test
 	fun `then the library is removed`() {
 		assertThat(removedLibraries.single()).isEqualTo(libraryId)
+	}
+
+	@Test
+	fun `then the connection is not possible`() {
+		assertThat(services.isConnectionPossible.value).isFalse
 	}
 }

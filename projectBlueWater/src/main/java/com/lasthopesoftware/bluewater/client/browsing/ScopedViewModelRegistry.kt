@@ -64,6 +64,7 @@ class ScopedViewModelRegistry(
 			librarySettingsStorage = librarySettingsStorage,
 			libraryRemoval = libraryRemoval,
 			applicationPermissions = permissionsDependencies.applicationPermissions,
+			manageConnectionSessions = connectionSessions,
 			stringResources = stringResources,
 		)
 	}

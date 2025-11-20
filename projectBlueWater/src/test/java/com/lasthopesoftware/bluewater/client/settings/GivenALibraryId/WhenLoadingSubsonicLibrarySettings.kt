@@ -36,6 +36,9 @@ class WhenLoadingSubsonicLibrarySettings {
 			mockk(),
 			mockk(),
 			mockk(),
+			mockk {
+				every { promiseIsConnectionActive(libraryId) } returns true.toPromise()
+			},
 			FakeStringResources(),
 		)
     }
@@ -92,5 +95,10 @@ class WhenLoadingSubsonicLibrarySettings {
 	@Test
 	fun `then the mac address is correct`() {
 		assertThat(connectionSettingsViewModel?.macAddress?.value).isEmpty()
+	}
+
+	@Test
+	fun `then the connection is possible`() {
+		assertThat(services.isConnectionPossible.value).isTrue
 	}
 }
