@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -209,8 +210,9 @@ private fun SearchFilesMenu(
 	searchFilesViewModel: SearchFilesViewModel,
 	applicationNavigation: NavigateApplication,
 	playbackServiceController: ControlPlaybackService,
+	modifier: Modifier = Modifier,
 ) {
-	ListMenuRow(modifier = Modifier.fillMaxWidth()) {
+	ListMenuRow(modifier = Modifier.fillMaxWidth().then(modifier)) {
 		val modifier = Modifier.requiredWidth(topMenuIconWidth)
 		val files by searchFilesViewModel.files.subscribeAsState()
 		val isFileControlsEnabled = files.any()
@@ -464,6 +466,9 @@ private fun SearchFilesList(
 						searchFilesViewModel,
 						applicationNavigation,
 						playbackServiceController,
+						modifier = Modifier.graphicsLayer {
+							translationY = (menuHeightValue - rowHeightPx) * 0.5f
+						}
 					)
 				}
 

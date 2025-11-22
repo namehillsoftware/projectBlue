@@ -58,6 +58,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -567,8 +568,9 @@ private fun FileDetailsSingleColumn(
 		min = LocalDensity.current.run { collapsedHeight.toPx() },
 		max = boxHeightPx
 	)
+	val maxMenuHeightPx = LocalDensity.current.remember { maxMenuHeight.toPx() }
 	val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(
-		LocalDensity.current.remember { maxMenuHeight.toPx() },
+		maxMenuHeightPx,
 		0f
 	)
 	val compositeScrollConnection = remember(heightScaler, menuHeightScaler) {
@@ -753,7 +755,11 @@ private fun FileDetailsSingleColumn(
 					contentAlignment = Alignment.BottomStart
 				) {
 					ListMenuRow(
-						modifier = Modifier.requiredHeight(menuHeight)
+						modifier = Modifier
+							.graphicsLayer {
+								translationY = (menuHeightPx - maxMenuHeightPx) * 0.5f
+							}
+							.requiredHeight(menuHeight)
 					) {
 						menuIcons()
 					}
