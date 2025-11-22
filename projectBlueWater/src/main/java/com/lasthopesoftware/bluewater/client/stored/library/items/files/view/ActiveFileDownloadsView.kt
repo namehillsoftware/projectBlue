@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.view
 
+import VerticalHeaderScaffold
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -7,7 +8,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -53,22 +53,21 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.calculateSummaryColumnWidth
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
-import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.FullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
-import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.ListLoading
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.MenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledChevronIcon
+import com.lasthopesoftware.bluewater.android.ui.components.ignoreConsumedOffset
+import com.lasthopesoftware.bluewater.android.ui.components.linkedTo
 import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
-import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconSize
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconWidth
@@ -224,36 +223,19 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 	ControlSurface {
 		val isLoading by activeFileDownloadsViewModel.isLoading.subscribeAsState()
 
-		BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-			if (maxWidth < Dimensions.twoColumnThreshold) {
-				val heightScaler = LocalDensity.current.run {
-					FullScreenScrollConnectedScaler.remember(min = appBarHeight.toPx(), max = boxHeight.toPx())
-				}
-				val topMenuHeightPx = LocalDensity.current.remember { topMenuHeight.toPx() }
-				val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(topMenuHeightPx, 0f)
-				val compositeScroller = remember(heightScaler) {
-					ConsumedOffsetErasingNestedScrollConnection(
-						LinkedNestedScrollConnection(heightScaler, menuHeightScaler)
-					)
-				}
+		if (maxWidth < Dimensions.twoColumnThreshold) {
+			val heightScaler = LocalDensity.current.run {
+				FullScreenScrollConnectedScaler.remember(min = appBarHeight.toPx(), max = boxHeight.toPx())
+			}
+			val topMenuHeightPx = LocalDensity.current.remember { topMenuHeight.toPx() }
+			val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(topMenuHeightPx, 0f)
+			val compositeScroller = remember(heightScaler) {
+				heightScaler.linkedTo(menuHeightScaler).ignoreConsumedOffset()
+			}
 
-				Box(
-					modifier = Modifier
-						.fillMaxSize()
-						.nestedScroll(compositeScroller)
-				) {
-					val listFocus = remember { FocusRequester() }
-					if (isLoading) {
-						ListLoading(modifier = Modifier.fillMaxSize())
-					} else {
-						DownloadingFilesList(
-							activeFileDownloadsViewModel = activeFileDownloadsViewModel,
-							trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
-							modifier = Modifier.fillMaxSize().focusRequester(listFocus),
-							headerHeight = Dimensions.expandedTitleHeight + Dimensions.appBarHeight + topMenuHeight + rowPadding * 2
-						)
-					}
-
+			val listFocus = remember { FocusRequester() }
+			VerticalHeaderScaffold(
+				header = {
 					Column(
 						modifier = Modifier
 							.fillMaxWidth()
@@ -342,68 +324,84 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 								}
 							}
 						}
-
-						val menuHeightValue by menuHeightScaler.valueState
-						val menuHeightValueDp by LocalDensity.current.remember { derivedStateOf { menuHeightValue.toDp() } }
-						Box(
-							modifier = Modifier
-								.fillMaxWidth()
-								.background(MaterialTheme.colors.surface)
-								.height(menuHeightValueDp)
-								.clipToBounds()
-						) {
-							SyncMenu(
-								activeFileDownloadsViewModel,
-								modifier = Modifier
-									.graphicsLayer {
-										translationY = (menuHeightValue - topMenuHeightPx) * 0.5f
-									}
-							)
-						}
 					}
-				}
-			} else {
-				Row(
-					modifier = Modifier.fillMaxSize(),
-				) {
-					val menuWidth = this@ActiveFileDownloadsView.calculateSummaryColumnWidth()
-					Column(
-						modifier = Modifier.width(menuWidth),
+				},
+				overlay = {
+					val menuHeightValue by menuHeightScaler.valueState
+					val menuHeightValueDp by LocalDensity.current.remember { derivedStateOf { menuHeightValue.toDp() } }
+					Box(
+						modifier = Modifier
+							.fillMaxWidth()
+							.background(MaterialTheme.colors.surface)
+							.height(menuHeightValueDp)
+							.clipToBounds()
 					) {
-						Column(
-							modifier = Modifier.weight(1f)
-						) {
-							BackButton(
-								applicationNavigation::navigateUp,
-								modifier = Modifier.padding(topRowOuterPadding)
-							)
-
-							val header = stringResource(id = R.string.activeDownloads)
-
-							ProvideTextStyle(MaterialTheme.typography.h5) {
-								Text(
-									text = header,
-									maxLines = 2,
-									overflow = TextOverflow.Ellipsis,
-									modifier = Modifier
-										.fillMaxWidth()
-										.padding(horizontal = viewPaddingUnit),
-								)
-							}
-						}
-
-						SyncMenu(activeFileDownloadsViewModel)
+						SyncMenu(
+							activeFileDownloadsViewModel,
+							modifier = Modifier
+								.graphicsLayer {
+									translationY = (menuHeightValue - topMenuHeightPx) * 0.5f
+								}
+						)
 					}
-
+				},
+				content = { headerHeight ->
 					if (isLoading) {
 						ListLoading(modifier = Modifier.fillMaxSize())
 					} else {
 						DownloadingFilesList(
 							activeFileDownloadsViewModel = activeFileDownloadsViewModel,
 							trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
-							modifier = Modifier.fillMaxSize(),
+							modifier = Modifier.fillMaxSize().focusRequester(listFocus),
+							headerHeight = headerHeight
 						)
 					}
+				},
+				modifier = Modifier
+					.fillMaxSize()
+					.nestedScroll(compositeScroller)
+			)
+		} else {
+			Row(
+				modifier = Modifier.fillMaxSize(),
+			) {
+				val menuWidth = this@ActiveFileDownloadsView.calculateSummaryColumnWidth()
+				Column(
+					modifier = Modifier.width(menuWidth),
+				) {
+					Column(
+						modifier = Modifier.weight(1f)
+					) {
+						BackButton(
+							applicationNavigation::navigateUp,
+							modifier = Modifier.padding(topRowOuterPadding)
+						)
+
+						val header = stringResource(id = R.string.activeDownloads)
+
+						ProvideTextStyle(MaterialTheme.typography.h5) {
+							Text(
+								text = header,
+								maxLines = 2,
+								overflow = TextOverflow.Ellipsis,
+								modifier = Modifier
+									.fillMaxWidth()
+									.padding(horizontal = viewPaddingUnit),
+							)
+						}
+					}
+
+					SyncMenu(activeFileDownloadsViewModel)
+				}
+
+				if (isLoading) {
+					ListLoading(modifier = Modifier.fillMaxSize())
+				} else {
+					DownloadingFilesList(
+						activeFileDownloadsViewModel = activeFileDownloadsViewModel,
+						trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
+						modifier = Modifier.fillMaxSize(),
+					)
 				}
 			}
 		}

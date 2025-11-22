@@ -2,6 +2,7 @@
 
 package com.lasthopesoftware.bluewater.settings
 
+import VerticalHeaderScaffold
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
@@ -42,7 +44,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -51,8 +52,6 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.onPlaced
-import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalResources
@@ -68,11 +67,11 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.ApplicationInfoText
 import com.lasthopesoftware.bluewater.android.ui.components.ApplicationLogo
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
-import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
-import com.lasthopesoftware.bluewater.android.ui.components.FullScreenScrollConnectedScaler
+import com.lasthopesoftware.bluewater.android.ui.components.ConsumableConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.LabeledSelection
-import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
+import com.lasthopesoftware.bluewater.android.ui.components.ignoreConsumedOffset
+import com.lasthopesoftware.bluewater.android.ui.components.linkedTo
 import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
@@ -419,92 +418,69 @@ private fun ApplicationSettingsViewVertical(
 	applicationNavigation: NavigateApplication,
 	playbackService: ControlPlaybackService,
 ) {
+	val minHeaderHeight = LocalDensity.current.remember { Dimensions.appBarHeight.toPx() }
+	val headerScaler = ConsumableConnectedScaler.remember(minHeaderHeight)
+
 	val expandedMenuHeightPx = LocalDensity.current.remember { expandedMenuHeight.toPx() }
-	var menuOffsetY by remember { mutableFloatStateOf(Float.MAX_VALUE) }
-	val paddingScaler = FullScreenScrollConnectedScaler.remember(
-		min = 0f,
-		max = menuOffsetY
-	)
 	val menuScaler = rememberDeferredPreScrollConnectedScaler(expandedMenuHeightPx, 0f)
-	val scrollConnection = remember(paddingScaler, menuScaler) {
-		ConsumedOffsetErasingNestedScrollConnection(
-			LinkedNestedScrollConnection(paddingScaler,menuScaler)
-		)
+
+	val scrollConnection = remember(menuScaler, headerScaler) {
+		headerScaler.linkedTo(menuScaler).ignoreConsumedOffset()
 	}
 
 	val libraries by applicationSettingsViewModel.libraries.subscribeAsState()
 	val selectedLibraryId by applicationSettingsViewModel.chosenLibraryId.subscribeAsState()
 
-	Box(
-		modifier = Modifier
-			.fillMaxSize()
-			.nestedScroll(scrollConnection)
-	) {
-		Column(
-			modifier = Modifier
-				.fillMaxSize()
-				.verticalScroll(rememberScrollState()),
-			horizontalAlignment = Alignment.CenterHorizontally,
-		) {
-			Box(
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(viewPaddingUnit * 8)
-			) {
-				ApplicationLogo(
+	VerticalHeaderScaffold(
+		header = {
+			headerScaler.apply {
+				Column(
 					modifier = Modifier
-						.fillMaxWidth(.5f)
-						.align(Alignment.TopCenter)
-						.combinedClickable(
-							interactionSource = remember { MutableInteractionSource() },
-							indication = null,
-							onClick = {},
-							onLongClick = { applicationNavigation.viewHiddenSettings() },
+						.fillMaxWidth()
+						.background(MaterialTheme.colors.surface)
+						.offsetLayout()
+						.clipToBounds()
+				) {
+					Box(
+						modifier = Modifier
+							.fillMaxWidth()
+							.padding(viewPaddingUnit * 8)
+					) {
+						ApplicationLogo(
+							modifier = Modifier
+								.fillMaxWidth(.5f)
+								.align(Alignment.TopCenter)
+								.combinedClickable(
+									interactionSource = remember { MutableInteractionSource() },
+									indication = null,
+									onClick = {},
+									onLongClick = { applicationNavigation.viewHiddenSettings() },
+								)
 						)
-				)
-			}
+					}
 
-			Spacer(modifier = Modifier
-				.height(expandedMenuHeight + Dimensions.appBarHeight)
-				.onPlaced { bounds ->
-					menuOffsetY = bounds.positionInParent().y
-				}
-			)
-
-			val selectedTab by applicationSettingsViewModel.selectedTab.subscribeAsState()
-			when (selectedTab) {
-				ApplicationSettingsViewModel.SelectedTab.ViewServers -> ServersList(
-					applicationNavigation,
-					libraries,
-					selectedLibraryId,
-				)
-				ApplicationSettingsViewModel.SelectedTab.ViewSettings -> SettingsList(
-					applicationSettingsViewModel,
-					playbackService
-				)
-			}
-		}
-
-		val menuHeightPx by LocalDensity.current.remember(menuScaler) { menuScaler.valueState }
-		val menuHeightDp by LocalDensity.current.remember { derivedStateOf { menuHeightPx.toDp() } }
-		val paddingDp by LocalDensity.current.remember(paddingScaler) { derivedStateOf { paddingScaler.valueState.value.toDp() } }
-		Column(modifier = Modifier.padding(top = paddingDp)) {
-			Row(
-				modifier = Modifier
-					.fillMaxWidth()
-					.height(Dimensions.appBarHeight)
-					.background(MaterialTheme.colors.surface)
-			) {
-				ProvideTextStyle(MaterialTheme.typography.h4) {
-					Text(text = stringResource(id = R.string.app_name))
+					Row(
+						modifier = Modifier
+							.fillMaxWidth()
+							.requiredHeight(Dimensions.appBarHeight)
+							.background(MaterialTheme.colors.surface)
+					) {
+						ProvideTextStyle(MaterialTheme.typography.h4) {
+							Text(text = stringResource(id = R.string.app_name))
+						}
+					}
 				}
 			}
+		},
+		overlay = {
+			val menuHeightPx by LocalDensity.current.remember(menuScaler) { menuScaler.valueState }
+			val menuHeightDp by LocalDensity.current.remember { derivedStateOf { menuHeightPx.toDp() } }
 
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
-					.height(menuHeightDp)
 					.background(MaterialTheme.colors.surface)
+					.height(menuHeightDp)
 					.clipToBounds()
 			) {
 				ApplicationSettingsMenu(
@@ -514,14 +490,41 @@ private fun ApplicationSettingsViewVertical(
 					modifier = Modifier
 						.graphicsLayer {
 							translationY = (menuHeightPx - expandedMenuHeightPx) * 0.5f
-						},
+						}
+						.fillMaxWidth(),
 					onTabChange = {
 						scrollConnection.goToMax()
 					}
 				)
 			}
-		}
-	}
+		},
+		content = { overlayHeight ->
+			Column(
+				modifier = Modifier
+					.fillMaxSize()
+					.verticalScroll(rememberScrollState()),
+				horizontalAlignment = Alignment.CenterHorizontally,
+			) {
+				Spacer(modifier = Modifier.height(overlayHeight))
+
+				val selectedTab by applicationSettingsViewModel.selectedTab.subscribeAsState()
+				when (selectedTab) {
+					ApplicationSettingsViewModel.SelectedTab.ViewServers -> ServersList(
+						applicationNavigation,
+						libraries,
+						selectedLibraryId,
+					)
+					ApplicationSettingsViewModel.SelectedTab.ViewSettings -> SettingsList(
+						applicationSettingsViewModel,
+						playbackService
+					)
+				}
+			}
+		},
+		modifier = Modifier
+			.fillMaxSize()
+			.nestedScroll(scrollConnection)
+	)
 }
 
 @Composable

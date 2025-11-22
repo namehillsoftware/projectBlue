@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.settings
 
+import VerticalHeaderScaffold
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,14 +54,14 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.calculateSummaryColumnWidth
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
-import com.lasthopesoftware.bluewater.android.ui.components.ConsumedOffsetErasingNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.FullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LabeledSelection
-import com.lasthopesoftware.bluewater.android.ui.components.LinkedNestedScrollConnection
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.StandardTextField
+import com.lasthopesoftware.bluewater.android.ui.components.ignoreConsumedOffset
+import com.lasthopesoftware.bluewater.android.ui.components.linkedTo
 import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
@@ -941,39 +942,11 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 		val heightScaler = FullScreenScrollConnectedScaler.remember(collapsedHeightPx, boxHeightPx)
 		val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(topMenuHeightPx, 0f)
 		val compositeScroller = remember(heightScaler, menuHeightScaler) {
-			ConsumedOffsetErasingNestedScrollConnection(
-				LinkedNestedScrollConnection(heightScaler, menuHeightScaler)
-			)
+			heightScaler.linkedTo(menuHeightScaler).ignoreConsumedOffset()
 		}
 
-		Box(
-			modifier = Modifier
-				.fillMaxSize()
-				.nestedScroll(compositeScroller)
-		) {
-			if (!isLoadingState) {
-				Column(
-					modifier = Modifier
-						.fillMaxSize()
-						.verticalScroll(rememberScrollState()),
-					horizontalAlignment = Alignment.CenterHorizontally,
-				) {
-					Spacer(
-						modifier = Modifier.height(boxHeight + thisTopMenuHeight)
-					)
-
-					LibrarySettings(
-						librarySettingsViewModel = librarySettingsViewModel,
-						stringResources = stringResources,
-						userSslCertificates = userSslCertificates,
-						undoBackStack = undoBackStack,
-						isSelectingServerType = isSelectingServerType,
-						onServerTypeSelectionFinished = { isSelectingServerType = false }
-					)
-				}
-			}
-
-			Column {
+		VerticalHeaderScaffold(
+			header = {
 				val heightValue by heightScaler.valueState
 				Box(
 					modifier = Modifier
@@ -1017,24 +990,55 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 							.padding(topRowOuterPadding)
 					)
 				}
-
+			},
+			overlay = {
 				val menuHeightPx by menuHeightScaler.valueState
 				val menuHeightDp by LocalDensity.current.remember { derivedStateOf { menuHeightPx.toDp() } }
-				LibrarySettingsMenu(
-					librarySettingsViewModel = librarySettingsViewModel,
-					navigateApplication = navigateApplication,
-					stringResources = stringResources,
-					onChangeServerTypeClick = { isSelectingServerType = true },
+				Box(
 					modifier = Modifier
-						.graphicsLayer {
-							translationY = (menuHeightPx - topMenuHeightPx) * 0.5f
-						}
 						.fillMaxWidth()
 						.height(menuHeightDp)
 						.clipToBounds()
-				)
-			}
-		}
+				) {
+					LibrarySettingsMenu(
+						librarySettingsViewModel = librarySettingsViewModel,
+						navigateApplication = navigateApplication,
+						stringResources = stringResources,
+						onChangeServerTypeClick = { isSelectingServerType = true },
+						modifier = Modifier
+							.graphicsLayer {
+								translationY = (menuHeightPx - topMenuHeightPx) * 0.5f
+							}
+					)
+				}
+			},
+			content = { headerHeight ->
+				if (!isLoadingState) {
+					Column(
+						modifier = Modifier
+							.fillMaxSize()
+							.verticalScroll(rememberScrollState()),
+						horizontalAlignment = Alignment.CenterHorizontally,
+					) {
+						Spacer(
+							modifier = Modifier.height(headerHeight)
+						)
+
+						LibrarySettings(
+							librarySettingsViewModel = librarySettingsViewModel,
+							stringResources = stringResources,
+							userSslCertificates = userSslCertificates,
+							undoBackStack = undoBackStack,
+							isSelectingServerType = isSelectingServerType,
+							onServerTypeSelectionFinished = { isSelectingServerType = false }
+						)
+					}
+				}
+			},
+			modifier = Modifier
+				.fillMaxSize()
+				.nestedScroll(compositeScroller)
+		)
 	} else {
 		Row(
 			modifier = Modifier.fillMaxSize(),
