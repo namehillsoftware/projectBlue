@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
-import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
@@ -47,6 +46,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -603,7 +603,6 @@ fun ItemListView(
 	}
 }
 
-@SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun ScreenDimensionsScope.ItemListView(
@@ -873,6 +872,9 @@ fun ScreenDimensionsScope.ItemListView(
 								applicationNavigation = applicationNavigation,
 								playbackServiceController = playbackServiceController,
 								modifier = Modifier
+									.graphicsLayer {
+										translationY = (menuHeightValue - topMenuHeightPx) * 0.5f
+									}
 									.focusProperties {
 										down = listFocus
 									}

@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -1025,6 +1026,9 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 					stringResources = stringResources,
 					onChangeServerTypeClick = { isSelectingServerType = true },
 					modifier = Modifier
+						.graphicsLayer {
+							translationY = (menuHeightPx - topMenuHeightPx) * 0.5f
+						}
 						.fillMaxWidth()
 						.height(menuHeightDp)
 						.clipToBounds()
