@@ -49,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
@@ -176,7 +177,9 @@ fun ThemeSettingsSection(
 		modifier = Modifier.fillMaxWidth(),
 	) {
 		Row(
-			modifier = standardRowModifier.padding(horizontal = horizontalOptionsPadding).selectableGroup(),
+			modifier = standardRowModifier
+				.padding(horizontal = horizontalOptionsPadding)
+				.selectableGroup(),
 			horizontalArrangement = Arrangement.SpaceEvenly,
 		) {
 			val isLoading by applicationSettingsViewModel.isLoading.subscribeAsState()
@@ -482,12 +485,10 @@ private fun ApplicationSettingsViewVertical(
 			}
 		}
 
-		val menuHeightDp by LocalDensity.current.remember(menuScaler) { derivedStateOf { menuScaler.valueState.floatValue.toDp() } }
+		val menuHeightPx by LocalDensity.current.remember(menuScaler) { menuScaler.valueState }
+		val menuHeightDp by LocalDensity.current.remember { derivedStateOf { menuHeightPx.toDp() } }
 		val paddingDp by LocalDensity.current.remember(paddingScaler) { derivedStateOf { paddingScaler.valueState.value.toDp() } }
-		Column(
-			modifier = Modifier
-				.padding(top = paddingDp)
-		) {
+		Column(modifier = Modifier.padding(top = paddingDp)) {
 			Row(
 				modifier = Modifier
 					.fillMaxWidth()
@@ -499,19 +500,26 @@ private fun ApplicationSettingsViewVertical(
 				}
 			}
 
-			ApplicationSettingsMenu(
-				applicationSettingsViewModel,
-				applicationNavigation = applicationNavigation,
-				selectedLibraryId = selectedLibraryId,
+			Box(
 				modifier = Modifier
 					.fillMaxWidth()
 					.height(menuHeightDp)
 					.background(MaterialTheme.colors.surface)
-					.clipToBounds(),
-				onTabChange = {
-					scrollConnection.goToMax()
-				}
-			)
+					.clipToBounds()
+			) {
+				ApplicationSettingsMenu(
+					applicationSettingsViewModel,
+					applicationNavigation = applicationNavigation,
+					selectedLibraryId = selectedLibraryId,
+					modifier = Modifier
+						.graphicsLayer {
+							translationY = (menuHeightPx - expandedMenuHeightPx) * 0.5f
+						},
+					onTabChange = {
+						scrollConnection.goToMax()
+					}
+				)
+			}
 		}
 	}
 }

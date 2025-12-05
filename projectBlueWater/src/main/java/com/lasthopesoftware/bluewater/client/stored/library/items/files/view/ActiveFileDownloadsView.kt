@@ -93,9 +93,10 @@ private val boxHeight = expandedTitleHeight + appBarHeight
 @Composable
 private fun SyncMenu(
 	activeFileDownloadsViewModel: ActiveFileDownloadsViewModel,
+	modifier: Modifier = Modifier,
 ) {
 	ListMenuRow(
-		modifier = Modifier.fillMaxWidth()
+		modifier = Modifier.fillMaxWidth().then(modifier)
 	) {
 		val isSyncing by activeFileDownloadsViewModel.isSyncing.subscribeAsState()
 		val label = stringResource(
@@ -351,7 +352,13 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 								.height(menuHeightValueDp)
 								.clipToBounds()
 						) {
-							SyncMenu(activeFileDownloadsViewModel)
+							SyncMenu(
+								activeFileDownloadsViewModel,
+								modifier = Modifier
+									.graphicsLayer {
+										translationY = (menuHeightValue - topMenuHeightPx) * 0.5f
+									}
+							)
 						}
 					}
 				}
