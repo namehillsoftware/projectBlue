@@ -1193,7 +1193,7 @@ fun NowPlayingView(
 						}
 
 						Icon(
-							painter = painterResource(id = R.drawable.remove_item_36dp),
+							painter = painterResource(id = R.drawable.cancel_36dp),
 							contentDescription = stringResource(id = R.string.btn_cancel),
 							modifier = Modifier
 								.clickable { playlistViewModel.disableSavingPlaylist() }
