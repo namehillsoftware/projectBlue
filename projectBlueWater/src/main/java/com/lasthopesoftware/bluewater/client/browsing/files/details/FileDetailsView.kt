@@ -832,7 +832,7 @@ private fun BoxWithConstraintsScope.FileDetailsTwoColumn(
 					)
 
 					Image(
-						painter = painterResource(id = R.drawable.remove_item_36dp),
+						painter = painterResource(id = R.drawable.cancel_36dp),
 						contentDescription = "Close",
 						colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
 						modifier = Modifier
