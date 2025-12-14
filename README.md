@@ -66,8 +66,7 @@ Once changes are merged, a build will be deployed and published by the project b
 
 - [Gradle](https://gradle.org/) - Dependency and Build Management
 - [Android Studio and SDK](https://developer.android.com/studio/) - Tools and standard library for Android
-- [Kotlin](https://kotlinlang.org/) - Language project blue is migrating to
-- [Java](https://www.java.com/en/) - Majority of the project is written in Java
+- [Kotlin](https://kotlinlang.org/) - Majority of project blue is written in Kotlin
 - [Handoff](https://github.com/namehillsoftware/handoff) - Continuations library
 
 ## Contributing
@@ -92,7 +91,26 @@ process for submitting pull requests to us.
 ## Versioning
 
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the 
-[tags on this repository](https://github.com/namehillsoftware/projectBlue/tags). 
+[tags on this repository](https://github.com/namehillsoftware/projectBlue/tags).
+
+## UI Design
+
+project blue has three major UI "areas":
+
+- The browser: displays items and files from the library server. Also displays local library information
+  like active file synchronization status.
+- Now playing: displays information about currently playing files.
+- File details: displays information about a file.
+
+The UI design is governed by a philosophy of "owners" for the above areas. These "owners" determine
+the design focus that is applied to a given area of the application:
+
+- Browser - the application (project blue).
+  - Focus on browsing the server, configuring the application, and syncing files to the device.
+- Now playing - the user.
+  - Focus on controlling playback, viewing current playback, and manipulating the playing playlist.
+- File details - the artist.
+  - Focus on displaying and editing details about a given track.
 
 ## Authors
 

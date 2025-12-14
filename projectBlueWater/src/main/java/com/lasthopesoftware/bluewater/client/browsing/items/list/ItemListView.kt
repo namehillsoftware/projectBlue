@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
+import VerticalHeaderScaffold
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
@@ -578,7 +579,6 @@ fun ItemListView(
 				}
 			}
 
-
 			if (LocalInputModeManager.current.inputMode == InputMode.Touch) {        // 5in in pixels, pixels/Inch
 				val maxScrollBarHeight = remember( maxHeight, headerHeight) {
 					val dpi = 160f
@@ -704,9 +704,7 @@ fun ScreenDimensionsScope.ItemListView(
 			val titleHeightScaler = FullScreenScrollConnectedScaler.remember(collapsedHeightPx, expandedHeightPx, 0f, fullListSize)
 
 			val compositeScrollConnection = remember(titleHeightScaler, menuHeightScaler) {
-				titleHeightScaler
-					.linkedTo(menuHeightScaler)
-					.ignoreConsumedOffset()
+				titleHeightScaler.linkedTo(menuHeightScaler).ignoreConsumedOffset()
 			}
 
 			val anchoredScrollConnectionDispatcher = AnchoredProgressScrollConnectionDispatcher.remember(
@@ -718,42 +716,15 @@ fun ScreenDimensionsScope.ItemListView(
 			val itemValue by itemListViewModel.itemValue.subscribeAsState()
 			if (maxWidth < Dimensions.twoColumnThreshold) {
 
-				Box(
-					modifier = Modifier
-						.fillMaxSize()
-						.nestedScroll(anchoredScrollConnectionDispatcher)
-				) {
-					val listFocus = remember { FocusRequester() }
-					ItemListView(
-						itemListViewModel,
-						fileListViewModel,
-						itemDataLoader,
-						nowPlayingViewModel,
-						itemListMenuBackPressedHandler,
-						trackHeadlineViewModelProvider,
-						childItemViewModelProvider,
-						applicationNavigation,
-						playbackLibraryItems,
-						playbackServiceController,
-						undoBackStack,
-						lazyListState,
-						anchoredScrollConnectionState,
-						{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
-						anchoredScrollConnectionDispatcher::progressTo,
-						headerHeight = appBarAndTitleHeight + topMenuHeight + rowPadding * 2,
-						focusRequester = listFocus
-					)
-
-					Column(
-						modifier = Modifier
-							.background(MaterialTheme.colors.surface)
-							.fillMaxWidth()
-							.focusGroup()
-					) headerColumn@{
+				val listFocus = remember { FocusRequester() }
+				VerticalHeaderScaffold(
+					header = {
 						val titleHeightValue by titleHeightScaler.valueState
 
 						val headerCollapseProgress by titleHeightScaler.progressState
-						val titleHeightValueDp by LocalDensity.current.remember(titleHeightScaler) { derivedStateOf { titleHeightValue.toDp() } }
+						val titleHeightValueDp by LocalDensity.current.remember(titleHeightScaler) {
+							derivedStateOf { titleHeightValue.toDp() }
+						}
 						Box(
 							modifier = Modifier
 								.fillMaxWidth()
@@ -855,7 +826,8 @@ fun ScreenDimensionsScope.ItemListView(
 								}
 							}
 						}
-
+					},
+					overlay = {
 						val menuHeightValue by menuHeightScaler.valueState
 						val menuHeightDp by LocalDensity.current.remember { derivedStateOf { menuHeightValue.toDp() } }
 						Box(
@@ -880,8 +852,32 @@ fun ScreenDimensionsScope.ItemListView(
 									}
 							)
 						}
-					}
-				}
+					},
+					content = { overhangHeight ->
+						ItemListView(
+							itemListViewModel,
+							fileListViewModel,
+							itemDataLoader,
+							nowPlayingViewModel,
+							itemListMenuBackPressedHandler,
+							trackHeadlineViewModelProvider,
+							childItemViewModelProvider,
+							applicationNavigation,
+							playbackLibraryItems,
+							playbackServiceController,
+							undoBackStack,
+							lazyListState,
+							anchoredScrollConnectionState,
+							{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
+							anchoredScrollConnectionDispatcher::progressTo,
+							headerHeight = overhangHeight,
+							focusRequester = listFocus
+						)
+					},
+					modifier = Modifier
+						.fillMaxSize()
+						.nestedScroll(anchoredScrollConnectionDispatcher)
+				)
 			} else {
 				Row(
 					modifier = Modifier.fillMaxSize(),
