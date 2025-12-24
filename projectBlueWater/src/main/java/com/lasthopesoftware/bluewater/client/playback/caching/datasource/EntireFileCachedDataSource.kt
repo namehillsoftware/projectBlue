@@ -133,7 +133,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 		override fun promiseFlush(): Promise<Unit> = Unit.toPromise()
 
-		private fun processQueue() : Promise<CacheWritableStream?> = rateLimiter.limit {
+		private fun processQueue() : Promise<CacheWritableStream?> = rateLimiter.enqueuePromise {
 			promisedOutputStream.eventually { outputStream ->
 				if (outputStream == null) isFaulted = true
 

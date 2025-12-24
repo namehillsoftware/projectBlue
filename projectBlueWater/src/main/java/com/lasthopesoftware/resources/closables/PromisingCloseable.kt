@@ -20,6 +20,10 @@ inline fun <T : PromisingCloseable, Result> T.eventuallyUse(usage: (T) -> Promis
 	}
 }
 
+inline fun <T : PromisingCloseable, Result> Promise<T>.eventuallyUse(crossinline usage: (T) -> Promise<Result>): Promise<Result> = eventually { resource ->
+	resource.eventuallyUse(usage)
+}
+
 inline fun <T : PromisingCloseable, Result> T.thenUse(usage: (T) -> Result): Promise<Result> =
 	try {
 		val use = usage(this)

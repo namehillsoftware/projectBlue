@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Giv
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.NullPromisingWritableStream
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
@@ -14,7 +15,6 @@ import io.mockk.mockk
 import io.reactivex.rxjava3.core.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.net.URI
 
@@ -24,12 +24,11 @@ class WhenProcessingTheJob {
 		val deferredDownload = DeferredPromise<PromisingReadableStream>(IOException())
         val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
+				every { promiseOutputStream(any()) } returns NullPromisingWritableStream.toPromise()
 			},
 			mockk { every { promiseDownload(any(), any()) } returns deferredDownload },
 			mockk(),
 		)
-		val statuses = ArrayList<StoredFileJobState>()
         storedFileJobProcessor
 			.observeStoredFileDownload(
 				Observable.just(
@@ -40,14 +39,15 @@ class WhenProcessingTheJob {
 					)
 				)
 			)
-            .map { s -> s.storedFileJobState }
-            .blockingSubscribe {
-				statuses.add(it)
-				if (it == StoredFileJobState.Downloading)
-					deferredDownload.resolve()
+            .map { s ->
+				s.storedFileJobState.also {
+					if (it == StoredFileJobState.Downloading)
+						deferredDownload.resolve()
+				}
 			}
-
-		statuses
+			.toList()
+			.timeout(30, java.util.concurrent.TimeUnit.SECONDS)
+			.blockingGet()
     }
 
     @Test

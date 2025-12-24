@@ -19,6 +19,9 @@ open class ProgressingPromiseProxy<Progress, Resolution> protected constructor()
 		}
 	}
 
+	val isCancelled
+		get() = cancellationProxy.isCancelled
+
 	init {
 		awaitCancellation(cancellationProxy)
 	}

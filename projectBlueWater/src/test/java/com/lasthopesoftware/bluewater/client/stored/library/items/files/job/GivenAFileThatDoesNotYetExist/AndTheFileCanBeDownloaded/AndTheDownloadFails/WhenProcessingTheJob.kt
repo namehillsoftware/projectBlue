@@ -6,17 +6,16 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
-import com.namehillsoftware.handoff.promises.Promise
+import com.lasthopesoftware.resources.io.PromisingWritableStreamWrapper
 import io.mockk.every
 import io.mockk.mockk
 import io.reactivex.rxjava3.core.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.io.ByteArrayInputStream
 import java.io.IOException
-import java.io.OutputStream
 import java.net.URI
 
 class WhenProcessingTheJob {
@@ -29,21 +28,17 @@ class WhenProcessingTheJob {
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { promiseOutputStream(any()) } returns Promise(mockk<OutputStream>(relaxUnitFun = true) {
-					every { write(any(), any(), any()) } throws IOException()
-				})
+				every { promiseOutputStream(any()) } returns PromisingWritableStreamWrapper(
+					mockk(relaxUnitFun = true) { every { write(any(), any(), any()) } throws IOException() }
+				).toPromise()
 			},
 			mockk {
-				every { promiseDownload(any(), any()) } returns Promise(
-					PromisingReadableStreamWrapper(
-						ByteArrayInputStream(
-							byteArrayOf(
-								(474 % 128).toByte(),
-								(550 % 128).toByte(),
-							)
-						)
-					)
-				)
+				every { promiseDownload(any(), any()) } returns PromisingReadableStreamWrapper(
+					byteArrayOf(
+						(474 % 128).toByte(),
+						(550 % 128).toByte(),
+					).inputStream()
+				).toPromise()
 			},
 			mockk(),
 		)

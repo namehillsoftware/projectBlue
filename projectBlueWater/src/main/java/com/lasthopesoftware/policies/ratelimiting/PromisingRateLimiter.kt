@@ -2,6 +2,8 @@
 package com.lasthopesoftware.policies.ratelimiting
 
 import com.lasthopesoftware.promises.NoopResponse.Companion.ignore
+import com.lasthopesoftware.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -13,8 +15,16 @@ class PromisingRateLimiter<T>(private val rate: Int): RateLimitPromises<T>, Imme
 	private val availablePromises = AtomicInteger(rate)
 	private val queuedPromises = ConcurrentLinkedQueue<() -> Promise<T>>()
 
-	override fun limit(factory: () -> Promise<T>): Promise<T> =
+	override fun enqueuePromise(factory: () -> Promise<T>): Promise<T> =
 		object : Promise.Proxy<T>() {
+			init {
+				queuedPromises.offer { factory().also(::proxy) }
+				doNext()
+			}
+		}
+
+	override fun <Progress> enqueueProgressingPromise(factory: () -> ProgressingPromise<Progress, T>): ProgressingPromise<Progress, T> =
+		object : ProgressingPromiseProxy<Progress, T>() {
 			init {
 				queuedPromises.offer { factory().also(::proxy) }
 				doNext()
