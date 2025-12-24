@@ -103,7 +103,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.Normalize
 import com.lasthopesoftware.bluewater.shared.NullBox
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePalette
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePaletteProvider
-import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toState

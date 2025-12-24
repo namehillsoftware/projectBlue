@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.CheckForSync
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
-import com.lasthopesoftware.bluewater.shared.observables.stream
+import com.lasthopesoftware.observables.stream
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.rxjava3.core.Completable

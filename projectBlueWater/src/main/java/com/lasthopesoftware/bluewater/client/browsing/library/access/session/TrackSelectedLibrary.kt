@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.access.session
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.observables.InteractionState
+import com.lasthopesoftware.observables.InteractionState
 import com.namehillsoftware.handoff.promises.Promise
 
 interface TrackSelectedLibrary {

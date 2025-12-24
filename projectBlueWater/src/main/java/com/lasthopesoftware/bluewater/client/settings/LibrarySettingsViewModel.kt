@@ -15,11 +15,11 @@ import com.lasthopesoftware.bluewater.client.connection.session.ManageConnection
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusExtensions.getConnectionStatusString
 import com.lasthopesoftware.bluewater.permissions.RequestApplicationPermissions
 import com.lasthopesoftware.bluewater.shared.NullBox
-import com.lasthopesoftware.bluewater.shared.observables.InteractionState
-import com.lasthopesoftware.bluewater.shared.observables.LiftedInteractionState
-import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
-import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
-import com.lasthopesoftware.bluewater.shared.observables.toCloseable
+import com.lasthopesoftware.observables.InteractionState
+import com.lasthopesoftware.observables.LiftedInteractionState
+import com.lasthopesoftware.observables.MutableInteractionState
+import com.lasthopesoftware.observables.mapNotNull
+import com.lasthopesoftware.observables.toCloseable
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.onEach
 import com.lasthopesoftware.promises.extensions.toPromise

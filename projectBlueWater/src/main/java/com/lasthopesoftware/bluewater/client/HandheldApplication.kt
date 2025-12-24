@@ -74,7 +74,7 @@ import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.exceptions.UncaughtExceptionHandlerLogger
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
-import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise

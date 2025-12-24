@@ -10,9 +10,9 @@ import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.exceptions.isOkHttpCanceled
 import com.lasthopesoftware.exceptions.isSocketClosedException
+import com.lasthopesoftware.observables.MutableInteractionState
 import com.lasthopesoftware.promises.PromiseDelay
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse

@@ -7,9 +7,9 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.PassThrou
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
-import com.lasthopesoftware.bluewater.shared.observables.toCloseable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.observables.mapNotNull
+import com.lasthopesoftware.observables.toCloseable
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
