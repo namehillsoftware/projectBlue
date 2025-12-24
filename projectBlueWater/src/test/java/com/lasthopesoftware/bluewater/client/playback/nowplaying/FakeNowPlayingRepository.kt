@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.ManageNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
-import com.lasthopesoftware.bluewater.shared.Gate
-import com.lasthopesoftware.bluewater.shared.promises.extensions.PromiseLatch
+import com.lasthopesoftware.promises.Gate
+import com.lasthopesoftware.promises.PromiseLatch
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -42,15 +42,15 @@ class LockingNowPlayingRepository(private val inner: ManageNowPlayingState) : Ma
 
 	override fun close() = latch.close()
 
-	override fun updateNowPlaying(nowPlaying: NowPlaying): Promise<NowPlaying> = latch.eventually {
+	override fun updateNowPlaying(nowPlaying: NowPlaying): Promise<NowPlaying> = latch.wait().eventually {
 		inner.updateNowPlaying(nowPlaying)
 	}
 
-	override fun promiseActiveNowPlaying(): Promise<NowPlaying?> = latch.eventually {
+	override fun promiseActiveNowPlaying(): Promise<NowPlaying?> = latch.wait().eventually {
 		inner.promiseActiveNowPlaying()
 	}
 
-	override fun promiseNowPlaying(libraryId: LibraryId): Promise<NowPlaying?> = latch.eventually {
+	override fun promiseNowPlaying(libraryId: LibraryId): Promise<NowPlaying?> = latch.wait().eventually {
 		inner.promiseNowPlaying(libraryId)
 	}
 }
