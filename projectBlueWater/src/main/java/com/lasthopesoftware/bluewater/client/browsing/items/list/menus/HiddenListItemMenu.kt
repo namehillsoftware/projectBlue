@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list.menus
 
-import com.lasthopesoftware.bluewater.shared.observables.InteractionState
+import com.lasthopesoftware.observables.InteractionState
 
 interface HiddenListItemMenu {
 	val isMenuShown: InteractionState<Boolean>

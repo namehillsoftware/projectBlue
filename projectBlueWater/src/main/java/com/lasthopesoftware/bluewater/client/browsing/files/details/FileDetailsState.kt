@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.observables.InteractionState
-import com.lasthopesoftware.bluewater.shared.observables.LiftedInteractionState
+import com.lasthopesoftware.observables.InteractionState
+import com.lasthopesoftware.observables.LiftedInteractionState
 import com.namehillsoftware.handoff.promises.Promise
 
 interface FileDetailsState : TrackLoadedViewState {

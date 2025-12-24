@@ -11,8 +11,8 @@ import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.bluewater.shared.observables.LiftedInteractionState
-import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
+import com.lasthopesoftware.observables.LiftedInteractionState
+import com.lasthopesoftware.observables.MutableInteractionState
 import com.lasthopesoftware.promises.PromiseDelay
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.rxjava3.core.Observable

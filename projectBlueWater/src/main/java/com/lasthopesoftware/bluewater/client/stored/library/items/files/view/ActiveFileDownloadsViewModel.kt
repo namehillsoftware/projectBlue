@@ -10,9 +10,9 @@ import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileMessage
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncStateMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.bluewater.shared.observables.LiftedInteractionState
-import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
-import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
+import com.lasthopesoftware.observables.LiftedInteractionState
+import com.lasthopesoftware.observables.MutableInteractionState
+import com.lasthopesoftware.observables.mapNotNull
 import com.namehillsoftware.handoff.promises.Promise
 
 class ActiveFileDownloadsViewModel(

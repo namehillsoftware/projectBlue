@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.browsing.items.aggregate.GivenItem
 import com.lasthopesoftware.bluewater.client.browsing.items.AggregateItemViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.observables.MutableInteractionState
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk

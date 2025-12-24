@@ -35,7 +35,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.LocalSurfaceColor
 import com.lasthopesoftware.bluewater.client.connection.http.HttpClientType
-import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.observables.subscribeAsState
 
 private val optionsPadding = PaddingValues(start = 32.dp, end = 32.dp)
 

@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 
-import com.lasthopesoftware.bluewater.shared.observables.InteractionState
+import com.lasthopesoftware.observables.InteractionState
 
 interface ControlScreenOnState {
 	val isScreenOnEnabled: InteractionState<Boolean>

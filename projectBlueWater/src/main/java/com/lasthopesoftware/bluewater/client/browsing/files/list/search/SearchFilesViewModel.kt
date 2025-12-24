@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.LoadedLibrarySt
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ServiceFilesListState
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
+import com.lasthopesoftware.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 

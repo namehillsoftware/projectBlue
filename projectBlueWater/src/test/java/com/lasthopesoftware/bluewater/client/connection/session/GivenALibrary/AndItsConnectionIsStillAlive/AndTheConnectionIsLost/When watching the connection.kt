@@ -5,8 +5,8 @@ import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionPro
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionLostNotification
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
-import com.lasthopesoftware.bluewater.shared.observables.toCloseable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.observables.toCloseable
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every

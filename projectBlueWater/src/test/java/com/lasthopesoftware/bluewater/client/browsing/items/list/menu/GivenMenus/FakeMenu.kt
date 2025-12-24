@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list.menu.GivenMenus
 
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.HiddenListItemMenu
-import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
+import com.lasthopesoftware.observables.MutableInteractionState
 
 class FakeMenu : HiddenListItemMenu {
 	private val mutableIsMenuShown = MutableInteractionState(false)

@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.navigable
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
-import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.observables.subscribeAsState
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable

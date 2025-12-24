@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.observables
+package com.lasthopesoftware.observables
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect

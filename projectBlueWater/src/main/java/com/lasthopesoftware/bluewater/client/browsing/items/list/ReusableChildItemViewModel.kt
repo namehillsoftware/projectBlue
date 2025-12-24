@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.I
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
-import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
+import com.lasthopesoftware.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.closables.ResettableCloseable
 import com.namehillsoftware.handoff.promises.Promise
