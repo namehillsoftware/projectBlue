@@ -12,6 +12,7 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import io.mockk.every
 import io.mockk.mockk
+import io.reactivex.rxjava3.core.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -82,7 +83,7 @@ class WhenProcessingTheQueue {
 			storedFilesUpdater,
 		)
 		val observedStatuses =
-			storedFileJobProcessor.observeStoredFileDownload(storedFileJobs).toList()
+			storedFileJobProcessor.observeStoredFileDownload(Observable.fromIterable(storedFileJobs)).toList()
 		storedFileStatuses = observedStatuses.blockingGet()
 		secondStoredFileStatuses = observedStatuses.blockingGet()
 	}

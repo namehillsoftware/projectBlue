@@ -31,5 +31,4 @@ private class ObserveProgressingPromise<T : Any>(private val progressingPromise:
 	}
 
 	override fun isDisposed(): Boolean = cancellationProxy.isCancelled
-
 }

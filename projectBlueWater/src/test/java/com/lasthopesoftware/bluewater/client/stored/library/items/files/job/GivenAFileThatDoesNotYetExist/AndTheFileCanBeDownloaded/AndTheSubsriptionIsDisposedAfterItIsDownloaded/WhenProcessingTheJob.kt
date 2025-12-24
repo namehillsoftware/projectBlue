@@ -14,6 +14,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Observer
 import io.reactivex.rxjava3.disposables.Disposable
 import org.assertj.core.api.Assertions.assertThat
@@ -45,7 +46,7 @@ class WhenProcessingTheJob {
 		)
 		storedFileJobProcessor
 			.observeStoredFileDownload(
-				setOf(
+				Observable.fromArray(
 					StoredFileJob(
 						LibraryId(13),
 						ServiceFile("1"),

@@ -10,6 +10,7 @@ import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
+import io.reactivex.rxjava3.core.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -47,7 +48,7 @@ class WhenProcessingTheJob {
 			mockk(),
 		)
 		storedFileJobProcessor.observeStoredFileDownload(
-			setOf(
+			Observable.fromArray(
 				StoredFileJob(
 					LibraryId(5),
 					ServiceFile("1"),

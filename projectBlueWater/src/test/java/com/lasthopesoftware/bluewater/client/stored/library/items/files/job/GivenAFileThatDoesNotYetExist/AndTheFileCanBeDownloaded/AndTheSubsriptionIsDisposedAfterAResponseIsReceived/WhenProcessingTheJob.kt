@@ -13,6 +13,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import io.reactivex.rxjava3.core.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -48,7 +49,7 @@ class WhenProcessingTheJob {
 			updateStoredFiles,
 		)
         states = storedFileJobProcessor.observeStoredFileDownload(
-            setOf(
+			Observable.fromArray(
                 StoredFileJob(
                     LibraryId(15),
                     ServiceFile("1"),

@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
+import io.reactivex.rxjava3.core.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.net.URI
@@ -27,7 +28,7 @@ class WhenProcessingTheJob {
 
 		storedFileJobProcessor
 			.observeStoredFileDownload(
-				setOf(
+				Observable.fromArray(
 					StoredFileJob(
 						LibraryId(10),
 						ServiceFile("1"),
