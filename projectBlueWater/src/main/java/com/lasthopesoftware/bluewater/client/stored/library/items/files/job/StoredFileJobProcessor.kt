@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job
 
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.ProduceStoredFileDestinations
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.DownloadStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException
@@ -7,7 +8,10 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exce
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.observables.observeProgress
+import com.lasthopesoftware.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.promises.PromiseLatch
+import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.closables.eventuallyUse
 import com.lasthopesoftware.resources.io.PromisingWritableStreamWrapper
@@ -28,11 +32,99 @@ class StoredFileJobProcessor(
 	private val updateStoredFiles: UpdateStoredFiles,
 ) : ProcessStoredFileJobs {
 
-	override fun observeStoredFileDownload(jobs: Observable<StoredFileJob>): Observable<StoredFileJobStatus> =
-		RecursiveObservableProcessor(jobs)
+	override fun observeStoredFileDownload(jobs: Observable<StoredFileJob>): Observable<StoredFileJobStatus> {
+		val rateLimiter = PromisingRateLimiter<Unit>(1)
+		return jobs
+			.distinct()
+			.flatMap { (libraryId, _, storedFile) ->
+				StoredFileDownloadPromise(libraryId, storedFile, rateLimiter).observeProgress()
+			}
+	}
 
 	override fun observeStoredFileDownload(jobs: Iterable<StoredFileJob>): Observable<StoredFileJobStatus> =
 		RecursiveQueueProcessor(jobs)
+
+	private inner class StoredFileDownloadPromise(libraryId: LibraryId, storedFile: StoredFile, rateLimiter: PromisingRateLimiter<Unit>) : ProgressingPromiseProxy<StoredFileJobStatus, Unit>() {
+		init {
+			reportProgress(StoredFileJobStatus(storedFile, StoredFileJobState.Queued))
+			proxy(
+				rateLimiter.limit {
+					storedFileFileProvider
+						.promiseOutputStream(storedFile)
+						.eventually { outputStream ->
+							outputStream
+								?.let {
+									if (isCancelled) {
+										it.close()
+										getCancelledStoredFileJobResult(storedFile).toPromise()
+									} else {
+										reportProgress(StoredFileJobStatus(storedFile, StoredFileJobState.Downloading))
+
+										val promisedDownload = storedFiles
+											.promiseDownload(libraryId, storedFile)
+											.also(::doCancel)
+										PromisingWritableStreamWrapper(it)
+											.eventuallyUse { outputStreamWrapper ->
+												promisedDownload
+													.eventually { inputStream ->
+														inputStream.eventuallyUse { s ->
+															if (isCancelled) getCancelledStoredFileJobResult(storedFile).toPromise()
+															else outputStreamWrapper
+																.promiseCopyFrom(s)
+																.also(::doCancel)
+																.eventually { downloadedBytes ->
+																	if (downloadedBytes > 0) updateStoredFiles.markStoredFileAsDownloaded(
+																		storedFile
+																	)
+																	else storedFile.toPromise()
+																}
+																.then { sf ->
+																	StoredFileJobStatus(
+																		sf,
+																		if (sf.isDownloadComplete) StoredFileJobState.Downloaded
+																		else StoredFileJobState.Queued
+																	)
+																}
+														}
+													}
+											}
+									}
+								}
+								?.then(::reportProgress) { error ->
+									val status = when (error) {
+										is CancellationException -> getCancelledStoredFileJobResult(storedFile)
+										is StoredFileReadException -> StoredFileJobStatus(
+											storedFile,
+											StoredFileJobState.Unreadable
+										)
+
+										is IOException -> {
+											logger.error("Error writing file!", error)
+											StoredFileJobStatus(storedFile, StoredFileJobState.Queued)
+										}
+
+										is StoredFileJobException -> throw error
+										else -> throw StoredFileJobException(storedFile, error)
+									}
+
+									reportProgress(status)
+								}
+								?: storedFile.run {
+									reportProgress(
+										StoredFileJobStatus(
+											storedFile,
+											if (isDownloadComplete) StoredFileJobState.Downloaded
+											else StoredFileJobState.Unreadable
+										)
+									)
+
+									Unit.toPromise()
+								}
+						}
+				}
+			)
+		}
+	}
 
 	private inner class RecursiveObservableProcessor(private val jobs: Observable<StoredFileJob>) :
 		Observable<StoredFileJobStatus>(),
