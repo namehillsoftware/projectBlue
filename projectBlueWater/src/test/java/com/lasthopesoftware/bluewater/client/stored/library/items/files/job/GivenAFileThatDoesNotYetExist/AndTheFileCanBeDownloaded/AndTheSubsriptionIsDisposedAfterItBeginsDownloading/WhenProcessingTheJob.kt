@@ -15,6 +15,7 @@ import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Observer
 import io.reactivex.rxjava3.disposables.Disposable
 import org.assertj.core.api.Assertions.assertThat
@@ -40,7 +41,7 @@ class WhenProcessingTheJob {
 			storedFileUpdater,
 		)
 		storedFileJobProcessor.observeStoredFileDownload(
-			setOf(
+			Observable.fromArray(
 				StoredFileJob(
 					LibraryId(55),
 					ServiceFile("1"),
