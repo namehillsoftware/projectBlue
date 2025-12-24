@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared
+package com.lasthopesoftware.promises
 
 interface Gate {
 	fun open(): AutoCloseable

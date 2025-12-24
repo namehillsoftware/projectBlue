@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exce
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.policies.ratelimiting.PromisingRateLimiter
+import com.lasthopesoftware.promises.PromiseLatch
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.closables.eventuallyUse
 import com.lasthopesoftware.resources.io.PromisingWritableStreamWrapper
@@ -21,7 +21,6 @@ import java.io.IOException
 import java.util.LinkedList
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.TimeUnit
 
 class StoredFileJobProcessor(
 	private val storedFileFileProvider: ProduceStoredFileDestinations,
@@ -42,13 +41,10 @@ class StoredFileJobProcessor(
 	{
 		private val cancellationProxy = CancellationProxy()
 		private val jobsQueue = ConcurrentLinkedQueue<StoredFileJob>()
-		private val singleDownloadRateLimiter = PromisingRateLimiter<Unit>(1)
+		private val downloadsReadySignal = PromiseLatch()
 		private lateinit var observer: Observer<in StoredFileJobStatus>
 		private lateinit var subscription: Disposable
 		private var isRunning = false
-
-		@Volatile
-		private var processQueuePromise = Unit.toPromise()
 
 		@Synchronized
 		override fun subscribeActual(observer: Observer<in StoredFileJobStatus>) {
@@ -61,27 +57,22 @@ class StoredFileJobProcessor(
 			observer.onSubscribe(this)
 			this.observer = observer
 
-			subscription = jobs.distinct().buffer(1, TimeUnit.SECONDS).subscribe(
-				{ jobs ->
-					if (jobs.isNotEmpty()) {
-						for (job in jobs) {
-							val storedFile = job.storedFile
-							observer.onNext(StoredFileJobStatus(storedFile, StoredFileJobState.Queued))
-							jobsQueue.offer(job)
-						}
-
-						synchronized(jobsQueue) {
-							processQueuePromise = singleDownloadRateLimiter.limit(::processQueue)
-						}
-					}
+			val processQueuePromise = processQueue()
+			subscription = jobs.distinct().subscribe(
+				{ job ->
+					val storedFile = job.storedFile
+					observer.onNext(StoredFileJobStatus(storedFile, StoredFileJobState.Queued))
+					jobsQueue.offer(job)
+					downloadsReadySignal.open()
 				},
 				observer::onError,
 				{
-					synchronized(jobsQueue) {
-						processQueuePromise.then(
-							{ observer.onComplete() },
-							observer::onError)
-					}
+					// Open to flush out any remaining items, then close
+					downloadsReadySignal.open()
+					downloadsReadySignal.close()
+					processQueuePromise.then(
+						{ observer.onComplete() },
+						observer::onError)
 				}
 			)
 		}
@@ -89,8 +80,12 @@ class StoredFileJobProcessor(
 		private fun processQueue(): Promise<Unit> {
 			if (cancellationProxy.isCancelled) return Unit.toPromise()
 
-			val (libraryId, _, storedFile) = jobsQueue.poll() ?: return Unit.toPromise()
+			val job = jobsQueue.poll() ?: return downloadsReadySignal.reset().eventually { isClosed ->
+				if (!isClosed) processQueue()
+				else Unit.toPromise()
+			}
 
+			val (libraryId, _, storedFile) = job
 			return storedFileFileProvider
 				.promiseOutputStream(storedFile)
 				.eventually { outputStream ->
