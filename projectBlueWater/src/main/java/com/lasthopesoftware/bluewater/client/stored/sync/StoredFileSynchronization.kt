@@ -44,6 +44,7 @@ class StoredFileSynchronization(
 			}
 			.stream()
 			.flatMap({ library -> syncHandler.observeLibrarySync(library.libraryId) }, true)
+			.serialize()
 			.flatMapCompletable({ storedFileJobStatus ->
 				val message = when (storedFileJobStatus.storedFileJobState) {
 					StoredFileJobState.Queued -> StoredFileMessage.FileQueued(storedFileJobStatus.storedFile.id)
