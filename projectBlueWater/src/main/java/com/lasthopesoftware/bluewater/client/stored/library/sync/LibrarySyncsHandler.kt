@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.observables.stream
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
 import com.namehillsoftware.handoff.promises.Promise
+import io.reactivex.rxjava3.core.MaybeSource
 import io.reactivex.rxjava3.core.Observable
 
 class LibrarySyncsHandler(
@@ -25,35 +26,35 @@ class LibrarySyncsHandler(
 	}
 
 	override fun observeLibrarySync(libraryId: LibraryId): Observable<StoredFileJobStatus> =
-		Promise.Proxy { cancellationProxy ->
-			val pruneFilesTasks = storedFilePruner.pruneStoredFiles(libraryId)
+		storedFileJobsProcessor.observeStoredFileDownload(
+			Promise.Proxy { cancellationProxy ->
+				val pruneFilesTasks = storedFilePruner.pruneStoredFiles(libraryId)
 
-			cancellationProxy.doCancel(pruneFilesTasks)
+				cancellationProxy.doCancel(pruneFilesTasks)
 
-			serviceFilesToSyncCollector
-				.promiseServiceFilesToSync(libraryId)
-				.eventually { allServiceFilesToSync ->
-					pruneFilesTasks.excuse { e -> logger.warn("There was an error pruning the files", e) }
-					pruneFilesTasks.then { _ -> allServiceFilesToSync }
-				}
-		}
-		.stream()
-		.distinct()
-		.flatMapMaybe { serviceFile ->
-			storedFileUpdater
-				.promiseStoredFileUpdate(libraryId, serviceFile)
-				.then<StoredFileJob?>({ storedFile ->
-					storedFile
-						?.takeUnless { sf -> sf.isDownloadComplete }
-						?.let { sf -> StoredFileJob(libraryId, serviceFile, sf) }
-				}, { e ->
-					if (e !is IllegalArgumentException || e.message != IGNORED_ARGUMENT_ERROR) throw e
+				serviceFilesToSyncCollector
+					.promiseServiceFilesToSync(libraryId)
+					.eventually { allServiceFilesToSync ->
+						pruneFilesTasks.excuse { e -> logger.warn("There was an error pruning the files", e) }
+						pruneFilesTasks.then { _ -> allServiceFilesToSync }
+					}
+			}
+			.stream()
+			.distinct()
+			.flatMapMaybe { serviceFile ->
+				storedFileUpdater
+					.promiseStoredFileUpdate(libraryId, serviceFile)
+					.then<StoredFileJob?>({ storedFile ->
+						storedFile
+							?.takeUnless { sf -> sf.isDownloadComplete }
+							?.let { sf -> StoredFileJob(libraryId, serviceFile, sf) }
+					}, { e ->
+						if (e !is IllegalArgumentException || e.message != IGNORED_ARGUMENT_ERROR) throw e
 
-					logger.warn("An accepted exception occurred while updating the stored file for $libraryId, $serviceFile, ignoring file.", e)
-					null
-				})
-				.toMaybeObservable()
-		}
-		.toList()
-		.flatMapObservable(storedFileJobsProcessor::observeStoredFileDownload)
+						logger.warn("An accepted exception occurred while updating the stored file for $libraryId, $serviceFile, ignoring file.", e)
+						null
+					})
+					.toMaybeObservable() as MaybeSource<StoredFileJob>
+			}
+		)
 }

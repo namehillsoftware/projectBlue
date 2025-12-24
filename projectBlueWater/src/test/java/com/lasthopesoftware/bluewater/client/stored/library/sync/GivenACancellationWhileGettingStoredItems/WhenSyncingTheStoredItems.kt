@@ -72,9 +72,9 @@ class WhenSyncingTheStoredItems {
 					Promise(StoredFile(libraryId, serviceFile, URI("fake-file-name"), true))
 			},
 			mockk {
-				every { observeStoredFileDownload(any()) } answers {
-					val jobs = firstArg<Iterable<StoredFileJob>>()
-					Observable.fromIterable(jobs).flatMap { (_, _, storedFile) ->
+				every { observeStoredFileDownload(any<Observable<StoredFileJob>>()) } answers {
+					val jobs = firstArg<Observable<StoredFileJob>>()
+					jobs.flatMap { (_, _, storedFile) ->
 						Observable.just(
 							StoredFileJobStatus(
                                 storedFile,
