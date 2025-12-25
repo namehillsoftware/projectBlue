@@ -59,6 +59,7 @@ class PromisingWritableStreamWrapper(
 						if (ct.isCancelled) throw CancellationException("promiseCopyFrom was cancelled.")
 						currentTotal + bytes
 					}
+					.also(cs::doCancel)
 			}
 		}
 	}

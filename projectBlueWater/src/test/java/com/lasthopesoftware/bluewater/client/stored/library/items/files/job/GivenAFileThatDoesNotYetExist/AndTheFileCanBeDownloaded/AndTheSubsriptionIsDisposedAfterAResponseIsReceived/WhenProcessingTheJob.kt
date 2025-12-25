@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Giv
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.NullPromisingWritableStream
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
@@ -17,8 +18,6 @@ import io.reactivex.rxjava3.core.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.net.URI
 
 class WhenProcessingTheJob {
@@ -32,17 +31,15 @@ class WhenProcessingTheJob {
     fun before() {
         val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
+				every { promiseOutputStream(any()) } returns NullPromisingWritableStream.toPromise()
 			},
 			mockk {
 				every { promiseDownload(any(), any()) } returns Promise(
 					PromisingReadableStreamWrapper(
-						ByteArrayInputStream(
-							byteArrayOf(
-								120,
-								(573 % 128).toByte()
-							)
-						)
+						byteArrayOf(
+							120,
+							(573 % 128).toByte()
+						).inputStream()
 					)
 				)
 			},

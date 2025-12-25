@@ -1,5 +1,7 @@
 package com.lasthopesoftware.policies.ratelimiting
 
+import com.lasthopesoftware.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
@@ -15,8 +17,21 @@ class RateLimiter<T>(private val executor: Executor, rate: Int): RateLimitPromis
 	private val semaphoreReleasingResolveHandler = ImmediateResponse<T, Unit> { semaphore.release() }
 	private val semaphoreReleasingRejectionHandler = ImmediateResponse<Throwable, Unit> { semaphore.release() }
 
-	override fun limit(factory: () -> Promise<T>): Promise<T> =
+	override fun enqueuePromise(factory: () -> Promise<T>): Promise<T> =
 		object : Promise.Proxy<T>() {
+			init {
+				// Use resolve/rejection handler over `must` so that errors don't propagate as unhandled
+				queuedPromises.offer {
+					factory().also(::proxy)
+						.then(semaphoreReleasingResolveHandler, semaphoreReleasingRejectionHandler)
+				}
+
+				if (queueProcessorReference.compareAndSet(null, this@RateLimiter)) executor.execute(this@RateLimiter)
+			}
+		}
+
+	override fun <Progress> enqueueProgressingPromise(factory: () -> ProgressingPromise<Progress, T>): ProgressingPromise<Progress, T> =
+		object : ProgressingPromiseProxy<Progress, T>() {
 			init {
 				// Use resolve/rejection handler over `must` so that errors don't propagate as unhandled
 				queuedPromises.offer {

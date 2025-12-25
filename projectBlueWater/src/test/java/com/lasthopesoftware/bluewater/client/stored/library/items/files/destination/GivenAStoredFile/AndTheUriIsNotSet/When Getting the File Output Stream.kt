@@ -5,11 +5,11 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileUriDestinationBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.resources.io.PromisingWritableStream
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.io.OutputStream
 
 class `When Getting the File Output Stream` {
 
@@ -17,7 +17,7 @@ class `When Getting the File Output Stream` {
 		StoredFileUriDestinationBuilder(mockk(), mockk(), mockk())
 	}
 
-	private var outputStream: OutputStream? = null
+	private var outputStream: PromisingWritableStream? = null
 
 	@BeforeAll
 	fun act() {

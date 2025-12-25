@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredIt
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.PruneStoredFiles
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.NullPromisingWritableStream
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
@@ -19,7 +20,6 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.io.ByteArrayOutputStream
 import java.net.URI
 import java.util.concurrent.TimeUnit
 
@@ -73,7 +73,7 @@ class WhenSyncingTheStoredItems {
 			},
 			StoredFileJobProcessor(
 				mockk {
-					every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
+					every { promiseOutputStream(any()) } returns NullPromisingWritableStream.toPromise()
 				},
 				mockk {
 					every { promiseDownload(any(), any()) } answers {

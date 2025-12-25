@@ -6,18 +6,18 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFi
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.io.OsFileSupplier
+import com.lasthopesoftware.resources.io.PromisingWritableStream
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.File
-import java.io.OutputStream
 import java.nio.file.Files
 
 class `When Getting the File Output Stream` {
 
-	private var outputStream: OutputStream? = null
+	private var outputStream: PromisingWritableStream? = null
 
 	@BeforeAll
 	fun before() {

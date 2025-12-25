@@ -5,6 +5,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exce
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.lasthopesoftware.resources.io.PromisingWritableStream
+import com.lasthopesoftware.resources.io.PromisingWritableStreamWrapper
 import com.lasthopesoftware.resources.io.SupplyFiles
 import com.lasthopesoftware.resources.uri.IoCommon
 import com.lasthopesoftware.resources.uri.resourceExists
@@ -14,7 +16,6 @@ import com.lasthopesoftware.storage.write.permissions.DecideIfFileWriteIsPossibl
 import com.namehillsoftware.handoff.promises.Promise
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
-import java.io.OutputStream
 import java.net.URI
 
 class StoredFileUriDestinationBuilder(
@@ -23,7 +24,7 @@ class StoredFileUriDestinationBuilder(
 	private val contentResolver: ContentResolver
 ) : ProduceStoredFileDestinations {
 
-	override fun promiseOutputStream(storedFile: StoredFile): Promise<OutputStream?> {
+	override fun promiseOutputStream(storedFile: StoredFile): Promise<PromisingWritableStream?> {
 		val storedFileUri = URI(storedFile.uri ?: return Promise.empty())
 
 		return ThreadPools.io.preparePromise {
@@ -55,7 +56,7 @@ class StoredFileUriDestinationBuilder(
 				}
 
 				else -> null
-			}
+			}?.let { PromisingWritableStreamWrapper(it) }
 		}
 	}
 }
