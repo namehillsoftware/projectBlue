@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Giv
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.DeferredDownloadPromise
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.NullPromisingWritableStream
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
@@ -9,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
 import com.lasthopesoftware.promises.extensions.toPromise
-import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -29,32 +29,32 @@ class WhenProcessingTheJob {
 
 	@BeforeAll
     fun before() {
+		val deferredDownloadPromise = DeferredDownloadPromise(byteArrayOf(120, (573 % 128).toByte()))
         val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
 				every { promiseOutputStream(any()) } returns NullPromisingWritableStream.toPromise()
 			},
 			mockk {
-				every { promiseDownload(any(), any()) } returns Promise(
-					PromisingReadableStreamWrapper(
-						byteArrayOf(
-							120,
-							(573 % 128).toByte()
-						).inputStream()
-					)
-				)
+				every { promiseDownload(any(), any()) } returns deferredDownloadPromise
 			},
 			updateStoredFiles,
 		)
-        states = storedFileJobProcessor.observeStoredFileDownload(
-			Observable.fromArray(
-                StoredFileJob(
-                    LibraryId(15),
-                    ServiceFile("1"),
-                    storedFile
-                )
-            )
-        )
-            .map { f -> f.storedFileJobState }
+        states = storedFileJobProcessor
+			.observeStoredFileDownload(
+				Observable.just(
+					StoredFileJob(
+						LibraryId(15),
+						ServiceFile("1"),
+						storedFile
+					)
+				)
+			)
+            .map { f ->
+				f.storedFileJobState.also {
+					if (it == StoredFileJobState.Downloading)
+						deferredDownloadPromise.resolve()
+				}
+			}
             .toList().blockingGet()
     }
 
