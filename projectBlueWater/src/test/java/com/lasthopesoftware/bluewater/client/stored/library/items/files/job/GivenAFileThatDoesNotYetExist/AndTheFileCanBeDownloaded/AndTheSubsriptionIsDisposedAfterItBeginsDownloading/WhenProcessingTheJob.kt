@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Giv
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.DeferredDownloadPromise
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.NullPromisingWritableStream
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
@@ -12,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.emptyByteArray
+import com.lasthopesoftware.resources.io.PromisingWritableStreamWrapper
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -21,19 +21,23 @@ import io.reactivex.rxjava3.disposables.Disposable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.io.ByteArrayOutputStream
 import java.net.URI
+import java.util.concurrent.TimeUnit
 
 class WhenProcessingTheJob {
 	private val storedFile = StoredFile(LibraryId(55), ServiceFile("1"), URI("test://test-path"), true)
 	private val storedFileUpdater = mockk<UpdateStoredFiles>()
 	private val states: MutableList<StoredFileJobState> = ArrayList()
+	private var downloadedBytes = emptyByteArray
 
 	@BeforeAll
 	fun before() {
-		val deferredPromise = DeferredDownloadPromise(emptyByteArray)
+		val os = ByteArrayOutputStream()
+		val deferredPromise = DeferredDownloadPromise(byteArrayOf(498.toByte(), 416.toByte()))
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { promiseOutputStream(any()) } returns NullPromisingWritableStream.toPromise()
+				every { promiseOutputStream(any()) } returns PromisingWritableStreamWrapper(os, null).toPromise()
 			},
 			mockk { every { promiseDownload(any(), any()) } returns deferredPromise },
 			storedFileUpdater,
@@ -48,6 +52,7 @@ class WhenProcessingTheJob {
 					)
 				)
 			)
+			.timeout(30, TimeUnit.SECONDS)
 			.blockingSubscribe(object : Observer<StoredFileJobStatus> {
 				private lateinit var disposable: Disposable
 
@@ -65,6 +70,13 @@ class WhenProcessingTheJob {
 				override fun onError(e: Throwable) {}
 				override fun onComplete() {}
 			})
+
+		downloadedBytes = os.toByteArray()
+	}
+
+	@Test
+	fun `then the downloaded bytes are correct`() {
+		assertThat(downloadedBytes).isEmpty()
 	}
 
 	@Test
