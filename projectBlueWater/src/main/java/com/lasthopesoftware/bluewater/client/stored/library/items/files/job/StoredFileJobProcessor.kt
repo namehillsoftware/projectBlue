@@ -74,7 +74,10 @@ class StoredFileJobProcessor(
 			proxy(promiseProgressingDownload())
 		}
 
-		fun promiseProgressingDownload(): Promise<Unit> = storedFileFileProvider
+		fun promiseProgressingDownload(): Promise<Unit> = if (isCancelled) {
+			reportProgress(getCancelledStoredFileJobResult(storedFile))
+			Unit.toPromise()
+		} else storedFileFileProvider
 			.promiseOutputStream(storedFile)
 			.eventually { outputStream ->
 				outputStream
