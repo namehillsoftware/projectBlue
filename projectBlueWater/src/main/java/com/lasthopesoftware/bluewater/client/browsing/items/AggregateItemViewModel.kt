@@ -2,9 +2,9 @@ package com.lasthopesoftware.bluewater.client.browsing.items
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.observables.InteractionState
-import com.lasthopesoftware.bluewater.shared.observables.LiftedInteractionState
-import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
+import com.lasthopesoftware.observables.InteractionState
+import com.lasthopesoftware.observables.LiftedInteractionState
+import com.lasthopesoftware.observables.mapNotNull
 import com.lasthopesoftware.promises.extensions.UnitResponse
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import com.namehillsoftware.handoff.promises.Promise

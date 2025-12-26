@@ -2,6 +2,8 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Giv
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.DeferredDownloadPromise
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.NullPromisingWritableStream
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
@@ -9,18 +11,18 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
 import com.lasthopesoftware.promises.extensions.toPromise
-import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Observer
 import io.reactivex.rxjava3.disposables.Disposable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.io.ByteArrayOutputStream
 import java.net.URI
+import java.util.concurrent.TimeUnit
 
 class WhenProcessingTheJob {
 	private val storedFile = StoredFile(LibraryId(13), ServiceFile("1"), URI("test-path"), true)
@@ -32,20 +34,23 @@ class WhenProcessingTheJob {
 	@OptIn(ExperimentalStdlibApi::class)
 	@BeforeAll
 	fun before() {
+		val storedFileDownloadMap = mutableMapOf<StoredFile, DeferredDownloadPromise>()
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
+				every { promiseOutputStream(any()) } returns NullPromisingWritableStream.toPromise()
 			},
 			mockk {
 				every { promiseDownload(any(), any()) } answers {
-					PromisingReadableStreamWrapper("590d88fbd4994ee0a7d03ed155e6c969".hexToByteArray().inputStream()).toPromise()
+					val storedFile = secondArg<StoredFile>()
+					storedFileDownloadMap
+						.computeIfAbsent(storedFile) { DeferredDownloadPromise("590d88fbd4994ee0a7d03ed155e6c969".hexToByteArray()) }
 				}
 			},
 			updateStoredFiles,
 		)
 		storedFileJobProcessor
 			.observeStoredFileDownload(
-				setOf(
+				Observable.just(
 					StoredFileJob(
 						LibraryId(13),
 						ServiceFile("1"),
@@ -53,6 +58,7 @@ class WhenProcessingTheJob {
 					)
 				)
 			)
+			.timeout(30, TimeUnit.SECONDS)
 			.blockingSubscribe(object : Observer<StoredFileJobStatus> {
 				private lateinit var disposable: Disposable
 				override fun onSubscribe(d: Disposable) {
@@ -61,7 +67,11 @@ class WhenProcessingTheJob {
 
 				override fun onNext(status: StoredFileJobStatus) {
 					states.add(status.storedFileJobState)
-					if (status.storedFileJobState == StoredFileJobState.Downloaded) disposable.dispose()
+					when (status.storedFileJobState) {
+						StoredFileJobState.Downloading -> storedFileDownloadMap[status.storedFile]?.resolve()
+						StoredFileJobState.Downloaded -> disposable.dispose()
+						else -> {}
+					}
 				}
 
 				override fun onError(e: Throwable) {}

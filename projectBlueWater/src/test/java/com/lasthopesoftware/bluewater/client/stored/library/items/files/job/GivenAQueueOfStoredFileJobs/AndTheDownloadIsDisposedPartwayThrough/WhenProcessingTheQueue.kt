@@ -1,24 +1,28 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.AndObservingTwice
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.AndTheDownloadIsDisposedPartwayThrough
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.DeferredDownloadPromise
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.MarkedFilesStoredFilesUpdater
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.NullPromisingWritableStream
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.promises.extensions.toPromise
-import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import io.mockk.every
 import io.mockk.mockk
+import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.core.Observer
+import io.reactivex.rxjava3.disposables.Disposable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.io.ByteArrayOutputStream
+import java.util.concurrent.TimeUnit
 
 class WhenProcessingTheQueue {
-	private val storedFileJobs: Set<StoredFileJob> = setOf(
+	private val storedFileJobs = setOf(
 		StoredFileJob(
 			LibraryId(1),
 			ServiceFile("1"),
@@ -59,32 +63,52 @@ class WhenProcessingTheQueue {
 		StoredFile().setServiceId("1").setLibraryId(1),
 		StoredFile().setServiceId("2").setLibraryId(1),
 		StoredFile().setServiceId("4").setLibraryId(1),
-		StoredFile().setServiceId("5").setLibraryId(1),
-		StoredFile().setServiceId("7").setLibraryId(1),
-		StoredFile().setServiceId("114").setLibraryId(1),
-		StoredFile().setServiceId("92").setLibraryId(1)
 	)
 	private val storedFilesUpdater = MarkedFilesStoredFilesUpdater()
-	private lateinit var storedFileStatuses: List<StoredFileJobStatus>
-	private lateinit var secondStoredFileStatuses: List<StoredFileJobStatus>
+	private val storedFileStatuses = ArrayList<StoredFileJobStatus>()
 
 	@BeforeAll
 	fun before() {
+		val storedFileDownloadMap = mutableMapOf<StoredFile, DeferredDownloadPromise>()
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
+				every { promiseOutputStream(any()) } returns NullPromisingWritableStream.toPromise()
 			},
 			mockk {
 				every { promiseDownload(any(), any()) } answers {
-					PromisingReadableStreamWrapper(byteArrayOf(200.toByte(), 289.toByte()).inputStream()).toPromise()
+					val storedFile = secondArg<StoredFile>()
+					storedFileDownloadMap
+						.computeIfAbsent(storedFile) { DeferredDownloadPromise(byteArrayOf(978.toByte(), 373.toByte())) }
 				}
 			},
 			storedFilesUpdater,
 		)
-		val observedStatuses =
-			storedFileJobProcessor.observeStoredFileDownload(storedFileJobs).toList()
-		storedFileStatuses = observedStatuses.blockingGet()
-		secondStoredFileStatuses = observedStatuses.blockingGet()
+		storedFileJobProcessor
+			.observeStoredFileDownload(Observable.fromIterable(storedFileJobs))
+			.timeout(30, TimeUnit.SECONDS)
+			.blockingSubscribe(object : Observer<StoredFileJobStatus> {
+				private lateinit var disposable: Disposable
+				override fun onSubscribe(d: Disposable) {
+					disposable = d
+				}
+
+				override fun onNext(t: StoredFileJobStatus) {
+					val (storedFile, status) = t
+
+					storedFileStatuses.add(t)
+
+					if (status == StoredFileJobState.Downloaded && storedFile.serviceId == "4") disposable.dispose()
+
+					if (status == StoredFileJobState.Downloading)
+						storedFileDownloadMap
+							.computeIfAbsent(storedFile) { DeferredDownloadPromise(byteArrayOf(978.toByte(), 373.toByte())) }
+							.resolve()
+				}
+
+				override fun onError(e: Throwable) {}
+
+				override fun onComplete() {}
+			})
 	}
 
 	@Test
@@ -98,7 +122,7 @@ class WhenProcessingTheQueue {
 		assertThat(
 			storedFileStatuses
 				.filter { s -> s.storedFileJobState === StoredFileJobState.Downloading }
-				.map { r -> r.storedFile }
+				.map { r -> r.storedFile }.toList()
 		).containsExactly(*expectedStoredFiles)
 	}
 
@@ -109,10 +133,5 @@ class WhenProcessingTheQueue {
 				.filter { s -> s.storedFileJobState === StoredFileJobState.Downloaded }
 				.map { r -> r.storedFile }
 		).containsOnly(*expectedStoredFiles)
-	}
-
-	@Test
-	fun `then the second list of stored files is empty`() {
-		assertThat(secondStoredFileStatuses).isEmpty()
 	}
 }

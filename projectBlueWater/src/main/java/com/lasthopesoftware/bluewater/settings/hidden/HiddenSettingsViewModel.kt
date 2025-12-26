@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
 import com.lasthopesoftware.bluewater.client.connection.http.HttpClientType
 import com.lasthopesoftware.bluewater.features.access.HoldApplicationFeatureConfiguration
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
-import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
+import com.lasthopesoftware.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 

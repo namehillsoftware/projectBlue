@@ -115,7 +115,7 @@ import com.lasthopesoftware.bluewater.shared.android.UndoStack
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.toState

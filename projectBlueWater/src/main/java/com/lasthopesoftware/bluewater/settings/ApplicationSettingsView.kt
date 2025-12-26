@@ -81,8 +81,8 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUni
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
-import com.lasthopesoftware.bluewater.shared.observables.subscribeAsMutableState
-import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.observables.subscribeAsMutableState
+import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.toState
 import com.lasthopesoftware.resources.executors.ThreadPools

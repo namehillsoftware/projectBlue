@@ -16,13 +16,10 @@ class MutedSyncWorker(context: Context, workerParams: WorkerParameters) : SyncWo
 
 	private val permissionsChecker by lazy { OsPermissionsChecker(context) }
 
-	private var isForeground = false
-
 	override fun notify(notificationText: String?) {
 		if (permissionsChecker.isForegroundDataServicePermissionNotGranted) return
 
-		if (isForeground || foregroundStates.contains(ProcessLifecycleOwner.get().lifecycle.currentState)) {
-			isForeground = true
+		if (foregroundStates.contains(ProcessLifecycleOwner.get().lifecycle.currentState)) {
 			super.notify(notificationText)
 		}
 	}

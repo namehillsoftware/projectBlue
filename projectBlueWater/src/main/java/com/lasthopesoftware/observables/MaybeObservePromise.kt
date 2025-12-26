@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.observables
+package com.lasthopesoftware.observables
 
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.rxjava3.core.Maybe

@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
-import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
+import com.lasthopesoftware.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.cancelBackThen
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise

@@ -75,8 +75,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedF
 import com.lasthopesoftware.bluewater.client.connection.trust.ProvideUserSslCertificates
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.shared.android.UndoStack
-import com.lasthopesoftware.bluewater.shared.observables.subscribeAsMutableState
-import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.observables.subscribeAsMutableState
+import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.emptyByteArray

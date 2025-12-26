@@ -5,9 +5,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedF
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMediaCenterConnectionSettings
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
-import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
-import com.lasthopesoftware.bluewater.shared.observables.toCloseable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.observables.mapNotNull
+import com.lasthopesoftware.observables.toCloseable
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.FakeStringResources
 import io.mockk.every

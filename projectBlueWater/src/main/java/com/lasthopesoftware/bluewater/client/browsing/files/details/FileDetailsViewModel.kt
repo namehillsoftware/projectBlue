@@ -19,10 +19,10 @@ import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.bluewater.shared.observables.LiftedInteractionState
-import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
-import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
-import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
+import com.lasthopesoftware.observables.LiftedInteractionState
+import com.lasthopesoftware.observables.MutableInteractionState
+import com.lasthopesoftware.observables.mapNotNull
+import com.lasthopesoftware.observables.toMaybeObservable
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.unitResponse

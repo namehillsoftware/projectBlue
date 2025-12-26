@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
+import com.lasthopesoftware.observables.MutableInteractionState
 import com.namehillsoftware.handoff.promises.Promise
 
 class ApplicationViewModel(

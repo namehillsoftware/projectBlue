@@ -10,6 +10,7 @@ import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
+import io.reactivex.rxjava3.core.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -34,7 +35,7 @@ class WhenProcessingTheJob {
 		)
         try {
             storedFileJobProcessor.observeStoredFileDownload(
-                setOf(
+				Observable.just(
                     StoredFileJob(LibraryId(7), ServiceFile("1"), storedFile)
                 )
             ).blockingSubscribe()

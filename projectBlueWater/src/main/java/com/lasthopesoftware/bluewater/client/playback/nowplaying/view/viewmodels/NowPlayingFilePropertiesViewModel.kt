@@ -29,7 +29,7 @@ import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.promiseReceivedMessage
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
+import com.lasthopesoftware.observables.MutableInteractionState
 import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise

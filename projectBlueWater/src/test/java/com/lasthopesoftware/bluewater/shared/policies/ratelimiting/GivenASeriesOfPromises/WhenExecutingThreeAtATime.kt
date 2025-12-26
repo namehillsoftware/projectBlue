@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.shared.policies.ratelimiting.GivenASeriesOfPromises
 
-import com.lasthopesoftware.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.policies.ratelimiting.PromisingRateLimiter
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -26,7 +26,7 @@ class WhenExecutingThreeAtATime {
 		val rateLimiter = PromisingRateLimiter<Any>(3)
 
 		fun enqueuePromise(promise: Promise<Any>) =
-			rateLimiter.limit { promise.also(activePromises::add).must { _ -> activePromises.remove(promise) } }
+			rateLimiter.enqueuePromise { promise.also(activePromises::add).must { _ -> activePromises.remove(promise) } }
 
 		val futureFirstResult = enqueuePromise(firstPromise).toExpiringFuture()
 		enqueuePromise(secondPromise)

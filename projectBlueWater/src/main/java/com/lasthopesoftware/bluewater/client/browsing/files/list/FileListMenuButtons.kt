@@ -15,7 +15,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
 import com.lasthopesoftware.bluewater.android.ui.theme.SharedAlphas
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
-import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.observables.subscribeAsState
 
 @Composable
 fun LabelledShuffleButton(

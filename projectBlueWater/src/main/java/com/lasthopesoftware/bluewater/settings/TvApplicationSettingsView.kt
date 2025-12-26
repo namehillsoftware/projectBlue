@@ -34,7 +34,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
-import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.observables.subscribeAsState
 
 @Composable
 @OptIn(ExperimentalMaterialApi::class)

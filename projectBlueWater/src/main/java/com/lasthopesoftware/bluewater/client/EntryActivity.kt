@@ -28,7 +28,7 @@ import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissio
 import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.registerResultActivityLauncher
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
