@@ -28,18 +28,23 @@ import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -54,7 +59,9 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.calculateSummaryColumnWidth
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
-import com.lasthopesoftware.bluewater.android.ui.components.FullScreenScrollConnectedScaler
+import com.lasthopesoftware.bluewater.android.ui.components.ConsumableConnectedScaler
+import com.lasthopesoftware.bluewater.android.ui.components.ConsumableConnectedScaler.Companion.offsetLayout
+import com.lasthopesoftware.bluewater.android.ui.components.DeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
@@ -62,9 +69,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.android.ui.components.StandardTextField
 import com.lasthopesoftware.bluewater.android.ui.components.ignoreConsumedOffset
 import com.lasthopesoftware.bluewater.android.ui.components.linkedTo
-import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
-import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuHeight
@@ -82,6 +87,7 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.emptyByteArray
 import com.lasthopesoftware.resources.strings.GetStringResources
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 private val expandedTitleHeight = Dimensions.expandedTitleHeight
@@ -137,7 +143,6 @@ private fun LabelledRemoveServerButton(
 }
 
 
-
 @Composable
 private fun LabelledSaveAndTestButton(
 	librarySettingsViewModel: LibrarySettingsViewModel,
@@ -183,6 +188,7 @@ private fun LabelledSaveAndTestButton(
 	)
 }
 
+
 @Composable
 private fun LabelledSaveAndConnectButton(
 	librarySettingsViewModel: LibrarySettingsViewModel,
@@ -220,6 +226,7 @@ private fun LabelledSaveAndConnectButton(
 		focusRequester = focusRequester,
 	)
 }
+
 
 @Composable
 private fun RemoveServerConfirmationDialog(
@@ -276,6 +283,7 @@ private fun RemoveServerConfirmationDialog(
 		)
 	}
 }
+
 
 @Composable
 private fun LibrarySettingsList(
@@ -794,6 +802,7 @@ private fun ColumnScope.LibrarySettings(
 	}
 }
 
+
 @Composable
 fun ServerTypeSelection(
 	librarySettingsViewModel: LibrarySettingsViewModel,
@@ -935,52 +944,61 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 	val isLoadingState by librarySettingsViewModel.isLoading.subscribeAsState()
 
 	if (this@LibrarySettingsView.maxWidth < Dimensions.twoColumnThreshold) {
-		val boxHeightPx = LocalDensity.current.remember { boxHeight.toPx() }
+
 		val collapsedHeightPx = LocalDensity.current.remember { appBarHeight.toPx() }
 		val thisTopMenuHeight = topMenuHeight + viewPaddingUnit * 6
 		val topMenuHeightPx = LocalDensity.current.remember { thisTopMenuHeight.toPx()  }
-		val heightScaler = FullScreenScrollConnectedScaler.remember(collapsedHeightPx, boxHeightPx)
-		val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(topMenuHeightPx, 0f)
-		val compositeScroller = remember(heightScaler, menuHeightScaler) {
-			heightScaler.linkedTo(menuHeightScaler).ignoreConsumedOffset()
+		val headerScaler = ConsumableConnectedScaler.remember(collapsedHeightPx)
+		val menuHeightScaler = DeferredPreScrollConnectedScaler.remember(topMenuHeightPx, 0f)
+		val compositeScroller = remember(headerScaler, menuHeightScaler) {
+			headerScaler.linkedTo(menuHeightScaler).ignoreConsumedOffset()
+		}
+
+		var lastScrollPosition by rememberSaveable { mutableIntStateOf(0) }
+		val scrollState = rememberScrollState()
+		LaunchedEffect(scrollState) {
+			val firstScrollPosition = snapshotFlow { scrollState.value }.first()
+			compositeScroller.onPreScroll(Offset(x = 0f, y = (lastScrollPosition - firstScrollPosition).toFloat()), NestedScrollSource.SideEffect)
+
+			snapshotFlow { scrollState.value }
+				.collect {
+					lastScrollPosition = it
+				}
 		}
 
 		VerticalHeaderScaffold(
 			header = {
-				val heightValue by heightScaler.valueState
 				Box(
 					modifier = Modifier
-						.height(LocalDensity.current.run { heightValue.toDp() })
 						.fillMaxWidth()
 						.background(MaterialTheme.colors.surface)
 				) {
-					ProvideTextStyle(MaterialTheme.typography.h5) {
-						val headerCollapseProgress by heightScaler.progressState
-						val topPadding by remember {
-							derivedStateOf {
-								linearInterpolation(
-									Dimensions.appBarHeight,
-									14.dp,
-									headerCollapseProgress
-								)
-							}
-						}
+					Column(
+						modifier = Modifier
+							.fillMaxWidth()
+							.offsetLayout(headerScaler)
+							.clipToBounds()
+					) {
+						Spacer(modifier = Modifier.height(Dimensions.appBarHeight))
 
-						val startPadding by rememberTitleStartPadding(heightScaler.progressState)
-						val endPadding = viewPaddingUnit
-						MarqueeText(
-							text = stringResource(id = R.string.settings),
-							overflow = TextOverflow.Ellipsis,
-							gradientSides = setOf(GradientSide.End),
-							gradientEdgeColor = MaterialTheme.colors.surface,
-							modifier = Modifier
-								.fillMaxWidth()
-								.padding(
-									start = startPadding,
-									end = endPadding,
-									top = topPadding
-								),
-						)
+						ProvideTextStyle(MaterialTheme.typography.h5) {
+							val startPadding by rememberTitleStartPadding(headerScaler.progressState)
+							val endPadding = viewPaddingUnit
+							MarqueeText(
+								text = stringResource(id = R.string.settings),
+								overflow = TextOverflow.Ellipsis,
+								gradientSides = setOf(GradientSide.End),
+								gradientEdgeColor = MaterialTheme.colors.surface,
+								modifier = Modifier
+									.fillMaxWidth()
+									.padding(
+										start = startPadding,
+										end = endPadding,
+										top = topRowOuterPadding,
+										bottom = topRowOuterPadding,
+									),
+							)
+						}
 					}
 
 					BackButton(
@@ -997,6 +1015,7 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 				Box(
 					modifier = Modifier
 						.fillMaxWidth()
+						.background(MaterialTheme.colors.surface)
 						.height(menuHeightDp)
 						.clipToBounds()
 				) {
@@ -1014,15 +1033,21 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 			},
 			content = { headerHeight ->
 				if (!isLoadingState) {
+//					val measuredContentHeightDp by LocalDensity.current.remember { derivedStateOf { measuredContentHeight.toDp() } }
+
 					Column(
 						modifier = Modifier
-							.fillMaxSize()
-							.verticalScroll(rememberScrollState()),
+							.verticalScroll(scrollState)
+							.fillMaxWidth()
+//							.wrapContentHeight()
+//							.heightIn(min = measuredContentHeightDp)
+//							.onPlaced {
+//								measuredContentHeight = maxOf(it.size.height, measuredContentHeight)
+//							}
+							,
 						horizontalAlignment = Alignment.CenterHorizontally,
 					) {
-						Spacer(
-							modifier = Modifier.height(headerHeight)
-						)
+						Spacer(modifier = Modifier.height(headerHeight))
 
 						LibrarySettings(
 							librarySettingsViewModel = librarySettingsViewModel,

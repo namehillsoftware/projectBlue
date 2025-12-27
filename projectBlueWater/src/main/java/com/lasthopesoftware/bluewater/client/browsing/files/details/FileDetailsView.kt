@@ -75,6 +75,8 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumableConnectedScaler
+import com.lasthopesoftware.bluewater.android.ui.components.ConsumableConnectedScaler.Companion.offsetLayout
+import com.lasthopesoftware.bluewater.android.ui.components.DeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
@@ -83,7 +85,6 @@ import com.lasthopesoftware.bluewater.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledChevronIcon
 import com.lasthopesoftware.bluewater.android.ui.components.ignoreConsumedOffset
 import com.lasthopesoftware.bluewater.android.ui.components.linkedTo
-import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.indicateFocus
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
@@ -558,10 +559,7 @@ private fun FileDetailsSingleColumn(
 	val titleFontSize = MaterialTheme.typography.h5.fontSize
 	val collapsedHeight = appBarHeight + rowPadding
 	val maxMenuHeightPx = LocalDensity.current.remember { maxMenuHeight.toPx() }
-	val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(
-		maxMenuHeightPx,
-		0f
-	)
+	val menuHeightScaler = DeferredPreScrollConnectedScaler.remember(maxMenuHeightPx, 0f)
 	val headerScaler = ConsumableConnectedScaler.remember(LocalDensity.current.remember { collapsedHeight.toPx() })
 	val compositeScrollConnection = remember(headerScaler, menuHeightScaler) {
 		headerScaler.linkedTo(menuHeightScaler).ignoreConsumedOffset()
@@ -574,124 +572,121 @@ private fun FileDetailsSingleColumn(
 	if (!isLoading) {
 		VerticalHeaderScaffold(
 			header = {
-				headerScaler.apply {
+				Box(
+					modifier = Modifier
+						.fillMaxWidth()
+						.background(coverArtColorState.backgroundColor),
+				) {
 					Box(
+						modifier = Modifier.height(appBarHeight).fillMaxWidth()
+					) {
+						BackButton(
+							onBack = navigateApplication::navigateUp,
+							modifier = Modifier
+								.padding(topRowOuterPadding)
+								.align(Alignment.CenterStart)
+						)
+
+						if (headerCollapseProgress > 0f) {
+							val menuHeightProgress by menuHeightScaler.progressState
+							val chevronRotation by remember {
+								derivedStateOf { linearInterpolation(0f, 180f, menuHeightProgress) }
+							}
+							val isMenuFullyShown by remember { derivedStateOf { menuHeightProgress < .02f } }
+							val chevronLabel = stringResource(id = if (isMenuFullyShown) R.string.collapse else R.string.expand)
+
+							val scope = rememberCoroutineScope()
+
+							UnlabelledChevronIcon(
+								onClick = {
+									if (headerCollapseProgress < 1f) return@UnlabelledChevronIcon
+									scope.launch {
+										if (!isMenuFullyShown) {
+											menuHeightScaler.animateGoToMax()
+										} else {
+											menuHeightScaler.animateGoToMin()
+										}
+									}
+								},
+								chevronDescription = chevronLabel,
+								modifier = Modifier
+									.align(Alignment.TopEnd)
+									.padding(
+										vertical = topRowOuterPadding,
+										horizontal = viewPaddingUnit * 2
+									),
+								chevronModifier = Modifier
+									.rotate(chevronRotation)
+									.alpha(headerCollapseProgress),
+							)
+						}
+					}
+
+					Column(
 						modifier = Modifier
 							.fillMaxWidth()
-							.background(coverArtColorState.backgroundColor),
+							.offsetLayout(headerScaler)
+							.clipToBounds()
+							.padding(viewPadding)
 					) {
+						val coverArtTopPadding = appBarHeight
+						val coverArtBottomPadding = viewPadding * 3
+
 						Box(
-							modifier = Modifier.height(appBarHeight).fillMaxWidth()
+							modifier = Modifier
+								.requiredHeight(coverArtContainerHeight)
+								.padding(
+									top = coverArtTopPadding,
+									start = viewPadding * 11,
+									end = viewPadding * 11,
+									bottom = coverArtBottomPadding
+								)
+								.fillMaxWidth()
 						) {
-							BackButton(
-								onBack = navigateApplication::navigateUp,
-								modifier = Modifier
-									.padding(topRowOuterPadding)
-									.align(Alignment.CenterStart)
-							)
+							val coverArtState = remember(coverArtBitmap) { coverArtBitmap?.asImageBitmap() }
 
-							if (headerCollapseProgress > 0f) {
-								val menuHeightProgress by menuHeightScaler.progressState
-								val chevronRotation by remember {
-									derivedStateOf { linearInterpolation(0f, 180f, menuHeightProgress) }
-								}
-								val isMenuFullyShown by remember { derivedStateOf { menuHeightProgress < .02f } }
-								val chevronLabel =
-									stringResource(id = if (isMenuFullyShown) R.string.collapse else R.string.expand)
-
-								val scope = rememberCoroutineScope()
-
-								UnlabelledChevronIcon(
-									onClick = {
-										if (headerCollapseProgress < 1f) return@UnlabelledChevronIcon
-										scope.launch {
-											if (!isMenuFullyShown) {
-												menuHeightScaler.animateGoToMax()
-											} else {
-												menuHeightScaler.animateGoToMin()
-											}
-										}
-									},
-									chevronDescription = chevronLabel,
-									modifier = Modifier
-										.align(Alignment.TopEnd)
-										.padding(
-											vertical = topRowOuterPadding,
-											horizontal = viewPaddingUnit * 2
+							coverArtState
+								?.also {
+									val album by viewModel.album.subscribeAsState()
+									val artist by viewModel.artist.subscribeAsState()
+									Image(
+										bitmap = it,
+										contentDescription = stringResource(
+											id = R.string.lbl_cover_art,
+											album,
+											artist
 										),
-									chevronModifier = Modifier
-										.rotate(chevronRotation)
-										.alpha(headerCollapseProgress),
+										contentScale = ContentScale.FillHeight,
+										modifier = Modifier
+											.clip(RoundedCornerShape(5.dp))
+											.border(
+												1.dp,
+												shape = RoundedCornerShape(5.dp),
+												color = coverArtColorState.secondaryTextColor
+											)
+											.fillMaxHeight()
+											.align(Alignment.Center),
+									)
+								}
+						}
+
+						val startPadding by rememberTitleStartPadding(headerScaler.progressState)
+						val endPadding by remember {
+							derivedStateOf {
+								linearInterpolation(
+									viewPadding,
+									topMenuIconSize + viewPaddingUnit * 4,
+									headerCollapseProgress
 								)
 							}
 						}
-
-						Column(
-							modifier = Modifier
-								.fillMaxWidth()
-								.offsetLayout()
-								.clipToBounds()
-								.padding(viewPadding)
-						) {
-							val coverArtTopPadding = appBarHeight
-							val coverArtBottomPadding = viewPadding * 3
-
-							Box(
-								modifier = Modifier
-									.requiredHeight(coverArtContainerHeight)
-									.padding(
-										top = coverArtTopPadding,
-										start = viewPadding * 11,
-										end = viewPadding * 11,
-										bottom = coverArtBottomPadding
-									)
-									.fillMaxWidth()
-							) {
-								val coverArtState = remember(coverArtBitmap) { coverArtBitmap?.asImageBitmap() }
-
-								coverArtState
-									?.also {
-										val album by viewModel.album.subscribeAsState()
-										val artist by viewModel.artist.subscribeAsState()
-										Image(
-											bitmap = it,
-											contentDescription = stringResource(
-												id = R.string.lbl_cover_art,
-												album,
-												artist
-											),
-											contentScale = ContentScale.FillHeight,
-											modifier = Modifier
-												.clip(RoundedCornerShape(5.dp))
-												.border(
-													1.dp,
-													shape = RoundedCornerShape(5.dp),
-													color = coverArtColorState.secondaryTextColor
-												)
-												.fillMaxHeight()
-												.align(Alignment.Center),
-										)
-									}
-							}
-
-							val startPadding by rememberTitleStartPadding(headerScaler.progressState)
-							val endPadding by remember {
-								derivedStateOf {
-									linearInterpolation(
-										viewPadding,
-										topMenuIconSize + viewPaddingUnit * 4,
-										headerCollapseProgress
-									)
-								}
-							}
-							FilePropertyHeader(
-								viewModel,
-								coverArtColorState,
-								modifier = Modifier.padding(start = startPadding, end = endPadding),
-								titleFontSize = titleFontSize,
-								isMarqueeEnabled = !lazyListState.isScrollInProgress
-							)
-						}
+						FilePropertyHeader(
+							viewModel,
+							coverArtColorState,
+							modifier = Modifier.padding(start = startPadding, end = endPadding),
+							titleFontSize = titleFontSize,
+							isMarqueeEnabled = !lazyListState.isScrollInProgress
+						)
 					}
 				}
 			},

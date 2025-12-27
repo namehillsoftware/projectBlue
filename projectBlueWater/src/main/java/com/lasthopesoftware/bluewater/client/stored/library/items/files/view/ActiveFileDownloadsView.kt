@@ -53,6 +53,7 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.calculateSummaryColumnWidth
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
+import com.lasthopesoftware.bluewater.android.ui.components.DeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.FullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.ListLoading
@@ -62,7 +63,6 @@ import com.lasthopesoftware.bluewater.android.ui.components.MenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledChevronIcon
 import com.lasthopesoftware.bluewater.android.ui.components.ignoreConsumedOffset
 import com.lasthopesoftware.bluewater.android.ui.components.linkedTo
-import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.remember
@@ -228,7 +228,7 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 				FullScreenScrollConnectedScaler.remember(min = appBarHeight.toPx(), max = boxHeight.toPx())
 			}
 			val topMenuHeightPx = LocalDensity.current.remember { topMenuHeight.toPx() }
-			val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(topMenuHeightPx, 0f)
+			val menuHeightScaler = DeferredPreScrollConnectedScaler.remember(topMenuHeightPx, 0f)
 			val compositeScroller = remember(heightScaler) {
 				heightScaler.linkedTo(menuHeightScaler).ignoreConsumedOffset()
 			}
@@ -246,7 +246,7 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 										listFocus.requestFocus()
 								}
 							},
-					) headerColumn@{
+					) {
 						val heightValue by heightScaler.valueState
 						val heightValueDp by LocalDensity.current.remember { derivedStateOf { heightValue.toDp() } }
 						Box(

@@ -328,6 +328,15 @@ class ConsumableConnectedScaler(
 
 			return scaler
 		}
+
+		fun Modifier.offsetLayout(connectedScaler: ConsumableConnectedScaler) = layout { measurable, constraints ->
+			val placeable = measurable.measure(constraints)
+			connectedScaler.max.floatValue = placeable.height.toFloat()
+
+			layout(placeable.width, connectedScaler.valueState.value.fastRoundToInt()) {
+				placeable.place(0, connectedScaler.calculateOffset())
+			}
+		}
 	}
 
 	private val negativeStart = -start
@@ -340,7 +349,11 @@ class ConsumableConnectedScaler(
 
 	val valueState by lazy {
 		derivedStateOf {
-			(max.floatValue + totalDistanceTraveled.floatValue).coerceIn(state.min, max.floatValue)
+			(max.floatValue + totalDistanceTraveled.floatValue).coerceIn(state.min, max.floatValue).also {
+				if (DebugFlag.isDebugCompilation) {
+					Log.d(logTag, "valueState: $it")
+				}
+			}
 		}
 	}
 
@@ -359,7 +372,7 @@ class ConsumableConnectedScaler(
 		totalDistanceTraveled.floatValue += available.y
 
 		if (DebugFlag.isDebugCompilation) {
-			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
+			Log.d(logTag, "totalDistanceTraveled: ${totalDistanceTraveled.floatValue}")
 		}
 
 		return available.copy(y = valueState.value - originalValue)
@@ -380,15 +393,6 @@ class ConsumableConnectedScaler(
 		return available.copy(y = valueState.value - originalValue)
 	}
 
-	fun Modifier.offsetLayout() = layout { measurable, constraints ->
-		val placeable = measurable.measure(constraints)
-		max.floatValue = placeable.height.toFloat()
-
-		layout(placeable.width, valueState.value.fastRoundToInt()) {
-			placeable.place(0, calculateOffset())
-		}
-	}
-
 	private fun calculateOffset() =
 		maxOf(totalDistanceTraveled.floatValue, state.min - max.floatValue).fastRoundToInt()
 
@@ -397,19 +401,20 @@ class ConsumableConnectedScaler(
 	private fun calculateProgress(value: Float) = if (fullDistance.value == 0f) 1f else (max.floatValue - value) / fullDistance.value
 }
 
-/**
- * Will scale a value based on a nested **vertical** scroll, sourced from Android examples on this page:
- * https://developer.android.com/reference/kotlin/androidx/compose/ui/input/nestedscroll/package-summary#extension-functions
- */
-@Composable
-fun rememberDeferredPreScrollConnectedScaler(max: Float, min: Float) = rememberSaveable(saver = DeferredPreScrollConnectedScaler.Saver) {
-	DeferredPreScrollConnectedScaler(max, min)
-}
-
 class DeferredPreScrollConnectedScaler private constructor(private val max: Float, private val min: Float, initialDistanceTraveled: Float) : BoundedScrollConnection {
 
 	companion object {
 		private const val logTag = "DeferredPreScrollConnectedScaler"
+
+		/**
+		 * Will scale a value based on a nested **vertical** scroll, sourced from Android examples on this page:
+		 * https://developer.android.com/reference/kotlin/androidx/compose/ui/input/nestedscroll/package-summary#extension-functions
+		 */
+		@Composable
+		fun remember(max: Float, min: Float) = rememberSaveable(saver = Saver) {
+			DeferredPreScrollConnectedScaler(max, min)
+		}
+
 	}
 
 	constructor(max: Float, min: Float): this(max, min, max)
@@ -440,6 +445,10 @@ class DeferredPreScrollConnectedScaler private constructor(private val max: Floa
 
 	@SuppressLint("LongLogTag")
 	private fun consumeY(available: Offset): Offset {
+		if (DebugFlag.isDebugCompilation) {
+			Log.d(logTag, "available: $available")
+		}
+
 		val delta = available.y
 		val originalValue = mutableValueState.floatValue
 		val newOffset = originalValue + delta

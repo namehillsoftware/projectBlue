@@ -2,7 +2,7 @@ import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -19,14 +19,14 @@ fun VerticalHeaderScaffold(
 	modifier: Modifier = Modifier,
 ) {
 	Box(modifier = modifier) {
-		var headerHeight by rememberSaveable { mutableIntStateOf(0) }
+		var headerHeight by rememberSaveable { mutableStateOf<Int?>(null) }
 
 		val actualContent = LocalDensity.current.remember(content, headerHeight) {
-			val headerHeightDp = headerHeight.toDp()
+			val headerHeightDp = headerHeight?.toDp()
 			Log.d("VerticalHeaderScaffold", "maxOverlayHeightDp = $headerHeightDp")
 
 			return@remember @Composable {
-				content(headerHeightDp)
+				headerHeightDp?.let { content(it) } ?: Unit
 			}
 		}
 
@@ -49,7 +49,7 @@ fun VerticalHeaderScaffold(
 								placeable.place(x = 0, y = currentY)
 								currentY += placeable.height
 							}
-							headerHeight = maxOf(currentY, headerHeight)
+							headerHeight = headerHeight?.coerceAtLeast(currentY) ?: currentY
 						}
 					}
 				},
@@ -67,7 +67,7 @@ fun VerticalHeaderScaffold(
 						}
 					}
 				}
-			)
+			),
 		) { (headerWithOverlayMeasurable, contentMeasurable), constraints ->
 			val headerPlaceables = headerWithOverlayMeasurable.map { it.measure(constraints) }
 

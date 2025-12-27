@@ -9,8 +9,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -69,6 +69,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.AnchoredChips
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredProgressScrollConnectionDispatcher
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
+import com.lasthopesoftware.bluewater.android.ui.components.DeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.FullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.ListItemIcon
@@ -79,7 +80,6 @@ import com.lasthopesoftware.bluewater.android.ui.components.UnlabelledChevronIco
 import com.lasthopesoftware.bluewater.android.ui.components.ignoreConsumedOffset
 import com.lasthopesoftware.bluewater.android.ui.components.linkedTo
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
-import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
 import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
@@ -526,13 +526,8 @@ fun ItemListView(
 			LazyColumn(
 				state = lazyListState,
 				modifier = modifier,
+				contentPadding = PaddingValues(top = headerHeight)
 			) {
-				// Using a spacer instead of content padding helps keep the state between the horizontal and vertical
-				// views
-				item(contentType = ItemListContentType.Spacer) {
-					Spacer(Modifier.height(headerHeight))
-				}
-
 				if (items.any()) {
 					item(contentType = ItemListContentType.Header) {
 						ItemsCountHeader(items.size)
@@ -676,7 +671,7 @@ fun ScreenDimensionsScope.ItemListView(
 			val collapsedHeightPx = LocalDensity.current.remember { appBarHeight.toPx() }
 			val topMenuHeightPx = LocalDensity.current.remember { rowPadding.toPx() * 2 + topMenuHeight.toPx() }
 
-			val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(topMenuHeightPx, 0f)
+			val menuHeightScaler = DeferredPreScrollConnectedScaler.remember(topMenuHeightPx, 0f)
 
 			val fullListSize by LocalDensity.current.remember(maxHeight) {
 				val topMenuHeightPx = 0f
