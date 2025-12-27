@@ -42,15 +42,21 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -68,11 +74,12 @@ import com.lasthopesoftware.bluewater.android.ui.components.ApplicationInfoText
 import com.lasthopesoftware.bluewater.android.ui.components.ApplicationLogo
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.ConsumableConnectedScaler
+import com.lasthopesoftware.bluewater.android.ui.components.ConsumableConnectedScaler.Companion.offsetLayout
+import com.lasthopesoftware.bluewater.android.ui.components.DeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.ignoreConsumedOffset
 import com.lasthopesoftware.bluewater.android.ui.components.linkedTo
-import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
@@ -87,6 +94,7 @@ import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.toState
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.mikepenz.markdown.m2.Markdown
+import kotlinx.coroutines.flow.first
 
 private val horizontalOptionsPadding = 32.dp
 val expandedMenuHeight = Dimensions.topMenuHeight + viewPaddingUnit * 6
@@ -422,10 +430,22 @@ private fun ApplicationSettingsViewVertical(
 	val headerScaler = ConsumableConnectedScaler.remember(minHeaderHeight)
 
 	val expandedMenuHeightPx = LocalDensity.current.remember { expandedMenuHeight.toPx() }
-	val menuScaler = rememberDeferredPreScrollConnectedScaler(expandedMenuHeightPx, 0f)
+	val menuScaler = DeferredPreScrollConnectedScaler.remember(expandedMenuHeightPx, 0f)
 
-	val scrollConnection = remember(menuScaler, headerScaler) {
+	val compositeScroll = remember(menuScaler, headerScaler) {
 		headerScaler.linkedTo(menuScaler).ignoreConsumedOffset()
+	}
+
+	var lastScrollPosition by rememberSaveable { mutableIntStateOf(0) }
+	val scrollState = rememberScrollState()
+	LaunchedEffect(scrollState) {
+		val firstScrollPosition = snapshotFlow { scrollState.value }.first()
+		compositeScroll.onPreScroll(Offset(x = 0f, y = (lastScrollPosition - firstScrollPosition).toFloat()), NestedScrollSource.SideEffect)
+
+		snapshotFlow { scrollState.value }
+			.collect {
+				lastScrollPosition = it
+			}
 	}
 
 	val libraries by applicationSettingsViewModel.libraries.subscribeAsState()
@@ -433,41 +453,39 @@ private fun ApplicationSettingsViewVertical(
 
 	VerticalHeaderScaffold(
 		header = {
-			headerScaler.apply {
-				Column(
+			Column(
+				modifier = Modifier
+					.fillMaxWidth()
+					.background(MaterialTheme.colors.surface)
+					.offsetLayout(headerScaler)
+					.clipToBounds()
+			) {
+				Box(
 					modifier = Modifier
 						.fillMaxWidth()
-						.background(MaterialTheme.colors.surface)
-						.offsetLayout()
-						.clipToBounds()
+						.padding(viewPaddingUnit * 8)
 				) {
-					Box(
+					ApplicationLogo(
 						modifier = Modifier
-							.fillMaxWidth()
-							.padding(viewPaddingUnit * 8)
-					) {
-						ApplicationLogo(
-							modifier = Modifier
-								.fillMaxWidth(.5f)
-								.align(Alignment.TopCenter)
-								.combinedClickable(
-									interactionSource = remember { MutableInteractionSource() },
-									indication = null,
-									onClick = {},
-									onLongClick = { applicationNavigation.viewHiddenSettings() },
-								)
-						)
-					}
+							.fillMaxWidth(.5f)
+							.align(Alignment.TopCenter)
+							.combinedClickable(
+								interactionSource = remember { MutableInteractionSource() },
+								indication = null,
+								onClick = {},
+								onLongClick = { applicationNavigation.viewHiddenSettings() },
+							)
+					)
+				}
 
-					Row(
-						modifier = Modifier
-							.fillMaxWidth()
-							.requiredHeight(Dimensions.appBarHeight)
-							.background(MaterialTheme.colors.surface)
-					) {
-						ProvideTextStyle(MaterialTheme.typography.h4) {
-							Text(text = stringResource(id = R.string.app_name))
-						}
+				Row(
+					modifier = Modifier
+						.fillMaxWidth()
+						.requiredHeight(Dimensions.appBarHeight)
+						.background(MaterialTheme.colors.surface)
+				) {
+					ProvideTextStyle(MaterialTheme.typography.h4) {
+						Text(text = stringResource(id = R.string.app_name))
 					}
 				}
 			}
@@ -493,7 +511,7 @@ private fun ApplicationSettingsViewVertical(
 						}
 						.fillMaxWidth(),
 					onTabChange = {
-						scrollConnection.goToMax()
+						compositeScroll.goToMax()
 					}
 				)
 			}
@@ -501,8 +519,8 @@ private fun ApplicationSettingsViewVertical(
 		content = { overlayHeight ->
 			Column(
 				modifier = Modifier
-					.fillMaxSize()
-					.verticalScroll(rememberScrollState()),
+					.verticalScroll(scrollState)
+					.fillMaxWidth(),
 				horizontalAlignment = Alignment.CenterHorizontally,
 			) {
 				Spacer(modifier = Modifier.height(overlayHeight))
@@ -523,7 +541,7 @@ private fun ApplicationSettingsViewVertical(
 		},
 		modifier = Modifier
 			.fillMaxSize()
-			.nestedScroll(scrollConnection)
+			.nestedScroll(compositeScroll)
 	)
 }
 

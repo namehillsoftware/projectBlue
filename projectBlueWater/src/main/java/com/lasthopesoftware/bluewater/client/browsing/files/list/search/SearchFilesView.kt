@@ -68,11 +68,11 @@ import com.lasthopesoftware.bluewater.android.ui.calculateSummaryColumnWidth
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredChips
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredProgressScrollConnectionDispatcher
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
+import com.lasthopesoftware.bluewater.android.ui.components.DeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.ignoreConsumedOffset
 import com.lasthopesoftware.bluewater.android.ui.components.rememberAnchoredScrollConnectionState
-import com.lasthopesoftware.bluewater.android.ui.components.rememberDeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
@@ -332,7 +332,7 @@ private fun SearchFilesList(
 			val lazyListState = rememberLazyListState()
 
 			val rowHeightPx = LocalDensity.current.remember { standardRowHeight.toPx() }
-			val menuHeightScaler = rememberDeferredPreScrollConnectedScaler(rowHeightPx, 0f)
+			val menuHeightScaler = DeferredPreScrollConnectedScaler.remember(rowHeightPx, 0f)
 
 			val compositeScrollConnection = remember(menuHeightScaler) {
 				menuHeightScaler.ignoreConsumedOffset()
