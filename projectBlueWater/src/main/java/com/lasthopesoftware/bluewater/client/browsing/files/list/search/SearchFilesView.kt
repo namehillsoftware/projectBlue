@@ -4,6 +4,7 @@ import VerticalHeaderScaffold
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
@@ -47,7 +49,10 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -60,6 +65,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
@@ -67,6 +73,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.calculateSummaryColumnWidth
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredChips
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredProgressScrollConnectionDispatcher
+import com.lasthopesoftware.bluewater.android.ui.components.AnchoredScrollConnectionState
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.DeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.LabelledRefreshButton
@@ -77,7 +84,6 @@ import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
-import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.standardRowHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconWidth
@@ -319,232 +325,138 @@ private fun SearchFilesList(
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	applicationNavigation: NavigateApplication,
 	playbackServiceController: ControlPlaybackService,
-	stringResources: GetStringResources,
+	lazyListState: LazyListState,
+	anchoredScrollConnectionState: AnchoredScrollConnectionState,
+	chipLabel: @Composable (Int, Float) -> Unit,
+	onScrollProgress: (Float) -> Unit,
+	modifier: Modifier = Modifier,
+	headerHeight: Dp = 0.dp,
+	focusRequester: FocusRequester? = null
 ) {
 	val files by searchFilesViewModel.files.subscribeAsState()
-	val isLoading by searchFilesViewModel.isLoading.subscribeAsState()
-	when {
-		isLoading -> Box(modifier = Modifier.fillMaxSize()) {
-			CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-		}
-
-		files.any() -> BoxWithConstraints {
-			val lazyListState = rememberLazyListState()
-
-			val rowHeightPx = LocalDensity.current.remember { standardRowHeight.toPx() }
-			val menuHeightScaler = DeferredPreScrollConnectedScaler.remember(rowHeightPx, 0f)
-
-			val compositeScrollConnection = remember(menuHeightScaler) {
-				menuHeightScaler.ignoreConsumedOffset()
-			}
-
-			var minVisibleItemsForScroll by remember { mutableIntStateOf(30) }
-			LaunchedEffect(lazyListState, searchFilesViewModel) {
-				combine(
-					snapshotFlow { lazyListState.layoutInfo },
-					searchFilesViewModel.isLoading.mapNotNull().asFlow()
-				) { info, s -> Pair(info, s) }
-					.filterNot { (_, s) -> s }
-					.map { (info, _) -> info.visibleItemsInfo.size }
-					.filter { it == 0 }
-					.distinctUntilChanged()
-					.take(1)
-					.collect {
-						minVisibleItemsForScroll = (it * 3).coerceAtLeast(30)
-					}
-			}
-
-			val labeledAnchors by remember {
-				derivedStateOf {
-					var totalItems = 1
-
-					if (files.any())
-						totalItems += 1 + files.size
-
-					if (totalItems <= minVisibleItemsForScroll) emptyList()
-					else listOf(
-						Pair(stringResources.top, 0f),
-						Pair(stringResources.end, 1f),
-					)
+	BoxWithConstraints(modifier = modifier) {
+		var listModifier = Modifier
+			.focusGroup()
+			.focusProperties {
+				onExit = {
+					if (requestedFocusDirection == FocusDirection.Up)
+						onScrollProgress(0f)
 				}
 			}
-
-			val progressAnchors by remember {
-				derivedStateOf { labeledAnchors.map { (_, p) -> p }.toFloatArray() }
-			}
-
-			val anchoredScrollConnectionState = rememberAnchoredScrollConnectionState(progressAnchors)
-
-			val fullListSize by LocalDensity.current.remember(maxHeight) {
-				val topMenuHeightPx = 0f
-				val headerHeightPx = (topMenuHeight + viewPaddingUnit * 2).toPx()
-				val rowHeightPx = standardRowHeight.toPx()
-				val dividerHeight = 1.dp.toPx()
-
-				derivedStateOf {
-					var fullListSize = topMenuHeightPx
-
-					if (files.any()) {
-						fullListSize += headerHeightPx + rowHeightPx * files.size + dividerHeight * files.size - 1
-					}
-
-					fullListSize -= maxHeight.toPx()
-					if (files.any())
-						fullListSize += rowHeightPx + dividerHeight
-					fullListSize.coerceAtLeast(0f)
-				}
-			}
-
-			val anchoredScrollConnectionDispatcher = AnchoredProgressScrollConnectionDispatcher.remember(
-				anchoredScrollConnectionState,
-				compositeScrollConnection,
-				-fullListSize,
+			.scrollbar(
+				lazyListState,
+				horizontal = false,
+				knobColor = MaterialTheme.colors.onSurface,
+				trackColor = Color.Transparent,
+				visibleAlpha = .4f,
+				knobCornerRadius = 1.dp,
 			)
+		if (focusRequester != null)
+			listModifier = listModifier.focusRequester(focusRequester)
 
-			VerticalHeaderScaffold(
-				header = {},
-				overlay = {
-					val menuHeightValue by menuHeightScaler.valueState
-					val menuHeightDp by LocalDensity.current.remember { derivedStateOf { menuHeightValue.toDp() } }
-					Box(
-						modifier = Modifier
-							.fillMaxWidth()
-							.background(MaterialTheme.colors.surface)
-							.height(menuHeightDp)
-							.clipToBounds()
-					) {
-						SearchFilesMenu(
-							searchFilesViewModel,
-							applicationNavigation,
-							playbackServiceController,
-							modifier = Modifier.graphicsLayer {
-								translationY = (menuHeightValue - rowHeightPx) * 0.5f
-							}
-						)
-					}
-				},
-				content = {
-					LazyColumn(
-						state = lazyListState,
-						contentPadding = PaddingValues(top = topMenuHeight + rowPadding * 2),
-						modifier = Modifier
-							.scrollbar(
-								lazyListState,
-								horizontal = false,
-								knobColor = MaterialTheme.colors.onSurface,
-								trackColor = Color.Transparent,
-								visibleAlpha = .4f,
-								knobCornerRadius = 1.dp,
-							),
-					) {
-						item(contentType = ItemListContentType.Header) {
-							Box(
-								modifier = Modifier
-									.padding(viewPaddingUnit)
-									.height(viewPaddingUnit * 12)
-							) {
-								ProvideTextStyle(MaterialTheme.typography.h5) {
-									Text(
-										text = stringResource(R.string.file_count_label, files.size),
-										fontWeight = FontWeight.Bold,
-										modifier = Modifier
-											.padding(viewPaddingUnit)
-											.align(Alignment.CenterStart)
-									)
-								}
-							}
-						}
-
-						itemsIndexed(files, contentType = { _, _ -> ItemListContentType.Item }) { i, f ->
-							RenderTrackTitleItem(
-								position = i,
-								serviceFile = f,
-								trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
-								searchFilesViewModel = searchFilesViewModel,
-								applicationNavigation = applicationNavigation,
-								nowPlayingViewModel = nowPlayingViewModel,
-								itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-								playbackServiceController = playbackServiceController,
-							)
-
-							if (i < files.lastIndex)
-								Divider()
-						}
-					}
-
-					LaunchedEffect(anchoredScrollConnectionState) {
-						snapshotFlow { anchoredScrollConnectionState.selectedProgress }
-							.drop(1) // Ignore initial state
-							.map {
-								val layoutInfo = lazyListState.layoutInfo
-								it?.let { progress ->
-									val totalItems = layoutInfo.totalItemsCount
-
-									val newIndex = (totalItems - 1) * progress
-									newIndex
-								}
-							}
-							.distinctUntilChanged()
-							.collect {
-								it?.let { fractionalIndex ->
-									if (DebugFlag.isDebugCompilation) {
-										Log.d("LoadedItemListView", "Selected index: $it")
-									}
-
-									val index = fractionalIndex.toInt()
-
-									lazyListState.scrollToItem(index)
-
-									val offsetPercentage = fractionalIndex - index
-									if (offsetPercentage != 0f) {
-										val offsetPixels = lazyListState
-											.layoutInfo
-											.visibleItemsInfo
-											.firstOrNull()
-											?.size
-											?.let { s -> s * offsetPercentage }
-											?.takeIf { p -> p != 0f }
-
-										if (offsetPixels != null) {
-											lazyListState.scrollBy(offsetPixels)
-										}
-									}
-								}
-							}
-					}
-
-					if (LocalInputModeManager.current.inputMode == InputMode.Touch) {
-						// 5in in pixels, pixels/Inch
-						val maxHeight = this@BoxWithConstraints.maxHeight
-						val maxScrollBarHeight = remember(maxHeight) {
-							val dpi = 160f
-							(2.5f * dpi).dp.coerceAtMost(maxHeight - topMenuHeight)
-						}
-
-						val localHapticFeedback = LocalHapticFeedback.current
-						AnchoredChips(
+		LazyColumn(
+			state = lazyListState,
+			contentPadding = PaddingValues(top = headerHeight),
+			modifier = listModifier,
+		) {
+			item(contentType = ItemListContentType.Header) {
+				Box(
+					modifier = Modifier
+						.padding(viewPaddingUnit)
+						.height(viewPaddingUnit * 12)
+				) {
+					ProvideTextStyle(MaterialTheme.typography.h5) {
+						Text(
+							text = stringResource(R.string.file_count_label, files.size),
+							fontWeight = FontWeight.Bold,
 							modifier = Modifier
-								.heightIn(200.dp, maxScrollBarHeight)
-								.align(Alignment.BottomEnd),
-							anchoredScrollConnectionState = anchoredScrollConnectionState,
-							lazyListState = lazyListState,
-							chipLabel = { _, p ->
-								labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) }
-							},
-							onScrollProgress = { p -> anchoredScrollConnectionState.selectedProgress = p },
-							onSelected = {
-								localHapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
-							}
+								.padding(viewPaddingUnit)
+								.align(Alignment.CenterStart)
 						)
 					}
-				},
-				modifier = Modifier
-					.fillMaxSize()
-					.nestedScroll(anchoredScrollConnectionDispatcher)
-			)
+				}
+			}
+
+			itemsIndexed(files, contentType = { _, _ -> ItemListContentType.Item }) { i, f ->
+				RenderTrackTitleItem(
+					position = i,
+					serviceFile = f,
+					trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
+					searchFilesViewModel = searchFilesViewModel,
+					applicationNavigation = applicationNavigation,
+					nowPlayingViewModel = nowPlayingViewModel,
+					itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+					playbackServiceController = playbackServiceController,
+				)
+
+				if (i < files.lastIndex)
+					Divider()
+			}
 		}
 
-		else -> Spacer(modifier = Modifier.fillMaxSize())
+		LaunchedEffect(anchoredScrollConnectionState) {
+			snapshotFlow { anchoredScrollConnectionState.selectedProgress }
+				.drop(1) // Ignore initial state
+				.map {
+					val layoutInfo = lazyListState.layoutInfo
+					it?.let { progress ->
+						val totalItems = layoutInfo.totalItemsCount
+
+						val newIndex = (totalItems - 1) * progress
+						newIndex
+					}
+				}
+				.distinctUntilChanged()
+				.collect {
+					it?.let { fractionalIndex ->
+						if (DebugFlag.isDebugCompilation) {
+							Log.d("LoadedItemListView", "Selected index: $it")
+						}
+
+						val index = fractionalIndex.toInt()
+
+						lazyListState.scrollToItem(index)
+
+						val offsetPercentage = fractionalIndex - index
+						if (offsetPercentage != 0f) {
+							val offsetPixels = lazyListState
+								.layoutInfo
+								.visibleItemsInfo
+								.firstOrNull()
+								?.size
+								?.let { s -> s * offsetPercentage }
+								?.takeIf { p -> p != 0f }
+
+							if (offsetPixels != null) {
+								lazyListState.scrollBy(offsetPixels)
+							}
+						}
+					}
+				}
+		}
+
+		if (LocalInputModeManager.current.inputMode == InputMode.Touch) {
+			// 5in in pixels, pixels/Inch
+			val maxHeight = this@BoxWithConstraints.maxHeight
+			val maxScrollBarHeight = remember(maxHeight) {
+				val dpi = 160f
+				(2.5f * dpi).dp.coerceAtMost(maxHeight - topMenuHeight)
+			}
+
+			val localHapticFeedback = LocalHapticFeedback.current
+			AnchoredChips(
+				modifier = Modifier
+					.heightIn(200.dp, maxScrollBarHeight)
+					.align(Alignment.BottomEnd),
+				anchoredScrollConnectionState = anchoredScrollConnectionState,
+				lazyListState = lazyListState,
+				chipLabel = chipLabel,
+				onScrollProgress = onScrollProgress,
+				onSelected = {
+					localHapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
+				}
+			)
+		}
 	}
 }
 
@@ -562,6 +474,78 @@ fun ScreenDimensionsScope.SearchFilesView(
 ) {
 	var isConnectionLost by remember { mutableStateOf(false) }
 	val scope = rememberCoroutineScope()
+	val lazyListState = rememberLazyListState()
+
+	val rowHeightPx = LocalDensity.current.remember { standardRowHeight.toPx() }
+	val menuHeightScaler = DeferredPreScrollConnectedScaler.remember(rowHeightPx, 0f)
+
+	val compositeScrollConnection = remember(menuHeightScaler) {
+		menuHeightScaler.ignoreConsumedOffset()
+	}
+
+	var minVisibleItemsForScroll by remember { mutableIntStateOf(30) }
+	LaunchedEffect(lazyListState, searchFilesViewModel) {
+		combine(
+			snapshotFlow { lazyListState.layoutInfo },
+			searchFilesViewModel.isLoading.mapNotNull().asFlow()
+		) { info, s -> Pair(info, s) }
+			.filterNot { (_, s) -> s }
+			.map { (info, _) -> info.visibleItemsInfo.size }
+			.filter { it == 0 }
+			.distinctUntilChanged()
+			.take(1)
+			.collect {
+				minVisibleItemsForScroll = (it * 3).coerceAtLeast(30)
+			}
+	}
+
+	val files by searchFilesViewModel.files.subscribeAsState()
+	val labeledAnchors by remember {
+		derivedStateOf {
+			var totalItems = 1
+
+			if (files.any())
+				totalItems += 1 + files.size
+
+			if (totalItems <= minVisibleItemsForScroll) emptyList()
+			else listOf(
+				Pair(stringResources.top, 0f),
+				Pair(stringResources.end, 1f),
+			)
+		}
+	}
+
+	val progressAnchors by remember {
+		derivedStateOf { labeledAnchors.map { (_, p) -> p }.toFloatArray() }
+	}
+
+	val anchoredScrollConnectionState = rememberAnchoredScrollConnectionState(progressAnchors)
+
+	val fullListSize by LocalDensity.current.remember(this@SearchFilesView.maxHeight) {
+		val topMenuHeightPx = 0f
+		val headerHeightPx = (topMenuHeight + viewPaddingUnit * 2).toPx()
+		val rowHeightPx = standardRowHeight.toPx()
+		val dividerHeight = 1.dp.toPx()
+
+		derivedStateOf {
+			var fullListSize = topMenuHeightPx
+
+			if (files.any()) {
+				fullListSize += headerHeightPx + rowHeightPx * files.size + dividerHeight * files.size - 1
+			}
+
+			fullListSize -= this@SearchFilesView.maxHeight.toPx()
+			if (files.any())
+				fullListSize += rowHeightPx + dividerHeight
+			fullListSize.coerceAtLeast(0f)
+		}
+	}
+
+	val anchoredScrollConnectionDispatcher = AnchoredProgressScrollConnectionDispatcher.remember(
+		anchoredScrollConnectionState,
+		compositeScrollConnection,
+		-fullListSize,
+	)
 
 	ControlSurface {
 		if (maxWidth < Dimensions.twoColumnThreshold) {
@@ -595,8 +579,9 @@ fun ScreenDimensionsScope.SearchFilesView(
 					}
 				}
 
-				if (isConnectionLost) {
-					ConnectionLostView(
+				val isLoading by searchFilesViewModel.isLoading.subscribeAsState()
+				when {
+					isConnectionLost -> ConnectionLostView(
 						onCancel = { isConnectionLost = false },
 						onRetry = {
 							scope.launch {
@@ -608,16 +593,60 @@ fun ScreenDimensionsScope.SearchFilesView(
 							}
 						}
 					)
-				} else {
-					SearchFilesList(
-						searchFilesViewModel = searchFilesViewModel,
-						nowPlayingViewModel = nowPlayingViewModel,
-						trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
-						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-						applicationNavigation = applicationNavigation,
-						playbackServiceController = playbackServiceController,
-						stringResources = stringResources,
-					)
+
+					isLoading -> Box(modifier = Modifier.fillMaxSize()) {
+						CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+					}
+
+					files.any() -> {
+						val listFocus = remember { FocusRequester() }
+						VerticalHeaderScaffold(
+							header = {},
+							overlay = {
+								val menuHeightValue by menuHeightScaler.valueState
+								val menuHeightDp by LocalDensity.current.remember { derivedStateOf { menuHeightValue.toDp() } }
+								Box(
+									modifier = Modifier
+										.fillMaxWidth()
+										.background(MaterialTheme.colors.surface)
+										.height(menuHeightDp)
+										.clipToBounds()
+								) {
+									SearchFilesMenu(
+										searchFilesViewModel,
+										applicationNavigation,
+										playbackServiceController,
+										modifier = Modifier
+											.graphicsLayer {
+												translationY = (menuHeightValue - rowHeightPx) * 0.5f
+											}
+											.focusProperties {
+												down = listFocus
+											}
+									)
+								}
+							},
+							content = { headerHeight ->
+								SearchFilesList(
+									searchFilesViewModel = searchFilesViewModel,
+									nowPlayingViewModel = nowPlayingViewModel,
+									trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
+									itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+									applicationNavigation = applicationNavigation,
+									playbackServiceController = playbackServiceController,
+									lazyListState = lazyListState,
+									anchoredScrollConnectionState,
+									{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
+									anchoredScrollConnectionDispatcher::progressTo,
+									headerHeight = headerHeight,
+									focusRequester = listFocus
+								)
+							},
+							modifier = Modifier.fillMaxSize().nestedScroll(anchoredScrollConnectionDispatcher)
+						)
+					}
+
+					else -> Spacer(modifier = Modifier.fillMaxSize())
 				}
 			}
 		} else {
@@ -647,10 +676,18 @@ fun ScreenDimensionsScope.SearchFilesView(
 								.padding(horizontal = searchFieldPadding),
 						)
 					}
+
+					SearchFilesMenu(
+						searchFilesViewModel,
+						applicationNavigation,
+						playbackServiceController,
+					)
 				}
 
-				if (isConnectionLost) {
-					ConnectionLostView(
+
+				val isLoading by searchFilesViewModel.isLoading.subscribeAsState()
+				when {
+					isConnectionLost -> ConnectionLostView(
 						onCancel = { isConnectionLost = false },
 						onRetry = {
 							scope.launch {
@@ -662,16 +699,28 @@ fun ScreenDimensionsScope.SearchFilesView(
 							}
 						}
 					)
-				} else {
-					SearchFilesList(
-						searchFilesViewModel = searchFilesViewModel,
-						nowPlayingViewModel = nowPlayingViewModel,
-						trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
-						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-						applicationNavigation = applicationNavigation,
-						playbackServiceController = playbackServiceController,
-						stringResources = stringResources,
-					)
+
+					isLoading -> Box(modifier = Modifier.fillMaxSize()) {
+						CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+					}
+
+					files.any() -> {
+						SearchFilesList(
+							searchFilesViewModel = searchFilesViewModel,
+							nowPlayingViewModel = nowPlayingViewModel,
+							trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
+							itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+							applicationNavigation = applicationNavigation,
+							playbackServiceController = playbackServiceController,
+							lazyListState = lazyListState,
+							anchoredScrollConnectionState,
+							{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
+							anchoredScrollConnectionDispatcher::progressTo,
+							modifier = Modifier.nestedScroll(anchoredScrollConnectionDispatcher)
+						)
+					}
+
+					else -> Spacer(modifier = Modifier.fillMaxSize())
 				}
 			}
 		}

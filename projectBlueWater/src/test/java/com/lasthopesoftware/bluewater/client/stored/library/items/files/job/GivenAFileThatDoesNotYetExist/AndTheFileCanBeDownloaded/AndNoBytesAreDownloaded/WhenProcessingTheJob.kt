@@ -17,6 +17,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URI
+import java.util.concurrent.TimeUnit
 
 class WhenProcessingTheJob {
 
@@ -53,6 +54,7 @@ class WhenProcessingTheJob {
 						deferredDownload.resolve()
 				}
 			}
+			.timeout(30, TimeUnit.SECONDS)
 			.toList()
 			.blockingGet()
 	}
