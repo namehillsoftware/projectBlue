@@ -41,7 +41,7 @@ class ActiveFileDownloadsViewModel(
 		mutableDownloadingFiles.mapNotNull().map { it.values.toList() },
 		emptyList()
 	)
-	val downloadingFileId = mutableDownloadingFileId.asInteractionState()
+
 	override val isLoading = mutableIsLoading.asInteractionState()
 
 	init {
@@ -80,6 +80,15 @@ class ActiveFileDownloadsViewModel(
 		})
 
 		addCloseable(applicationMessages.registerReceiver { message: StoredFileMessage.FileWriteError ->
+			mutableDownloadingFiles.value[message.storedFileId]?.let { storedFile ->
+				if (storedFile.libraryId == activeLibraryId?.id) {
+					mutableDownloadingFiles.value -= storedFile.id
+					mutableQueuedFiles.value += Pair(storedFile.id, storedFile)
+				}
+			}
+		})
+
+		addCloseable(applicationMessages.registerReceiver { message: StoredFileMessage.FileReadError ->
 			mutableDownloadingFiles.value[message.storedFileId]?.let { storedFile ->
 				if (storedFile.libraryId == activeLibraryId?.id) {
 					mutableDownloadingFiles.value -= storedFile.id

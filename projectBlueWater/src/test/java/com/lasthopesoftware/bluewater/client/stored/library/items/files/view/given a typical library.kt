@@ -62,6 +62,7 @@ class `given a typical library` {
 		inner class `when loading files` {
 			val downloadedFileId = 939
 			val faultyWriteFileId = 665
+			val faultyReadFileId = 368
 			private val downloadingFileIds = listOf(148, 132)
 
 			private val services by lazy {
@@ -78,6 +79,7 @@ class `given a typical library` {
 									StoredFile().setLibraryId(libraryId).setId(939),
 									StoredFile().setLibraryId(libraryId).setId(853),
 									StoredFile().setLibraryId(libraryId).setId(148),
+									StoredFile().setLibraryId(libraryId).setId(faultyReadFileId),
 									StoredFile().setLibraryId(libraryId).setId(872),
 									StoredFile().setLibraryId(libraryId).setId(22),
 									StoredFile().setLibraryId(libraryId).setId(132),
@@ -94,13 +96,13 @@ class `given a typical library` {
 				)
 			}
 
-			private val downloadingFiles = mutableSetOf<StoredFile>()
+			private val downloadingFiles = mutableSetOf<Int>()
 
 			@BeforeAll
 			fun act() {
 				val (messageBus, vm) = services
 
-				vm.downloadingFiles.mapNotNull().subscribe(downloadingFiles::addAll).toCloseable().use {
+				vm.downloadingFiles.mapNotNull().flatMapIterable { files -> files.map { it.id } }.subscribe(downloadingFiles::add).toCloseable().use {
 					vm.loadActiveDownloads(LibraryId(libraryId)).toExpiringFuture().get()
 					messageBus.sendMessage(StoredFileMessage.FileDownloading(downloadedFileId))
 					for (id in downloadingFileIds) {
@@ -109,6 +111,8 @@ class `given a typical library` {
 					messageBus.sendMessage(StoredFileMessage.FileDownloading(faultyWriteFileId))
 					messageBus.sendMessage(StoredFileMessage.FileDownloaded(downloadedFileId))
 					messageBus.sendMessage(StoredFileMessage.FileWriteError(faultyWriteFileId))
+					messageBus.sendMessage(StoredFileMessage.FileDownloading(faultyReadFileId))
+					messageBus.sendMessage(StoredFileMessage.FileReadError(faultyReadFileId))
 				}
 			}
 
@@ -119,12 +123,19 @@ class `given a typical library` {
 
 			@Test
 			fun `then the loaded files are correct`() {
-				assertThat(services.second.queuedFiles.value.map { it.id }).isEqualTo(listOf(497, 853, 872, 22, 92, faultyWriteFileId))
+				assertThat(services.second.queuedFiles.value.map { it.id }).isEqualTo(listOf(497, 853, 872, 22, 92, faultyWriteFileId, faultyReadFileId))
 			}
 
 			@Test
 			fun `then the downloading files are correct`() {
 				assertThat(services.second.downloadingFiles.value.map { it.id }).isEqualTo(downloadingFileIds)
+			}
+
+			@Test
+			fun `then all downloading files are correct`() {
+				assertThat(downloadingFiles).isEqualTo(
+					(downloadingFileIds + downloadedFileId + faultyReadFileId + faultyWriteFileId).toSet()
+				)
 			}
 		}
 	}
