@@ -74,8 +74,8 @@ class ActiveFileDownloadsViewModel(
 				?.also {
 					mutableQueuedFiles.value[message.storedFileId]?.let { storedFile ->
 						if (storedFile.libraryId == activeLibraryId?.id) {
-							mutableDownloadingFiles.value += Pair(storedFile.id, storedFile)
 							mutableQueuedFiles.value -= storedFile.id
+							mutableDownloadingFiles.value += Pair(storedFile.id, storedFile)
 						}
 					} ?: storedFileAccess.promiseStoredFile(it).then { storedFile ->
 						if (storedFile != null && storedFile.libraryId == activeLibraryId?.id) {
