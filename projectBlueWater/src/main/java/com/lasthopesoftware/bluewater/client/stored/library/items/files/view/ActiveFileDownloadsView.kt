@@ -233,7 +233,8 @@ fun DownloadingFilesList(
 				f,
 			)
 
-			Divider()
+			if (i < downloadingFiles.lastIndex || files.isNotEmpty())
+				Divider()
 		}
 
 		itemsIndexed(
