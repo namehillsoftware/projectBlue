@@ -79,6 +79,15 @@ class ActiveFileDownloadsViewModel(
 				}
 		})
 
+		addCloseable(applicationMessages.registerReceiver { message: StoredFileMessage.FileWriteError ->
+			mutableDownloadingFiles.value[message.storedFileId]?.let { storedFile ->
+				if (storedFile.libraryId == activeLibraryId?.id) {
+					mutableDownloadingFiles.value -= storedFile.id
+					mutableQueuedFiles.value += Pair(storedFile.id, storedFile)
+				}
+			}
+		})
+
 		addCloseable(applicationMessages.registerReceiver { _ : SyncStateMessage.SyncStarted ->
 			mutableIsSyncing.value = true
 		})

@@ -61,6 +61,7 @@ class `given a typical library` {
 		@Nested
 		inner class `when loading files` {
 			val downloadedFileId = 939
+			val faultyWriteFileId = 665
 			private val downloadingFileIds = listOf(148, 132)
 
 			private val services by lazy {
@@ -80,6 +81,8 @@ class `given a typical library` {
 									StoredFile().setLibraryId(libraryId).setId(872),
 									StoredFile().setLibraryId(libraryId).setId(22),
 									StoredFile().setLibraryId(libraryId).setId(132),
+									StoredFile().setLibraryId(libraryId).setId(92),
+									StoredFile().setLibraryId(libraryId).setId(faultyWriteFileId),
 								)
 							)
 						},
@@ -103,7 +106,9 @@ class `given a typical library` {
 					for (id in downloadingFileIds) {
 						messageBus.sendMessage(StoredFileMessage.FileDownloading(id))
 					}
+					messageBus.sendMessage(StoredFileMessage.FileDownloading(faultyWriteFileId))
 					messageBus.sendMessage(StoredFileMessage.FileDownloaded(downloadedFileId))
+					messageBus.sendMessage(StoredFileMessage.FileWriteError(faultyWriteFileId))
 				}
 			}
 
@@ -114,7 +119,7 @@ class `given a typical library` {
 
 			@Test
 			fun `then the loaded files are correct`() {
-				assertThat(services.second.queuedFiles.value.map { it.id }).isEqualTo(listOf(497, 853, 872, 22))
+				assertThat(services.second.queuedFiles.value.map { it.id }).isEqualTo(listOf(497, 853, 872, 22, 92, faultyWriteFileId))
 			}
 
 			@Test
