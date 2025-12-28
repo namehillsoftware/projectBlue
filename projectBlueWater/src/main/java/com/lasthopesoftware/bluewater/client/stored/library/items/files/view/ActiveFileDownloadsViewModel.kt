@@ -57,11 +57,11 @@ class ActiveFileDownloadsViewModel(
 					mutableDownloadingFiles.value[message.storedFileId]?.let { storedFile ->
 						if (storedFile.libraryId == activeLibraryId?.id) {
 							mutableDownloadingFiles.value -= storedFile.id
-							mutableQueuedFiles.value += Pair(storedFile.id, storedFile)
+							mutableQueuedFiles.value += storedFile.id to storedFile
 						}
 					} ?: storedFileAccess.promiseStoredFile(it).then { storedFile ->
 						if (storedFile != null && storedFile.libraryId == activeLibraryId?.id) {
-							mutableQueuedFiles.value += Pair(storedFile.id, storedFile)
+							mutableQueuedFiles.value += storedFile.id to storedFile
 						}
 					}
 				}
@@ -75,11 +75,11 @@ class ActiveFileDownloadsViewModel(
 					mutableQueuedFiles.value[message.storedFileId]?.let { storedFile ->
 						if (storedFile.libraryId == activeLibraryId?.id) {
 							mutableQueuedFiles.value -= storedFile.id
-							mutableDownloadingFiles.value += Pair(storedFile.id, storedFile)
+							mutableDownloadingFiles.value += storedFile.id to storedFile
 						}
 					} ?: storedFileAccess.promiseStoredFile(it).then { storedFile ->
 						if (storedFile != null && storedFile.libraryId == activeLibraryId?.id) {
-							mutableDownloadingFiles.value += Pair(storedFile.id, storedFile)
+							mutableDownloadingFiles.value += storedFile.id to storedFile
 						}
 					}
 				}
@@ -89,7 +89,7 @@ class ActiveFileDownloadsViewModel(
 			mutableDownloadingFiles.value[message.storedFileId]?.let { storedFile ->
 				if (storedFile.libraryId == activeLibraryId?.id) {
 					mutableDownloadingFiles.value -= storedFile.id
-					mutableQueuedFiles.value += Pair(storedFile.id, storedFile)
+					mutableQueuedFiles.value += storedFile.id to storedFile
 				}
 			}
 		})
@@ -98,7 +98,7 @@ class ActiveFileDownloadsViewModel(
 			mutableDownloadingFiles.value[message.storedFileId]?.let { storedFile ->
 				if (storedFile.libraryId == activeLibraryId?.id) {
 					mutableDownloadingFiles.value -= storedFile.id
-					mutableQueuedFiles.value += Pair(storedFile.id, storedFile)
+					mutableQueuedFiles.value += storedFile.id to storedFile
 				}
 			}
 		})
