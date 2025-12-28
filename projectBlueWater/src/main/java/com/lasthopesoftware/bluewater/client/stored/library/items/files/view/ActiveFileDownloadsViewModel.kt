@@ -53,10 +53,16 @@ class ActiveFileDownloadsViewModel(
 		addCloseable(applicationMessages.registerReceiver { message: StoredFileMessage.FileQueued ->
 			message.storedFileId
 				.takeUnless(mutableQueuedFiles.value::containsKey)
-				?.let(storedFileAccess::promiseStoredFile)
-				?.then { storedFile ->
-					if (storedFile != null && storedFile.libraryId == activeLibraryId?.id) {
-						mutableQueuedFiles.value += Pair(storedFile.id, storedFile)
+				?.also {
+					mutableDownloadingFiles.value[message.storedFileId]?.let { storedFile ->
+						if (storedFile.libraryId == activeLibraryId?.id) {
+							mutableDownloadingFiles.value -= storedFile.id
+							mutableQueuedFiles.value += Pair(storedFile.id, storedFile)
+						}
+					} ?: storedFileAccess.promiseStoredFile(it).then { storedFile ->
+						if (storedFile != null && storedFile.libraryId == activeLibraryId?.id) {
+							mutableQueuedFiles.value += Pair(storedFile.id, storedFile)
+						}
 					}
 				}
 		})

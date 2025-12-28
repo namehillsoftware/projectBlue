@@ -63,6 +63,7 @@ class `given a typical library` {
 			val downloadedFileId = 939
 			val faultyWriteFileId = 665
 			val faultyReadFileId = 368
+			val requeuedFileId = 228
 			private val downloadingFileIds = listOf(148, 132)
 
 			private val services by lazy {
@@ -85,6 +86,8 @@ class `given a typical library` {
 									StoredFile().setLibraryId(libraryId).setId(132),
 									StoredFile().setLibraryId(libraryId).setId(92),
 									StoredFile().setLibraryId(libraryId).setId(faultyWriteFileId),
+									StoredFile().setLibraryId(libraryId).setId(43),
+									StoredFile().setLibraryId(libraryId).setId(requeuedFileId),
 								)
 							)
 						},
@@ -105,6 +108,7 @@ class `given a typical library` {
 				vm.downloadingFiles.mapNotNull().flatMapIterable { files -> files.map { it.id } }.subscribe(downloadingFiles::add).toCloseable().use {
 					vm.loadActiveDownloads(LibraryId(libraryId)).toExpiringFuture().get()
 					messageBus.sendMessage(StoredFileMessage.FileDownloading(downloadedFileId))
+					messageBus.sendMessage(StoredFileMessage.FileDownloading(requeuedFileId))
 					for (id in downloadingFileIds) {
 						messageBus.sendMessage(StoredFileMessage.FileDownloading(id))
 					}
@@ -113,6 +117,7 @@ class `given a typical library` {
 					messageBus.sendMessage(StoredFileMessage.FileWriteError(faultyWriteFileId))
 					messageBus.sendMessage(StoredFileMessage.FileDownloading(faultyReadFileId))
 					messageBus.sendMessage(StoredFileMessage.FileReadError(faultyReadFileId))
+					messageBus.sendMessage(StoredFileMessage.FileQueued(requeuedFileId))
 				}
 			}
 
@@ -123,7 +128,19 @@ class `given a typical library` {
 
 			@Test
 			fun `then the loaded files are correct`() {
-				assertThat(services.second.queuedFiles.value.map { it.id }).isEqualTo(listOf(497, 853, 872, 22, 92, faultyWriteFileId, faultyReadFileId))
+				assertThat(services.second.queuedFiles.value.map { it.id }).isEqualTo(
+					listOf(
+						497,
+						853,
+						872,
+						22,
+						92,
+						43,
+						faultyWriteFileId,
+						faultyReadFileId,
+						requeuedFileId,
+					)
+				)
 			}
 
 			@Test
@@ -134,7 +151,7 @@ class `given a typical library` {
 			@Test
 			fun `then all downloading files are correct`() {
 				assertThat(downloadingFiles).isEqualTo(
-					(downloadingFileIds + downloadedFileId + faultyReadFileId + faultyWriteFileId).toSet()
+					(downloadingFileIds + downloadedFileId + faultyReadFileId + faultyWriteFileId + requeuedFileId).toSet()
 				)
 			}
 		}
