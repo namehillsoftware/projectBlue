@@ -143,7 +143,6 @@ fun RenderTrackHeaderItem(
 	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewFileItem>,
 	storedFile: StoredFile
 ) {
-	val downloadingFileId by activeFileDownloadsViewModel.downloadingFileId.subscribeAsState()
 	val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 
 	DisposableEffect(storedFile.serviceId) {
@@ -160,7 +159,33 @@ fun RenderTrackHeaderItem(
 
 	TrackTitleItemView(
 		itemName = fileName,
-		isActive = downloadingFileId == storedFile.id,
+		isActive = false,
+	)
+}
+
+@Composable
+fun RenderDownloadingTrackHeaderItem(
+	activeFileDownloadsViewModel: ActiveFileDownloadsViewModel,
+	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewFileItem>,
+	storedFile: StoredFile
+) {
+	val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
+
+	DisposableEffect(storedFile.serviceId) {
+		activeFileDownloadsViewModel.activeLibraryId?.also {
+			fileItemViewModel.promiseUpdate(it, ServiceFile(storedFile.serviceId))
+		}
+
+		onDispose {
+			fileItemViewModel.reset()
+		}
+	}
+
+	val fileName by fileItemViewModel.title.subscribeAsState()
+
+	TrackTitleItemView(
+		itemName = fileName,
+		isActive = true,
 	)
 }
 
@@ -171,6 +196,7 @@ fun DownloadingFilesList(
 	modifier: Modifier = Modifier,
 	headerHeight: Dp = 0.dp,
 ) {
+	val downloadingFiles by activeFileDownloadsViewModel.downloadingFiles.subscribeAsState()
 	val files by activeFileDownloadsViewModel.queuedFiles.subscribeAsState()
 	val lazyListState = rememberLazyListState()
 
@@ -195,6 +221,19 @@ fun DownloadingFilesList(
 					)
 				}
 			}
+		}
+
+		itemsIndexed(
+			downloadingFiles,
+			{ _, f -> f.id },
+			contentType = { _, _ -> ItemListContentType.File }) { i, f ->
+			RenderDownloadingTrackHeaderItem(
+				activeFileDownloadsViewModel,
+				trackHeadlineViewModelProvider,
+				f,
+			)
+
+			Divider()
 		}
 
 		itemsIndexed(
