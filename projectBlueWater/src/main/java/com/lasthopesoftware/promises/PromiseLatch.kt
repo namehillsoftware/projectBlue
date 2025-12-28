@@ -9,7 +9,7 @@ class PromiseLatch : PromisingLatch, AutoCloseable {
 	@Volatile
 	private var isClosed = false
 
-	override fun open(): AutoCloseable {
+	override fun open(): Gate {
 		latch.get().resolve()
 		return this
 	}

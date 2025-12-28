@@ -20,66 +20,86 @@ class ActiveFileDownloadsViewModel(
 	applicationMessages: RegisterForApplicationMessages,
 	private val scheduler: ScheduleSyncs,
 ) : ViewModel(), TrackLoadedViewState {
+
 	private val mutableIsLoading = MutableInteractionState(false)
 
 	private val mutableIsSyncing = MutableInteractionState(false)
 	private val mutableIsSyncStateChangeEnabled = MutableInteractionState(false)
-	private val mutableDownloadingFiles = MutableInteractionState(emptyMap<Int, StoredFile>())
+	private val mutableQueuedFiles = MutableInteractionState(emptyMap<Int, StoredFile>())
 	private val mutableDownloadingFileId = MutableInteractionState<Int?>(null)
-	private val fileDownloadedRegistration = applicationMessages.registerReceiver { message: StoredFileMessage.FileDownloaded ->
-		mutableDownloadingFiles.value -= message.storedFileId
-	}
-
-	private val fileQueuedRegistration = applicationMessages.registerReceiver { message: StoredFileMessage.FileQueued ->
-		message.storedFileId
-			.takeUnless(mutableDownloadingFiles.value::containsKey)
-			?.let(storedFileAccess::promiseStoredFile)
-			?.then { storedFile ->
-				if (storedFile != null && storedFile.libraryId == activeLibraryId?.id) {
-					mutableDownloadingFiles.value += Pair(storedFile.id, storedFile)
-				}
-			}
-	}
-
-	private val fileDownloadingRegistration = applicationMessages.registerReceiver { message: StoredFileMessage.FileDownloading ->
-		mutableDownloadingFileId.value = message.storedFileId
-	}
-
-	private val syncStartedReceiver = applicationMessages.registerReceiver { _ : SyncStateMessage.SyncStarted ->
-		mutableIsSyncing.value = true
-	}
-
-	private val syncStoppedReceiver = applicationMessages.registerReceiver { _ : SyncStateMessage.SyncStopped ->
-		mutableIsSyncing.value = false
-	}
+	private val mutableDownloadingFiles = MutableInteractionState(emptyMap<Int, StoredFile>())
 
 	var activeLibraryId: LibraryId? = null
 		private set
 
 	val isSyncing = mutableIsSyncing.asInteractionState()
 	val isSyncStateChangeEnabled = mutableIsSyncStateChangeEnabled.asInteractionState()
+	val queuedFiles = LiftedInteractionState(
+		mutableQueuedFiles.mapNotNull().map { it.values.toList() },
+		emptyList()
+	)
 	val downloadingFiles = LiftedInteractionState(
 		mutableDownloadingFiles.mapNotNull().map { it.values.toList() },
 		emptyList()
 	)
-	val downloadingFileId = mutableDownloadingFileId.asInteractionState()
+
 	override val isLoading = mutableIsLoading.asInteractionState()
 
 	init {
+		addCloseable(applicationMessages.registerReceiver { message: StoredFileMessage.FileDownloaded ->
+			mutableQueuedFiles.value -= message.storedFileId
+			mutableDownloadingFiles.value -= message.storedFileId
+		})
+
+		addCloseable(applicationMessages.registerReceiver { message: StoredFileMessage.FileQueued ->
+			message.storedFileId
+				.takeUnless(mutableQueuedFiles.value::containsKey)
+				?.takeUnless { transferStoredFile(mutableDownloadingFiles, mutableQueuedFiles, it) }
+				?.also {
+					storedFileAccess.promiseStoredFile(it).then { storedFile ->
+						if (storedFile != null && storedFile.libraryId == activeLibraryId?.id) {
+							mutableQueuedFiles.value += storedFile.id to storedFile
+						}
+					}
+				}
+		})
+
+		addCloseable(applicationMessages.registerReceiver { message: StoredFileMessage.FileDownloading ->
+			mutableDownloadingFileId.value = message.storedFileId
+			message.storedFileId
+				.takeUnless(mutableDownloadingFiles.value::containsKey)
+				?.takeUnless { transferStoredFile(mutableQueuedFiles, mutableDownloadingFiles, it) }
+				?.also {
+					storedFileAccess.promiseStoredFile(it).then { storedFile ->
+						if (storedFile != null && storedFile.libraryId == activeLibraryId?.id) {
+							mutableDownloadingFiles.value += storedFile.id to storedFile
+						}
+					}
+				}
+		})
+
+		addCloseable(applicationMessages.registerReceiver { message: StoredFileMessage.FileWriteError ->
+			transferStoredFile(mutableDownloadingFiles, mutableQueuedFiles, message.storedFileId)
+		})
+
+		addCloseable(applicationMessages.registerReceiver { message: StoredFileMessage.FileReadError ->
+			transferStoredFile(mutableDownloadingFiles, mutableQueuedFiles, message.storedFileId)
+		})
+
+		addCloseable(applicationMessages.registerReceiver { _ : SyncStateMessage.SyncStarted ->
+			mutableIsSyncing.value = true
+		})
+
+		addCloseable(applicationMessages.registerReceiver { _ : SyncStateMessage.SyncStopped ->
+			mutableIsSyncing.value = false
+		})
+
 	    scheduler
 			.promiseIsSyncing()
-			.then { it ->
+			.then {
 				mutableIsSyncing.value = it
 				mutableIsSyncStateChangeEnabled.value = true
 			}
-	}
-
-	override fun onCleared() {
-		fileDownloadedRegistration.close()
-		fileQueuedRegistration.close()
-		syncStartedReceiver.close()
-		syncStoppedReceiver.close()
-		fileDownloadingRegistration.close()
 	}
 
 	fun loadActiveDownloads(libraryId: LibraryId): Promise<*> {
@@ -88,11 +108,11 @@ class ActiveFileDownloadsViewModel(
 		return storedFileAccess
 			.promiseDownloadingFiles()
 			.then { storedFiles ->
-				mutableDownloadingFiles.value = storedFiles
+				mutableQueuedFiles.value = storedFiles
 						.filter { sf -> sf.libraryId == libraryId.id }
 						.associateBy { sf -> sf.id }
 			}
-			.must {  _ -> mutableIsLoading.value = false }
+			.must { _ -> mutableIsLoading.value = false }
 	}
 
 	fun toggleSync() {
@@ -108,5 +128,16 @@ class ActiveFileDownloadsViewModel(
 			.must { _ ->
 				mutableIsSyncStateChangeEnabled.value = true
 			}
+	}
+
+	private fun transferStoredFile(fromMapState: MutableInteractionState<Map<Int, StoredFile>>, toMapState: MutableInteractionState<Map<Int, StoredFile>>, key: Int): Boolean {
+		val storedFile = fromMapState.value[key] ?: return false
+
+		if (storedFile.libraryId == activeLibraryId?.id) {
+			fromMapState.value -= key
+			toMapState.value += key to storedFile
+		}
+
+		return true
 	}
 }

@@ -38,9 +38,16 @@ class LockingNowPlayingRepository(private val inner: ManageNowPlayingState) : Ma
 
 	private val latch = PromiseLatch()
 
-	override fun open(): AutoCloseable = latch.open()
+	override fun open(): Gate {
+		latch.open()
+		return this
+	}
 
-	override fun close() = latch.close()
+	override fun reset(): Promise<Boolean> = latch.reset()
+
+	override fun close() {
+		latch.reset()
+	}
 
 	override fun updateNowPlaying(nowPlaying: NowPlaying): Promise<NowPlaying> = latch.wait().eventually {
 		inner.updateNowPlaying(nowPlaying)
@@ -60,6 +67,7 @@ class AlwaysOpenNowPlayingRepository<T>(inner: T) : ManageNowPlayingState by inn
 	init { inner.open() }
 
 	override fun open() = this
+	override fun reset(): Promise<Boolean> = false.toPromise()
 
 	override fun close() {}
 }
