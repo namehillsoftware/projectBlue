@@ -60,7 +60,8 @@ class `given a typical library` {
 	inner class `and files are downloading`() {
 		@Nested
 		inner class `when loading files` {
-			private val downloadingFileIds = listOf(148, 939)
+			val downloadedFileId = 939
+			private val downloadingFileIds = listOf(148, 132)
 
 			private val services by lazy {
 				val messageBus = RecordingApplicationMessageBus()
@@ -77,6 +78,8 @@ class `given a typical library` {
 									StoredFile().setLibraryId(libraryId).setId(853),
 									StoredFile().setLibraryId(libraryId).setId(148),
 									StoredFile().setLibraryId(libraryId).setId(872),
+									StoredFile().setLibraryId(libraryId).setId(22),
+									StoredFile().setLibraryId(libraryId).setId(132),
 								)
 							)
 						},
@@ -96,9 +99,11 @@ class `given a typical library` {
 
 				vm.downloadingFiles.mapNotNull().subscribe(downloadingFiles::addAll).toCloseable().use {
 					vm.loadActiveDownloads(LibraryId(libraryId)).toExpiringFuture().get()
+					messageBus.sendMessage(StoredFileMessage.FileDownloading(downloadedFileId))
 					for (id in downloadingFileIds) {
 						messageBus.sendMessage(StoredFileMessage.FileDownloading(id))
 					}
+					messageBus.sendMessage(StoredFileMessage.FileDownloaded(downloadedFileId))
 				}
 			}
 
@@ -109,7 +114,7 @@ class `given a typical library` {
 
 			@Test
 			fun `then the loaded files are correct`() {
-				assertThat(services.second.queuedFiles.value.map { it.id }).isEqualTo(listOf(497, 853, 872))
+				assertThat(services.second.queuedFiles.value.map { it.id }).isEqualTo(listOf(497, 853, 872, 22))
 			}
 
 			@Test

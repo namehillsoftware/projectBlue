@@ -47,6 +47,7 @@ class ActiveFileDownloadsViewModel(
 	init {
 		addCloseable(applicationMessages.registerReceiver { message: StoredFileMessage.FileDownloaded ->
 			mutableQueuedFiles.value -= message.storedFileId
+			mutableDownloadingFiles.value -= message.storedFileId
 		})
 
 		addCloseable(applicationMessages.registerReceiver { message: StoredFileMessage.FileQueued ->
