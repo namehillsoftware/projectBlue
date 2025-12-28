@@ -18,6 +18,8 @@ import org.junit.jupiter.api.Test
 
 class `given a typical library` {
 
+	enum class SimpleStoredFileJobState { Queued, Downloading }
+
 	private val libraryId = 809
 
 	@Nested
@@ -99,26 +101,35 @@ class `given a typical library` {
 				)
 			}
 
-			private val downloadingFiles = mutableSetOf<Int>()
+			private val processingFileStates = mutableListOf<Pair<SimpleStoredFileJobState, Int>>()
 
 			@BeforeAll
 			fun act() {
 				val (messageBus, vm) = services
 
-				vm.downloadingFiles.mapNotNull().flatMapIterable { files -> files.map { it.id } }.subscribe(downloadingFiles::add).toCloseable().use {
-					vm.loadActiveDownloads(LibraryId(libraryId)).toExpiringFuture().get()
-					messageBus.sendMessage(StoredFileMessage.FileDownloading(downloadedFileId))
-					messageBus.sendMessage(StoredFileMessage.FileDownloading(requeuedFileId))
-					for (id in downloadingFileIds) {
-						messageBus.sendMessage(StoredFileMessage.FileDownloading(id))
+				vm.downloadingFiles
+					.mapNotNull()
+					.flatMapIterable { files -> files.map { SimpleStoredFileJobState.Downloading to it.id } }
+					.mergeWith(
+						vm.queuedFiles
+							.mapNotNull()
+							.flatMapIterable { files -> files.map { SimpleStoredFileJobState.Queued to it.id } })
+					.subscribe(processingFileStates::add)
+					.toCloseable()
+					.use {
+						vm.loadActiveDownloads(LibraryId(libraryId)).toExpiringFuture().get()
+						messageBus.sendMessage(StoredFileMessage.FileDownloading(downloadedFileId))
+						messageBus.sendMessage(StoredFileMessage.FileDownloading(requeuedFileId))
+						for (id in downloadingFileIds) {
+							messageBus.sendMessage(StoredFileMessage.FileDownloading(id))
+						}
+						messageBus.sendMessage(StoredFileMessage.FileDownloading(faultyWriteFileId))
+						messageBus.sendMessage(StoredFileMessage.FileDownloaded(downloadedFileId))
+						messageBus.sendMessage(StoredFileMessage.FileWriteError(faultyWriteFileId))
+						messageBus.sendMessage(StoredFileMessage.FileDownloading(faultyReadFileId))
+						messageBus.sendMessage(StoredFileMessage.FileReadError(faultyReadFileId))
+						messageBus.sendMessage(StoredFileMessage.FileQueued(requeuedFileId))
 					}
-					messageBus.sendMessage(StoredFileMessage.FileDownloading(faultyWriteFileId))
-					messageBus.sendMessage(StoredFileMessage.FileDownloaded(downloadedFileId))
-					messageBus.sendMessage(StoredFileMessage.FileWriteError(faultyWriteFileId))
-					messageBus.sendMessage(StoredFileMessage.FileDownloading(faultyReadFileId))
-					messageBus.sendMessage(StoredFileMessage.FileReadError(faultyReadFileId))
-					messageBus.sendMessage(StoredFileMessage.FileQueued(requeuedFileId))
-				}
 			}
 
 			@Test
@@ -149,9 +160,130 @@ class `given a typical library` {
 			}
 
 			@Test
-			fun `then all downloading files are correct`() {
-				assertThat(downloadingFiles).isEqualTo(
-					(downloadingFileIds + downloadedFileId + faultyReadFileId + faultyWriteFileId + requeuedFileId).toSet()
+			fun `then processing file states are correct`() {
+				assertThat(processingFileStates).isEqualTo(
+					listOf(
+						Pair(SimpleStoredFileJobState.Queued, 497),
+						Pair(SimpleStoredFileJobState.Queued, 939),
+						Pair(SimpleStoredFileJobState.Queued, 853),
+						Pair(SimpleStoredFileJobState.Queued, 148),
+						Pair(SimpleStoredFileJobState.Queued, 368),
+						Pair(SimpleStoredFileJobState.Queued, 872),
+						Pair(SimpleStoredFileJobState.Queued, 22),
+						Pair(SimpleStoredFileJobState.Queued, 132),
+						Pair(SimpleStoredFileJobState.Queued, 92),
+						Pair(SimpleStoredFileJobState.Queued, 665),
+						Pair(SimpleStoredFileJobState.Queued, 43),
+						Pair(SimpleStoredFileJobState.Queued, 228),
+						Pair(SimpleStoredFileJobState.Queued, 497),
+						Pair(SimpleStoredFileJobState.Queued, 853),
+						Pair(SimpleStoredFileJobState.Queued, 148),
+						Pair(SimpleStoredFileJobState.Queued, 368),
+						Pair(SimpleStoredFileJobState.Queued, 872),
+						Pair(SimpleStoredFileJobState.Queued, 22),
+						Pair(SimpleStoredFileJobState.Queued, 132),
+						Pair(SimpleStoredFileJobState.Queued, 92),
+						Pair(SimpleStoredFileJobState.Queued, 665),
+						Pair(SimpleStoredFileJobState.Queued, 43),
+						Pair(SimpleStoredFileJobState.Queued, 228),
+						Pair(SimpleStoredFileJobState.Downloading, 939),
+						Pair(SimpleStoredFileJobState.Queued, 497),
+						Pair(SimpleStoredFileJobState.Queued, 853),
+						Pair(SimpleStoredFileJobState.Queued, 148),
+						Pair(SimpleStoredFileJobState.Queued, 368),
+						Pair(SimpleStoredFileJobState.Queued, 872),
+						Pair(SimpleStoredFileJobState.Queued, 22),
+						Pair(SimpleStoredFileJobState.Queued, 132),
+						Pair(SimpleStoredFileJobState.Queued, 92),
+						Pair(SimpleStoredFileJobState.Queued, 665),
+						Pair(SimpleStoredFileJobState.Queued, 43),
+						Pair(SimpleStoredFileJobState.Downloading, 939),
+						Pair(SimpleStoredFileJobState.Downloading, 228),
+						Pair(SimpleStoredFileJobState.Queued, 497),
+						Pair(SimpleStoredFileJobState.Queued, 853),
+						Pair(SimpleStoredFileJobState.Queued, 368),
+						Pair(SimpleStoredFileJobState.Queued, 872),
+						Pair(SimpleStoredFileJobState.Queued, 22),
+						Pair(SimpleStoredFileJobState.Queued, 132),
+						Pair(SimpleStoredFileJobState.Queued, 92),
+						Pair(SimpleStoredFileJobState.Queued, 665),
+						Pair(SimpleStoredFileJobState.Queued, 43),
+						Pair(SimpleStoredFileJobState.Downloading, 939),
+						Pair(SimpleStoredFileJobState.Downloading, 228),
+						Pair(SimpleStoredFileJobState.Downloading, 148),
+						Pair(SimpleStoredFileJobState.Queued, 497),
+						Pair(SimpleStoredFileJobState.Queued, 853),
+						Pair(SimpleStoredFileJobState.Queued, 368),
+						Pair(SimpleStoredFileJobState.Queued, 872),
+						Pair(SimpleStoredFileJobState.Queued, 22),
+						Pair(SimpleStoredFileJobState.Queued, 92),
+						Pair(SimpleStoredFileJobState.Queued, 665),
+						Pair(SimpleStoredFileJobState.Queued, 43),
+						Pair(SimpleStoredFileJobState.Downloading, 939),
+						Pair(SimpleStoredFileJobState.Downloading, 228),
+						Pair(SimpleStoredFileJobState.Downloading, 148),
+						Pair(SimpleStoredFileJobState.Downloading, 132),
+						Pair(SimpleStoredFileJobState.Queued, 497),
+						Pair(SimpleStoredFileJobState.Queued, 853),
+						Pair(SimpleStoredFileJobState.Queued, 368),
+						Pair(SimpleStoredFileJobState.Queued, 872),
+						Pair(SimpleStoredFileJobState.Queued, 22),
+						Pair(SimpleStoredFileJobState.Queued, 92),
+						Pair(SimpleStoredFileJobState.Queued, 43),
+						Pair(SimpleStoredFileJobState.Downloading, 939),
+						Pair(SimpleStoredFileJobState.Downloading, 228),
+						Pair(SimpleStoredFileJobState.Downloading, 148),
+						Pair(SimpleStoredFileJobState.Downloading, 132),
+						Pair(SimpleStoredFileJobState.Downloading, 665),
+						Pair(SimpleStoredFileJobState.Downloading, 228),
+						Pair(SimpleStoredFileJobState.Downloading, 148),
+						Pair(SimpleStoredFileJobState.Downloading, 132),
+						Pair(SimpleStoredFileJobState.Downloading, 665),
+						Pair(SimpleStoredFileJobState.Downloading, 228),
+						Pair(SimpleStoredFileJobState.Downloading, 148),
+						Pair(SimpleStoredFileJobState.Downloading, 132),
+						Pair(SimpleStoredFileJobState.Queued, 497),
+						Pair(SimpleStoredFileJobState.Queued, 853),
+						Pair(SimpleStoredFileJobState.Queued, 368),
+						Pair(SimpleStoredFileJobState.Queued, 872),
+						Pair(SimpleStoredFileJobState.Queued, 22),
+						Pair(SimpleStoredFileJobState.Queued, 92),
+						Pair(SimpleStoredFileJobState.Queued, 43),
+						Pair(SimpleStoredFileJobState.Queued, 665),
+						Pair(SimpleStoredFileJobState.Queued, 497),
+						Pair(SimpleStoredFileJobState.Queued, 853),
+						Pair(SimpleStoredFileJobState.Queued, 872),
+						Pair(SimpleStoredFileJobState.Queued, 22),
+						Pair(SimpleStoredFileJobState.Queued, 92),
+						Pair(SimpleStoredFileJobState.Queued, 43),
+						Pair(SimpleStoredFileJobState.Queued, 665),
+						Pair(SimpleStoredFileJobState.Downloading, 228),
+						Pair(SimpleStoredFileJobState.Downloading, 148),
+						Pair(SimpleStoredFileJobState.Downloading, 132),
+						Pair(SimpleStoredFileJobState.Downloading, 368),
+						Pair(SimpleStoredFileJobState.Downloading, 228),
+						Pair(SimpleStoredFileJobState.Downloading, 148),
+						Pair(SimpleStoredFileJobState.Downloading, 132),
+						Pair(SimpleStoredFileJobState.Queued, 497),
+						Pair(SimpleStoredFileJobState.Queued, 853),
+						Pair(SimpleStoredFileJobState.Queued, 872),
+						Pair(SimpleStoredFileJobState.Queued, 22),
+						Pair(SimpleStoredFileJobState.Queued, 92),
+						Pair(SimpleStoredFileJobState.Queued, 43),
+						Pair(SimpleStoredFileJobState.Queued, 665),
+						Pair(SimpleStoredFileJobState.Queued, 368),
+						Pair(SimpleStoredFileJobState.Downloading, 148),
+						Pair(SimpleStoredFileJobState.Downloading, 132),
+						Pair(SimpleStoredFileJobState.Queued, 497),
+						Pair(SimpleStoredFileJobState.Queued, 853),
+						Pair(SimpleStoredFileJobState.Queued, 872),
+						Pair(SimpleStoredFileJobState.Queued, 22),
+						Pair(SimpleStoredFileJobState.Queued, 92),
+						Pair(SimpleStoredFileJobState.Queued, 43),
+						Pair(SimpleStoredFileJobState.Queued, 665),
+						Pair(SimpleStoredFileJobState.Queued, 368),
+						Pair(SimpleStoredFileJobState.Queued, 228)
+					)
 				)
 			}
 		}
