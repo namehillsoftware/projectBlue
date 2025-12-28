@@ -171,7 +171,7 @@ fun DownloadingFilesList(
 	modifier: Modifier = Modifier,
 	headerHeight: Dp = 0.dp,
 ) {
-	val files by activeFileDownloadsViewModel.downloadingFiles.subscribeAsState()
+	val files by activeFileDownloadsViewModel.queuedFiles.subscribeAsState()
 	val lazyListState = rememberLazyListState()
 
 	LazyColumn(
