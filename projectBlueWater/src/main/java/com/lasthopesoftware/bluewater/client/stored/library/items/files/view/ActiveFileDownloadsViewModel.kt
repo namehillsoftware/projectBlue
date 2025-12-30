@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.sync.ScheduleSyncs
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileMessage
@@ -14,6 +15,7 @@ import com.lasthopesoftware.observables.LiftedInteractionState
 import com.lasthopesoftware.observables.MutableInteractionState
 import com.lasthopesoftware.observables.mapNotNull
 import com.namehillsoftware.handoff.promises.Promise
+import java.util.LinkedList
 
 class ActiveFileDownloadsViewModel(
 	private val storedFileAccess: AccessStoredFiles,
@@ -21,25 +23,39 @@ class ActiveFileDownloadsViewModel(
 	private val scheduler: ScheduleSyncs,
 ) : ViewModel(), TrackLoadedViewState {
 
-	private val mutableIsLoading = MutableInteractionState(false)
+	@Volatile
+	private var isPartiallyUpdating = false
 
+	private val mutableIsLoading = MutableInteractionState(false)
 	private val mutableIsSyncing = MutableInteractionState(false)
 	private val mutableIsSyncStateChangeEnabled = MutableInteractionState(false)
-	private val mutableQueuedFiles = MutableInteractionState(emptyMap<Int, StoredFile>())
-	private val mutableDownloadingFileId = MutableInteractionState<Int?>(null)
-	private val mutableDownloadingFiles = MutableInteractionState(emptyMap<Int, StoredFile>())
+	private val mutableSyncingFilesWithState = MutableInteractionState(emptyMap<Int, Pair<StoredFile, StoredFileJobState>>())
 
 	var activeLibraryId: LibraryId? = null
 		private set
 
 	val isSyncing = mutableIsSyncing.asInteractionState()
 	val isSyncStateChangeEnabled = mutableIsSyncStateChangeEnabled.asInteractionState()
-	val queuedFiles = LiftedInteractionState(
-		mutableQueuedFiles.mapNotNull().map { it.values.toList() },
-		emptyList()
-	)
-	val downloadingFiles = LiftedInteractionState(
-		mutableDownloadingFiles.mapNotNull().map { it.values.toList() },
+
+	val syncingFiles = LiftedInteractionState(
+		mutableSyncingFilesWithState
+			.mapNotNull()
+			.filter { !isPartiallyUpdating }
+			.map { m ->
+				val downloadingArray = ArrayList<Pair<StoredFile, StoredFileJobState>>()
+				val returnList = LinkedList<Pair<StoredFile, StoredFileJobState>>()
+				val addedFiles = HashSet<Int>(m.values.size)
+
+				for ((k, p) in m) {
+					val (f, s) = p
+					if (!addedFiles.add(f.id)) continue
+					if (s == StoredFileJobState.Downloading) downloadingArray.add(p)
+					else returnList.add(p)
+				}
+
+				returnList.addAll(0, downloadingArray)
+				returnList
+			},
 		emptyList()
 	)
 
@@ -47,43 +63,23 @@ class ActiveFileDownloadsViewModel(
 
 	init {
 		addCloseable(applicationMessages.registerReceiver { message: StoredFileMessage.FileDownloaded ->
-			mutableQueuedFiles.value -= message.storedFileId
-			mutableDownloadingFiles.value -= message.storedFileId
+			mutableSyncingFilesWithState.value -= message.storedFileId
 		})
 
 		addCloseable(applicationMessages.registerReceiver { message: StoredFileMessage.FileQueued ->
-			message.storedFileId
-				.takeUnless(mutableQueuedFiles.value::containsKey)
-				?.takeUnless { transferStoredFile(mutableDownloadingFiles, mutableQueuedFiles, it) }
-				?.also {
-					storedFileAccess.promiseStoredFile(it).then { storedFile ->
-						if (storedFile != null && storedFile.libraryId == activeLibraryId?.id) {
-							mutableQueuedFiles.value += storedFile.id to storedFile
-						}
-					}
-				}
+			updateStoredFileState(message.storedFileId, StoredFileJobState.Queued)
 		})
 
 		addCloseable(applicationMessages.registerReceiver { message: StoredFileMessage.FileDownloading ->
-			mutableDownloadingFileId.value = message.storedFileId
-			message.storedFileId
-				.takeUnless(mutableDownloadingFiles.value::containsKey)
-				?.takeUnless { transferStoredFile(mutableQueuedFiles, mutableDownloadingFiles, it) }
-				?.also {
-					storedFileAccess.promiseStoredFile(it).then { storedFile ->
-						if (storedFile != null && storedFile.libraryId == activeLibraryId?.id) {
-							mutableDownloadingFiles.value += storedFile.id to storedFile
-						}
-					}
-				}
+			updateStoredFileState(message.storedFileId, StoredFileJobState.Downloading)
 		})
 
 		addCloseable(applicationMessages.registerReceiver { message: StoredFileMessage.FileWriteError ->
-			transferStoredFile(mutableDownloadingFiles, mutableQueuedFiles, message.storedFileId)
+			updateStoredFileState(message.storedFileId, StoredFileJobState.Queued)
 		})
 
 		addCloseable(applicationMessages.registerReceiver { message: StoredFileMessage.FileReadError ->
-			transferStoredFile(mutableDownloadingFiles, mutableQueuedFiles, message.storedFileId)
+			updateStoredFileState(message.storedFileId, StoredFileJobState.Queued)
 		})
 
 		addCloseable(applicationMessages.registerReceiver { _ : SyncStateMessage.SyncStarted ->
@@ -108,9 +104,9 @@ class ActiveFileDownloadsViewModel(
 		return storedFileAccess
 			.promiseDownloadingFiles()
 			.then { storedFiles ->
-				mutableQueuedFiles.value = storedFiles
-						.filter { sf -> sf.libraryId == libraryId.id }
-						.associateBy { sf -> sf.id }
+				mutableSyncingFilesWithState.value = storedFiles
+					.filter { sf -> sf.libraryId == libraryId.id }
+					.associate { sf -> sf.id to (sf to StoredFileJobState.Queued) }
 			}
 			.must { _ -> mutableIsLoading.value = false }
 	}
@@ -130,14 +126,17 @@ class ActiveFileDownloadsViewModel(
 			}
 	}
 
-	private fun transferStoredFile(fromMapState: MutableInteractionState<Map<Int, StoredFile>>, toMapState: MutableInteractionState<Map<Int, StoredFile>>, key: Int): Boolean {
-		val storedFile = fromMapState.value[key] ?: return false
-
-		if (storedFile.libraryId == activeLibraryId?.id) {
-			fromMapState.value -= key
-			toMapState.value += key to storedFile
-		}
-
-		return true
+	private fun updateStoredFileState(storedFileId: Int, state: StoredFileJobState) {
+		mutableSyncingFilesWithState.value[storedFileId]
+			?.also { (sf, _) ->
+				isPartiallyUpdating = true
+				mutableSyncingFilesWithState.value -= sf.id
+				isPartiallyUpdating = false
+				mutableSyncingFilesWithState.value += sf.id to (sf to state)
+			} ?: storedFileAccess.promiseStoredFile(storedFileId).then { storedFile ->
+					if (storedFile != null && storedFile.libraryId == activeLibraryId?.id) {
+						mutableSyncingFilesWithState.value += storedFile.id to (storedFile to state)
+					}
+			}
 	}
 }

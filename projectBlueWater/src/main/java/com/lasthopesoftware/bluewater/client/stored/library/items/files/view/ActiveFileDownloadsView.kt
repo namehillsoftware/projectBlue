@@ -78,6 +78,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackTitleItemV
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListContentType
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.ScreenDimensionsScope
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
@@ -141,7 +142,8 @@ private fun SyncMenu(
 fun RenderTrackHeaderItem(
 	activeFileDownloadsViewModel: ActiveFileDownloadsViewModel,
 	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewFileItem>,
-	storedFile: StoredFile
+	storedFile: StoredFile,
+	isActive: Boolean
 ) {
 	val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 
@@ -159,33 +161,7 @@ fun RenderTrackHeaderItem(
 
 	TrackTitleItemView(
 		itemName = fileName,
-		isActive = false,
-	)
-}
-
-@Composable
-fun RenderDownloadingTrackHeaderItem(
-	activeFileDownloadsViewModel: ActiveFileDownloadsViewModel,
-	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewFileItem>,
-	storedFile: StoredFile
-) {
-	val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
-
-	DisposableEffect(storedFile.serviceId) {
-		activeFileDownloadsViewModel.activeLibraryId?.also {
-			fileItemViewModel.promiseUpdate(it, ServiceFile(storedFile.serviceId))
-		}
-
-		onDispose {
-			fileItemViewModel.reset()
-		}
-	}
-
-	val fileName by fileItemViewModel.title.subscribeAsState()
-
-	TrackTitleItemView(
-		itemName = fileName,
-		isActive = true,
+		isActive = isActive,
 	)
 }
 
@@ -196,8 +172,7 @@ fun DownloadingFilesList(
 	modifier: Modifier = Modifier,
 	headerHeight: Dp = 0.dp,
 ) {
-	val downloadingFiles by activeFileDownloadsViewModel.downloadingFiles.subscribeAsState()
-	val files by activeFileDownloadsViewModel.queuedFiles.subscribeAsState()
+	val files by activeFileDownloadsViewModel.syncingFiles.subscribeAsState()
 	val lazyListState = rememberLazyListState()
 
 	LazyColumn(
@@ -224,27 +199,14 @@ fun DownloadingFilesList(
 		}
 
 		itemsIndexed(
-			downloadingFiles,
-			{ _, f -> f.id },
-			contentType = { _, _ -> ItemListContentType.File }) { i, f ->
-			RenderDownloadingTrackHeaderItem(
-				activeFileDownloadsViewModel,
-				trackHeadlineViewModelProvider,
-				f,
-			)
-
-			if (i < downloadingFiles.lastIndex || files.isNotEmpty())
-				Divider()
-		}
-
-		itemsIndexed(
 			files,
-			{ _, f -> f.id },
-			contentType = { _, _ -> ItemListContentType.File }) { i, f ->
+			{ _, (f, _) -> f.id },
+			contentType = { _, _ -> ItemListContentType.File }) { i, (f, s) ->
 			RenderTrackHeaderItem(
 				activeFileDownloadsViewModel,
 				trackHeadlineViewModelProvider,
 				f,
+				s == StoredFileJobState.Downloading
 			)
 
 			if (i < files.lastIndex)
