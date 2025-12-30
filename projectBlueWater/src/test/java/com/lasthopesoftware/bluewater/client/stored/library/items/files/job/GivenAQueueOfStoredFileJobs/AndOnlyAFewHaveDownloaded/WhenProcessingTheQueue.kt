@@ -18,6 +18,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
+import java.util.function.Function
 
 class WhenProcessingTheQueue {
 	private val storedFileJobs: Set<StoredFileJob> = setOf(
@@ -75,6 +76,9 @@ class WhenProcessingTheQueue {
 
 	@BeforeAll
 	fun before() {
+		val deferredDownloadProvider = Function<StoredFile, DeferredDownloadPromise> { _ ->
+			DeferredDownloadPromise(byteArrayOf(5, 10))
+		}
 		val storedFileDownloadMap = mutableMapOf<StoredFile, DeferredDownloadPromise>()
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
@@ -84,7 +88,7 @@ class WhenProcessingTheQueue {
 				every { promiseDownload(any(), any()) } answers {
 					val storedFile = secondArg<StoredFile>()
 					if (expectedDownloadedStoredFiles.contains(storedFile)) {
-						storedFileDownloadMap.computeIfAbsent(storedFile) { DeferredDownloadPromise(byteArrayOf(5, 10)) }
+						storedFileDownloadMap.computeIfAbsent(storedFile, deferredDownloadProvider)
 					} else {
 						DeferredDownloadPromise(byteArrayOf(805.toByte()))
 					}
@@ -97,8 +101,8 @@ class WhenProcessingTheQueue {
 			.timeout(1, TimeUnit.SECONDS) { it.onComplete() }
 			.doOnEach { n ->
 				val (storedFile, status) = n.value ?: return@doOnEach
-				if (status == StoredFileJobState.Downloading)
-					storedFileDownloadMap[storedFile]?.resolve()
+				if (status == StoredFileJobState.Downloading && expectedDownloadedStoredFiles.contains(storedFile))
+					storedFileDownloadMap.computeIfAbsent(storedFile, deferredDownloadProvider).resolve()
 			}
 			.toList().blockingGet()
 	}

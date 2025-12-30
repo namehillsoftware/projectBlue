@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.navigation
 
 import LoadedItemListView
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,7 +40,13 @@ fun ScreenDimensionsScope.NavigateToLibraryDestination(
 					applicationNavigation = applicationNavigation,
                 )
 
-				activeFileDownloadsViewModel.loadActiveDownloads(destination.libraryId)
+				DisposableEffect(destination) {
+					val promise = activeFileDownloadsViewModel.loadActiveDownloads(destination.libraryId)
+
+					onDispose {
+						promise.cancel()
+					}
+				}
 			}
 		}
 
