@@ -20,6 +20,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
+import java.util.function.Function
 
 class WhenProcessingTheQueue {
 	private val storedFileJobs: Set<StoredFileJob> = HashSet(
@@ -61,6 +62,12 @@ class WhenProcessingTheQueue {
 			)
 		)
 	)
+
+	private val deferredDownloadProvider = Function<StoredFile, DeferredDownloadPromise> { sf ->
+		if (sf.serviceId != "4") DeferredDownloadPromise(byteArrayOf(5, 10))
+		else DeferredDownloadPromise(UnexpectedException())
+	}
+
 	private val expectedStoredFiles = arrayOf(
 		StoredFile().setServiceId("1").setLibraryId(1),
 		StoredFile().setServiceId("2").setLibraryId(1)
@@ -80,13 +87,7 @@ class WhenProcessingTheQueue {
 			mockk {
 				every { promiseDownload(any(), any()) } answers {
 					val storedFile = secondArg<StoredFile>()
-					storedFileDownloadMap
-						.computeIfAbsent(storedFile) { DeferredDownloadPromise(byteArrayOf(5, 10)) }
-				}
-				every { promiseDownload(any(), match { it.serviceId == "4" }) } answers {
-					val storedFile = secondArg<StoredFile>()
-					storedFileDownloadMap
-						.computeIfAbsent(storedFile) { DeferredDownloadPromise(UnexpectedException()) }
+					storedFileDownloadMap.computeIfAbsent(storedFile, deferredDownloadProvider)
 				}
 			},
 			storedFilesUpdater,
@@ -96,8 +97,9 @@ class WhenProcessingTheQueue {
 			.observeStoredFileDownload(Observable.fromIterable(storedFileJobs))
 			.doOnEach { n ->
 				val (storedFile, status) = n.value ?: return@doOnEach
-				if (status == StoredFileJobState.Downloading)
-					storedFileDownloadMap[storedFile]?.resolve()
+				if (status != StoredFileJobState.Downloading) return@doOnEach
+
+				storedFileDownloadMap.computeIfAbsent(storedFile, deferredDownloadProvider).resolve()
 			}
 			.timeout(30, TimeUnit.SECONDS)
 			.blockingSubscribe(storedFileStatuses::add) { e: Throwable? ->

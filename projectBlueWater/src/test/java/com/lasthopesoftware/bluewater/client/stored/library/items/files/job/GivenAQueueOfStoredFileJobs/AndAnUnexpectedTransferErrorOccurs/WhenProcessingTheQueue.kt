@@ -21,6 +21,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
+import java.util.function.Function
 
 class WhenProcessingTheQueue {
 	private val storedFileJobs: Set<StoredFileJob> = setOf(
@@ -72,6 +73,10 @@ class WhenProcessingTheQueue {
 
 	@BeforeAll
 	fun before() {
+		val deferredDownloadProvider = Function<StoredFile, DeferredDownloadPromise> {
+			DeferredDownloadPromise(byteArrayOf(5, 10))
+		}
+
 		val storedFileDownloadMap = mutableMapOf<StoredFile, DeferredDownloadPromise>()
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
@@ -85,8 +90,7 @@ class WhenProcessingTheQueue {
 			mockk {
 				every { promiseDownload(any(), any()) } answers {
 					val storedFile = secondArg<StoredFile>()
-					storedFileDownloadMap
-						.computeIfAbsent(storedFile) { DeferredDownloadPromise(byteArrayOf(5, 10)) }
+					storedFileDownloadMap.computeIfAbsent(storedFile, deferredDownloadProvider)
 				}
 			},
 			storedFilesUpdater,
@@ -97,7 +101,7 @@ class WhenProcessingTheQueue {
 			.doOnEach { n ->
 				val (storedFile, status) = n.value ?: return@doOnEach
 				if (status == StoredFileJobState.Downloading)
-					storedFileDownloadMap[storedFile]?.resolve()
+					storedFileDownloadMap.computeIfAbsent(storedFile, deferredDownloadProvider).resolve()
 			}
 			.timeout(30, TimeUnit.SECONDS)
 			.blockingSubscribe(storedFileStatuses::add) { e -> if (e is StoredFileJobException) exception = e }
