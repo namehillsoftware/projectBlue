@@ -14,8 +14,11 @@ import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.observables.LiftedInteractionState
 import com.lasthopesoftware.observables.MutableInteractionState
 import com.lasthopesoftware.observables.mapNotNull
+import com.lasthopesoftware.promises.extensions.regardless
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.LinkedList
+import java.util.concurrent.atomic.AtomicReference
 
 class ActiveFileDownloadsViewModel(
 	private val storedFileAccess: AccessStoredFiles,
@@ -25,6 +28,7 @@ class ActiveFileDownloadsViewModel(
 
 	@Volatile
 	private var isPartiallyUpdating = false
+	private val lastPromisedFileUpdate = AtomicReference(Unit.toPromise())
 
 	private val mutableIsLoading = MutableInteractionState(false)
 	private val mutableIsSyncing = MutableInteractionState(false)
@@ -127,16 +131,24 @@ class ActiveFileDownloadsViewModel(
 	}
 
 	private fun updateStoredFileState(storedFileId: Int, state: StoredFileJobState) {
-		mutableSyncingFilesWithState.value[storedFileId]
-			?.also { (sf, _) ->
-				isPartiallyUpdating = true
-				mutableSyncingFilesWithState.value -= sf.id
-				isPartiallyUpdating = false
-				mutableSyncingFilesWithState.value += sf.id to (sf to state)
-			} ?: storedFileAccess.promiseStoredFile(storedFileId).then { storedFile ->
-					if (storedFile != null && storedFile.libraryId == activeLibraryId?.id) {
-						mutableSyncingFilesWithState.value += storedFile.id to (storedFile to state)
+		lastPromisedFileUpdate.getAndUpdate { prior ->
+			prior.regardless {
+				mutableSyncingFilesWithState.value[storedFileId]
+					?.let { (storedFile, currentState) ->
+						if (currentState != state) {
+							isPartiallyUpdating = true
+							mutableSyncingFilesWithState.value -= storedFile.id
+							isPartiallyUpdating = false
+							mutableSyncingFilesWithState.value += storedFile.id to (storedFile to state)
+						}
+					}
+					?.toPromise()
+					?: storedFileAccess.promiseStoredFile(storedFileId).then { storedFile ->
+						if (storedFile != null && storedFile.libraryId == activeLibraryId?.id) {
+							mutableSyncingFilesWithState.value += storedFile.id to (storedFile to state)
+						}
 					}
 			}
+		}
 	}
 }
