@@ -44,7 +44,7 @@ class LibrarySyncsHandler(
 			.flatMapMaybe { serviceFile ->
 				storedFileUpdater
 					.promiseStoredFileUpdate(libraryId, serviceFile)
-					.then<StoredFileJob?>({ storedFile ->
+					.then({ storedFile ->
 						storedFile
 							?.takeUnless { sf -> sf.isDownloadComplete }
 							?.let { sf -> StoredFileJob(libraryId, serviceFile, sf) }

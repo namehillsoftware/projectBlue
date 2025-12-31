@@ -22,7 +22,7 @@ import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.observables.LiftedInteractionState
 import com.lasthopesoftware.observables.MutableInteractionState
 import com.lasthopesoftware.observables.mapNotNull
-import com.lasthopesoftware.observables.toMaybeObservable
+import com.lasthopesoftware.observables.toSingleObservable
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.unitResponse
@@ -82,7 +82,7 @@ class FileDetailsViewModel(
 	override val isLoading = mutableIsLoading.asInteractionState()
 	override val coverArt = LiftedInteractionState(
 		promisedDefaultCoverArt
-			.toMaybeObservable()
+			.toSingleObservable()
 			.toObservable()
 			.concatWith(mutableCoverArt.mapNotNull()),
 		emptyByteArray

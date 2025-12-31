@@ -97,7 +97,7 @@ import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.observables.toMaybeObservable
+import com.lasthopesoftware.observables.toSingleObservable
 import com.lasthopesoftware.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.promises.PromiseDelay.Companion.delay
@@ -927,7 +927,7 @@ import java.util.concurrent.TimeoutException
 		val promisedPlayedFile = playingFile.promisePlayedFile()
 		val localSubscription = trackPositionBroadcaster.run {
 			Observable.interval(1, TimeUnit.SECONDS, lazyObservationScheduler.value)
-				.flatMapMaybe { promisedPlayedFile.progress.toMaybeObservable() }
+				.flatMapSingle { promisedPlayedFile.progress.toSingleObservable() }
 				.distinctUntilChanged()
 				.subscribe(observeUpdates(playingFile))
 		}
