@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import java.util.function.Function
 
 class WhenProcessingTheQueue {
 	private val storedFileJobs = setOf(
@@ -72,6 +73,10 @@ class WhenProcessingTheQueue {
 
 	@BeforeAll
 	fun act() {
+		val deferredDownloadProvider = Function<StoredFile, DeferredDownloadPromise> { storedFile ->
+			if (storedFile.serviceId == "2") DeferredDownloadPromise(IOException())
+			else DeferredDownloadPromise(byteArrayOf((327 % 128).toByte(), (955 % 128).toByte()))
+		}
 		val storedFileDownloadMap = mutableMapOf<StoredFile, DeferredDownloadPromise>()
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
@@ -80,13 +85,7 @@ class WhenProcessingTheQueue {
 			mockk {
 				every { promiseDownload(any(), any()) } answers {
 					val storedFile = secondArg<StoredFile>()
-					storedFileDownloadMap
-						.computeIfAbsent(storedFile) { DeferredDownloadPromise(byteArrayOf((327 % 128).toByte(), (955 % 128).toByte())) }
-				}
-				every { promiseDownload(any(), match { it.serviceId == "2" }) } answers {
-					val storedFile = secondArg<StoredFile>()
-					storedFileDownloadMap
-						.computeIfAbsent(storedFile) { DeferredDownloadPromise(IOException()) }
+					storedFileDownloadMap.computeIfAbsent(storedFile,deferredDownloadProvider)
 				}
 			},
 			storedFilesUpdater,
@@ -97,7 +96,7 @@ class WhenProcessingTheQueue {
 				.doOnEach { n ->
 					val (storedFile, status) = n.value ?: return@doOnEach
 					if (status == StoredFileJobState.Downloading)
-						storedFileDownloadMap[storedFile]?.resolve()
+						storedFileDownloadMap.computeIfAbsent(storedFile,deferredDownloadProvider).resolve()
 				}
 				.toList()
 				.timeout(30, TimeUnit.SECONDS)

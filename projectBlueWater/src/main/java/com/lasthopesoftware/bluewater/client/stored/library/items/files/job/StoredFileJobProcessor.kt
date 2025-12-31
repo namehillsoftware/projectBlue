@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exce
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.observables.observeProgress
+import com.lasthopesoftware.observables.observeBufferedProgress
 import com.lasthopesoftware.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -39,7 +39,7 @@ class StoredFileJobProcessor(
 			.flatMap { (libraryId, _, storedFile) ->
 				Observable
 					.just(StoredFileJobStatus(storedFile, StoredFileJobState.Queued))
-					.concatWith(rateLimiter.enqueueProgressingPromise { StoredFileDownloadPromise(libraryId, storedFile) }.observeProgress())
+					.concatWith(rateLimiter.enqueueProgressingPromise { StoredFileDownloadPromise(libraryId, storedFile) }.observeBufferedProgress())
 			}
 	}
 

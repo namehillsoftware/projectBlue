@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApp
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.observables.LiftedInteractionState
 import com.lasthopesoftware.observables.MutableInteractionState
-import com.lasthopesoftware.observables.toMaybeObservable
+import com.lasthopesoftware.observables.toSingleObservable
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.emptyByteArray
 import com.namehillsoftware.handoff.promises.Promise
@@ -52,7 +52,7 @@ class NowPlayingCoverArtViewModel(
 	val isNowPlayingImageLoading = isNowPlayingImageLoadingState.asInteractionState()
 	val nowPlayingImage = LiftedInteractionState(
 		promisedDefaultImage
-			.toMaybeObservable()
+			.toSingleObservable()
 			.toObservable()
 			.concatWith(nowPlayingImageState.filter { it.value.isNotEmpty() }.map { it.value }),
 		emptyByteArray)
