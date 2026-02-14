@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
+import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
@@ -55,7 +55,7 @@ class WhenStateIsRestoredWithTheSameLibraryId {
 		val libraryProvider = FakeLibraryRepository(library, restoringLibrary)
 		val nowPlayingRepository =
             NowPlayingRepository(
-                FakeSelectedLibraryProvider(),
+                FakeSelectedLibraryIdProvider(),
                 libraryProvider,
             )
 		val preparedPlaybackQueueResourceManagement = PreparedPlaybackQueueResourceManagement(

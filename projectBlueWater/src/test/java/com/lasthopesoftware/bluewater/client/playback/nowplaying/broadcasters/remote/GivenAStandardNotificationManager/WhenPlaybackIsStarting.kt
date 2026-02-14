@@ -25,6 +25,8 @@ class WhenPlaybackIsStarting : AndroidContext() {
 			mockk(),
 			ImmediateBitmapProducer,
 			mediaSessionCompat,
+			mockk(),
+			mockk(),
 			recordingApplicationMessageBus,
 		)
 		recordingApplicationMessageBus.sendMessage(PlaybackMessage.PlaybackStarting)

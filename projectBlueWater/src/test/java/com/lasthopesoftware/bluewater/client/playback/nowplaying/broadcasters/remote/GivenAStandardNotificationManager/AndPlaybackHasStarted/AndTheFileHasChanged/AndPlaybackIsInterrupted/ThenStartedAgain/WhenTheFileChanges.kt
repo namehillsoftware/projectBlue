@@ -58,7 +58,7 @@ class WhenTheFileChanges : AndroidContext() {
 				every { promiseImageBytes(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns byteArrayOf((912).toByte(), (368).toByte(), (395).toByte()).toPromise()
 			},
 			ImmediateBitmapProducer,
-			mockk {
+			mockk(relaxUnitFun = true) {
 				every { setPlaybackState(any()) } answers {
 					playbackStates?.add(firstArg())
 				}
@@ -67,6 +67,8 @@ class WhenTheFileChanges : AndroidContext() {
 					mediaMetadata?.add(firstArg())
 				}
 			},
+			mockk(),
+			mockk(),
 			messageBus,
 		)
 

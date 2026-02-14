@@ -10,10 +10,16 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFi
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.toFuture
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 @UnstableApi class MediaSessionService : Service() {
+	companion object {
+		private val logger by lazyLogger<MediaSessionService>()
+	}
+
 	private val binder by lazy { GenericBinder(this) }
 
 	private val lazyMediaSession = lazy {
@@ -40,6 +46,8 @@ import java.util.concurrent.TimeUnit
 				libraryFilePropertiesDependents.imageBytesProvider,
 				applicationDependencies.bitmapProducer,
 				MediaSessionController(newMediaSession),
+				applicationDependencies.selectedLibraryIdProvider,
+				applicationDependencies.intentBuilder,
 				registerForApplicationMessages,
 			)
 
@@ -53,24 +61,24 @@ import java.util.concurrent.TimeUnit
 	override fun onBind(intent: Intent) = binder
 
 	override fun onCreate() {
-		lazyMediaSession.value.second.isActive = true
+		mediaSession.isActive = true
 	}
 
 	override fun onDestroy() {
 		if (lazyMediaSession.isInitialized()) {
 			val (broadcaster, mediaSession) = lazyMediaSession.value
 
-			val futureLibraryId = applicationDependencies.selectedLibraryIdProvider.promiseSelectedLibraryId().toFuture()
-
-			broadcaster.close()
-			with (mediaSession) {
-				isActive = false
-				futureLibraryId
+			try {
+				mediaSession.isActive = false
+				broadcaster
+					.promiseClose()
+					.toFuture()
 					.get(30, TimeUnit.SECONDS)
-					?.also {
-						setSessionActivity(applicationDependencies.intentBuilder.buildPendingNowPlayingIntent(it))
-					}
-				release()
+				mediaSession.release()
+			} catch (e: TimeoutException) {
+				logger.warn("Timed out closing the broadcaster.", e)
+			} catch (e: Exception) {
+				logger.error("An unexpected error occurred destroying the MediaSessionService.", e)
 			}
 		}
 		super.onDestroy()

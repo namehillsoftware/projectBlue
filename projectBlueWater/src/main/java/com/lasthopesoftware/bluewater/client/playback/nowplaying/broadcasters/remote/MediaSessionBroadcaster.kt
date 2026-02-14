@@ -6,9 +6,11 @@ import android.media.session.PlaybackState
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.RatingCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import com.lasthopesoftware.bluewater.android.intents.BuildIntents
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.PlaybackNotificationRouter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
@@ -18,7 +20,9 @@ import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
+import com.lasthopesoftware.resources.closables.PromisingCloseable
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.atomic.AtomicLong
 
@@ -38,8 +42,10 @@ class MediaSessionBroadcaster(
     private val imageProvider: GetImageBytes,
 	private val bitmapProducer: ProduceBitmaps,
     private val mediaSession: ControlMediaSession,
+	private val selectedLibraryIdProvider: ProvideSelectedLibraryId,
+	private val intentBuilder: BuildIntents,
     applicationMessages: RegisterForApplicationMessages,
-) : PlaybackNotificationRouter(applicationMessages) {
+) : PlaybackNotificationRouter(applicationMessages), PromisingCloseable {
 
 	private val trackPositionUpdatesSubscription = applicationMessages.registerReceiver { m: TrackPositionUpdate ->
 		updateTrackPosition(m.filePosition.millis)
@@ -61,13 +67,32 @@ class MediaSessionBroadcaster(
 	@Volatile
 	private var isPlaying = false
 
+	init {
+	    mediaSession.activate()
+	}
+
 	override fun close() {
 		trackPositionUpdatesSubscription.close()
 		clearClientBitmap()
 		super.close()
 	}
 
-	override fun notifyStarting() = notifyPlaying()
+	override fun promiseClose(): Promise<Unit> {
+		close()
+		return if (playbackState == PlaybackStateCompat.STATE_STOPPED) Unit.toPromise()
+		else selectedLibraryIdProvider
+			.promiseSelectedLibraryId()
+			.then {
+				if (it != null)
+					mediaSession.setSessionActivity(intentBuilder.buildPendingNowPlayingIntent(it))
+			}
+			.must { _ -> mediaSession.deactivate() }
+	}
+
+	override fun notifyStarting() {
+		mediaSession.activate()
+		notifyPlaying()
+	}
 
 	override fun notifyPlaying() {
 		isPlaying = true
@@ -101,6 +126,7 @@ class MediaSessionBroadcaster(
 			playbackSpeed
 		)
 		mediaSession.setPlaybackState(builder.build())
+		mediaSession.deactivate()
 	}
 
 	override fun notifyInterrupted() {

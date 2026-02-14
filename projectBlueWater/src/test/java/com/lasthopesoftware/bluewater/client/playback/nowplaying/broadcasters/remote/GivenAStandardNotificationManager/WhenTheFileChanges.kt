@@ -47,6 +47,8 @@ class WhenTheFileChanges : AndroidContext() {
 			},
 			ImmediateBitmapProducer,
 			mediaSessionCompat,
+			mockk(),
+			mockk(),
 			messageBus,
 		)
 		messageBus.sendMessage(

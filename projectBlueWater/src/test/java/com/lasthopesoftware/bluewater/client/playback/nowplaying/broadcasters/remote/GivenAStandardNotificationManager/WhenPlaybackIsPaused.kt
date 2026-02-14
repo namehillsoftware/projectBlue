@@ -24,6 +24,8 @@ class WhenPlaybackIsPaused : AndroidContext() {
 			mockk(),
 			ImmediateBitmapProducer,
 			mediaSessionCompat,
+			mockk(),
+			mockk(),
 			messageBus,
 		)
 		messageBus.sendMessage(PlaybackMessage.PlaybackPaused)
