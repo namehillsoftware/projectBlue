@@ -21,7 +21,7 @@ class PlaybackNotificationBroadcaster(
 	notificationsConfiguration: NotificationsConfiguration,
 	private val nowPlayingNotificationContentBuilder: BuildNowPlayingNotificationContent,
 	private val playbackStartingNotification: BuildPlaybackStartingNotification,
-) : PlaybackNotificationRouter(registerApplicationMessages), AutoCloseable {
+) : PlaybackNotificationRouter(registerApplicationMessages) {
 
 	private val notificationId = notificationsConfiguration.notificationId
 	private val notificationSync = Any()

@@ -49,6 +49,8 @@ class WhenPlaybackStarts : AndroidContext() {
 			},
 			ImmediateBitmapProducer,
 			mediaSessionCompat,
+			mockk(),
+			mockk(),
 			recordingApplicationMessageBus,
 		)
 

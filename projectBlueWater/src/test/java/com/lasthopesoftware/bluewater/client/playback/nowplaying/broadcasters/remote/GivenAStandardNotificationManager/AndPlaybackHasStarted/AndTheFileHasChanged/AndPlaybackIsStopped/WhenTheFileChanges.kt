@@ -13,9 +13,11 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.singleNowPlayin
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.ControlMediaSession
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.lasthopesoftware.resources.bitmaps.ImmediateBitmapProducer
+import com.lasthopesoftware.resources.closables.thenUse
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -49,15 +51,17 @@ class WhenTheFileChanges : AndroidContext() {
 			},
 			ImmediateBitmapProducer,
 			mediaSessionCompat,
+			mockk(),
+			mockk(),
 			messageBus,
-		).use {
+		).thenUse {
 			with(messageBus) {
 				sendMessage(PlaybackMessage.PlaybackStarted)
 				sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
 				sendMessage(PlaybackMessage.PlaybackStopped)
 				sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
 			}
-		}
+		}.toExpiringFuture().get()
 	}
 
 	@Test
@@ -95,6 +99,23 @@ class WhenTheFileChanges : AndroidContext() {
 					m.getLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER) == 919L &&
 					m.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART) == null
 			})
+		}
+	}
+
+	@Test
+	fun `then the session is activated`() {
+		verify { mediaSessionCompat.activate() }
+	}
+
+	@Test
+	fun `then the session is deactivated`() {
+		verify { mediaSessionCompat.deactivate() }
+	}
+
+	@Test
+	fun `then the session activity is correctly set up`() {
+		verify(exactly = 0) {
+			mediaSessionCompat.setSessionActivity(any())
 		}
 	}
 }
