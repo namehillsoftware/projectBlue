@@ -1,45 +1,45 @@
 [versions]
-activityCompose = "1.12.2"
-agp = "8.13.2"
-androidJunit5 = "1.14.0.0"
+activityCompose = "1.12.4"
+agp = "9.0.1"
+androidJunit5 = "2.0.1"
 annotation = "1.9.1"
-assertjCore = "3.27.6"
-commonsCodec = "1.20.0"
+assertjCore = "3.27.7"
+commonsCodec = "1.21.0"
 commonsIo = "2.21.0"
-compose = "1.10.0"
+compose = "1.10.3"
 coreKtx = "1.17.0"
 desugar_jdk_libs = "2.1.5"
 gson = "2.13.2"
 guava = "33.5.0-android"
 handoff = "0.30.1"
 jodaTime = "2.14.0"
-jsoup = "1.21.2"
+jsoup = "1.22.1"
 junit = "4.13.2"
-junitJupiterApi = "6.0.1"
+junitJupiterApi = "6.0.2"
 junitKtx = "1.3.0"
 kotlinxCoroutinesRx3 = "1.10.2"
-kotlin = "2.3.0"
-ktorVersion = "3.3.3"
+kotlin = "2.3.10"
+ktorVersion = "3.4.0"
 lazyJ = "0.11.0"
 lifecycle = "2.10.0"
 logbackAndroid = "3.0.0"
-markdownRenderer = "0.39.0"
+markdownRenderer = "0.39.2"
 material = "1.13.0"
 media = "1.7.1"
-media3 = "1.8.0"
-mockk = "1.14.7"
+media3 = "1.9.2"
+mockk = "1.14.9"
 okhttp = "5.3.2"
 okio = "3.16.4"
 paletteKtx = "1.0.0"
 preferenceKtx = "1.2.1"
 querydroid = "0.8.2"
 navigationReimagined = "1.5.0"
-robolectric = "4.16"
+robolectric = "4.16.1"
 runner = "1.7.0"
 rxjava = "3.1.12"
 slf4jApi = "2.0.17"
 startupRuntime = "1.2.0"
-workRuntime = "2.11.0"
+workRuntime = "2.11.1"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
@@ -98,6 +98,6 @@ slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4jApi" }
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidJUnit5 = { id = "de.mannodermaus.android-junit5", version.ref = "androidJunit5" }
-kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlinPluginCompose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

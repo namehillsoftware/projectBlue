@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAPlaylist
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -33,7 +33,7 @@ class `When loading the files` {
 				).toPromise()
 			},
 			mockk {
-				every { isItemMarkedForSync(any(), any<Item>()) } returns false.toPromise()
+				every { isItemMarkedForSync(any(), any<IItem>()) } returns false.toPromise()
 			},
 		)
 	}
