@@ -1,10 +1,8 @@
 package com.lasthopesoftware.promises.extensions
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.produceState
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
 import com.namehillsoftware.handoff.cancellation.CancellationResponse
@@ -50,22 +48,11 @@ fun <Resolution> Promise<Resolution>.toFuture(): Future<Resolution?> = FuturePro
 fun <Resolution> Future<Resolution>.getSafely(): Resolution? = get(3, TimeUnit.SECONDS)
 
 @Composable
-fun <T> Promise<T>.toState(initialValue: T): State<T> = toState(initialValue, this)
+fun <T> Promise<T>.toState(initialValue: T): State<T> = toState(initialValue, Unit)
 
 @Composable
-fun <T> Promise<T>.toState(initialValue: T, key1: Any?): State<T> {
-	val result = remember { mutableStateOf(initialValue) }
-	DisposableEffect(this, key1) {
-		val promisedSet = then { it, cs ->
-			if (!cs.isCancelled)
-				result.value = it
-		}
-
-		onDispose {
-			promisedSet.cancel()
-		}
-	}
-	return result
+fun <T> Promise<T>.toState(initialValue: T, key1: Any?): State<T> = produceState(initialValue, this, key1) {
+	value = suspend()
 }
 
 suspend fun <T> Promise<T>.suspend(): T = suspendCancellableCoroutine { d ->
