@@ -9,26 +9,27 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import org.apache.commons.codec.binary.Hex
 import org.assertj.core.api.Assertions.assertThat
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-private const val libraryId = 206
-
 class `When Getting the Server Info` {
+	companion object {
+		private const val libraryId = 206
+	}
+
 	private val services by lazy {
         ServerLookup(
             mockk {
-                every { promiseConnectionSettings(LibraryId(com.lasthopesoftware.bluewater.client.connection.lookup.mediacenter.GivenServerInfoXml.AndASavedMacAddress.libraryId)) } returns MediaCenterConnectionSettings(
+                every { promiseConnectionSettings(LibraryId(libraryId)) } returns MediaCenterConnectionSettings(
                     accessCode = "Pf4UCkv5vHu",
 					macAddress = "00:34:B3:57:73:D0"
                 ).toPromise()
             },
             mockk {
-                every { promiseServerInfoXml(LibraryId(com.lasthopesoftware.bluewater.client.connection.lookup.mediacenter.GivenServerInfoXml.AndASavedMacAddress.libraryId)) } returns Promise(
+                every { promiseServerInfoXml(LibraryId(libraryId)) } returns Promise(
                     Jsoup.parse(
                         """<?xml version="1.0" encoding="UTF-8"?>
 <Response Status="OK">
@@ -54,7 +55,7 @@ class `When Getting the Server Info` {
 
 	@BeforeAll
 	fun act() {
-		serverInfo = services.promiseServerInformation(LibraryId(com.lasthopesoftware.bluewater.client.connection.lookup.mediacenter.GivenServerInfoXml.AndASavedMacAddress.libraryId)).toExpiringFuture().get()
+		serverInfo = services.promiseServerInformation(LibraryId(libraryId)).toExpiringFuture().get()
 	}
 
 	@Test
@@ -66,7 +67,7 @@ class `When Getting the Server Info` {
                 remoteHosts = setOf("108.491.23.154"),
                 macAddresses = setOf("5c-f3-70-8b-db-e9", "16-15-f4-b9-cd-15", "00:34:B3:57:73:D0"),
                 localHosts = setOf("169.254.72.216", "192.940.1.817"),
-                certificateFingerprint = Hex.decodeHex("746E06046B44CED35658F300DB2D08A799DEBC7E"),
+                certificateFingerprint = "746E06046B44CED35658F300DB2D08A799DEBC7E".hexToByteArray(),
             )
         )
 	}

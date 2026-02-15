@@ -10,7 +10,7 @@ docker compose build && docker compose run --rm \
   -v "$(pwd)":/src -w /src \
 #  -u "$(id -u)":"$(id -g)" \
    gradle \
-  :projectBlueWater:test \
+  :projectBlueWater:testReleaseUnitTest \
   :projectBlueWater:assembleRelease
 
 mkdir -p _artifacts
