@@ -4,8 +4,9 @@ import android.app.PendingIntent
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import java.lang.AutoCloseable
 
-class MediaSessionController(private val mediaSessionCompat: MediaSessionCompat) : ControlMediaSession {
+class MediaSessionController(private val mediaSessionCompat: MediaSessionCompat) : ControlMediaSession, AutoCloseable {
 	override fun activate() {
 		if (!mediaSessionCompat.isActive)
 			mediaSessionCompat.isActive = true
@@ -26,5 +27,10 @@ class MediaSessionController(private val mediaSessionCompat: MediaSessionCompat)
 
 	override fun setSessionActivity(pendingIntent: PendingIntent) {
 		mediaSessionCompat.setSessionActivity(pendingIntent)
+	}
+
+	override fun close() {
+		deactivate()
+		mediaSessionCompat.release()
 	}
 }

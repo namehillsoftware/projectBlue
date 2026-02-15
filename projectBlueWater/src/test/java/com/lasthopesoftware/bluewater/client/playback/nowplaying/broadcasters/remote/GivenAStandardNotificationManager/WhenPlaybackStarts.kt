@@ -33,11 +33,6 @@ class WhenPlaybackStarts : AndroidContext() {
 	}
 
 	@Test
-	fun `then the session is activated`() {
-		verify { mediaSessionCompat.activate() }
-	}
-
-	@Test
 	fun `then the state is set to playing`() {
 		verify { mediaSessionCompat.setPlaybackState(match { c -> c.state == PlaybackStateCompat.STATE_PLAYING }) }
 	}

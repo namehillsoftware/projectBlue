@@ -103,12 +103,7 @@ class WhenTheFileChanges : AndroidContext() {
 	}
 
 	@Test
-	fun `then the session is activated`() {
-		verify { mediaSessionCompat.activate() }
-	}
-
-	@Test
-	fun `then the session is deactivated`() {
+	fun `then the session is deactivated on stop`() {
 		verify { mediaSessionCompat.deactivate() }
 	}
 

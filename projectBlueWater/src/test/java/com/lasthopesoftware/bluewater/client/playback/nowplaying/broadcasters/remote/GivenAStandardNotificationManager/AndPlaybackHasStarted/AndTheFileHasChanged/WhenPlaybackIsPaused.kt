@@ -91,16 +91,9 @@ class WhenPlaybackIsPaused : AndroidContext() {
 	}
 
 	@Test
-	fun `then the session activity is correctly set up`() {
+	fun `then the session activity is correctly set up on resource clean-up`() {
 		verify {
 			mediaSessionCompat.setSessionActivity(expectedIntent)
-		}
-	}
-
-	@Test
-	fun `then the session activity is deactivated`() {
-		verify {
-			mediaSessionCompat.deactivate()
 		}
 	}
 }

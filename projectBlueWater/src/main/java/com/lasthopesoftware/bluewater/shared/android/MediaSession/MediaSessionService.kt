@@ -11,8 +11,10 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnect
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.promises.extensions.getSafely
 import com.lasthopesoftware.promises.extensions.toFuture
-import java.util.concurrent.TimeUnit
+import com.lasthopesoftware.resources.closables.PromisingCloseable
+import com.lasthopesoftware.resources.closables.PromisingCloseableManager
 import java.util.concurrent.TimeoutException
 
 @UnstableApi class MediaSessionService : Service() {
@@ -22,15 +24,12 @@ import java.util.concurrent.TimeoutException
 
 	private val binder by lazy { GenericBinder(this) }
 
-	private val lazyMediaSession = lazy {
-		val libraryConnectionDependencies = LibraryConnectionRegistry(applicationDependencies)
-		val libraryFilePropertiesDependents = LibraryFilePropertiesDependentsRegistry(
-			applicationDependencies,
-			libraryConnectionDependencies
-		)
+	private val promisingCloseableManager = PromisingCloseableManager()
 
+	private val libraryConnectionDependencies by lazy { LibraryConnectionRegistry(applicationDependencies) }
+
+	val mediaSession by lazy {
 		val newMediaSession = MediaSessionCompat(this, MediaSessionConstants.mediaSessionTag)
-
 		with (applicationDependencies) {
 			newMediaSession.setCallback(
 				MediaSessionCallbackReceiver(
@@ -40,46 +39,40 @@ import java.util.concurrent.TimeoutException
 				)
 			)
 
-			val broadcaster = MediaSessionBroadcaster(
-				nowPlayingState,
-				libraryConnectionDependencies.libraryFilePropertiesProvider,
-				libraryFilePropertiesDependents.imageBytesProvider,
-				applicationDependencies.bitmapProducer,
-				MediaSessionController(newMediaSession),
-				applicationDependencies.selectedLibraryIdProvider,
-				applicationDependencies.intentBuilder,
-				registerForApplicationMessages,
+			val libraryFilePropertiesDependents = LibraryFilePropertiesDependentsRegistry(
+				applicationDependencies,
+				libraryConnectionDependencies
 			)
-
-			Pair(broadcaster, newMediaSession)
+			val mediaSessionController = promisingCloseableManager.manage(MediaSessionController(newMediaSession))
+			promisingCloseableManager.manage(
+				MediaSessionBroadcaster(
+					nowPlayingState,
+					libraryConnectionDependencies.libraryFilePropertiesProvider,
+					libraryFilePropertiesDependents.imageBytesProvider,
+					bitmapProducer,
+					mediaSessionController,
+					selectedLibraryIdProvider,
+					intentBuilder,
+					registerForApplicationMessages,
+				) as PromisingCloseable
+			)
 		}
-	}
 
-	val mediaSession
-		get() = lazyMediaSession.value.second
+		newMediaSession
+	}
 
 	override fun onBind(intent: Intent) = binder
 
-	override fun onCreate() {
-		mediaSession.isActive = true
-	}
-
 	override fun onDestroy() {
-		if (lazyMediaSession.isInitialized()) {
-			val (broadcaster, mediaSession) = lazyMediaSession.value
-
-			try {
-				mediaSession.isActive = false
-				broadcaster
-					.promiseClose()
-					.toFuture()
-					.get(30, TimeUnit.SECONDS)
-				mediaSession.release()
-			} catch (e: TimeoutException) {
-				logger.warn("Timed out closing the broadcaster.", e)
-			} catch (e: Exception) {
-				logger.error("An unexpected error occurred destroying the MediaSessionService.", e)
-			}
+		try {
+			promisingCloseableManager
+				.promiseClose()
+				.toFuture()
+				.getSafely()
+		} catch (e: TimeoutException) {
+			logger.warn("Timed out closing the resources.", e)
+		} catch (e: Exception) {
+			logger.error("An unexpected error occurred closing resources.", e)
 		}
 		super.onDestroy()
 	}

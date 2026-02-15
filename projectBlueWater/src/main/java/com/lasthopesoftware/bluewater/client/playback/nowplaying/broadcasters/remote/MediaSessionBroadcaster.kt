@@ -67,10 +67,6 @@ class MediaSessionBroadcaster(
 	@Volatile
 	private var isPlaying = false
 
-	init {
-	    mediaSession.activate()
-	}
-
 	override fun close() {
 		trackPositionUpdatesSubscription.close()
 		clearClientBitmap()
@@ -86,7 +82,6 @@ class MediaSessionBroadcaster(
 				if (it != null)
 					mediaSession.setSessionActivity(intentBuilder.buildPendingNowPlayingIntent(it))
 			}
-			.must { _ -> mediaSession.deactivate() }
 	}
 
 	override fun notifyStarting() {
