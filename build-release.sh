@@ -9,7 +9,7 @@ BUILD_GROUP=$(stat -c "%g" "$(pwd)")
 docker compose build && docker compose run --rm \
   -v "$(pwd)":/src -w /src \
   -u "$BUILD_USER":"$BUILD_GROUP" gradle \
-  :projectBlueWater:testReleaseUnitTest \
+  :projectBlueWater:test \
   :projectBlueWater:assembleRelease \
   :projectBlueWater:bundleRelease
 EXIT_CODE=${PIPESTATUS[0]}
