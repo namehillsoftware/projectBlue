@@ -863,11 +863,13 @@ fun FileDetailsView(
 
 	val paletteProvider = MediaStylePaletteProvider(activity)
 	val coverArt by viewModel.coverArt.subscribeAsState()
-	val coverArtBitmap by coverArt
-		.takeIf { it.isNotEmpty() }
-		?.let(bitmapProducer::promiseBitmap)
-		.keepPromise()
-		.toState(null, coverArt)
+	val promisedBitmap = remember(coverArt) {
+		coverArt
+			.takeIf { it.isNotEmpty() }
+			?.let(bitmapProducer::promiseBitmap)
+			.keepPromise()
+	}
+	val coverArtBitmap by promisedBitmap.toState(null)
 
 	val coverArtColorState by rememberComputedColorPalette(paletteProvider = paletteProvider, coverArt = coverArtBitmap)
 

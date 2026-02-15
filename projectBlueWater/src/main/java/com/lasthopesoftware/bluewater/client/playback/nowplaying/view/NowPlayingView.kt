@@ -142,11 +142,13 @@ fun NowPlayingCoverArtView(
 		val isLoadingImage by nowPlayingCoverArtViewModel.isNowPlayingImageLoading.subscribeAsState()
 
 		val coverArt by nowPlayingCoverArtViewModel.nowPlayingImage.subscribeAsState()
-		val coverArtBitmap by coverArt
-			.takeIf { it.isNotEmpty() }
-			?.let(bitmapProducer::promiseBitmap)
-			.keepPromise()
-			.toState(null, coverArt)
+		val promisedBitmap = remember(coverArt) {
+			coverArt
+				.takeIf { it.isNotEmpty() }
+				?.let(bitmapProducer::promiseBitmap)
+				.keepPromise()
+		}
+		val coverArtBitmap by promisedBitmap.toState(null)
 
 		coverArtBitmap
 			?.let {

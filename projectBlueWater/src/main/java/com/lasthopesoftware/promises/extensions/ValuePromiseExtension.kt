@@ -50,12 +50,12 @@ fun <Resolution> Promise<Resolution>.toFuture(): Future<Resolution?> = FuturePro
 fun <Resolution> Future<Resolution>.getSafely(): Resolution? = get(3, TimeUnit.SECONDS)
 
 @Composable
-fun <T> Promise<T>.toState(initialValue: T): State<T> = toState(initialValue, Unit)
+fun <T> Promise<T>.toState(initialValue: T): State<T> = toState(initialValue, this)
 
 @Composable
 fun <T> Promise<T>.toState(initialValue: T, key1: Any?): State<T> {
 	val result = remember { mutableStateOf(initialValue) }
-	DisposableEffect(key1) {
+	DisposableEffect(this, key1) {
 		val promisedSet = then { it, cs ->
 			if (!cs.isCancelled)
 				result.value = it
