@@ -3,8 +3,7 @@ package com.lasthopesoftware.resources.closables
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
-import com.lasthopesoftware.promises.extensions.keepPromise
-import com.lasthopesoftware.promises.extensions.regardless
+import com.lasthopesoftware.promises.PromiseMachines
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
@@ -33,7 +32,7 @@ open class PromisingCloseableManager : ManagePromisingCloseables, ImmediateRespo
 
 	override fun createNestedManager(): ManagePromisingCloseables = NestedPromisingCloseableManager(this)
 
-	override fun promiseClose(): Promise<Unit> =
+	override fun promiseClose(): Promise<Unit> = PromiseMachines.loop { _, cancellable ->
 		(nestedContainerStack
 			.pop()
 			?.promiseClose()
@@ -49,8 +48,8 @@ open class PromisingCloseableManager : ManagePromisingCloseables, ImmediateRespo
 							logger.debug(closedMessage, resource)
 						}, this)
 				})
-			?.regardless { promiseClose() }
-			.keepPromise(Unit)
+			?: cancellable.cancel().toPromise()
+	}
 
 	override fun respond(resolution: Throwable?) {
 		logger.warn("There was an error closing a resource", resolution)
