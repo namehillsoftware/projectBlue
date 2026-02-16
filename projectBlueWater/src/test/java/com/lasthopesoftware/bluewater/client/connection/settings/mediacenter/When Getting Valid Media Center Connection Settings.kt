@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFutur
 import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
-import org.apache.commons.codec.binary.Hex
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -45,7 +44,7 @@ class `When Getting Valid Media Center Connection Settings` {
 				accessCode = "P9qd",
 				userName = "x39",
 				password = "gEaP",
-				sslCertificateFingerprint = Hex.decodeHex("A10B"),
+				sslCertificateFingerprint = "A10B".hexToByteArray(),
 				isWakeOnLanEnabled = true,
 				isLocalOnly = true,
 			)

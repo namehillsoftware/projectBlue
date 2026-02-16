@@ -3,10 +3,11 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
 	alias(libs.plugins.androidJUnit5)
 	alias(libs.plugins.kotlinSerialization)
-	alias(libs.plugins.kotlinAndroid)
 }
 
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'org.jetbrains.kotlin.android'
 apply plugin: 'kotlin-parcelize'
 apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 
@@ -73,6 +74,10 @@ android {
 		coreLibraryDesugaringEnabled = true
 	}
 
+	kotlinOptions {
+		jvmTarget = '11'
+	}
+
 	sourceSets {
 		main {
 			res.srcDirs += copyDependencyList.map { it.temporaryDir }
@@ -87,7 +92,7 @@ android {
         release {
             minifyEnabled true
             shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 			signingConfig (isSignedExternally() ? signingConfigs.release : signingConfig)
 			ndk {
 				debugSymbolLevel = 'SYMBOL_TABLE'
@@ -129,9 +134,6 @@ android {
     }
 
 	namespace 'com.lasthopesoftware.bluewater'
-	kotlinOptions {
-		jvmTarget = '11'
-	}
 }
 
 tasks.withType(KotlinCompile).configureEach {
@@ -223,7 +225,6 @@ dependencies {
 	testImplementation libs.androidx.junit.ktx
 	testImplementation libs.androidx.test.core
 	testImplementation libs.androidx.test.runner
-	testImplementation libs.commons.codec
 	testImplementation libs.junit.jupiter.api
 	testImplementation libs.assertj.core
 	testImplementation libs.robolectric

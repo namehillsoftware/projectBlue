@@ -9,7 +9,6 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import org.apache.commons.codec.binary.Hex
 import org.assertj.core.api.Assertions.assertThat
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
@@ -69,7 +68,7 @@ class WhenParsingTheServerInfo {
 
 	@Test
 	fun `then the certificate fingerprint is correct`() {
-		assertThat(String(Hex.encodeHex(serverInfo!!.certificateFingerprint)))
+		assertThat(serverInfo!!.certificateFingerprint.toHexString())
 			.isEqualToIgnoringCase("746E06046B44CED35658F300DB2D08A799DEBC7E")
 	}
 

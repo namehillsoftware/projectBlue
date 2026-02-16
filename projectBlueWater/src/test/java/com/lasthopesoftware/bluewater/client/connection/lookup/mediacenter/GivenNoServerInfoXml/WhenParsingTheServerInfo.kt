@@ -8,21 +8,22 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFutur
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import org.apache.commons.codec.binary.Hex
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-private const val libraryId = 601
-
 class WhenParsingTheServerInfo {
+
+	companion object {
+		private const val libraryId = 601
+	}
 
 	private val serverInfo by lazy {
 		val serverLookup = ServerLookup(
 			mockk {
-				every { promiseConnectionSettings(LibraryId(com.lasthopesoftware.bluewater.client.connection.lookup.mediacenter.GivenNoServerInfoXml.libraryId)) } returns Promise(
+				every { promiseConnectionSettings(LibraryId(libraryId)) } returns Promise(
 					MediaCenterConnectionSettings(
 						accessCode = "JcMHkVt5mty",
-						sslCertificateFingerprint = Hex.decodeHex("2386166660562C5AAA1253B2BED7C2483F9C2D45")
+						sslCertificateFingerprint = "2386166660562C5AAA1253B2BED7C2483F9C2D45".hexToByteArray()
 					)
 				)
 			},
@@ -30,7 +31,7 @@ class WhenParsingTheServerInfo {
 				every { promiseServerInfoXml(any()) } returns Promise.empty()
 			},
         )
-		serverLookup.promiseServerInformation(LibraryId(com.lasthopesoftware.bluewater.client.connection.lookup.mediacenter.GivenNoServerInfoXml.libraryId)).toExpiringFuture().get()
+		serverLookup.promiseServerInformation(LibraryId(libraryId)).toExpiringFuture().get()
 	}
 
 	@Test
@@ -39,7 +40,7 @@ class WhenParsingTheServerInfo {
 			ServerInfo(
 				httpsPort = 443,
 				remoteHosts = setOf("JcMHkVt5mty"),
-				certificateFingerprint = Hex.decodeHex("2386166660562C5AAA1253B2BED7C2483F9C2D45"),
+				certificateFingerprint = "2386166660562C5AAA1253B2BED7C2483F9C2D45".hexToByteArray(),
 			)
 		)
 	}

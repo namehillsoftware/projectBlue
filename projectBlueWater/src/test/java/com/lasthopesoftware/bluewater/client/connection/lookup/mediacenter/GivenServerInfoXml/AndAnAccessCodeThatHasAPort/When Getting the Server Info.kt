@@ -9,26 +9,27 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import org.apache.commons.codec.binary.Hex
 import org.assertj.core.api.Assertions.assertThat
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-private const val libraryId = 495
-
 class `When Getting the Server Info` {
+	companion object {
+		private const val libraryId = 495
+	}
+
 	private val services by lazy {
         ServerLookup(
             mockk {
-                every { promiseConnectionSettings(LibraryId(com.lasthopesoftware.bluewater.client.connection.lookup.mediacenter.GivenServerInfoXml.AndAnAccessCodeThatHasAPort.libraryId)) } returns MediaCenterConnectionSettings(
+                every { promiseConnectionSettings(LibraryId(libraryId)) } returns MediaCenterConnectionSettings(
                     accessCode = "gyRxp8AOEkD:302",
-					sslCertificateFingerprint = Hex.decodeHex("d0a3e4bf62221422a2e5dc9c479c2b36"),
+					sslCertificateFingerprint = "d0a3e4bf62221422a2e5dc9c479c2b36".hexToByteArray(),
                 ).toPromise()
             },
             mockk {
-                every { promiseServerInfoXml(LibraryId(com.lasthopesoftware.bluewater.client.connection.lookup.mediacenter.GivenServerInfoXml.AndAnAccessCodeThatHasAPort.libraryId)) } returns Promise(
+                every { promiseServerInfoXml(LibraryId(libraryId)) } returns Promise(
 					Jsoup.parse(
 						"""<?xml version="1.0" encoding="UTF-8"?>
 <Response Status="OK">
@@ -54,7 +55,7 @@ class `When Getting the Server Info` {
 
 	@BeforeAll
 	fun act() {
-		serverInfo = services.promiseServerInformation(LibraryId(com.lasthopesoftware.bluewater.client.connection.lookup.mediacenter.GivenServerInfoXml.AndAnAccessCodeThatHasAPort.libraryId)).toExpiringFuture().get()
+		serverInfo = services.promiseServerInformation(LibraryId(libraryId)).toExpiringFuture().get()
 	}
 
 	@Test
@@ -66,7 +67,7 @@ class `When Getting the Server Info` {
                 remoteHosts = setOf("gyRxp8AOEkD"),
                 macAddresses = emptySet(),
                 localHosts = emptySet(),
-                certificateFingerprint = Hex.decodeHex("d0a3e4bf62221422a2e5dc9c479c2b36"),
+                certificateFingerprint = "d0a3e4bf62221422a2e5dc9c479c2b36".hexToByteArray(),
             )
         )
 	}

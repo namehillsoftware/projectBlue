@@ -19,7 +19,6 @@ import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import org.apache.commons.codec.binary.Hex
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -35,7 +34,7 @@ class `When Getting The Live Connection` {
 				setOf("dR7ft3qmY99"),
 				emptySet(),
 				emptySet(),
-				Hex.decodeHex("ae16487d40f24abb8c61f49bf4540076")
+				"ae16487d40f24abb8c61f49bf4540076".hexToByteArray()
 			)
 		)
 
@@ -95,7 +94,7 @@ class `When Getting The Live Connection` {
 	@Test
 	fun `then the certificate fingerprint is correct`() {
 		assertThat(selectedConnectionDetails?.certificateFingerprint)
-			.isEqualTo(Hex.decodeHex("ae16487d40f24abb8c61f49bf4540076"))
+			.isEqualTo("ae16487d40f24abb8c61f49bf4540076".hexToByteArray())
 	}
 
 	@Test

@@ -9,7 +9,6 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import org.apache.commons.codec.binary.Hex
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -22,7 +21,7 @@ class `When Getting the Server Info` {
             mockk {
                 every { promiseConnectionSettings(LibraryId(com.lasthopesoftware.bluewater.client.connection.lookup.mediacenter.GivenAnAccessCodeThatIsAValidServer.AndAnHttpsScheme.libraryId)) } returns MediaCenterConnectionSettings(
                     accessCode = "https://b7XpyOQv:63389",
-					sslCertificateFingerprint = Hex.decodeHex("d0a3e4bf62221422a2e5dc9c479c2b36")
+					sslCertificateFingerprint = "d0a3e4bf62221422a2e5dc9c479c2b36".hexToByteArray()
                 ).toPromise()
             },
             mockk {
@@ -47,7 +46,7 @@ class `When Getting the Server Info` {
 			remoteHosts = setOf("b7XpyOQv"),
 			macAddresses = emptySet(),
 			localHosts = emptySet(),
-			certificateFingerprint = Hex.decodeHex("d0a3e4bf62221422a2e5dc9c479c2b36"),
+			certificateFingerprint = "d0a3e4bf62221422a2e5dc9c479c2b36".hexToByteArray(),
 		)
         )
 	}

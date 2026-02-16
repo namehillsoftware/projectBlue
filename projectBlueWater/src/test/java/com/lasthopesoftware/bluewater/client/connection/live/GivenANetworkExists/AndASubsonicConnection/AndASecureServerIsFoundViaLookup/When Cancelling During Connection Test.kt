@@ -17,7 +17,6 @@ import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import org.apache.commons.codec.binary.Hex
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
@@ -34,7 +33,7 @@ class `When Cancelling During Connection Test` {
 				setOf("LD1kt8LI7aC"),
 				emptySet(),
 				emptySet(),
-				Hex.decodeHex("3e29389b9409419180eae3159dbb1ecc")
+				"3e29389b9409419180eae3159dbb1ecc".hexToByteArray()
 			)
 		)
 
