@@ -20,11 +20,13 @@ import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.updateIfDifferent
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
 import com.lasthopesoftware.resources.closables.PromisingCloseable
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 
 private val logger by lazyLogger<MediaSessionBroadcaster>()
 private const val playbackSpeed = 1.0f
@@ -54,15 +56,15 @@ class MediaSessionBroadcaster(
 	@Volatile
 	private var playbackState = PlaybackStateCompat.STATE_STOPPED
 
-	@Volatile
-	private var trackPosition = AtomicLong(0)
+	private val trackPosition = AtomicLong(0)
 
 	@Volatile
 	private var mediaMetadata = MediaMetadataCompat.Builder().build()
 
 	@Volatile
 	private var capabilities = standardCapabilities
-	private var remoteClientBitmap: Bitmap? = null
+
+	private val remoteClientBitmap = AtomicReference<Bitmap?>(null)
 
 	@Volatile
 	private var isPlaying = false
@@ -155,13 +157,12 @@ class MediaSessionBroadcaster(
 
 	@Synchronized
 	private fun clearClientBitmap() {
-		if (remoteClientBitmap == null) return
+		if (remoteClientBitmap.getAndSet(null) == null) return
 		val metadataBuilder = MediaMetadataCompat.Builder(mediaMetadata)
 		metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, null)
 		metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ART, null)
 		metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON, null)
 		mediaSession.setMetadata(metadataBuilder.build().also { mediaMetadata = it })
-		remoteClientBitmap = null
 	}
 
 	private fun updateNowPlaying(libraryId: LibraryId, serviceFile: ServiceFile): Promise<*> {
@@ -196,11 +197,10 @@ class MediaSessionBroadcaster(
 				)
 
 				promisedBitmap.then { bitmap ->
-					if (remoteClientBitmap !== bitmap) {
+					if (remoteClientBitmap.updateIfDifferent(bitmap)) {
 						metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, bitmap)
 						metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ART, bitmap)
 						metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON, bitmap)
-						remoteClientBitmap = bitmap
 					}
 					mediaSession.setMetadata(metadataBuilder.build().also { mediaMetadata = it })
 				}

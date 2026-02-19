@@ -28,7 +28,7 @@ import java.util.concurrent.TimeoutException
 
 	private val libraryConnectionDependencies by lazy { LibraryConnectionRegistry(applicationDependencies) }
 
-	val mediaSession by lazy {
+	private val mediaSessionServices by lazy {
 		val newMediaSession = MediaSessionCompat(this, MediaSessionConstants.mediaSessionTag)
 		with (applicationDependencies) {
 			newMediaSession.setCallback(
@@ -43,7 +43,7 @@ import java.util.concurrent.TimeoutException
 				applicationDependencies,
 				libraryConnectionDependencies
 			)
-			val mediaSessionController = promisingCloseableManager.manage(MediaSessionController(newMediaSession))
+			val mediaSessionController = promisingCloseableManager.manage(MediaSessionController(newMediaSession, nowPlayingState))
 			promisingCloseableManager.manage(
 				MediaSessionBroadcaster(
 					nowPlayingState,
@@ -56,12 +56,32 @@ import java.util.concurrent.TimeoutException
 					registerForApplicationMessages,
 				) as PromisingCloseable
 			)
+			Pair(newMediaSession, mediaSessionController)
 		}
-
-		newMediaSession
 	}
 
+	val mediaSession: MediaSessionCompat
+		get() = mediaSessionServices.first
+
+	val mediaSessionController: ControlMediaSession
+		get() = mediaSessionServices.second
+
 	override fun onBind(intent: Intent) = binder
+
+	override fun onCreate() {
+		super.onCreate()
+
+		try {
+			mediaSessionController
+				.promiseInitialization()
+				.toFuture()
+				.getSafely()
+		} catch (e: TimeoutException) {
+			logger.warn("Timed out initializing the media session controller.", e)
+		} catch (e: Exception) {
+			logger.error("An unexpected error occurred initializing the media session controller.", e)
+		}
+	}
 
 	override fun onDestroy() {
 		try {

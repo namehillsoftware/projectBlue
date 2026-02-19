@@ -697,7 +697,7 @@ import java.util.concurrent.TimeoutException
 			val timeoutResponse =
 				promisedTimeout.then(
 					{ throw PlaybackStartingTimeoutException(playbackStartTimeout) },
-					{ it ->
+					{
 						// avoid logging cancellation exceptions
 						if (it !is CancellationException)
 							throw it
