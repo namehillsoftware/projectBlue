@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged
 
+import android.app.PendingIntent
 import android.media.MediaMetadata
 import android.support.v4.media.session.PlaybackStateCompat
 import com.lasthopesoftware.AndroidContext
@@ -7,15 +8,18 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.MappedFilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.FakeNowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.singleNowPlaying
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.ControlMediaSession
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.lasthopesoftware.resources.bitmaps.ImmediateBitmapProducer
+import com.lasthopesoftware.resources.closables.thenUse
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -28,6 +32,7 @@ class WhenPlaybackIsPaused : AndroidContext() {
 		private const val serviceFileId = "654"
 
 		private val mediaSessionCompat = mockk<ControlMediaSession>(relaxUnitFun = true)
+		private val expectedIntent = mockk<PendingIntent>()
 	}
 
 	override fun before() {
@@ -50,12 +55,16 @@ class WhenPlaybackIsPaused : AndroidContext() {
 			},
 			ImmediateBitmapProducer,
 			mediaSessionCompat,
+			FakeSelectedLibraryIdProvider(LibraryId(libraryId)),
+			mockk {
+				every { buildPendingNowPlayingIntent(LibraryId(libraryId)) } returns expectedIntent
+			},
 			messageBus
-		)
-
-		messageBus.sendMessage(PlaybackMessage.PlaybackStarted)
-		messageBus.sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
-		messageBus.sendMessage(PlaybackMessage.PlaybackPaused)
+		).thenUse {
+			messageBus.sendMessage(PlaybackMessage.PlaybackStarted)
+			messageBus.sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
+			messageBus.sendMessage(PlaybackMessage.PlaybackPaused)
+		}.toExpiringFuture().get()
 	}
 
 	@Test
@@ -78,6 +87,13 @@ class WhenPlaybackIsPaused : AndroidContext() {
 					m.getLong(MediaMetadata.METADATA_KEY_DURATION) == 259267L * 1000 &&
 					m.getLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER) == 919L
 			})
+		}
+	}
+
+	@Test
+	fun `then the session activity is correctly set up on resource clean-up`() {
+		verify {
+			mediaSessionCompat.setSessionActivity(expectedIntent)
 		}
 	}
 }

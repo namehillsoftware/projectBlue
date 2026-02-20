@@ -697,7 +697,7 @@ import java.util.concurrent.TimeoutException
 			val timeoutResponse =
 				promisedTimeout.then(
 					{ throw PlaybackStartingTimeoutException(playbackStartTimeout) },
-					{ it ->
+					{
 						// avoid logging cancellation exceptions
 						if (it !is CancellationException)
 							throw it
@@ -835,11 +835,11 @@ import java.util.concurrent.TimeoutException
 		val playbackState = promisedPlaybackServices.value
 
 		isMarkedForPlay = true
-		applicationMessageBus.sendMessage(PlaybackMessage.PlaybackStarting)
 
 		if (!areListenersRegistered) registerListeners()
 
 		return playbackState.eventually {
+			applicationMessageBus.sendMessage(PlaybackMessage.PlaybackStarting)
 			it.playbackState
 				.startPlaylist(
 					libraryId,
@@ -879,10 +879,10 @@ import java.util.concurrent.TimeoutException
 
 	private fun resumePlayback(libraryId: LibraryId): Promise<Unit> {
 		isMarkedForPlay = true
-		applicationMessageBus.sendMessage(PlaybackMessage.PlaybackStarting)
 
 		if (!areListenersRegistered) registerListeners()
 		return restorePlaybackServices(libraryId).eventually {
+			applicationMessageBus.sendMessage(PlaybackMessage.PlaybackStarting)
 			it.playbackState.resume().then(forward()) { e -> it.errorHandler.onError(e) }
 		}
 	}

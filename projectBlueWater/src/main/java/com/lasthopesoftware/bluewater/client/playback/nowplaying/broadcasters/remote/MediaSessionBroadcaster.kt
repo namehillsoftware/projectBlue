@@ -6,9 +6,11 @@ import android.media.session.PlaybackState
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.RatingCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import com.lasthopesoftware.bluewater.android.intents.BuildIntents
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.PlaybackNotificationRouter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
@@ -18,9 +20,13 @@ import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.updateIfDifferent
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
+import com.lasthopesoftware.resources.closables.PromisingCloseable
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 
 private val logger by lazyLogger<MediaSessionBroadcaster>()
 private const val playbackSpeed = 1.0f
@@ -38,8 +44,10 @@ class MediaSessionBroadcaster(
     private val imageProvider: GetImageBytes,
 	private val bitmapProducer: ProduceBitmaps,
     private val mediaSession: ControlMediaSession,
+	private val selectedLibraryIdProvider: ProvideSelectedLibraryId,
+	private val intentBuilder: BuildIntents,
     applicationMessages: RegisterForApplicationMessages,
-) : PlaybackNotificationRouter(applicationMessages) {
+) : PlaybackNotificationRouter(applicationMessages), PromisingCloseable {
 
 	private val trackPositionUpdatesSubscription = applicationMessages.registerReceiver { m: TrackPositionUpdate ->
 		updateTrackPosition(m.filePosition.millis)
@@ -48,15 +56,15 @@ class MediaSessionBroadcaster(
 	@Volatile
 	private var playbackState = PlaybackStateCompat.STATE_STOPPED
 
-	@Volatile
-	private var trackPosition = AtomicLong(0)
+	private val trackPosition = AtomicLong(0)
 
 	@Volatile
 	private var mediaMetadata = MediaMetadataCompat.Builder().build()
 
 	@Volatile
 	private var capabilities = standardCapabilities
-	private var remoteClientBitmap: Bitmap? = null
+
+	private val remoteClientBitmap = AtomicReference<Bitmap?>(null)
 
 	@Volatile
 	private var isPlaying = false
@@ -67,7 +75,21 @@ class MediaSessionBroadcaster(
 		super.close()
 	}
 
-	override fun notifyStarting() = notifyPlaying()
+	override fun promiseClose(): Promise<Unit> {
+		close()
+		return if (playbackState == PlaybackStateCompat.STATE_STOPPED) Unit.toPromise()
+		else selectedLibraryIdProvider
+			.promiseSelectedLibraryId()
+			.then {
+				if (it != null)
+					mediaSession.setSessionActivity(intentBuilder.buildPendingNowPlayingIntent(it))
+			}
+	}
+
+	override fun notifyStarting() {
+		mediaSession.activate()
+		notifyPlaying()
+	}
 
 	override fun notifyPlaying() {
 		isPlaying = true
@@ -101,6 +123,7 @@ class MediaSessionBroadcaster(
 			playbackSpeed
 		)
 		mediaSession.setPlaybackState(builder.build())
+		mediaSession.deactivate()
 	}
 
 	override fun notifyInterrupted() {
@@ -134,13 +157,12 @@ class MediaSessionBroadcaster(
 
 	@Synchronized
 	private fun clearClientBitmap() {
-		if (remoteClientBitmap == null) return
+		if (remoteClientBitmap.getAndSet(null) == null) return
 		val metadataBuilder = MediaMetadataCompat.Builder(mediaMetadata)
 		metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, null)
 		metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ART, null)
 		metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON, null)
 		mediaSession.setMetadata(metadataBuilder.build().also { mediaMetadata = it })
-		remoteClientBitmap = null
 	}
 
 	private fun updateNowPlaying(libraryId: LibraryId, serviceFile: ServiceFile): Promise<*> {
@@ -175,11 +197,10 @@ class MediaSessionBroadcaster(
 				)
 
 				promisedBitmap.then { bitmap ->
-					if (remoteClientBitmap !== bitmap) {
+					if (remoteClientBitmap.updateIfDifferent(bitmap)) {
 						metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, bitmap)
 						metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ART, bitmap)
 						metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON, bitmap)
-						remoteClientBitmap = bitmap
 					}
 					mediaSession.setMetadata(metadataBuilder.build().also { mediaMetadata = it })
 				}

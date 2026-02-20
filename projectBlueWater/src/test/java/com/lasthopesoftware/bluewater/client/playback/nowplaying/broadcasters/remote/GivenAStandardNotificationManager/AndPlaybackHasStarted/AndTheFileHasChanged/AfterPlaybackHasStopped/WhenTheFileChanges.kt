@@ -30,6 +30,7 @@ class WhenTheFileChanges : AndroidContext() {
 
 		private var playbackStates: MutableList<PlaybackStateCompat>? = ArrayList()
 		private var mediaMetadata: MutableList<MediaMetadataCompat>? = ArrayList()
+		private var isDeactivated = false
 
 		@AfterClass
 		@JvmStatic
@@ -65,7 +66,7 @@ class WhenTheFileChanges : AndroidContext() {
 				every { promiseImageBytes(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns byteArrayOf((912).toByte(), (368).toByte(), (395).toByte()).toPromise()
 			},
 			ImmediateBitmapProducer,
-			mockk {
+			mockk(relaxUnitFun = true) {
 				every { setPlaybackState(any()) } answers {
 					playbackStates?.add(firstArg())
 				}
@@ -73,7 +74,13 @@ class WhenTheFileChanges : AndroidContext() {
 				every { setMetadata(any()) } answers {
 					mediaMetadata?.add(firstArg())
 				}
+
+				every { deactivate() } answers {
+					isDeactivated = true
+				}
 			},
+			mockk(),
+			mockk(),
 			messageBus
 		)
 
@@ -115,5 +122,10 @@ class WhenTheFileChanges : AndroidContext() {
 				m.getLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER) == 340L &&
 				m.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART) != null
 		}
+	}
+
+	@Test
+	fun `then the session is deactivated`() {
+		assertThat(isDeactivated).isTrue
 	}
 }

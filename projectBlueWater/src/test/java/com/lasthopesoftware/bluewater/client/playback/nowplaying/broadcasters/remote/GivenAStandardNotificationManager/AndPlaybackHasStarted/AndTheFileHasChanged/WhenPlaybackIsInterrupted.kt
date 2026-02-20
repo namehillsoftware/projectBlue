@@ -49,6 +49,8 @@ class WhenPlaybackIsInterrupted : AndroidContext() {
 			},
 			ImmediateBitmapProducer,
 			mediaSessionCompat,
+			mockk(),
+			mockk(),
 			messageBus
 		)
 

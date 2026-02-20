@@ -25,9 +25,16 @@ class WhenPlaybackIsStarting : AndroidContext() {
 			mockk(),
 			ImmediateBitmapProducer,
 			mediaSessionCompat,
+			mockk(),
+			mockk(),
 			recordingApplicationMessageBus,
 		)
 		recordingApplicationMessageBus.sendMessage(PlaybackMessage.PlaybackStarting)
+	}
+
+	@Test
+	fun `then the session is activated`() {
+		verify { mediaSessionCompat.activate() }
 	}
 
 	@Test
