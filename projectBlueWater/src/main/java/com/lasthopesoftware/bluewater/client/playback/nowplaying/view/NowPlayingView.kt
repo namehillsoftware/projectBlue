@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
+import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.SplineBasedFloatDecayAnimationSpec
 import androidx.compose.animation.core.generateDecayAnimationSpec
@@ -55,6 +56,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -116,9 +118,8 @@ import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBu
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.observables.subscribeAsState
-import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
-import com.lasthopesoftware.promises.extensions.toState
 import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -142,11 +143,9 @@ fun NowPlayingCoverArtView(
 		val isLoadingImage by nowPlayingCoverArtViewModel.isNowPlayingImageLoading.subscribeAsState()
 
 		val coverArt by nowPlayingCoverArtViewModel.nowPlayingImage.subscribeAsState()
-		val coverArtBitmap by coverArt
-			.takeIf { it.isNotEmpty() }
-			?.let(bitmapProducer::promiseBitmap)
-			.keepPromise()
-			.toState(null, coverArt)
+		val coverArtBitmap by produceState<Bitmap?>(null, coverArt) {
+			value = if (coverArt.isNotEmpty()) bitmapProducer.promiseBitmap(coverArt).suspend() else null
+		}
 
 		coverArtBitmap
 			?.let {
