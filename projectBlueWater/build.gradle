@@ -1,15 +1,15 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
 	alias(libs.plugins.androidJUnit5)
 	alias(libs.plugins.kotlinSerialization)
+	alias(libs.plugins.kotlinPluginCompose)
+	alias(libs.plugins.androidApplication)
 }
 
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'org.jetbrains.kotlin.android'
 apply plugin: 'kotlin-parcelize'
-apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 
 def androidKeyStorePassword = hasProperty('androidKeyStorePassword') ? androidKeyStorePassword : null
 def hasKeyStorePassword = { androidKeyStorePassword != null && !androidKeyStorePassword.isEmpty() }
@@ -74,10 +74,6 @@ android {
 		coreLibraryDesugaringEnabled = true
 	}
 
-	kotlinOptions {
-		jvmTarget = '11'
-	}
-
 	sourceSets {
 		main {
 			res.srcDirs += copyDependencyList.map { it.temporaryDir }
@@ -93,7 +89,7 @@ android {
             minifyEnabled true
             shrinkResources true
             //noinspection ProguardAndroidTxtUsage―upcoming
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 			signingConfig (isSignedExternally() ? signingConfigs.release : signingConfig)
 			ndk {
 				debugSymbolLevel = 'SYMBOL_TABLE'
@@ -138,6 +134,14 @@ android {
     }
 
 	namespace 'com.lasthopesoftware.bluewater'
+
+	kotlin {
+		compilerOptions {
+			languageVersion = KotlinVersion.KOTLIN_2_3
+			// Optional: Set jvmTarget
+			 jvmTarget = JvmTarget.JVM_11
+		}
+	}
 }
 
 tasks.withType(KotlinCompile).configureEach {

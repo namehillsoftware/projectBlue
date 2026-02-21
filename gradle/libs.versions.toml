@@ -1,6 +1,6 @@
 [versions]
 activityCompose = "1.13.0"
-agp = "8.13.2"
+agp = "9.2.0"
 androidJunit5 = "2.0.1"
 annotation = "1.10.0"
 assertjCore = "3.27.7"
@@ -96,6 +96,5 @@ slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4jApi" }
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidJUnit5 = { id = "de.mannodermaus.android-junit5", version.ref = "androidJunit5" }
-kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlinPluginCompose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
