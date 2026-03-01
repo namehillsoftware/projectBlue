@@ -4,6 +4,7 @@ import android.content.ContentResolver
 import android.content.ContentValues
 import android.os.Build
 import android.provider.MediaStore
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.uri.toURI
@@ -17,6 +18,10 @@ class ExternalContentRepository(
 	private val contentResolver: ContentResolver,
 	private val publicDirectoryLookup: GetPublicDirectories,
 ) : HaveExternalContent {
+
+	companion object {
+		private val logger by lazyLogger<ExternalContentRepository>()
+	}
 
 	override fun promiseNewContentUri(externalContent: ExternalContent): Promise<URI?> =
 		externalContent
@@ -61,12 +66,15 @@ class ExternalContentRepository(
 			null,
 			null
 		)
-
-		Unit
 	}
 
 	override fun removeContent(uri: URI): Promise<Boolean> = ThreadPools.io.preparePromise {
-		val deletedRecords = contentResolver.delete(uri.toUri(), null, null)
-		deletedRecords > 0
+		try {
+			val deletedRecords = contentResolver.delete(uri.toUri(), null, null)
+			deletedRecords > 0
+		} catch (e: Throwable) {
+			logger.error("Unable to delete file at uri $uri.", e)
+			false
+		}
 	}
 }
