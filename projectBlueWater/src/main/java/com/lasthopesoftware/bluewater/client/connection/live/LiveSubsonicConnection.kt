@@ -80,6 +80,7 @@ class LiveSubsonicConnection(
 		const val replayGain = "replayGain"
 		const val trackGain = "trackGain"
 		const val peakGain = "trackPeak"
+		const val userRating = "userRating"
 	}
 
 	private val promisedRootItem by lazy {
@@ -217,7 +218,7 @@ class LiveSubsonicConnection(
 				logger.debug("rest/scrobble responded with a response code of {}", responseCode)
 			}
 
-			if (responseCode < 200 || responseCode >= 300) throw HttpResponseException(responseCode)
+			if (responseCode !in 200..<300) throw HttpResponseException(responseCode)
 		}
 	}
 
@@ -265,6 +266,7 @@ class LiveSubsonicConnection(
 					NormalizedFileProperties.Name to KnownFileProperties.title,
 					NormalizedFileProperties.VolumeLevelReplayGain to KnownFileProperties.trackGain,
 					NormalizedFileProperties.PeakLevel to KnownFileProperties.peakGain,
+					NormalizedFileProperties.Rating to KnownFileProperties.userRating,
 				)
 			}
 
