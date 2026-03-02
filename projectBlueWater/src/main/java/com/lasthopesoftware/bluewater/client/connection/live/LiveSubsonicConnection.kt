@@ -82,6 +82,7 @@ class LiveSubsonicConnection(
 		const val peakGain = "trackPeak"
 		const val userRating = "userRating"
 		const val playCount = "playCount"
+		const val duration = "duration"
 	}
 
 	private val promisedRootItem by lazy {
@@ -269,6 +270,7 @@ class LiveSubsonicConnection(
 					NormalizedFileProperties.PeakLevel to KnownFileProperties.peakGain,
 					NormalizedFileProperties.Rating to KnownFileProperties.userRating,
 					NormalizedFileProperties.NumberPlays to KnownFileProperties.playCount,
+					NormalizedFileProperties.Duration to KnownFileProperties.duration,
 				)
 			}
 

@@ -119,6 +119,16 @@ class WhenGettingFileProperties {
 	}
 
 	@Test
+	fun `then the date is correct`() {
+		assertThat(fileProperties?.get(NormalizedFileProperties.Duration)).isEqualTo(
+			ReadOnlyFileProperty(
+				NormalizedFileProperties.Duration,
+				"242",
+			)
+		)
+	}
+
+	@Test
 	fun `then the rating is editable`() {
 		assertThat(fileProperties?.rating).isEqualTo(
 			EditableFileProperty(
