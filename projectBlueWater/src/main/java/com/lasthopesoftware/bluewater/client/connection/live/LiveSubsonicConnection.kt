@@ -80,6 +80,9 @@ class LiveSubsonicConnection(
 		const val replayGain = "replayGain"
 		const val trackGain = "trackGain"
 		const val peakGain = "trackPeak"
+		const val userRating = "userRating"
+		const val playCount = "playCount"
+		const val duration = "duration"
 	}
 
 	private val promisedRootItem by lazy {
@@ -217,7 +220,7 @@ class LiveSubsonicConnection(
 				logger.debug("rest/scrobble responded with a response code of {}", responseCode)
 			}
 
-			if (responseCode < 200 || responseCode >= 300) throw HttpResponseException(responseCode)
+			if (responseCode !in 200..<300) throw HttpResponseException(responseCode)
 		}
 	}
 
@@ -249,7 +252,7 @@ class LiveSubsonicConnection(
 					throw SubsonicServerException(jsonTranslator.parseJson<ErrorResponse>(json))
 				}
 
-				jsonTranslator.parseJson<T>(json)
+				if (!cs.isCancelled) jsonTranslator.parseJson<T>(json) else null
 			}
 		}
 
@@ -265,6 +268,9 @@ class LiveSubsonicConnection(
 					NormalizedFileProperties.Name to KnownFileProperties.title,
 					NormalizedFileProperties.VolumeLevelReplayGain to KnownFileProperties.trackGain,
 					NormalizedFileProperties.PeakLevel to KnownFileProperties.peakGain,
+					NormalizedFileProperties.Rating to KnownFileProperties.userRating,
+					NormalizedFileProperties.NumberPlays to KnownFileProperties.playCount,
+					NormalizedFileProperties.Duration to KnownFileProperties.duration,
 				)
 			}
 
