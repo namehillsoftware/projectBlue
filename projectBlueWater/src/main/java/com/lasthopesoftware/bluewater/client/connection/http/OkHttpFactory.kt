@@ -54,6 +54,10 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 		private val dispatcher by lazy { Dispatcher(ThreadPools.io) }
 		private fun OkHttpClient.Builder.configureForStreaming() =
 			readTimeout(45.seconds).retryOnConnectionFailure(false)
+		private fun Request.Builder.addHeaders(headers: Map<String, String>) {
+			for ((key, value) in headers)
+				addHeader(key, value)
+		}
 	}
 
 	private val commonClient by lazy {
@@ -100,7 +104,7 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 		return "$applicationName/$versionName (Linux;Android ${Build.VERSION.RELEASE})"
 	}
 
-	inner class MediaCenterClient() : ProvideHttpPromiseServerClients<MediaCenterConnectionDetails> {
+	inner class MediaCenterClient : ProvideHttpPromiseServerClients<MediaCenterConnectionDetails> {
 		override fun promiseServerClient(connectionDetails: MediaCenterConnectionDetails): Promise<HttpPromiseClient> =
 			OkHttpPromiseClient(getOkHttpClient(connectionDetails)).toPromise()
 
@@ -129,6 +133,9 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 				.addNetworkInterceptor { chain ->
 					val requestBuilder = chain.request().newBuilder()
 					requestBuilder.header("Authorization", authHeaderValue)
+
+					requestBuilder.addHeaders(mediaCenterConnectionDetails.customHeaders)
+
 					chain.proceed(requestBuilder.build())
 				}
 				.build()
@@ -188,7 +195,7 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 		}
 	}
 
-	inner class SubsonicClient() : ProvideHttpPromiseServerClients<SubsonicConnectionDetails> {
+	inner class SubsonicClient : ProvideHttpPromiseServerClients<SubsonicConnectionDetails> {
 		override fun promiseServerClient(connectionDetails: SubsonicConnectionDetails): Promise<HttpPromiseClient> =
 			OkHttpPromiseClient(getOkHttpClient(connectionDetails)).toPromise()
 
@@ -219,6 +226,7 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 					val requestBuilder = chain.request().newBuilder()
 
 					requestBuilder.url(chain.request().url.toUrl().addParams(*addedParams))
+					requestBuilder.addHeaders(subsonicConnectionDetails.customHeaders)
 
 					chain.proceed(requestBuilder.build())
 				}

@@ -8,6 +8,7 @@ data class MediaCenterConnectionDetails(
 	val baseUrl: URL,
 	val authCode: String? = null,
 	val certificateFingerprint: ByteArray = emptyByteArray,
+	val customHeaders: Map<String, String> = emptyMap(),
 ) {
 	constructor(authCode: String?, ipAddress: String?, port: Int)
 		: this(URL(IoCommon.httpUriScheme, ipAddress, port, ""), authCode)
@@ -24,6 +25,7 @@ data class MediaCenterConnectionDetails(
 		if (baseUrl != other.baseUrl) return false
 		if (authCode != other.authCode) return false
 		if (!certificateFingerprint.contentEquals(other.certificateFingerprint)) return false
+		if (customHeaders != other.customHeaders) return false
 
 		return true
 	}
@@ -32,6 +34,7 @@ data class MediaCenterConnectionDetails(
 		var result = baseUrl.hashCode()
 		result = 31 * result + (authCode?.hashCode() ?: 0)
 		result = 31 * result + certificateFingerprint.contentHashCode()
+		result = 31 * result + customHeaders.hashCode()
 		return result
 	}
 }

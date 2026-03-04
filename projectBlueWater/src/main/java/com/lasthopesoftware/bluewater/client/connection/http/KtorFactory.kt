@@ -121,7 +121,7 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 		}
 	).toPromise()
 
-	inner class MediaCenterClient() : ProvideHttpPromiseServerClients<MediaCenterConnectionDetails> {
+	inner class MediaCenterClient : ProvideHttpPromiseServerClients<MediaCenterConnectionDetails> {
 
 		override fun promiseServerClient(connectionDetails: MediaCenterConnectionDetails): Promise<HttpPromiseClient> =
 			KtorPromiseClient(scope, CIO, getHttpConfiguration(connectionDetails), getEngineConfig(connectionDetails)).toPromise()
@@ -150,6 +150,7 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 			mediaCenterConnectionDetails.authCode.takeUnless { it.isNullOrEmpty() }?.let { "basic $it" }.also {
 				install(createClientPlugin("BasicAuth") {
 					onRequest { request, _ ->
+						request.headers.appendAll(mediaCenterConnectionDetails.customHeaders)
 						request.header(HttpHeaders.Authorization, it)
 					}
 				})
@@ -164,7 +165,7 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 		}
 	}
 
-	inner class SubsonicClient() : ProvideHttpPromiseServerClients<SubsonicConnectionDetails> {
+	inner class SubsonicClient : ProvideHttpPromiseServerClients<SubsonicConnectionDetails> {
 		override fun promiseServerClient(connectionDetails: SubsonicConnectionDetails): Promise<HttpPromiseClient> =
 			KtorPromiseClient(
 				scope,
@@ -208,6 +209,8 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 
 			install(createClientPlugin("SubsonicParams") {
 				onRequest { request, _ ->
+					request.headers.appendAll(subsonicConnectionDetails.customHeaders)
+
 					request.url {
 						with(subsonicConnectionDetails) {
 							parameters["u"] = userName
