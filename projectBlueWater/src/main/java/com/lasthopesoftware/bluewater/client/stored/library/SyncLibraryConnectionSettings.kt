@@ -28,6 +28,7 @@ class SyncLibraryConnectionSettings(private val librarySettings: ProvideLibraryS
 							isWakeOnLanEnabled = it.isWakeOnLanEnabled,
 							macAddress = it.macAddress,
 							sslCertificateFingerprint = it.sslCertificateFingerprint?.hexToByteArray() ?: emptyByteArray,
+							customHeaders = it.customHeaders,
 						)
 						is StoredSubsonicConnectionSettings -> SubsonicConnectionSettings(
 							url = it.url ?: throw MissingAccessCodeException(libraryId),
@@ -36,6 +37,7 @@ class SyncLibraryConnectionSettings(private val librarySettings: ProvideLibraryS
 							sslCertificateFingerprint = it.sslCertificateFingerprint?.hexToByteArray() ?: emptyByteArray,
 							macAddress = it.macAddress,
 							isWakeOnLanEnabled = it.isWakeOnLanEnabled,
+							customHeaders = it.customHeaders,
 						)
 					}
 				}

@@ -17,7 +17,7 @@ class `When getting a library that syncs on any media center connection` {
 		val syncLibraryProvider = SyncLibraryConnectionSettings(
 			mockk {
 				every { promiseLibrarySettings(LibraryId(4)) } returns LibrarySettings(
-					connectionSettings = StoredMediaCenterConnectionSettings(accessCode = "2OoO9Vefrb")
+					connectionSettings = StoredMediaCenterConnectionSettings(accessCode = "2OoO9Vefrb", customHeaders = mapOf("semodSNEj" to "0t6ZfU1P"))
 				).toPromise()
 			}
 		)
@@ -28,4 +28,9 @@ class `When getting a library that syncs on any media center connection` {
     fun `then the library is not local only`() {
         assertThat(library?.isLocalOnly).isFalse
     }
+
+	@Test
+	fun `then the custom headers are correct`() {
+		assertThat(library?.customHeaders).isEqualTo(mapOf("semodSNEj" to "0t6ZfU1P"))
+	}
 }

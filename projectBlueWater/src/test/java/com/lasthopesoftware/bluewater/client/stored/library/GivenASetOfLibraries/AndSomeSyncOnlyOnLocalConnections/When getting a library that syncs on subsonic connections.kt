@@ -21,6 +21,7 @@ class `When getting a library that syncs on subsonic connections` {
 						url = "pxLGAQo89",
 						userName = "b1UJSCEj",
 						password = "XXZfQGRtC0j",
+						customHeaders = mapOf("vmMS1J23rDy" to "o6QpfglyfjC", "dtkT9hiSPUN" to "hFlqBSvj3am"),
                 	)
 				).toPromise()
 			}
@@ -36,6 +37,7 @@ class `When getting a library that syncs on subsonic connections` {
 				url = "pxLGAQo89",
 				userName = "b1UJSCEj",
 				password = "XXZfQGRtC0j",
+				customHeaders = mapOf("vmMS1J23rDy" to "o6QpfglyfjC", "dtkT9hiSPUN" to "hFlqBSvj3am"),
 			)
 		)
 	}

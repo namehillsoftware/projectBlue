@@ -50,7 +50,8 @@ class `When saving the library settings` {
 					isWakeOnLanEnabled = true,
 					userName = "j7sRVmbpEg",
 					password = "nrI3ZQp5",
-					sslCertificateFingerprint = "nzMyG2g4abv"
+					sslCertificateFingerprint = "nzMyG2g4abv",
+					customHeaders = mapOf("85aETjieiSC" to "dw7Lj4io"),
 				)
 			)
 		).toExpiringFuture().get()
@@ -72,7 +73,8 @@ class `When saving the library settings` {
 						isWakeOnLanEnabled = true,
 						userName = "j7sRVmbpEg",
 						password = "nrI3ZQp5",
-						sslCertificateFingerprint = "nzMyG2g4abv"
+						sslCertificateFingerprint = "nzMyG2g4abv",
+						customHeaders = mapOf("85aETjieiSC" to "dw7Lj4io"),
 					)
 				)
 			)
@@ -93,7 +95,8 @@ class `When saving the library settings` {
 					isWakeOnLanEnabled = true,
 					userName = "j7sRVmbpEg",
 					password = "nrI3ZQp5",
-					sslCertificateFingerprint = "nzMyG2g4abv"
+					sslCertificateFingerprint = "nzMyG2g4abv",
+					customHeaders = mapOf("85aETjieiSC" to "dw7Lj4io"),
 				)
 			)
 		)
