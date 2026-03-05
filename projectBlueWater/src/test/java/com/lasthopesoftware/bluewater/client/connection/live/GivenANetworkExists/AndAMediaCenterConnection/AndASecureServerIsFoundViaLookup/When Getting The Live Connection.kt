@@ -42,7 +42,7 @@ class `When Getting The Live Connection` {
 			PassThroughBase64Encoder,
 			serverLookup,
 			mockk {
-				every { promiseConnectionSettings(LibraryId(35)) } returns MediaCenterConnectionSettings(accessCode = "gooPc").toPromise()
+				every { promiseConnectionSettings(LibraryId(35)) } returns MediaCenterConnectionSettings(accessCode = "gooPc", customHeaders = mapOf("auJIzq15H" to "FbRMu1do")).toPromise()
 			},
 			mockk {
 				every {
@@ -108,5 +108,10 @@ class `When Getting The Live Connection` {
 	fun `then the certificate fingerprint is correct`() {
 		assertThat(selectedConnectionDetails?.certificateFingerprint)
 			.isEqualTo("2386166660562C5AAA1253B2BED7C2483F9C2D45".hexToByteArray())
+	}
+
+	@Test
+	fun `then the custom headers are correct`() {
+		assertThat(selectedConnectionDetails?.customHeaders).isEqualTo(mapOf("auJIzq15H" to "FbRMu1do"))
 	}
 }

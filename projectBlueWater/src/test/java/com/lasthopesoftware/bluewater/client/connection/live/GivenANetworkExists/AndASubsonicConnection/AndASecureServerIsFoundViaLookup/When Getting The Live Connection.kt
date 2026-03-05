@@ -47,6 +47,7 @@ class `When Getting The Live Connection` {
 					url = "dR7ft3qmY99",
 					userName = "UT4tdcIOw3z",
 					password = "9EIZHyoPY",
+					customHeaders = mapOf("1ubjecESNJK" to "piOBH4c2fmk"),
 				).toPromise()
 			},
 			mockk(),
@@ -105,5 +106,10 @@ class `When Getting The Live Connection` {
 	@Test
 	fun `then the password is correct`() {
 		assertThat(selectedConnectionDetails?.password).isEqualTo("9EIZHyoPY")
+	}
+
+	@Test
+	fun `then the custom headers are correct`() {
+		assertThat(selectedConnectionDetails?.customHeaders).isEqualTo(mapOf("1ubjecESNJK" to "piOBH4c2fmk"))
 	}
 }

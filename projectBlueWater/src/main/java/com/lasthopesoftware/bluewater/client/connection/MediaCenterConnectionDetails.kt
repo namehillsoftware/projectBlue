@@ -10,11 +10,11 @@ data class MediaCenterConnectionDetails(
 	val certificateFingerprint: ByteArray = emptyByteArray,
 	val customHeaders: Map<String, String> = emptyMap(),
 ) {
-	constructor(authCode: String?, ipAddress: String?, port: Int)
-		: this(URL(IoCommon.httpUriScheme, ipAddress, port, ""), authCode)
+	constructor(authCode: String?, ipAddress: String?, port: Int, customHeaders: Map<String, String> = emptyMap())
+		: this(baseUrl = URL(IoCommon.httpUriScheme, ipAddress, port, ""), authCode = authCode, customHeaders = customHeaders)
 
-	constructor(authCode: String?, ipAddress: String?, port: Int, certificateFingerprint: ByteArray)
-		: this(URL(IoCommon.httpsUriScheme, ipAddress, port, ""), authCode, certificateFingerprint)
+	constructor(authCode: String?, ipAddress: String?, port: Int, certificateFingerprint: ByteArray, customHeaders: Map<String, String> = emptyMap())
+		: this(URL(IoCommon.httpsUriScheme, ipAddress, port, ""), authCode, certificateFingerprint, customHeaders)
 
 	override fun equals(other: Any?): Boolean {
 		if (this === other) return true
