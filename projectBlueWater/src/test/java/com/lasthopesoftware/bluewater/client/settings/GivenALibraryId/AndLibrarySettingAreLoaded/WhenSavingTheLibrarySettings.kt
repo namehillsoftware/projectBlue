@@ -32,6 +32,10 @@ class WhenSavingTheLibrarySettings {
 						isWakeOnLanEnabled = false,
 						password = "hmpyA",
 						macAddress = "S4YhepUHBcj",
+						customHeaders = mapOf(
+							"2OSsZYGWs" to "JOkr7Rk",
+							"jXPFx7bIgq7" to "NhSZus6",
+						),
 					)
 				).toPromise()
 			},
@@ -85,6 +89,10 @@ class WhenSavingTheLibrarySettings {
 				isWakeOnLanEnabled.value = !isWakeOnLanEnabled.value
 				syncedFileLocation.value = SyncedFileLocation.EXTERNAL
 				macAddress.value = "sVU0zPNKdFu"
+
+				editHeader("2OSsZYGWs")
+				editingHeaderValue.value = "E5QAkZvJr"
+				saveHeader()
 
 				didSettingsChange = isSettingsChanged.value
 				isSaved = saveLibrary().toExpiringFuture().get() == true
@@ -170,6 +178,16 @@ class WhenSavingTheLibrarySettings {
 	}
 
 	@Test
+	fun `then the custom headers are correct`() {
+		assertThat(connectionSettingsViewModel?.customHeaders?.value).isEqualTo(
+			mapOf(
+				"2OSsZYGWs" to "E5QAkZvJr",
+				"jXPFx7bIgq7" to "NhSZus6",
+			)
+		)
+	}
+
+	@Test
 	fun `then the saved library settings are correct`() {
 		assertThat(savedLibrarySettings).containsExactly(
 			LibrarySettings(
@@ -184,6 +202,10 @@ class WhenSavingTheLibrarySettings {
 					password = "sl0Ha",
 					macAddress = "sVU0zPNKdFu",
 					sslCertificateFingerprint = "",
+					customHeaders = mapOf(
+						"2OSsZYGWs" to "E5QAkZvJr",
+						"jXPFx7bIgq7" to "NhSZus6",
+					),
 				)
 			)
 		)
