@@ -62,6 +62,7 @@
     <string name="lbl_search_hint">Search for files</string>
     <string name="title_activity_search_results">Search Results for &quot;%1$s&quot;</string>
     <string name="btn_remove_file">Remove file from playlist</string>
+    <string name="btn_remove_header">Remove Header</string>
     <string name="title_svc_connecting_to_server">Connecting to server</string>
     <string name="title_long_click_menu">Long Click</string>
     <string name="tutorial_long_click_menu">Long click on an item to see a menu with additional actions available.</string>
@@ -69,8 +70,10 @@
     <string name="btn_sync_item">Sync Files</string>
     <string name="files_synced">Syncing Files</string>
     <string name="btn_add_server">Add Server</string>
+    <string name="btn_add_header">Add Header</string>
     <string name="lbl_sync_path">Custom Sync Path</string>
-    <string name="lblSyncMusicLocation">Sync Music Location:</string>
+    <string name="lbl_sync_music_location">Sync Music Location:</string>
+    <string name="lbl_custom_headers">Custom Headers:</string>
     <string name="rbPrivateToApp">Private to App</string>
     <string name="rbPublicLocation">Public Music Location</string>
     <string name="rbCustomLocation">Custom:</string>
@@ -164,4 +167,7 @@
     <string name="acknowledgements_title">Acknowledgements</string>
     <string name="test_connection">Test Connection</string>
     <string name="save_and_test_connection">Save and Test</string>
+    <string name="header">Header</string>
+    <string name="value">Value</string>
+    <string name="server_type">Server Type</string>
 </resources>
