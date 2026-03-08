@@ -9,6 +9,7 @@ data class SubsonicConnectionDetails(
 	val password: String,
 	val salt: String = "",
 	val certificateFingerprint: ByteArray = emptyByteArray,
+	val customHeaders: Map<String, String> = emptyMap()
 ) {
 	override fun equals(other: Any?): Boolean {
 		if (this === other) return true
@@ -21,6 +22,7 @@ data class SubsonicConnectionDetails(
 		if (password != other.password) return false
 		if (salt != other.salt) return false
 		if (!certificateFingerprint.contentEquals(other.certificateFingerprint)) return false
+		if (customHeaders != other.customHeaders) return false
 
 		return true
 	}
@@ -31,6 +33,7 @@ data class SubsonicConnectionDetails(
 		result = 31 * result + password.hashCode()
 		result = 31 * result + salt.hashCode()
 		result = 31 * result + certificateFingerprint.contentHashCode()
+		result = 31 * result + customHeaders.hashCode()
 		return result
 	}
 }

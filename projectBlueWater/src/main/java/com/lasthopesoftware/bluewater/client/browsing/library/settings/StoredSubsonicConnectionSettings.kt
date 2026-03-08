@@ -10,4 +10,5 @@ data class StoredSubsonicConnectionSettings(
 	val isWakeOnLanEnabled: Boolean = false,
 	val sslCertificateFingerprint: String? = null,
 	val macAddress: String? = null,
+	override val customHeaders: Map<String, String> = emptyMap(),
 ) : StoredConnectionSettings

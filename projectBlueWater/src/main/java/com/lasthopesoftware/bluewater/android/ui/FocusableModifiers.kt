@@ -21,7 +21,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusRequester
@@ -101,7 +100,6 @@ fun NavigableApplication(content: @Composable () -> Unit) {
 private val selectionKeys = setOf(Key.DirectionCenter, Key.Enter)
 
 // Courtesy of https://github.com/thesauri/dpad-compose/blob/main/app/src/main/java/dev/berggren/DpadFocusable.kt
-@ExperimentalComposeUiApi
 fun Modifier.navigable(
 	onClick: (() -> Unit)? = null,
 	onClickLabel: String? = null,

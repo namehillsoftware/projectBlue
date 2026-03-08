@@ -294,11 +294,78 @@ class LibrarySettingsViewModel(
 		val isConnectionSettingsChanged: Observable<Boolean>
 		fun getCurrentConnectionSettings(): StoredConnectionSettings
 		fun assignConnectionSettings(connectionSettings: ConnectionSettings)
+		fun editHeader(key: String)
+		fun cancelHeaderEdit()
+		fun removeHeader()
+		fun saveHeader()
+		val customHeaders: InteractionState<Map<String, String>>
+		val editingHeaderValue: MutableInteractionState<String>
+		val editingHeaderKey: MutableInteractionState<String>
+		val isEditingHeader: InteractionState<Boolean>
+		val isHeaderChanged: InteractionState<Boolean>
 	}
 
-	@OptIn(ExperimentalStdlibApi::class)
+	abstract class HeaderConnectionSettingsViewModel<ConnectionSettings : StoredConnectionSettings> : ConnectionSettingsViewModel<ConnectionSettings> {
+		private val mutableCustomHeaders = MutableInteractionState(emptyMap<String, String>())
+		private val mutableIsEditingHeader = MutableInteractionState(false)
+		private var editedHeaderKey = ""
+
+		final override val isEditingHeader = mutableIsEditingHeader.asInteractionState()
+		final override val editingHeaderKey = MutableInteractionState("")
+		final override val editingHeaderValue = MutableInteractionState("")
+		final override val customHeaders = mutableCustomHeaders.asInteractionState()
+		final override val isHeaderChanged = LiftedInteractionState(
+			Observable.combineLatest(
+				editingHeaderKey.mapNotNull(),
+				editingHeaderValue.mapNotNull(),
+				mutableCustomHeaders.mapNotNull(),
+			) { key, value, headers ->
+				key.takeIf { it.isNotBlank() }?.let {
+					headers[key] != value
+				} ?: false
+			}.distinctUntilChanged(),
+			false)
+
+		final override fun editHeader(key: String) {
+			editedHeaderKey = key
+			editingHeaderKey.value = key
+			editingHeaderValue.value = mutableCustomHeaders.value[key] ?: ""
+			mutableIsEditingHeader.value = true
+		}
+
+		final override fun cancelHeaderEdit() {
+			editedHeaderKey = ""
+			editingHeaderKey.value = ""
+			editingHeaderValue.value = ""
+			mutableIsEditingHeader.value = false
+		}
+
+		final override fun removeHeader() {
+			mutableCustomHeaders.value -= editedHeaderKey
+			editedHeaderKey = ""
+		}
+
+		final override fun saveHeader() {
+			removeHeader()
+			mutableCustomHeaders.value += editingHeaderKey.value to editingHeaderValue.value
+			editedHeaderKey = editingHeaderKey.value
+		}
+
+		final override fun assignConnectionSettings(connectionSettings: ConnectionSettings) {
+			mutableCustomHeaders.value = connectionSettings.customHeaders
+			assignSpecificConnectionSettings(connectionSettings)
+		}
+
+		protected abstract fun assignSpecificConnectionSettings(connectionSettings: ConnectionSettings)
+
+		final override fun getCurrentConnectionSettings(): StoredConnectionSettings =
+			getSpecificConnectionSettings(mutableCustomHeaders.value)
+
+		protected abstract fun getSpecificConnectionSettings(customHeaders: Map<String, String>): StoredConnectionSettings
+	}
+
 	inner class MediaCenterConnectionSettingsViewModel :
-		ConnectionSettingsViewModel<StoredMediaCenterConnectionSettings>
+		HeaderConnectionSettingsViewModel<StoredMediaCenterConnectionSettings>()
 	{
 		private val autoCloseables = AutoCloseableManager()
 
@@ -306,7 +373,7 @@ class LibrarySettingsViewModel(
 			get() = stringResources.mediaCenter
 
 		override val isConnectionSettingsChanged: Observable<Boolean> by lazy {
-			val changeTrackers = arrayOf(
+			val changeTrackers = listOf(
 				observeConnectionSettingsChanges(accessCode) { accessCode },
 				observeConnectionSettingsChanges(userName) { userName },
 				observeConnectionSettingsChanges(password) { password },
@@ -315,9 +382,10 @@ class LibrarySettingsViewModel(
 				observeConnectionSettingsChanges(isSyncLocalConnectionsOnly) { isSyncLocalConnectionsOnly },
 				observeConnectionSettingsChanges(mutableSslStringCertificate) { sslCertificateFingerprint },
 				observeConnectionSettingsChanges(macAddress) { macAddress },
+				observeConnectionSettingsChanges(customHeaders) { customHeaders },
 			)
 
-			Observable.combineLatest(changeTrackers.asIterable()) { values -> values.any { it as Boolean } }
+			Observable.combineLatest(changeTrackers) { values -> values.any { it as Boolean } }
 		}
 
 		private val mutableSslStringCertificate =
@@ -359,7 +427,7 @@ class LibrarySettingsViewModel(
 		private inline fun <T> observeConnectionSettingsChanges(observable: Observable<NullBox<T>>, crossinline connectionValue: StoredMediaCenterConnectionSettings.() -> T?) =
 			observeConnectionSettingsChanges<StoredMediaCenterConnectionSettings, T>(observable, connectionValue)
 
-		override fun assignConnectionSettings(connectionSettings: StoredMediaCenterConnectionSettings) {
+		override fun assignSpecificConnectionSettings(connectionSettings: StoredMediaCenterConnectionSettings) {
 			isWakeOnLanEnabled.value = connectionSettings.isWakeOnLanEnabled
 			isSyncLocalConnectionsOnly.value = connectionSettings.isSyncLocalConnectionsOnly
 			accessCode.value = connectionSettings.accessCode ?: ""
@@ -370,7 +438,7 @@ class LibrarySettingsViewModel(
 			mutableSslStringCertificate.value = connectionSettings.sslCertificateFingerprint ?: ""
 		}
 
-		override fun getCurrentConnectionSettings() = StoredMediaCenterConnectionSettings(
+		override fun getSpecificConnectionSettings(customHeaders: Map<String, String>) = StoredMediaCenterConnectionSettings(
 			isWakeOnLanEnabled = isWakeOnLanEnabled.value,
 			isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly.value,
 			accessCode = accessCode.value,
@@ -379,27 +447,28 @@ class LibrarySettingsViewModel(
 			isLocalOnly = isLocalOnly.value,
 			macAddress = macAddress.value,
 			sslCertificateFingerprint = mutableSslStringCertificate.value,
+			customHeaders = customHeaders
 		)
 	}
 
-	@OptIn(ExperimentalStdlibApi::class)
-	inner class SubsonicConnectionSettingsViewModel : ConnectionSettingsViewModel<StoredSubsonicConnectionSettings> {
+	inner class SubsonicConnectionSettingsViewModel : HeaderConnectionSettingsViewModel<StoredSubsonicConnectionSettings>() {
 		private val autoCloseables = AutoCloseableManager()
 
 		override val connectionTypeName: String
 			get() = stringResources.subsonic
 
 		override val isConnectionSettingsChanged: Observable<Boolean> by lazy {
-			val changeTrackers = arrayOf(
+			val changeTrackers = listOf(
 				observeConnectionSettingsChanges(url) { url },
 				observeConnectionSettingsChanges(userName) { userName },
 				observeConnectionSettingsChanges(password) { password },
 				observeConnectionSettingsChanges(isWakeOnLanEnabled) { isWakeOnLanEnabled },
 				observeConnectionSettingsChanges(mutableSslStringCertificate) { sslCertificateFingerprint },
 				observeConnectionSettingsChanges(macAddress) { macAddress },
+				observeConnectionSettingsChanges(customHeaders) { customHeaders },
 			)
 
-			Observable.combineLatest(changeTrackers.asIterable()) { values -> values.any { it as Boolean } }
+			Observable.combineLatest(changeTrackers) { values -> values.any { it as Boolean } }
 		}
 
 		private val mutableSslStringCertificate =
@@ -439,7 +508,7 @@ class LibrarySettingsViewModel(
 		private inline fun <T> observeConnectionSettingsChanges(observable: Observable<NullBox<T>>, crossinline connectionValue: StoredSubsonicConnectionSettings.() -> T?) =
 			observeConnectionSettingsChanges<StoredSubsonicConnectionSettings, T>(observable, connectionValue)
 
-		override fun assignConnectionSettings(connectionSettings: StoredSubsonicConnectionSettings) {
+		override fun assignSpecificConnectionSettings(connectionSettings: StoredSubsonicConnectionSettings) {
 			isWakeOnLanEnabled.value = connectionSettings.isWakeOnLanEnabled
 			url.value = connectionSettings.url ?: ""
 			userName.value = connectionSettings.userName ?: ""
@@ -448,13 +517,14 @@ class LibrarySettingsViewModel(
 			mutableSslStringCertificate.value = connectionSettings.sslCertificateFingerprint ?: ""
 		}
 
-		override fun getCurrentConnectionSettings() = StoredSubsonicConnectionSettings(
+		override fun getSpecificConnectionSettings(customHeaders: Map<String, String>) = StoredSubsonicConnectionSettings(
 			isWakeOnLanEnabled = isWakeOnLanEnabled.value,
 			url = url.value,
 			userName = userName.value,
 			password = password.value,
 			macAddress = macAddress.value,
 			sslCertificateFingerprint = mutableSslStringCertificate.value,
+			customHeaders = customHeaders
 		)
 	}
 }

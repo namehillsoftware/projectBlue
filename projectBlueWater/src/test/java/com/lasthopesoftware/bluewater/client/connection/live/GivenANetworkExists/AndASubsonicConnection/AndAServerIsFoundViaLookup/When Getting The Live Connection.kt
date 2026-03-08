@@ -47,6 +47,7 @@ class `When Getting The Live Connection` {
 					url = "3wV3e1Q",
 					userName = "fyOXmq0UHH",
 					password = "jhpmi6SUf",
+					customHeaders = mapOf("RNRmnUDPYp" to "QEaB7dYg")
 				).toPromise()
 			},
 			mockk(),
@@ -99,5 +100,10 @@ class `When Getting The Live Connection` {
 	@Test
 	fun `then the salt is not empty`() {
 		assertThat(selectedConnectionDetails?.salt).isNotEmpty
+	}
+
+	@Test
+	fun `then the custom headers are correct`() {
+		assertThat(selectedConnectionDetails?.customHeaders).isEqualTo(mapOf("RNRmnUDPYp" to "QEaB7dYg"))
 	}
 }

@@ -42,6 +42,7 @@ class `When getting the library settings` {
 							isWakeOnLanEnabled = true,
 							sslCertificateFingerprint = "8ZuBp6yyjiT",
 							isSyncLocalConnectionsOnly = true,
+							customHeaders = mapOf("fgBQ9Iz4qX6" to "yyjskDWSTLd", "cGid1Ld" to "sRWru4Zlc"),
 						)
 					)
 				).toPromise()
@@ -74,6 +75,7 @@ class `When getting the library settings` {
 					isWakeOnLanEnabled = true,
 					sslCertificateFingerprint = "8ZuBp6yyjiT",
 					isSyncLocalConnectionsOnly = true,
+					customHeaders = mapOf("fgBQ9Iz4qX6" to "yyjskDWSTLd", "cGid1Ld" to "sRWru4Zlc"),
 				)
 			)
 		)

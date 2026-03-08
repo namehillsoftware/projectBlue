@@ -11,6 +11,7 @@ data class SubsonicConnectionSettings(
 	val isWakeOnLanEnabled: Boolean = false,
 	val sslCertificateFingerprint: ByteArray = emptyByteArray,
 	val macAddress: String? = null,
+	override val customHeaders: Map<String, String> = emptyMap(),
 ) : ConnectionSettings {
 	override fun equals(other: Any?): Boolean {
 		if (this === other) return true
@@ -22,8 +23,9 @@ data class SubsonicConnectionSettings(
 		if (url != other.url) return false
 		if (userName != other.userName) return false
 		if (password != other.password) return false
-		if (!sslCertificateFingerprint.contentEquals(other.sslCertificateFingerprint)) return false
 		if (macAddress != other.macAddress) return false
+		if (!sslCertificateFingerprint.contentEquals(other.sslCertificateFingerprint)) return false
+		if (customHeaders != other.customHeaders) return false
 
 		return true
 	}
@@ -35,6 +37,7 @@ data class SubsonicConnectionSettings(
 		result = 31 * result + password.hashCode()
 		result = 31 * result + sslCertificateFingerprint.contentHashCode()
 		result = 31 * result + (macAddress?.hashCode() ?: 0)
+		result = 31 * result + customHeaders.hashCode()
 		return result
 	}
 }

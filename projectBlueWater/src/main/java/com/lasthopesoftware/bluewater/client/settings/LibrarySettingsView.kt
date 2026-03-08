@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
@@ -23,6 +23,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.Checkbox
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.RadioButton
@@ -42,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -54,6 +56,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.calculateSummaryColumnWidth
@@ -66,12 +69,16 @@ import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.android.ui.components.ListMenuRow
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
+import com.lasthopesoftware.bluewater.android.ui.components.MenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.StandardTextField
 import com.lasthopesoftware.bluewater.android.ui.components.ignoreConsumedOffset
 import com.lasthopesoftware.bluewater.android.ui.components.linkedTo
 import com.lasthopesoftware.bluewater.android.ui.components.rememberTitleStartPadding
+import com.lasthopesoftware.bluewater.android.ui.navigable
 import com.lasthopesoftware.bluewater.android.ui.remember
+import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.rowPadding
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconWidth
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topRowOuterPadding
@@ -90,9 +97,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-private val expandedTitleHeight = Dimensions.expandedTitleHeight
 private val appBarHeight = Dimensions.appBarHeight
-private val boxHeight = expandedTitleHeight + appBarHeight
 private val innerGroupPadding = viewPaddingUnit * 2
 private const val inputRowMaxWidth = .8f
 
@@ -286,6 +291,168 @@ private fun RemoveServerConfirmationDialog(
 
 
 @Composable
+private fun CustomHeadersList(
+	connectionSettingsViewModel: LibrarySettingsViewModel.ConnectionSettingsViewModel<*>,
+) {
+	with(connectionSettingsViewModel) {
+		val isHeaderChanged by isHeaderChanged.subscribeAsState()
+		val isEditingHeader by isEditingHeader.subscribeAsState()
+
+		if (isEditingHeader) {
+			Dialog(::cancelHeaderEdit) {
+				ControlSurface {
+					Column(
+						modifier = Modifier.padding(viewPaddingUnit * 2),
+					) {
+						Row(
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(viewPaddingUnit)
+						) {
+							ProvideTextStyle(MaterialTheme.typography.h5) {
+								Text(
+									text = "Edit Header",
+									modifier = Modifier
+										.weight(1f)
+										.align(Alignment.CenterVertically),
+								)
+							}
+
+							Icon(
+								painter = painterResource(id = R.drawable.cancel_36dp),
+								contentDescription = stringResource(id = R.string.btn_cancel),
+								modifier = Modifier
+									.navigable(onClick = ::cancelHeaderEdit)
+									.align(Alignment.CenterVertically),
+							)
+						}
+
+						val fieldFocusRequester = remember { FocusRequester() }
+						var editingHeaderKey by editingHeaderKey.subscribeAsMutableState()
+						var editingHeaderValue by editingHeaderValue.subscribeAsMutableState()
+						Column(
+							modifier = Modifier
+								.padding(viewPaddingUnit)
+								.fillMaxWidth()
+								.heightIn(100.dp, 450.dp),
+							horizontalAlignment = Alignment.CenterHorizontally
+						) {
+							val verticalPadding = 2.dp
+							StandardTextField(
+								value = editingHeaderKey,
+								placeholder = stringResource(R.string.header),
+								onValueChange = { editingHeaderKey = it },
+								modifier = Modifier.focusRequester(fieldFocusRequester).padding(vertical = verticalPadding),
+							)
+
+							StandardTextField(
+								value = editingHeaderValue,
+								placeholder = stringResource(R.string.value),
+								onValueChange = { editingHeaderValue = it },
+								modifier = Modifier.focusRequester(fieldFocusRequester).padding(vertical = verticalPadding),
+							)
+						}
+
+						Row(
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(rowPadding)
+						) {
+							MenuIcon(
+								onClick = {
+									removeHeader()
+									cancelHeaderEdit()
+								},
+								iconPainter = painterResource(id = R.drawable.remove_item_36dp),
+								iconModifier = Modifier.size(Dimensions.listItemMenuIconSize),
+								contentDescription = stringResource(id = R.string.btn_remove_header),
+								modifier = Modifier
+									.fillMaxWidth()
+									.weight(1f)
+									.align(Alignment.CenterVertically)
+									.size(Dimensions.listItemMenuIconSize),
+							)
+
+							MenuIcon(
+								onClick = {
+									saveHeader()
+									cancelHeaderEdit()
+								},
+								iconPainter = painterResource(id = R.drawable.ic_save_white_36dp),
+								iconModifier = Modifier.size(Dimensions.listItemMenuIconSize),
+								contentDescription = stringResource(id = R.string.save),
+								enabled = isHeaderChanged,
+								modifier = Modifier
+									.fillMaxWidth()
+									.weight(1f)
+									.align(Alignment.CenterVertically),
+							)
+						}
+					}
+				}
+			}
+		}
+
+		Column(
+			modifier = Modifier.padding(innerGroupPadding)
+		) {
+			val customHeaders by customHeaders.subscribeAsState()
+			val itemPadding = 2.dp
+			for ((key, value) in customHeaders) {
+				Row(
+					modifier = Modifier
+						.navigable(
+							onClick = { editHeader(key) },
+						)
+						.fillMaxWidth(),
+				) {
+					Text(
+						text = key,
+						modifier = Modifier
+							.weight(1f)
+							.padding(itemPadding),
+					)
+
+					Text(
+						text = value,
+						modifier = Modifier
+							.weight(2f)
+							.padding(itemPadding),
+					)
+				}
+			}
+
+			Row(
+				modifier = Modifier
+					.navigable(
+						onClick = { editHeader("") },
+					)
+					.fillMaxWidth(),
+				verticalAlignment = Alignment.CenterVertically,
+			) {
+				MenuIcon(
+					onClick = { editHeader("") },
+					iconPainter = painterResource(id = R.drawable.ic_add_item_36dp),
+					contentDescription = stringResource(id = R.string.btn_add_header),
+					modifier = Modifier
+						.padding(itemPadding)
+						.fillMaxWidth()
+						.weight(1f)
+				)
+
+				Text(
+					text = stringResource(id = R.string.btn_add_header),
+					modifier = Modifier
+						.weight(2f)
+						.padding(itemPadding),
+				)
+			}
+		}
+	}
+}
+
+
+@Composable
 private fun LibrarySettingsList(
 	librarySettingsViewModel: LibrarySettingsViewModel,
 	connectionSettingsViewModel: LibrarySettingsViewModel.MediaCenterConnectionSettingsViewModel,
@@ -442,7 +609,22 @@ private fun LibrarySettingsList(
 					.selectableGroup()
 			) {
 				Text(
-					text = stringResource(id = R.string.lblSyncMusicLocation),
+					text = stringResource(id = R.string.lbl_custom_headers),
+					modifier = Modifier.padding(innerGroupPadding),
+				)
+
+				CustomHeadersList(
+					connectionSettingsViewModel,
+				)
+			}
+
+			Column(
+				modifier = Modifier
+					.fillMaxWidth(inputRowMaxWidth)
+					.selectableGroup()
+			) {
+				Text(
+					text = stringResource(id = R.string.lbl_sync_music_location),
 					modifier = Modifier.padding(innerGroupPadding),
 				)
 
@@ -677,7 +859,22 @@ private fun LibrarySettingsList(
 					.selectableGroup()
 			) {
 				Text(
-					text = stringResource(id = R.string.lblSyncMusicLocation),
+					text = stringResource(id = R.string.lbl_custom_headers),
+					modifier = Modifier.padding(innerGroupPadding),
+				)
+
+				CustomHeadersList(
+					connectionSettingsViewModel,
+				)
+			}
+
+			Column(
+				modifier = Modifier
+					.fillMaxWidth(inputRowMaxWidth)
+					.selectableGroup()
+			) {
+				Text(
+					text = stringResource(id = R.string.lbl_sync_music_location),
 					modifier = Modifier.padding(innerGroupPadding),
 				)
 
@@ -759,46 +956,27 @@ private fun LibrarySettingsList(
 }
 
 @Composable
-private fun ColumnScope.LibrarySettings(
+private fun LibrarySettings(
 	librarySettingsViewModel: LibrarySettingsViewModel,
+	connectionSettingsViewModel: LibrarySettingsViewModel.ConnectionSettingsViewModel<*>,
 	stringResources: GetStringResources,
 	userSslCertificates: ProvideUserSslCertificates,
-	undoBackStack: UndoStack,
-	isSelectingServerType: Boolean,
-	onServerTypeSelectionFinished: () -> Unit,
 ) {
-	if (isSelectingServerType) {
-		ServerTypeSelection(
+
+	when (connectionSettingsViewModel) {
+		is LibrarySettingsViewModel.MediaCenterConnectionSettingsViewModel -> LibrarySettingsList(
 			librarySettingsViewModel = librarySettingsViewModel,
-			undoBackStack = undoBackStack,
-			onServerTypeSelectionFinished = onServerTypeSelectionFinished,
-			modifier = Modifier.weight(1f)
+			connectionSettingsViewModel = connectionSettingsViewModel,
+			stringResources = stringResources,
+			userSslCertificates = userSslCertificates,
 		)
-	} else {
-		val connectionSettingsViewModelState by librarySettingsViewModel.savedConnectionSettingsViewModel.subscribeAsState()
 
-		when (val connectionSettingsViewModel = connectionSettingsViewModelState) {
-			is LibrarySettingsViewModel.MediaCenterConnectionSettingsViewModel -> LibrarySettingsList(
-				librarySettingsViewModel = librarySettingsViewModel,
-				connectionSettingsViewModel = connectionSettingsViewModel,
-				stringResources = stringResources,
-				userSslCertificates = userSslCertificates,
-			)
-
-			is LibrarySettingsViewModel.SubsonicConnectionSettingsViewModel -> LibrarySettingsList(
-				librarySettingsViewModel = librarySettingsViewModel,
-				connectionSettingsViewModel = connectionSettingsViewModel,
-				stringResources = stringResources,
-				userSslCertificates = userSslCertificates,
-			)
-
-			null -> ServerTypeSelection(
-				librarySettingsViewModel = librarySettingsViewModel,
-				undoBackStack = undoBackStack,
-				onServerTypeSelectionFinished = onServerTypeSelectionFinished,
-				modifier = Modifier.weight(1f)
-			)
-		}
+		is LibrarySettingsViewModel.SubsonicConnectionSettingsViewModel -> LibrarySettingsList(
+			librarySettingsViewModel = librarySettingsViewModel,
+			connectionSettingsViewModel = connectionSettingsViewModel,
+			stringResources = stringResources,
+			userSslCertificates = userSslCertificates,
+		)
 	}
 }
 
@@ -825,7 +1003,7 @@ fun ServerTypeSelection(
 				.selectableGroup(),
 		) {
 			Text(
-				text = "Server Type",
+				text = stringResource(R.string.server_type),
 				modifier = Modifier.padding(innerGroupPadding),
 			)
 
@@ -940,7 +1118,7 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 		navigateApplication = navigateApplication
 	)
 
-	var isSelectingServerType by rememberSaveable { mutableStateOf(false) }
+	var isUserSelectingServerType by rememberSaveable { mutableStateOf(false) }
 	val isLoadingState by librarySettingsViewModel.isLoading.subscribeAsState()
 
 	if (this@LibrarySettingsView.maxWidth < Dimensions.twoColumnThreshold) {
@@ -1023,7 +1201,7 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 						librarySettingsViewModel = librarySettingsViewModel,
 						navigateApplication = navigateApplication,
 						stringResources = stringResources,
-						onChangeServerTypeClick = { isSelectingServerType = true },
+						onChangeServerTypeClick = { isUserSelectingServerType = true },
 						modifier = Modifier
 							.graphicsLayer {
 								translationY = (menuHeightPx - topMenuHeightPx) * 0.5f
@@ -1033,30 +1211,36 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 			},
 			content = { headerHeight ->
 				if (!isLoadingState) {
-//					val measuredContentHeightDp by LocalDensity.current.remember { derivedStateOf { measuredContentHeight.toDp() } }
+					val connectionSettingsViewModelState by librarySettingsViewModel.savedConnectionSettingsViewModel.subscribeAsState()
+					val isSelectingServerType by remember { derivedStateOf { isUserSelectingServerType || connectionSettingsViewModelState == null } }
+					var modifier: Modifier = Modifier.fillMaxWidth()
+					modifier =
+						if (!isSelectingServerType) modifier.verticalScroll(scrollState)
+						else modifier.fillMaxSize()
 
 					Column(
-						modifier = Modifier
-							.verticalScroll(scrollState)
-							.fillMaxWidth()
-//							.wrapContentHeight()
-//							.heightIn(min = measuredContentHeightDp)
-//							.onPlaced {
-//								measuredContentHeight = maxOf(it.size.height, measuredContentHeight)
-//							}
-							,
+						modifier = modifier,
 						horizontalAlignment = Alignment.CenterHorizontally,
 					) {
 						Spacer(modifier = Modifier.height(headerHeight))
 
-						LibrarySettings(
-							librarySettingsViewModel = librarySettingsViewModel,
-							stringResources = stringResources,
-							userSslCertificates = userSslCertificates,
-							undoBackStack = undoBackStack,
-							isSelectingServerType = isSelectingServerType,
-							onServerTypeSelectionFinished = { isSelectingServerType = false }
-						)
+						if (isSelectingServerType) {
+							ServerTypeSelection(
+								librarySettingsViewModel = librarySettingsViewModel,
+								undoBackStack = undoBackStack,
+								onServerTypeSelectionFinished = { isUserSelectingServerType = false },
+								modifier = Modifier.weight(1f)
+							)
+						} else {
+							connectionSettingsViewModelState?.also { connectionSettingsViewModel ->
+								LibrarySettings(
+									librarySettingsViewModel = librarySettingsViewModel,
+									connectionSettingsViewModel = connectionSettingsViewModel,
+									stringResources = stringResources,
+									userSslCertificates = userSslCertificates
+								)
+							}
+						}
 					}
 				}
 			},
@@ -1096,26 +1280,52 @@ fun ScreenDimensionsScope.LibrarySettingsView(
 					librarySettingsViewModel = librarySettingsViewModel,
 					navigateApplication = navigateApplication,
 					stringResources = stringResources,
-					{ isSelectingServerType = true },
+					{ isUserSelectingServerType = true },
 					modifier = Modifier.fillMaxWidth()
 				)
 			}
 
 			if (!isLoadingState) {
+				val connectionSettingsViewModelState by librarySettingsViewModel.savedConnectionSettingsViewModel.subscribeAsState()
+				val isSelectingServerType by remember { derivedStateOf { isUserSelectingServerType || connectionSettingsViewModelState == null } }
+
+				var modifier: Modifier = Modifier.fillMaxWidth()
+				modifier =
+					if (!isSelectingServerType) modifier.verticalScroll(rememberScrollState())
+					else modifier.fillMaxSize()
+
 				Column(
-					modifier = Modifier
-						.fillMaxSize()
-						.verticalScroll(rememberScrollState()),
+					modifier = modifier,
 					horizontalAlignment = Alignment.CenterHorizontally,
 				) {
-					LibrarySettings(
-						librarySettingsViewModel = librarySettingsViewModel,
-						stringResources = stringResources,
-						userSslCertificates = userSslCertificates,
-						undoBackStack = undoBackStack,
-						isSelectingServerType = isSelectingServerType,
-						onServerTypeSelectionFinished = { isSelectingServerType = false }
-					)
+					if (isSelectingServerType) {
+						ServerTypeSelection(
+							librarySettingsViewModel = librarySettingsViewModel,
+							undoBackStack = undoBackStack,
+							onServerTypeSelectionFinished = { isUserSelectingServerType = false },
+							modifier = Modifier.weight(1f)
+						)
+					} else {
+						val connectionSettingsViewModelState by librarySettingsViewModel.savedConnectionSettingsViewModel.subscribeAsState()
+						val connectionSettingsViewModel = connectionSettingsViewModelState
+						if (connectionSettingsViewModel == null) {
+							ServerTypeSelection(
+								librarySettingsViewModel = librarySettingsViewModel,
+								undoBackStack = undoBackStack,
+								onServerTypeSelectionFinished = { isUserSelectingServerType = false },
+								modifier = Modifier.weight(1f)
+							)
+						} else {
+							connectionSettingsViewModelState?.also { connectionSettingsViewModel ->
+								LibrarySettings(
+									librarySettingsViewModel = librarySettingsViewModel,
+									connectionSettingsViewModel = connectionSettingsViewModel,
+									stringResources = stringResources,
+									userSslCertificates = userSslCertificates
+								)
+							}
+						}
+					}
 				}
 			}
 		}

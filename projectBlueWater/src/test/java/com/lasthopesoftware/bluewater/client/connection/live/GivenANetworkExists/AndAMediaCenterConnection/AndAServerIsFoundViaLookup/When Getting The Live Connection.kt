@@ -40,7 +40,7 @@ class `When Getting The Live Connection` {
 			PassThroughBase64Encoder,
 			serverLookup,
 			mockk {
-				every { promiseConnectionSettings(LibraryId(55)) } returns MediaCenterConnectionSettings(accessCode = "gooPc").toPromise()
+				every { promiseConnectionSettings(LibraryId(55)) } returns MediaCenterConnectionSettings(accessCode = "gooPc", customHeaders = mapOf("test" to "header")).toPromise()
 			},
 			mockk {
 				every {
@@ -102,5 +102,10 @@ class `When Getting The Live Connection` {
 	@Test
 	fun `then the base url is correct`() {
 		assertThat(selectedConnectionDetails?.baseUrl.toString()).isEqualTo("http://1.2.3.4:143")
+	}
+
+	@Test
+	fun `then the custom headers are correct`() {
+		assertThat(selectedConnectionDetails?.customHeaders).isEqualTo(mapOf("test" to "header"))
 	}
 }

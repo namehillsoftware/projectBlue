@@ -80,7 +80,8 @@ class LiveServerConnectionProvider(
 										authKey,
 										ip,
 										httpsPort,
-										certificateFingerprint
+										certificateFingerprint,
+										settings.customHeaders,
 									)
 								)
 							}
@@ -93,6 +94,7 @@ class LiveServerConnectionProvider(
 										authKey,
 										ip,
 										httpPort,
+										settings.customHeaders,
 									)
 								)
 							}
@@ -106,6 +108,7 @@ class LiveServerConnectionProvider(
 									authKey,
 									ip,
 									httpPort,
+									settings.customHeaders,
 								)
 							)
 						}
@@ -151,7 +154,8 @@ class LiveServerConnectionProvider(
 									settings.userName,
 									settings.password,
 									salt,
-									certificateFingerprint
+									certificateFingerprint,
+									settings.customHeaders,
 								)
 							)
 						}
@@ -165,7 +169,8 @@ class LiveServerConnectionProvider(
 									settings.userName,
 									settings.password,
 									salt,
-									certificateFingerprint
+									certificateFingerprint,
+									settings.customHeaders,
 								)
 							)
 						}
@@ -177,7 +182,8 @@ class LiveServerConnectionProvider(
 									settings.userName,
 									settings.password,
 									salt,
-									certificateFingerprint
+									certificateFingerprint,
+									settings.customHeaders,
 								)
 							)
 						}

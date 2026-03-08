@@ -150,6 +150,7 @@ fun MenuIcon(
 	modifier: Modifier = Modifier,
 	enabled: Boolean = true,
 	iconTint: Color = iconColor(enabled),
+	iconModifier: Modifier = Modifier,
 	label: String? = null,
 	labelColor: Color = labelColor(enabled),
 	labelModifier: Modifier = Modifier,
@@ -163,7 +164,7 @@ fun MenuIcon(
 			Icon(
 				painter = iconPainter,
 				contentDescription = contentDescription,
-				modifier = Modifier.size(topMenuIconSize),
+				modifier = iconModifier.then(Modifier.size(topMenuIconSize)),
 				tint = iconTint,
 			)
 		},
