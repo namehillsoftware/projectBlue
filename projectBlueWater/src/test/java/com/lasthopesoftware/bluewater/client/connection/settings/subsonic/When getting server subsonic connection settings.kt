@@ -30,7 +30,8 @@ class `When getting server subsonic connection settings` {
 						password = "G5gVek1fn",
 						isWakeOnLanEnabled = true,
 						sslCertificateFingerprint = "df6a6e32bdb440d0949b93a89796ac9e",
-						macAddress = "D5:38:83:8D:EE:7B"
+						macAddress = "D5:38:83:8D:EE:7B",
+						customHeaders = mapOf("3lF9AIbMB" to "fOvdffm6", "Pb3HNNu" to "yA7qnHG7isS"),
 					)
 				).toPromise()
 			}
@@ -54,7 +55,8 @@ class `When getting server subsonic connection settings` {
 				password = "G5gVek1fn",
 				isWakeOnLanEnabled = true,
 				sslCertificateFingerprint = "df6a6e32bdb440d0949b93a89796ac9e".hexToByteArray(),
-				macAddress = "D5:38:83:8D:EE:7B"
+				macAddress = "D5:38:83:8D:EE:7B",
+				customHeaders = mapOf("3lF9AIbMB" to "fOvdffm6", "Pb3HNNu" to "yA7qnHG7isS"),
 			)
 		)
 	}

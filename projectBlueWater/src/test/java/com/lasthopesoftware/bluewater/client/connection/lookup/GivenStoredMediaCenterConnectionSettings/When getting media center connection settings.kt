@@ -32,6 +32,7 @@ class `When getting media center connection settings` {
 						accessCode = "CfRnKe4Y",
 						macAddress = "JJGehSnl",
 						sslCertificateFingerprint = "3f34c3f7fda04081bae8b5181a48fffd",
+						customHeaders = mapOf("dL28lgYm3" to "CAOWiUKbg", "IfkkgO9s6G1" to "llTnPBzGC"),
 					)
 				).toPromise()
 			}
@@ -56,7 +57,8 @@ class `When getting media center connection settings` {
 				userName = "NYS1VeeiiE",
 				accessCode = "CfRnKe4Y",
 				isLocalOnly = true,
-				sslCertificateFingerprint = "3f34c3f7fda04081bae8b5181a48fffd".hexToByteArray()
+				sslCertificateFingerprint = "3f34c3f7fda04081bae8b5181a48fffd".hexToByteArray(),
+				customHeaders = mapOf("dL28lgYm3" to "CAOWiUKbg", "IfkkgO9s6G1" to "llTnPBzGC"),
 			)
 		)
 	}

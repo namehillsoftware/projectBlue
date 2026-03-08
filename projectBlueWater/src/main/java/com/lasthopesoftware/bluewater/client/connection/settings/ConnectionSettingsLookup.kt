@@ -12,7 +12,7 @@ class ConnectionSettingsLookup(private val librarySettings: ProvideLibrarySettin
 	override fun promiseConnectionSettings(libraryId: LibraryId): Promise<ConnectionSettings?> =
 		librarySettings
 			.promiseLibrarySettings(libraryId)
-			.then { it ->
+			.then {
 				it?.connectionSettings?.run {
 					when (this) {
 						is StoredMediaCenterConnectionSettings -> MediaCenterConnectionSettings(
@@ -22,7 +22,9 @@ class ConnectionSettingsLookup(private val librarySettings: ProvideLibrarySettin
 							isLocalOnly = isLocalOnly,
 							isWakeOnLanEnabled = isWakeOnLanEnabled,
 							sslCertificateFingerprint = sslCertificateFingerprint?.hexToByteArray() ?: emptyByteArray,
-							macAddress = macAddress)
+							macAddress = macAddress,
+							customHeaders = customHeaders,
+						)
 						is StoredSubsonicConnectionSettings -> SubsonicConnectionSettings(
 							url = url ?: "",
 							userName = userName ?: "",
@@ -30,6 +32,7 @@ class ConnectionSettingsLookup(private val librarySettings: ProvideLibrarySettin
 							isWakeOnLanEnabled = isWakeOnLanEnabled,
 							sslCertificateFingerprint = sslCertificateFingerprint?.hexToByteArray() ?: emptyByteArray,
 							macAddress = macAddress,
+							customHeaders = customHeaders,
 						)
 					}
 				}
