@@ -95,6 +95,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.dragging.rememberDra
 import com.lasthopesoftware.bluewater.android.ui.findWindow
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.navigable
+import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.LocalControlColor
@@ -876,6 +877,21 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 		snapshotFlow { playlistDrawerState.currentValue }.collect { draggableState = it }
 	}
 
+	val playlistOpenProgress by remember(playlistDrawerState) {
+		derivedStateOf { playlistDrawerState.progress(SlideOutState.Closed, SlideOutState.Open) }
+	}
+
+	val isDrawerFullyClosed by remember { derivedStateOf { playlistOpenProgress == 0f } }
+
+	DisposableEffect(isDrawerFullyClosed) {
+		if (isDrawerFullyClosed) {
+			playlistViewModel.hidePlaylist()
+		} else {
+			playlistViewModel.showPlaylist()
+		}
+		onDispose { }
+	}
+
 	Box(
 		modifier = Modifier
 			.fillMaxSize()
@@ -883,15 +899,6 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 	) {
 		val nowPlayingPaneWidth = LocalDensity.current.run {
 			this@NowPlayingWideView.maxWidth - playlistDrawerState.requireOffset().toDp()
-		}
-
-		val playlistOpenProgress by remember(playlistDrawerState) {
-			derivedStateOf {
-				playlistDrawerState.progress(
-					SlideOutState.Closed,
-					SlideOutState.Open
-				)
-			}
 		}
 
 		Box(
@@ -933,7 +940,9 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 					.align(Alignment.BottomCenter)
 					.fillMaxWidth()
 			) {
-				if (isScreenControlsVisible) {
+				val isPlaylistShown by playlistViewModel.isPlaylistShown.subscribeAsState()
+				val isTopControlsShown by remember { derivedStateOf { isScreenControlsVisible || isPlaylistShown } }
+				if (isTopControlsShown) {
 					Row(
 						verticalAlignment = Alignment.CenterVertically,
 						modifier = Modifier
@@ -1005,11 +1014,12 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 					.background(SharedColors.overlayDark),
 				horizontalAlignment = Alignment.CenterHorizontally,
 			) {
-				DisposableEffect(key1 = playlistDrawerState.currentValue) {
-					if (playlistDrawerState.currentValue == SlideOutState.Closed) {
+				DisposableEffect(key1 = isDrawerFullyClosed) {
+					if (isDrawerFullyClosed) {
 						playlistViewModel.enableSystemAutoScrolling()
 					} else {
 						playlistViewModel.disableSystemAutoScrolling()
+						playlistViewModel.enableUserAutoScrolling()
 					}
 
 					onDispose {

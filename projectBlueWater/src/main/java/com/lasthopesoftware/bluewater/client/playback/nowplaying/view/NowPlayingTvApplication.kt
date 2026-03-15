@@ -415,11 +415,17 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedVi
 							)
 						}
 
-						DisposableEffect(key1 = Unit) {
-							if (!isPlaylistOpen)
+						DisposableEffect(key1 = playlistDrawerState.currentValue) {
+							if (playlistDrawerState.currentValue == SlideOutState.Closed) {
 								nowPlayingPlaylistViewModel.enableSystemAutoScrolling()
+							} else {
+								nowPlayingPlaylistViewModel.disableSystemAutoScrolling()
+								nowPlayingPlaylistViewModel.enableUserAutoScrolling()
+							}
 
-							onDispose {  }
+							onDispose {
+								nowPlayingPlaylistViewModel.disableSystemAutoScrolling()
+							}
 						}
 
 						if (isPlaylistOpen) {
@@ -431,9 +437,9 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedVi
 									.background(SharedColors.overlayDark)
 									.onFocusChanged { state ->
 										if (state.hasFocus)
-											nowPlayingPlaylistViewModel.disableSystemAutoScrolling()
+											nowPlayingPlaylistViewModel.lockOutAutoScroll()
 										else
-											nowPlayingPlaylistViewModel.enableSystemAutoScrolling()
+											nowPlayingPlaylistViewModel.releaseAutoScroll()
 									}
 									.focusGroup(),
 								horizontalAlignment = Alignment.CenterHorizontally,
