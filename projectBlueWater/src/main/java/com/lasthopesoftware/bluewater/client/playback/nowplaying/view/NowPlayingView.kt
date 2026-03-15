@@ -881,10 +881,10 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 		derivedStateOf { playlistDrawerState.progress(SlideOutState.Closed, SlideOutState.Open) }
 	}
 
-	val isSettledOnFirstPage by remember { derivedStateOf { playlistOpenProgress == 0f } }
+	val isDrawerFullyClosed by remember { derivedStateOf { playlistOpenProgress == 0f } }
 
-	DisposableEffect(isSettledOnFirstPage) {
-		if (isSettledOnFirstPage) {
+	DisposableEffect(isDrawerFullyClosed) {
+		if (isDrawerFullyClosed) {
 			playlistViewModel.hidePlaylist()
 		} else {
 			playlistViewModel.showPlaylist()
@@ -1014,11 +1014,12 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 					.background(SharedColors.overlayDark),
 				horizontalAlignment = Alignment.CenterHorizontally,
 			) {
-				DisposableEffect(key1 = playlistDrawerState.currentValue) {
-					if (playlistDrawerState.currentValue == SlideOutState.Closed) {
+				DisposableEffect(key1 = isDrawerFullyClosed) {
+					if (isDrawerFullyClosed) {
 						playlistViewModel.enableSystemAutoScrolling()
 					} else {
 						playlistViewModel.disableSystemAutoScrolling()
+						playlistViewModel.enableUserAutoScrolling()
 					}
 
 					onDispose {
