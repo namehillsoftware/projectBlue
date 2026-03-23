@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.destina
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileUriDestinationBuilder
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileOutputStreamProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.io.PromisingWritableStream
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test
 class `When Getting the File Output Stream` {
 
 	private val mut by lazy {
-		StoredFileUriDestinationBuilder(mockk(), mockk(), mockk())
+		StoredFileOutputStreamProvider(mockk(), mockk(), mockk())
 	}
 
 	private var outputStream: PromisingWritableStream? = null

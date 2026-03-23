@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.destina
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileUriDestinationBuilder
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileOutputStreamProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.io.OsFileSupplier
@@ -27,7 +27,7 @@ class `When Getting the File Output Stream` {
 		val tempFile = File(File(tempPathFile, "that"), "knot")
 		val storedFile = StoredFile(LibraryId(1), ServiceFile("1"), tempFile.toURI(), true)
 		storedFile.setIsDownloadComplete(true)
-		val storedFileJobProcessor = StoredFileUriDestinationBuilder(
+		val storedFileJobProcessor = StoredFileOutputStreamProvider(
 			OsFileSupplier,
 			mockk {
 				every { isFileWritePossible(any()) } returns true

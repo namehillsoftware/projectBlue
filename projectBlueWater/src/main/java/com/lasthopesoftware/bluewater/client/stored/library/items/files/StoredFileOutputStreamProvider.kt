@@ -18,7 +18,7 @@ import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.net.URI
 
-class StoredFileUriDestinationBuilder(
+class StoredFileOutputStreamProvider(
 	private val fileSupplier: SupplyFiles,
 	private val fileWritePossibleTester: DecideIfFileWriteIsPossible,
 	private val contentResolver: ContentResolver
