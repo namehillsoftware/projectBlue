@@ -65,15 +65,23 @@ class StoredFileSynchronization(
 		return when (e) {
 			is CompositeException -> e.exceptions.all { handleError(it) }
 			is StoredFileWriteException -> {
+				logger.warn("Unable to write file ${e.storedFile.id} to path ${e.storedFile.uri}.", e)
 				applicationMessages.sendMessage(StoredFileMessage.FileWriteError(e.storedFile.id))
-				return true
+				true
 			}
 			is StoredFileReadException -> {
+				logger.warn("Unable to read file ${e.storedFile.id} from path ${e.storedFile.uri}.", e)
 				applicationMessages.sendMessage(StoredFileMessage.FileReadError(e.storedFile.id))
-				return true
+				true
 			}
-			is StorageCreatePathException -> true
-			is StoredFileJobException -> true
+			is StorageCreatePathException -> {
+				logger.warn("Unable to create path.", e)
+				true
+			}
+			is StoredFileJobException -> {
+				logger.error("An exception was caught syncing file ${e.storedFile.id} with path ${e.storedFile.uri}.", e)
+				true
+			}
 			else -> false
 		}
 	}
