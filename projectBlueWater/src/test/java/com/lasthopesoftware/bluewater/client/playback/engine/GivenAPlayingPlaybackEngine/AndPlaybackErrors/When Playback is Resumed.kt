@@ -7,8 +7,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PassThroughPlaybackQueueConfiguration
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.ProvidePlayableFilePreparationSources
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPlaybackHandler
@@ -35,7 +36,7 @@ class `When Playback is Resumed` {
 	private val expectedPlaybackHandler = FakeBufferingPlaybackHandler()
 
 	private val mut by lazy {
-		val fakePlaybackPreparerProvider = mockk<IPlayableFilePreparationSourceProvider> {
+		val fakePlaybackPreparerProvider = mockk<ProvidePlayableFilePreparationSources> {
 			every { providePlayableFilePreparationSource() } returns mockk {
 				every { promisePreparedPlaybackFile(LibraryId(libraryId), any(), any()) } returns Promise.empty()
 
@@ -63,8 +64,6 @@ class `When Playback is Resumed` {
 					expectedPlaybackHandler
 				).toPromise()
 			}
-
-			every { maxQueueSize } returns 0
 		}
 
 		val library = Library(id = libraryId)
@@ -77,7 +76,7 @@ class `When Playback is Resumed` {
 
 		val preparedPlaybackQueueResourceManagement = PreparedPlaybackQueueResourceManagement(
 			fakePlaybackPreparerProvider,
-			fakePlaybackPreparerProvider
+			PassThroughPlaybackQueueConfiguration(0),
 		)
 		val playbackBootstrapper = ManagedPlaylistPlayer(
 			PlaylistVolumeManager(1.0f),

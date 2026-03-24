@@ -5,7 +5,7 @@ import java.net.URI
 import java.net.URL
 
 object PathAndQuery {
-	fun Uri.pathAndQuery() = "$path?$query"
+	fun Uri.pathAndQuery() = "$path${query?.takeIf { it.isNotBlank() }?.let { "?$it" } ?: ""}"
 }
 
 fun Uri.toURL(): URL = URL(toString())

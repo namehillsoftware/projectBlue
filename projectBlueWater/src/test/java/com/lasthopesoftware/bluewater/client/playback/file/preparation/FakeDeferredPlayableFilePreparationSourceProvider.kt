@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.preparation
 
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.ProvidePlayableFilePreparationSources
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakePreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.namehillsoftware.handoff.Messenger
@@ -8,7 +8,7 @@ import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 
-class FakeDeferredPlayableFilePreparationSourceProvider : IPlayableFilePreparationSourceProvider {
+class FakeDeferredPlayableFilePreparationSourceProvider : ProvidePlayableFilePreparationSources {
 	val deferredResolution = DeferredResolution()
 
     override fun providePlayableFilePreparationSource(): PlayableFilePreparationSource {
@@ -17,11 +17,6 @@ class FakeDeferredPlayableFilePreparationSourceProvider : IPlayableFilePreparati
 			Promise(deferredResolution)
         }
     }
-
-    override val maxQueueSize: Int
-        get() {
-            return 1
-        }
 
     class DeferredResolution : MessengerOperator<PreparedPlayableFile> {
         private var resolve: Messenger<PreparedPlayableFile>? = null

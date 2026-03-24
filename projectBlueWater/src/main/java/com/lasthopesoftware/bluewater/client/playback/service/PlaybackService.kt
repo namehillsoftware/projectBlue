@@ -57,12 +57,14 @@ import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackSt
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlayingFileChanged
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaylistError
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaylistReset
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.FallbackPreparedPlayableFileSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlaybackQueueConfiguration
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.MediaSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.RemoteDataSourceFactoryProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.QueueProviders
@@ -445,8 +447,14 @@ import java.util.concurrent.TimeoutException
 		)
 	}
 
+	private val remoteFileUriProvider by lazy {
+		CachedAudioFileUriProvider(
+			RemoteFileUriProvider(libraryConnectionProvider),
+			playbackServiceDependencies.audioFileCache
+		)
+	}
+
 	private val bestMatchUriProvider by lazy {
-		val remoteFileUriProvider = RemoteFileUriProvider(libraryConnectionProvider)
 		val storedFileAccess = StoredFileAccess(this)
 		BestMatchUriProvider(
 			playbackServiceDependencies.libraryProvider,
@@ -454,7 +462,6 @@ import java.util.concurrent.TimeoutException
 				storedFileAccess,
 				arbitratorForOs,
 				contentResolver),
-			CachedAudioFileUriProvider(remoteFileUriProvider, playbackServiceDependencies.audioFileCache),
 			CompatibleMediaFileUriProvider(
 				libraryFilePropertiesProvider,
 				arbitratorForOs,
@@ -484,17 +491,28 @@ import java.util.concurrent.TimeoutException
 			.then { h -> Handler(h.looper) }
 			.then { playbackHandler ->
 				MaxFileVolumePreparationProvider(
-					ExoPlayerPlayableFilePreparationSourceProvider(
-						this,
-						playbackHandler,
-						mainLoopHandlerExecutor,
-						mediaSourceProvider,
-						bestMatchUriProvider
+					FallbackPreparedPlayableFileSourceProvider(
+						ExoPlayerPlayableFilePreparationSourceProvider(
+							this,
+							playbackHandler,
+							mainLoopHandlerExecutor,
+							mediaSourceProvider,
+							bestMatchUriProvider
+						),
+						ExoPlayerPlayableFilePreparationSourceProvider(
+							this,
+							playbackHandler,
+							mainLoopHandlerExecutor,
+							mediaSourceProvider,
+							remoteFileUriProvider
+						),
 					),
 					maxFileVolumeProvider
 				)
 			}
 	})
+
+	private val preparedPlaybackQueueConfiguration = ExoPlayerPlaybackQueueConfiguration
 
 	private val promisedPlaybackServices = promisingServiceCloseables.manage(RetryOnRejectionLazyPromise {
 		// Call the value to initialize the lazy promise
@@ -505,7 +523,7 @@ import java.util.concurrent.TimeoutException
 		val promisedEngine = promisedPreparationSourceProvider
 			.then { preparationSourceProvider ->
 				promisingPlaybackEngineCloseables.manage(
-					PreparedPlaybackQueueResourceManagement(preparationSourceProvider, preparationSourceProvider)
+					PreparedPlaybackQueueResourceManagement(preparationSourceProvider, preparedPlaybackQueueConfiguration)
 				)
 			}
 			.then { preparedPlaybackQueueResourceManagement ->

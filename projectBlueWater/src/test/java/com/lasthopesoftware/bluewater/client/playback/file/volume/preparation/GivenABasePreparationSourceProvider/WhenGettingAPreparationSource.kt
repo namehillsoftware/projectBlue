@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.GivenABasePreparationSourceProvider
 
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.ProvidePlayableFilePreparationSources
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.BufferingPlaybackFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test
 class WhenGettingAPreparationSource {
     private val playableFileSource by lazy {
         val maxFileVolumePreparationProvider =
-            MaxFileVolumePreparationProvider(object : IPlayableFilePreparationSourceProvider {
+            MaxFileVolumePreparationProvider(object : ProvidePlayableFilePreparationSources {
                 override fun providePlayableFilePreparationSource(): PlayableFilePreparationSource {
                     return PlayableFilePreparationSource { _, _, _ ->
                         Promise(PreparedPlayableFile(
@@ -29,11 +29,6 @@ class WhenGettingAPreparationSource {
                         ))
                     }
                 }
-
-                override val maxQueueSize: Int
-                    get() {
-                        return 13
-                    }
             }, mockk())
         maxFileVolumePreparationProvider.providePlayableFilePreparationSource()
     }

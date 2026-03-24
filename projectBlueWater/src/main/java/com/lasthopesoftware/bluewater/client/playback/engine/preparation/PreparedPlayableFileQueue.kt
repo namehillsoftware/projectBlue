@@ -15,9 +15,9 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 class PreparedPlayableFileQueue(
-	private val configuration: IPreparedPlaybackQueueConfiguration,
-	private val playbackPreparer: PlayableFilePreparationSource,
-	private var positionedFileQueue: PositionedFileQueue
+    private val configuration: ConfigurePreparedPlaybackQueue,
+    private val playbackPreparer: PlayableFilePreparationSource,
+    private var positionedFileQueue: PositionedFileQueue
 ) : SupplyQueuedPreparedFiles, Closeable {
 
 	companion object {

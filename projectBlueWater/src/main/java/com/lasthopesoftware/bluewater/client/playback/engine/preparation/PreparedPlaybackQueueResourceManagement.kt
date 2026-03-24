@@ -4,8 +4,8 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Po
 import com.lasthopesoftware.resources.closables.ResettableCloseable
 
 class PreparedPlaybackQueueResourceManagement(
-    private val playbackPreparerProvider: IPlayableFilePreparationSourceProvider,
-    private val preparedPlaybackQueueConfiguration: IPreparedPlaybackQueueConfiguration
+    private val playbackPreparerProvider: ProvidePlayableFilePreparationSources,
+    private val preparedPlaybackQueueConfiguration: ConfigurePreparedPlaybackQueue
 ) : ManagePlaybackQueues, ResettableCloseable {
 	@Volatile
     private var preparedPlaybackQueue: PreparedPlayableFileQueue? = null

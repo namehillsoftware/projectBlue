@@ -7,8 +7,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PassThroughPlaybackQueueConfiguration
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.ProvidePlayableFilePreparationSources
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
@@ -27,18 +28,15 @@ class WhenObservingPlayback {
 
 	private val mut by lazy {
 		val deferredErrorPlaybackPreparer = DeferredErrorPlaybackPreparer()
-		val fakePlaybackPreparerProvider = object : IPlayableFilePreparationSourceProvider {
+		val fakePlaybackPreparerProvider = object : ProvidePlayableFilePreparationSources {
 			override fun providePlayableFilePreparationSource(): PlayableFilePreparationSource =
 				deferredErrorPlaybackPreparer
-
-			override val maxQueueSize: Int
-				get() = 1
 		}
 		val library = Library(id = libraryId)
 		val libraryProvider = FakeLibraryRepository(library)
 		val preparedPlaybackQueueResourceManagement = PreparedPlaybackQueueResourceManagement(
 			fakePlaybackPreparerProvider,
-			fakePlaybackPreparerProvider
+			PassThroughPlaybackQueueConfiguration(1),
 		)
 		val repository = NowPlayingRepository(
 			FakeSelectedLibraryIdProvider(),
