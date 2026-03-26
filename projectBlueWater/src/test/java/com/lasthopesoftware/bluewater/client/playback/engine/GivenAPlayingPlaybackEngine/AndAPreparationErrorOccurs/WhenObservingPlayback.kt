@@ -7,9 +7,10 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.ManagedPlaylistPlayer
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PassThroughPlaybackQueueConfiguration
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.ProvidePlayableFilePreparationSources
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakePreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
@@ -31,16 +32,11 @@ private const val libraryId = 668
 class WhenObservingPlayback {
 	private val mut by lazy {
 		val deferredErrorPlaybackPreparer = DeferredErrorPlaybackPreparer()
-		val fakePlaybackPreparerProvider: IPlayableFilePreparationSourceProvider =
-			object : IPlayableFilePreparationSourceProvider {
+		val fakePlaybackPreparerProvider: ProvidePlayableFilePreparationSources =
+			object : ProvidePlayableFilePreparationSources {
 				override fun providePlayableFilePreparationSource(): PlayableFilePreparationSource {
 					return deferredErrorPlaybackPreparer
 				}
-
-                override val maxQueueSize: Int
-                    get() {
-                        return 1
-                    }
 			}
 
 		val library = Library(id = libraryId)
@@ -53,7 +49,7 @@ class WhenObservingPlayback {
 
 		val preparedPlaybackQueueResourceManagement = PreparedPlaybackQueueResourceManagement(
 			fakePlaybackPreparerProvider,
-			fakePlaybackPreparerProvider
+			PassThroughPlaybackQueueConfiguration(1),
 		)
 		val playbackBootstrapper = ManagedPlaylistPlayer(
 			PlaylistVolumeManager(1.0f),

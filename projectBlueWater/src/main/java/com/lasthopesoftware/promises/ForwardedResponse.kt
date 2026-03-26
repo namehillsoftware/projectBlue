@@ -26,11 +26,6 @@ class ForwardedResponse<Resolution : Response, Response> private constructor() :
 		fun <Resolution : Response, Response> forward(): ForwardedResponse<Resolution, Response> =
 			singlePassThrough as ForwardedResponse<Resolution, Response>
 
-		@Suppress("UNCHECKED_CAST")
-		@JvmStatic
-		fun <Resolution : Response, Response> promisedForward(): ForwardedResponse<Resolution, Response> =
-			singlePassThrough as ForwardedResponse<Resolution, Response>
-
 		fun <Resolution: Response, Response> Promise<Resolution>.thenForward(): Promise<Response> =
 			this.cancelBackThen(forward())
 	}

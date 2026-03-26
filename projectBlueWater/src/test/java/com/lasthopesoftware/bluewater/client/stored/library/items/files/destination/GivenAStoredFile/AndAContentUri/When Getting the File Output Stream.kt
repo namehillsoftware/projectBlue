@@ -4,7 +4,7 @@ import android.content.ContentUris
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileUriDestinationBuilder
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileOutputStreamProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.io.PromisingWritableStream
@@ -25,7 +25,7 @@ class `When Getting the File Output Stream` {
 
 	companion object {
 		private val mut by lazy {
-            StoredFileUriDestinationBuilder(
+            StoredFileOutputStreamProvider(
 				mockk(),
                 mockk(),
                 mockk {

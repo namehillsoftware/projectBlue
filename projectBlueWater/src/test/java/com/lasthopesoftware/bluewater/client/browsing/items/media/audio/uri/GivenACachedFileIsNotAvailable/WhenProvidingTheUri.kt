@@ -42,7 +42,7 @@ class WhenProvidingTheUri {
     }
 
 	@Test
-	fun thenTheUriIsEmpty() {
-		assertThat(cachedFileUri).isNull()
+	fun `then the remote file uri is returned`() {
+		assertThat(cachedFileUri.toString()).isEqualTo("http://a-url/file?key=1")
 	}
 }

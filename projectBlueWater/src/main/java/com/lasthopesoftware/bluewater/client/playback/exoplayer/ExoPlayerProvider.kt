@@ -18,7 +18,7 @@ import com.lasthopesoftware.resources.executors.HandlerExecutor
 ) :
 	ProvideExoPlayers
 {
-	@OptIn(androidx.media3.common.util.UnstableApi::class)
+	@OptIn(UnstableApi::class)
 	override fun getExoPlayer(): PromisingExoPlayer {
 		val exoPlayerBuilder = ExoPlayer.Builder(context, renderersFactory)
 			.setLoadControl(loadControl)

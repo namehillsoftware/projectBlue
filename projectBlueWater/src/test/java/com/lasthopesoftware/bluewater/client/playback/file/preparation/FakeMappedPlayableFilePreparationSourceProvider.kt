@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.preparation
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.ProvidePlayableFilePreparationSources
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakePreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.lasthopesoftware.promises.extensions.keepPromise
@@ -10,7 +10,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 import kotlin.coroutines.cancellation.CancellationException
 
-class FakeMappedPlayableFilePreparationSourceProvider(queue: List<ServiceFile>) : IPlayableFilePreparationSourceProvider {
+class FakeMappedPlayableFilePreparationSourceProvider(queue: List<ServiceFile>) : ProvidePlayableFilePreparationSources {
 	private var preparationSourceProvidedHandler: ((ServiceFile, DeferredPreparedPlayableFile) -> Unit)? = null
 	val deferredResolutions = queue.associateWith { DeferredPreparedPlayableFile() }.toMutableMap()
 
@@ -29,8 +29,6 @@ class FakeMappedPlayableFilePreparationSourceProvider(queue: List<ServiceFile>) 
 				.keepPromise()
         }
     }
-
-    override val maxQueueSize = 1
 
 	fun preparationSourceBeingProvided(handler: (ServiceFile, DeferredPreparedPlayableFile) -> Unit) {
 		preparationSourceProvidedHandler = handler

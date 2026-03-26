@@ -29,7 +29,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.DelegatingStor
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredFilesCounter
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileUriDestinationBuilder
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileOutputStreamProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFilesChecker
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFilesPruner
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader
@@ -192,7 +192,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			storedFilesPruner,
 			storedFileUpdater,
 			StoredFileJobProcessor(
-				StoredFileUriDestinationBuilder(OsFileSupplier, FileWritePossibleTester, context.contentResolver),
+				StoredFileOutputStreamProvider(OsFileSupplier, FileWritePossibleTester, context.contentResolver),
 				StoredFileDownloader(libraryConnections),
 				storedFileUpdater,
 			)

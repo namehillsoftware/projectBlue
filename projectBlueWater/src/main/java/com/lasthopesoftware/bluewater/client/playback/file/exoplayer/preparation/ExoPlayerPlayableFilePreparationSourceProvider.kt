@@ -4,8 +4,8 @@ import android.content.Context
 import android.os.Handler
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
-import com.lasthopesoftware.bluewater.client.browsing.files.uri.BestMatchUriProvider
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.uri.ProvideFileUrisForLibrary
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.ProvidePlayableFilePreparationSources
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.ExoPlayerProvider
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayerProvider
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.SpawnMediaSources
@@ -18,8 +18,8 @@ import org.joda.time.Minutes
 	private val playbackHandler: Handler,
 	private val interactionsHandler: HandlerExecutor,
 	private val mediaSourceProvider: SpawnMediaSources,
-	private val bestMatchUriProvider: BestMatchUriProvider
-) : IPlayableFilePreparationSourceProvider {
+	private val uriProvider: ProvideFileUrisForLibrary,
+) : ProvidePlayableFilePreparationSources {
 	companion object {
 		private val maxBufferMs by lazy { Minutes.minutes(5).toStandardDuration().millis.toInt() }
 	}
@@ -52,12 +52,11 @@ import org.joda.time.Minutes
 		BufferingExoPlayerProvider(interactionsHandler)
 	}
 
-    override val maxQueueSize get() = 1
-
-	override fun providePlayableFilePreparationSource() = ExoPlayerPlaybackPreparer(
-		mediaSourceProvider,
-		exoPlayerProvider,
-		bufferingExoPlayerProvider,
-		bestMatchUriProvider
-	)
+	override fun providePlayableFilePreparationSource() =
+		ExoPlayerPlaybackPreparer(
+			mediaSourceProvider,
+			exoPlayerProvider,
+			bufferingExoPlayerProvider,
+			uriProvider
+		)
 }

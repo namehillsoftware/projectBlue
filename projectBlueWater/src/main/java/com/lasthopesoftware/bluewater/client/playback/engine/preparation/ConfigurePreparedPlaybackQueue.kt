@@ -1,5 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation
 
-interface IPreparedPlaybackQueueConfiguration {
+interface ConfigurePreparedPlaybackQueue {
 	val maxQueueSize: Int
 }

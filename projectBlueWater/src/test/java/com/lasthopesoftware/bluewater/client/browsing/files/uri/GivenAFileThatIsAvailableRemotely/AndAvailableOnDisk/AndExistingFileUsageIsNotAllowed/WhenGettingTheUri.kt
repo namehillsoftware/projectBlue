@@ -45,8 +45,7 @@ class WhenGettingTheUri {
 					every { promiseLibrary(LibraryId(libraryId)) } returns Library(id = libraryId).toPromise()
 				},
 				mockStoredFileUriProvider,
-				cachedAudioFileUriProvider,
-				mockMediaFileUriProvider,
+                mockMediaFileUriProvider,
 				mockRemoteFileUriProvider
 			)
 
