@@ -1,3 +1,4 @@
 #!/bin/sh
-export JAVA_HOME=/app/share/java_home
-exec android-translation-layer --gapplication-app-id=net.newpipe.NewPipe /app/share/project-blue.apk $@
+#export JAVA_HOME=/app/share/java_home
+export ATL_UGLY_ENABLE_WEBVIEW=
+exec android-translation-layer /app/share/project-blue.apk $@
