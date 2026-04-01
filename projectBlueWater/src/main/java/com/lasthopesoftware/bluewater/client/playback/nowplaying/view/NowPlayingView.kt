@@ -543,7 +543,7 @@ private val collapsedControlsHeight = ProgressIndicatorDefaults.StrokeWidth + Di
 private val expandedControlsHeight = controlRowHeight + collapsedControlsHeight
 
 @Composable
-fun BoxWithConstraintsScope.NowPlayingNarrowView(
+private fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
 	nowPlayingScreenViewModel: NowPlayingScreenViewModel,
 	playbackServiceController: ControlPlaybackService,
