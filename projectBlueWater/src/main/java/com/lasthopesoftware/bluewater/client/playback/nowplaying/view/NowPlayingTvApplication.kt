@@ -58,6 +58,7 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.android.ui.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.android.ui.SlideOutState
 import com.lasthopesoftware.bluewater.android.ui.calculateProgress
 import com.lasthopesoftware.bluewater.android.ui.components.PaddedSystemScreenBox

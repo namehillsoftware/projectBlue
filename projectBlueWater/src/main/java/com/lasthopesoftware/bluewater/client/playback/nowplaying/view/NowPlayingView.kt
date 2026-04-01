@@ -76,7 +76,6 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
@@ -85,6 +84,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.android.ui.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.android.ui.SlideOutState
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.MarqueeText
@@ -128,9 +128,6 @@ val controlRowHeight = 72.dp
 const val playlistControlAlpha = .8f
 val minimumMenuWidth = Dimensions.listItemMenuIconSize * 3
 const val disabledAlpha = .6f
-
-class ScreenDimensionsScope(val screenHeight: Dp, val screenWidth: Dp, innerBoxScope: BoxWithConstraintsScope) :
-	BoxWithConstraintsScope by innerBoxScope
 
 @Composable
 fun NowPlayingCoverArtView(
@@ -543,7 +540,7 @@ private val collapsedControlsHeight = ProgressIndicatorDefaults.StrokeWidth + Di
 private val expandedControlsHeight = controlRowHeight + collapsedControlsHeight
 
 @Composable
-fun BoxWithConstraintsScope.NowPlayingNarrowView(
+private fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
 	nowPlayingScreenViewModel: NowPlayingScreenViewModel,
 	playbackServiceController: ControlPlaybackService,

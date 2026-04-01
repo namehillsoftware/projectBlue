@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.android.ui.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.android.ui.calculateSummaryColumnWidth
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
@@ -85,7 +86,6 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topRowOuterPad
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.connection.trust.ProvideUserSslCertificates
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.shared.android.UndoStack
 import com.lasthopesoftware.observables.subscribeAsMutableState
 import com.lasthopesoftware.observables.subscribeAsState

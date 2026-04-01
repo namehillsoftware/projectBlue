@@ -6,7 +6,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceIn
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.minimumMenuWidth
 
 fun linearInterpolation(initial: Dp, final: Dp, progress: Float): Dp =
