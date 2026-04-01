@@ -1,10 +1,6 @@
 package com.lasthopesoftware.bluewater.client
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.SplineBasedFloatDecayAnimationSpec
-import androidx.compose.animation.core.exponentialDecay
-import androidx.compose.animation.core.generateDecayAnimationSpec
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -14,7 +10,6 @@ import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.animateTo
-import androidx.compose.foundation.gestures.animateToWithDecay
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -45,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -55,7 +51,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.coerceAtMost
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -128,7 +123,6 @@ import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
 import com.lasthopesoftware.promises.extensions.suspend
-import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.rememberNavController
@@ -136,26 +130,6 @@ import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 
 private val logger by lazy { LoggerFactory.getLogger("ResponsiveApplication") }
-
-@Composable
-fun promiseHiddenPlaylist(
-	playlistViewModel: NowPlayingPlaylistViewModel,
-	playlistDrawerState: AnchoredDraggableState<SlideOutState>,
-): Promise<Unit> {
-	val decaySpec = LocalDensity.current.let { d ->
-		remember(d) {
-			SplineBasedFloatDecayAnimationSpec(d).generateDecayAnimationSpec<Float>()
-		}
-	}
-
-	val velocity = LocalDensity.current.run { remember(this) { 100.dp.toPx() } }
-
-	val scope = rememberCoroutineScope()
-	return scope.launch {
-		playlistViewModel.finishPlaylistEdit()
-		playlistDrawerState.animateToWithDecay(SlideOutState.Closed, velocity, decayAnimationSpec = decaySpec)
-	}.toPromise()
-}
 
 @Composable
 fun BrowserLibraryDestination.NowPlayingBrowserView(browserViewDependencies: ScopedViewModelDependencies) {
@@ -187,8 +161,8 @@ fun BrowserLibraryDestination.NowPlayingBrowserView(browserViewDependencies: Sco
 	}
 
 	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-		val halfWidth = maxWidth / 2
-		val halfWidthPx = LocalDensity.current.run { halfWidth.toPx() }
+		val maxBrowserWidth = if (maxWidth > maxHeight) maxWidth / 2 else maxWidth
+		val maxBrowserWidthPx = LocalDensity.current.run { maxBrowserWidth.toPx() }
 
 		val maxWidthPx = LocalDensity.current.run { maxWidth.toPx() }
 
@@ -203,31 +177,29 @@ fun BrowserLibraryDestination.NowPlayingBrowserView(browserViewDependencies: Sco
 			AnchoredDraggableState(
 				initialValue = browserDragValue,
 				anchors = DraggableAnchors {
-					SlideOutState.Closed at -halfWidthPx
+					SlideOutState.Closed at -maxBrowserWidthPx
 					SlideOutState.Open at 0f
 				},
-//					positionalThreshold = { d -> d * .5f },
-//					velocityThreshold = { 100.dp.toPx() },
-//					snapAnimationSpec = tween(),
-//					decayAnimationSpec = exponentialDecay(),
-//					confirmValueChange = { newValue ->
-//						previousBrowserDragValue = browserDragValue
-//						browserDragValue = newValue
-//						true
-//					}
 			)
 		}
 
-		val browserDrawerOffset by LocalDensity.current.run {
-			remember {
-				derivedStateOf {
-					browserDrawerState.requireOffset().toDp()
-				}
+		DisposableEffect(maxWidthPx) {
+			browserDrawerState.updateAnchors(DraggableAnchors {
+				SlideOutState.Closed at -maxWidthPx
+				SlideOutState.Open at 0f
+			})
+
+			onDispose { }
+		}
+
+		val browserDrawerOffset by LocalDensity.current.remember(browserDrawerState) {
+			derivedStateOf {
+				browserDrawerState.requireOffset().toDp()
 			}
 		}
 
-		val nowPlayingWidth by remember { derivedStateOf { (halfWidth - browserDrawerOffset).coerceAtMost(maxWidth) } }
-		val nowPlayingOffset by remember { derivedStateOf { halfWidth + browserDrawerOffset } }
+		val nowPlayingWidth by remember { derivedStateOf { (maxBrowserWidth - browserDrawerOffset).coerceAtMost(maxWidth) } }
+		val nowPlayingOffset by remember { derivedStateOf { maxBrowserWidth + browserDrawerOffset } }
 
 		var playlistDragValue by rememberSaveable { mutableStateOf(SlideOutState.Closed) }
 
@@ -237,18 +209,23 @@ fun BrowserLibraryDestination.NowPlayingBrowserView(browserViewDependencies: Sco
 					initialValue = playlistDragValue,
 					anchors = DraggableAnchors {
 						SlideOutState.Closed at maxWidthPx
-						SlideOutState.Open at halfWidthPx
-					},
-					positionalThreshold = { d -> d * .5f },
-					velocityThreshold = { 100.dp.toPx() },
-					snapAnimationSpec = tween(),
-					decayAnimationSpec = exponentialDecay(),
-					confirmValueChange = { newValue ->
-						playlistDragValue = newValue
-						true
+						SlideOutState.Open at maxBrowserWidthPx
 					}
 				)
 			}
+		}
+
+		DisposableEffect(maxWidthPx, maxBrowserWidthPx) {
+			playlistDrawerState.updateAnchors(DraggableAnchors {
+				SlideOutState.Closed at maxWidthPx
+				SlideOutState.Open at maxBrowserWidthPx
+			})
+
+			onDispose { }
+		}
+
+		LaunchedEffect(playlistDrawerState) {
+			snapshotFlow { playlistDrawerState.currentValue }.collect { playlistDragValue = it }
 		}
 
 		suspend fun hidePlaylist() {
@@ -275,230 +252,240 @@ fun BrowserLibraryDestination.NowPlayingBrowserView(browserViewDependencies: Sco
 			}
 		}
 
-		if (isBrowserOpen) {
-			Box(
-				modifier = Modifier
-					.offset { IntOffset(x = browserDrawerOffset.roundToPx(), y = 0) }
-					.width(halfWidth)
-					.fillMaxHeight()
-					.focusGroup()
-			) {
-				val screenDimensions = ScreenDimensionsScope(
-                    this@BoxWithConstraints.maxHeight,
-                    this@BoxWithConstraints.maxWidth,
-                    this@BoxWithConstraints,
-                )
-				screenDimensions.NavigateToTvLibraryDestination(this@NowPlayingBrowserView, browserViewDependencies)
-			}
-		} else {
-			BackHandler {
-				scope.launch {
-					when {
-						playlistDrawerState.currentValue == SlideOutState.Open -> {
-							hidePlaylist()
-						}
-
-						browserDrawerState.currentValue == SlideOutState.Closed -> {
-							browserDrawerState.animateTo(SlideOutState.Open)
-						}
-					}
-				}
-			}
-		}
-
 		Box(
 			modifier = Modifier
-				.width(nowPlayingWidth)
-				.offset { IntOffset(x = nowPlayingOffset.roundToPx(), y = 0) }
-				.fillMaxHeight()
 				.anchoredDraggable(
 					browserDrawerState,
 					orientation = Orientation.Horizontal,
 				)
-				.focusGroup()
 		) {
-			ControlSurface(
-				color = Color.Transparent,
-				contentColor = Color.White,
-				controlColor = Color.White,
-			) {
-
-				NowPlayingCoverArtView(
-                    nowPlayingCoverArtViewModel = browserViewDependencies.nowPlayingCoverArtViewModel,
-                    bitmapProducer = browserViewDependencies.bitmapProducer,
-                )
-
+			if (isBrowserOpen) {
 				Box(
 					modifier = Modifier
-						.fillMaxSize()
-						.background(SharedColors.overlayDark),
+						.offset { IntOffset(x = browserDrawerOffset.roundToPx(), y = 0) }
+						.width(maxBrowserWidth)
+						.fillMaxHeight()
+						.focusGroup()
 				) {
-					with (browserViewDependencies) {
-						DisposableEffect(Unit) {
-							nowPlayingScreenViewModel.alwaysShowControls()
+					val screenDimensions = ScreenDimensionsScope(
+						this@BoxWithConstraints.maxHeight,
+						this@BoxWithConstraints.maxWidth,
+						this@BoxWithConstraints,
+					)
+					screenDimensions.NavigateToTvLibraryDestination(this@NowPlayingBrowserView, browserViewDependencies)
+				}
+			} else {
+				BackHandler {
+					scope.launch {
+						when {
+							playlistDrawerState.currentValue == SlideOutState.Open -> {
+								hidePlaylist()
+							}
 
-							onDispose {
-								nowPlayingScreenViewModel.disableAlwaysShowingControls()
+							browserDrawerState.currentValue == SlideOutState.Closed -> {
+								browserDrawerState.animateTo(SlideOutState.Open)
 							}
 						}
+					}
+				}
+			}
 
-						val isPlaylistOpen by remember {
-							derivedStateOf {
-								playlistDrawerState.targetValue == SlideOutState.Open
-									|| playlistDrawerState.currentValue == SlideOutState.Open
+			Box(
+				modifier = Modifier
+					.width(nowPlayingWidth)
+					.offset { IntOffset(x = nowPlayingOffset.roundToPx(), y = 0) }
+					.fillMaxHeight()
+					.focusGroup()
+			) {
+				ControlSurface(
+					color = Color.Transparent,
+					contentColor = Color.White,
+					controlColor = Color.White,
+				) {
+
+					NowPlayingCoverArtView(
+						nowPlayingCoverArtViewModel = browserViewDependencies.nowPlayingCoverArtViewModel,
+						bitmapProducer = browserViewDependencies.bitmapProducer,
+					)
+
+					Box(
+						modifier = Modifier
+							.fillMaxSize()
+							.background(SharedColors.overlayDark),
+					) {
+						with(browserViewDependencies) {
+							DisposableEffect(Unit) {
+								nowPlayingScreenViewModel.alwaysShowControls()
+
+								onDispose {
+									nowPlayingScreenViewModel.disableAlwaysShowingControls()
+								}
 							}
-						}
 
-						val nowPlayingControlsWidth by remember {
-							derivedStateOf {
-								nowPlayingWidth.coerceAtMost(playlistDrawerOffset)
+							val isPlaylistOpen by remember {
+								derivedStateOf {
+									playlistDrawerState.targetValue == SlideOutState.Open
+										|| playlistDrawerState.currentValue == SlideOutState.Open
+								}
 							}
-						}
 
-						Box(
-							modifier = Modifier
-								.fillMaxHeight()
-								.width(nowPlayingControlsWidth)
-								.focusGroup()
-						) {
-							NowPlayingHeadline(
-                                modifier = Modifier.fillMaxWidth(),
-                                nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel
-                            )
+							val nowPlayingControlsWidth by remember {
+								derivedStateOf {
+									nowPlayingWidth.coerceAtMost(playlistDrawerOffset)
+								}
+							}
 
-							Column(modifier = Modifier
-								.align(Alignment.BottomCenter)
-								.fillMaxWidth()
+							Box(
+								modifier = Modifier
+									.fillMaxHeight()
+									.width(nowPlayingControlsWidth)
+									.focusGroup()
 							) {
-								Row(
-									verticalAlignment = Alignment.CenterVertically,
+								NowPlayingHeadline(
+									modifier = Modifier.fillMaxWidth(),
+									nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel
+								)
+
+								Column(
+									modifier = Modifier
+										.align(Alignment.BottomCenter)
+										.fillMaxWidth()
 								) {
-									Image(
-										painter = painterResource(
-											if (browserDragValue == SlideOutState.Open) R.drawable.baseline_fullscreen_36
-											else R.drawable.baseline_fullscreen_exit_36),
-										alpha = playlistControlAlpha,
-										contentDescription = stringResource(R.string.btn_hide_files),
-										modifier = Modifier
-											.navigable(onClick = {
-												scope.launch {
-													browserDrawerState.animateTo(
-														if (browserDragValue == SlideOutState.Open) SlideOutState.Closed
-														else SlideOutState.Open
+									Row(
+										verticalAlignment = Alignment.CenterVertically,
+									) {
+										Image(
+											painter = painterResource(
+												if (browserDragValue == SlideOutState.Open) R.drawable.baseline_fullscreen_36
+												else R.drawable.baseline_fullscreen_exit_36
+											),
+											alpha = playlistControlAlpha,
+											contentDescription = stringResource(R.string.btn_hide_files),
+											modifier = Modifier
+												.navigable(onClick = {
+													scope.launch {
+														browserDrawerState.animateTo(
+															if (browserDragValue == SlideOutState.Open) SlideOutState.Closed
+															else SlideOutState.Open
+														)
+													}
+												})
+										)
+
+										NowPlayingRating(
+											nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+											nowPlayingScreenViewModel = nowPlayingScreenViewModel,
+											modifier = Modifier.weight(1f)
+										)
+
+										val nowPlayingOpenProgress by remember {
+											derivedStateOf {
+												with(playlistDrawerState) {
+													calculateProgress(
+														anchors.positionOf(SlideOutState.Closed),
+														anchors.positionOf(SlideOutState.Open),
+														requireOffset()
 													)
 												}
-											})
-									)
-
-                                    NowPlayingRating(
-                                        nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-                                        nowPlayingScreenViewModel = nowPlayingScreenViewModel,
-                                        modifier = Modifier.weight(1f)
-                                    )
-
-									val nowPlayingOpenProgress by remember {
-										derivedStateOf {
-											with (playlistDrawerState) {
-												calculateProgress(
-													anchors.positionOf(SlideOutState.Closed),
-													anchors.positionOf(SlideOutState.Open),
-													requireOffset()
-												)
 											}
 										}
+
+										val browserChevronRotation by remember {
+											derivedStateOf {
+												(-90 + (180 * nowPlayingOpenProgress)).coerceIn(-90f, 180f)
+											}
+										}
+										Image(
+											painter = painterResource(R.drawable.chevron_up_white_36dp),
+											alpha = playlistControlAlpha,
+											contentDescription = stringResource(R.string.btn_hide_files),
+											modifier = Modifier
+												.navigable(onClick = {
+													if (playlistDrawerState.currentValue == SlideOutState.Open) {
+														scope.launch {
+															hidePlaylist()
+														}
+														scope.launch {
+															browserDrawerState.animateTo(previousBrowserDragValue)
+														}
+													} else {
+														scope.launch {
+															playlistDrawerState.animateTo(SlideOutState.Open)
+														}
+														scope.launch {
+															browserDrawerState.animateTo(SlideOutState.Closed)
+														}
+													}
+												})
+												.rotate(browserChevronRotation),
+										)
 									}
 
-									val browserChevronRotation by remember { derivedStateOf { (-90 + (180 * nowPlayingOpenProgress)).coerceIn(-90f, 180f) } }
-									Image(
-										painter = painterResource(R.drawable.chevron_up_white_36dp),
-										alpha = playlistControlAlpha,
-										contentDescription = stringResource(R.string.btn_hide_files),
-										modifier = Modifier
-											.navigable(onClick = {
-												if (playlistDrawerState.currentValue == SlideOutState.Open) {
-													scope.launch {
-														hidePlaylist()
-													}
-													scope.launch {
-														browserDrawerState.animateTo(previousBrowserDragValue)
-													}
-												} else {
-													scope.launch {
-														playlistDrawerState.animateTo(SlideOutState.Open)
-													}
-													scope.launch {
-														browserDrawerState.animateTo(SlideOutState.Closed)
-													}
-												}
-											})
-											.rotate(browserChevronRotation),
+									Spacer(modifier = Modifier.height(ProgressIndicatorDefaults.StrokeWidth))
+
+									NowPlayingPlaybackControls(
+										nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+										playbackServiceController = playbackServiceController,
 									)
 								}
 
-								Spacer(modifier = Modifier.height(ProgressIndicatorDefaults.StrokeWidth))
-
-                                NowPlayingPlaybackControls(
-                                    nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-                                    playbackServiceController = playbackServiceController,
-                                )
-							}
-
-                            NowPlayingProgressIndicator(
-                                nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-                                modifier = Modifier
-									.fillMaxWidth()
-									.align(Alignment.BottomCenter)
-									.padding(bottom = controlRowHeight)
-                            )
-						}
-
-						DisposableEffect(key1 = playlistDrawerState.currentValue) {
-							if (playlistDrawerState.currentValue == SlideOutState.Closed) {
-								nowPlayingPlaylistViewModel.enableSystemAutoScrolling()
-							} else {
-								nowPlayingPlaylistViewModel.disableSystemAutoScrolling()
-								nowPlayingPlaylistViewModel.enableUserAutoScrolling()
-							}
-
-							onDispose {
-								nowPlayingPlaylistViewModel.disableSystemAutoScrolling()
-							}
-						}
-
-						if (isPlaylistOpen) {
-							Column(
-								modifier = Modifier
-									.fillMaxHeight()
-									.width(halfWidth)
-									.offset { IntOffset(x = playlistDrawerOffset.roundToPx(), y = 0) }
-									.background(SharedColors.overlayDark)
-									.onFocusChanged { state ->
-										if (state.hasFocus)
-											nowPlayingPlaylistViewModel.lockOutAutoScroll()
-										else
-											nowPlayingPlaylistViewModel.releaseAutoScroll()
-									}
-									.focusGroup(),
-								horizontalAlignment = Alignment.CenterHorizontally,
-							) {
-								PlaylistControls(
-                                    modifier = Modifier
+								NowPlayingProgressIndicator(
+									nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+									modifier = Modifier
 										.fillMaxWidth()
-										.height(Dimensions.appBarHeight),
-                                    playlistViewModel = nowPlayingPlaylistViewModel,
-                                    viewModelMessageBus = nowPlayingViewModelMessageBus,
-                                    undoBackStack = undoBackStackBuilder,
-                                )
-
-								NowPlayingTvPlaylist(
-									reusablePlaylistFileItemViewModelProvider,
-									nowPlayingFilePropertiesViewModel,
-									applicationNavigation,
-									playbackServiceController,
-									nowPlayingPlaylistViewModel,
-									viewModelMessageBus = nowPlayingViewModelMessageBus,
-									modifier = Modifier.fillMaxHeight(),
+										.align(Alignment.BottomCenter)
+										.padding(bottom = controlRowHeight)
 								)
+							}
+
+							DisposableEffect(key1 = playlistDrawerState.currentValue) {
+								if (playlistDrawerState.currentValue == SlideOutState.Closed) {
+									nowPlayingPlaylistViewModel.enableSystemAutoScrolling()
+								} else {
+									nowPlayingPlaylistViewModel.disableSystemAutoScrolling()
+									nowPlayingPlaylistViewModel.enableUserAutoScrolling()
+								}
+
+								onDispose {
+									nowPlayingPlaylistViewModel.disableSystemAutoScrolling()
+								}
+							}
+
+							if (isPlaylistOpen) {
+								Column(
+									modifier = Modifier
+										.fillMaxHeight()
+										.width(maxBrowserWidth)
+										.offset { IntOffset(x = playlistDrawerOffset.roundToPx(), y = 0) }
+										.background(SharedColors.overlayDark)
+										.onFocusChanged { state ->
+											if (state.hasFocus)
+												nowPlayingPlaylistViewModel.lockOutAutoScroll()
+											else
+												nowPlayingPlaylistViewModel.releaseAutoScroll()
+										}
+										.focusGroup(),
+									horizontalAlignment = Alignment.CenterHorizontally,
+								) {
+									PlaylistControls(
+										modifier = Modifier
+											.fillMaxWidth()
+											.height(Dimensions.appBarHeight),
+										playlistViewModel = nowPlayingPlaylistViewModel,
+										viewModelMessageBus = nowPlayingViewModelMessageBus,
+										undoBackStack = undoBackStackBuilder,
+									)
+
+									NowPlayingTvPlaylist(
+										reusablePlaylistFileItemViewModelProvider,
+										nowPlayingFilePropertiesViewModel,
+										applicationNavigation,
+										playbackServiceController,
+										nowPlayingPlaylistViewModel,
+										viewModelMessageBus = nowPlayingViewModelMessageBus,
+										modifier = Modifier.fillMaxHeight(),
+									)
+								}
 							}
 						}
 					}
