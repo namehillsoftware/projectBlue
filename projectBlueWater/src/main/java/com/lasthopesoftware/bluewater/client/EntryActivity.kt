@@ -18,7 +18,6 @@ import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.android.ui.ProjectBlueComposableApplication
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingTvApplication
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
@@ -106,7 +105,7 @@ class EntryActivity :
 			val isDarkTheme = theme == ApplicationSettings.Theme.DARK || (theme == ApplicationSettings.Theme.SYSTEM && isSystemInDarkTheme())
 			if (!isInLeanbackMode) {
 				ProjectBlueComposableApplication(darkTheme = isDarkTheme) {
-					HandheldApplication(
+					ResponsiveApplication(
 						entryDependencies = browserViewDependencies,
 						permissionsDependencies = this,
 						initialDestination = getDestination(intent),
@@ -115,7 +114,7 @@ class EntryActivity :
 			} else {
 				AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
 				ProjectBlueComposableApplication(darkTheme = isDarkTheme) {
-					NowPlayingTvApplication(
+					ResponsiveApplication(
 						entryDependencies = browserViewDependencies,
 						permissionsDependencies = this,
 						initialDestination = getDestination(intent),
