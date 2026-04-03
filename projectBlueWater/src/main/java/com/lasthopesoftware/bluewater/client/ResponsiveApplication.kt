@@ -16,20 +16,29 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.AlertDialog
+import androidx.compose.material.BottomSheetScaffold
 import androidx.compose.material.Button
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProgressIndicatorDefaults
 import androidx.compose.material.Text
+import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -47,23 +56,29 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.coerceAtMost
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.android.ui.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.android.ui.SlideOutState
 import com.lasthopesoftware.bluewater.android.ui.calculateProgress
 import com.lasthopesoftware.bluewater.android.ui.components.PaddedSystemScreenBox
+import com.lasthopesoftware.bluewater.android.ui.isNarrow
 import com.lasthopesoftware.bluewater.android.ui.navigable
 import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.DetermineWindowControlColors
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.appBarHeight
+import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.bottomSheetElevation
 import com.lasthopesoftware.bluewater.android.ui.theme.SharedColors
 import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ReusedViewModelRegistry
@@ -82,6 +97,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationGrap
 import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsFromNowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.HiddenSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryDestination
+import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryMenu
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NewConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.RoutedNavigationDependencies
@@ -89,6 +105,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.SearchedFileDet
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SelectedLibraryReRouter
 import com.lasthopesoftware.bluewater.client.browsing.registerBackNav
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionDependents
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.client.connection.libraries.RateLimitedFilePropertiesDependencies
 import com.lasthopesoftware.bluewater.client.connection.libraries.RetryingLibraryConnectionRegistry
@@ -122,17 +139,187 @@ import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
 import com.lasthopesoftware.promises.extensions.suspend
-import com.lasthopesoftware.view.ScreenDimensionsScope
-import com.lasthopesoftware.view.isNarrow
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.rememberNavController
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 
 private val logger by lazy { LoggerFactory.getLogger("ResponsiveApplication") }
 
+@Composable
+private fun BrowserLibraryDestination.Navigate(
+	browserViewDependencies: ScopedViewModelDependencies,
+	libraryConnectionDependencies: LibraryConnectionDependents,
+) {
+	with(browserViewDependencies) {
+		BoxWithConstraints(
+			modifier = Modifier
+				.fillMaxSize()
+				.background(Color.Black)
+		) screenBox@{
 
+			val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
+			val layoutDirection = LocalLayoutDirection.current
+			Column(
+				modifier = Modifier
+					.padding(
+						start = systemBarsPadding.calculateStartPadding(layoutDirection),
+						end = systemBarsPadding.calculateEndPadding(layoutDirection),
+						bottom = systemBarsPadding.calculateBottomPadding(),
+					)
+					.fillMaxSize()
+			) {
+				Spacer(
+					modifier = Modifier
+						.windowInsetsTopHeight(WindowInsets.systemBars)
+						.fillMaxWidth()
+						.background(MaterialTheme.colors.surface)
+				)
+
+				val scaffoldState = rememberBottomSheetScaffoldState()
+
+				val isBottomSheetCollapsed = scaffoldState.bottomSheetState.isCollapsed
+				val scope = rememberCoroutineScope()
+				DisposableEffect(isBottomSheetCollapsed) {
+					if (isBottomSheetCollapsed) {
+						onDispose { }
+					} else {
+						val collapseAction = {
+							scope.async {
+								if (scaffoldState.bottomSheetState.isCollapsed) false
+								else {
+									scaffoldState.bottomSheetState.collapse()
+									true
+								}
+							}.toPromise()
+						}
+
+						undoBackStackBuilder.addAction(collapseAction)
+
+						onDispose { undoBackStackBuilder.removeAction(collapseAction) }
+					}
+				}
+				val selectedLibraryId by selectedLibraryViewModel.selectedLibraryId.subscribeAsState()
+				val isSelectedLibrary by remember { derivedStateOf { selectedLibraryId == libraryId } }
+
+				BottomSheetScaffold(
+					modifier = Modifier.weight(1f),
+					scaffoldState = scaffoldState,
+					sheetPeekHeight = if (isSelectedLibrary) appBarHeight else 0.dp,
+					sheetElevation = bottomSheetElevation,
+					sheetContent = {
+						if (isSelectedLibrary) {
+							LibraryMenu(
+								applicationNavigation = applicationNavigation,
+								nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+								playbackServiceController = playbackServiceController,
+								bottomSheetState = scaffoldState.bottomSheetState,
+								libraryId = libraryId,
+							)
+
+							LaunchedEffect(key1 = libraryId) {
+								try {
+									nowPlayingFilePropertiesViewModel.initializeViewModel(libraryId).suspend()
+								} catch (e: Throwable) {
+									when {
+										ConnectionLostExceptionFilter.isConnectionLostException(e) -> {
+											libraryConnectionDependencies.pollForConnections.pollConnection(libraryId)
+										}
+
+										UncaughtExceptionHandlerLogger.uncaughtException(e) -> {
+											exceptionAnnouncer.announce(e)
+										}
+									}
+								}
+							}
+						}
+					}
+				) { paddingValues ->
+					BoxWithConstraints(modifier = Modifier.padding(paddingValues)) nestedBox@{
+						val screenScope = ScreenDimensionsScope(
+							screenHeight = this@screenBox.maxHeight,
+							screenWidth = this@screenBox.maxWidth,
+							innerBoxScope = this@nestedBox
+						)
+
+						screenScope.NavigateToTvLibraryDestination(this@Navigate, browserViewDependencies)
+					}
+				}
+			}
+		}
+	}
+}
+
+@Composable
+@OptIn(ExperimentalFoundationApi::class)
+private fun LibraryDestination.Navigate(browserViewDependencies: ScopedViewModelDependencies) {
+	when (this) {
+		is BrowserLibraryDestination -> {
+			NowPlayingBrowserView(browserViewDependencies = browserViewDependencies)
+		}
+
+		is BrowsedFileDetailsScreen -> {
+			val viewModel = browserViewDependencies.browsedFileDetailsViewModel
+
+			FileDetailsView(
+				viewModel = viewModel,
+				navigateApplication = browserViewDependencies.applicationNavigation,
+				bitmapProducer = browserViewDependencies.bitmapProducer,
+				playableFileDetailsState = viewModel,
+			)
+
+			viewModel.load(libraryId, item, positionedFile)
+		}
+
+		is SearchedFileDetailsScreen -> {
+			val viewModel = browserViewDependencies.searchedFileDetailsViewModel
+
+			FileDetailsView(
+				viewModel = viewModel,
+				navigateApplication = browserViewDependencies.applicationNavigation,
+				bitmapProducer = browserViewDependencies.bitmapProducer,
+				playableFileDetailsState = viewModel,
+			)
+
+			viewModel.load(libraryId, query, positionedFile)
+		}
+
+		is FileDetailsFromNowPlayingScreen -> {
+			val viewModel = browserViewDependencies.nowPlayingFileDetailsViewModel
+
+			FileDetailsView(
+				viewModel = viewModel,
+				navigateApplication = browserViewDependencies.applicationNavigation,
+				bitmapProducer = browserViewDependencies.bitmapProducer,
+				nowPlayingFileDetailsSate = viewModel,
+				playableFileDetailsState = viewModel,
+			)
+
+			viewModel.load(libraryId, positionedFile)
+		}
+
+		is ConnectionSettingsScreen -> {
+			with(browserViewDependencies) {
+				PaddedSystemScreenBox {
+					val viewModel = librarySettingsViewModel
+					LibrarySettingsView(
+						librarySettingsViewModel = viewModel,
+						navigateApplication = applicationNavigation,
+						stringResources = stringResources,
+						userSslCertificates = userSslCertificateProvider,
+						undoBackStack = undoBackStackBuilder,
+					)
+					viewModel.loadLibrary(libraryId)
+				}
+			}
+		}
+
+		is NowPlayingScreen -> {}
+	}
+}
 
 @Composable
 fun BrowserLibraryDestination.NowPlayingBrowserView(browserViewDependencies: ScopedViewModelDependencies) {
@@ -164,7 +351,7 @@ fun BrowserLibraryDestination.NowPlayingBrowserView(browserViewDependencies: Sco
 	}
 
 	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-		val maxBrowserWidth = if (isNarrow()) maxWidth else maxWidth / 2
+		val maxBrowserWidth = if (isNarrow) maxWidth else maxWidth / 2
 		val maxBrowserWidthPx = LocalDensity.current.remember { maxBrowserWidth.toPx() }
 
 		val maxWidthPx = LocalDensity.current.remember { maxWidth.toPx() }
@@ -270,7 +457,7 @@ fun BrowserLibraryDestination.NowPlayingBrowserView(browserViewDependencies: Sco
 						.fillMaxHeight()
 						.focusGroup()
 				) {
-					if (this@BoxWithConstraints.isNarrow()) {
+					if (this@BoxWithConstraints.isNarrow) {
 						this@NowPlayingBrowserView.Navigate(browserViewDependencies, browserViewDependencies)
 					} else {
 						val screenDimensions = ScreenDimensionsScope(
@@ -477,7 +664,7 @@ fun BrowserLibraryDestination.NowPlayingBrowserView(browserViewDependencies: Sco
 									PlaylistControls(
 										modifier = Modifier
 											.fillMaxWidth()
-											.height(Dimensions.appBarHeight),
+											.height(appBarHeight),
 										playlistViewModel = nowPlayingPlaylistViewModel,
 										viewModelMessageBus = nowPlayingViewModelMessageBus,
 										undoBackStack = undoBackStackBuilder,
@@ -535,74 +722,6 @@ fun BrowserLibraryDestination.NowPlayingBrowserView(browserViewDependencies: Sco
 				dismissOnBackPress = true,
 			)
 		)
-	}
-}
-
-@Composable
-@OptIn(ExperimentalFoundationApi::class)
-private fun LibraryDestination.Navigate(browserViewDependencies: ScopedViewModelDependencies) {
-	when (this) {
-		is BrowserLibraryDestination -> {
-			NowPlayingBrowserView(browserViewDependencies = browserViewDependencies)
-		}
-
-		is BrowsedFileDetailsScreen -> {
-			val viewModel = browserViewDependencies.browsedFileDetailsViewModel
-
-			FileDetailsView(
-				viewModel = viewModel,
-				navigateApplication = browserViewDependencies.applicationNavigation,
-				bitmapProducer = browserViewDependencies.bitmapProducer,
-				playableFileDetailsState = viewModel,
-			)
-
-			viewModel.load(libraryId, item, positionedFile)
-		}
-
-		is SearchedFileDetailsScreen -> {
-			val viewModel = browserViewDependencies.searchedFileDetailsViewModel
-
-			FileDetailsView(
-				viewModel = viewModel,
-				navigateApplication = browserViewDependencies.applicationNavigation,
-				bitmapProducer = browserViewDependencies.bitmapProducer,
-				playableFileDetailsState = viewModel,
-			)
-
-			viewModel.load(libraryId, query, positionedFile)
-		}
-
-		is FileDetailsFromNowPlayingScreen -> {
-			val viewModel = browserViewDependencies.nowPlayingFileDetailsViewModel
-
-			FileDetailsView(
-				viewModel = viewModel,
-				navigateApplication = browserViewDependencies.applicationNavigation,
-				bitmapProducer = browserViewDependencies.bitmapProducer,
-				nowPlayingFileDetailsSate = viewModel,
-				playableFileDetailsState = viewModel,
-			)
-
-			viewModel.load(libraryId, positionedFile)
-		}
-
-		is ConnectionSettingsScreen -> {
-			with(browserViewDependencies) {
-				PaddedSystemScreenBox {
-					val viewModel = librarySettingsViewModel
-					LibrarySettingsView(
-						librarySettingsViewModel = viewModel,
-						navigateApplication = applicationNavigation,
-						stringResources = stringResources,
-						userSslCertificates = userSslCertificateProvider,
-						undoBackStack = undoBackStackBuilder,
-					)
-					viewModel.loadLibrary(libraryId)
-				}
-			}
-		}
-
-		is NowPlayingScreen -> {}
 	}
 }
 

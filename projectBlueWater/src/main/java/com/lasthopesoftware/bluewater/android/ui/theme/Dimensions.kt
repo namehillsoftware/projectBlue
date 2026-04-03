@@ -15,6 +15,7 @@ object Dimensions {
 	val listItemMenuIconSize = 36.dp
 	val expandedTitleHeight = 84.dp
 	val viewPaddingUnit = 4.dp
+	val bottomSheetElevation = 16.dp
 	val topRowOuterPadding by lazy(LazyThreadSafetyMode.NONE) { viewPaddingUnit * 4 }
 	val topMenuHeight by lazy(LazyThreadSafetyMode.NONE) { topMenuIconSize + viewPaddingUnit * 6 }
 	val topMenuIconWidth by lazy(LazyThreadSafetyMode.NONE) { topMenuHeight * 2 }
