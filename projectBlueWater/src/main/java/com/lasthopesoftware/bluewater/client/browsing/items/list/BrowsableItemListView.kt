@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.lasthopesoftware.bluewater.NavigateApplication
+import com.lasthopesoftware.bluewater.android.ui.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.DetermineWindowControlColors
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
@@ -25,7 +26,6 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseables
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.ViewModelInitAction
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.GetStringResources
-import com.lasthopesoftware.view.ScreenDimensionsScope
 import java.io.IOException
 
 @Composable
