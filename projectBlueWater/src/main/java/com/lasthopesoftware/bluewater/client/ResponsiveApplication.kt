@@ -131,6 +131,8 @@ import org.slf4j.LoggerFactory
 
 private val logger by lazy { LoggerFactory.getLogger("ResponsiveApplication") }
 
+
+
 @Composable
 fun BrowserLibraryDestination.NowPlayingBrowserView(browserViewDependencies: ScopedViewModelDependencies) {
 	LaunchedEffect(key1 = libraryId) {
@@ -161,7 +163,8 @@ fun BrowserLibraryDestination.NowPlayingBrowserView(browserViewDependencies: Sco
 	}
 
 	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-		val maxBrowserWidth = if (maxWidth > maxHeight) maxWidth / 2 else maxWidth
+		val isNarrow = LocalDensity.current.remember { maxWidth < maxHeight }
+		val maxBrowserWidth = if (isNarrow) maxWidth else maxWidth / 2
 		val maxBrowserWidthPx = LocalDensity.current.run { maxBrowserWidth.toPx() }
 
 		val maxWidthPx = LocalDensity.current.run { maxWidth.toPx() }
@@ -267,12 +270,16 @@ fun BrowserLibraryDestination.NowPlayingBrowserView(browserViewDependencies: Sco
 						.fillMaxHeight()
 						.focusGroup()
 				) {
-					val screenDimensions = ScreenDimensionsScope(
-						this@BoxWithConstraints.maxHeight,
-						this@BoxWithConstraints.maxWidth,
-						this@BoxWithConstraints,
-					)
-					screenDimensions.NavigateToTvLibraryDestination(this@NowPlayingBrowserView, browserViewDependencies)
+					if (isNarrow) {
+						this@NowPlayingBrowserView.Navigate(browserViewDependencies, browserViewDependencies)
+					} else {
+						val screenDimensions = ScreenDimensionsScope(
+							this@BoxWithConstraints.maxHeight,
+							this@BoxWithConstraints.maxWidth,
+							this@BoxWithConstraints,
+						)
+						screenDimensions.NavigateToTvLibraryDestination(this@NowPlayingBrowserView, browserViewDependencies)
+					}
 				}
 			} else {
 				BackHandler {
