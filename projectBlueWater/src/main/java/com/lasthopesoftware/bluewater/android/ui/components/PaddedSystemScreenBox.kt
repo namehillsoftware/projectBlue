@@ -17,7 +17,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.ScreenDimensionsScope
+import com.lasthopesoftware.view.ScreenDimensionsScope
 
 @Composable
 fun PaddedSystemScreenBox(
