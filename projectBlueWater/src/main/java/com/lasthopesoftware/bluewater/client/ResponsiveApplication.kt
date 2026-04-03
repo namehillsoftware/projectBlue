@@ -104,7 +104,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingProgressIndicator
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingRating
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.PlaylistControls
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.SkipNowPlayingNavigation
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.components.NowPlayingTvItemView
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.controlRowHeight
@@ -123,6 +122,8 @@ import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
 import com.lasthopesoftware.promises.extensions.suspend
+import com.lasthopesoftware.view.ScreenDimensionsScope
+import com.lasthopesoftware.view.isNarrow
 import com.namehillsoftware.handoff.promises.Promise
 import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.rememberNavController
@@ -163,11 +164,10 @@ fun BrowserLibraryDestination.NowPlayingBrowserView(browserViewDependencies: Sco
 	}
 
 	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-		val isNarrow = LocalDensity.current.remember { maxWidth < maxHeight }
-		val maxBrowserWidth = if (isNarrow) maxWidth else maxWidth / 2
-		val maxBrowserWidthPx = LocalDensity.current.run { maxBrowserWidth.toPx() }
+		val maxBrowserWidth = if (isNarrow()) maxWidth else maxWidth / 2
+		val maxBrowserWidthPx = LocalDensity.current.remember { maxBrowserWidth.toPx() }
 
-		val maxWidthPx = LocalDensity.current.run { maxWidth.toPx() }
+		val maxWidthPx = LocalDensity.current.remember { maxWidth.toPx() }
 
 		var previousBrowserDragValue by rememberSaveable {
 			mutableStateOf(SlideOutState.Open)
@@ -176,7 +176,7 @@ fun BrowserLibraryDestination.NowPlayingBrowserView(browserViewDependencies: Sco
 			mutableStateOf(SlideOutState.Open)
 		}
 
-		val browserDrawerState = remember {
+		val browserDrawerState = remember(browserDragValue) {
 			AnchoredDraggableState(
 				initialValue = browserDragValue,
 				anchors = DraggableAnchors {
@@ -186,9 +186,9 @@ fun BrowserLibraryDestination.NowPlayingBrowserView(browserViewDependencies: Sco
 			)
 		}
 
-		DisposableEffect(maxWidthPx) {
+		DisposableEffect(maxBrowserWidthPx) {
 			browserDrawerState.updateAnchors(DraggableAnchors {
-				SlideOutState.Closed at -maxWidthPx
+				SlideOutState.Closed at -maxBrowserWidthPx
 				SlideOutState.Open at 0f
 			})
 
@@ -270,7 +270,7 @@ fun BrowserLibraryDestination.NowPlayingBrowserView(browserViewDependencies: Sco
 						.fillMaxHeight()
 						.focusGroup()
 				) {
-					if (isNarrow) {
+					if (this@BoxWithConstraints.isNarrow()) {
 						this@NowPlayingBrowserView.Navigate(browserViewDependencies, browserViewDependencies)
 					} else {
 						val screenDimensions = ScreenDimensionsScope(

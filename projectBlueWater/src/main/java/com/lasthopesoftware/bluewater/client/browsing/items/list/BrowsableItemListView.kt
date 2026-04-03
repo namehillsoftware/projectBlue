@@ -19,7 +19,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.UndoStack
@@ -27,6 +26,7 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseables
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.ViewModelInitAction
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.GetStringResources
+import com.lasthopesoftware.view.ScreenDimensionsScope
 import java.io.IOException
 
 @Composable

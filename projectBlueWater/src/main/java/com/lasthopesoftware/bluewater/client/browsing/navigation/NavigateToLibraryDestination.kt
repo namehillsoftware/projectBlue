@@ -12,10 +12,10 @@ import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencie
 import com.lasthopesoftware.bluewater.client.browsing.files.list.search.SearchFilesView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsView
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.ViewModelInitAction
 import com.lasthopesoftware.promises.extensions.suspend
+import com.lasthopesoftware.view.ScreenDimensionsScope
 import java.io.IOException
 
 @Composable

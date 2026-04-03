@@ -76,7 +76,6 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
@@ -121,6 +120,7 @@ import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.toState
 import com.lasthopesoftware.resources.bitmaps.ProduceBitmaps
+import com.lasthopesoftware.view.ScreenDimensionsScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
@@ -128,9 +128,6 @@ val controlRowHeight = 72.dp
 const val playlistControlAlpha = .8f
 val minimumMenuWidth = Dimensions.listItemMenuIconSize * 3
 const val disabledAlpha = .6f
-
-class ScreenDimensionsScope(val screenHeight: Dp, val screenWidth: Dp, innerBoxScope: BoxWithConstraintsScope) :
-	BoxWithConstraintsScope by innerBoxScope
 
 @Composable
 fun NowPlayingCoverArtView(

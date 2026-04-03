@@ -19,6 +19,7 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionF
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsView
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.ViewModelInitAction
 import com.lasthopesoftware.promises.extensions.suspend
+import com.lasthopesoftware.view.ScreenDimensionsScope
 import java.io.IOException
 
 @Composable
