@@ -129,7 +129,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingProgressIndicator
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingRating
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.PlaylistControls
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.components.NowPlayingTvItemView
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.components.NowPlayingItemView
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.controlRowHeight
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.playlistControlAlpha
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
@@ -272,7 +272,7 @@ fun ScreenDimensionsScope.NavigateToBrowserLibraryDestination(
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
-private fun ScopedViewModelDependencies.Navigate(destination: LibraryDestination) {
+private fun Navigate(destination: LibraryDestination, scopedViewModelDependencies: ScopedViewModelDependencies): Unit = scopedViewModelDependencies.run {
 	when (destination) {
 		is BrowserLibraryDestination, is NowPlayingScreen -> {
 			val libraryId = destination.libraryId
@@ -420,7 +420,6 @@ private fun ScopedViewModelDependencies.Navigate(destination: LibraryDestination
 										.fillMaxSize()
 										.background(Color.Black)
 								) screenBox@{
-
 									val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 									val layoutDirection = LocalLayoutDirection.current
 									Column(
@@ -512,7 +511,7 @@ private fun ScopedViewModelDependencies.Navigate(destination: LibraryDestination
 												screenScope.NavigateToBrowserLibraryDestination(
 													destination as? BrowserLibraryDestination
 														?: LibraryScreen(destination.libraryId),
-													this@Navigate,
+													this@run,
 												)
 											}
 										}
@@ -527,7 +526,7 @@ private fun ScopedViewModelDependencies.Navigate(destination: LibraryDestination
 								screenScope.NavigateToBrowserLibraryDestination(
 									destination as? BrowserLibraryDestination
 										?: LibraryScreen(destination.libraryId),
-									this@Navigate,
+									this@run,
 								)
 							}
 						}
@@ -910,7 +909,7 @@ fun NowPlayingTvPlaylist(
 		val artist by fileItemViewModel.artist.subscribeAsState()
 		val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
 
-		NowPlayingTvItemView(
+		NowPlayingItemView(
 			itemName = fileName,
 			artist = artist,
 			isActive = isPlaying,
@@ -1078,7 +1077,7 @@ fun ResponsiveApplication(
 							)
 						}
 						?.registerBackNav()
-						?.Navigate(destination)
+						?.also { Navigate(destination, it) }
 				}
 				is ApplicationSettingsScreen -> {
 					Box(
