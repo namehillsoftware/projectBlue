@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
@@ -15,8 +14,9 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -32,21 +32,21 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 
 private val rowHeight = Dimensions.twoLineRowHeight
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun DragDropItemScope.NowPlayingItemView(
+private fun NowPlayingItemView(
 	itemName: String,
 	artist: String,
 	isActive: Boolean = false,
 	isEditingPlaylist: Boolean = false,
 	isHiddenMenuShown: Boolean = false,
+	menuFocusRequester: FocusRequester? = null,
 	onItemClick: () -> Unit = {},
-	onHiddenMenuClick: () -> Unit = {},
-	onRemoveFromNowPlayingClick: () -> Unit = {},
-	onViewFilesClick: () -> Unit = {},
 	onPlayClick: () -> Unit = {},
+	onViewFilesClick: () -> Unit = {},
+	onHiddenMenuClick: (() -> Unit)? = null,
+	onRemoveFromNowPlayingClick: (() -> Unit)? = null,
+	editSideMenu: @Composable () -> Unit = {},
 ) {
-
 	val hapticFeedback = LocalHapticFeedback.current
 
 	if (!isHiddenMenuShown) {
@@ -55,13 +55,18 @@ fun DragDropItemScope.NowPlayingItemView(
 				.navigable(
 					interactionSource = remember { MutableInteractionSource() },
 					indication = null,
-					onLongClick = {
-						hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+					onLongClick = onHiddenMenuClick?.run {
+						{
+							hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
 
-						onHiddenMenuClick()
+							invoke()
+						}
 					},
 					onClickLabel = stringResource(id = R.string.btn_view_song_details),
-					onClick = onItemClick,
+					onClick = {
+						if (menuFocusRequester != null && isEditingPlaylist) menuFocusRequester.requestFocus()
+						else onItemClick()
+					},
 					focusedBorderColor = Color.White,
 					unfocusedBorderColor = Color.Transparent,
 				)
@@ -92,13 +97,7 @@ fun DragDropItemScope.NowPlayingItemView(
 			}
 
 			if (isEditingPlaylist) {
-				Image(
-					painter = painterResource(id = R.drawable.drag),
-					contentDescription = stringResource(id = R.string.drag_item),
-					modifier = Modifier
-						.padding(Dimensions.viewPaddingUnit)
-						.detectDrag(),
-				)
+				editSideMenu()
 			}
 		}
 	} else {
@@ -108,14 +107,15 @@ fun DragDropItemScope.NowPlayingItemView(
 				.padding(Dimensions.rowPaddingValues),
 			verticalAlignment = Alignment.CenterVertically,
 		) {
-			ListItemIcon(
-				painter = painterResource(id = R.drawable.remove_item_36dp),
-				contentDescription = stringResource(id = R.string.btn_remove_file),
-				modifier = Modifier
-					.fillMaxWidth()
-					.weight(1f)
-					.clickable { onRemoveFromNowPlayingClick() },
-			)
+			onRemoveFromNowPlayingClick?.also {
+				ListItemIcon(
+					painter = painterResource(id = R.drawable.remove_item_36dp),
+					contentDescription = stringResource(id = R.string.btn_remove_file),
+					modifier = Modifier
+						.weight(1f)
+						.clickable(onClick = it),
+				)
+			}
 
 			ListItemIcon(
 				painter = painterResource(id = R.drawable.ic_menu_36dp),
@@ -136,4 +136,138 @@ fun DragDropItemScope.NowPlayingItemView(
 			)
 		}
 	}
+}
+
+@Composable
+fun DragDropItemScope.NowPlayingItemView(
+	itemName: String,
+	artist: String,
+	isActive: Boolean = false,
+	isEditingPlaylist: Boolean = false,
+	isHiddenMenuShown: Boolean = false,
+	onItemClick: () -> Unit = {},
+	onPlayClick: () -> Unit = {},
+	onViewFilesClick: () -> Unit = {},
+	onHiddenMenuClick: (() -> Unit)? = null,
+	onRemoveFromNowPlayingClick: (() -> Unit)? = null,
+	onMoveItemUp: (() -> Unit)? = null,
+	onMoveItemDown: (() -> Unit)? = null,
+) {
+	val menuFocusRequester = remember { FocusRequester() }
+	NowPlayingItemView(
+		itemName = itemName,
+		artist = artist,
+		isActive = isActive,
+		isEditingPlaylist = isEditingPlaylist,
+		isHiddenMenuShown = isHiddenMenuShown,
+		menuFocusRequester = menuFocusRequester,
+		onItemClick = onItemClick,
+		onPlayClick = onPlayClick,
+		onViewFilesClick = onViewFilesClick,
+		onHiddenMenuClick = onHiddenMenuClick,
+		onRemoveFromNowPlayingClick = onRemoveFromNowPlayingClick,
+		editSideMenu = {
+			onMoveItemUp?.also {
+				ListItemIcon(
+					painter = painterResource(id = R.drawable.chevron_up_white_36dp),
+					contentDescription = "Move Item Up",
+					modifier = Modifier
+						.navigable(
+							onClick = it,
+							focusRequester = menuFocusRequester
+						),
+				)
+			}
+
+			onMoveItemDown?.also {
+				ListItemIcon(
+					painter = painterResource(id = R.drawable.chevron_up_white_36dp),
+					contentDescription = "Move Item Down",
+					modifier = Modifier
+						.rotate(180f)
+						.navigable(onClick = it),
+				)
+			}
+
+			onRemoveFromNowPlayingClick?.also {
+				ListItemIcon(
+					painter = painterResource(id = R.drawable.remove_item_36dp),
+					contentDescription = stringResource(id = R.string.btn_remove_file),
+					modifier = Modifier
+						.navigable(onClick = it),
+				)
+			}
+
+			ListItemIcon(
+				painter = painterResource(id = R.drawable.drag),
+				contentDescription = stringResource(id = R.string.drag_item),
+				modifier = Modifier
+					.padding(Dimensions.viewPaddingUnit)
+					.detectDrag(),
+			)
+		}
+	)
+}
+
+@Composable
+fun NowPlayingItemView(
+	itemName: String,
+	artist: String,
+	isActive: Boolean = false,
+	isEditingPlaylist: Boolean = false,
+	isHiddenMenuShown: Boolean = false,
+	onItemClick: () -> Unit = {},
+	onPlayClick: () -> Unit = {},
+	onViewFilesClick: () -> Unit = {},
+	onHiddenMenuClick: (() -> Unit)? = null,
+	onRemoveFromNowPlayingClick: (() -> Unit)? = null,
+	onMoveItemUp: (() -> Unit)? = null,
+	onMoveItemDown: (() -> Unit)? = null,
+) {
+	val menuFocusRequester = remember { FocusRequester() }
+	NowPlayingItemView(
+		itemName = itemName,
+		artist = artist,
+		isActive = isActive,
+		isEditingPlaylist = isEditingPlaylist,
+		isHiddenMenuShown = isHiddenMenuShown,
+		menuFocusRequester = menuFocusRequester,
+		onItemClick = onItemClick,
+		onPlayClick = onPlayClick,
+		onViewFilesClick = onViewFilesClick,
+		onHiddenMenuClick = onHiddenMenuClick,
+		onRemoveFromNowPlayingClick = onRemoveFromNowPlayingClick,
+		editSideMenu = {
+			onMoveItemUp?.also {
+				ListItemIcon(
+					painter = painterResource(id = R.drawable.chevron_up_white_36dp),
+					contentDescription = "Move Item Up",
+					modifier = Modifier
+						.navigable(
+							onClick = it,
+							focusRequester = menuFocusRequester
+						),
+				)
+			}
+
+			onMoveItemDown?.also {
+				ListItemIcon(
+					painter = painterResource(id = R.drawable.chevron_up_white_36dp),
+					contentDescription = "Move Item Down",
+					modifier = Modifier
+						.rotate(180f)
+						.navigable(onClick = it),
+				)
+			}
+
+			onRemoveFromNowPlayingClick?.also {
+				ListItemIcon(
+					painter = painterResource(id = R.drawable.remove_item_36dp),
+					contentDescription = stringResource(id = R.string.btn_remove_file),
+					modifier = Modifier
+						.navigable(onClick = it),
+				)
+			}
+		}
+	)
 }

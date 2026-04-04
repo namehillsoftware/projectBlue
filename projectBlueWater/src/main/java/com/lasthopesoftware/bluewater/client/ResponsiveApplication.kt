@@ -28,9 +28,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsTopHeight
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.BottomSheetScaffold
@@ -65,7 +64,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.android.ui.SlideOutState
@@ -85,7 +83,6 @@ import com.lasthopesoftware.bluewater.client.browsing.ReusedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsView
-import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.files.list.search.SearchFilesView
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
@@ -121,30 +118,22 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.RetryingLibrar
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingCoverArtView
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingHeadline
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingPlaybackControls
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingPlaylist
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingProgressIndicator
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingRating
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.PlaylistControls
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.components.NowPlayingTvItemView
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.controlRowHeight
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.playlistControlAlpha
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
-import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsView
 import com.lasthopesoftware.bluewater.exceptions.UncaughtExceptionHandlerLogger
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
-import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
-import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.ViewModelInitAction
-import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
 import com.lasthopesoftware.promises.extensions.suspend
@@ -272,7 +261,7 @@ fun ScreenDimensionsScope.NavigateToBrowserLibraryDestination(
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
-private fun ScopedViewModelDependencies.Navigate(destination: LibraryDestination) {
+private fun Navigate(destination: LibraryDestination, scopedViewModelDependencies: ScopedViewModelDependencies): Unit = scopedViewModelDependencies.run {
 	when (destination) {
 		is BrowserLibraryDestination, is NowPlayingScreen -> {
 			val libraryId = destination.libraryId
@@ -384,8 +373,6 @@ private fun ScopedViewModelDependencies.Navigate(destination: LibraryDestination
 					}
 				}
 
-				val scope = rememberCoroutineScope()
-
 				val isBrowserOpen by remember {
 					derivedStateOf {
 						browserDrawerState.targetValue == SlideOutState.Open
@@ -393,12 +380,13 @@ private fun ScopedViewModelDependencies.Navigate(destination: LibraryDestination
 					}
 				}
 
-				if (destination is NowPlayingScreen) {
+				if (isNarrow && destination is NowPlayingScreen) {
 					LaunchedEffect(destination) {
 						browserDrawerState.animateTo(SlideOutState.Closed)
 					}
 				}
 
+				val playlistListState = rememberLazyListState()
 				Box(
 					modifier = Modifier
 						.anchoredDraggable(
@@ -406,6 +394,7 @@ private fun ScopedViewModelDependencies.Navigate(destination: LibraryDestination
 							orientation = Orientation.Horizontal,
 						)
 				) {
+					val scope = rememberCoroutineScope()
 					if (isBrowserOpen) {
 						Box(
 							modifier = Modifier
@@ -420,7 +409,6 @@ private fun ScopedViewModelDependencies.Navigate(destination: LibraryDestination
 										.fillMaxSize()
 										.background(Color.Black)
 								) screenBox@{
-
 									val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 									val layoutDirection = LocalLayoutDirection.current
 									Column(
@@ -512,7 +500,7 @@ private fun ScopedViewModelDependencies.Navigate(destination: LibraryDestination
 												screenScope.NavigateToBrowserLibraryDestination(
 													destination as? BrowserLibraryDestination
 														?: LibraryScreen(destination.libraryId),
-													this@Navigate,
+													this@run,
 												)
 											}
 										}
@@ -527,7 +515,7 @@ private fun ScopedViewModelDependencies.Navigate(destination: LibraryDestination
 								screenScope.NavigateToBrowserLibraryDestination(
 									destination as? BrowserLibraryDestination
 										?: LibraryScreen(destination.libraryId),
-									this@Navigate,
+									this@run,
 								)
 							}
 						}
@@ -549,7 +537,6 @@ private fun ScopedViewModelDependencies.Navigate(destination: LibraryDestination
 
 					Box(
 						modifier = Modifier
-							.width(nowPlayingWidth)
 							.offset { IntOffset(x = nowPlayingOffset.roundToPx(), y = 0) }
 							.fillMaxHeight()
 							.focusGroup()
@@ -559,190 +546,216 @@ private fun ScopedViewModelDependencies.Navigate(destination: LibraryDestination
 							contentColor = Color.White,
 							controlColor = Color.White,
 						) {
-
 							NowPlayingCoverArtView(
 								nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
 								bitmapProducer = bitmapProducer,
 							)
 
-							Box(
-								modifier = Modifier
-									.fillMaxSize()
-									.background(SharedColors.overlayDark),
-							) {
-								DisposableEffect(Unit) {
-									nowPlayingScreenViewModel.alwaysShowControls()
-
-									onDispose {
-										nowPlayingScreenViewModel.disableAlwaysShowingControls()
-									}
-								}
-
-								val isPlaylistOpen by remember {
-									derivedStateOf {
-										playlistDrawerState.targetValue == SlideOutState.Open
-											|| playlistDrawerState.currentValue == SlideOutState.Open
-									}
-								}
-
-								val nowPlayingControlsWidth by remember {
-									derivedStateOf {
-										nowPlayingWidth.coerceAtMost(playlistDrawerOffset)
-									}
-								}
+							Column {
+								Spacer(
+									modifier = Modifier
+										.windowInsetsTopHeight(WindowInsets.systemBars)
+										.fillMaxWidth()
+										.background(SharedColors.overlayDark)
+								)
 
 								Box(
 									modifier = Modifier
-										.fillMaxHeight()
-										.width(nowPlayingControlsWidth)
-										.focusGroup()
+										.fillMaxWidth()
+										.weight(1f)
+										.background(SharedColors.overlayDark),
 								) {
-									NowPlayingHeadline(
-										modifier = Modifier.fillMaxWidth(),
-										nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel
-									)
+									DisposableEffect(Unit) {
+										nowPlayingScreenViewModel.alwaysShowControls()
 
-									Column(
+										onDispose {
+											nowPlayingScreenViewModel.disableAlwaysShowingControls()
+										}
+									}
+
+									val isPlaylistOpen by remember {
+										derivedStateOf {
+											playlistDrawerState.targetValue == SlideOutState.Open
+												|| playlistDrawerState.currentValue == SlideOutState.Open
+										}
+									}
+
+									val nowPlayingControlsWidth by remember {
+										derivedStateOf {
+											nowPlayingWidth.coerceAtMost(playlistDrawerOffset)
+										}
+									}
+
+									Box(
 										modifier = Modifier
-											.align(Alignment.BottomCenter)
-											.fillMaxWidth()
+											.fillMaxHeight()
+											.width(nowPlayingControlsWidth)
+											.focusGroup()
 									) {
-										Row(
-											verticalAlignment = Alignment.CenterVertically,
+										NowPlayingHeadline(
+											modifier = Modifier.fillMaxWidth(),
+											nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel
+										)
+
+										Column(
+											modifier = Modifier
+												.align(Alignment.BottomCenter)
+												.fillMaxWidth()
 										) {
-											Image(
-												painter = painterResource(
-													if (browserDragValue == SlideOutState.Open) R.drawable.baseline_fullscreen_36
-													else R.drawable.baseline_fullscreen_exit_36
-												),
-												alpha = playlistControlAlpha,
-												contentDescription = stringResource(R.string.btn_hide_files),
-												modifier = Modifier
-													.navigable(onClick = {
-														scope.launch {
-															browserDrawerState.animateTo(
-																if (browserDragValue == SlideOutState.Open) SlideOutState.Closed
-																else SlideOutState.Open
+											Row(
+												verticalAlignment = Alignment.CenterVertically,
+											) {
+												Image(
+													painter = painterResource(
+														if (browserDragValue == SlideOutState.Open) R.drawable.baseline_fullscreen_36
+														else R.drawable.baseline_fullscreen_exit_36
+													),
+													alpha = playlistControlAlpha,
+													contentDescription = stringResource(R.string.btn_hide_files),
+													modifier = Modifier
+														.navigable(onClick = {
+															scope.launch {
+																browserDrawerState.animateTo(
+																	if (browserDragValue == SlideOutState.Open) SlideOutState.Closed
+																	else SlideOutState.Open
+																)
+															}
+														})
+												)
+
+												NowPlayingRating(
+													nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+													nowPlayingScreenViewModel = nowPlayingScreenViewModel,
+													modifier = Modifier.weight(1f)
+												)
+
+												val nowPlayingOpenProgress by remember {
+													derivedStateOf {
+														with(playlistDrawerState) {
+															calculateProgress(
+																anchors.positionOf(SlideOutState.Closed),
+																anchors.positionOf(SlideOutState.Open),
+																requireOffset()
 															)
 														}
-													})
-											)
-
-											NowPlayingRating(
-												nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-												nowPlayingScreenViewModel = nowPlayingScreenViewModel,
-												modifier = Modifier.weight(1f)
-											)
-
-											val nowPlayingOpenProgress by remember {
-												derivedStateOf {
-													with(playlistDrawerState) {
-														calculateProgress(
-															anchors.positionOf(SlideOutState.Closed),
-															anchors.positionOf(SlideOutState.Open),
-															requireOffset()
-														)
 													}
 												}
+
+												val browserChevronRotation by remember {
+													derivedStateOf {
+														(-90 + (180 * nowPlayingOpenProgress)).coerceIn(-90f, 180f)
+													}
+												}
+												Image(
+													painter = painterResource(R.drawable.chevron_up_white_36dp),
+													alpha = playlistControlAlpha,
+													contentDescription = stringResource(R.string.btn_hide_files),
+													modifier = Modifier
+														.navigable(onClick = {
+															if (playlistDrawerState.currentValue == SlideOutState.Open) {
+																scope.launch {
+																	hidePlaylist()
+																}
+																scope.launch {
+																	browserDrawerState.animateTo(
+																		previousBrowserDragValue
+																	)
+																}
+															} else {
+																scope.launch {
+																	playlistDrawerState.animateTo(SlideOutState.Open)
+																}
+																scope.launch {
+																	browserDrawerState.animateTo(SlideOutState.Closed)
+																}
+															}
+														})
+														.rotate(browserChevronRotation),
+												)
 											}
 
-											val browserChevronRotation by remember {
-												derivedStateOf {
-													(-90 + (180 * nowPlayingOpenProgress)).coerceIn(-90f, 180f)
-												}
-											}
-											Image(
-												painter = painterResource(R.drawable.chevron_up_white_36dp),
-												alpha = playlistControlAlpha,
-												contentDescription = stringResource(R.string.btn_hide_files),
-												modifier = Modifier
-													.navigable(onClick = {
-														if (playlistDrawerState.currentValue == SlideOutState.Open) {
-															scope.launch {
-																hidePlaylist()
-															}
-															scope.launch {
-																browserDrawerState.animateTo(previousBrowserDragValue)
-															}
-														} else {
-															scope.launch {
-																playlistDrawerState.animateTo(SlideOutState.Open)
-															}
-															scope.launch {
-																browserDrawerState.animateTo(SlideOutState.Closed)
-															}
-														}
-													})
-													.rotate(browserChevronRotation),
+											Spacer(modifier = Modifier.height(ProgressIndicatorDefaults.StrokeWidth))
+
+											NowPlayingPlaybackControls(
+												nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+												playbackServiceController = playbackServiceController,
 											)
 										}
 
-										Spacer(modifier = Modifier.height(ProgressIndicatorDefaults.StrokeWidth))
-
-										NowPlayingPlaybackControls(
+										NowPlayingProgressIndicator(
 											nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-											playbackServiceController = playbackServiceController,
-										)
-									}
-
-									NowPlayingProgressIndicator(
-										nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-										modifier = Modifier
-											.fillMaxWidth()
-											.align(Alignment.BottomCenter)
-											.padding(bottom = controlRowHeight)
-									)
-								}
-
-								DisposableEffect(key1 = playlistDrawerState.currentValue) {
-									if (playlistDrawerState.currentValue == SlideOutState.Closed) {
-										nowPlayingPlaylistViewModel.enableSystemAutoScrolling()
-									} else {
-										nowPlayingPlaylistViewModel.disableSystemAutoScrolling()
-										nowPlayingPlaylistViewModel.enableUserAutoScrolling()
-									}
-
-									onDispose {
-										nowPlayingPlaylistViewModel.disableSystemAutoScrolling()
-									}
-								}
-
-								if (isPlaylistOpen) {
-									Column(
-										modifier = Modifier
-											.fillMaxHeight()
-											.width(maxBrowserWidth)
-											.offset { IntOffset(x = playlistDrawerOffset.roundToPx(), y = 0) }
-											.background(SharedColors.overlayDark)
-											.onFocusChanged { state ->
-												if (state.hasFocus)
-													nowPlayingPlaylistViewModel.lockOutAutoScroll()
-												else
-													nowPlayingPlaylistViewModel.releaseAutoScroll()
-											}
-											.focusGroup(),
-										horizontalAlignment = Alignment.CenterHorizontally,
-									) {
-										PlaylistControls(
 											modifier = Modifier
 												.fillMaxWidth()
-												.height(appBarHeight),
-											playlistViewModel = nowPlayingPlaylistViewModel,
-											viewModelMessageBus = nowPlayingViewModelMessageBus,
-											undoBackStack = undoBackStackBuilder,
-										)
-
-										NowPlayingTvPlaylist(
-											reusablePlaylistFileItemViewModelProvider,
-											nowPlayingFilePropertiesViewModel,
-											applicationNavigation,
-											playbackServiceController,
-											nowPlayingPlaylistViewModel,
-											viewModelMessageBus = nowPlayingViewModelMessageBus,
-											modifier = Modifier.fillMaxHeight(),
+												.align(Alignment.BottomCenter)
+												.padding(bottom = controlRowHeight)
 										)
 									}
+
+									DisposableEffect(key1 = playlistDrawerState.currentValue) {
+										if (playlistDrawerState.currentValue == SlideOutState.Closed) {
+											nowPlayingPlaylistViewModel.enableSystemAutoScrolling()
+										} else {
+											nowPlayingPlaylistViewModel.disableSystemAutoScrolling()
+											nowPlayingPlaylistViewModel.enableUserAutoScrolling()
+										}
+
+										onDispose {
+											nowPlayingPlaylistViewModel.disableSystemAutoScrolling()
+										}
+									}
+
+									if (isPlaylistOpen) {
+										Column(
+											modifier = Modifier
+												.fillMaxHeight()
+												.width(maxBrowserWidth)
+												.offset { IntOffset(x = playlistDrawerOffset.roundToPx(), y = 0) }
+												.background(SharedColors.overlayDark)
+												.onFocusChanged { state ->
+													if (state.hasFocus)
+														nowPlayingPlaylistViewModel.lockOutAutoScroll()
+													else
+														nowPlayingPlaylistViewModel.releaseAutoScroll()
+												}
+												.focusGroup(),
+											horizontalAlignment = Alignment.CenterHorizontally,
+										) {
+											PlaylistControls(
+												modifier = Modifier
+													.fillMaxWidth()
+													.height(appBarHeight),
+												playlistViewModel = nowPlayingPlaylistViewModel,
+												viewModelMessageBus = nowPlayingViewModelMessageBus,
+												undoBackStack = undoBackStackBuilder,
+											)
+
+											NowPlayingPlaylist(
+												reusablePlaylistFileItemViewModelProvider,
+												nowPlayingFilePropertiesViewModel,
+												applicationNavigation,
+												playbackServiceController,
+												itemListMenuBackPressedHandler,
+												nowPlayingPlaylistViewModel,
+												nowPlayingViewModelMessageBus,
+												undoBackStackBuilder,
+												playlistListState,
+												modifier = Modifier
+													.fillMaxHeight()
+													.onFocusChanged { f ->
+														if (f.hasFocus) nowPlayingPlaylistViewModel.lockOutAutoScroll()
+														else nowPlayingPlaylistViewModel.releaseAutoScroll()
+													},
+											)
+										}
+									}
 								}
+
+								Spacer(
+									modifier = Modifier
+										.windowInsetsBottomHeight(WindowInsets.systemBars)
+										.fillMaxWidth()
+										.background(SharedColors.overlayDark)
+								)
 							}
 						}
 					}
@@ -847,119 +860,6 @@ private fun ScopedViewModelDependencies.Navigate(destination: LibraryDestination
 	}
 }
 
-
-@Composable
-fun NowPlayingTvPlaylist(
-    childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
-    nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
-    applicationNavigation: NavigateApplication,
-    playbackServiceController: ControlPlaybackService,
-    playlistViewModel: NowPlayingPlaylistViewModel,
-    viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
-    modifier: Modifier = Modifier,
-) {
-	val nowPlayingFiles by playlistViewModel.nowPlayingList.subscribeAsState()
-	val activeLibraryId by nowPlayingFilePropertiesViewModel.activeLibraryId.subscribeAsState()
-
-	val lazyListState = rememberLazyListState()
-
-	val playingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.subscribeAsState()
-
-	val isAutoScrollEnabled by playlistViewModel.isAutoScrolling.subscribeAsState()
-	if (isAutoScrollEnabled) {
-		LaunchedEffect(key1 = playingFile) {
-			playingFile?.apply {
-				if (!lazyListState.isScrollInProgress)
-					lazyListState.scrollToItem(playlistPosition)
-			}
-		}
-	}
-
-	val scope = rememberCoroutineScope()
-	DisposableEffect(key1 = Unit) {
-		val registration = viewModelMessageBus.registerReceiver { _: NowPlayingMessage.ScrollToNowPlaying ->
-			scope.launch {
-				playingFile?.apply {
-					lazyListState.scrollToItem(playlistPosition)
-				}
-			}
-		}
-
-		onDispose {
-			registration.close()
-		}
-	}
-
-	val isEditing by playlistViewModel.isEditingPlaylist.subscribeAsState()
-
-	@Composable
-	fun NowPlayingFileView(positionedFile: PositionedFile) {
-		val fileItemViewModel = remember(childItemViewModelProvider::getViewModel)
-
-		DisposableEffect(activeLibraryId, positionedFile) {
-			activeLibraryId?.also {
-				fileItemViewModel.promiseUpdate(it, positionedFile.serviceFile)
-			}
-
-			onDispose {
-				fileItemViewModel.reset()
-			}
-		}
-
-		val fileName by fileItemViewModel.title.subscribeAsState()
-		val artist by fileItemViewModel.artist.subscribeAsState()
-		val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
-
-		NowPlayingTvItemView(
-			itemName = fileName,
-			artist = artist,
-			isActive = isPlaying,
-			isEditingPlaylist = isEditing,
-			onMoveItemUp = {
-				activeLibraryId?.let {
-					val currentPosition = positionedFile.playlistPosition
-					val newPosition = currentPosition - 1
-					playlistViewModel.swapFiles(currentPosition, newPosition)
-					playbackServiceController.moveFile(it, currentPosition, newPosition)
-				}
-			},
-			onMoveItemDown = {
-				activeLibraryId?.let {
-					val currentPosition = positionedFile.playlistPosition
-					val newPosition = currentPosition + 1
-					playlistViewModel.swapFiles(currentPosition, newPosition)
-					playbackServiceController.moveFile(it, currentPosition, newPosition)
-				}
-			},
-			onItemClick = {
-				activeLibraryId?.also {
-					applicationNavigation.viewNowPlayingFileDetails(it, positionedFile)
-				}
-			},
-			onRemoveFromNowPlayingClick = {
-				activeLibraryId?.also {
-					playbackServiceController
-						.removeFromPlaylistAtPosition(it, positionedFile.playlistPosition)
-				}
-			}
-		)
-	}
-
-	LazyColumn(
-		state = lazyListState,
-		modifier = Modifier
-			.focusGroup()
-			.onFocusChanged { f ->
-				if (f.hasFocus) playlistViewModel.lockOutAutoScroll()
-				else playlistViewModel.releaseAutoScroll()
-			}
-			.then(modifier),
-	) {
-		items(items = nowPlayingFiles, key = { it }) { f ->
-			NowPlayingFileView(positionedFile = f)
-		}
-	}
-}
 
 @Composable
 fun ResponsiveApplication(
@@ -1078,7 +978,7 @@ fun ResponsiveApplication(
 							)
 						}
 						?.registerBackNav()
-						?.Navigate(destination)
+						?.also { Navigate(destination, it) }
 				}
 				is ApplicationSettingsScreen -> {
 					Box(
