@@ -33,7 +33,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 private val rowHeight = Dimensions.twoLineRowHeight
 
 @Composable
-fun NowPlayingItemView(
+private fun NowPlayingItemView(
 	itemName: String,
 	artist: String,
 	isActive: Boolean = false,

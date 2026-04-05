@@ -1,6 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -12,6 +14,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.platform.LocalInputModeManager
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.android.ui.components.dragging.DragDropItemScope
 import com.lasthopesoftware.bluewater.android.ui.components.dragging.DragDropLazyColumn
@@ -90,69 +94,154 @@ fun NowPlayingPlaylist(
 		}
 	}
 
-	@Composable
-	fun DragDropItemScope.NowPlayingFileView(positionedFile: PositionedFile) {
-		val fileItemViewModel = remember(childItemViewModelProvider::getViewModel)
+	val inputMode = LocalInputModeManager.current
+	if (inputMode.inputMode == InputMode.Touch) {
 
-		DisposableEffect(activeLibraryId, positionedFile) {
-			activeLibraryId?.also {
-				fileItemViewModel.promiseUpdate(it, positionedFile.serviceFile)
+		@Composable
+		fun DragDropItemScope.NowPlayingFileView(positionedFile: PositionedFile) {
+			val fileItemViewModel = remember(childItemViewModelProvider::getViewModel)
+
+			DisposableEffect(activeLibraryId, positionedFile) {
+				activeLibraryId?.also {
+					fileItemViewModel.promiseUpdate(it, positionedFile.serviceFile)
+				}
+
+				onDispose {
+					fileItemViewModel.reset()
+				}
 			}
 
-			onDispose {
-				fileItemViewModel.reset()
+			val isMenuShown by fileItemViewModel.isMenuShown.subscribeAsState()
+			val fileName by fileItemViewModel.title.subscribeAsState()
+			val artist by fileItemViewModel.artist.subscribeAsState()
+			val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
+
+			val viewFilesClickHandler = {
+				activeLibraryId?.also {
+					applicationNavigation.viewNowPlayingFileDetails(it, positionedFile)
+				}
+				Unit
 			}
+
+			val isEditingPlaylist by playlistViewModel.isEditingPlaylist.subscribeAsState()
+			NowPlayingItemView(
+				itemName = fileName,
+				artist = artist,
+				isActive = isPlaying,
+				isEditingPlaylist = isEditingPlaylist,
+				isHiddenMenuShown = isMenuShown,
+				onItemClick = viewFilesClickHandler,
+				onHiddenMenuClick = {
+					if (!isEditingPlaylist) {
+						itemListMenuBackPressedHandler.hideAllMenus()
+						fileItemViewModel.showMenu()
+						undoBackStack.addAction { fileItemViewModel.hideMenu().toPromise() }
+					}
+				},
+				onRemoveFromNowPlayingClick = {
+					activeLibraryId?.also {
+						playbackServiceController
+							.removeFromPlaylistAtPosition(it, positionedFile.playlistPosition)
+					}
+				},
+				onViewFilesClick = viewFilesClickHandler,
+				onPlayClick = {
+					fileItemViewModel.hideMenu()
+					activeLibraryId?.also {
+						playbackServiceController.seekTo(it, positionedFile.playlistPosition)
+					}
+				}
+			)
 		}
 
-		val isMenuShown by fileItemViewModel.isMenuShown.subscribeAsState()
-		val fileName by fileItemViewModel.title.subscribeAsState()
-		val artist by fileItemViewModel.artist.subscribeAsState()
-		val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
-
-		val viewFilesClickHandler = {
-			activeLibraryId?.also {
-				applicationNavigation.viewNowPlayingFileDetails(it, positionedFile)
+		DragDropLazyColumn(
+			dragDropListState = dragDropListState,
+			modifier = modifier,
+		) {
+			dragDropItems(items = nowPlayingFiles, keyFactory = { _, f -> f }) { _, f ->
+				NowPlayingFileView(positionedFile = f)
 			}
-			Unit
+		}
+	} else {
+		@Composable
+		fun NowPlayingFileView(positionedFile: PositionedFile) {
+			val fileItemViewModel = remember(childItemViewModelProvider::getViewModel)
+
+			DisposableEffect(activeLibraryId, positionedFile) {
+				activeLibraryId?.also {
+					fileItemViewModel.promiseUpdate(it, positionedFile.serviceFile)
+				}
+
+				onDispose {
+					fileItemViewModel.reset()
+				}
+			}
+
+			val isMenuShown by fileItemViewModel.isMenuShown.subscribeAsState()
+			val fileName by fileItemViewModel.title.subscribeAsState()
+			val artist by fileItemViewModel.artist.subscribeAsState()
+			val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
+
+			val viewFilesClickHandler = {
+				activeLibraryId?.also {
+					applicationNavigation.viewNowPlayingFileDetails(it, positionedFile)
+				}
+				Unit
+			}
+
+			val isEditingPlaylist by playlistViewModel.isEditingPlaylist.subscribeAsState()
+			NowPlayingItemView(
+				itemName = fileName,
+				artist = artist,
+				isActive = isPlaying,
+				isEditingPlaylist = isEditingPlaylist,
+				isHiddenMenuShown = isMenuShown,
+				onItemClick = viewFilesClickHandler,
+				onHiddenMenuClick = {
+					if (!isEditingPlaylist) {
+						itemListMenuBackPressedHandler.hideAllMenus()
+						fileItemViewModel.showMenu()
+						undoBackStack.addAction { fileItemViewModel.hideMenu().toPromise() }
+					}
+				},
+				onRemoveFromNowPlayingClick = {
+					activeLibraryId?.also {
+						playbackServiceController
+							.removeFromPlaylistAtPosition(it, positionedFile.playlistPosition)
+					}
+				},
+				onViewFilesClick = viewFilesClickHandler,
+				onPlayClick = {
+					fileItemViewModel.hideMenu()
+					activeLibraryId?.also {
+						playbackServiceController.seekTo(it, positionedFile.playlistPosition)
+					}
+				},
+				onMoveItemUp = {
+					activeLibraryId?.let {
+						val currentPosition = positionedFile.playlistPosition
+						val newPosition = currentPosition - 1
+						playlistViewModel.swapFiles(currentPosition, newPosition)
+						playbackServiceController.moveFile(it, currentPosition, newPosition)
+					}
+				},
+				onMoveItemDown = {
+					activeLibraryId?.let {
+						val currentPosition = positionedFile.playlistPosition
+						val newPosition = currentPosition + 1
+						playlistViewModel.swapFiles(currentPosition, newPosition)
+						playbackServiceController.moveFile(it, currentPosition, newPosition)
+					}
+				},
+			)
 		}
 
-		val isEditingPlaylist by playlistViewModel.isEditingPlaylist.subscribeAsState()
-		NowPlayingItemView(
-			itemName = fileName,
-			artist = artist,
-			isActive = isPlaying,
-			isEditingPlaylist = isEditingPlaylist,
-			isHiddenMenuShown = isMenuShown,
-			onItemClick = viewFilesClickHandler,
-			onHiddenMenuClick = {
-				if (!isEditingPlaylist) {
-					itemListMenuBackPressedHandler.hideAllMenus()
-					fileItemViewModel.showMenu()
-					undoBackStack.addAction { fileItemViewModel.hideMenu().toPromise() }
-				}
-			},
-			onRemoveFromNowPlayingClick = {
-				activeLibraryId?.also {
-					playbackServiceController
-						.removeFromPlaylistAtPosition(it, positionedFile.playlistPosition)
-				}
-			},
-			onViewFilesClick = viewFilesClickHandler,
-			onPlayClick = {
-				fileItemViewModel.hideMenu()
-				activeLibraryId?.also {
-					playbackServiceController.seekTo(it, positionedFile.playlistPosition)
-				}
+		LazyColumn(
+			modifier = modifier
+		) {
+			items(items = nowPlayingFiles, key = { it }) {
+				NowPlayingFileView(it)
 			}
-		)
-	}
-
-	DragDropLazyColumn(
-		dragDropListState = dragDropListState,
-		modifier = modifier,
-	) {
-		dragDropItems(items = nowPlayingFiles, keyFactory = { _, f -> f }) { _, f ->
-			NowPlayingFileView(positionedFile = f)
 		}
 	}
 }

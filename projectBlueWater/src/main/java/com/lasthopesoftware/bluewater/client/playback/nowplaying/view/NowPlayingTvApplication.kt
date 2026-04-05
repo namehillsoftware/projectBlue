@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
-import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.tween
@@ -39,7 +38,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.onFocusChanged
@@ -108,9 +106,6 @@ import org.slf4j.LoggerFactory
 
 private val logger by lazy { LoggerFactory.getLogger("NowPlayingTvApplication") }
 
-@SuppressLint("UnusedBoxWithConstraintsScope")
-@OptIn(ExperimentalComposeUiApi::class)
-@ExperimentalFoundationApi
 @Composable
 fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedViewModelDependencies) {
 	LaunchedEffect(key1 = libraryId) {
