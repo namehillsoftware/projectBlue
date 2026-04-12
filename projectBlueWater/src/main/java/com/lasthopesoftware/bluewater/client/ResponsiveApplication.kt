@@ -537,7 +537,6 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 
 					Box(
 						modifier = Modifier
-							.width(nowPlayingWidth)
 							.offset { IntOffset(x = nowPlayingOffset.roundToPx(), y = 0) }
 							.fillMaxHeight()
 							.focusGroup()
@@ -547,7 +546,6 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 							contentColor = Color.White,
 							controlColor = Color.White,
 						) {
-
 							NowPlayingCoverArtView(
 								nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
 								bitmapProducer = bitmapProducer,
