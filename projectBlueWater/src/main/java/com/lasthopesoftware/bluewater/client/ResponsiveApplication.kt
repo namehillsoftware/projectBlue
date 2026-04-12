@@ -373,8 +373,6 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 					}
 				}
 
-				val scope = rememberCoroutineScope()
-
 				val isBrowserOpen by remember {
 					derivedStateOf {
 						browserDrawerState.targetValue == SlideOutState.Open
@@ -382,7 +380,7 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 					}
 				}
 
-				if (destination is NowPlayingScreen) {
+				if (isNarrow && destination is NowPlayingScreen) {
 					LaunchedEffect(destination) {
 						browserDrawerState.animateTo(SlideOutState.Closed)
 					}
@@ -396,6 +394,7 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 							orientation = Orientation.Horizontal,
 						)
 				) {
+					val scope = rememberCoroutineScope()
 					if (isBrowserOpen) {
 						Box(
 							modifier = Modifier
