@@ -148,6 +148,7 @@ import java.io.IOException
 
 private val logger by lazy { LoggerFactory.getLogger("ResponsiveApplication") }
 
+enum class ResponsiveState { Browser, NowPlaying, Playlist }
 
 @Composable
 fun ScreenDimensionsScope.NavigateToBrowserLibraryDestination(
@@ -290,33 +291,37 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 				}
 			}
 
-			BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+			BoxWithConstraints(modifier = Modifier.fillMaxSize()) fullScreen@{
 				val maxBrowserWidth = if (isNarrow) maxWidth else maxWidth / 2
 				val maxBrowserWidthPx = LocalDensity.current.remember { maxBrowserWidth.toPx() }
 
 				val maxWidthPx = LocalDensity.current.remember { maxWidth.toPx() }
 
 				var previousBrowserDragValue by rememberSaveable {
-					mutableStateOf(SlideOutState.Open)
+					mutableStateOf(ResponsiveState.Browser)
 				}
 				var browserDragValue by rememberSaveable {
-					mutableStateOf(SlideOutState.Open)
+					mutableStateOf(ResponsiveState.Browser)
 				}
 
 				val browserDrawerState = remember(browserDragValue) {
 					AnchoredDraggableState(
 						initialValue = browserDragValue,
 						anchors = DraggableAnchors {
-							SlideOutState.Closed at -maxBrowserWidthPx
-							SlideOutState.Open at 0f
+							ResponsiveState.NowPlaying at -maxBrowserWidthPx
+							ResponsiveState.Browser at 0f
 						},
 					)
 				}
 
-				DisposableEffect(maxBrowserWidthPx) {
-					browserDrawerState.updateAnchors(DraggableAnchors {
-						SlideOutState.Closed at -maxBrowserWidthPx
-						SlideOutState.Open at 0f
+				DisposableEffect(maxBrowserWidthPx, isNarrow) {
+					browserDrawerState.updateAnchors(if (isNarrow) DraggableAnchors {
+						ResponsiveState.NowPlaying at -maxBrowserWidthPx
+						ResponsiveState.Browser at 0f
+					} else DraggableAnchors {
+						ResponsiveState.Playlist at -maxWidthPx
+						ResponsiveState.NowPlaying at -maxBrowserWidthPx
+						ResponsiveState.Browser at 0f
 					})
 
 					onDispose { }
@@ -333,16 +338,14 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 
 				var playlistDragValue by rememberSaveable { mutableStateOf(SlideOutState.Closed) }
 
-				val playlistDrawerState = with(LocalDensity.current) {
-					remember {
-						AnchoredDraggableState(
-							initialValue = playlistDragValue,
-							anchors = DraggableAnchors {
-								SlideOutState.Closed at maxWidthPx
-								SlideOutState.Open at maxBrowserWidthPx
-							}
-						)
-					}
+				val playlistDrawerState = remember {
+					AnchoredDraggableState(
+						initialValue = playlistDragValue,
+						anchors = DraggableAnchors {
+							SlideOutState.Closed at maxWidthPx
+							SlideOutState.Open at maxBrowserWidthPx
+						}
+					)
 				}
 
 				DisposableEffect(maxWidthPx, maxBrowserWidthPx) {
@@ -361,6 +364,7 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 				suspend fun hidePlaylist() {
 					nowPlayingPlaylistViewModel.finishPlaylistEdit()
 					playlistDrawerState.animateTo(SlideOutState.Closed)
+					browserDrawerState.animateTo(ResponsiveState.NowPlaying)
 				}
 
 				val playlistDrawerOffset by LocalDensity.current.run {
@@ -373,16 +377,14 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 					}
 				}
 
-				val isBrowserOpen by remember {
-					derivedStateOf {
-						browserDrawerState.targetValue == SlideOutState.Open
-							|| browserDrawerState.currentValue == SlideOutState.Open
-					}
+				val browserOpenProgress by remember(playlistDrawerState) {
+					derivedStateOf { browserDrawerState.progress(ResponsiveState.NowPlaying, ResponsiveState.Browser) }
 				}
+				val isBrowserOpen by remember { derivedStateOf { browserOpenProgress > 0f } }
 
-				if (isNarrow && destination is NowPlayingScreen) {
+				if (destination is NowPlayingScreen) {
 					LaunchedEffect(destination) {
-						browserDrawerState.animateTo(SlideOutState.Closed)
+						browserDrawerState.animateTo(ResponsiveState.NowPlaying)
 					}
 				}
 
@@ -403,7 +405,7 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 								.fillMaxHeight()
 								.focusGroup()
 						) {
-							if (this@BoxWithConstraints.isNarrow) {
+							if (this@fullScreen.isNarrow) {
 								BoxWithConstraints(
 									modifier = Modifier
 										.fillMaxSize()
@@ -508,9 +510,9 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 								}
 							} else {
 								val screenScope = ScreenDimensionsScope(
-									screenHeight = this@BoxWithConstraints.maxHeight,
-									screenWidth = this@BoxWithConstraints.maxWidth,
-									innerBoxScope = this@BoxWithConstraints
+									screenHeight = this@fullScreen.maxHeight,
+									screenWidth = this@fullScreen.maxWidth,
+									innerBoxScope = this@fullScreen
 								)
 								screenScope.NavigateToBrowserLibraryDestination(
 									destination as? BrowserLibraryDestination
@@ -527,8 +529,12 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 										hidePlaylist()
 									}
 
-									browserDrawerState.currentValue == SlideOutState.Closed -> {
-										browserDrawerState.animateTo(SlideOutState.Open)
+									browserDrawerState.currentValue == ResponsiveState.Playlist -> {
+										hidePlaylist()
+									}
+
+									browserDrawerState.currentValue == ResponsiveState.NowPlaying -> {
+										browserDrawerState.animateTo(ResponsiveState.Browser)
 									}
 								}
 							}
@@ -591,7 +597,7 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 											.fillMaxHeight()
 											.width(nowPlayingControlsWidth)
 											.focusGroup()
-									) {
+									) nowPlayingControls@{
 										NowPlayingHeadline(
 											modifier = Modifier.fillMaxWidth(),
 											nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel
@@ -607,7 +613,7 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 											) {
 												Image(
 													painter = painterResource(
-														if (browserDragValue == SlideOutState.Open) R.drawable.baseline_fullscreen_36
+														if (browserDragValue == ResponsiveState.Browser) R.drawable.baseline_fullscreen_36
 														else R.drawable.baseline_fullscreen_exit_36
 													),
 													alpha = playlistControlAlpha,
@@ -616,8 +622,8 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 														.navigable(onClick = {
 															scope.launch {
 																browserDrawerState.animateTo(
-																	if (browserDragValue == SlideOutState.Open) SlideOutState.Closed
-																	else SlideOutState.Open
+																	if (browserDragValue != ResponsiveState.Browser) ResponsiveState.NowPlaying
+																	else ResponsiveState.Browser
 																)
 															}
 														})
@@ -666,7 +672,7 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 																	playlistDrawerState.animateTo(SlideOutState.Open)
 																}
 																scope.launch {
-																	browserDrawerState.animateTo(SlideOutState.Closed)
+																	browserDrawerState.animateTo(ResponsiveState.Browser)
 																}
 															}
 														})

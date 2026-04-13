@@ -472,13 +472,11 @@ private fun BoxWithConstraintsScope.NowPlayingNarrowView(
 
 	val isSettledOnFirstPage by remember { derivedStateOf { playlistOpenProgress == 0f } }
 
-	val decaySpec = LocalDensity.current.let { d ->
-		remember(d) {
-			SplineBasedFloatDecayAnimationSpec(d).generateDecayAnimationSpec<Float>()
-		}
+	val decaySpec = LocalDensity.current.remember {
+		SplineBasedFloatDecayAnimationSpec(this).generateDecayAnimationSpec<Float>()
 	}
 
-	val velocity = LocalDensity.current.run { remember(this) { 100.dp.toPx() } }
+	val velocity = LocalDensity.current.remember { 100.dp.toPx() }
 
 	suspend fun hidePlaylist() {
 		playlistViewModel.finishPlaylistEdit()
