@@ -334,7 +334,7 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 				}
 
 				val nowPlayingWidth by remember { derivedStateOf { (maxBrowserWidth - browserDrawerOffset).coerceAtMost(maxWidth) } }
-				val nowPlayingOffset by remember { derivedStateOf { maxBrowserWidth + browserDrawerOffset } }
+				val nowPlayingOffset by remember { derivedStateOf { (maxBrowserWidth + browserDrawerOffset).coerceAtLeast(0.dp) } }
 
 				var playlistDragValue by rememberSaveable { mutableStateOf(SlideOutState.Closed) }
 
@@ -367,21 +367,6 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 					browserDrawerState.animateTo(ResponsiveState.NowPlaying)
 				}
 
-				val playlistDrawerOffset by LocalDensity.current.run {
-					remember {
-						derivedStateOf {
-							playlistDrawerState
-								.requireOffset()
-								.toDp()
-						}
-					}
-				}
-
-				val browserOpenProgress by remember(playlistDrawerState) {
-					derivedStateOf { browserDrawerState.progress(ResponsiveState.NowPlaying, ResponsiveState.Browser) }
-				}
-				val isBrowserOpen by remember { derivedStateOf { browserOpenProgress > 0f } }
-
 				if (destination is NowPlayingScreen) {
 					LaunchedEffect(destination) {
 						browserDrawerState.animateTo(ResponsiveState.NowPlaying)
@@ -396,6 +381,11 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 							orientation = Orientation.Horizontal,
 						)
 				) {
+					val browserOpenProgress by remember(playlistDrawerState) {
+						derivedStateOf { browserDrawerState.progress(ResponsiveState.NowPlaying, ResponsiveState.Browser) }
+					}
+					val isBrowserOpen by remember { derivedStateOf { browserOpenProgress > 0f } }
+
 					val scope = rememberCoroutineScope()
 					if (isBrowserOpen) {
 						Box(
@@ -579,10 +569,31 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 										}
 									}
 
+									val playlistDrawerProgress by remember(playlistDrawerState) {
+										derivedStateOf {
+											playlistDrawerState.progress(SlideOutState.Closed, SlideOutState.Open)
+										}
+									}
+
+									val responsivePlaylistProgress by remember(browserDrawerState) {
+										derivedStateOf {
+											browserDrawerState.progress(ResponsiveState.NowPlaying, ResponsiveState.Playlist)
+										}
+									}
+
 									val isPlaylistOpen by remember {
 										derivedStateOf {
-											playlistDrawerState.targetValue == SlideOutState.Open
-												|| playlistDrawerState.currentValue == SlideOutState.Open
+											playlistDrawerProgress > 0 || responsivePlaylistProgress > 0
+										}
+									}
+
+									val playlistDrawerOffset by LocalDensity.current.remember(playlistDrawerState) {
+										derivedStateOf {
+											if (playlistDrawerProgress > 0) {
+												playlistDrawerState.requireOffset().toDp()
+											} else {
+												this@fullScreen.maxWidth + maxBrowserWidth + browserDrawerOffset
+											}
 										}
 									}
 
