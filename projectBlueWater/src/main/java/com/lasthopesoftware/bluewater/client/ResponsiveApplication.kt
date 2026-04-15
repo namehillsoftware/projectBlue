@@ -120,6 +120,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.initialization.C
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingCoverArtView
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingHeadline
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingNarrowView
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingPlaybackControls
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingPlaylist
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingProgressIndicator
@@ -555,12 +556,29 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 										.background(SharedColors.overlayDark)
 								)
 
-								Box(
+								BoxWithConstraints(
 									modifier = Modifier
 										.fillMaxWidth()
 										.weight(1f)
 										.background(SharedColors.overlayDark),
-								) {
+								) nowPlayingPane@{
+									if (isNarrow) {
+										NowPlayingNarrowView(
+											nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+											nowPlayingScreenViewModel = nowPlayingScreenViewModel,
+											playbackServiceController = playbackServiceController,
+											playlistViewModel = nowPlayingPlaylistViewModel,
+											childItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+											applicationNavigation = applicationNavigation,
+											itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+											viewModelMessageBus = nowPlayingViewModelMessageBus,
+											undoBackStack = undoBackStackBuilder,
+											lazyListState = playlistListState,
+										)
+
+										return@nowPlayingPane
+									}
+
 									DisposableEffect(Unit) {
 										nowPlayingScreenViewModel.alwaysShowControls()
 
