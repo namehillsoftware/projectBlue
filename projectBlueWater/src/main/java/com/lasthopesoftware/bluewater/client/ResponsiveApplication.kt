@@ -48,7 +48,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -66,8 +65,6 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.ScreenDimensionsScope
-import com.lasthopesoftware.bluewater.android.ui.SlideOutState
-import com.lasthopesoftware.bluewater.android.ui.calculateProgress
 import com.lasthopesoftware.bluewater.android.ui.components.PaddedSystemScreenBox
 import com.lasthopesoftware.bluewater.android.ui.isNarrow
 import com.lasthopesoftware.bluewater.android.ui.navigable
@@ -337,34 +334,8 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 				val nowPlayingWidth by remember { derivedStateOf { (maxBrowserWidth - browserDrawerOffset).coerceAtMost(maxWidth) } }
 				val nowPlayingOffset by remember { derivedStateOf { (maxBrowserWidth + browserDrawerOffset).coerceAtLeast(0.dp) } }
 
-				var playlistDragValue by rememberSaveable { mutableStateOf(SlideOutState.Closed) }
-
-				val playlistDrawerState = remember {
-					AnchoredDraggableState(
-						initialValue = playlistDragValue,
-						anchors = DraggableAnchors {
-							SlideOutState.Closed at maxWidthPx
-							SlideOutState.Open at maxBrowserWidthPx
-						}
-					)
-				}
-
-				DisposableEffect(maxWidthPx, maxBrowserWidthPx) {
-					playlistDrawerState.updateAnchors(DraggableAnchors {
-						SlideOutState.Closed at maxWidthPx
-						SlideOutState.Open at maxBrowserWidthPx
-					})
-
-					onDispose { }
-				}
-
-				LaunchedEffect(playlistDrawerState) {
-					snapshotFlow { playlistDrawerState.currentValue }.collect { playlistDragValue = it }
-				}
-
 				suspend fun hidePlaylist() {
 					nowPlayingPlaylistViewModel.finishPlaylistEdit()
-					playlistDrawerState.animateTo(SlideOutState.Closed)
 					browserDrawerState.animateTo(ResponsiveState.NowPlaying)
 				}
 
@@ -382,7 +353,7 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 							orientation = Orientation.Horizontal,
 						)
 				) {
-					val browserOpenProgress by remember(playlistDrawerState) {
+					val browserOpenProgress by remember(browserDrawerState) {
 						derivedStateOf { browserDrawerState.progress(ResponsiveState.NowPlaying, ResponsiveState.Browser) }
 					}
 					val isBrowserOpen by remember { derivedStateOf { browserOpenProgress > 0f } }
@@ -515,18 +486,10 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 					} else {
 						BackHandler {
 							scope.launch {
-								when {
-									playlistDrawerState.currentValue == SlideOutState.Open -> {
-										hidePlaylist()
-									}
-
-									browserDrawerState.currentValue == ResponsiveState.Playlist -> {
-										hidePlaylist()
-									}
-
-									browserDrawerState.currentValue == ResponsiveState.NowPlaying -> {
-										browserDrawerState.animateTo(ResponsiveState.Browser)
-									}
+								when (browserDrawerState.currentValue) {
+									ResponsiveState.Playlist -> hidePlaylist()
+									ResponsiveState.NowPlaying -> browserDrawerState.animateTo(ResponsiveState.Browser)
+									else -> {}
 								}
 							}
 						}
@@ -587,12 +550,6 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 										}
 									}
 
-									val playlistDrawerProgress by remember(playlistDrawerState) {
-										derivedStateOf {
-											playlistDrawerState.progress(SlideOutState.Closed, SlideOutState.Open)
-										}
-									}
-
 									val responsivePlaylistProgress by remember(browserDrawerState) {
 										derivedStateOf {
 											browserDrawerState.progress(ResponsiveState.NowPlaying, ResponsiveState.Playlist)
@@ -601,17 +558,13 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 
 									val isPlaylistOpen by remember {
 										derivedStateOf {
-											playlistDrawerProgress > 0 || responsivePlaylistProgress > 0
+											responsivePlaylistProgress > 0
 										}
 									}
 
-									val playlistDrawerOffset by LocalDensity.current.remember(playlistDrawerState) {
+									val playlistDrawerOffset by LocalDensity.current.remember {
 										derivedStateOf {
-											if (playlistDrawerProgress > 0) {
-												playlistDrawerState.requireOffset().toDp()
-											} else {
-												this@fullScreen.maxWidth + maxBrowserWidth + browserDrawerOffset
-											}
+											this@fullScreen.maxWidth + maxBrowserWidth + browserDrawerOffset
 										}
 									}
 
@@ -664,21 +617,9 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 													modifier = Modifier.weight(1f)
 												)
 
-												val nowPlayingOpenProgress by remember {
-													derivedStateOf {
-														with(playlistDrawerState) {
-															calculateProgress(
-																anchors.positionOf(SlideOutState.Closed),
-																anchors.positionOf(SlideOutState.Open),
-																requireOffset()
-															)
-														}
-													}
-												}
-
 												val browserChevronRotation by remember {
 													derivedStateOf {
-														(-90 + (180 * nowPlayingOpenProgress)).coerceIn(-90f, 180f)
+														(-90 + (180 * responsivePlaylistProgress)).coerceIn(-90f, 180f)
 													}
 												}
 												Image(
@@ -687,19 +628,11 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 													contentDescription = stringResource(R.string.btn_hide_files),
 													modifier = Modifier
 														.navigable(onClick = {
-															if (playlistDrawerState.currentValue == SlideOutState.Open) {
+															if (browserDrawerState.currentValue == ResponsiveState.Playlist) {
 																scope.launch {
-																	hidePlaylist()
-																}
-																scope.launch {
-																	browserDrawerState.animateTo(
-																		previousBrowserDragValue
-																	)
+																	browserDrawerState.animateTo(previousBrowserDragValue)
 																}
 															} else {
-																scope.launch {
-																	playlistDrawerState.animateTo(SlideOutState.Open)
-																}
 																scope.launch {
 																	browserDrawerState.animateTo(ResponsiveState.Browser)
 																}
@@ -726,8 +659,8 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 										)
 									}
 
-									DisposableEffect(key1 = playlistDrawerState.currentValue) {
-										if (playlistDrawerState.currentValue == SlideOutState.Closed) {
+									DisposableEffect(key1 = browserDrawerState.currentValue) {
+										if (browserDrawerState.currentValue != ResponsiveState.Playlist) {
 											nowPlayingPlaylistViewModel.enableSystemAutoScrolling()
 										} else {
 											nowPlayingPlaylistViewModel.disableSystemAutoScrolling()
