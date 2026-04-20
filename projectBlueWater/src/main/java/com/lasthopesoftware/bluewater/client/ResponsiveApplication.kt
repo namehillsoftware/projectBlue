@@ -1,16 +1,13 @@
 package com.lasthopesoftware.bluewater.client
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.animateTo
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -25,7 +22,6 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
@@ -49,21 +45,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -118,11 +109,9 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.RetryingLibrar
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingControls
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingCoverArtView
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingNarrowView
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingPlaylist
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.PlaylistControls
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingWideView
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.minimumMenuWidth
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
@@ -142,7 +131,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import java.io.IOException
-import kotlin.math.absoluteValue
 
 private val logger by lazy { LoggerFactory.getLogger("ResponsiveApplication") }
 
@@ -546,145 +534,21 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 											lazyListState = playlistListState,
 										)
 									} else {
-										val playlistOpenState = ResponsiveState.Playlist
-										val playlistClosedState = ResponsiveState.NowPlaying
-
-										val playlistOpenProgress by remember(browserDrawerState) {
-											derivedStateOf { browserDrawerState.progress(playlistClosedState, playlistOpenState) }
-										}
-
-										val isDrawerFullyClosed by remember { derivedStateOf { playlistOpenProgress == 0f } }
-
-										DisposableEffect(isDrawerFullyClosed) {
-											if (isDrawerFullyClosed) {
-												nowPlayingPlaylistViewModel.hidePlaylist()
-											} else {
-												nowPlayingPlaylistViewModel.showPlaylist()
-											}
-											onDispose { }
-										}
-
-										Box(
-											modifier = Modifier.fillMaxSize(),
-										) {
-											val browserDrawerOffset by LocalDensity.current.remember(browserDrawerState) {
-												derivedStateOf {
-													browserDrawerState.requireOffset().toDp()
-												}
-											}
-
-											val playlistWidthPx = remember(browserDrawerState) {
-												(browserDrawerState.anchors.positionOf(playlistClosedState) - browserDrawerState.anchors.positionOf(playlistOpenState)).absoluteValue
-											}
-											val playlistWidth = LocalDensity.current.remember(playlistWidthPx) { playlistWidthPx.toDp() }
-
-											val openPlaylistOffset = LocalDensity.current.remember(browserDrawerState) {
-												browserDrawerState.anchors.positionOf(playlistOpenState).toDp()
-											}
-
-											val maxWidth = this@fullScreen.maxWidth
-											val playlistDrawerOffset by remember(maxWidth, browserDrawerState, openPlaylistOffset) {
-												derivedStateOf {
-													maxWidth + playlistWidth + browserDrawerOffset
-												}
-											}
-
-											val nowPlayingControlsWidth by LocalDensity.current.remember(maxWidth) {
-												derivedStateOf {
-													min((maxWidth - browserDrawerOffset - playlistWidth).coerceAtLeast(0.dp), playlistDrawerOffset)
-												}
-											}
-
-											NowPlayingControls(
-												nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-												nowPlayingScreenViewModel = nowPlayingScreenViewModel,
-												playbackServiceController = playbackServiceController,
-												playlistViewModel = nowPlayingPlaylistViewModel,
-												applicationNavigation = applicationNavigation,
-												playlistControl = {
-													val drawerChevronRotation by remember {
-														derivedStateOf { -90 + (180 * playlistOpenProgress).coerceIn(0f, 180f) }
-													}
-													val scope = rememberCoroutineScope()
-													Image(
-														painter = painterResource(R.drawable.chevron_up_white_36dp),
-														contentDescription = stringResource(R.string.btn_hide_files),
-														modifier = Modifier
-															.clickable(
-																onClick = {
-																	scope.launch {
-																		if (browserDrawerState.currentValue == playlistOpenState) {
-																			nowPlayingPlaylistViewModel.finishPlaylistEdit()
-																			scope.launch {
-																				browserDrawerState.animateTo(
-																					playlistClosedState
-																				)
-																			}
-																		} else {
-																			browserDrawerState.animateTo(playlistOpenState)
-																		}
-																	}
-																},
-																indication = null,
-																interactionSource = remember { MutableInteractionSource() }
-															)
-															.rotate(drawerChevronRotation),
-													)
-												},
-												modifier = Modifier.fillMaxHeight().width(nowPlayingControlsWidth)
-											)
-
-											if (playlistOpenProgress > 0f) {
-												Column(
-													modifier = Modifier
-														.fillMaxHeight()
-														.width(playlistWidth)
-														.offset { IntOffset(x = playlistDrawerOffset.roundToPx(), y = 0) }
-														.background(SharedColors.overlayDark),
-													horizontalAlignment = Alignment.CenterHorizontally,
-												) {
-													DisposableEffect(key1 = isDrawerFullyClosed) {
-														if (isDrawerFullyClosed) {
-															nowPlayingPlaylistViewModel.enableSystemAutoScrolling()
-														} else {
-															nowPlayingPlaylistViewModel.disableSystemAutoScrolling()
-															nowPlayingPlaylistViewModel.enableUserAutoScrolling()
-														}
-
-														onDispose {
-															nowPlayingPlaylistViewModel.disableSystemAutoScrolling()
-														}
-													}
-
-													PlaylistControls(
-														modifier = Modifier
-															.fillMaxWidth()
-															.height(appBarHeight),
-														playlistViewModel = nowPlayingPlaylistViewModel,
-														viewModelMessageBus = nowPlayingViewModelMessageBus,
-														undoBackStack = undoBackStackBuilder,
-													)
-
-													NowPlayingPlaylist(
-														reusablePlaylistFileItemViewModelProvider,
-														nowPlayingFilePropertiesViewModel,
-														applicationNavigation,
-														playbackServiceController,
-														itemListMenuBackPressedHandler,
-														nowPlayingPlaylistViewModel,
-														viewModelMessageBus = nowPlayingViewModelMessageBus,
-														undoBackStack = undoBackStackBuilder,
-														lazyListState = playlistListState,
-														modifier = Modifier
-															.fillMaxHeight()
-															.onFocusChanged { f ->
-																if (f.hasFocus) nowPlayingPlaylistViewModel.lockOutAutoScroll()
-																else nowPlayingPlaylistViewModel.releaseAutoScroll()
-															},
-													)
-												}
-											}
-										}
+										NowPlayingWideView(
+											nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+											nowPlayingScreenViewModel = nowPlayingScreenViewModel,
+											playbackServiceController = playbackServiceController,
+											playlistViewModel = nowPlayingPlaylistViewModel,
+											childItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+											applicationNavigation = applicationNavigation,
+											itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+											viewModelMessageBus = nowPlayingViewModelMessageBus,
+											undoBackStack = undoBackStackBuilder,
+											lazyListState = playlistListState,
+											playlistDrawerState = browserDrawerState,
+											closedState = ResponsiveState.NowPlaying,
+											openState = ResponsiveState.Playlist,
+										)
 									}
 								}
 

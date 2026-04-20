@@ -78,7 +78,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.coerceAtLeast
-import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
@@ -860,7 +859,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 }
 
 @Composable
-fun <T> ScreenDimensionsScope.NowPlayingWideView(
+fun <T> BoxWithConstraintsScope.NowPlayingWideView(
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
 	playbackServiceController: ControlPlaybackService,
 	nowPlayingScreenViewModel: NowPlayingScreenViewModel,
@@ -903,31 +902,22 @@ fun <T> ScreenDimensionsScope.NowPlayingWideView(
 			(playlistDrawerState.anchors.positionOf(closedState) - playlistDrawerState.anchors.positionOf(openState)).absoluteValue
 		}
 		val playlistWidth = LocalDensity.current.remember(playlistWidthPx) { playlistWidthPx.toDp() }
-		val maxWidth = this@NowPlayingWideView.maxWidth
-		val fullSizePx = remember(playlistDrawerState) {
-			playlistDrawerState.anchors.run { maxPosition() - minPosition() }
-		}
-		val fullSize = LocalDensity.current.remember(fullSizePx) {
-			fullSizePx.toDp()
-		}
+
 		val openPlaylistOffset = LocalDensity.current.remember(playlistDrawerState) {
 			playlistDrawerState.anchors.positionOf(openState).toDp()
 		}
-		val playlistDrawerOffset by remember(this@NowPlayingWideView.screenWidth, playlistDrawerState, openPlaylistOffset) {
+
+		val maxWidth = this@NowPlayingWideView.maxWidth
+		val playlistDrawerOffset by remember(maxWidth, playlistDrawerState, openPlaylistOffset) {
 			derivedStateOf {
-				this@NowPlayingWideView.screenWidth - openPlaylistOffset + browserDrawerOffset
+				maxWidth + playlistWidth + browserDrawerOffset
 			}
 		}
 
-		val nowPlayingWidth by remember { derivedStateOf { (playlistWidth - browserDrawerOffset).coerceAtMost(this@NowPlayingWideView.maxWidth) } }
 		val nowPlayingControlsWidth by LocalDensity.current.remember(maxWidth) {
 			derivedStateOf {
 				min((maxWidth - browserDrawerOffset - playlistWidth).coerceAtLeast(0.dp), playlistDrawerOffset)
 			}
-		}
-
-		val nowPlayingPaneWidth = LocalDensity.current.run {
-			this@NowPlayingWideView.maxWidth - playlistDrawerState.requireOffset().toDp()
 		}
 
 		NowPlayingControls(
