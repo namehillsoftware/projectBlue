@@ -8,6 +8,7 @@ commonsIo = "2.22.0"
 compose = "1.11.0"
 coreKtx = "1.18.0"
 desugar_jdk_libs = "2.1.5"
+freeDroidWarn = "V1.11"
 gson = "2.13.2"
 guava = "33.6.0-android"
 handoff = "0.30.1"
@@ -66,6 +67,7 @@ androidx-work-runtime = { module = "androidx.work:work-runtime", version.ref = "
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertjCore" }
 commons-io = { module = "commons-io:commons-io", version.ref = "commonsIo" }
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
+freedroidwarn = { module = "com.github.woheller69:FreeDroidWarn", version.ref = "freeDroidWarn" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 handoff = { module = "com.namehillsoftware:handoff", version.ref = "handoff" }

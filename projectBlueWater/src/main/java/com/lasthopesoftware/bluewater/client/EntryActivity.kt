@@ -13,6 +13,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
 import com.lasthopesoftware.bluewater.ActivityDependencies
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
+import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.TvApplicationDependencies
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.android.ui.ProjectBlueComposableApplication
@@ -32,6 +33,7 @@ import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.registerResultActivityLauncher
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
+import org.woheller69.freeDroidWarn.FreeDroidWarn
 import java.util.concurrent.ConcurrentHashMap
 
 private val logger by lazyLogger<EntryActivity>()
@@ -91,6 +93,8 @@ class EntryActivity :
 
 			isInLeanbackMode = intent.hasCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
 		}
+
+		FreeDroidWarn.showWarningOnUpgrade(this, BuildConfig.VERSION_CODE)
 
 		applicationPermissions.promiseApplicationPermissionsRequest()
 
