@@ -466,16 +466,40 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 									}
 								}
 							} else {
-								val screenScope = ScreenDimensionsScope(
-									screenHeight = this@fullScreen.maxHeight,
-									screenWidth = this@fullScreen.maxWidth,
-									innerBoxScope = this@fullScreen
-								)
-								screenScope.NavigateToBrowserLibraryDestination(
-									destination as? BrowserLibraryDestination
-										?: LibraryScreen(destination.libraryId),
-									this@run,
-								)
+								Column {
+									Spacer(
+										modifier = Modifier
+											.windowInsetsTopHeight(WindowInsets.systemBars)
+											.fillMaxWidth()
+											.background(SharedColors.overlayDark)
+									)
+
+									BoxWithConstraints(
+										modifier = Modifier
+											.fillMaxWidth()
+											.weight(1f)
+									) {
+
+										val screenScope = ScreenDimensionsScope(
+											screenHeight = this@fullScreen.maxHeight,
+											screenWidth = this@fullScreen.maxWidth,
+											innerBoxScope = this
+										)
+
+										screenScope.NavigateToBrowserLibraryDestination(
+											destination as? BrowserLibraryDestination
+												?: LibraryScreen(destination.libraryId),
+											this@run,
+										)
+									}
+
+									Spacer(
+										modifier = Modifier
+											.windowInsetsBottomHeight(WindowInsets.systemBars)
+											.fillMaxWidth()
+											.background(SharedColors.overlayDark)
+									)
+								}
 							}
 						}
 					} else {
