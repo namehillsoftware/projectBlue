@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.AnchoredDraggableState
@@ -11,14 +10,11 @@ import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,7 +28,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.BottomSheetScaffold
 import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
@@ -49,9 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.coerceIn
@@ -120,7 +113,7 @@ import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsView
 import com.lasthopesoftware.bluewater.exceptions.UncaughtExceptionHandlerLogger
-import com.lasthopesoftware.bluewater.settings.TvApplicationSettingsView
+import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.ViewModelInitAction
 import com.lasthopesoftware.observables.subscribeAsState
@@ -131,22 +124,12 @@ import com.namehillsoftware.handoff.promises.Promise
 import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.rememberNavController
 import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import java.io.IOException
 
 private val logger by lazy { LoggerFactory.getLogger("ResponsiveApplication") }
 
 enum class ResponsiveState { Browser, NowPlaying, Playlist }
-
-interface ResponsiveScope : BoxWithConstraintsScope {
-	val isNarrow: Boolean
-	val browserOffset: Dp
-	val playlistOffset: Dp
-	val nowPlayingOffset: Dp
-	val controlsOffset: Dp
-	val controlsWidth: Dp
-}
 
 @Composable
 fun ScreenDimensionsScope.NavigateToBrowserLibraryDestination(
@@ -363,105 +346,87 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 								.focusGroup()
 						) {
 							if (this@fullScreen.isNarrow) {
-								BoxWithConstraints(
+								val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
+								Column(
 									modifier = Modifier
 										.fillMaxSize()
-										.background(Color.Black)
-								) screenBox@{
-									val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
-									val layoutDirection = LocalLayoutDirection.current
-									Column(
-										modifier = Modifier
-											.padding(
-												start = systemBarsPadding.calculateStartPadding(layoutDirection),
-												end = systemBarsPadding.calculateEndPadding(layoutDirection),
-												bottom = systemBarsPadding.calculateBottomPadding(),
-											)
-											.fillMaxSize()
-									) {
-										Spacer(
-											modifier = Modifier
-												.windowInsetsTopHeight(WindowInsets.systemBars)
-												.fillMaxWidth()
-												.background(MaterialTheme.colors.surface)
-										)
+										.padding(systemBarsPadding)
+								) {
+									val scaffoldState = rememberBottomSheetScaffoldState()
 
-										val scaffoldState = rememberBottomSheetScaffoldState()
-
-										val isBottomSheetCollapsed = scaffoldState.bottomSheetState.isCollapsed
-										val scope = rememberCoroutineScope()
-										DisposableEffect(isBottomSheetCollapsed) {
-											if (isBottomSheetCollapsed) {
-												onDispose { }
-											} else {
-												val collapseAction = {
-													scope.async {
-														if (scaffoldState.bottomSheetState.isCollapsed) false
-														else {
-															scaffoldState.bottomSheetState.collapse()
-															true
-														}
-													}.toPromise()
-												}
-
-												undoBackStackBuilder.addAction(collapseAction)
-
-												onDispose { undoBackStackBuilder.removeAction(collapseAction) }
+									val isBottomSheetCollapsed = scaffoldState.bottomSheetState.isCollapsed
+									val scope = rememberCoroutineScope()
+									DisposableEffect(isBottomSheetCollapsed) {
+										if (isBottomSheetCollapsed) {
+											onDispose { }
+										} else {
+											val collapseAction = {
+												scope.async {
+													if (scaffoldState.bottomSheetState.isCollapsed) false
+													else {
+														scaffoldState.bottomSheetState.collapse()
+														true
+													}
+												}.toPromise()
 											}
+
+											undoBackStackBuilder.addAction(collapseAction)
+
+											onDispose { undoBackStackBuilder.removeAction(collapseAction) }
 										}
-										val selectedLibraryId by selectedLibraryViewModel.selectedLibraryId.subscribeAsState()
-										val isSelectedLibrary by remember { derivedStateOf { selectedLibraryId == libraryId } }
+									}
+									val selectedLibraryId by selectedLibraryViewModel.selectedLibraryId.subscribeAsState()
+									val isSelectedLibrary by remember { derivedStateOf { selectedLibraryId == libraryId } }
 
-										BottomSheetScaffold(
-											modifier = Modifier.weight(1f),
-											scaffoldState = scaffoldState,
-											sheetPeekHeight = if (isSelectedLibrary) appBarHeight else 0.dp,
-											sheetElevation = bottomSheetElevation,
-											sheetContent = {
-												if (isSelectedLibrary) {
-													LibraryMenu(
-														applicationNavigation = applicationNavigation,
-														nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-														playbackServiceController = playbackServiceController,
-														bottomSheetState = scaffoldState.bottomSheetState,
-														libraryId = libraryId,
-													)
+									BottomSheetScaffold(
+										modifier = Modifier.weight(1f),
+										scaffoldState = scaffoldState,
+										sheetPeekHeight = if (isSelectedLibrary) appBarHeight else 0.dp,
+										sheetElevation = bottomSheetElevation,
+										sheetContent = {
+											if (isSelectedLibrary) {
+												LibraryMenu(
+													applicationNavigation = applicationNavigation,
+													nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+													playbackServiceController = playbackServiceController,
+													bottomSheetState = scaffoldState.bottomSheetState,
+													libraryId = libraryId,
+												)
 
-													LaunchedEffect(key1 = libraryId) {
-														try {
-															nowPlayingFilePropertiesViewModel.initializeViewModel(
-																libraryId
-															).suspend()
-														} catch (e: Throwable) {
-															when {
-																ConnectionLostExceptionFilter.isConnectionLostException(
-																	e
-																) -> {
-																	pollForConnections.pollConnection(libraryId)
-																}
+												LaunchedEffect(key1 = libraryId) {
+													try {
+														nowPlayingFilePropertiesViewModel.initializeViewModel(
+															libraryId
+														).suspend()
+													} catch (e: Throwable) {
+														when {
+															ConnectionLostExceptionFilter.isConnectionLostException(
+																e
+															) -> {
+																pollForConnections.pollConnection(libraryId)
+															}
 
-																UncaughtExceptionHandlerLogger.uncaughtException(e) -> {
-																	exceptionAnnouncer.announce(e)
-																}
+															UncaughtExceptionHandlerLogger.uncaughtException(e) -> {
+																exceptionAnnouncer.announce(e)
 															}
 														}
 													}
 												}
 											}
-										) { paddingValues ->
-											BoxWithConstraints(modifier = Modifier.padding(paddingValues)) nestedBox@{
-												val screenScope = ScreenDimensionsScope(
-													screenHeight = this@screenBox.maxHeight,
-													screenWidth = this@screenBox.maxWidth,
-													innerBoxScope = this@nestedBox
-												)
+										}
+									) { paddingValues ->
+										BoxWithConstraints(modifier = Modifier.padding(paddingValues)) nestedBox@{
+											val screenScope = ScreenDimensionsScope(
+												screenHeight = this@fullScreen.maxHeight,
+												screenWidth = this@fullScreen.maxWidth,
+												innerBoxScope = this@nestedBox
+											)
 
-												screenScope.NavigateToBrowserLibraryDestination(
-													destination as? BrowserLibraryDestination
-														?: LibraryScreen(destination.libraryId),
-													this@run,
-												)
-											}
+											screenScope.NavigateToBrowserLibraryDestination(
+												destination as? BrowserLibraryDestination
+													?: LibraryScreen(destination.libraryId),
+												this@run,
+											)
 										}
 									}
 								}
@@ -471,7 +436,6 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 										modifier = Modifier
 											.windowInsetsTopHeight(WindowInsets.systemBars)
 											.fillMaxWidth()
-//											.background(SharedColors.overlayDark)
 									)
 
 									BoxWithConstraints(
@@ -503,14 +467,26 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 							}
 						}
 					} else {
-						BackHandler {
-							scope.launch {
-								when (browserDrawerState.currentValue) {
-									ResponsiveState.Playlist -> hidePlaylist()
-									ResponsiveState.NowPlaying -> browserDrawerState.animateTo(ResponsiveState.Browser)
-									else -> {}
-								}
+						DisposableEffect(Unit) {
+							val nowPlayingBackAction = {
+								scope.async {
+									when (browserDrawerState.currentValue) {
+										ResponsiveState.Playlist -> {
+											hidePlaylist()
+											true
+										}
+										ResponsiveState.NowPlaying -> {
+											browserDrawerState.animateTo(ResponsiveState.Browser)
+											true
+										}
+										else -> false
+									}
+								}.toPromise()
 							}
+
+							undoBackStackBuilder.addAction(nowPlayingBackAction)
+
+							onDispose { undoBackStackBuilder.removeAction(nowPlayingBackAction) }
 						}
 					}
 
@@ -826,7 +802,7 @@ fun ResponsiveApplication(
 					Box(
 						modifier = Modifier.fillMaxSize()
 					) {
-						TvApplicationSettingsView(
+						ApplicationSettingsView(
 							applicationSettingsViewModel = routedNavigationDependencies.applicationSettingsViewModel,
 							applicationNavigation = routedNavigationDependencies.applicationNavigation,
 							playbackService = routedNavigationDependencies.playbackServiceController,
