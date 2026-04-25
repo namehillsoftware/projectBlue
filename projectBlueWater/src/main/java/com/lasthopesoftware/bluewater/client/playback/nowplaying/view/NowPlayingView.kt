@@ -162,7 +162,7 @@ fun NowPlayingCoverArtView(
 }
 
 @Composable
-private fun KeepScreenOn(keepScreenOn: Boolean) {
+fun KeepScreenOn(keepScreenOn: Boolean) {
 	val currentView = LocalView.current
 	DisposableEffect(keepScreenOn) {
 		currentView.keepScreenOn = keepScreenOn
@@ -471,28 +471,6 @@ fun NowPlayingControls(
 					)
 
 					playlistControl()
-//					val playlistOpenProgress by playlistOpenProgressState
-//					val drawerChevronRotation by remember {
-//						derivedStateOf { -90 + (180 * playlistOpenProgress).coerceIn(0f, 180f) }
-//					}
-//					Image(
-//						painter = painterResource(R.drawable.chevron_up_white_36dp),
-//						contentDescription = stringResource(R.string.btn_hide_files),
-//						modifier = Modifier
-//							.clickable(
-//								onClick = {
-//									if (isPlaylistShown) {
-//										playlistViewModel.finishPlaylistEdit()
-//										playlistViewModel.hidePlaylist()
-//									} else {
-//										playlistViewModel.showPlaylist()
-//									}
-//								},
-//								indication = null,
-//								interactionSource = remember { MutableInteractionSource() }
-//							)
-//							.rotate(drawerChevronRotation),
-//					)
 				}
 			}
 
