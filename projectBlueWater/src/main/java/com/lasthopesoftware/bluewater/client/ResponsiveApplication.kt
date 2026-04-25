@@ -105,6 +105,7 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.RetryingLibrar
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.KeepScreenOn
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingCoverArtView
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingNarrowView
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingWideView
@@ -490,74 +491,80 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 						}
 					}
 
-					Box(
-						modifier = Modifier
-							.offset { IntOffset(x = nowPlayingOffset.roundToPx(), y = 0) }
-							.fillMaxHeight()
-							.focusGroup()
-					) {
-						ControlSurface(
-							color = Color.Transparent,
-							contentColor = Color.White,
-							controlColor = Color.White,
+					val isNowPlayingShown by remember { derivedStateOf { nowPlayingOffset < this@fullScreen.maxWidth } }
+					if (isNowPlayingShown) {
+						Box(
+							modifier = Modifier
+								.offset { IntOffset(x = nowPlayingOffset.roundToPx(), y = 0) }
+								.fillMaxHeight()
+								.focusGroup()
 						) {
-							NowPlayingCoverArtView(
-								nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
-								bitmapProducer = bitmapProducer,
-							)
+							val isScreenOn by nowPlayingScreenViewModel.isScreenOn.subscribeAsState()
+							KeepScreenOn(isScreenOn)
 
-							Column {
-								Spacer(
-									modifier = Modifier
-										.windowInsetsTopHeight(WindowInsets.systemBars)
-										.fillMaxWidth()
-										.background(SharedColors.overlayDark)
+							ControlSurface(
+								color = Color.Transparent,
+								contentColor = Color.White,
+								controlColor = Color.White,
+							) {
+								NowPlayingCoverArtView(
+									nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
+									bitmapProducer = bitmapProducer,
 								)
 
-								BoxWithConstraints(
-									modifier = Modifier
-										.fillMaxWidth()
-										.weight(1f)
-										.background(SharedColors.overlayDark),
-								) nowPlayingPane@{
-									if (isNarrow) {
-										NowPlayingNarrowView(
-											nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-											nowPlayingScreenViewModel = nowPlayingScreenViewModel,
-											playbackServiceController = playbackServiceController,
-											playlistViewModel = nowPlayingPlaylistViewModel,
-											childItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
-											applicationNavigation = applicationNavigation,
-											itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-											viewModelMessageBus = nowPlayingViewModelMessageBus,
-											undoBackStack = undoBackStackBuilder,
-											lazyListState = playlistListState,
-										)
-									} else {
-										NowPlayingWideView(
-											nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-											nowPlayingScreenViewModel = nowPlayingScreenViewModel,
-											playbackServiceController = playbackServiceController,
-											playlistViewModel = nowPlayingPlaylistViewModel,
-											childItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
-											applicationNavigation = applicationNavigation,
-											itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-											viewModelMessageBus = nowPlayingViewModelMessageBus,
-											undoBackStack = undoBackStackBuilder,
-											lazyListState = playlistListState,
-											playlistDrawerState = browserDrawerState,
-											closedState = ResponsiveState.NowPlaying,
-											openState = ResponsiveState.Playlist,
-										)
+								Column {
+									Spacer(
+										modifier = Modifier
+											.windowInsetsTopHeight(WindowInsets.systemBars)
+											.fillMaxWidth()
+											.background(SharedColors.overlayDark)
+									)
+
+									BoxWithConstraints(
+										modifier = Modifier
+											.fillMaxWidth()
+											.weight(1f)
+											.background(SharedColors.overlayDark),
+									) nowPlayingPane@{
+										if (isNarrow) {
+											NowPlayingNarrowView(
+												nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+												nowPlayingScreenViewModel = nowPlayingScreenViewModel,
+												playbackServiceController = playbackServiceController,
+												playlistViewModel = nowPlayingPlaylistViewModel,
+												childItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+												applicationNavigation = applicationNavigation,
+												itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+												viewModelMessageBus = nowPlayingViewModelMessageBus,
+												undoBackStack = undoBackStackBuilder,
+												lazyListState = playlistListState,
+											)
+										} else {
+											NowPlayingWideView(
+												nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+												nowPlayingScreenViewModel = nowPlayingScreenViewModel,
+												playbackServiceController = playbackServiceController,
+												playlistViewModel = nowPlayingPlaylistViewModel,
+												childItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+												applicationNavigation = applicationNavigation,
+												itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+												viewModelMessageBus = nowPlayingViewModelMessageBus,
+												undoBackStack = undoBackStackBuilder,
+												lazyListState = playlistListState,
+												playlistDrawerState = browserDrawerState,
+												closedState = ResponsiveState.NowPlaying,
+												openState = ResponsiveState.Playlist,
+											)
+										}
 									}
-								}
 
-								Spacer(
-									modifier = Modifier
-										.windowInsetsBottomHeight(WindowInsets.systemBars)
-										.fillMaxWidth()
-										.background(SharedColors.overlayDark)
-								)
+									Spacer(
+										modifier = Modifier
+											.windowInsetsBottomHeight(WindowInsets.systemBars)
+											.fillMaxWidth()
+											.background(SharedColors.overlayDark)
+									)
+								}
 							}
 						}
 					}
