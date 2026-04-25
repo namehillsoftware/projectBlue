@@ -45,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -61,6 +62,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.android.ui.components.PaddedSystemScreenBox
+import com.lasthopesoftware.bluewater.android.ui.findWindow
 import com.lasthopesoftware.bluewater.android.ui.isNarrow
 import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
@@ -69,6 +71,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.appBarHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.bottomSheetElevation
 import com.lasthopesoftware.bluewater.android.ui.theme.SharedColors
+import com.lasthopesoftware.bluewater.android.ui.theme.isStatusBarLight
 import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ReusedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
@@ -286,14 +289,11 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 			}
 
 			BoxWithConstraints(modifier = Modifier.fillMaxSize()) fullScreen@{
+				findWindow()?.isStatusBarLight = false
+
 				val paneWidth = if (isNarrow) maxWidth else maxHeight.coerceIn(minimumMenuWidth, maxWidth / 2)
 				val paneWidthPx = LocalDensity.current.remember { paneWidth.toPx() }
 
-				val maxWidthPx = LocalDensity.current.remember { maxWidth.toPx() }
-
-				var previousBrowserDragValue by rememberSaveable {
-					mutableStateOf(ResponsiveState.Browser)
-				}
 				var browserDragValue by rememberSaveable {
 					mutableStateOf(ResponsiveState.Browser)
 				}
@@ -471,7 +471,7 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 										modifier = Modifier
 											.windowInsetsTopHeight(WindowInsets.systemBars)
 											.fillMaxWidth()
-											.background(SharedColors.overlayDark)
+//											.background(SharedColors.overlayDark)
 									)
 
 									BoxWithConstraints(
@@ -586,6 +586,22 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 						}
 					}
 				}
+
+				Spacer(
+					modifier = Modifier
+						.align(Alignment.TopStart)
+						.windowInsetsTopHeight(WindowInsets.systemBars)
+						.fillMaxWidth()
+						.background(SharedColors.overlayDark)
+				)
+
+				Spacer(
+					modifier = Modifier
+						.align(Alignment.BottomStart)
+						.windowInsetsBottomHeight(WindowInsets.systemBars)
+						.fillMaxWidth()
+						.background(SharedColors.overlayDark)
+				)
 			}
 
 			val isConnectionLost by connectionWatcherViewModel.isCheckingConnection.subscribeAsState()
