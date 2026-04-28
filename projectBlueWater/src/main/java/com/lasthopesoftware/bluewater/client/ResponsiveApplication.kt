@@ -474,9 +474,6 @@ private fun Navigate(destination: LibraryDestination, responsiveState: AnchoredD
 						}
 					} else {
 						DisposableEffect(responsiveState) {
-
-							applicationNavigation.viewNowPlaying(libraryId)
-
 							val nowPlayingBackAction = {
 								scope.async {
 									when (responsiveState.currentValue) {
@@ -497,7 +494,6 @@ private fun Navigate(destination: LibraryDestination, responsiveState: AnchoredD
 
 							onDispose {
 								undoBackStackBuilder.removeAction(nowPlayingBackAction)
-								applicationNavigation.navigateUp()
 							}
 						}
 					}
