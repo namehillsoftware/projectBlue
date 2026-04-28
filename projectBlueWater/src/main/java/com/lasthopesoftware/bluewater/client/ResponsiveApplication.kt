@@ -82,7 +82,6 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowsedFileDeta
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
-import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationGraphNavigation
 import com.lasthopesoftware.bluewater.client.browsing.navigation.DownloadsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsFromNowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.FilePropertySearchScreen
@@ -94,6 +93,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryMenu
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NewConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.ResponsiveDestinationGraphNavigation
 import com.lasthopesoftware.bluewater.client.browsing.navigation.RoutedNavigationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SearchScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SearchedFileDetailsScreen
@@ -257,7 +257,7 @@ fun ScreenDimensionsScope.NavigateToBrowserLibraryDestination(
 }
 
 @Composable
-private fun Navigate(destination: LibraryDestination, scopedViewModelDependencies: ScopedViewModelDependencies, permissionsDependencies: PermissionsDependencies): Unit = scopedViewModelDependencies.run {
+private fun Navigate(destination: LibraryDestination, responsiveState: AnchoredDraggableState<ResponsiveState>, scopedViewModelDependencies: ScopedViewModelDependencies, permissionsDependencies: PermissionsDependencies): Unit = scopedViewModelDependencies.run {
 	when (destination) {
 		is BrowserLibraryDestination, is NowPlayingScreen -> {
 			val libraryId = destination.libraryId
@@ -292,22 +292,8 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 				val paneWidth = if (isNarrow) maxWidth else maxHeight.coerceIn(minimumMenuWidth, maxWidth / 2)
 				val paneWidthPx = LocalDensity.current.remember { paneWidth.toPx() }
 
-				var browserDragValue by rememberSaveable {
-					mutableStateOf(ResponsiveState.Browser)
-				}
-
-				val browserDrawerState = remember(browserDragValue) {
-					AnchoredDraggableState(
-						initialValue = browserDragValue,
-						anchors = DraggableAnchors {
-							ResponsiveState.NowPlaying at -paneWidthPx
-							ResponsiveState.Browser at 0f
-						},
-					)
-				}
-
 				DisposableEffect(paneWidthPx, isNarrow) {
-					browserDrawerState.updateAnchors(if (isNarrow) DraggableAnchors {
+					responsiveState.updateAnchors(if (isNarrow) DraggableAnchors {
 						ResponsiveState.NowPlaying at -paneWidthPx
 						ResponsiveState.Browser at 0f
 					} else DraggableAnchors {
@@ -319,9 +305,9 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 					onDispose { }
 				}
 
-				val browserDrawerOffset by LocalDensity.current.remember(browserDrawerState) {
+				val browserDrawerOffset by LocalDensity.current.remember(responsiveState) {
 					derivedStateOf {
-						browserDrawerState.requireOffset().toDp()
+						responsiveState.requireOffset().toDp()
 					}
 				}
 
@@ -329,25 +315,28 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 
 				suspend fun hidePlaylist() {
 					nowPlayingPlaylistViewModel.finishPlaylistEdit()
-					browserDrawerState.animateTo(ResponsiveState.NowPlaying)
+					responsiveState.animateTo(ResponsiveState.NowPlaying)
 				}
 
-				if (destination is NowPlayingScreen) {
-					LaunchedEffect(destination) {
-						browserDrawerState.animateTo(ResponsiveState.NowPlaying)
-					}
-				}
+//				LaunchedEffect(destination) {
+//					val state = when (destination) {
+//						is NowPlayingScreen -> ResponsiveState.NowPlaying
+//						is BrowserLibraryDestination -> ResponsiveState.Browser
+//					}
+//
+//					if (responsiveState.targetValue != state) responsiveState.animateTo(state)
+//				}
 
 				val playlistListState = rememberLazyListState()
 				Box(
 					modifier = Modifier
 						.anchoredDraggable(
-							browserDrawerState,
+							responsiveState,
 							orientation = Orientation.Horizontal,
 						)
 				) {
-					val browserOpenProgress by remember(browserDrawerState) {
-						derivedStateOf { browserDrawerState.progress(ResponsiveState.NowPlaying, ResponsiveState.Browser) }
+					val browserOpenProgress by remember(responsiveState) {
+						derivedStateOf { responsiveState.progress(ResponsiveState.NowPlaying, ResponsiveState.Browser) }
 					}
 					val isBrowserOpen by remember { derivedStateOf { browserOpenProgress > 0f } }
 
@@ -484,16 +473,19 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 							}
 						}
 					} else {
-						DisposableEffect(Unit) {
+						DisposableEffect(responsiveState) {
+
+							applicationNavigation.viewNowPlaying(libraryId)
+
 							val nowPlayingBackAction = {
 								scope.async {
-									when (browserDrawerState.currentValue) {
+									when (responsiveState.currentValue) {
 										ResponsiveState.Playlist -> {
 											hidePlaylist()
 											true
 										}
 										ResponsiveState.NowPlaying -> {
-											browserDrawerState.animateTo(ResponsiveState.Browser)
+											responsiveState.animateTo(ResponsiveState.Browser)
 											true
 										}
 										else -> false
@@ -503,7 +495,10 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 
 							undoBackStackBuilder.addAction(nowPlayingBackAction)
 
-							onDispose { undoBackStackBuilder.removeAction(nowPlayingBackAction) }
+							onDispose {
+								undoBackStackBuilder.removeAction(nowPlayingBackAction)
+								applicationNavigation.navigateUp()
+							}
 						}
 					}
 
@@ -567,7 +562,7 @@ private fun Navigate(destination: LibraryDestination, scopedViewModelDependencie
 												viewModelMessageBus = nowPlayingViewModelMessageBus,
 												undoBackStack = undoBackStackBuilder,
 												lazyListState = playlistListState,
-												playlistDrawerState = browserDrawerState,
+												playlistDrawerState = responsiveState,
 												closedState = ResponsiveState.NowPlaying,
 												openState = ResponsiveState.Playlist,
 											)
@@ -712,9 +707,25 @@ fun ResponsiveApplication(
 
 	val coroutineScope = rememberCoroutineScope()
 
+	var browserDragValue by rememberSaveable {
+		mutableStateOf(ResponsiveState.Browser)
+	}
+
+	val responsiveState = remember(browserDragValue) {
+		AnchoredDraggableState(
+			initialValue = browserDragValue,
+			anchors = DraggableAnchors {
+				ResponsiveState.Playlist at 2 * -100f
+				ResponsiveState.NowPlaying at -100f
+				ResponsiveState.Browser at 0f
+			}
+		)
+	}
+
 	val destinationGraphNavigation = remember {
-		DestinationGraphNavigation(
+		ResponsiveDestinationGraphNavigation(
 			entryDependencies.applicationNavigation,
+			responsiveState,
 			navController,
 			coroutineScope,
 			entryDependencies.itemListMenuBackPressedHandler
@@ -819,7 +830,7 @@ fun ResponsiveApplication(
 							)
 						}
 						?.registerBackNav()
-						?.also { Navigate(destination, it, permissionsDependencies) }
+						?.also { Navigate(destination, responsiveState, it, permissionsDependencies) }
 				}
 				is ApplicationSettingsScreen -> {
 					Box(
