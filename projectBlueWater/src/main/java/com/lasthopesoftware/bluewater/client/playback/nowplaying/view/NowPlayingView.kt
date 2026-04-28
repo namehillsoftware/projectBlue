@@ -867,6 +867,27 @@ fun <T> BoxWithConstraintsScope.NowPlayingWideView(
 		onDispose { }
 	}
 
+	val scope = rememberCoroutineScope()
+	DisposableEffect(isDrawerFullyClosed) {
+		val nowPlayingBackAction =
+			if (isDrawerFullyClosed) null
+			else {
+				{
+					scope.async {
+						playlistViewModel.finishPlaylistEdit()
+						playlistDrawerState.animateTo(closedState)
+						true
+					}.toPromise()
+				}
+			}
+
+		nowPlayingBackAction?.let(undoBackStack::addAction)
+
+		onDispose {
+			nowPlayingBackAction?.let(undoBackStack::removeAction)
+		}
+	}
+
 	Box(
 		modifier = Modifier.fillMaxSize(),
 	) {
