@@ -323,148 +323,137 @@ private fun Navigate(destination: LibraryDestination, responsiveState: AnchoredD
 								.fillMaxHeight()
 								.focusGroup()
 						) {
-							if (this@fullScreen.isNarrow) {
-								val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
-								Column(
-									modifier = Modifier
-										.fillMaxSize()
-										.padding(systemBarsPadding)
-								) {
-									val scaffoldState = rememberBottomSheetScaffoldState()
-
-									val isBottomSheetCollapsed = scaffoldState.bottomSheetState.isCollapsed
-									val scope = rememberCoroutineScope()
-									DisposableEffect(isBottomSheetCollapsed) {
-										if (isBottomSheetCollapsed) {
-											onDispose { }
-										} else {
-											val collapseAction = {
-												scope.async {
-													if (scaffoldState.bottomSheetState.isCollapsed) false
-													else {
-														scaffoldState.bottomSheetState.collapse()
-														true
-													}
-												}.toPromise()
-											}
-
-											undoBackStackBuilder.addAction(collapseAction)
-
-											onDispose { undoBackStackBuilder.removeAction(collapseAction) }
-										}
+							NavHost(browserNavController) { browserDestination ->
+								LocalViewModelStoreOwner.current
+									?.let { viewModelStoreOwner ->
+										ScopedViewModelRegistry(
+											browserNavDependencies,
+											permissionsDependencies,
+											viewModelStoreOwner,
+										)
 									}
-									val selectedLibraryId by selectedLibraryViewModel.selectedLibraryId.subscribeAsState()
-									val isSelectedLibrary by remember { derivedStateOf { selectedLibraryId == libraryId } }
+									?.registerBackNav()
+									?.also { scopedDependencies ->
+										if (this@fullScreen.isNarrow) {
+											val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
+											Column(
+												modifier = Modifier
+													.fillMaxSize()
+													.padding(systemBarsPadding)
+											) {
+												val scaffoldState = rememberBottomSheetScaffoldState()
 
-									BottomSheetScaffold(
-										modifier = Modifier.weight(1f),
-										scaffoldState = scaffoldState,
-										sheetPeekHeight = if (isSelectedLibrary) appBarHeight else 0.dp,
-										sheetElevation = bottomSheetElevation,
-										sheetContent = {
-											if (isSelectedLibrary) {
-												LibraryMenu(
-													applicationNavigation = applicationNavigation,
-													nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-													playbackServiceController = playbackServiceController,
-													bottomSheetState = scaffoldState.bottomSheetState,
-													libraryId = libraryId,
-												)
+												val isBottomSheetCollapsed = scaffoldState.bottomSheetState.isCollapsed
+												val scope = rememberCoroutineScope()
+												DisposableEffect(isBottomSheetCollapsed) {
+													if (isBottomSheetCollapsed) {
+														onDispose { }
+													} else {
+														val collapseAction = {
+															scope.async {
+																if (scaffoldState.bottomSheetState.isCollapsed) false
+																else {
+																	scaffoldState.bottomSheetState.collapse()
+																	true
+																}
+															}.toPromise()
+														}
 
-												LaunchedEffect(key1 = libraryId) {
-													try {
-														nowPlayingFilePropertiesViewModel
-															.initializeViewModel(libraryId)
-															.suspend()
-													} catch (e: Throwable) {
-														when {
-															ConnectionLostExceptionFilter.isConnectionLostException(
-																e
-															) -> {
-																pollForConnections.pollConnection(libraryId)
-															}
+														undoBackStackBuilder.addAction(collapseAction)
 
-															UncaughtExceptionHandlerLogger.uncaughtException(e) -> {
-																exceptionAnnouncer.announce(e)
+														onDispose { undoBackStackBuilder.removeAction(collapseAction) }
+													}
+												}
+												val selectedLibraryId by selectedLibraryViewModel.selectedLibraryId.subscribeAsState()
+												val isSelectedLibrary by remember { derivedStateOf { selectedLibraryId == libraryId } }
+
+												BottomSheetScaffold(
+													modifier = Modifier.weight(1f),
+													scaffoldState = scaffoldState,
+													sheetPeekHeight = if (isSelectedLibrary) appBarHeight else 0.dp,
+													sheetElevation = bottomSheetElevation,
+													sheetContent = {
+														if (isSelectedLibrary) {
+															LibraryMenu(
+																applicationNavigation = applicationNavigation,
+																nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+																playbackServiceController = playbackServiceController,
+																bottomSheetState = scaffoldState.bottomSheetState,
+																libraryId = libraryId,
+															)
+
+															LaunchedEffect(key1 = libraryId) {
+																try {
+																	nowPlayingFilePropertiesViewModel
+																		.initializeViewModel(libraryId)
+																		.suspend()
+																} catch (e: Throwable) {
+																	when {
+																		ConnectionLostExceptionFilter.isConnectionLostException(
+																			e
+																		) -> {
+																			pollForConnections.pollConnection(libraryId)
+																		}
+
+																		UncaughtExceptionHandlerLogger.uncaughtException(
+																			e
+																		) -> {
+																			exceptionAnnouncer.announce(e)
+																		}
+																	}
+																}
 															}
 														}
 													}
-												}
-											}
-										}
-									) { paddingValues ->
-										BoxWithConstraints(modifier = Modifier.padding(paddingValues)) nestedBox@{
-											val screenScope = ScreenDimensionsScope(
-												screenHeight = this@fullScreen.maxHeight,
-												screenWidth = this@fullScreen.maxWidth,
-												innerBoxScope = this@nestedBox
-											)
-
-											NavHost(browserNavController) { browserDestination ->
-												LocalViewModelStoreOwner.current
-													?.let { viewModelStoreOwner ->
-														ScopedViewModelRegistry(
-															browserNavDependencies,
-															permissionsDependencies,
-															viewModelStoreOwner,
+												) { paddingValues ->
+													BoxWithConstraints(modifier = Modifier.padding(paddingValues)) nestedBox@{
+														val screenScope = ScreenDimensionsScope(
+															screenHeight = this@fullScreen.maxHeight,
+															screenWidth = this@fullScreen.maxWidth,
+															innerBoxScope = this@nestedBox
 														)
-													}
-													?.registerBackNav()
-													?.also { scopedDependencies ->
+
 														screenScope.NavigateToBrowserLibraryDestination(
 															browserDestination,
 															scopedDependencies
 														)
 													}
-											}
-										}
-									}
-								}
-							} else {
-								Column {
-									Spacer(
-										modifier = Modifier
-											.windowInsetsTopHeight(WindowInsets.systemBars)
-											.fillMaxWidth()
-									)
-
-									BoxWithConstraints(
-										modifier = Modifier
-											.fillMaxWidth()
-											.weight(1f)
-									) {
-										val screenScope = ScreenDimensionsScope(
-											screenHeight = this@fullScreen.maxHeight,
-											screenWidth = this@fullScreen.maxWidth,
-											innerBoxScope = this
-										)
-
-										NavHost(browserNavController) { browserDestination ->
-											LocalViewModelStoreOwner.current
-												?.let { viewModelStoreOwner ->
-													ScopedViewModelRegistry(
-														browserNavDependencies,
-														permissionsDependencies,
-														viewModelStoreOwner,
-													)
 												}
-												?.registerBackNav()
-												?.also { scopedDependencies ->
+											}
+										} else {
+											Column {
+												Spacer(
+													modifier = Modifier
+														.windowInsetsTopHeight(WindowInsets.systemBars)
+														.fillMaxWidth()
+												)
+
+												BoxWithConstraints(
+													modifier = Modifier
+														.fillMaxWidth()
+														.weight(1f)
+												) {
+													val screenScope = ScreenDimensionsScope(
+														screenHeight = this@fullScreen.maxHeight,
+														screenWidth = this@fullScreen.maxWidth,
+														innerBoxScope = this
+													)
+
 													screenScope.NavigateToBrowserLibraryDestination(
 														browserDestination,
 														scopedDependencies
 													)
 												}
+
+												Spacer(
+													modifier = Modifier
+														.windowInsetsBottomHeight(WindowInsets.systemBars)
+														.fillMaxWidth()
+														.background(SharedColors.overlayDark)
+												)
+											}
 										}
 									}
-
-									Spacer(
-										modifier = Modifier
-											.windowInsetsBottomHeight(WindowInsets.systemBars)
-											.fillMaxWidth()
-											.background(SharedColors.overlayDark)
-									)
-								}
 							}
 						}
 					}
