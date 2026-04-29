@@ -6,7 +6,6 @@ import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
-import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -135,129 +134,97 @@ enum class ResponsiveState { Browser, NowPlaying, Playlist }
 @Composable
 fun ScreenDimensionsScope.NavigateToBrowserLibraryDestination(
 	destination: BrowserLibraryDestination,
-	scopedViewModelDependencies: ScopedViewModelDependencies,
-	permissionsDependencies: PermissionsDependencies,
+	scopedDependencies: ScopedViewModelDependencies,
 ) {
-	val scope = rememberCoroutineScope()
-	val browserNavController =
-		rememberNavController<BrowserLibraryDestination>(listOf(LibraryScreen(destination.libraryId)))
-	val dependencies = remember(scope, browserNavController) {
-		object : ScopedViewModelDependencies by scopedViewModelDependencies {
-			override val applicationNavigation by lazy {
-				LibraryDestinationGraphNavigation(
-					scopedViewModelDependencies.applicationNavigation,
-					browserNavController,
-					scope,
-					itemListMenuBackPressedHandler
+	when (destination) {
+		is LibraryScreen -> {
+			LoadedItemListView(scopedDependencies, destination.libraryId, null)
+		}
+
+		is ItemScreen -> {
+			LoadedItemListView(scopedDependencies, destination.libraryId, destination.item)
+		}
+
+		is DownloadsScreen -> {
+			scopedDependencies.apply {
+				ActiveFileDownloadsView(
+					activeFileDownloadsViewModel = activeFileDownloadsViewModel,
+					trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
+					applicationNavigation = applicationNavigation,
 				)
+
+				activeFileDownloadsViewModel.loadActiveDownloads(destination.libraryId)
 			}
 		}
-	}
 
-	dependencies.registerBackNav()
+		is FilePropertySearchScreen,is SearchScreen -> {
+			var isConnectionLost by remember { mutableStateOf(false) }
+			var reinitializeConnection by remember { mutableStateOf(false) }
 
-	NavHost(browserNavController) { browserDestination ->
-		LocalViewModelStoreOwner.current
-			?.let { viewModelStoreOwner ->
-				ScopedViewModelRegistry(
-					dependencies,
-					permissionsDependencies,
-					viewModelStoreOwner,
-				)
-			}
-			?.registerBackNav()
-			?.also { scopedDependencies ->
-				when (browserDestination) {
-					is LibraryScreen -> {
-						LoadedItemListView(scopedDependencies, destination.libraryId, null)
-					}
+			scopedDependencies.apply {
+				if (isConnectionLost) {
+					ConnectionLostView(
+						onCancel = { scopedDependencies.applicationNavigation.viewApplicationSettings() },
+						onRetry = {
+							reinitializeConnection = true
+						}
+					)
+				} else {
+					SearchFilesView(
+						searchFilesViewModel = searchFilesViewModel,
+						nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
+						trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+						applicationNavigation = applicationNavigation,
+						playbackServiceController = playbackServiceController,
+						stringResources = stringResources,
+						backStackBuilder = undoBackStackBuilder,
+					)
+				}
 
-					is ItemScreen -> {
-						LoadedItemListView(scopedDependencies, destination.libraryId, browserDestination.item)
-					}
+				ViewModelInitAction {
+					searchFilesViewModel.setActiveLibraryId(destination.libraryId)
 
-					is DownloadsScreen -> {
-						scopedDependencies.apply {
-							ActiveFileDownloadsView(
-								activeFileDownloadsViewModel = activeFileDownloadsViewModel,
-								trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
-								applicationNavigation = applicationNavigation,
-							)
-
-							activeFileDownloadsViewModel.loadActiveDownloads(destination.libraryId)
+					if (reinitializeConnection) {
+						LaunchedEffect(key1 = Unit) {
+							isConnectionLost =
+								!connectionStatusViewModel.initializeConnection(destination.libraryId).suspend()
+							reinitializeConnection = false
 						}
 					}
 
-					is FilePropertySearchScreen,is SearchScreen -> {
-						var isConnectionLost by remember { mutableStateOf(false) }
-						var reinitializeConnection by remember { mutableStateOf(false) }
-
-						scopedDependencies.apply {
-							if (isConnectionLost) {
-								ConnectionLostView(
-									onCancel = { scopedDependencies.applicationNavigation.viewApplicationSettings() },
-									onRetry = {
-										reinitializeConnection = true
+					if (!isConnectionLost) {
+						LaunchedEffect(destination) {
+							try {
+								when (destination) {
+									is FilePropertySearchScreen -> {
+										destination.filePropertyFilter?.let(searchFilesViewModel::prependFilter)
 									}
-								)
-							} else {
-								SearchFilesView(
-									searchFilesViewModel = searchFilesViewModel,
-									nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
-									trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
-									itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-									applicationNavigation = applicationNavigation,
-									playbackServiceController = playbackServiceController,
-									stringResources = stringResources,
-									backStackBuilder = undoBackStackBuilder,
-								)
-							}
 
-							ViewModelInitAction {
-								searchFilesViewModel.setActiveLibraryId(destination.libraryId)
-
-								if (reinitializeConnection) {
-									LaunchedEffect(key1 = Unit) {
-										isConnectionLost =
-											!connectionStatusViewModel.initializeConnection(destination.libraryId).suspend()
-										reinitializeConnection = false
+									is SearchScreen -> {
+										searchFilesViewModel.query.value = destination.searchQuery
 									}
 								}
+								searchFilesViewModel.findFiles().suspend()
 
-								if (!isConnectionLost) {
-									LaunchedEffect(destination) {
-										try {
-											when (browserDestination) {
-										is FilePropertySearchScreen -> {
-												browserDestination.filePropertyFilter?.let(searchFilesViewModel::prependFilter)
-										}
-
-										is SearchScreen -> {
-											searchFilesViewModel.query.value = browserDestination.searchQuery
-										}
-									}
-												searchFilesViewModel.findFiles().suspend()
-
-										} catch (e: IOException) {
-											if (ConnectionLostExceptionFilter.isConnectionLostException(e))
-												isConnectionLost = true
-											else
-												applicationNavigation.backOut().suspend()
-										} catch (_: Exception) {
-											applicationNavigation.backOut().suspend()
-										}
-									}
-								}
+							} catch (e: IOException) {
+								if (ConnectionLostExceptionFilter.isConnectionLostException(e))
+									isConnectionLost = true
+								else
+									applicationNavigation.backOut().suspend()
+							} catch (_: Exception) {
+								applicationNavigation.backOut().suspend()
 							}
 						}
 					}
 				}
 			}
+		}
 	}
 }
 
 @Composable
-private fun Navigate(destination: LibraryDestination, responsiveState: AnchoredDraggableState<ResponsiveState>, scopedViewModelDependencies: ScopedViewModelDependencies, permissionsDependencies: PermissionsDependencies): Unit = scopedViewModelDependencies.run {
+private fun Navigate(destination: LibraryDestination, responsiveState: AnchoredDraggableState<ResponsiveState>, scopedViewModelDependencies: ScopedViewModelDependencies, permissionsDependencies: PermissionsDependencies): Unit = with(scopedViewModelDependencies) {
 	when (destination) {
 		is BrowserLibraryDestination, is NowPlayingScreen -> {
 			val libraryId = destination.libraryId
@@ -286,6 +253,8 @@ private fun Navigate(destination: LibraryDestination, responsiveState: AnchoredD
 				}
 			}
 
+			val browserNavController = rememberNavController<BrowserLibraryDestination>(LibraryScreen(libraryId))
+
 			BoxWithConstraints(modifier = Modifier.fillMaxSize()) fullScreen@{
 				findWindow()?.isStatusBarLight = false
 
@@ -313,20 +282,6 @@ private fun Navigate(destination: LibraryDestination, responsiveState: AnchoredD
 
 				val nowPlayingOffset by remember { derivedStateOf { (paneWidth + browserDrawerOffset).coerceAtLeast(0.dp) } }
 
-				suspend fun hidePlaylist() {
-					nowPlayingPlaylistViewModel.finishPlaylistEdit()
-					responsiveState.animateTo(ResponsiveState.NowPlaying)
-				}
-
-//				LaunchedEffect(destination) {
-//					val state = when (destination) {
-//						is NowPlayingScreen -> ResponsiveState.NowPlaying
-//						is BrowserLibraryDestination -> ResponsiveState.Browser
-//					}
-//
-//					if (responsiveState.targetValue != state) responsiveState.animateTo(state)
-//				}
-
 				val playlistListState = rememberLazyListState()
 				Box(
 					modifier = Modifier
@@ -336,12 +291,31 @@ private fun Navigate(destination: LibraryDestination, responsiveState: AnchoredD
 						)
 				) {
 					val browserOpenProgress by remember(responsiveState) {
-						derivedStateOf { responsiveState.progress(ResponsiveState.NowPlaying, ResponsiveState.Browser) }
+						derivedStateOf {
+							responsiveState.progress(
+								ResponsiveState.NowPlaying,
+								ResponsiveState.Browser
+							)
+						}
 					}
 					val isBrowserOpen by remember { derivedStateOf { browserOpenProgress > 0f } }
-
-					val scope = rememberCoroutineScope()
 					if (isBrowserOpen) {
+						val scope = rememberCoroutineScope()
+						val browserNavDependencies = remember(scope, browserNavController) {
+							object : ScopedViewModelDependencies by scopedViewModelDependencies {
+								override val applicationNavigation by lazy {
+									LibraryDestinationGraphNavigation(
+										scopedViewModelDependencies.applicationNavigation,
+										browserNavController,
+										scope,
+										itemListMenuBackPressedHandler
+									)
+								}
+							}
+						}
+
+						browserNavDependencies.registerBackNav()
+
 						Box(
 							modifier = Modifier
 								.offset { IntOffset(x = browserDrawerOffset.roundToPx(), y = 0) }
@@ -399,9 +373,9 @@ private fun Navigate(destination: LibraryDestination, responsiveState: AnchoredD
 
 												LaunchedEffect(key1 = libraryId) {
 													try {
-														nowPlayingFilePropertiesViewModel.initializeViewModel(
-															libraryId
-														).suspend()
+														nowPlayingFilePropertiesViewModel
+															.initializeViewModel(libraryId)
+															.suspend()
 													} catch (e: Throwable) {
 														when {
 															ConnectionLostExceptionFilter.isConnectionLostException(
@@ -426,12 +400,23 @@ private fun Navigate(destination: LibraryDestination, responsiveState: AnchoredD
 												innerBoxScope = this@nestedBox
 											)
 
-											screenScope.NavigateToBrowserLibraryDestination(
-												destination as? BrowserLibraryDestination
-													?: LibraryScreen(destination.libraryId),
-												this@run,
-												permissionsDependencies
-											)
+											NavHost(browserNavController) { browserDestination ->
+												LocalViewModelStoreOwner.current
+													?.let { viewModelStoreOwner ->
+														ScopedViewModelRegistry(
+															browserNavDependencies,
+															permissionsDependencies,
+															viewModelStoreOwner,
+														)
+													}
+													?.registerBackNav()
+													?.also { scopedDependencies ->
+														screenScope.NavigateToBrowserLibraryDestination(
+															browserDestination,
+															scopedDependencies
+														)
+													}
+											}
 										}
 									}
 								}
@@ -448,19 +433,29 @@ private fun Navigate(destination: LibraryDestination, responsiveState: AnchoredD
 											.fillMaxWidth()
 											.weight(1f)
 									) {
-
 										val screenScope = ScreenDimensionsScope(
 											screenHeight = this@fullScreen.maxHeight,
 											screenWidth = this@fullScreen.maxWidth,
 											innerBoxScope = this
 										)
 
-										screenScope.NavigateToBrowserLibraryDestination(
-											destination as? BrowserLibraryDestination
-												?: LibraryScreen(destination.libraryId),
-											this@run,
-											permissionsDependencies
-										)
+										NavHost(browserNavController) { browserDestination ->
+											LocalViewModelStoreOwner.current
+												?.let { viewModelStoreOwner ->
+													ScopedViewModelRegistry(
+														browserNavDependencies,
+														permissionsDependencies,
+														viewModelStoreOwner,
+													)
+												}
+												?.registerBackNav()
+												?.also { scopedDependencies ->
+													screenScope.NavigateToBrowserLibraryDestination(
+														browserDestination,
+														scopedDependencies
+													)
+												}
+										}
 									}
 
 									Spacer(
@@ -470,30 +465,6 @@ private fun Navigate(destination: LibraryDestination, responsiveState: AnchoredD
 											.background(SharedColors.overlayDark)
 									)
 								}
-							}
-						}
-					} else {
-						DisposableEffect(responsiveState) {
-							val nowPlayingBackAction = {
-								scope.async {
-									when (responsiveState.currentValue) {
-										ResponsiveState.Playlist -> {
-											hidePlaylist()
-											true
-										}
-										ResponsiveState.NowPlaying -> {
-											responsiveState.animateTo(ResponsiveState.Browser)
-											true
-										}
-										else -> false
-									}
-								}.toPromise()
-							}
-
-							undoBackStackBuilder.addAction(nowPlayingBackAction)
-
-							onDispose {
-								undoBackStackBuilder.removeAction(nowPlayingBackAction)
 							}
 						}
 					}
@@ -828,6 +799,7 @@ fun ResponsiveApplication(
 						?.registerBackNav()
 						?.also { Navigate(destination, responsiveState, it, permissionsDependencies) }
 				}
+
 				is ApplicationSettingsScreen -> {
 					Box(
 						modifier = Modifier.fillMaxSize()

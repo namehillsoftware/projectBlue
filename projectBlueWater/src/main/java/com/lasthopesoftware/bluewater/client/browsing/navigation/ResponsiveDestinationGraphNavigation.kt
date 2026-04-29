@@ -16,6 +16,7 @@ import dev.olshevski.navigation.reimagined.NavController
 import dev.olshevski.navigation.reimagined.navigate
 import dev.olshevski.navigation.reimagined.pop
 import dev.olshevski.navigation.reimagined.popUpTo
+import dev.olshevski.navigation.reimagined.replaceAll
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -31,13 +32,18 @@ class ResponsiveDestinationGraphNavigation(
 	override fun launchSearch(libraryId: LibraryId) = coroutineScope.launch {
 		bringBrowserIntoView(libraryId)
 
-		navController.navigate(SearchScreen(libraryId))
+		navController.navigate(FilePropertySearchScreen(libraryId))
 	}.toPromise()
 
 	override fun search(libraryId: LibraryId, filePropertyFilter: FileProperty): Promise<Unit> = coroutineScope.launch {
 		bringBrowserIntoView(libraryId)
 
-		navController.navigate(SearchScreen(libraryId, filePropertyFilter))
+		navController.navigate(FilePropertySearchScreen(libraryId, filePropertyFilter))
+	}.toPromise()
+
+	override fun search(libraryId: LibraryId, searchQuery: String): Promise<Unit> = coroutineScope.launch {
+		bringBrowserIntoView(libraryId)
+		navController.navigate(SearchScreen(libraryId, searchQuery))
 	}.toPromise()
 
 	override fun viewApplicationSettings() = coroutineScope.launch {
