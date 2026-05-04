@@ -108,6 +108,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.KeepScreen
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingCoverArtView
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingNarrowView
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingWideView
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.SavePlaylistDialog
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.minimumMenuWidth
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
@@ -521,6 +522,8 @@ private fun Navigate(destination: LibraryDestination, responsiveState: AnchoredD
 								}
 							}
 						}
+
+						SavePlaylistDialog(nowPlayingPlaylistViewModel)
 					}
 				}
 
