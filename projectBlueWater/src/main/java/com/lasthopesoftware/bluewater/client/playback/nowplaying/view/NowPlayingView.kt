@@ -48,7 +48,6 @@ import androidx.compose.material.ProgressIndicatorDefaults
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
-import androidx.compose.material.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -68,10 +67,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -209,101 +206,6 @@ fun NowPlayingHeadline(
 			MarqueeText(
 				text = artist,
 				gradientEdgeColor = Color.Transparent,
-			)
-		}
-	}
-}
-
-@OptIn(ExperimentalComposeUiApi::class)
-@Composable
-fun PlaylistControls(
-	modifier: Modifier = Modifier,
-	playlistViewModel: NowPlayingPlaylistViewModel,
-	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
-	undoBackStack: UndoStack,
-) {
-	Row(
-		modifier = modifier,
-		horizontalArrangement = Arrangement.SpaceAround,
-		verticalAlignment = Alignment.CenterVertically,
-	) {
-		val isEditingPlaylist by playlistViewModel.isEditingPlaylist.subscribeAsState()
-		if (isEditingPlaylist) {
-			Image(
-				painter = painterResource(id = R.drawable.cancel_36dp),
-				contentDescription = stringResource(id = R.string.finish_edit_now_playing_list),
-				modifier = Modifier.navigable(onClick = playlistViewModel::finishPlaylistEdit),
-				alpha = playlistControlAlpha,
-			)
-		} else {
-			Image(
-				painter = painterResource(id = R.drawable.pencil),
-				contentDescription = stringResource(id = R.string.edit_now_playing_list),
-				modifier = Modifier
-					.navigable(onClick = {
-						playlistViewModel.editPlaylist()
-						undoBackStack.addAction { playlistViewModel.finishPlaylistEdit().toPromise() }
-					}),
-				alpha = playlistControlAlpha,
-			)
-		}
-
-		if (isEditingPlaylist) {
-			Image(
-				painter = painterResource(id = R.drawable.clear_all_white_36dp),
-				contentDescription = stringResource(R.string.empty_playlist),
-				modifier = Modifier.navigable(onClick = playlistViewModel::requestPlaylistClearingPermission),
-				alpha = playlistControlAlpha,
-			)
-		} else {
-			val isRepeating by playlistViewModel.isRepeating.subscribeAsState()
-			if (isRepeating) {
-				Image(
-					painter = painterResource(id = R.drawable.av_repeat_white),
-					contentDescription = stringResource(id = R.string.btn_complete_playlist),
-					modifier = Modifier.navigable(onClick = playlistViewModel::toggleRepeating),
-					alpha = playlistControlAlpha,
-				)
-			} else {
-				Image(
-					painter = painterResource(id = R.drawable.av_no_repeat_white),
-					contentDescription = stringResource(id = R.string.btn_repeat_playlist),
-					modifier = Modifier.navigable(onClick = playlistViewModel::toggleRepeating),
-					alpha = playlistControlAlpha,
-				)
-			}
-		}
-
-		if (isEditingPlaylist) {
-			Image(
-				painter = painterResource(id = R.drawable.upload_36dp),
-				contentDescription = stringResource(id = R.string.save_playlist),
-				modifier = Modifier.navigable(onClick = playlistViewModel::enableSavingPlaylist),
-				alpha = playlistControlAlpha,
-			)
-		} else {
-			val hapticFeedback = LocalHapticFeedback.current
-			val isAutoScrollEnabled by playlistViewModel.isAutoScrolling.subscribeAsState()
-			Image(
-				painter = painterResource(id = R.drawable.baseline_playlist_play_36),
-				contentDescription = stringResource(R.string.scroll_to_now_playing_item),
-				modifier = Modifier.navigable(
-					interactionSource = remember { MutableInteractionSource() },
-					indication = ripple(),
-					onClick = {
-						viewModelMessageBus.sendMessage(NowPlayingMessage.ScrollToNowPlaying)
-					},
-					onClickLabel = stringResource(R.string.scroll_to_now_playing_item),
-					onLongClick = {
-						if (isAutoScrollEnabled)
-							playlistViewModel.disableUserAutoScrolling()
-						else
-							playlistViewModel.enableUserAutoScrolling()
-						hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-					},
-					onLongClickLabel = stringResource(R.string.auto_scroll_to_now_playing_item)
-				),
-				alpha = if (isAutoScrollEnabled) 1f else disabledAlpha,
 			)
 		}
 	}
@@ -574,6 +476,15 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 		playlistDrawerState.animateToWithDecay(SlideOutState.Closed, velocity, decayAnimationSpec = decaySpec)
 	}
 
+	val isEditingPlaylist by playlistViewModel.isEditingPlaylist.subscribeAsState()
+	DisposableEffect(isPlaylistEditingShown, isEditingPlaylist) {
+		if (isEditingPlaylist) {
+			onDispose { playlistViewModel.finishPlaylistEdit() }
+		} else {
+			onDispose { }
+		}
+	}
+
 	val isPlaylistShown by playlistViewModel.isPlaylistShown.subscribeAsState()
 	val scope = rememberCoroutineScope()
 	DisposableEffect(isSettledOnFirstPage) {
@@ -582,7 +493,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 			onDispose { }
 		} else {
 			playlistViewModel.showPlaylist()
-			val hidePlaylistAction = {
+			val hidePlaylistAction = undoBackStack.addAction {
 				scope.async {
 					if (!playlistViewModel.isPlaylistShown.value) false
 					else {
@@ -592,11 +503,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 				}.toPromise()
 			}
 
-			undoBackStack.addAction(hidePlaylistAction)
-
-			onDispose {
-				undoBackStack.removeAction(hidePlaylistAction)
-			}
+			onDispose { hidePlaylistAction.close() }
 		}
 	}
 
@@ -953,7 +860,9 @@ fun <T> BoxWithConstraintsScope.NowPlayingWideView(
 						.rotate(drawerChevronRotation),
 				)
 			},
-			modifier = Modifier.fillMaxHeight().width(nowPlayingControlsWidth)
+			modifier = Modifier
+				.fillMaxHeight()
+				.width(nowPlayingControlsWidth)
 		)
 
 		if (playlistOpenProgress > 0f) {

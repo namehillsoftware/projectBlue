@@ -194,6 +194,7 @@ fun DragDropItemScope.NowPlayingItemView(
 					painter = painterResource(id = R.drawable.remove_item_36dp),
 					contentDescription = stringResource(id = R.string.btn_remove_file),
 					modifier = Modifier
+						.padding(Dimensions.viewPaddingUnit)
 						.navigable(onClick = it),
 				)
 			}
