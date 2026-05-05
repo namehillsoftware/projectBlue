@@ -73,7 +73,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.search.SearchFi
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.LoadedItemListView
-import com.lasthopesoftware.bluewater.client.browsing.library.LibraryDestinationGraphNavigation
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibrarySearchScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSettingsScreen
@@ -122,6 +121,7 @@ import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
+import dev.olshevski.navigation.reimagined.NavController
 import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.rememberNavController
 import kotlinx.coroutines.async
@@ -225,10 +225,10 @@ fun ScreenDimensionsScope.NavigateToBrowserLibraryDestination(
 }
 
 @Composable
-private fun Navigate(destination: LibraryDestination, responsiveState: AnchoredDraggableState<ResponsiveState>, scopedViewModelDependencies: ScopedViewModelDependencies, permissionsDependencies: PermissionsDependencies): Unit = with(scopedViewModelDependencies) {
+private fun Navigate(destination: LibraryDestination, browserNavController: NavController<BrowserLibraryDestination>, responsiveState: AnchoredDraggableState<ResponsiveState>, scopedViewModelDependencies: ScopedViewModelDependencies, permissionsDependencies: PermissionsDependencies): Unit = with(scopedViewModelDependencies) {
+	val libraryId = destination.libraryId
 	when (destination) {
 		is BrowserLibraryDestination, is NowPlayingScreen -> {
-			val libraryId = destination.libraryId
 			LaunchedEffect(key1 = libraryId) {
 				try {
 					val isConnectionActive = connectionWatcherViewModel.watchLibraryConnection(libraryId).suspend()
@@ -253,8 +253,6 @@ private fun Navigate(destination: LibraryDestination, responsiveState: AnchoredD
 					}
 				}
 			}
-
-			val browserNavController = rememberNavController<BrowserLibraryDestination>(LibraryScreen(libraryId))
 
 			BoxWithConstraints(modifier = Modifier.fillMaxSize()) fullScreen@{
 				findWindow()?.isStatusBarLight = false
@@ -291,27 +289,11 @@ private fun Navigate(destination: LibraryDestination, responsiveState: AnchoredD
 							orientation = Orientation.Horizontal,
 						)
 				) {
-					val scope = rememberCoroutineScope()
-					val browserNavDependencies = remember(scope, browserNavController) {
-						object : ScopedViewModelDependencies by scopedViewModelDependencies {
-							override val applicationNavigation by lazy {
-								LibraryDestinationGraphNavigation(
-									scopedViewModelDependencies.applicationNavigation,
-									browserNavController,
-									scope,
-									itemListMenuBackPressedHandler
-								)
-							}
-						}
-					}
-
-					browserNavDependencies.registerBackNav()
-
 					NavHost(browserNavController) { browserDestination ->
 						LocalViewModelStoreOwner.current
 							?.let { viewModelStoreOwner ->
 								ScopedViewModelRegistry(
-									browserNavDependencies,
+									scopedViewModelDependencies,
 									permissionsDependencies,
 									viewModelStoreOwner,
 								)
@@ -334,6 +316,7 @@ private fun Navigate(destination: LibraryDestination, responsiveState: AnchoredD
 												.padding(systemBarsPadding)
 										) {
 											val isBottomSheetCollapsed = scaffoldState.bottomSheetState.isCollapsed
+											val scope = rememberCoroutineScope()
 											DisposableEffect(isBottomSheetCollapsed) {
 												if (isBottomSheetCollapsed) {
 													onDispose { }
@@ -666,12 +649,14 @@ fun ResponsiveApplication(
 		)
 	}
 
+	val browserNavController = rememberNavController<BrowserLibraryDestination>(emptyList())
 	val coroutineScope = rememberCoroutineScope()
 	val destinationGraphNavigation = remember(entryDependencies, responsiveState, navController, coroutineScope) {
 		ResponsiveDestinationGraphNavigation(
 			entryDependencies.applicationNavigation,
 			responsiveState,
 			navController,
+			browserNavController,
 			coroutineScope,
 			entryDependencies.itemListMenuBackPressedHandler
 		)
@@ -775,7 +760,7 @@ fun ResponsiveApplication(
 							)
 						}
 						?.registerBackNav()
-						?.also { Navigate(destination, responsiveState, it, permissionsDependencies) }
+						?.also { Navigate(destination, browserNavController, responsiveState, it, permissionsDependencies) }
 				}
 
 				is ApplicationSettingsScreen -> {
