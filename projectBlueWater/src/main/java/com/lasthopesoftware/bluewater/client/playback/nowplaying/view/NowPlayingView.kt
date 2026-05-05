@@ -779,7 +779,7 @@ fun <T> BoxWithConstraintsScope.NowPlayingWideView(
 		val nowPlayingBackAction =
 			if (isDrawerFullyClosed) null
 			else {
-				{
+				undoBackStack.addAction {
 					scope.async {
 						playlistViewModel.finishPlaylistEdit()
 						playlistDrawerState.animateTo(closedState)
@@ -788,10 +788,8 @@ fun <T> BoxWithConstraintsScope.NowPlayingWideView(
 				}
 			}
 
-		nowPlayingBackAction?.let(undoBackStack::addAction)
-
 		onDispose {
-			nowPlayingBackAction?.let(undoBackStack::removeAction)
+			nowPlayingBackAction?.close()
 		}
 	}
 
