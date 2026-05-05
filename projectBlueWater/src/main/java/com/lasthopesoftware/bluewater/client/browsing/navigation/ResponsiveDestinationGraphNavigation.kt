@@ -92,14 +92,18 @@ class ResponsiveDestinationGraphNavigation(
 	}.toPromise()
 
 	override fun navigateUp() = coroutineScope.async {
-		if (navController.backstack.entries.lastOrNull()?.destination is BrowserLibraryDestination && draggableState.currentValue > ResponsiveState.Browser) {
-			draggableState.animateTo(ResponsiveState.Browser)
-			true
-		} else {
-			(libraryNavController.pop() && libraryNavController.backstack.entries.any()) ||
-				(navController.pop() && navController.backstack.entries.any()) ||
-				inner.navigateUp().suspend()
+		if (navController.backstack.entries.lastOrNull()?.destination is BrowserLibraryDestination) {
+			if (draggableState.currentValue > ResponsiveState.Browser) {
+				draggableState.animateTo(ResponsiveState.Browser)
+				return@async true
+			}
+
+			if (libraryNavController.pop() && libraryNavController.backstack.entries.any()) {
+				return@async true
+			}
 		}
+
+		(navController.pop() && navController.backstack.entries.any()) || inner.navigateUp().suspend()
 	}.toPromise()
 
 	override fun backOut() = coroutineScope.async {
