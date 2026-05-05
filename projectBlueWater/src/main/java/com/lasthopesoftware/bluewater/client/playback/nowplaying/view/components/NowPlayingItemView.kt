@@ -111,7 +111,9 @@ private fun NowPlayingItemView(
 				ListItemIcon(
 					painter = painterResource(id = R.drawable.remove_item_36dp),
 					contentDescription = stringResource(id = R.string.btn_remove_file),
-					modifier = Modifier.clickable(onClick = it),
+					modifier = Modifier
+						.weight(1f)
+						.clickable(onClick = it),
 				)
 			}
 
