@@ -58,7 +58,6 @@ import com.lasthopesoftware.bluewater.android.ui.findWindow
 import com.lasthopesoftware.bluewater.android.ui.isNarrow
 import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
-import com.lasthopesoftware.bluewater.android.ui.theme.DetermineWindowControlColors
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.appBarHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.bottomSheetElevation
@@ -709,8 +708,6 @@ fun ResponsiveApplication(
 	routedNavigationDependencies.registerBackNav()
 
 	ControlSurface {
-		DetermineWindowControlColors()
-
 		NavHost(navController) { destination ->
 			when (destination) {
 				is LandingScreen -> {
