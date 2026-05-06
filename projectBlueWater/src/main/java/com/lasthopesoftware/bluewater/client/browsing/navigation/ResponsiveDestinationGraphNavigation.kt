@@ -9,6 +9,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
+import com.lasthopesoftware.navigation.isNotEmpty
+import com.lasthopesoftware.navigation.peek
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -65,7 +67,8 @@ class ResponsiveDestinationGraphNavigation(
 	}.toPromise()
 
 	override fun viewLibrary(libraryId: LibraryId) = coroutineScope.launch {
-		navigateToBrowserDestination(LibraryScreen(libraryId))
+		if (libraryNavController.peek()?.destination?.libraryId != libraryId)
+			navigateToBrowserDestination(LibraryScreen(libraryId))
 	}.toPromise()
 
 	override fun viewItem(libraryId: LibraryId, item: IItem) = coroutineScope.launch {
@@ -92,18 +95,18 @@ class ResponsiveDestinationGraphNavigation(
 	}.toPromise()
 
 	override fun navigateUp() = coroutineScope.async {
-		if (navController.backstack.entries.lastOrNull()?.destination is BrowserLibraryDestination) {
+		if (navController.peek()?.destination is BrowserLibraryDestination) {
 			if (draggableState.currentValue > ResponsiveState.Browser) {
 				draggableState.animateTo(ResponsiveState.Browser)
 				return@async true
 			}
 
-			if (libraryNavController.pop() && libraryNavController.backstack.entries.any()) {
+			if (libraryNavController.pop() && libraryNavController.isNotEmpty()) {
 				return@async true
 			}
 		}
 
-		(navController.pop() && navController.backstack.entries.any()) || inner.navigateUp().suspend()
+		(navController.pop() && navController.isNotEmpty()) || inner.navigateUp().suspend()
 	}.toPromise()
 
 	override fun backOut() = coroutineScope.async {
@@ -115,7 +118,8 @@ class ResponsiveDestinationGraphNavigation(
 
 		bringBrowserIntoView(libraryId)
 
-		libraryNavController.navigate(destination)
+		if (libraryNavController.peek()?.destination != destination)
+			libraryNavController.navigate(destination)
 	}
 
 	private suspend fun bringBrowserIntoView(libraryId: LibraryId) {
@@ -126,8 +130,10 @@ class ResponsiveDestinationGraphNavigation(
 	private fun ensureBrowserIsOnStack(libraryId: LibraryId) {
 		if (!navController.popUpTo { it is LibraryScreen && it.libraryId == libraryId }) {
 			navController.popUpTo { it is ApplicationSettingsScreen }
-			navController.navigate(LibraryScreen(libraryId))
-			libraryNavController.replaceAll(LibraryScreen(libraryId))
+
+			val destination = LibraryScreen(libraryId)
+			navController.navigate(destination)
+			libraryNavController.replaceAll(destination)
 		}
 	}
 }

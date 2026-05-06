@@ -57,6 +57,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.PaddedSystemScreenBo
 import com.lasthopesoftware.bluewater.android.ui.findWindow
 import com.lasthopesoftware.bluewater.android.ui.isNarrow
 import com.lasthopesoftware.bluewater.android.ui.remember
+import com.lasthopesoftware.bluewater.android.ui.rememberAutoCloseable
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.appBarHeight
@@ -157,14 +158,14 @@ fun ScreenDimensionsScope.NavigateToBrowserLibraryDestination(
 			}
 		}
 
-		is FilePropertySearchScreen,is SearchScreen -> {
+		is FilePropertySearchScreen, is SearchScreen -> {
 			var isConnectionLost by remember { mutableStateOf(false) }
 			var reinitializeConnection by remember { mutableStateOf(false) }
 
 			scopedDependencies.apply {
 				if (isConnectionLost) {
 					ConnectionLostView(
-						onCancel = { scopedDependencies.applicationNavigation.viewApplicationSettings() },
+						onCancel = { applicationNavigation.viewApplicationSettings() },
 						onRetry = {
 							reinitializeConnection = true
 						}
@@ -200,13 +201,12 @@ fun ScreenDimensionsScope.NavigateToBrowserLibraryDestination(
 									is FilePropertySearchScreen -> {
 										destination.filePropertyFilter?.let(searchFilesViewModel::prependFilter)
 									}
-
 									is SearchScreen -> {
 										searchFilesViewModel.query.value = destination.searchQuery
 									}
 								}
-								searchFilesViewModel.findFiles().suspend()
 
+								searchFilesViewModel.findFiles().suspend()
 							} catch (e: IOException) {
 								if (ConnectionLostExceptionFilter.isConnectionLostException(e))
 									isConnectionLost = true
@@ -650,7 +650,7 @@ fun ResponsiveApplication(
 
 	val browserNavController = rememberNavController<BrowserLibraryDestination>(emptyList())
 	val coroutineScope = rememberCoroutineScope()
-	val destinationGraphNavigation = remember(entryDependencies, responsiveState, navController, coroutineScope) {
+	val destinationGraphNavigation = remember(entryDependencies, responsiveState, navController, browserNavController, coroutineScope) {
 		ResponsiveDestinationGraphNavigation(
 			entryDependencies.applicationNavigation,
 			responsiveState,
@@ -671,7 +671,7 @@ fun ResponsiveApplication(
 		}
 	}
 
-	val routedNavigationDependencies = remember(destinationGraphNavigation, connectionStatusViewModel, navController) {
+	val routedNavigationDependencies = rememberAutoCloseable(destinationGraphNavigation, connectionStatusViewModel, navController) {
 		RoutedNavigationDependencies(
 			entryDependencies,
 			destinationGraphNavigation,
@@ -699,12 +699,6 @@ fun ResponsiveApplication(
 		)
 	}
 
-	DisposableEffect(key1 = routedNavigationDependencies) {
-		onDispose {
-			routedNavigationDependencies.close()
-		}
-	}
-
 	routedNavigationDependencies.registerBackNav()
 
 	ControlSurface {
@@ -719,30 +713,18 @@ fun ResponsiveApplication(
 					}
 				}
 
-				is ActiveLibrarySearchScreen -> {
+				is ActiveLibraryDownloadsScreen -> {
 					routedNavigationDependencies.apply {
 						LaunchedEffect(Unit) {
-							applicationNavigation.searchActiveLibrary(destination.searchQuery)
+							applicationNavigation.viewActiveDownloads().suspend()
 						}
 					}
 				}
 
-				is ActiveLibraryDownloadsScreen -> {
+				is ActiveLibrarySearchScreen -> {
 					routedNavigationDependencies.apply {
-						LaunchedEffect(key1 = Unit) {
-							val selectedLibraryId = try {
-								selectedLibraryIdProvider.promiseSelectedLibraryId().suspend()
-							} catch (e: Throwable) {
-								logger.error("An error occurred initializing the library", e)
-								null
-							}
-
-							if (selectedLibraryId != null && selectedLibraryId.id > -1) {
-								applicationNavigation.viewLibrary(selectedLibraryId).suspend()
-								applicationNavigation.viewActiveDownloads(selectedLibraryId).suspend()
-							} else {
-								applicationNavigation.backOut().suspend()
-							}
+						LaunchedEffect(Unit) {
+							applicationNavigation.searchActiveLibrary(destination.searchQuery)
 						}
 					}
 				}
