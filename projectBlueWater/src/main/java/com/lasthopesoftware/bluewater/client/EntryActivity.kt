@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
@@ -30,6 +31,7 @@ import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.registerResultActivityLauncher
+import com.lasthopesoftware.promises.extensions.suspend
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ConcurrentHashMap
@@ -100,7 +102,7 @@ class EntryActivity :
 
 		setContent {
 			val theme by browserViewDependencies.applicationViewModel.run {
-				loadSettings()
+				LaunchedEffect(Unit) { loadSettings().suspend() }
 				theme.subscribeAsState()
 			}
 			val isDarkTheme = theme == ApplicationSettings.Theme.DARK || (theme == ApplicationSettings.Theme.SYSTEM && isSystemInDarkTheme())

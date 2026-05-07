@@ -8,13 +8,19 @@ import com.lasthopesoftware.promises.extensions.toPromise
 
 interface NavigateApplication {
 
-	fun viewLibrary(libraryId: LibraryId) = Unit.toPromise()
-
 	fun viewApplicationSettings() = Unit.toPromise()
 
 	fun viewHiddenSettings() = Unit.toPromise()
 
 	fun viewNewServerSettings() = Unit.toPromise()
+
+	fun viewActiveLibrary() = Unit.toPromise()
+
+	fun viewActiveDownloads() = Unit.toPromise()
+
+	fun viewLibrary(libraryId: LibraryId) = Unit.toPromise()
+
+	fun viewItem(libraryId: LibraryId, item: IItem) = Unit.toPromise()
 
 	fun viewServerSettings(libraryId: LibraryId) = Unit.toPromise()
 
@@ -27,8 +33,6 @@ interface NavigateApplication {
 	fun launchSearch(libraryId: LibraryId) = Unit.toPromise()
 
 	fun search(libraryId: LibraryId, filePropertyFilter: FileProperty) = Unit.toPromise()
-
-	fun viewItem(libraryId: LibraryId, item: IItem) = Unit.toPromise()
 
 	fun viewNowPlaying(libraryId: LibraryId) = Unit.toPromise()
 

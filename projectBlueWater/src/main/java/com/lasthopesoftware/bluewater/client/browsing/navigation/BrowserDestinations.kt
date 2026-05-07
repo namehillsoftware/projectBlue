@@ -21,10 +21,13 @@ data object HiddenSettingsScreen : Destination
 sealed interface ConnectingDestination : Destination
 
 @Parcelize
-data object ActiveLibraryDownloadsScreen : ConnectingDestination
+data object LandingScreen : ConnectingDestination
 
 @Parcelize
-data object SelectedLibraryReRouter : ConnectingDestination
+data object ActiveLibraryDownloadsScreen : ConnectingDestination
+
+//@Parcelize
+//data object ActiveLibraryScreen : ConnectingDestination
 
 sealed interface LibraryDestination : Destination {
 	val libraryId: LibraryId
