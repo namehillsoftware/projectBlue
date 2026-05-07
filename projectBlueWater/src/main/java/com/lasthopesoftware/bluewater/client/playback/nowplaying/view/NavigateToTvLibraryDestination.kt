@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
-import LoadedItemListView
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -10,6 +9,7 @@ import androidx.compose.runtime.setValue
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.list.search.SearchFilesView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
+import com.lasthopesoftware.bluewater.client.browsing.items.list.LoadedItemListScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.DownloadsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ItemScreen
@@ -25,11 +25,11 @@ import java.io.IOException
 fun ScreenDimensionsScope.NavigateToTvLibraryDestination(destination: BrowserLibraryDestination, browserViewDependencies: ScopedViewModelDependencies) {
 	when (destination) {
 		is LibraryScreen -> {
-            LoadedItemListView(browserViewDependencies, destination.libraryId, null)
+            LoadedItemListScreen(browserViewDependencies, destination.libraryId, null)
 		}
 
 		is ItemScreen -> {
-            LoadedItemListView(browserViewDependencies, destination.libraryId, destination.item)
+            LoadedItemListScreen(browserViewDependencies, destination.libraryId, destination.item)
 		}
 
 		is DownloadsScreen -> {

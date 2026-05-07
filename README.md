@@ -112,6 +112,11 @@ the design focus that is applied to a given area of the application:
 - File details - the artist.
   - Focus on displaying and editing details about a given track.
 
+### Semantic Meanings
+
+- Screen: a component that generally controls its environment; influences screen and/or window chrome
+- View: a component that fully encapsulates a certain area, but does not control its environment
+
 ## Authors
 
 - David Vedvick
