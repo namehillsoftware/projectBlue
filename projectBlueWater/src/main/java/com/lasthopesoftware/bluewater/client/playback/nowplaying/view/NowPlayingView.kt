@@ -461,7 +461,7 @@ fun <T : Enum<T>> BoxWithConstraintsScope.NowPlayingNarrowView(
 	val halfScreenHeight = filePropertiesHeight / 2
 	val halfScreenHeightPx = LocalDensity.current.run { halfScreenHeight.toPx() }
 
-	val playlistDrawerState = remember(initialDrawerState) {
+	val playlistDrawerState = remember {
 		AnchoredDraggableState(
 			initialValue = initialDrawerState,
 			anchors = DraggableAnchors {

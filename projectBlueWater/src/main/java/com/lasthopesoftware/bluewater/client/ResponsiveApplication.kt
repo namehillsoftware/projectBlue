@@ -645,7 +645,7 @@ fun ResponsiveApplication(
 		mutableStateOf(ResponsiveState.Browser)
 	}
 
-	val responsiveState = remember(browserDragValue) {
+	val responsiveState = remember {
 		AnchoredDraggableState(
 			initialValue = browserDragValue,
 			anchors = DraggableAnchors {
