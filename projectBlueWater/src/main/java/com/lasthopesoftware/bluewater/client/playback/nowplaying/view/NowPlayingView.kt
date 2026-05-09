@@ -415,8 +415,45 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	undoBackStack: UndoStack,
 	lazyListState: LazyListState,
 ) {
-	val isScreenControlsVisible by nowPlayingScreenViewModel.isScreenControlsVisible.subscribeAsState()
+	var draggableState by rememberSaveable { mutableStateOf(SlideOutState.Closed) }
 
+	NowPlayingNarrowView(
+		nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+		nowPlayingScreenViewModel = nowPlayingScreenViewModel,
+		playbackServiceController = playbackServiceController,
+		playlistViewModel = playlistViewModel,
+		childItemViewModelProvider = childItemViewModelProvider,
+		applicationNavigation = applicationNavigation,
+		itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+		viewModelMessageBus = viewModelMessageBus,
+		undoBackStack = undoBackStack,
+		lazyListState = lazyListState,
+		drawerOpenState = SlideOutState.Open,
+		drawerPartiallyOpenState = SlideOutState.PartiallyOpen,
+		drawerClosedState = SlideOutState.Closed,
+		initialDrawerState = draggableState,
+		onDrawerStateChanged = { draggableState = it },
+	)
+}
+
+@Composable
+fun <T : Enum<T>> BoxWithConstraintsScope.NowPlayingNarrowView(
+	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
+	nowPlayingScreenViewModel: NowPlayingScreenViewModel,
+	playbackServiceController: ControlPlaybackService,
+	playlistViewModel: NowPlayingPlaylistViewModel,
+	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+	applicationNavigation: NavigateApplication,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
+	undoBackStack: UndoStack,
+	lazyListState: LazyListState,
+	drawerOpenState: T,
+	drawerPartiallyOpenState: T,
+	drawerClosedState: T,
+	initialDrawerState: T,
+	onDrawerStateChanged: (T) -> Unit,
+) {
 	val filePropertiesHeight = remember(maxHeight) { maxHeight - expandedControlsHeight }
 
 	val filePropertiesHeightPx = LocalDensity.current.run { filePropertiesHeight.toPx() }
@@ -424,35 +461,70 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	val halfScreenHeight = filePropertiesHeight / 2
 	val halfScreenHeightPx = LocalDensity.current.run { halfScreenHeight.toPx() }
 
-	var draggableState by rememberSaveable { mutableStateOf(SlideOutState.Closed) }
-
 	val playlistDrawerState = remember {
 		AnchoredDraggableState(
-			initialValue = draggableState,
+			initialValue = initialDrawerState,
 			anchors = DraggableAnchors {
-				SlideOutState.Closed at filePropertiesHeightPx
-				SlideOutState.PartiallyOpen at halfScreenHeightPx
-				SlideOutState.Open at 0f
+				drawerClosedState at filePropertiesHeightPx
+				drawerPartiallyOpenState at halfScreenHeightPx
+				drawerOpenState at 0f
 			}
 		)
 	}
 
+	LaunchedEffect(playlistDrawerState) {
+		snapshotFlow { playlistDrawerState.currentValue }.collect(onDrawerStateChanged)
+	}
+
 	DisposableEffect(filePropertiesHeightPx, halfScreenHeightPx) {
 		playlistDrawerState.updateAnchors(DraggableAnchors {
-			SlideOutState.Closed at filePropertiesHeightPx
-			SlideOutState.PartiallyOpen at halfScreenHeightPx
-			SlideOutState.Open at 0f
+			drawerClosedState at filePropertiesHeightPx
+			drawerPartiallyOpenState at halfScreenHeightPx
+			drawerOpenState at 0f
 		})
 
 		onDispose { }
 	}
 
-	LaunchedEffect(playlistDrawerState) {
-		snapshotFlow { playlistDrawerState.currentValue }.collect { draggableState = it }
-	}
+	NowPlayingNarrowView(
+		nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+		nowPlayingScreenViewModel = nowPlayingScreenViewModel,
+		playbackServiceController = playbackServiceController,
+		playlistViewModel = playlistViewModel,
+		childItemViewModelProvider = childItemViewModelProvider,
+		applicationNavigation = applicationNavigation,
+		itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+		viewModelMessageBus = viewModelMessageBus,
+		undoBackStack = undoBackStack,
+		lazyListState = lazyListState,
+		playlistDrawerState = playlistDrawerState,
+		openState = drawerOpenState,
+		partiallyOpenState = drawerPartiallyOpenState,
+		closedState = drawerClosedState,
+	)
+}
+
+@Composable
+fun <T> BoxWithConstraintsScope.NowPlayingNarrowView(
+	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
+	nowPlayingScreenViewModel: NowPlayingScreenViewModel,
+	playbackServiceController: ControlPlaybackService,
+	playlistViewModel: NowPlayingPlaylistViewModel,
+	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+	applicationNavigation: NavigateApplication,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
+	undoBackStack: UndoStack,
+	lazyListState: LazyListState,
+	playlistDrawerState: AnchoredDraggableState<T>,
+	openState: T,
+	partiallyOpenState: T,
+	closedState: T,
+) {
+	val isScreenControlsVisible by nowPlayingScreenViewModel.isScreenControlsVisible.subscribeAsState()
 
 	val playlistEditingShownProgress by remember(playlistDrawerState) {
-		derivedStateOf { playlistDrawerState.progress(SlideOutState.PartiallyOpen, SlideOutState.Open) }
+		derivedStateOf { playlistDrawerState.progress(partiallyOpenState, openState) }
 	}
 
 	val isPlaylistEditingShown by remember {
@@ -460,7 +532,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	}
 
 	val playlistOpenProgress by remember(playlistDrawerState) {
-		derivedStateOf { playlistDrawerState.progress(SlideOutState.Closed, SlideOutState.Open) }
+		derivedStateOf { playlistDrawerState.progress(closedState, openState) }
 	}
 
 	val isSettledOnFirstPage by remember { derivedStateOf { playlistOpenProgress == 0f } }
@@ -473,7 +545,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 
 	suspend fun hidePlaylist() {
 		playlistViewModel.finishPlaylistEdit()
-		playlistDrawerState.animateToWithDecay(SlideOutState.Closed, velocity, decayAnimationSpec = decaySpec)
+		playlistDrawerState.animateToWithDecay(closedState, velocity, decayAnimationSpec = decaySpec)
 	}
 
 	val isEditingPlaylist by playlistViewModel.isEditingPlaylist.subscribeAsState()
@@ -586,10 +658,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 				if (isTopControlsShown) {
 					val drawerChevronRotation by remember(playlistDrawerState) {
 						derivedStateOf {
-							(180 * playlistDrawerState.progress(
-								SlideOutState.Closed,
-								SlideOutState.PartiallyOpen
-							)).coerceIn(0f, 180f)
+							(180 * playlistDrawerState.progress(closedState, partiallyOpenState)).coerceIn(0f, 180f)
 						}
 					}
 					Image(
@@ -601,7 +670,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 									scope.launch {
 										if (playlistDrawerState.currentValue != SlideOutState.Closed) hidePlaylist()
 										else playlistDrawerState.animateToWithDecay(
-											SlideOutState.PartiallyOpen,
+											partiallyOpenState,
 											velocity,
 											decayAnimationSpec = decaySpec
 										)
@@ -617,13 +686,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 			}
 
 			val progressIndicatorPadding by remember {
-				derivedStateOf {
-					linearInterpolation(
-						Dimensions.viewPaddingUnit,
-						0.dp,
-						playlistOpenProgress
-					)
-				}
+				derivedStateOf { linearInterpolation(Dimensions.viewPaddingUnit, 0.dp, playlistOpenProgress) }
 			}
 			NowPlayingProgressIndicator(
 				nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
