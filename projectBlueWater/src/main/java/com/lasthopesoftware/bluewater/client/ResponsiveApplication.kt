@@ -53,6 +53,7 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.ScreenDimensionsScope
+import com.lasthopesoftware.bluewater.android.ui.SlideOutState
 import com.lasthopesoftware.bluewater.android.ui.components.PaddedSystemScreenBox
 import com.lasthopesoftware.bluewater.android.ui.findWindow
 import com.lasthopesoftware.bluewater.android.ui.isNarrow
@@ -428,6 +429,8 @@ private fun Navigate(destination: LibraryDestination, browserNavController: NavC
 							}
 					}
 
+					var narrowDrawerDraggableState by rememberSaveable { mutableStateOf(SlideOutState.Closed) }
+
 					val isNowPlayingShown by remember { derivedStateOf { nowPlayingOffset < this@fullScreen.maxWidth } }
 					if (isNowPlayingShown) {
 						Box(
@@ -475,6 +478,11 @@ private fun Navigate(destination: LibraryDestination, browserNavController: NavC
 												viewModelMessageBus = nowPlayingViewModelMessageBus,
 												undoBackStack = undoBackStackBuilder,
 												lazyListState = playlistListState,
+												drawerOpenState = SlideOutState.Open,
+												drawerPartiallyOpenState = SlideOutState.PartiallyOpen,
+												drawerClosedState = SlideOutState.Closed,
+												initialDrawerState = narrowDrawerDraggableState,
+												onDrawerStateChanged = { narrowDrawerDraggableState = it },
 											)
 										} else {
 											NowPlayingWideView(
