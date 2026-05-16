@@ -342,7 +342,7 @@ class LiveMediaCenterConnection(
 	) : FilePropertiesLookup() {
 
 		companion object {
-			private val editableFileProperties by lazy { editableFilePropertyDefinitions.map { it.name }.toSet() }
+			private val editableFileProperties by lazy { editableFilePropertyDefinitions.map { it.propertyName }.toSet() }
 		}
 
 		override val availableProperties by lazy { filePropertiesMap.keys }

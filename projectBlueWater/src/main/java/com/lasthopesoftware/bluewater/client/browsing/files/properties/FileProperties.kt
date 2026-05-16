@@ -173,7 +173,7 @@ abstract class FilePropertiesLookup : LookupFileProperties {
 
 		when {
 			name == NormalizedFileProperties.Key -> KeyFileProperty(value)
-			isEditable(name) -> EditableFileProperty(name, value, filePropertyType)
+			isEditable -> EditableFileProperty(name, value, filePropertyType)
 			else -> ReadOnlyFileProperty(name, value, filePropertyType)
 		}
 	}
