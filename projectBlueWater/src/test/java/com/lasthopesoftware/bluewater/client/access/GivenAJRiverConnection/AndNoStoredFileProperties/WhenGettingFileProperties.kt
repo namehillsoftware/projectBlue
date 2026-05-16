@@ -29,6 +29,7 @@ class WhenGettingFileProperties {
 				mapOf(
 					Pair(NormalizedFileProperties.Key, "45"),
 					Pair("Peak Level (Sample)", "308.99 dB; -0.3 Left; -0.5 Right"),
+					Pair(NormalizedFileProperties.AlbumArtist, "E6u3psYIX"),
 					Pair(NormalizedFileProperties.Lyrics, """[In the Fade]
 
 [Verse 1: Josh Homme]
@@ -137,6 +138,16 @@ Some more valid text... la di da..."""),
 			ReadOnlyFileProperty(
 				"Peak Level (Sample)",
 				"308.99 dB; -0.3 Left; -0.5 Right",
+			)
+		)
+	}
+
+	@Test
+	fun `then the album artist is editable`() {
+		assertThat(fileProperties?.get(NormalizedFileProperties.AlbumArtist)).isEqualTo(
+			EditableFileProperty(
+				NormalizedFileProperties.AlbumArtist,
+				"E6u3psYIX",
 			)
 		)
 	}
