@@ -46,13 +46,16 @@ class RoutedNavigationDependencies(
 			is LibraryScreen -> viewLibrary(destination.libraryId)
 			is NowPlayingScreen -> viewNowPlaying(destination.libraryId)
 			is ActiveLibraryDownloadsScreen -> viewActiveDownloads()
-			is SearchScreen -> {
+			is FilePropertySearchScreen -> {
 				val filePropertyFilter = destination.filePropertyFilter
 
 				if (filePropertyFilter != null)
 					search(destination.libraryId, filePropertyFilter)
 				else
 					launchSearch(destination.libraryId)
+			}
+			is SearchScreen -> {
+				search(destination.libraryId, destination.searchQuery)
 			}
 
 			else -> navController.navigate(destination).toPromise()

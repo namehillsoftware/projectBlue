@@ -27,13 +27,19 @@ class DestinationGraphNavigation(
 	override fun launchSearch(libraryId: LibraryId) = coroutineScope.launch {
 		ensureBrowserIsOnStack(libraryId)
 
-		navController.navigate(SearchScreen(libraryId))
+		navController.navigate(FilePropertySearchScreen(libraryId))
 	}.toPromise()
 
 	override fun search(libraryId: LibraryId, filePropertyFilter: FileProperty): Promise<Unit> = coroutineScope.launch {
 		ensureBrowserIsOnStack(libraryId)
 
-		navController.navigate(SearchScreen(libraryId, filePropertyFilter))
+		navController.navigate(FilePropertySearchScreen(libraryId, filePropertyFilter))
+	}.toPromise()
+
+	override fun search(libraryId: LibraryId, searchQuery: String): Promise<Unit> = coroutineScope.launch {
+		ensureBrowserIsOnStack(libraryId)
+
+		navController.navigate(SearchScreen(libraryId, searchQuery))
 	}.toPromise()
 
 	override fun viewApplicationSettings() = coroutineScope.launch {

@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client
 
+import android.app.SearchManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -17,6 +18,7 @@ import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicati
 import com.lasthopesoftware.bluewater.TvApplicationDependencies
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.android.ui.ProjectBlueComposableApplication
+import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibrarySearchScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingTvApplication
@@ -174,6 +176,14 @@ class EntryActivity :
 			)
 	}
 
-	private fun getDestination(intent: Intent?): Destination? =
-		intent?.safelyGetParcelableExtra<Destination>(destinationProperty)
+	private fun getDestination(intent: Intent?): Destination? {
+		val destination = intent?.safelyGetParcelableExtra<Destination>(destinationProperty)
+		if (destination != null) return destination
+
+		if (intent?.action == Intent.ACTION_SEARCH) {
+			return intent.getStringExtra(SearchManager.QUERY)?.let(::ActiveLibrarySearchScreen)
+		}
+
+		return null
+	}
 }

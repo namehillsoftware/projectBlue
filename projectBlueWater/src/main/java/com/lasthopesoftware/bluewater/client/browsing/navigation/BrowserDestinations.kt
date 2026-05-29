@@ -26,8 +26,8 @@ data object LandingScreen : ConnectingDestination
 @Parcelize
 data object ActiveLibraryDownloadsScreen : ConnectingDestination
 
-//@Parcelize
-//data object ActiveLibraryScreen : ConnectingDestination
+@Parcelize
+data class ActiveLibrarySearchScreen(val searchQuery: String) : ConnectingDestination
 
 sealed interface LibraryDestination : Destination {
 	val libraryId: LibraryId
@@ -71,4 +71,7 @@ data class ItemScreen(override val libraryId: LibraryId, val item: IItem) : Brow
 class DownloadsScreen(override val libraryId: LibraryId) : BrowserLibraryDestination
 
 @Parcelize
-class SearchScreen(override val libraryId: LibraryId, val filePropertyFilter: FileProperty? = null) : BrowserLibraryDestination
+class FilePropertySearchScreen(override val libraryId: LibraryId, val filePropertyFilter: FileProperty? = null) : BrowserLibraryDestination
+
+@Parcelize
+class SearchScreen(override val libraryId: LibraryId, val searchQuery: String) : BrowserLibraryDestination

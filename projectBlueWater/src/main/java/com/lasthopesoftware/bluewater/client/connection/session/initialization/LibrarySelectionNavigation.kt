@@ -30,6 +30,12 @@ class LibrarySelectionNavigation(
 				it?.let(::viewLibrary) ?: viewApplicationSettings()
 			}
 
+	override fun searchActiveLibrary(searchQuery: String): Promise<Unit> =
+		promiseSelectedLibraryId()
+			.eventually { l ->
+				l?.let { search(it, searchQuery) } ?: viewApplicationSettings()
+			}
+
 	override fun viewActiveDownloads(): Promise<Unit> =
 		promiseSelectedLibraryId()
 			.eventually {
@@ -54,6 +60,9 @@ class LibrarySelectionNavigation(
 
 	override fun search(libraryId: LibraryId, filePropertyFilter: FileProperty): Promise<Unit> =
 		selectLibrary(libraryId) { inner.search(it.libraryId, filePropertyFilter) }
+
+	override fun search(libraryId: LibraryId, searchQuery: String): Promise<Unit> =
+		selectLibrary(libraryId) { inner.search(it.libraryId, searchQuery) }
 
 	override fun viewFileDetails(libraryId: LibraryId, searchQuery: String, positionedFile: PositionedFile): Promise<Unit> =
 		selectLibrary(libraryId) { inner.viewFileDetails(it.libraryId, searchQuery, positionedFile) }

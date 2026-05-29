@@ -15,9 +15,9 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDo
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
+import com.lasthopesoftware.bluewater.client.browsing.navigation.FilePropertySearchScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
-import com.lasthopesoftware.bluewater.client.browsing.navigation.SearchScreen
 import com.lasthopesoftware.bluewater.client.destinationProperty
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 
@@ -25,7 +25,7 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 
 	override fun buildViewLibraryIntent(libraryId: LibraryId): Intent = getBrowserActivityIntent(LibraryScreen(libraryId))
 
-	override fun buildLibrarySearchIntent(libraryId: LibraryId, filePropertyFilter: FileProperty): Intent = getBrowserActivityIntent(SearchScreen(libraryId, filePropertyFilter))
+	override fun buildLibrarySearchIntent(libraryId: LibraryId, filePropertyFilter: FileProperty): Intent = getBrowserActivityIntent(FilePropertySearchScreen(libraryId, filePropertyFilter))
 
 	override fun buildApplicationSettingsIntent(): Intent = getBrowserActivityIntent(ApplicationSettingsScreen)
 

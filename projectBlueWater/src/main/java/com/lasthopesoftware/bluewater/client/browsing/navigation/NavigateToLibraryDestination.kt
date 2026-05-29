@@ -50,16 +50,16 @@ fun ScreenDimensionsScope.NavigateToLibraryDestination(
 			}
 		}
 
-		is SearchScreen -> {
-			with(browserViewDependencies) {
-				var isConnectionLost by remember { mutableStateOf(false) }
-				var initializeConnection by remember { mutableStateOf(false) }
+		is FilePropertySearchScreen, is SearchScreen -> {
+			var isConnectionLost by remember { mutableStateOf(false) }
+			var reinitializeConnection by remember { mutableStateOf(false) }
 
+			browserViewDependencies.apply {
 				if (isConnectionLost) {
 					ConnectionLostView(
 						onCancel = { applicationNavigation.viewApplicationSettings() },
 						onRetry = {
-							initializeConnection = true
+							reinitializeConnection = true
 						}
 					)
 				} else {
@@ -78,20 +78,27 @@ fun ScreenDimensionsScope.NavigateToLibraryDestination(
 				ViewModelInitAction {
 					searchFilesViewModel.setActiveLibraryId(destination.libraryId)
 
-					if (initializeConnection) {
+					if (reinitializeConnection) {
 						LaunchedEffect(key1 = Unit) {
-							isConnectionLost = !connectionStatusViewModel.initializeConnection(destination.libraryId).suspend()
-							initializeConnection = false
+							isConnectionLost =
+								!connectionStatusViewModel.initializeConnection(destination.libraryId).suspend()
+							reinitializeConnection = false
 						}
 					}
 
 					if (!isConnectionLost) {
-						LaunchedEffect(destination.filePropertyFilter) {
+						LaunchedEffect(destination) {
 							try {
-								if (destination.filePropertyFilter != null) {
-									searchFilesViewModel.prependFilter(destination.filePropertyFilter)
-									searchFilesViewModel.findFiles().suspend()
+								when (destination) {
+									is FilePropertySearchScreen -> {
+										destination.filePropertyFilter?.let(searchFilesViewModel::prependFilter)
+									}
+									is SearchScreen -> {
+										searchFilesViewModel.query.value = destination.searchQuery
+									}
 								}
+
+								searchFilesViewModel.findFiles().suspend()
 							} catch (e: IOException) {
 								if (ConnectionLostExceptionFilter.isConnectionLostException(e))
 									isConnectionLost = true

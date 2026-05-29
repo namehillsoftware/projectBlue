@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
 
 interface NavigateApplication {
 
@@ -17,6 +18,8 @@ interface NavigateApplication {
 	fun viewActiveLibrary() = Unit.toPromise()
 
 	fun viewActiveDownloads() = Unit.toPromise()
+
+	fun searchActiveLibrary(searchQuery: String): Promise<Unit> = Unit.toPromise()
 
 	fun viewLibrary(libraryId: LibraryId) = Unit.toPromise()
 
@@ -33,6 +36,8 @@ interface NavigateApplication {
 	fun launchSearch(libraryId: LibraryId) = Unit.toPromise()
 
 	fun search(libraryId: LibraryId, filePropertyFilter: FileProperty) = Unit.toPromise()
+
+	fun search(libraryId: LibraryId, searchQuery: String) = Unit.toPromise()
 
 	fun viewNowPlaying(libraryId: LibraryId) = Unit.toPromise()
 

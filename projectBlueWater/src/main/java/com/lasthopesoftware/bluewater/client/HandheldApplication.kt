@@ -42,6 +42,7 @@ import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsView
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibrarySearchScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowsedFileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryDestination
@@ -390,6 +391,14 @@ fun HandheldApplication(
 							?.let(routedNavigationDependencies::promiseNavigation)
 							?: routedNavigationDependencies.applicationNavigation.viewActiveLibrary())
 							.suspend()
+					}
+				}
+
+				is ActiveLibrarySearchScreen -> {
+					routedNavigationDependencies.apply {
+						LaunchedEffect(Unit) {
+							applicationNavigation.searchActiveLibrary(destination.searchQuery)
+						}
 					}
 				}
 

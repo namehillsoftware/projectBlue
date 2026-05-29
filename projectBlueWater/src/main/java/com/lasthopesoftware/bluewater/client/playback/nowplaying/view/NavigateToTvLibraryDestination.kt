@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostV
 import com.lasthopesoftware.bluewater.client.browsing.items.list.LoadedItemListScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.DownloadsScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.FilePropertySearchScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ItemScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SearchScreen
@@ -44,11 +45,11 @@ fun ScreenDimensionsScope.NavigateToTvLibraryDestination(destination: BrowserLib
 			}
 		}
 
-		is SearchScreen -> {
-			with(browserViewDependencies) {
-				var isConnectionLost by remember { mutableStateOf(false) }
-				var reinitializeConnection by remember { mutableStateOf(false) }
+		is FilePropertySearchScreen, is SearchScreen -> {
+			var isConnectionLost by remember { mutableStateOf(false) }
+			var reinitializeConnection by remember { mutableStateOf(false) }
 
+			browserViewDependencies.apply {
 				if (isConnectionLost) {
 					ConnectionLostView(
 						onCancel = { applicationNavigation.viewApplicationSettings() },
@@ -74,18 +75,25 @@ fun ScreenDimensionsScope.NavigateToTvLibraryDestination(destination: BrowserLib
 
 					if (reinitializeConnection) {
 						LaunchedEffect(key1 = Unit) {
-							isConnectionLost = !connectionStatusViewModel.initializeConnection(destination.libraryId).suspend()
+							isConnectionLost =
+								!connectionStatusViewModel.initializeConnection(destination.libraryId).suspend()
 							reinitializeConnection = false
 						}
 					}
 
 					if (!isConnectionLost) {
-						LaunchedEffect(destination.filePropertyFilter) {
+						LaunchedEffect(destination) {
 							try {
-								if (destination.filePropertyFilter != null) {
-									searchFilesViewModel.prependFilter(destination.filePropertyFilter)
-									searchFilesViewModel.findFiles().suspend()
+								when (destination) {
+									is FilePropertySearchScreen -> {
+										destination.filePropertyFilter?.let(searchFilesViewModel::prependFilter)
+									}
+									is SearchScreen -> {
+										searchFilesViewModel.query.value = destination.searchQuery
+									}
 								}
+
+								searchFilesViewModel.findFiles().suspend()
 							} catch (e: IOException) {
 								if (ConnectionLostExceptionFilter.isConnectionLostException(e))
 									isConnectionLost = true
