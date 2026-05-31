@@ -11,7 +11,8 @@ docker compose build && docker compose run --rm \
   -u "$BUILD_USER":"$BUILD_GROUP" gradle \
   :projectBlueWater:testReleaseUnitTest \
   :projectBlueWater:assembleRelease \
-  :projectBlueWater:bundleRelease
+  :projectBlueWater:assemblePlayRelease \
+  :projectBlueWater:bundlePlayRelease
 EXIT_CODE=${PIPESTATUS[0]}
 
 cp -r projectBlueWater/build _artifacts
