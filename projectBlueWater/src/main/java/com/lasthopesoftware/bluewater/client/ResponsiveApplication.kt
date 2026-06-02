@@ -131,7 +131,7 @@ import java.io.IOException
 
 private val logger by lazy { LoggerFactory.getLogger("ResponsiveApplication") }
 
-enum class ResponsiveState { Browser, NowPlaying, Playlist }
+enum class ResponsiveState { Browser, Split, NowPlaying, Playlist }
 
 @Composable
 fun ScreenDimensionsScope.NavigateToBrowserLibraryDestination(
@@ -225,7 +225,13 @@ fun ScreenDimensionsScope.NavigateToBrowserLibraryDestination(
 }
 
 @Composable
-private fun Navigate(destination: LibraryDestination, browserNavController: NavController<BrowserLibraryDestination>, responsiveState: AnchoredDraggableState<ResponsiveState>, scopedViewModelDependencies: ScopedViewModelDependencies, permissionsDependencies: PermissionsDependencies): Unit = with(scopedViewModelDependencies) {
+private fun ResponsiveLibraryView(
+	destination: LibraryDestination,
+	browserNavController: NavController<BrowserLibraryDestination>,
+	responsiveState: AnchoredDraggableState<ResponsiveState>,
+	scopedViewModelDependencies: ScopedViewModelDependencies,
+	permissionsDependencies: PermissionsDependencies
+): Unit = with(scopedViewModelDependencies) {
 	val libraryId = destination.libraryId
 	when (destination) {
 		is BrowserLibraryDestination, is NowPlayingScreen -> {
@@ -259,27 +265,49 @@ private fun Navigate(destination: LibraryDestination, browserNavController: NavC
 
 				val paneWidth = if (isNarrow) maxWidth else maxHeight.coerceIn(minimumMenuWidth, maxWidth / 2)
 				val paneWidthPx = LocalDensity.current.remember { paneWidth.toPx() }
+				val paneRemainingWidthPx = LocalDensity.current.remember(paneWidthPx) { maxWidth.toPx() - paneWidthPx }
 
-				DisposableEffect(paneWidthPx, isNarrow) {
+				DisposableEffect(paneWidthPx, paneRemainingWidthPx, isNarrow) {
 					responsiveState.updateAnchors(if (isNarrow) DraggableAnchors {
 						ResponsiveState.NowPlaying at -paneWidthPx
 						ResponsiveState.Browser at 0f
 					} else DraggableAnchors {
-						ResponsiveState.Playlist at 2 * -paneWidthPx
-						ResponsiveState.NowPlaying at -paneWidthPx
+						ResponsiveState.Playlist at -(paneRemainingWidthPx + 2 * paneWidthPx)
+						ResponsiveState.NowPlaying at -(paneRemainingWidthPx + paneWidthPx)
+						ResponsiveState.Split at -paneRemainingWidthPx
 						ResponsiveState.Browser at 0f
 					})
 
 					onDispose { }
 				}
 
-				val browserDrawerOffset by LocalDensity.current.remember(responsiveState) {
+				val responsiveStateOffset by LocalDensity.current.remember(responsiveState) {
 					derivedStateOf {
 						responsiveState.requireOffset().toDp()
 					}
 				}
 
-				val nowPlayingOffset by remember { derivedStateOf { (paneWidth + browserDrawerOffset).coerceAtLeast(0.dp) } }
+				val browserDrawerOffset by LocalDensity.current.remember(paneWidth) {
+					derivedStateOf {
+						val anchorBeforeBrowser = if (isNarrow) ResponsiveState.NowPlaying else ResponsiveState.Split
+						val browserTravelDistance = responsiveState.anchors.run {
+							positionOf(ResponsiveState.Browser) - positionOf(anchorBeforeBrowser)
+						}
+						(responsiveStateOffset + browserTravelDistance.toDp()).coerceAtMost(0.dp)
+					}
+				}
+
+				val browserWidth by LocalDensity.current.remember(maxWidth, paneWidth) {
+					derivedStateOf {
+						(maxWidth + responsiveStateOffset).coerceAtLeast(paneWidth)
+					}
+				}
+
+				val nowPlayingOffset by remember {
+					derivedStateOf {
+						(browserWidth + browserDrawerOffset).coerceAtLeast(0.dp)
+					}
+				}
 
 				val playlistListState = rememberLazyListState()
 				Box(
@@ -293,7 +321,7 @@ private fun Navigate(destination: LibraryDestination, browserNavController: NavC
 					Box(
 						modifier = Modifier
 							.offset { IntOffset(x = browserDrawerOffset.roundToPx(), y = 0) }
-							.width(paneWidth)
+							.width(browserWidth)
 							.fillMaxHeight()
 							.focusGroup()
 					) {
@@ -359,15 +387,11 @@ private fun Navigate(destination: LibraryDestination, browserNavController: NavC
 													.suspend()
 											} catch (e: Throwable) {
 												when {
-													ConnectionLostExceptionFilter.isConnectionLostException(
-														e
-													) -> {
+													ConnectionLostExceptionFilter.isConnectionLostException(e) -> {
 														pollForConnections.pollConnection(libraryId)
 													}
 
-													UncaughtExceptionHandlerLogger.uncaughtException(
-														e
-													) -> {
+													UncaughtExceptionHandlerLogger.uncaughtException(e) -> {
 														exceptionAnnouncer.announce(e)
 													}
 												}
@@ -625,8 +649,9 @@ fun ResponsiveApplication(
 		AnchoredDraggableState(
 			initialValue = browserDragValue,
 			anchors = DraggableAnchors {
-				ResponsiveState.Playlist at 2 * -100f
-				ResponsiveState.NowPlaying at -100f
+				ResponsiveState.Playlist at 3 * -100f
+				ResponsiveState.NowPlaying at 2 * -100f
+				ResponsiveState.Split at -100f
 				ResponsiveState.Browser at 0f
 			}
 		)
@@ -723,7 +748,7 @@ fun ResponsiveApplication(
 							)
 						}
 						?.registerBackNav()
-						?.also { Navigate(destination, browserNavController, responsiveState, it, permissionsDependencies) }
+						?.also { ResponsiveLibraryView(destination, browserNavController, responsiveState, it, permissionsDependencies) }
 				}
 
 				is ApplicationSettingsScreen -> {
