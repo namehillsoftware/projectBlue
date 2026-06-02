@@ -74,10 +74,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -870,20 +868,11 @@ fun <T> BoxWithConstraintsScope.NowPlayingWideView(
 		}
 		val playlistWidth = LocalDensity.current.remember(playlistWidthPx) { playlistWidthPx.toDp() }
 
-		val openPlaylistOffset = LocalDensity.current.remember(playlistDrawerState) {
-			playlistDrawerState.anchors.positionOf(openState).toDp()
-		}
-
 		val maxWidth = this@NowPlayingWideView.maxWidth
-		val playlistDrawerOffset by remember(maxWidth, playlistDrawerState, openPlaylistOffset) {
+		val playlistDrawerOffset by LocalDensity.current.remember(maxWidth) {
 			derivedStateOf {
-				maxWidth + playlistWidth + browserDrawerOffset
-			}
-		}
-
-		val nowPlayingControlsWidth by LocalDensity.current.remember(maxWidth) {
-			derivedStateOf {
-				min((maxWidth - browserDrawerOffset - playlistWidth).coerceAtLeast(0.dp), playlistDrawerOffset)
+				val closedPosition = playlistDrawerState.anchors.positionOf(closedState).toDp()
+				maxWidth - (closedPosition - browserDrawerOffset).coerceIn(0.dp, playlistWidth)
 			}
 		}
 
@@ -923,7 +912,7 @@ fun <T> BoxWithConstraintsScope.NowPlayingWideView(
 			},
 			modifier = Modifier
 				.fillMaxHeight()
-				.width(nowPlayingControlsWidth)
+				.width(playlistDrawerOffset)
 		)
 
 		if (playlistOpenProgress > 0f) {
@@ -931,7 +920,7 @@ fun <T> BoxWithConstraintsScope.NowPlayingWideView(
 				modifier = Modifier
 					.fillMaxHeight()
 					.width(playlistWidth)
-					.offset { IntOffset(x = nowPlayingControlsWidth.roundToPx(), y = 0) }
+					.offset { IntOffset(x = playlistDrawerOffset.roundToPx(), y = 0) }
 					.background(SharedColors.overlayDark),
 				horizontalAlignment = Alignment.CenterHorizontally,
 			) {
