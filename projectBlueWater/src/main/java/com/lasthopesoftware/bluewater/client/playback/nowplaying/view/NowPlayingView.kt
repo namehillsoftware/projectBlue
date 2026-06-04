@@ -876,13 +876,6 @@ fun <T> BoxWithConstraintsScope.NowPlayingWideView(
 			}
 		}
 
-//		val nowPlayingControlsWidth by LocalDensity.current.remember(maxWidth) {
-//			derivedStateOf {
-////				/*min(*/(maxWidth - playlistDrawerOffset).coerceAtLeast(0.dp)/*, playlistDrawerOffset)*/
-//				minOf(maxWidth, playlistDrawerOffset)
-//			}
-//		}
-
 		NowPlayingControls(
 			nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
 			nowPlayingScreenViewModel = nowPlayingScreenViewModel,

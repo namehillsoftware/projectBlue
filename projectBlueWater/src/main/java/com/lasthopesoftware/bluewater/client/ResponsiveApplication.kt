@@ -287,12 +287,14 @@ private fun ResponsiveLibraryView(
 					}
 				}
 
-				val browserDrawerOffset by LocalDensity.current.remember(paneWidth) {
+				val browserDrawerOffset by LocalDensity.current.remember(responsiveState) {
 					derivedStateOf {
-						val anchorBeforeBrowser = if (isNarrow) ResponsiveState.NowPlaying else ResponsiveState.Split
 						val browserTravelDistance = responsiveState.anchors.run {
-							positionOf(ResponsiveState.Browser) - positionOf(anchorBeforeBrowser)
+							val browserPosition = positionOf(ResponsiveState.Browser)
+							val nextAnchor = closestAnchor(browserPosition - 1f, searchUpwards = false)
+							browserPosition - (nextAnchor?.let(::positionOf) ?: maxPosition())
 						}
+
 						(responsiveStateOffset + browserTravelDistance.toDp()).coerceAtMost(0.dp)
 					}
 				}
@@ -433,7 +435,11 @@ private fun ResponsiveLibraryView(
 
 					val isNowPlayingShown by remember { derivedStateOf { nowPlayingOffset < this@fullScreen.maxWidth } }
 					if (isNowPlayingShown) {
-						val nowPlayingWidth by remember { derivedStateOf { this@fullScreen.maxWidth - nowPlayingOffset } }
+						val nowPlayingWidth by remember(paneWidth) {
+							derivedStateOf {
+								maxOf(this@fullScreen.maxWidth - nowPlayingOffset, this@fullScreen.maxWidth - paneWidth)
+							}
+						}
 						Box(
 							modifier = Modifier
 								.offset { IntOffset(x = nowPlayingOffset.roundToPx(), y = 0) }
@@ -463,7 +469,6 @@ private fun ResponsiveLibraryView(
 
 									BoxWithConstraints(
 										modifier = Modifier
-//											.fillMaxWidth()
 											.width(nowPlayingWidth)
 											.weight(1f)
 											.background(SharedColors.overlayDark),
