@@ -433,6 +433,7 @@ private fun ResponsiveLibraryView(
 
 					val isNowPlayingShown by remember { derivedStateOf { nowPlayingOffset < this@fullScreen.maxWidth } }
 					if (isNowPlayingShown) {
+						val nowPlayingWidth by remember { derivedStateOf { this@fullScreen.maxWidth - nowPlayingOffset } }
 						Box(
 							modifier = Modifier
 								.offset { IntOffset(x = nowPlayingOffset.roundToPx(), y = 0) }
@@ -462,7 +463,8 @@ private fun ResponsiveLibraryView(
 
 									BoxWithConstraints(
 										modifier = Modifier
-											.fillMaxWidth()
+//											.fillMaxWidth()
+											.width(nowPlayingWidth)
 											.weight(1f)
 											.background(SharedColors.overlayDark),
 									) nowPlayingPane@{
