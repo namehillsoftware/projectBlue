@@ -96,7 +96,8 @@ class ResponsiveDestinationGraphNavigation(
 
 	override fun navigateUp() = coroutineScope.async {
 		if (navController.peek()?.destination is BrowserLibraryDestination) {
-			if (draggableState.currentValue > ResponsiveState.Browser) {
+			if (draggableState.currentValue > ResponsiveState.Split) {
+				// Navigate Up will only return to the Browser state
 				draggableState.animateTo(ResponsiveState.Browser)
 				return@async true
 			}
@@ -110,7 +111,27 @@ class ResponsiveDestinationGraphNavigation(
 	}.toPromise()
 
 	override fun backOut() = coroutineScope.async {
-		itemListMenuBackPressedHandler.hideAllMenus() || navigateUp().suspend()
+		if (itemListMenuBackPressedHandler.hideAllMenus()) return@async true
+
+		if (navController.peek()?.destination is BrowserLibraryDestination) {
+			if (draggableState.currentValue > ResponsiveState.Browser) {
+				// Back-out will reverse through all prior states
+				val animatedToPreviousState = ResponsiveState
+					.entries
+					.asReversed()
+					// only consider values less than current state
+					.dropWhile { it != draggableState.currentValue }
+					.firstOrNull {
+						it != draggableState.currentValue && draggableState.anchors.hasPositionFor(it)
+					}
+					?.let {
+						draggableState.animateTo(it)
+					}
+				if (animatedToPreviousState != null) return@async true
+			}
+		}
+
+		navigateUp().suspend()
 	}.toPromise()
 
 	private suspend fun navigateToBrowserDestination(destination: BrowserLibraryDestination) {
