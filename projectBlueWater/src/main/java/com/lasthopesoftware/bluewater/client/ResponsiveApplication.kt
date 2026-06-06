@@ -291,8 +291,8 @@ private fun ResponsiveLibraryView(
 					derivedStateOf {
 						val browserTravelDistance = responsiveState.anchors.run {
 							val browserPosition = positionOf(ResponsiveState.Browser)
-							val nextAnchor = closestAnchor(browserPosition - 1f, searchUpwards = false)
-							browserPosition - (nextAnchor?.let(::positionOf) ?: maxPosition())
+							val splitAnchor = positionOf(ResponsiveState.Split)
+							browserPosition - (splitAnchor.takeUnless { it.isNaN() } ?: 0f)
 						}
 
 						(responsiveStateOffset + browserTravelDistance.toDp()).coerceAtMost(0.dp)
@@ -437,7 +437,7 @@ private fun ResponsiveLibraryView(
 					if (isNowPlayingShown) {
 						val nowPlayingWidth by remember(paneWidth) {
 							derivedStateOf {
-								maxOf(this@fullScreen.maxWidth - nowPlayingOffset, this@fullScreen.maxWidth - paneWidth)
+								maxOf(this@fullScreen.maxWidth - nowPlayingOffset, this@fullScreen.maxWidth - paneWidth, paneWidth)
 							}
 						}
 						Box(
