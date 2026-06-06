@@ -39,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -267,16 +268,25 @@ private fun ResponsiveLibraryView(
 				val paneWidthPx = LocalDensity.current.remember { paneWidth.toPx() }
 				val paneRemainingWidthPx = LocalDensity.current.remember(paneWidthPx) { maxWidth.toPx() - paneWidthPx }
 
-				DisposableEffect(paneWidthPx, paneRemainingWidthPx, isNarrow) {
-					responsiveState.updateAnchors(if (isNarrow) DraggableAnchors {
-						ResponsiveState.NowPlaying at -paneWidthPx
-						ResponsiveState.Browser at 0f
-					} else DraggableAnchors {
-						ResponsiveState.Playlist at -(paneRemainingWidthPx + 2 * paneWidthPx)
-						ResponsiveState.NowPlaying at -(paneRemainingWidthPx + paneWidthPx)
-						ResponsiveState.Split at -paneRemainingWidthPx
-						ResponsiveState.Browser at 0f
-					})
+				DisposableEffect(paneWidthPx, paneRemainingWidthPx, isNarrow, responsiveState) {
+					val currentState = responsiveState.currentValue
+
+					responsiveState.updateAnchors(
+						if (isNarrow) DraggableAnchors {
+							ResponsiveState.NowPlaying at -paneWidthPx
+							ResponsiveState.Browser at 0f
+						} else DraggableAnchors {
+							ResponsiveState.Playlist at -(paneRemainingWidthPx + 2 * paneWidthPx)
+							ResponsiveState.NowPlaying at -(paneRemainingWidthPx + paneWidthPx)
+							ResponsiveState.Split at -paneRemainingWidthPx
+							ResponsiveState.Browser at 0f
+						},
+						if (isNarrow) when (currentState) {
+							ResponsiveState.Playlist -> ResponsiveState.NowPlaying
+							ResponsiveState.NowPlaying -> ResponsiveState.NowPlaying
+							ResponsiveState.Split -> ResponsiveState.Browser
+							ResponsiveState.Browser -> ResponsiveState.Browser
+						} else currentState)
 
 					onDispose { }
 				}
@@ -662,6 +672,11 @@ fun ResponsiveApplication(
 				ResponsiveState.Browser at 0f
 			}
 		)
+	}
+
+	LaunchedEffect(responsiveState) {
+		snapshotFlow { responsiveState.currentValue }
+			.collect { browserDragValue = it }
 	}
 
 	val browserNavController = rememberNavController<BrowserLibraryDestination>(emptyList())
