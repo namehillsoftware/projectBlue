@@ -268,6 +268,7 @@ private fun ResponsiveLibraryView(
 				val paneWidthPx = LocalDensity.current.remember { paneWidth.toPx() }
 				val paneRemainingWidthPx = LocalDensity.current.remember(paneWidthPx) { maxWidth.toPx() - paneWidthPx }
 
+				var narrowDrawerDraggableState by rememberSaveable { mutableStateOf(SlideOutState.Closed) }
 				DisposableEffect(paneWidthPx, paneRemainingWidthPx, isNarrow, responsiveState) {
 					val currentState = responsiveState.currentValue
 
@@ -286,7 +287,22 @@ private fun ResponsiveLibraryView(
 							ResponsiveState.NowPlaying -> ResponsiveState.NowPlaying
 							ResponsiveState.Split -> ResponsiveState.Browser
 							ResponsiveState.Browser -> ResponsiveState.Browser
-						} else currentState)
+						} else when (currentState) {
+							ResponsiveState.Playlist -> ResponsiveState.Playlist
+							ResponsiveState.NowPlaying -> when (narrowDrawerDraggableState) {
+								SlideOutState.Open, SlideOutState.PartiallyOpen -> ResponsiveState.Playlist
+								else -> ResponsiveState.NowPlaying
+							}
+							else -> currentState
+						})
+
+					if (isNarrow) {
+						narrowDrawerDraggableState = when (currentState) {
+							ResponsiveState.Playlist if narrowDrawerDraggableState == SlideOutState.Closed -> SlideOutState.PartiallyOpen
+							ResponsiveState.Playlist -> narrowDrawerDraggableState
+							else -> SlideOutState.Closed
+						}
+					}
 
 					onDispose { }
 				}
@@ -440,8 +456,6 @@ private fun ResponsiveLibraryView(
 							}
 						}
 					}
-
-					var narrowDrawerDraggableState by rememberSaveable { mutableStateOf(SlideOutState.Closed) }
 
 					val isNowPlayingShown by remember { derivedStateOf { nowPlayingOffset < this@fullScreen.maxWidth } }
 					if (isNowPlayingShown) {
