@@ -299,15 +299,19 @@ private fun ResponsiveLibraryView(
 					onDispose { }
 				}
 
-				LaunchedEffect(responsiveState) {
-					snapshotFlow { responsiveState.currentValue }
-						.collect { currentState ->
-							narrowDrawerDraggableState = when (currentState) {
-								ResponsiveState.Playlist if narrowDrawerDraggableState == SlideOutState.Closed -> SlideOutState.PartiallyOpen
-								ResponsiveState.Playlist -> narrowDrawerDraggableState
-								else -> SlideOutState.Closed
+				if (!isNarrow) {
+					LaunchedEffect(responsiveState) {
+						snapshotFlow { responsiveState.currentValue }
+							.collect { currentState ->
+								if (!isNarrow) {
+									narrowDrawerDraggableState = when (currentState) {
+										ResponsiveState.Playlist if narrowDrawerDraggableState == SlideOutState.Closed -> SlideOutState.PartiallyOpen
+										ResponsiveState.Playlist -> narrowDrawerDraggableState
+										else -> SlideOutState.Closed
+									}
+								}
 							}
-						}
+					}
 				}
 
 				val responsiveStateOffset by LocalDensity.current.remember(responsiveState) {
