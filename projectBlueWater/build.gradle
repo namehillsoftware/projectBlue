@@ -34,11 +34,11 @@ def copyDependencyList = tasks.register("copyDependencyList", Copy) {
 preBuild.dependsOn(copyDependencyList)
 
 android {
-    compileSdk 36
+    compileSdk 37
 
     defaultConfig {
         minSdkVersion 23
-        targetSdkVersion 36
+        targetSdkVersion 37
 		versionName gitVersion()
 		base.archivesName = "project-blue-" + gitVersion()
 	}

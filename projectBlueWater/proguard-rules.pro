@@ -16,6 +16,7 @@
 #   public *;
 #}
 
+-dontrepackage
 -dontwarn org.apache.commons.**
 -dontwarn com.google.**
 -dontwarn org.apache.http**
@@ -37,6 +38,7 @@
 
 -keepclassmembers class ch.qos.logback.core.rolling.helper.* { <init>(); }
 -keepclassmembers class ch.qos.logback.classic.pattern.* { <init>(); }
+-keepclassmembers class com.namehillsoftware.handoff.** { *; }
 
 # -printseeds /home/david/sandbox/projectBlue/projectBlueWater/release/seeds.txt # print out classes that are kept
 # -printusage /home/david/sandbox/projectBlue/projectBlueWater/release/usage.txt # print out classes that are obfuscated
