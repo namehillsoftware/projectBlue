@@ -16,12 +16,13 @@
 #   public *;
 #}
 
--dontrepackage
 -dontwarn org.apache.commons.**
 -dontwarn com.google.**
 -dontwarn org.apache.http**
 -dontwarn org.joda.time**
 -dontwarn ch.qos.logback**
+-dontwarn com.google.common.collect.**
+-dontwarn com.google.common.cache.**
 
 -keep class android.arch.lifecycle.** {*;}
 
@@ -39,6 +40,11 @@
 -keepclassmembers class ch.qos.logback.core.rolling.helper.* { <init>(); }
 -keepclassmembers class ch.qos.logback.classic.pattern.* { <init>(); }
 -keepclassmembers class com.namehillsoftware.handoff.** { *; }
+-keep class com.google.common.cache.** { *; }
+-keepclassmembers class com.google.common.cache.LocalCache$Strength {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
 
 # -printseeds /home/david/sandbox/projectBlue/projectBlueWater/release/seeds.txt # print out classes that are kept
 # -printusage /home/david/sandbox/projectBlue/projectBlueWater/release/usage.txt # print out classes that are obfuscated
