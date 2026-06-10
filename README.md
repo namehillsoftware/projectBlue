@@ -18,7 +18,7 @@ Its features include:
 * Edit and update playlists through Now Playing.
 * Interfaces with Bluetooth remote control clients.
 * Android TV Support
-* ~~Supports Android Auto (beta)~~ NOT supported due to strict Google Play requirements.
+* Supports Android Auto (beta) - via sideloaded releases only; NOT supported on Play store due to strict Google Play requirements.
 * Interfaces with apps that implement the Scrobble Droid interface (Simple Last.fm Scrobbler is my scrobbler of choice) for scrobbling to Last.fm or Libre.fm
 
 Download the latest from the [releases page](https://github.com/namehillsoftware/projectBlue/releases/latest), or the not-as-frequently updated version on the [Google Play Store](https://play.google.com/store/apps/details?id=com.lasthopesoftware.bluewater).
