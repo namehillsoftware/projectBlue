@@ -98,7 +98,7 @@ class ActivityDependencies(
 		SelectedLibraryViewModel(
 			selectedLibraryIdProvider,
 			libraryBrowserSelection,
-		).apply { loadSelectedLibraryId() }
+		)
 	}
 
 	override val reusableChildItemViewModelProvider by activity.buildViewModelLazily {

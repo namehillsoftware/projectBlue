@@ -42,6 +42,7 @@ import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsView
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibrarySearchScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowsedFileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryDestination
@@ -50,6 +51,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationGraphNavigation
 import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsFromNowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.HiddenSettingsScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.LandingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryMenu
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigateToLibraryDestination
@@ -57,7 +59,6 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.NewConnectionSe
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.RoutedNavigationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SearchedFileDetailsScreen
-import com.lasthopesoftware.bluewater.client.browsing.navigation.SelectedLibraryReRouter
 import com.lasthopesoftware.bluewater.client.browsing.registerBackNav
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionDependents
@@ -82,9 +83,6 @@ import com.namehillsoftware.handoff.promises.Promise
 import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.rememberNavController
 import kotlinx.coroutines.async
-import org.slf4j.LoggerFactory
-
-private val logger by lazy { LoggerFactory.getLogger("HandheldApplication") }
 
 private val bottomAppBarHeight = Dimensions.appBarHeight
 private val bottomSheetElevation = 16.dp
@@ -142,6 +140,11 @@ private fun BrowserLibraryDestination.Navigate(
 						onDispose { undoBackStackBuilder.removeAction(collapseAction) }
 					}
 				}
+
+				LaunchedEffect(Unit) {
+					selectedLibraryViewModel.promiseSelectedLibraryId().suspend()
+				}
+
 				val selectedLibraryId by selectedLibraryViewModel.selectedLibraryId.subscribeAsState()
 				val isSelectedLibrary by remember { derivedStateOf { selectedLibraryId == libraryId } }
 
@@ -317,10 +320,7 @@ fun HandheldApplication(
 	permissionsDependencies: PermissionsDependencies,
 	initialDestination: Destination?
 ) {
-	val navController = rememberNavController(
-		if (initialDestination == null) listOf(ApplicationSettingsScreen, SelectedLibraryReRouter)
-		else listOf(ApplicationSettingsScreen)
-	)
+	val navController = rememberNavController(listOf(ApplicationSettingsScreen, LandingScreen))
 
 	val coroutineScope = rememberCoroutineScope()
 	val destinationGraphNavigation = remember(navController, coroutineScope) {
@@ -349,9 +349,8 @@ fun HandheldApplication(
 			entryDependencies,
 			destinationGraphNavigation,
 			connectionStatusViewModel,
-			navController,
-			initialDestination
-		)
+			navController
+        )
 	}
 
 	val libraryConnectionDependencies = remember(routedNavigationDependencies) {
@@ -386,41 +385,27 @@ fun HandheldApplication(
 
 		NavHost(navController) { destination ->
 			when (destination) {
-				is SelectedLibraryReRouter -> {
-					routedNavigationDependencies.apply {
-						LaunchedEffect(key1 = Unit) {
-							val selectedLibraryId = try {
-								selectedLibraryIdProvider.promiseSelectedLibraryId().suspend()
-							} catch (e: Throwable) {
-								logger.error("An error occurred initializing the library", e)
-								null
-							}
+				is LandingScreen -> {
+					LaunchedEffect(Unit) {
+						(initialDestination
+							?.let(routedNavigationDependencies::promiseNavigation)
+							?: routedNavigationDependencies.applicationNavigation.viewActiveLibrary())
+							.suspend()
+					}
+				}
 
-							if (selectedLibraryId != null && selectedLibraryId.id > -1) {
-								applicationNavigation.viewLibrary(selectedLibraryId).suspend()
-							} else {
-								applicationNavigation.backOut().suspend()
-							}
+				is ActiveLibrarySearchScreen -> {
+					routedNavigationDependencies.apply {
+						LaunchedEffect(Unit) {
+							applicationNavigation.searchActiveLibrary(destination.searchQuery)
 						}
 					}
 				}
 
 				is ActiveLibraryDownloadsScreen -> {
 					routedNavigationDependencies.apply {
-						LaunchedEffect(key1 = Unit) {
-							val selectedLibraryId = try {
-								selectedLibraryIdProvider.promiseSelectedLibraryId().suspend()
-							} catch (e: Throwable) {
-								logger.error("An error occurred initializing the library", e)
-								null
-							}
-
-							if (selectedLibraryId != null && selectedLibraryId.id > -1) {
-								applicationNavigation.viewLibrary(selectedLibraryId).suspend()
-								applicationNavigation.viewActiveDownloads(selectedLibraryId).suspend()
-							} else {
-								applicationNavigation.backOut().suspend()
-							}
+						LaunchedEffect(Unit) {
+							applicationNavigation.viewActiveDownloads().suspend()
 						}
 					}
 				}

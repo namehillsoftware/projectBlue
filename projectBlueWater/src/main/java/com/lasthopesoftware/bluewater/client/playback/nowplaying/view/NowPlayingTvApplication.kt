@@ -72,8 +72,8 @@ import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibrarySearchScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowsedFileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryDestination
@@ -82,12 +82,12 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationGraphNavigation
 import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsFromNowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.HiddenSettingsScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.LandingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NewConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.RoutedNavigationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SearchedFileDetailsScreen
-import com.lasthopesoftware.bluewater.client.browsing.navigation.SelectedLibraryReRouter
 import com.lasthopesoftware.bluewater.client.browsing.registerBackNav
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
@@ -695,10 +695,12 @@ fun NowPlayingTvApplication(
 	permissionsDependencies: PermissionsDependencies,
 	initialDestination: Destination?
 ) {
-	val navController = rememberNavController(
-		if (initialDestination == null) listOf(ApplicationSettingsScreen, SelectedLibraryReRouter)
-		else listOf(ApplicationSettingsScreen)
-	)
+//	val navController = rememberNavController(
+//		if (initialDestination == null) listOf(ApplicationSettingsScreen, ActiveLibraryScreen)
+//		else listOf(ApplicationSettingsScreen)
+//	)
+
+	val navController = rememberNavController<Destination>(ApplicationSettingsScreen)
 
 	val coroutineScope = rememberCoroutineScope()
 
@@ -730,9 +732,8 @@ fun NowPlayingTvApplication(
 			entryDependencies,
 			destinationGraphNavigation,
 			connectionStatusViewModel,
-			navController,
-			initialDestination
-		)
+			navController
+        )
 	}
 
 	val libraryConnectionDependencies = remember {
@@ -765,45 +766,31 @@ fun NowPlayingTvApplication(
 	ControlSurface {
 		NavHost(navController) { destination ->
 			when (destination) {
-				is SelectedLibraryReRouter -> {
-					routedNavigationDependencies.apply {
-						LaunchedEffect(key1 = Unit) {
-							try {
-								val settings =
-									applicationSettings.promiseApplicationSettings().suspend()
-								if (settings.chosenLibraryId > -1) {
-									val libraryId = LibraryId(settings.chosenLibraryId)
-									applicationNavigation.viewLibrary(libraryId).suspend()
-									return@LaunchedEffect
-								}
-							} catch (e: Throwable) {
-								logger.error("An error occurred initializing the library", e)
-							}
+				is LandingScreen -> {
+					LaunchedEffect(Unit) {
+						(initialDestination
+							?.let(routedNavigationDependencies::promiseNavigation)
+							?: routedNavigationDependencies.applicationNavigation.viewActiveLibrary())
+							.suspend()
+					}
+				}
 
-							applicationNavigation.backOut().suspend()
+				is ActiveLibrarySearchScreen -> {
+					routedNavigationDependencies.apply {
+						LaunchedEffect(Unit) {
+							applicationNavigation.searchActiveLibrary(destination.searchQuery)
 						}
 					}
 				}
+
 				is ActiveLibraryDownloadsScreen -> {
 					routedNavigationDependencies.apply {
-						LaunchedEffect(key1 = Unit) {
-							try {
-								val settings =
-									applicationSettings.promiseApplicationSettings().suspend()
-								if (settings.chosenLibraryId > -1) {
-									val libraryId = LibraryId(settings.chosenLibraryId)
-									applicationNavigation.viewLibrary(libraryId).suspend()
-									applicationNavigation.viewActiveDownloads(libraryId).suspend()
-									return@LaunchedEffect
-								}
-							} catch (e: Throwable) {
-								logger.error("An error occurred initializing the library", e)
-							}
-
-							applicationNavigation.backOut().suspend()
+						LaunchedEffect(Unit) {
+							applicationNavigation.viewActiveDownloads().suspend()
 						}
 					}
 				}
+
 				is LibraryDestination -> {
 					LocalViewModelStoreOwner.current
 						?.let { viewModelStoreOwner ->

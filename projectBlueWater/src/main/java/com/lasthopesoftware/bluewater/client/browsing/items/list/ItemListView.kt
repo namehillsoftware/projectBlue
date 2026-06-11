@@ -85,8 +85,6 @@ import com.lasthopesoftware.bluewater.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.android.ui.navigable
 import com.lasthopesoftware.bluewater.android.ui.remember
-import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
-import com.lasthopesoftware.bluewater.android.ui.theme.DetermineWindowControlColors
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.appBarHeight
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.expandedTitleHeight
@@ -128,7 +126,6 @@ import com.lasthopesoftware.observables.mapNotNull
 import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.GetStringResources
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -598,7 +595,6 @@ fun ItemListView(
 	}
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun ScreenDimensionsScope.ItemListView(
     itemListViewModel: ItemListViewModel,
@@ -614,303 +610,238 @@ fun ScreenDimensionsScope.ItemListView(
 	stringResources: GetStringResources,
     undoBackStack: UndoStack,
 ) {
-	ControlSurface {
-		DetermineWindowControlColors()
+	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+		val lazyListState = rememberLazyListState()
 
-		BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-			val lazyListState = rememberLazyListState()
+		var minVisibleItemsForScroll by remember { mutableIntStateOf(30) }
+		LaunchedEffect(lazyListState, itemDataLoader) {
+			combine(
+				snapshotFlow { lazyListState.layoutInfo },
+				itemDataLoader.isLoading.mapNotNull().asFlow(),
+			) { info, i -> Pair(info, i) }
+				.filterNot { (_, i) -> i }
+				.map { (info, _) -> info.visibleItemsInfo.size }
+				.filter { it == 0 }
+				.distinctUntilChanged()
+				.take(1)
+				.collect {
+					minVisibleItemsForScroll = (it * 3).coerceAtLeast(30)
+				}
+		}
 
-			var minVisibleItemsForScroll by remember { mutableIntStateOf(30) }
-			LaunchedEffect(lazyListState, itemDataLoader) {
-				combine(
-					snapshotFlow { lazyListState.layoutInfo },
-					itemDataLoader.isLoading.mapNotNull().asFlow(),
-				) { info, i -> Pair(info, i) }
-					.filterNot { (_, i) -> i }
-					.map { (info, _) -> info.visibleItemsInfo.size }
-					.filter { it == 0 }
-					.distinctUntilChanged()
-					.take(1)
-					.collect {
-						minVisibleItemsForScroll = (it * 3).coerceAtLeast(30)
+		val items by itemListViewModel.items.subscribeAsState()
+		val files by fileListViewModel.files.subscribeAsState()
+		val labeledAnchors by remember {
+			derivedStateOf {
+				var totalItems = 0
+				if (items.any())
+					totalItems += 1 + items.size
+
+				if (files.any())
+					totalItems += 1 + files.size
+
+				if (totalItems <= minVisibleItemsForScroll) emptyList()
+				else buildList {
+					add(Pair(stringResources.top, 0f))
+
+					if (files.any() && items.size > minVisibleItemsForScroll) {
+						add(Pair(stringResources.files, (1f + items.size) / totalItems))
 					}
-			}
 
-			val items by itemListViewModel.items.subscribeAsState()
-			val files by fileListViewModel.files.subscribeAsState()
-			val labeledAnchors by remember {
-				derivedStateOf {
-					var totalItems = 0
-					if (items.any())
-						totalItems += 1 + items.size
-
-					if (files.any())
-						totalItems += 1 + files.size
-
-					if (totalItems <= minVisibleItemsForScroll) emptyList()
-					else buildList {
-						add(Pair(stringResources.top, 0f))
-
-						if (files.any() && items.size > minVisibleItemsForScroll) {
-							add(Pair(stringResources.files, (1f + items.size) / totalItems))
-						}
-
-						add(Pair(stringResources.end, 1f))
-					}
+					add(Pair(stringResources.end, 1f))
 				}
 			}
+		}
 
-			val progressAnchors by remember {
-				derivedStateOf { labeledAnchors.map { (_, p) -> p }.toFloatArray() }
-			}
+		val progressAnchors by remember {
+			derivedStateOf { labeledAnchors.map { (_, p) -> p }.toFloatArray() }
+		}
 
-			val anchoredScrollConnectionState = rememberAnchoredScrollConnectionState(progressAnchors)
+		val anchoredScrollConnectionState = rememberAnchoredScrollConnectionState(progressAnchors)
 
-			// Persist and adjust between rotations
-			val expandedHeightPx = LocalDensity.current.remember { appBarAndTitleHeight.toPx() }
-			val collapsedHeightPx = LocalDensity.current.remember { appBarHeight.toPx() }
-			val topMenuHeightPx = LocalDensity.current.remember { rowPadding.toPx() * 2 + topMenuHeight.toPx() }
+		// Persist and adjust between rotations
+		val expandedHeightPx = LocalDensity.current.remember { appBarAndTitleHeight.toPx() }
+		val collapsedHeightPx = LocalDensity.current.remember { appBarHeight.toPx() }
+		val topMenuHeightPx = LocalDensity.current.remember { rowPadding.toPx() * 2 + topMenuHeight.toPx() }
 
-			val menuHeightScaler = DeferredPreScrollConnectedScaler.remember(topMenuHeightPx, 0f)
+		val menuHeightScaler = DeferredPreScrollConnectedScaler.remember(topMenuHeightPx, 0f)
 
-			val fullListSize by LocalDensity.current.remember(maxHeight) {
-				val topMenuHeightPx = 0f
-				val headerHeightPx = (topMenuHeight + viewPaddingUnit * 2).toPx()
-				val rowHeightPx = standardRowHeight.toPx()
-				val dividerHeight = 1.dp.toPx()
+		val fullListSize by LocalDensity.current.remember(maxHeight) {
+			val topMenuHeightPx = 0f
+			val headerHeightPx = (topMenuHeight + viewPaddingUnit * 2).toPx()
+			val rowHeightPx = standardRowHeight.toPx()
+			val dividerHeight = 1.dp.toPx()
 
-				derivedStateOf {
-					var fullListSize = topMenuHeightPx
-					if (items.any()) {
-						fullListSize += headerHeightPx + rowHeightPx * items.size + dividerHeight * (items.size - 1)
-					}
-
-					if (files.any()) {
-						fullListSize += headerHeightPx + rowHeightPx * files.size + dividerHeight * (files.size - 1)
-					}
-
-					fullListSize -= maxHeight.toPx()
-					if (files.any() || items.any())
-						fullListSize += rowHeightPx + dividerHeight
-					fullListSize.coerceAtLeast(0f)
+			derivedStateOf {
+				var fullListSize = topMenuHeightPx
+				if (items.any()) {
+					fullListSize += headerHeightPx + rowHeightPx * items.size + dividerHeight * (items.size - 1)
 				}
+
+				if (files.any()) {
+					fullListSize += headerHeightPx + rowHeightPx * files.size + dividerHeight * (files.size - 1)
+				}
+
+				fullListSize -= maxHeight.toPx()
+				if (files.any() || items.any())
+					fullListSize += rowHeightPx + dividerHeight
+				fullListSize.coerceAtLeast(0f)
 			}
+		}
 
-			val titleHeightScaler = FullScreenScrollConnectedScaler.remember(collapsedHeightPx, expandedHeightPx, 0f, fullListSize)
+		val titleHeightScaler = FullScreenScrollConnectedScaler.remember(collapsedHeightPx, expandedHeightPx, 0f, fullListSize)
 
-			val compositeScrollConnection = remember(titleHeightScaler, menuHeightScaler) {
-				titleHeightScaler.linkedTo(menuHeightScaler).ignoreConsumedOffset()
-			}
+		val compositeScrollConnection = remember(titleHeightScaler, menuHeightScaler) {
+			titleHeightScaler.linkedTo(menuHeightScaler).ignoreConsumedOffset()
+		}
 
-			val anchoredScrollConnectionDispatcher = AnchoredProgressScrollConnectionDispatcher.remember(
-				anchoredScrollConnectionState,
-				compositeScrollConnection,
-				-fullListSize,
-			)
+		val anchoredScrollConnectionDispatcher = AnchoredProgressScrollConnectionDispatcher.remember(
+			anchoredScrollConnectionState,
+			compositeScrollConnection,
+			-fullListSize,
+		)
 
-			val itemValue by itemListViewModel.itemValue.subscribeAsState()
-			if (maxWidth < Dimensions.twoColumnThreshold) {
+		val itemValue by itemListViewModel.itemValue.subscribeAsState()
+		if (maxWidth < Dimensions.twoColumnThreshold) {
 
-				val listFocus = remember { FocusRequester() }
-				VerticalHeaderScaffold(
-					header = {
-						val titleHeightValue by titleHeightScaler.valueState
+			val listFocus = remember { FocusRequester() }
+			VerticalHeaderScaffold(
+				header = {
+					val titleHeightValue by titleHeightScaler.valueState
 
-						val headerCollapseProgress by titleHeightScaler.progressState
-						val titleHeightValueDp by LocalDensity.current.remember(titleHeightScaler) {
-							derivedStateOf { titleHeightValue.toDp() }
-						}
-						Box(
-							modifier = Modifier
-								.fillMaxWidth()
-								.background(MaterialTheme.colors.surface)
-								.height(titleHeightValueDp)
-						) {
-							BackButton(
-								applicationNavigation::navigateUp,
-								modifier = Modifier
-									.align(Alignment.TopStart)
-									.padding(topRowOuterPadding)
-							)
-
-							if (headerCollapseProgress > 0f) {
-								val menuHeightProgress by menuHeightScaler.progressState
-								val chevronRotation by remember {
-									derivedStateOf {
-										linearInterpolation(
-											0f,
-											180f,
-											menuHeightProgress
-										)
-									}
-								}
-								val isMenuFullyShown by remember { derivedStateOf { menuHeightProgress < .02f } }
-								val chevronLabel =
-									stringResource(id = if (isMenuFullyShown) R.string.collapse else R.string.expand)
-
-								val scope = rememberCoroutineScope()
-
-								UnlabelledChevronIcon(
-									onClick = {
-										if (headerCollapseProgress < 1f) return@UnlabelledChevronIcon
-										scope.launch {
-											if (!isMenuFullyShown) {
-												menuHeightScaler.animateGoToMax()
-											} else {
-												menuHeightScaler.animateGoToMin()
-											}
-										}
-									},
-									chevronDescription = chevronLabel,
-									modifier = Modifier
-										.align(Alignment.TopEnd)
-										.padding(
-											vertical = topRowOuterPadding,
-											horizontal = viewPaddingUnit * 2
-										),
-									chevronModifier = Modifier
-										.rotate(chevronRotation)
-										.alpha(headerCollapseProgress),
-								)
-							}
-
-							ProvideTextStyle(MaterialTheme.typography.h5) {
-								val startPadding by rememberTitleStartPadding(titleHeightScaler.progressState)
-
-								val topPadding by remember(titleHeightScaler) {
-									derivedStateOf {
-										linearInterpolation(
-											appBarHeight,
-											14.dp,
-											headerCollapseProgress
-										)
-									}
-								}
-
-								val endPadding by remember(titleHeightScaler) {
-									derivedStateOf {
-										linearInterpolation(
-											viewPaddingUnit * 2,
-											topMenuIconSize + viewPaddingUnit * 4,
-											headerCollapseProgress
-										)
-									}
-								}
-
-								val maxLines by remember(titleHeightScaler) { derivedStateOf { (2 - headerCollapseProgress).roundToInt() } }
-								if (maxLines > 1) {
-									Text(
-										text = itemValue,
-										maxLines = maxLines,
-										overflow = TextOverflow.Ellipsis,
-										modifier = Modifier
-											.fillMaxWidth()
-											.padding(start = startPadding, top = topPadding, end = endPadding),
-									)
-								} else {
-									MarqueeText(
-										text = itemValue,
-										overflow = TextOverflow.Ellipsis,
-										gradientSides = setOf(GradientSide.End),
-										gradientEdgeColor = MaterialTheme.colors.surface,
-										modifier = Modifier
-											.fillMaxWidth()
-											.padding(start = startPadding, top = topPadding, end = endPadding),
-										isMarqueeEnabled = !lazyListState.isScrollInProgress
-									)
-								}
-							}
-						}
-					},
-					overlay = {
-						val menuHeightValue by menuHeightScaler.valueState
-						val menuHeightDp by LocalDensity.current.remember { derivedStateOf { menuHeightValue.toDp() } }
-						Box(
-							modifier = Modifier
-								.fillMaxWidth()
-								.background(MaterialTheme.colors.surface)
-								.height(menuHeightDp)
-								.clipToBounds()
-						) {
-							ItemListMenu(
-								itemListViewModel = itemListViewModel,
-								fileListViewModel = fileListViewModel,
-								itemDataLoader = itemDataLoader,
-								applicationNavigation = applicationNavigation,
-								playbackServiceController = playbackServiceController,
-								modifier = Modifier
-									.graphicsLayer {
-										translationY = (menuHeightValue - topMenuHeightPx) * 0.5f
-									}
-									.focusProperties {
-										down = listFocus
-									}
-							)
-						}
-					},
-					content = { overhangHeight ->
-						ItemListView(
-							itemListViewModel,
-							fileListViewModel,
-							itemDataLoader,
-							nowPlayingViewModel,
-							itemListMenuBackPressedHandler,
-							trackHeadlineViewModelProvider,
-							childItemViewModelProvider,
-							applicationNavigation,
-							playbackLibraryItems,
-							playbackServiceController,
-							undoBackStack,
-							lazyListState,
-							anchoredScrollConnectionState,
-							{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
-							anchoredScrollConnectionDispatcher::progressTo,
-							headerHeight = overhangHeight,
-							focusRequester = listFocus
-						)
-					},
-					modifier = Modifier
-						.fillMaxSize()
-						.nestedScroll(anchoredScrollConnectionDispatcher)
-				)
-			} else {
-				Row(
-					modifier = Modifier.fillMaxSize(),
-				) {
-					val menuWidth = this@ItemListView.calculateSummaryColumnWidth()
-					Column(
-						modifier = Modifier.width(menuWidth),
+					val headerCollapseProgress by titleHeightScaler.progressState
+					val titleHeightValueDp by LocalDensity.current.remember(titleHeightScaler) {
+						derivedStateOf { titleHeightValue.toDp() }
+					}
+					Box(
+						modifier = Modifier
+							.fillMaxWidth()
+							.background(MaterialTheme.colors.surface)
+							.height(titleHeightValueDp)
 					) {
-						Column(
-							modifier = Modifier.weight(1f)
-						) {
-							BackButton(
-								applicationNavigation::navigateUp,
-								modifier = Modifier.padding(topRowOuterPadding)
-							)
+						BackButton(
+							applicationNavigation::navigateUp,
+							modifier = Modifier
+								.align(Alignment.TopStart)
+								.padding(topRowOuterPadding)
+						)
 
-							ProvideTextStyle(MaterialTheme.typography.h5) {
+						if (headerCollapseProgress > 0f) {
+							val menuHeightProgress by menuHeightScaler.progressState
+							val chevronRotation by remember {
+								derivedStateOf {
+									linearInterpolation(
+										0f,
+										180f,
+										menuHeightProgress
+									)
+								}
+							}
+							val isMenuFullyShown by remember { derivedStateOf { menuHeightProgress < .02f } }
+							val chevronLabel =
+								stringResource(id = if (isMenuFullyShown) R.string.collapse else R.string.expand)
+
+							val scope = rememberCoroutineScope()
+
+							UnlabelledChevronIcon(
+								onClick = {
+									if (headerCollapseProgress < 1f) return@UnlabelledChevronIcon
+									scope.launch {
+										if (!isMenuFullyShown) {
+											menuHeightScaler.animateGoToMax()
+										} else {
+											menuHeightScaler.animateGoToMin()
+										}
+									}
+								},
+								chevronDescription = chevronLabel,
+								modifier = Modifier
+									.align(Alignment.TopEnd)
+									.padding(
+										vertical = topRowOuterPadding,
+										horizontal = viewPaddingUnit * 2
+									),
+								chevronModifier = Modifier
+									.rotate(chevronRotation)
+									.alpha(headerCollapseProgress),
+							)
+						}
+
+						ProvideTextStyle(MaterialTheme.typography.h5) {
+							val startPadding by rememberTitleStartPadding(titleHeightScaler.progressState)
+
+							val topPadding by remember(titleHeightScaler) {
+								derivedStateOf {
+									linearInterpolation(
+										appBarHeight,
+										14.dp,
+										headerCollapseProgress
+									)
+								}
+							}
+
+							val endPadding by remember(titleHeightScaler) {
+								derivedStateOf {
+									linearInterpolation(
+										viewPaddingUnit * 2,
+										topMenuIconSize + viewPaddingUnit * 4,
+										headerCollapseProgress
+									)
+								}
+							}
+
+							val maxLines by remember(titleHeightScaler) { derivedStateOf { (2 - headerCollapseProgress).roundToInt() } }
+							if (maxLines > 1) {
 								Text(
 									text = itemValue,
-									maxLines = 2,
+									maxLines = maxLines,
 									overflow = TextOverflow.Ellipsis,
 									modifier = Modifier
 										.fillMaxWidth()
-										.padding(horizontal = viewPaddingUnit),
+										.padding(start = startPadding, top = topPadding, end = endPadding),
+								)
+							} else {
+								MarqueeText(
+									text = itemValue,
+									overflow = TextOverflow.Ellipsis,
+									gradientSides = setOf(GradientSide.End),
+									gradientEdgeColor = MaterialTheme.colors.surface,
+									modifier = Modifier
+										.fillMaxWidth()
+										.padding(start = startPadding, top = topPadding, end = endPadding),
+									isMarqueeEnabled = !lazyListState.isScrollInProgress
 								)
 							}
 						}
-
+					}
+				},
+				overlay = {
+					val menuHeightValue by menuHeightScaler.valueState
+					val menuHeightDp by LocalDensity.current.remember { derivedStateOf { menuHeightValue.toDp() } }
+					Box(
+						modifier = Modifier
+							.fillMaxWidth()
+							.background(MaterialTheme.colors.surface)
+							.height(menuHeightDp)
+							.clipToBounds()
+					) {
 						ItemListMenu(
 							itemListViewModel = itemListViewModel,
 							fileListViewModel = fileListViewModel,
 							itemDataLoader = itemDataLoader,
 							applicationNavigation = applicationNavigation,
 							playbackServiceController = playbackServiceController,
-							modifier = Modifier.fillMaxWidth(),
+							modifier = Modifier
+								.graphicsLayer {
+									translationY = (menuHeightValue - topMenuHeightPx) * 0.5f
+								}
+								.focusProperties {
+									down = listFocus
+								}
 						)
 					}
-
+				},
+				content = { overhangHeight ->
 					ItemListView(
 						itemListViewModel,
 						fileListViewModel,
@@ -925,11 +856,72 @@ fun ScreenDimensionsScope.ItemListView(
 						undoBackStack,
 						lazyListState,
 						anchoredScrollConnectionState,
-						chipLabel = { _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
-						onScrollProgress = anchoredScrollConnectionDispatcher::progressTo,
-						modifier = Modifier.nestedScroll(anchoredScrollConnectionDispatcher)
+						{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
+						anchoredScrollConnectionDispatcher::progressTo,
+						headerHeight = overhangHeight,
+						focusRequester = listFocus
+					)
+				},
+				modifier = Modifier
+					.fillMaxSize()
+					.nestedScroll(anchoredScrollConnectionDispatcher)
+			)
+		} else {
+			Row(
+				modifier = Modifier.fillMaxSize(),
+			) {
+				val menuWidth = this@ItemListView.calculateSummaryColumnWidth()
+				Column(
+					modifier = Modifier.width(menuWidth),
+				) {
+					Column(
+						modifier = Modifier.weight(1f)
+					) {
+						BackButton(
+							applicationNavigation::navigateUp,
+							modifier = Modifier.padding(topRowOuterPadding)
+						)
+
+						ProvideTextStyle(MaterialTheme.typography.h5) {
+							Text(
+								text = itemValue,
+								maxLines = 2,
+								overflow = TextOverflow.Ellipsis,
+								modifier = Modifier
+									.fillMaxWidth()
+									.padding(horizontal = viewPaddingUnit),
+							)
+						}
+					}
+
+					ItemListMenu(
+						itemListViewModel = itemListViewModel,
+						fileListViewModel = fileListViewModel,
+						itemDataLoader = itemDataLoader,
+						applicationNavigation = applicationNavigation,
+						playbackServiceController = playbackServiceController,
+						modifier = Modifier.fillMaxWidth(),
 					)
 				}
+
+				ItemListView(
+					itemListViewModel,
+					fileListViewModel,
+					itemDataLoader,
+					nowPlayingViewModel,
+					itemListMenuBackPressedHandler,
+					trackHeadlineViewModelProvider,
+					childItemViewModelProvider,
+					applicationNavigation,
+					playbackLibraryItems,
+					playbackServiceController,
+					undoBackStack,
+					lazyListState,
+					anchoredScrollConnectionState,
+					chipLabel = { _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
+					onScrollProgress = anchoredScrollConnectionDispatcher::progressTo,
+					modifier = Modifier.nestedScroll(anchoredScrollConnectionDispatcher)
+				)
 			}
 		}
 	}

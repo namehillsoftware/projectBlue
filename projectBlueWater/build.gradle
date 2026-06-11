@@ -89,15 +89,19 @@ android {
             minifyEnabled false
 			signingConfig = (isSignedExternally() ? signingConfigs.debug : signingConfig)
 		}
-        release {
+        playRelease {
             minifyEnabled true
             shrinkResources true
+            //noinspection ProguardAndroidTxtUsage―upcoming
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 			signingConfig (isSignedExternally() ? signingConfigs.release : signingConfig)
 			ndk {
 				debugSymbolLevel = 'SYMBOL_TABLE'
 			}
         }
+		release {
+			initWith playRelease
+		}
     }
 
     packagingOptions {

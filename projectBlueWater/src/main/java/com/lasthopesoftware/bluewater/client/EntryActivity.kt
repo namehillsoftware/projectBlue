@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client
 
+import android.app.SearchManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -8,6 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
@@ -16,6 +18,7 @@ import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicati
 import com.lasthopesoftware.bluewater.TvApplicationDependencies
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.android.ui.ProjectBlueComposableApplication
+import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibrarySearchScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingTvApplication
@@ -30,6 +33,7 @@ import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.registerResultActivityLauncher
+import com.lasthopesoftware.promises.extensions.suspend
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ConcurrentHashMap
@@ -100,7 +104,7 @@ class EntryActivity :
 
 		setContent {
 			val theme by browserViewDependencies.applicationViewModel.run {
-				loadSettings()
+				LaunchedEffect(Unit) { loadSettings().suspend() }
 				theme.subscribeAsState()
 			}
 			val isDarkTheme = theme == ApplicationSettings.Theme.DARK || (theme == ApplicationSettings.Theme.SYSTEM && isSystemInDarkTheme())
@@ -172,6 +176,14 @@ class EntryActivity :
 			)
 	}
 
-	private fun getDestination(intent: Intent?): Destination? =
-		intent?.safelyGetParcelableExtra<Destination>(destinationProperty)
+	private fun getDestination(intent: Intent?): Destination? {
+		val destination = intent?.safelyGetParcelableExtra<Destination>(destinationProperty)
+		if (destination != null) return destination
+
+		if (intent?.action == Intent.ACTION_SEARCH) {
+			return intent.getStringExtra(SearchManager.QUERY)?.let(::ActiveLibrarySearchScreen)
+		}
+
+		return null
+	}
 }

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.AndTheConnectionIsNotInitialized
+package com.lasthopesoftware.bluewater.client.connection.session.GivenAnActiveLibrary
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -11,48 +11,39 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class `When viewing the library` {
+class `When viewing the active downloads` {
 	companion object {
-		private const val libraryId = 841
+		private const val libraryId = 104
 	}
 
 	private val mut by lazy {
 		LibrarySelectionNavigation(
 			mockk {
-				every { viewLibrary(LibraryId(libraryId)) } answers {
-					viewedLibraryId = firstArg()
-					Unit.toPromise()
-				}
-
-				every { viewApplicationSettings() } answers {
-					applicationSettingsViewed = true
+				every { viewActiveDownloads(LibraryId(libraryId)) } answers {
+					viewedLibraryDownloadsId = firstArg()
 					Unit.toPromise()
 				}
 			},
 			mockk {
+				every { promiseSelectedLibraryId() } returns LibraryId(libraryId).toPromise()
 				every { selectBrowserLibrary(any()) } answers { Library(id = firstArg<LibraryId>().id).toPromise() }
 			},
 			mockk {
 				every { initializeConnection(any()) } returns false.toPromise()
+				every { initializeConnection(LibraryId(libraryId)) } returns true.toPromise()
 			}
 		)
 	}
 
-	private var applicationSettingsViewed = false
-	private var viewedLibraryId: LibraryId? = null
+	private var viewedLibraryDownloadsId: LibraryId? = null
 
 	@BeforeAll
 	fun act() {
-		mut.viewLibrary(LibraryId(libraryId)).toExpiringFuture().get()
+		mut.viewActiveDownloads().toExpiringFuture().get()
 	}
 
 	@Test
 	fun `then the viewed library is correct`() {
-		assertThat(viewedLibraryId).isNull()
-	}
-
-	@Test
-	fun `then the application settings are viewed`() {
-		assertThat(applicationSettingsViewed).isTrue()
+		assertThat(viewedLibraryDownloadsId).isEqualTo(LibraryId(libraryId))
 	}
 }

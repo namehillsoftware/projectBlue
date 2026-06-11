@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
-import LoadedItemListView
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -10,8 +9,10 @@ import androidx.compose.runtime.setValue
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.list.search.SearchFilesView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
+import com.lasthopesoftware.bluewater.client.browsing.items.list.LoadedItemListScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.DownloadsScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.FilePropertySearchScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ItemScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SearchScreen
@@ -25,11 +26,11 @@ import java.io.IOException
 fun ScreenDimensionsScope.NavigateToTvLibraryDestination(destination: BrowserLibraryDestination, browserViewDependencies: ScopedViewModelDependencies) {
 	when (destination) {
 		is LibraryScreen -> {
-            LoadedItemListView(browserViewDependencies, destination.libraryId, null)
+            LoadedItemListScreen(browserViewDependencies, destination.libraryId, null)
 		}
 
 		is ItemScreen -> {
-            LoadedItemListView(browserViewDependencies, destination.libraryId, destination.item)
+            LoadedItemListScreen(browserViewDependencies, destination.libraryId, destination.item)
 		}
 
 		is DownloadsScreen -> {
@@ -44,11 +45,11 @@ fun ScreenDimensionsScope.NavigateToTvLibraryDestination(destination: BrowserLib
 			}
 		}
 
-		is SearchScreen -> {
-			with(browserViewDependencies) {
-				var isConnectionLost by remember { mutableStateOf(false) }
-				var reinitializeConnection by remember { mutableStateOf(false) }
+		is FilePropertySearchScreen, is SearchScreen -> {
+			var isConnectionLost by remember { mutableStateOf(false) }
+			var reinitializeConnection by remember { mutableStateOf(false) }
 
+			browserViewDependencies.apply {
 				if (isConnectionLost) {
 					ConnectionLostView(
 						onCancel = { applicationNavigation.viewApplicationSettings() },
@@ -74,18 +75,25 @@ fun ScreenDimensionsScope.NavigateToTvLibraryDestination(destination: BrowserLib
 
 					if (reinitializeConnection) {
 						LaunchedEffect(key1 = Unit) {
-							isConnectionLost = !connectionStatusViewModel.initializeConnection(destination.libraryId).suspend()
+							isConnectionLost =
+								!connectionStatusViewModel.initializeConnection(destination.libraryId).suspend()
 							reinitializeConnection = false
 						}
 					}
 
 					if (!isConnectionLost) {
-						LaunchedEffect(destination.filePropertyFilter) {
+						LaunchedEffect(destination) {
 							try {
-								if (destination.filePropertyFilter != null) {
-									searchFilesViewModel.prependFilter(destination.filePropertyFilter)
-									searchFilesViewModel.findFiles().suspend()
+								when (destination) {
+									is FilePropertySearchScreen -> {
+										destination.filePropertyFilter?.let(searchFilesViewModel::prependFilter)
+									}
+									is SearchScreen -> {
+										searchFilesViewModel.query.value = destination.searchQuery
+									}
 								}
+
+								searchFilesViewModel.findFiles().suspend()
 							} catch (e: IOException) {
 								if (ConnectionLostExceptionFilter.isConnectionLostException(e))
 									isConnectionLost = true
