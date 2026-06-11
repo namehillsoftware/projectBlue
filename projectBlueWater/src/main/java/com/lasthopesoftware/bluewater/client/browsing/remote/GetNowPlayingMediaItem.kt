@@ -4,5 +4,5 @@ import android.support.v4.media.MediaBrowserCompat
 import com.namehillsoftware.handoff.promises.Promise
 
 interface GetNowPlayingMediaItem {
-	fun promiseNowPlayingItem(): Promise<MediaBrowserCompat.MediaItem?>
+	fun promiseNowPlayingItem(): Promise<out MediaBrowserCompat.MediaItem?>
 }

@@ -137,9 +137,10 @@ android {
 
 	kotlin {
 		compilerOptions {
-			languageVersion = KotlinVersion.KOTLIN_2_3
+			// Get the major Kotlin version from libs.versions.toml
+			languageVersion = KotlinVersion.fromVersion(libs.versions.kotlin.get().split("\\.").take(2).join("."))
 			// Optional: Set jvmTarget
-			 jvmTarget = JvmTarget.JVM_11
+			jvmTarget = JvmTarget.JVM_11
 		}
 	}
 }

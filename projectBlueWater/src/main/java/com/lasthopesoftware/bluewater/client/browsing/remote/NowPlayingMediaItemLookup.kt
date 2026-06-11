@@ -11,7 +11,7 @@ class NowPlayingMediaItemLookup(
 	private val nowPlayingRepository: GetNowPlayingState,
 	private val mediaItemServiceFileLookup: GetMediaItemsFromServiceFiles,
 ) : GetNowPlayingMediaItem {
-	override fun promiseNowPlayingItem(): Promise<MediaBrowserCompat.MediaItem?> =
+	override fun promiseNowPlayingItem(): Promise<out MediaBrowserCompat.MediaItem?> =
 		selectedLibraryIdProvider
 			.promiseSelectedLibraryId()
 			.eventually { maybeId ->
@@ -20,7 +20,7 @@ class NowPlayingMediaItemLookup(
 						nowPlayingRepository
 							.promiseNowPlaying(libraryId)
 							.eventually { np ->
-								if (np == null || np.playlist.isEmpty() || np.playlistPosition < 0) Promise.empty<MediaBrowserCompat.MediaItem?>()
+								if (np == null || np.playlist.isEmpty() || np.playlistPosition < 0) Promise.empty()
 								else mediaItemServiceFileLookup.promiseMediaItemWithImage(libraryId, np.playlist[np.playlistPosition])
 							}
 					}

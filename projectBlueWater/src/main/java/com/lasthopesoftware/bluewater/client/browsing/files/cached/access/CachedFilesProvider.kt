@@ -25,7 +25,7 @@ class CachedFilesProvider(
 	}
 
     override fun promiseCachedFile(libraryId: LibraryId, uniqueKey: String): Promise<CachedFile?> =
-		promiseTableMessage<CachedFile?> { getCachedFile(libraryId, uniqueKey) }
+		promiseTableMessage { getCachedFile(libraryId, uniqueKey) }
 
     private fun getCachedFile(libraryId: LibraryId, uniqueKey: String): CachedFile? =
         RepositoryAccessHelper(context).use { repositoryAccessHelper ->
