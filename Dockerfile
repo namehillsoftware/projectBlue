@@ -1,4 +1,4 @@
-FROM gradle:8.14.3-jdk17
+FROM gradle:9.5.0-jdk17
 
 # Install system dependencies
 RUN apt-get update -qq && apt-get install -qq -y --no-install-recommends \
@@ -18,9 +18,9 @@ ENV ANDROID_SDK_HOME=${ANDROID_HOME}
 ENV PATH ${ANDROID_HOME}/cmdline-tools/cmdline-tools/bin:${ANDROID_HOME}/tools:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools:${PATH}
 
 # set default build arguments
+# Full reference at https://dl.google.com/android/repository/repository2-1.xml
 ARG SDK_VERSION=commandlinetools-linux-12700392_latest.zip
 
-# Full reference at https://dl.google.com/android/repository/repository2-1.xml
 # Download and unpack android SDKs
 RUN curl -sSL https://dl.google.com/android/repository/${SDK_VERSION} -o /tmp/sdk.zip \
     && mkdir ${ANDROID_HOME} \
@@ -30,14 +30,18 @@ RUN curl -sSL https://dl.google.com/android/repository/${SDK_VERSION} -o /tmp/sd
 
 # Set these to the same versions as in build.gradle to avoid downloading updated tools
 ARG ANDROID_BUILD_VERSION=36
+ARG ANDROID_BUILD_NEXT_VERSION=37.0
 ARG ANDROID_TOOLS_VERSION=36.0.0
+ARG ANDROID_TOOLS_NEXT_VERSION=37.0.0
 
 COPY projectBlueWater/src/test/resources/robolectric.properties ./
 
 RUN . ./robolectric.properties && (yes | sdkmanager "platform-tools" \
 #        "emulator" \ # keeping just in case it is needed
         "platforms;android-${ANDROID_BUILD_VERSION}" \
+        "platforms;android-${ANDROID_BUILD_NEXT_VERSION}" \
         "build-tools;${ANDROID_TOOLS_VERSION}" \
+        "build-tools;${ANDROID_TOOLS_NEXT_VERSION}" \
         "build-tools;${sdk}.0.0" \
 #        "add-ons;addon-google_apis-google-23" \ # keeping in case addons are needed
         "extras;android;m2repository")

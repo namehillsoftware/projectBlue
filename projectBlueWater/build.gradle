@@ -1,15 +1,15 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
 	alias(libs.plugins.androidJUnit5)
 	alias(libs.plugins.kotlinSerialization)
+	alias(libs.plugins.kotlinPluginCompose)
+	alias(libs.plugins.androidApplication)
 }
 
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'org.jetbrains.kotlin.android'
 apply plugin: 'kotlin-parcelize'
-apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 
 def androidKeyStorePassword = hasProperty('androidKeyStorePassword') ? androidKeyStorePassword : null
 def hasKeyStorePassword = { androidKeyStorePassword != null && !androidKeyStorePassword.isEmpty() }
@@ -34,11 +34,11 @@ def copyDependencyList = tasks.register("copyDependencyList", Copy) {
 preBuild.dependsOn(copyDependencyList)
 
 android {
-    compileSdk 36
+    compileSdk 37
 
     defaultConfig {
         minSdkVersion 23
-        targetSdkVersion 36
+        targetSdkVersion 37
 		versionName gitVersion()
 		base.archivesName = "project-blue-" + gitVersion()
 	}
@@ -74,10 +74,6 @@ android {
 		coreLibraryDesugaringEnabled = true
 	}
 
-	kotlinOptions {
-		jvmTarget = '11'
-	}
-
 	sourceSets {
 		main {
 			res.srcDirs += copyDependencyList.map { it.temporaryDir }
@@ -93,7 +89,7 @@ android {
             minifyEnabled true
             shrinkResources true
             //noinspection ProguardAndroidTxtUsage―upcoming
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 			signingConfig (isSignedExternally() ? signingConfigs.release : signingConfig)
 			ndk {
 				debugSymbolLevel = 'SYMBOL_TABLE'
@@ -138,6 +134,15 @@ android {
     }
 
 	namespace 'com.lasthopesoftware.bluewater'
+
+	kotlin {
+		compilerOptions {
+			// Get the major Kotlin version from libs.versions.toml
+			languageVersion = KotlinVersion.fromVersion(libs.versions.kotlin.get().split("\\.").take(2).join("."))
+			// Optional: Set jvmTarget
+			jvmTarget = JvmTarget.JVM_11
+		}
+	}
 }
 
 tasks.withType(KotlinCompile).configureEach {

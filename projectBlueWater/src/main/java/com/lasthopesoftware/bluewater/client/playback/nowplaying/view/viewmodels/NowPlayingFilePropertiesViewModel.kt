@@ -180,9 +180,14 @@ class NowPlayingFilePropertiesViewModel(
 
 								setView(np.libraryId, positionedFile.serviceFile, filePosition)
 							}
-							.then(forward()) { e ->
+							.eventually(forward()) { e ->
 								setTrackProgress(0)
-								handleException(e)
+								nowPlayingRepository
+									.promiseNowPlaying(libraryId)
+									.then {
+										if (it == np)
+											handleException(e)
+									}
 							}
 					} ?: run {
 						logger.debug("No file is playing")

@@ -89,7 +89,7 @@ class DiskFileCachePersistence(
 						} finally {
 							CacheFlushing.scheduleCacheFlushing(context, diskFileCacheConfiguration)
 						}
-					}.eventually<CachedFile?> { cachedFilesProvider.promiseCachedFile(libraryId, uniqueKey) }
+					}.eventually<CachedFile> { cachedFilesProvider.promiseCachedFile(libraryId, uniqueKey) }
 			}
 	}
 
