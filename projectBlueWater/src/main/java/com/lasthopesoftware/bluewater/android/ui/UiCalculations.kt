@@ -62,6 +62,17 @@ inline fun <T : AutoCloseable> rememberAutoCloseable(key1: Any?, key2: Any?, key
 	return result
 }
 
+@Composable
+inline fun <T : AutoCloseable> rememberAutoCloseable(vararg keys: Any?, crossinline calculation: () -> T): T {
+	val result = androidx.compose.runtime.remember(keys = keys, calculation)
+
+	DisposableEffect(result) {
+		onDispose { result.close() }
+	}
+
+	return result
+}
+
 /**
  * Calculates the width of the summary column based on the screen height, ensuring it stays within
  * the defined minimum menu width and half of the maximum screen width.

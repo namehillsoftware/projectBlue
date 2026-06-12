@@ -127,12 +127,9 @@ import dev.olshevski.navigation.reimagined.NavController
 import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.rememberNavController
 import kotlinx.coroutines.async
-import org.slf4j.LoggerFactory
 import java.io.IOException
 
-private val logger by lazy { LoggerFactory.getLogger("ResponsiveApplication") }
-
-enum class ResponsiveState { Browser, Split, NowPlaying, Playlist }
+enum class ResponsiveState { Split, Browser, NowPlaying, Playlist }
 
 @Composable
 fun ScreenDimensionsScope.NavigateToBrowserLibraryDestination(
@@ -293,6 +290,7 @@ private fun ResponsiveLibraryView(
 								SlideOutState.Open, SlideOutState.PartiallyOpen -> ResponsiveState.Playlist
 								else -> ResponsiveState.NowPlaying
 							}
+							ResponsiveState.Browser -> ResponsiveState.Split
 							else -> currentState
 						})
 
@@ -680,7 +678,7 @@ fun ResponsiveApplication(
 	val navController = rememberNavController(listOf(ApplicationSettingsScreen, LandingScreen))
 
 	var browserDragValue by rememberSaveable {
-		mutableStateOf(ResponsiveState.Browser)
+		mutableStateOf(ResponsiveState.Split)
 	}
 
 	val responsiveState = remember {
