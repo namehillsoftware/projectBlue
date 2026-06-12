@@ -96,10 +96,15 @@ class ResponsiveDestinationGraphNavigation(
 
 	override fun navigateUp() = coroutineScope.async {
 		if (navController.peek()?.destination is BrowserLibraryDestination) {
-			if (draggableState.currentValue > ResponsiveState.Split) {
-				// Navigate Up will only return to the Browser state
-				draggableState.animateTo(ResponsiveState.Browser)
-				return@async true
+			with (draggableState) {
+				if (currentValue > ResponsiveState.Browser) {
+					// Navigate Up will only return to the Browser state
+					animateTo(
+						if (anchors.hasPositionFor(ResponsiveState.Split)) ResponsiveState.Split
+						else ResponsiveState.Browser
+					)
+					return@async true
+				}
 			}
 
 			if (libraryNavController.pop() && libraryNavController.isNotEmpty()) {
@@ -114,7 +119,7 @@ class ResponsiveDestinationGraphNavigation(
 		if (itemListMenuBackPressedHandler.hideAllMenus()) return@async true
 
 		if (navController.peek()?.destination is BrowserLibraryDestination) {
-			if (draggableState.currentValue > ResponsiveState.Browser) {
+			if (draggableState.currentValue > ResponsiveState.Split) {
 				// Back-out will reverse through all prior states
 				val animatedToPreviousState = ResponsiveState
 					.entries
@@ -145,7 +150,13 @@ class ResponsiveDestinationGraphNavigation(
 
 	private suspend fun bringBrowserIntoView(libraryId: LibraryId) {
 		ensureBrowserIsOnStack(libraryId)
-		draggableState.animateTo(ResponsiveState.Browser)
+//		draggableState.animateTo(ResponsiveState.Browser)
+		with (draggableState) {
+			animateTo(
+				if (anchors.hasPositionFor(ResponsiveState.Split)) ResponsiveState.Split
+				else ResponsiveState.Browser
+			)
+		}
 	}
 
 	private fun ensureBrowserIsOnStack(libraryId: LibraryId) {
