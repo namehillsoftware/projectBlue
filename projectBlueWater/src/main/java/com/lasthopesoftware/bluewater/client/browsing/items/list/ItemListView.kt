@@ -112,6 +112,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledA
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSearchButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSettingsButton
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledViewNowPlayingButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
@@ -140,7 +141,7 @@ import kotlin.math.roundToInt
 private val appBarAndTitleHeight = expandedTitleHeight + appBarHeight
 
 @Composable
-fun ItemsCountHeader(itemsCount: Int) {
+private fun ItemsCountHeader(itemsCount: Int) {
 	Box(
 		modifier = Modifier
 			.height(topMenuHeight)
@@ -159,7 +160,7 @@ fun ItemsCountHeader(itemsCount: Int) {
 }
 
 @Composable
-fun FilesCountHeader(filesCount: Int) {
+private fun FilesCountHeader(filesCount: Int) {
 	Box(
 		modifier = Modifier
 			.padding(viewPaddingUnit)
@@ -178,7 +179,7 @@ fun FilesCountHeader(filesCount: Int) {
 }
 
 @Composable
-fun RenderTrackTitleItem(
+private fun RenderTrackTitleItem(
     position: Int,
     serviceFile: ServiceFile,
     trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
@@ -249,7 +250,7 @@ fun RenderTrackTitleItem(
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun ChildItem(
+private fun ChildItem(
     item: IItem,
     itemListViewModel: ItemListViewModel,
     applicationNavigation: NavigateApplication,
@@ -365,7 +366,7 @@ fun ChildItem(
 }
 
 @Composable
-fun ItemListMenu(
+private fun ItemListMenu(
 	itemListViewModel: ItemListViewModel,
 	fileListViewModel: FileListViewModel,
 	itemDataLoader: LoadItemData,
@@ -387,8 +388,13 @@ fun ItemListMenu(
 			modifier = modifier,
 		)
 
+		LabelledViewNowPlayingButton(
+			applicationNavigation = applicationNavigation,
+			modifier = modifier,
+		)
+
 		val files by fileListViewModel.files.subscribeAsState()
-		val isFileControlsEnabled = files.any()
+		val isFileControlsEnabled by remember { derivedStateOf { files.any() } }
 
 		LabelledPlayButton(
 			libraryState = itemListViewModel,
@@ -572,7 +578,7 @@ fun ItemListView(
 			}
 
 			if (LocalInputModeManager.current.inputMode == InputMode.Touch) {        // 5in in pixels, pixels/Inch
-				val maxScrollBarHeight = remember( maxHeight, headerHeight) {
+				val maxScrollBarHeight = remember(this@BoxWithConstraints.maxHeight, headerHeight) {
 					val dpi = 160f
 					(2.5f * dpi).dp.coerceAtMost(maxHeight - headerHeight - topMenuHeight)
 				}

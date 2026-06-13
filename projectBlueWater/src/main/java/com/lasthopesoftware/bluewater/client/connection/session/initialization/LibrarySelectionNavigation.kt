@@ -42,6 +42,12 @@ class LibrarySelectionNavigation(
 				it?.let(inner::viewActiveDownloads) ?: backOut().unitResponse()
 			}
 
+	override fun viewActiveNowPlaying(): Promise<Unit> =
+		promiseSelectedLibraryId()
+			.eventually {
+				it?.let(inner::viewNowPlaying) ?: backOut().unitResponse()
+			}
+
 	override fun viewLibrary(libraryId: LibraryId): Promise<Unit> =
 		selectLibrary(libraryId) { l ->
 			connectionStatus

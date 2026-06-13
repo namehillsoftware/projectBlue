@@ -25,6 +25,7 @@
     <string name="lbl_song_artist">Now Playing Artist</string>
     <string name="img_now_playing">Now Playing Album Image</string>
     <string name="img_now_playing_loading">Now Playing Album Image Loading</string>
+    <string name="view_now_playing">Now Playing</string>
     <string name="btn_view_files">View Files</string>
     <string name="btn_hide_files">Hide Files</string>
     <string name="btn_shuffle_files">Shuffle</string>
@@ -170,4 +171,5 @@
     <string name="header">Header</string>
     <string name="value">Value</string>
     <string name="server_type">Server Type</string>
+    <string name="split_screen">Split Screen</string>
 </resources>

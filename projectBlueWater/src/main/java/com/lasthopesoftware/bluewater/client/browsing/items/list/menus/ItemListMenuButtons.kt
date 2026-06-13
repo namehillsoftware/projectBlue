@@ -87,3 +87,19 @@ fun LabelledRefreshButton(
 		modifier = modifier,
 	)
 }
+
+@Composable
+fun LabelledViewNowPlayingButton(
+	applicationNavigation: NavigateApplication,
+	modifier: Modifier = Modifier,
+) {
+	val viewNowPlayingLabel = stringResource(R.string.view_now_playing)
+	ColumnMenuIcon(
+		onClick = applicationNavigation::viewActiveNowPlaying,
+		iconPainter = painterResource(id = R.drawable.now_playing_status_icon_white),
+		contentDescription = viewNowPlayingLabel,
+		label = viewNowPlayingLabel,
+		labelMaxLines = 1,
+		modifier = modifier,
+	)
+}
