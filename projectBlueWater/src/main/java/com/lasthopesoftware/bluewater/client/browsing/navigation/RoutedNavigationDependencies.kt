@@ -18,7 +18,7 @@ class RoutedNavigationDependencies(
 	connectionStatusViewModel: ConnectionStatusViewModel,
 	private val navController: NavController<Destination>
 ) : EntryDependencies by inner, AutoCloseable {
-	private val navigationMessageSubscription = navigationMessages.registerReceiver { message: NavigationMessage ->
+	private val navigationMessageSubscription = navigationMessageRegistration.registerReceiver { message: NavigationMessage ->
 		promiseNavigation(message.destination)
 	}
 

@@ -266,18 +266,27 @@ private fun ResponsiveLibraryView(
 				val paneRemainingWidthPx = LocalDensity.current.remember(paneWidthPx) { maxWidth.toPx() - paneWidthPx }
 
 				var narrowDrawerDraggableState by rememberSaveable { mutableStateOf(SlideOutState.Closed) }
-				DisposableEffect(paneWidthPx, paneRemainingWidthPx, isNarrow, responsiveState) {
+				val isTv by applicationViewModel.isTv.subscribeAsState()
+				DisposableEffect(paneWidthPx, paneRemainingWidthPx, isNarrow, responsiveState, isTv) {
 					val currentState = responsiveState.currentValue
 
 					responsiveState.updateAnchors(
-						if (isNarrow) DraggableAnchors {
-							ResponsiveState.NowPlaying at -paneWidthPx
-							ResponsiveState.Browser at 0f
-						} else DraggableAnchors {
-							ResponsiveState.Playlist at -(paneRemainingWidthPx + 2 * paneWidthPx)
-							ResponsiveState.NowPlaying at -(paneRemainingWidthPx + paneWidthPx)
-							ResponsiveState.Split at -paneRemainingWidthPx
-							ResponsiveState.Browser at 0f
+						when {
+							isNarrow -> DraggableAnchors {
+								ResponsiveState.NowPlaying at -paneWidthPx
+								ResponsiveState.Browser at 0f
+							}
+							isTv -> DraggableAnchors {
+								ResponsiveState.Playlist at -(paneRemainingWidthPx + 2 * paneWidthPx)
+								ResponsiveState.NowPlaying at -(paneRemainingWidthPx + paneWidthPx)
+								ResponsiveState.Split at -paneRemainingWidthPx
+							}
+							else -> DraggableAnchors {
+								ResponsiveState.Playlist at -(paneRemainingWidthPx + 2 * paneWidthPx)
+								ResponsiveState.NowPlaying at -(paneRemainingWidthPx + paneWidthPx)
+								ResponsiveState.Split at -paneRemainingWidthPx
+								ResponsiveState.Browser at 0f
+							}
 						},
 						if (isNarrow) when (currentState) {
 							ResponsiveState.Playlist -> ResponsiveState.NowPlaying
@@ -323,7 +332,7 @@ private fun ResponsiveLibraryView(
 						val browserTravelDistance = responsiveState.anchors.run {
 							val browserPosition = positionOf(ResponsiveState.Browser)
 							val splitAnchor = positionOf(ResponsiveState.Split)
-							browserPosition - (splitAnchor.takeUnless { it.isNaN() } ?: 0f)
+							(browserPosition.takeUnless { it.isNaN() } ?: 0f) - (splitAnchor.takeUnless { it.isNaN() } ?: 0f)
 						}
 
 						(responsiveStateOffset + browserTravelDistance.toDp()).coerceAtMost(0.dp)

@@ -13,9 +13,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
+import com.lasthopesoftware.bluewater.AccessApplicationState
 import com.lasthopesoftware.bluewater.ActivityDependencies
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
-import com.lasthopesoftware.bluewater.TvApplicationDependencies
+import com.lasthopesoftware.bluewater.ApplicationState
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.android.ui.ProjectBlueComposableApplication
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibrarySearchScreen
@@ -33,6 +34,7 @@ import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.registerResultActivityLauncher
 import com.lasthopesoftware.promises.extensions.suspend
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ConcurrentHashMap
@@ -48,21 +50,19 @@ class EntryActivity :
 	ActivityCompat.OnRequestPermissionsResultCallback,
 	ManagePermissions,
 	PermissionsDependencies,
-	ActivitySuppliedDependencies
+	ActivitySuppliedDependencies,
+	AccessApplicationState
 {
-	private val activityApplicationDependencies by lazy {
-		if (!isInLeanbackMode) applicationDependencies
-		else TvApplicationDependencies(applicationDependencies)
-	}
 	private val browserViewDependencies by lazy {
 		ActivityDependencies(
 			this,
 			this,
-			activityApplicationDependencies
+			applicationDependencies
 		)
 	}
 
 	override val registeredActivityResultsLauncher = registerResultActivityLauncher()
+	override val applicationStateAccess = this
 
 	override val applicationPermissions by lazy {
 		val osPermissionChecker = OsPermissionsChecker(applicationContext)
@@ -103,27 +103,19 @@ class EntryActivity :
 
 		setContent {
 			val theme by browserViewDependencies.applicationViewModel.run {
-				LaunchedEffect(Unit) { loadSettings().suspend() }
+				LaunchedEffect(isInLeanbackMode) { loadSettings().suspend() }
 				theme.subscribeAsState()
 			}
 			val isDarkTheme = theme == ApplicationSettings.Theme.DARK || (theme == ApplicationSettings.Theme.SYSTEM && isSystemInDarkTheme())
-			if (!isInLeanbackMode) {
-				ProjectBlueComposableApplication(darkTheme = isDarkTheme) {
-					ResponsiveApplication(
-						entryDependencies = browserViewDependencies,
-						permissionsDependencies = this,
-						initialDestination = getDestination(intent),
-					)
-				}
-			} else {
+			if (isInLeanbackMode) {
 				AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-				ProjectBlueComposableApplication(darkTheme = isDarkTheme) {
-					ResponsiveApplication(
-						entryDependencies = browserViewDependencies,
-						permissionsDependencies = this,
-						initialDestination = getDestination(intent),
-					)
-				}
+			}
+			ProjectBlueComposableApplication(darkTheme = isDarkTheme) {
+				ResponsiveApplication(
+					entryDependencies = browserViewDependencies,
+					permissionsDependencies = this,
+					initialDestination = getDestination(intent),
+				)
 			}
 		}
 	}
@@ -134,7 +126,7 @@ class EntryActivity :
 		// To preserve state within the Compose application, do not store the new intent.
 		val destination = getDestination(intent)
 		if (destination != null)
-			browserViewDependencies.navigationMessages.sendMessage(NavigationMessage(destination))
+			browserViewDependencies.navigationMessagePublisher.sendMessage(NavigationMessage(destination))
 	}
 
 	override fun requestPermissions(permissions: List<String>): Promise<Map<String, Boolean>> {
@@ -185,4 +177,7 @@ class EntryActivity :
 
 		return null
 	}
+
+	override fun promiseApplicationState(): Promise<ApplicationState> =
+		ApplicationState(isTv = isInLeanbackMode).toPromise()
 }
