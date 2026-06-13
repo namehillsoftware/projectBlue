@@ -150,12 +150,13 @@ class ResponsiveDestinationGraphNavigation(
 
 	private suspend fun bringBrowserIntoView(libraryId: LibraryId) {
 		ensureBrowserIsOnStack(libraryId)
-//		draggableState.animateTo(ResponsiveState.Browser)
 		with (draggableState) {
-			animateTo(
-				if (anchors.hasPositionFor(ResponsiveState.Split)) ResponsiveState.Split
-				else ResponsiveState.Browser
-			)
+			if (currentValue > ResponsiveState.Browser) {
+				animateTo(
+					if (anchors.hasPositionFor(ResponsiveState.Split)) ResponsiveState.Split
+					else ResponsiveState.Browser
+				)
+			}
 		}
 	}
 
