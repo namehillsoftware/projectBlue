@@ -18,6 +18,7 @@ import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
+import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
@@ -85,11 +86,15 @@ class ActivityDependencies(
 		)
 	}
 
-	override val navigationMessages by activity.buildViewModelLazily { ViewModelMessageBus<NavigationMessage>() }
+	override val navigationMessageRegistration by activity.buildViewModelLazily { ViewModelMessageBus<NavigationMessage>() }
+
+	override val navigationMessagePublisher: SendTypedMessages<NavigationMessage>
+		get() = navigationMessageRegistration
 
 	override val applicationViewModel by activity.buildViewModelLazily {
 		ApplicationViewModel(
 			applicationSettings,
+			activitySuppliedDependencies.applicationStateAccess,
 			messageBus,
 		)
 	}
