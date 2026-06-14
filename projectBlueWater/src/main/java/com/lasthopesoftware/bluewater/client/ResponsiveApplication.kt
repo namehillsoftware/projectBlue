@@ -1,11 +1,13 @@
 package com.lasthopesoftware.bluewater.client
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
+import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -44,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.coerceAtLeast
@@ -58,6 +61,7 @@ import com.lasthopesoftware.bluewater.android.ui.SlideOutState
 import com.lasthopesoftware.bluewater.android.ui.components.PaddedSystemScreenBox
 import com.lasthopesoftware.bluewater.android.ui.findWindow
 import com.lasthopesoftware.bluewater.android.ui.isNarrow
+import com.lasthopesoftware.bluewater.android.ui.navigable
 import com.lasthopesoftware.bluewater.android.ui.remember
 import com.lasthopesoftware.bluewater.android.ui.rememberAutoCloseable
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
@@ -111,6 +115,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingWideView
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.SavePlaylistDialog
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.minimumMenuWidth
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.playlistControlAlpha
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsView
@@ -127,6 +132,7 @@ import dev.olshevski.navigation.reimagined.NavController
 import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.rememberNavController
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import java.io.IOException
 
 enum class ResponsiveState { Split, Browser, NowPlaying, Playlist }
@@ -360,6 +366,7 @@ private fun ResponsiveLibraryView(
 						)
 				) {
 					val scaffoldState = rememberBottomSheetScaffoldState()
+					val scope = rememberCoroutineScope()
 					Box(
 						modifier = Modifier
 							.offset { IntOffset(x = browserDrawerOffset.roundToPx(), y = 0) }
@@ -386,7 +393,6 @@ private fun ResponsiveLibraryView(
 									this@fullScreen.isNarrow && isSelectedLibrary
 								}
 							}
-							val scope = rememberCoroutineScope()
 							DisposableEffect(isBottomSheetVisible, isBottomSheetCollapsed) {
 								if (!isBottomSheetVisible || isBottomSheetCollapsed) {
 									onDispose { }
@@ -544,6 +550,24 @@ private fun ResponsiveLibraryView(
 												playlistDrawerState = responsiveState,
 												closedState = ResponsiveState.NowPlaying,
 												openState = ResponsiveState.Playlist,
+												nowPlayingVisibilityControl =  {
+													Image(
+														painter = painterResource(
+															if (responsiveState.currentValue < ResponsiveState.NowPlaying) R.drawable.baseline_fullscreen_36
+															else R.drawable.baseline_fullscreen_exit_36),
+														alpha = playlistControlAlpha,
+														contentDescription = stringResource(R.string.btn_hide_files),
+														modifier = Modifier
+															.navigable(onClick = {
+																scope.launch {
+																	responsiveState.animateTo(
+																		if (responsiveState.currentValue < ResponsiveState.NowPlaying) ResponsiveState.NowPlaying
+																		else ResponsiveState.Split
+																	)
+																}
+															})
+													)
+												},
 											)
 										}
 									}
