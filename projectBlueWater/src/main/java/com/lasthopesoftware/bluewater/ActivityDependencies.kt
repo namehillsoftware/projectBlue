@@ -94,7 +94,7 @@ class ActivityDependencies(
 	override val applicationViewModel by activity.buildViewModelLazily {
 		ApplicationViewModel(
 			applicationSettings,
-			activitySuppliedDependencies.applicationStateAccess,
+			activitySuppliedDependencies.activityStateAccess,
 			messageBus,
 		)
 	}

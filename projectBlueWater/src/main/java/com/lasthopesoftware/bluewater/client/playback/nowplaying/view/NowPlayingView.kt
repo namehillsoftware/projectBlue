@@ -888,7 +888,7 @@ fun <T> BoxWithConstraintsScope.NowPlayingWideView(
 				val drawerChevronRotation by remember {
 					derivedStateOf { -90 + (180 * playlistOpenProgress).coerceIn(0f, 180f) }
 				}
-				val scope = rememberCoroutineScope()
+				val scope = scope
 				Image(
 					painter = painterResource(R.drawable.chevron_up_white_36dp),
 					contentDescription = stringResource(R.string.btn_hide_files),

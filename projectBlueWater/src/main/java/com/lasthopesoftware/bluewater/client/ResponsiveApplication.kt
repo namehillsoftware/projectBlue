@@ -517,7 +517,7 @@ private fun ResponsiveLibraryView(
 											.weight(1f)
 											.background(SharedColors.overlayDark),
 									) nowPlayingPane@{
-										if (isNarrow) {
+										if (isNarrow && !isTv) {
 											NowPlayingNarrowView(
 												nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
 												nowPlayingScreenViewModel = nowPlayingScreenViewModel,
@@ -705,6 +705,7 @@ private fun ResponsiveLibraryView(
 @Composable
 fun ResponsiveApplication(
 	entryDependencies: EntryDependencies,
+	activitySuppliedDependencies: ActivitySuppliedDependencies,
 	permissionsDependencies: PermissionsDependencies,
 	initialDestination: Destination?
 ) {
@@ -776,6 +777,7 @@ fun ResponsiveApplication(
 	val reusedViewModelDependencies = remember(routedNavigationDependencies, libraryConnectionDependencies) {
 		ReusedViewModelRegistry(
 			routedNavigationDependencies,
+			activitySuppliedDependencies,
 			libraryConnectionDependencies,
 			LibraryFilePropertiesDependentsRegistry(routedNavigationDependencies, libraryConnectionDependencies),
 			viewModelStoreOwner

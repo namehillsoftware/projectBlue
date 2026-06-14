@@ -11,13 +11,13 @@ import com.namehillsoftware.handoff.promises.Promise
 
 data class ApplicationState(val isTv: Boolean)
 
-interface AccessApplicationState {
+interface AccessActivityState {
 	fun promiseApplicationState(): Promise<ApplicationState>
 }
 
 class ApplicationViewModel(
 	private val applicationSettingsRepository: HoldApplicationSettings,
-	private val applicationStateAccess: AccessApplicationState,
+	private val applicationStateAccess: AccessActivityState,
 	messageBus: RegisterForApplicationMessages,
 ) : ViewModel(), ManageApplicationPropertyState {
 

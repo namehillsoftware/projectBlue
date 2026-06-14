@@ -317,6 +317,7 @@ fun LibraryDestination.Navigate(
 @Composable
 fun HandheldApplication(
 	entryDependencies: EntryDependencies,
+	activitySuppliedDependencies: ActivitySuppliedDependencies,
 	permissionsDependencies: PermissionsDependencies,
 	initialDestination: Destination?
 ) {
@@ -366,6 +367,7 @@ fun HandheldApplication(
 	val reusedViewModelDependencies = remember(routedNavigationDependencies, libraryConnectionDependencies) {
 		ReusedViewModelRegistry(
 			routedNavigationDependencies,
+			activitySuppliedDependencies,
 			libraryConnectionDependencies,
 			LibraryFilePropertiesDependentsRegistry(routedNavigationDependencies, libraryConnectionDependencies),
 			viewModelStoreOwner

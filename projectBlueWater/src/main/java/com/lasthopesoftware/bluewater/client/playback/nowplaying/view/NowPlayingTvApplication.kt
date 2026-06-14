@@ -60,6 +60,7 @@ import com.lasthopesoftware.bluewater.android.ui.navigable
 import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.SharedColors
+import com.lasthopesoftware.bluewater.client.ActivitySuppliedDependencies
 import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ReusedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
@@ -562,6 +563,7 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedViewModel
 @Composable
 fun NowPlayingTvApplication(
 	entryDependencies: EntryDependencies,
+	activitySuppliedDependencies: ActivitySuppliedDependencies,
 	permissionsDependencies: PermissionsDependencies,
 	initialDestination: Destination?
 ) {
@@ -619,6 +621,7 @@ fun NowPlayingTvApplication(
 	val reusedViewModelDependencies = remember {
 		ReusedViewModelRegistry(
 			routedNavigationDependencies,
+			activitySuppliedDependencies,
 			libraryConnectionDependencies,
 			LibraryFilePropertiesDependentsRegistry(routedNavigationDependencies, libraryConnectionDependencies),
 			viewModelStoreOwner
