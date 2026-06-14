@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing
 
 import androidx.lifecycle.ViewModelStoreOwner
+import com.lasthopesoftware.bluewater.client.ActivitySuppliedDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependents
@@ -19,6 +20,7 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLa
 
 class ReusedViewModelRegistry(
     entryDependencies: EntryDependencies,
+	activitySuppliedDependencies: ActivitySuppliedDependencies,
     libraryConnectionDependents: LibraryConnectionDependents,
 	libraryFilePropertiesDependents: LibraryFilePropertiesDependents,
     viewModelStoreOwner: ViewModelStoreOwner
@@ -58,6 +60,7 @@ class ReusedViewModelRegistry(
 			nowPlayingViewModelMessageBus,
 			nowPlayingDisplaySettings,
 			playbackServiceController,
+			activitySuppliedDependencies.activityStateAccess,
 		)
 	}
 

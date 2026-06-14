@@ -13,7 +13,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
-import com.lasthopesoftware.bluewater.AccessApplicationState
+import com.lasthopesoftware.bluewater.AccessActivityState
 import com.lasthopesoftware.bluewater.ActivityDependencies
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.ApplicationState
@@ -51,7 +51,7 @@ class EntryActivity :
 	ManagePermissions,
 	PermissionsDependencies,
 	ActivitySuppliedDependencies,
-	AccessApplicationState
+	AccessActivityState
 {
 	private val browserViewDependencies by lazy {
 		ActivityDependencies(
@@ -62,7 +62,7 @@ class EntryActivity :
 	}
 
 	override val registeredActivityResultsLauncher = registerResultActivityLauncher()
-	override val applicationStateAccess = this
+	override val activityStateAccess = this
 
 	override val applicationPermissions by lazy {
 		val osPermissionChecker = OsPermissionsChecker(applicationContext)
@@ -113,6 +113,7 @@ class EntryActivity :
 			ProjectBlueComposableApplication(darkTheme = isDarkTheme) {
 				ResponsiveApplication(
 					entryDependencies = browserViewDependencies,
+					activitySuppliedDependencies = this,
 					permissionsDependencies = this,
 					initialDestination = getDestination(intent),
 				)

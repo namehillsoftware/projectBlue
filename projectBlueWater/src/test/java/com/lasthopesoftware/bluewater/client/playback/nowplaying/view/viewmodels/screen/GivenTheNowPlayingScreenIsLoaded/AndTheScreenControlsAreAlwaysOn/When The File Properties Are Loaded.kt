@@ -1,12 +1,15 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.screen.GivenTheNowPlayingScreenIsLoaded.AndTheScreenControlsAreAlwaysOn
 
+import com.lasthopesoftware.bluewater.ApplicationState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.StoreNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.PromiseDelay
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.lasthopesoftware.resources.RecordingTypedMessageBus
+import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
@@ -24,6 +27,9 @@ class `When The File Properties Are Loaded` {
 				override val screenControlVisibilityTime: Duration = Duration.millis(500)
 			},
 			mockk(),
+			mockk {
+				every { promiseApplicationState() } returns ApplicationState(isTv = false).toPromise()
+			}
 		)
 
 		Pair(nowPlayingMessageBus, vm)

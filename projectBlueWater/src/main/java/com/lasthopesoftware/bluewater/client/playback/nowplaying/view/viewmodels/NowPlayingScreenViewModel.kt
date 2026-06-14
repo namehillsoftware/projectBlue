@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 
 import androidx.lifecycle.ViewModel
+import com.lasthopesoftware.bluewater.AccessActivityState
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingMessage
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
@@ -14,6 +15,7 @@ import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.observables.LiftedInteractionState
 import com.lasthopesoftware.observables.MutableInteractionState
 import com.lasthopesoftware.promises.PromiseDelay
+import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.rxjava3.core.Observable
 
@@ -22,6 +24,7 @@ class NowPlayingScreenViewModel(
 	nowPlayingMessages: RegisterForTypedMessages<NowPlayingMessage>,
 	private val nowPlayingDisplaySettings: StoreNowPlayingDisplaySettings,
 	private val playbackService: ControlPlaybackService,
+	private val applicationState: AccessActivityState,
 ) : ViewModel(), ControlDrawerState, ControlScreenOnState
 {
 	private val onPlaybackStartedSubscription = applicationMessages.registerReceiver { _: PlaybackMessage.PlaybackStarted ->
@@ -71,7 +74,15 @@ class NowPlayingScreenViewModel(
 
 	fun initializeViewModel(libraryId: LibraryId): Promise<Unit> {
 		activeLibraryId = libraryId
-		return playbackService.promiseIsMarkedForPlay(libraryId).then(::togglePlaying)
+
+		return Promise.whenAll(
+			applicationState
+				.promiseApplicationState()
+				.then { (isTv) ->
+					isScreenControlsAlwaysVisibleState.value = isTv
+				},
+			playbackService.promiseIsMarkedForPlay(libraryId).then(::togglePlaying)
+		).unitResponse()
 	}
 
 	@Synchronized
