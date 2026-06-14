@@ -310,7 +310,7 @@ fun NowPlayingControls(
 	playbackServiceController: ControlPlaybackService,
 	nowPlayingScreenViewModel: NowPlayingScreenViewModel,
 	playlistViewModel: NowPlayingPlaylistViewModel,
-	applicationNavigation: NavigateApplication,
+	nowPlayingVisibilityControl: @Composable () -> Unit,
 	playlistControl: @Composable () -> Unit,
 	modifier: Modifier = Modifier,
 ) {
@@ -362,7 +362,7 @@ fun NowPlayingControls(
 						.fillMaxWidth(),
 					horizontalArrangement = Arrangement.SpaceBetween
 				) {
-					BackButton(onBack = applicationNavigation::navigateUp)
+					nowPlayingVisibilityControl()
 
 					NowPlayingRating(
 						nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
@@ -801,6 +801,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 		playlistDrawerState = playlistDrawerState,
 		openState = SlideOutState.Open,
 		closedState = SlideOutState.Closed,
+		nowPlayingVisibilityControl = { BackButton(onBack = applicationNavigation::navigateUp) }
 	)
 }
 
@@ -819,6 +820,7 @@ fun <T> BoxWithConstraintsScope.NowPlayingWideView(
 	playlistDrawerState: AnchoredDraggableState<T>,
 	openState: T,
 	closedState: T,
+	nowPlayingVisibilityControl: @Composable (() -> Unit)
 ) {
 	val playlistOpenProgress by remember(playlistDrawerState) {
 		derivedStateOf { playlistDrawerState.progress(closedState, openState) }
@@ -881,7 +883,7 @@ fun <T> BoxWithConstraintsScope.NowPlayingWideView(
 			nowPlayingScreenViewModel = nowPlayingScreenViewModel,
 			playbackServiceController = playbackServiceController,
 			playlistViewModel = playlistViewModel,
-			applicationNavigation = applicationNavigation,
+			nowPlayingVisibilityControl = nowPlayingVisibilityControl,
 			playlistControl = {
 				val drawerChevronRotation by remember {
 					derivedStateOf { -90 + (180 * playlistOpenProgress).coerceIn(0f, 180f) }
