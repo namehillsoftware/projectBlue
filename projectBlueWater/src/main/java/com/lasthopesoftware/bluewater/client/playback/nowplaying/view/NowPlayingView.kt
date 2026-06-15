@@ -7,6 +7,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.Orientation
@@ -67,8 +68,10 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -264,7 +267,9 @@ fun NowPlayingPlaybackControls(
 	modifier: Modifier = Modifier,
 ) {
 	Row(
-		modifier = modifier.height(controlRowHeight),
+		modifier = modifier
+			.height(controlRowHeight)
+			.focusGroup(),
 		verticalAlignment = Alignment.CenterVertically,
 	) {
 		val activeLibraryId by nowPlayingFilePropertiesViewModel.activeLibraryId.subscribeAsState()
@@ -315,12 +320,12 @@ fun NowPlayingControls(
 	modifier: Modifier = Modifier,
 ) {
 	Box(
-		modifier = modifier
+		modifier = if (LocalInputModeManager.current.inputMode != InputMode.Keyboard) modifier
 			.clickable(
 				interactionSource = remember { MutableInteractionSource() },
 				indication = null,
 				onClick = { nowPlayingScreenViewModel.showControls() }
-			)
+			) else modifier
 	) {
 		val isScreenControlsVisible by nowPlayingScreenViewModel.isScreenControlsVisible.subscribeAsState()
 		Row(
@@ -341,7 +346,7 @@ fun NowPlayingControls(
 					contentDescription = stringResource(if (isScreenOnEnabled) R.string.screen_is_on else R.string.screen_is_off),
 					modifier = Modifier
 						.padding(Dimensions.viewPaddingUnit)
-						.clickable(onClick = nowPlayingScreenViewModel::toggleScreenOn),
+						.navigable(onClick = nowPlayingScreenViewModel::toggleScreenOn),
 				)
 			}
 		}
@@ -606,7 +611,7 @@ fun <T> BoxWithConstraintsScope.NowPlayingNarrowView(
 						contentDescription = stringResource(if (isScreenOnEnabled) R.string.screen_is_on else R.string.screen_is_off),
 						modifier = Modifier
 							.padding(Dimensions.viewPaddingUnit)
-							.clickable(onClick = nowPlayingScreenViewModel::toggleScreenOn),
+							.navigable(onClick = nowPlayingScreenViewModel::toggleScreenOn),
 					)
 				}
 			}
@@ -663,7 +668,7 @@ fun <T> BoxWithConstraintsScope.NowPlayingNarrowView(
 						painter = painterResource(R.drawable.chevron_up_white_36dp),
 						contentDescription = stringResource(R.string.btn_hide_files),
 						modifier = Modifier
-							.clickable(
+							.navigable(
 								onClick = {
 									scope.launch {
 										if (playlistDrawerState.currentValue != SlideOutState.Closed) hidePlaylist()
@@ -857,7 +862,9 @@ fun <T> BoxWithConstraintsScope.NowPlayingWideView(
 	}
 
 	Box(
-		modifier = Modifier.fillMaxSize(),
+		modifier = Modifier
+			.fillMaxSize()
+			.focusGroup(),
 	) {
 		val browserDrawerOffset by LocalDensity.current.remember(playlistDrawerState) {
 			derivedStateOf {
@@ -893,7 +900,7 @@ fun <T> BoxWithConstraintsScope.NowPlayingWideView(
 					painter = painterResource(R.drawable.chevron_up_white_36dp),
 					contentDescription = stringResource(R.string.btn_hide_files),
 					modifier = Modifier
-						.clickable(
+						.navigable(
 							onClick = {
 								scope.launch {
 									if (playlistDrawerState.currentValue == openState) {
@@ -1010,7 +1017,7 @@ fun SavePlaylistDialog(
 							painter = painterResource(id = R.drawable.cancel_36dp),
 							contentDescription = stringResource(id = R.string.btn_cancel),
 							modifier = Modifier
-								.clickable { playlistViewModel.disableSavingPlaylist() }
+								.navigable(onClick = { playlistViewModel.disableSavingPlaylist() })
 								.align(Alignment.CenterVertically),
 						)
 					}
@@ -1039,11 +1046,11 @@ fun SavePlaylistDialog(
 										modifier = Modifier
 											.height(Dimensions.standardRowHeight)
 											.fillMaxWidth()
-											.clickable {
+											.navigable(onClick = {
 												playlistViewModel.updateSelectedPlaylistPath(
 													playlistPath
 												)
-											},
+											}),
 										verticalAlignment = Alignment.CenterVertically,
 									) {
 										Text(text = playlistPath)

@@ -515,6 +515,7 @@ private fun ResponsiveLibraryView(
 										modifier = Modifier
 											.width(nowPlayingWidth)
 											.weight(1f)
+											.focusGroup()
 											.background(SharedColors.overlayDark),
 									) nowPlayingPane@{
 										if (isNarrow && !isTv) {
