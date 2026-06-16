@@ -32,6 +32,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -44,6 +45,8 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -372,7 +375,8 @@ private fun ItemListMenu(
 	itemDataLoader: LoadItemData,
 	applicationNavigation: NavigateApplication,
 	playbackServiceController: ControlPlaybackService,
-	modifier: Modifier = Modifier
+	modifier: Modifier = Modifier,
+	menuFocus: FocusRequester? = null,
 ) {
 	ListMenuRow(
 		modifier = modifier,
@@ -386,6 +390,7 @@ private fun ItemListMenu(
 			itemDataLoader = itemDataLoader,
 			enabled = isNotLoading,
 			modifier = modifier,
+			focusRequester = menuFocus
 		)
 
 		LabelledViewNowPlayingButton(
@@ -457,7 +462,8 @@ fun ItemListView(
 	onScrollProgress: (Float) -> Unit,
 	modifier: Modifier = Modifier,
 	headerHeight: Dp = 0.dp,
-	focusRequester: FocusRequester? = null
+	focusRequester: FocusRequester? = null,
+	menuFocus: FocusRequester? = null,
 ) {
 	BoxWithConstraints(modifier = modifier) {
 		val isLoading by itemDataLoader.isLoading.subscribeAsState()
@@ -508,12 +514,25 @@ fun ItemListView(
 					}
 			}
 
+			var menuFocusBackAction by remember { mutableStateOf<AutoCloseable?>(null) }
 			var modifier = Modifier
 				.focusGroup()
 				.focusProperties {
+					onEnter = {
+						menuFocusBackAction?.close()
+						menuFocusBackAction = menuFocus?.run {
+							undoBackStack.addAction {
+								onScrollProgress(0f)
+								requestFocus().toPromise()
+							}
+						}
+					}
 					onExit = {
 						if (requestedFocusDirection == FocusDirection.Up)
 							onScrollProgress(0f)
+
+						menuFocusBackAction?.close()
+						menuFocusBackAction = null
 					}
 				}
 				.scrollbar(
@@ -710,7 +729,7 @@ fun ScreenDimensionsScope.ItemListView(
 		val itemValue by itemListViewModel.itemValue.subscribeAsState()
 		if (maxWidth < Dimensions.twoColumnThreshold) {
 
-			val listFocus = remember { FocusRequester() }
+			val (listFocus, menuFocus) = remember { FocusRequester.createRefs() }
 			VerticalHeaderScaffold(
 				header = {
 					val titleHeightValue by titleHeightScaler.valueState
@@ -841,9 +860,11 @@ fun ScreenDimensionsScope.ItemListView(
 								.graphicsLayer {
 									translationY = (menuHeightValue - topMenuHeightPx) * 0.5f
 								}
+								.focusGroup()
 								.focusProperties {
 									down = listFocus
-								}
+								},
+							menuFocus = menuFocus,
 						)
 					}
 				},
@@ -865,7 +886,8 @@ fun ScreenDimensionsScope.ItemListView(
 						{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
 						anchoredScrollConnectionDispatcher::progressTo,
 						headerHeight = overhangHeight,
-						focusRequester = listFocus
+						focusRequester = listFocus,
+						menuFocus = menuFocus,
 					)
 				},
 				modifier = Modifier
