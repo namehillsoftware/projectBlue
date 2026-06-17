@@ -448,7 +448,11 @@ private fun ResponsiveLibraryView(
 									}
 								}
 							) { paddingValues ->
-								BoxWithConstraints(modifier = Modifier.padding(paddingValues)) nestedBox@{
+								BoxWithConstraints(
+									modifier = Modifier
+										.padding(paddingValues)
+										.focusGroup(),
+								) nestedBox@{
 									val screenScope = ScreenDimensionsScope(
 										screenHeight = this@fullScreen.maxHeight,
 										screenWidth = this@fullScreen.maxWidth,

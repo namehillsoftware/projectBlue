@@ -47,6 +47,7 @@ fun LabelledRefreshButton(
 	modifier: Modifier = Modifier,
 	enabled: Boolean = true,
 	labelColor: Color = labelColor(enabled),
+	isDefault: Boolean = false,
 	focusRequester: FocusRequester? = null,
 ) {
 	val refreshButtonLabel = stringResource(id = R.string.refresh)
@@ -59,6 +60,7 @@ fun LabelledRefreshButton(
 		labelColor = labelColor,
 		labelMaxLines = 1,
 		enabled = enabled,
+		isDefault = isDefault,
 		focusRequester = focusRequester,
 	)
 }

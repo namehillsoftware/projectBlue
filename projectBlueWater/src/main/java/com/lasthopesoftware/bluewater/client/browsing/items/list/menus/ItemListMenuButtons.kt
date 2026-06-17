@@ -86,6 +86,7 @@ fun LabelledRefreshButton(
 		},
 		enabled = enabled,
 		modifier = modifier,
+		isDefault = focusRequester != null,
 		focusRequester = focusRequester,
 	)
 }

@@ -130,6 +130,7 @@ import com.lasthopesoftware.observables.mapNotNull
 import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.GetStringResources
+import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -462,7 +463,7 @@ fun ItemListView(
 	onScrollProgress: (Float) -> Unit,
 	modifier: Modifier = Modifier,
 	headerHeight: Dp = 0.dp,
-	focusRequester: FocusRequester? = null,
+	listFocus: FocusRequester? = null,
 	menuFocus: FocusRequester? = null,
 ) {
 	BoxWithConstraints(modifier = modifier) {
@@ -515,16 +516,32 @@ fun ItemListView(
 			}
 
 			var menuFocusBackAction by remember { mutableStateOf<AutoCloseable?>(null) }
+
+			// An externally mutable back action since `focusProperties` below is not invoked on each update to `menuFocus`
+			val mutableFocusRequesterBackAction = remember(onScrollProgress) {
+				object : () -> Promise<Boolean> {
+					var focusRequester: FocusRequester? = menuFocus
+
+					override fun invoke(): Promise<Boolean> {
+						onScrollProgress(0f)
+						return (focusRequester?.requestFocus() ?: false).toPromise()
+					}
+				}
+			}
+			mutableFocusRequesterBackAction.focusRequester = menuFocus
+
+			DisposableEffect(Unit) {
+				onDispose {
+					menuFocusBackAction?.close()
+				}
+			}
 			var modifier = Modifier
 				.focusGroup()
 				.focusProperties {
 					onEnter = {
 						menuFocusBackAction?.close()
 						menuFocusBackAction = menuFocus?.run {
-							undoBackStack.addAction {
-								onScrollProgress(0f)
-								requestFocus().toPromise()
-							}
+							undoBackStack.addAction(mutableFocusRequesterBackAction)
 						}
 					}
 					onExit = {
@@ -543,8 +560,8 @@ fun ItemListView(
 					visibleAlpha = .4f,
 					knobCornerRadius = 1.dp,
 				)
-			if (focusRequester != null)
-				modifier = modifier.focusRequester(focusRequester)
+			if (listFocus != null)
+				modifier = modifier.focusRequester(listFocus)
 			LazyColumn(
 				state = lazyListState,
 				modifier = modifier,
@@ -886,7 +903,7 @@ fun ScreenDimensionsScope.ItemListView(
 						{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
 						anchoredScrollConnectionDispatcher::progressTo,
 						headerHeight = overhangHeight,
-						focusRequester = listFocus,
+						listFocus = listFocus,
 						menuFocus = menuFocus,
 					)
 				},
