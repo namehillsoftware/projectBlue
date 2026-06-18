@@ -45,8 +45,6 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
-import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -130,7 +128,6 @@ import com.lasthopesoftware.observables.mapNotNull
 import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.GetStringResources
-import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -444,8 +441,13 @@ private fun ItemListMenu(
 	}
 }
 
+private class NavigationFocusRefs {
+	val listFocus: FocusRequester = FocusRequester()
+	val menuFocus: FocusRequester = FocusRequester()
+}
+
 @Composable
-fun ItemListView(
+private fun ItemListView(
 	itemListViewModel: ItemListViewModel,
 	fileListViewModel: FileListViewModel,
 	itemDataLoader: LoadItemData,
@@ -463,8 +465,7 @@ fun ItemListView(
 	onScrollProgress: (Float) -> Unit,
 	modifier: Modifier = Modifier,
 	headerHeight: Dp = 0.dp,
-	listFocus: FocusRequester? = null,
-	menuFocus: FocusRequester? = null,
+	navigationFocusRefs: NavigationFocusRefs? = null,
 ) {
 	BoxWithConstraints(modifier = modifier) {
 		val isLoading by itemDataLoader.isLoading.subscribeAsState()
@@ -516,20 +517,6 @@ fun ItemListView(
 			}
 
 			var menuFocusBackAction by remember { mutableStateOf<AutoCloseable?>(null) }
-
-			// An externally mutable back action since `focusProperties` below is not invoked on each update to `menuFocus`
-			val mutableFocusRequesterBackAction = remember(onScrollProgress) {
-				object : () -> Promise<Boolean> {
-					var focusRequester: FocusRequester? = menuFocus
-
-					override fun invoke(): Promise<Boolean> {
-						onScrollProgress(0f)
-						return (focusRequester?.requestFocus() ?: false).toPromise()
-					}
-				}
-			}
-			mutableFocusRequesterBackAction.focusRequester = menuFocus
-
 			DisposableEffect(Unit) {
 				onDispose {
 					menuFocusBackAction?.close()
@@ -540,8 +527,11 @@ fun ItemListView(
 				.focusProperties {
 					onEnter = {
 						menuFocusBackAction?.close()
-						menuFocusBackAction = menuFocus?.run {
-							undoBackStack.addAction(mutableFocusRequesterBackAction)
+						menuFocusBackAction = navigationFocusRefs?.run {
+							undoBackStack.addAction {
+								onScrollProgress(0f)
+								menuFocus.requestFocus().toPromise()
+							}
 						}
 					}
 					onExit = {
@@ -560,6 +550,7 @@ fun ItemListView(
 					visibleAlpha = .4f,
 					knobCornerRadius = 1.dp,
 				)
+			val listFocus = navigationFocusRefs?.listFocus
 			if (listFocus != null)
 				modifier = modifier.focusRequester(listFocus)
 			LazyColumn(
@@ -746,7 +737,7 @@ fun ScreenDimensionsScope.ItemListView(
 		val itemValue by itemListViewModel.itemValue.subscribeAsState()
 		if (maxWidth < Dimensions.twoColumnThreshold) {
 
-			val (listFocus, menuFocus) = remember { FocusRequester.createRefs() }
+			val navigationFocusRefs = remember { NavigationFocusRefs() }
 			VerticalHeaderScaffold(
 				header = {
 					val titleHeightValue by titleHeightScaler.valueState
@@ -879,9 +870,9 @@ fun ScreenDimensionsScope.ItemListView(
 								}
 								.focusGroup()
 								.focusProperties {
-									down = listFocus
+									down = navigationFocusRefs.listFocus
 								},
-							menuFocus = menuFocus,
+							menuFocus = navigationFocusRefs.menuFocus,
 						)
 					}
 				},
@@ -903,8 +894,7 @@ fun ScreenDimensionsScope.ItemListView(
 						{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
 						anchoredScrollConnectionDispatcher::progressTo,
 						headerHeight = overhangHeight,
-						listFocus = listFocus,
-						menuFocus = menuFocus,
+						navigationFocusRefs = navigationFocusRefs,
 					)
 				},
 				modifier = Modifier
