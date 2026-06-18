@@ -34,7 +34,8 @@ fun PlayPauseButton(
 				if (isPlaying) playbackServiceController.pause()
 				else nowPlayingFilePropertiesViewModel.activeLibraryId.value?.also(playbackServiceController::play)
 				nowPlayingFilePropertiesViewModel.togglePlaying(!isPlaying)
-			}),
+			},
+			isDefault = true),
 		alpha = alpha,
 	)
 }
