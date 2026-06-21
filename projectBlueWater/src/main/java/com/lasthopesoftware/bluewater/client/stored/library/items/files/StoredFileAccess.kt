@@ -36,7 +36,7 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginNonExclusiveTransaction().use {
 					repositoryAccessHelper
-						.mapSql("SELECT * FROM $tableName WHERE $libraryIdColumnName = @$libraryIdColumnName")
+						.mapSql("$selectFromStoredFiles WHERE $libraryIdColumnName = @$libraryIdColumnName")
 						.addParameter(libraryIdColumnName, libraryId.id)
 						.fetch()
 				}
@@ -93,7 +93,7 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 
 	private fun RepositoryAccessHelper.getStoredFile(library: LibraryId, serviceFile: ServiceFile): StoredFile? =
 		beginNonExclusiveTransaction().use {
-			mapSql(" SELECT *  FROM $tableName WHERE $serviceIdColumnName = @$serviceIdColumnName AND $libraryIdColumnName = @$libraryIdColumnName")
+			mapSql("$selectFromStoredFiles WHERE $serviceIdColumnName = @$serviceIdColumnName AND $libraryIdColumnName = @$libraryIdColumnName")
 				.addParameter(serviceIdColumnName, serviceFile.key)
 				.addParameter(libraryIdColumnName, library.id)
 				.fetchFirstOrNull()
@@ -102,7 +102,7 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 	private fun getStoredFile(helper: RepositoryAccessHelper, storedFileId: Int): StoredFile? =
 		helper.beginNonExclusiveTransaction().use {
 			helper
-				.mapSql("SELECT * FROM $tableName WHERE id = @id")
+				.mapSql("$selectFromStoredFiles WHERE id = @id")
 				.addParameter("id", storedFileId)
 				.fetchFirstOrNull()
 		}
