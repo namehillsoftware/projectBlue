@@ -47,7 +47,8 @@ class StoredFileUpdater(
 				.keepPromise(storedFile)
 
 		val promisedLibrary = libraryProvider.promiseLibrary(libraryId)
-		return storedFileAccess.promiseStoredFile(libraryId, serviceFile)
+		return storedFileAccess
+			.promiseStoredFile(libraryId, serviceFile)
 			.eventually { storedFile ->
 				storedFile
 					?.toPromise()
