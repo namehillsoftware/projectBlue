@@ -36,6 +36,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.download
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.CompatibleMediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.ExternalContentRepository
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.RetryingStoredFileUpdate
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUrisLookup
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestedBroadcaster
@@ -169,22 +170,24 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			contentResolver,
 		)
 
-		val storedFileUpdater = StoredFileUpdater(
-            storedFileAccess,
-			mediaFileUriProvider,
-			libraryProvider,
-			StoredFileUrisLookup(
-				fileProperties,
-				applicationDependencies.librarySettingsProvider,
-				SyncDirectoryLookup(
-					applicationDependencies.librarySettingsProvider,
-                    PrivateDirectoryLookup(context),
-					FreeSpaceLookup
-				),
+		val storedFileUpdater = RetryingStoredFileUpdate(
+				StoredFileUpdater(
+				storedFileAccess,
 				mediaFileUriProvider,
+				libraryProvider,
+				StoredFileUrisLookup(
+					fileProperties,
+					applicationDependencies.librarySettingsProvider,
+					SyncDirectoryLookup(
+						applicationDependencies.librarySettingsProvider,
+						PrivateDirectoryLookup(context),
+						FreeSpaceLookup
+					),
+					mediaFileUriProvider,
+					externalContentRepository
+				),
 				externalContentRepository
-			),
-			externalContentRepository
+			)
 		)
 
 		val syncHandler = LibrarySyncsHandler(
