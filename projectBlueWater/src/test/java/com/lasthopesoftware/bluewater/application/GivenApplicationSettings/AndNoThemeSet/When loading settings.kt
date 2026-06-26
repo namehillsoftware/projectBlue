@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.application.GivenApplicationSettings.AndNoThemeSet
 
+import com.lasthopesoftware.bluewater.ApplicationState
 import com.lasthopesoftware.bluewater.ApplicationViewModel
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -17,6 +18,9 @@ class `When loading settings` {
 			mockk {
 				every { promiseApplicationSettings() } returns ApplicationSettings().toPromise()
 			},
+			mockk {
+				every { promiseApplicationState() } returns ApplicationState(isTv = true).toPromise()
+			},
 			RecordingApplicationMessageBus(),
 		)
 	}
@@ -29,5 +33,10 @@ class `When loading settings` {
 	@Test
 	fun `then the theme is correct`() {
 		assertThat(mut.theme.value).isEqualTo(ApplicationSettings.Theme.SYSTEM)
+	}
+
+	@Test
+	fun `then isTv is correct`() {
+		assertThat(mut.isTv.value).isTrue
 	}
 }

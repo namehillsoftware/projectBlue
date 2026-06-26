@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.screen.GivenTheNowPlayingScreenIsLoaded
 
+import com.lasthopesoftware.bluewater.ApplicationState
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
@@ -39,6 +40,9 @@ class `When A File Track Changes` {
 			mockk {
 				every { promiseIsMarkedForPlay(libraryId) } returns false.toPromise()
 			},
+			mockk {
+				every { promiseApplicationState() } returns ApplicationState(isTv = false).toPromise()
+			}
 		)
 
 		Pair(applicationMessages, vm)

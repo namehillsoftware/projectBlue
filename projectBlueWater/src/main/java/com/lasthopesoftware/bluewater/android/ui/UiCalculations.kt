@@ -6,7 +6,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceIn
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.minimumMenuWidth
 
 fun linearInterpolation(initial: Dp, final: Dp, progress: Float): Dp =
@@ -55,6 +54,17 @@ inline fun <T : AutoCloseable> rememberAutoCloseable(key1: Any?, key2: Any?, cro
 @Composable
 inline fun <T : AutoCloseable> rememberAutoCloseable(key1: Any?, key2: Any?, key3: Any?, crossinline calculation: () -> T): T {
 	val result = androidx.compose.runtime.remember(key1, key2, key3, calculation)
+
+	DisposableEffect(result) {
+		onDispose { result.close() }
+	}
+
+	return result
+}
+
+@Composable
+inline fun <T : AutoCloseable> rememberAutoCloseable(vararg keys: Any?, crossinline calculation: () -> T): T {
+	val result = androidx.compose.runtime.remember(keys = keys, calculation)
 
 	DisposableEffect(result) {
 		onDispose { result.close() }

@@ -32,6 +32,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -64,6 +65,7 @@ import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.android.ui.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.android.ui.calculateSummaryColumnWidth
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredChips
 import com.lasthopesoftware.bluewater.android.ui.components.AnchoredProgressScrollConnectionDispatcher
@@ -115,7 +117,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
@@ -371,7 +372,8 @@ fun ItemListMenu(
 	itemDataLoader: LoadItemData,
 	applicationNavigation: NavigateApplication,
 	playbackServiceController: ControlPlaybackService,
-	modifier: Modifier = Modifier
+	modifier: Modifier = Modifier,
+	menuFocus: FocusRequester? = null,
 ) {
 	ListMenuRow(
 		modifier = modifier,
@@ -385,6 +387,7 @@ fun ItemListMenu(
 			itemDataLoader = itemDataLoader,
 			enabled = isNotLoading,
 			modifier = modifier,
+			focusRequester = menuFocus
 		)
 
 		val files by fileListViewModel.files.subscribeAsState()
@@ -432,8 +435,13 @@ fun ItemListMenu(
 	}
 }
 
+private class NavigationFocusRefs {
+	val listFocus: FocusRequester = FocusRequester()
+	val menuFocus: FocusRequester = FocusRequester()
+}
+
 @Composable
-fun ItemListView(
+private fun ItemListView(
 	itemListViewModel: ItemListViewModel,
 	fileListViewModel: FileListViewModel,
 	itemDataLoader: LoadItemData,
@@ -451,7 +459,7 @@ fun ItemListView(
 	onScrollProgress: (Float) -> Unit,
 	modifier: Modifier = Modifier,
 	headerHeight: Dp = 0.dp,
-	focusRequester: FocusRequester? = null
+	navigationFocusRefs: NavigationFocusRefs? = null,
 ) {
 	BoxWithConstraints(modifier = modifier) {
 		val isLoading by itemDataLoader.isLoading.subscribeAsState()
@@ -502,12 +510,30 @@ fun ItemListView(
 					}
 			}
 
+			var menuFocusBackAction by remember { mutableStateOf<AutoCloseable?>(null) }
+			DisposableEffect(Unit) {
+				onDispose {
+					menuFocusBackAction?.close()
+				}
+			}
 			var modifier = Modifier
 				.focusGroup()
 				.focusProperties {
+					onEnter = {
+						menuFocusBackAction?.close()
+						menuFocusBackAction = navigationFocusRefs?.run {
+							undoBackStack.addAction {
+								onScrollProgress(0f)
+								menuFocus.requestFocus().toPromise()
+							}
+						}
+					}
 					onExit = {
 						if (requestedFocusDirection == FocusDirection.Up)
 							onScrollProgress(0f)
+
+						menuFocusBackAction?.close()
+						menuFocusBackAction = null
 					}
 				}
 				.scrollbar(
@@ -518,8 +544,9 @@ fun ItemListView(
 					visibleAlpha = .4f,
 					knobCornerRadius = 1.dp,
 				)
-			if (focusRequester != null)
-				modifier = modifier.focusRequester(focusRequester)
+			val listFocus = navigationFocusRefs?.listFocus
+			if (listFocus != null)
+				modifier = modifier.focusRequester(listFocus)
 			LazyColumn(
 				state = lazyListState,
 				modifier = modifier,
@@ -572,9 +599,9 @@ fun ItemListView(
 			}
 
 			if (LocalInputModeManager.current.inputMode == InputMode.Touch) {        // 5in in pixels, pixels/Inch
-				val maxScrollBarHeight = remember( maxHeight, headerHeight) {
+				val maxScrollBarHeight = remember(this@BoxWithConstraints.maxHeight, headerHeight) {
 					val dpi = 160f
-					(2.5f * dpi).dp.coerceAtMost(maxHeight - headerHeight - topMenuHeight)
+					(2.5f * dpi).dp.coerceAtMost(this@BoxWithConstraints.maxHeight - headerHeight - topMenuHeight)
 				}
 
 				val localHapticFeedback = LocalHapticFeedback.current
@@ -704,7 +731,7 @@ fun ScreenDimensionsScope.ItemListView(
 		val itemValue by itemListViewModel.itemValue.subscribeAsState()
 		if (maxWidth < Dimensions.twoColumnThreshold) {
 
-			val listFocus = remember { FocusRequester() }
+			val navigationFocusRefs = remember { NavigationFocusRefs() }
 			VerticalHeaderScaffold(
 				header = {
 					val titleHeightValue by titleHeightScaler.valueState
@@ -835,9 +862,11 @@ fun ScreenDimensionsScope.ItemListView(
 								.graphicsLayer {
 									translationY = (menuHeightValue - topMenuHeightPx) * 0.5f
 								}
+								.focusGroup()
 								.focusProperties {
-									down = listFocus
-								}
+									down = navigationFocusRefs.listFocus
+								},
+							menuFocus = navigationFocusRefs.menuFocus,
 						)
 					}
 				},
@@ -859,7 +888,7 @@ fun ScreenDimensionsScope.ItemListView(
 						{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
 						anchoredScrollConnectionDispatcher::progressTo,
 						headerHeight = overhangHeight,
-						focusRequester = listFocus
+						navigationFocusRefs = navigationFocusRefs,
 					)
 				},
 				modifier = Modifier

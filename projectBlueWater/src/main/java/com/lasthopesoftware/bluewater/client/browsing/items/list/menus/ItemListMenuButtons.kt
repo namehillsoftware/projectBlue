@@ -78,6 +78,7 @@ fun LabelledRefreshButton(
 	itemDataLoader: LoadItemData,
 	modifier: Modifier = Modifier,
 	enabled: Boolean = true,
+	focusRequester: FocusRequester? = null,
 ) {
 	LabelledRefreshButton(
 		onClick = {
@@ -85,5 +86,7 @@ fun LabelledRefreshButton(
 		},
 		enabled = enabled,
 		modifier = modifier,
+		isDefault = focusRequester != null,
+		focusRequester = focusRequester,
 	)
 }

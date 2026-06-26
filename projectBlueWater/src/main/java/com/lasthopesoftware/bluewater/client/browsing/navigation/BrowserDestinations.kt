@@ -62,7 +62,7 @@ class FileDetailsFromNowPlayingScreen(
 sealed interface BrowserLibraryDestination : LibraryDestination
 
 @Parcelize
-class LibraryScreen(override val libraryId: LibraryId) : BrowserLibraryDestination
+data class LibraryScreen(override val libraryId: LibraryId) : BrowserLibraryDestination
 
 @Parcelize
 data class ItemScreen(override val libraryId: LibraryId, val item: IItem) : BrowserLibraryDestination
