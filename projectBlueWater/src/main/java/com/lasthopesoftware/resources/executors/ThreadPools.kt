@@ -6,28 +6,33 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import java.util.concurrent.Executor
 import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.ForkJoinWorkerThread
+import java.util.concurrent.atomic.AtomicInteger
 
 object ThreadPools {
 
-	private fun namedThreadPoolFactory(poolName: String) = ForkJoinPool.ForkJoinWorkerThreadFactory { pool ->
-		ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool).apply {
-			name = "$poolName-pool-$poolIndex"
-		}
+	private class NamedThreadPoolFactory(private val poolName: String) : ForkJoinPool.ForkJoinWorkerThreadFactory {
+		private val threadIndex = AtomicInteger(0)
+
+		override fun newThread(pool: ForkJoinPool): ForkJoinWorkerThread =
+			ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool).apply {
+				name = "$poolName-pool-${threadIndex.getAndIncrement()}"
+			}
 	}
 
 	val io by lazy {
 		ForkJoinPool(
 			Runtime.getRuntime().availableProcessors(),
-			namedThreadPoolFactory("io"),
+			NamedThreadPoolFactory("io"),
 			UncaughtExceptionHandlerLogger,
 			true
 		)
 	}
 
-	val compute: Executor by lazy {
+	val compute by lazy {
 		ForkJoinPool(
 			Runtime.getRuntime().availableProcessors(),
-			namedThreadPoolFactory("compute"),
+			NamedThreadPoolFactory("compute"),
 			UncaughtExceptionHandlerLogger,
 			true
 		)
