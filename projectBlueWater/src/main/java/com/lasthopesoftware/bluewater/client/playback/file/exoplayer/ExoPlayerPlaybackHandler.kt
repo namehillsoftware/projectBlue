@@ -121,7 +121,8 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 			}
 	}
 
-	@OptIn(UnstableApi::class) override fun onPlayerError(error: PlaybackException) {
+	@OptIn(UnstableApi::class)
+	override fun onPlayerError(error: PlaybackException) {
 		removeListener()
 		when (val cause = error.cause) {
 			is EOFException -> {
