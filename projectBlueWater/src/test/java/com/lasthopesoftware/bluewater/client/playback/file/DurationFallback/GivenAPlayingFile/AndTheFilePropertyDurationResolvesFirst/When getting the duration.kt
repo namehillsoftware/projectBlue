@@ -1,8 +1,9 @@
-package com.lasthopesoftware.bluewater.client.playback.file.DurationFallback.GivenAPlayingFile.AndItsDurationIsMoreThanZero
+package com.lasthopesoftware.bluewater.client.playback.file.DurationFallback.GivenAPlayingFile.AndTheFilePropertyDurationResolvesFirst
 
 import com.lasthopesoftware.bluewater.client.playback.file.DurationFallbackPlayingFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -14,10 +15,10 @@ class `When getting the duration` {
 	private val mut by lazy {
 		DurationFallbackPlayingFile(
 			mockk {
-				every { duration } returns Duration.standardSeconds(372).toPromise()
+				every { duration } returns Promise<Duration> {}
 			},
 			mockk {
-				every { duration } returns Duration.standardSeconds(500).toPromise()
+				every { duration } returns Duration.standardSeconds(975).toPromise()
 			}
 		)
 	}
@@ -30,7 +31,7 @@ class `When getting the duration` {
 	}
 
 	@Test
-	fun `then the duration is read from the playing file`() {
-		assertThat(duration).isEqualTo(Duration.standardSeconds(372))
+	fun `then the duration is read from the fallback source`() {
+		assertThat(duration).isEqualTo(Duration.standardSeconds(975))
 	}
 }
