@@ -68,6 +68,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.MediaSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.RemoteDataSourceFactoryProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.QueueProviders
+import com.lasthopesoftware.bluewater.client.playback.file.properties.FilePropertiesPreparationProvider
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparationProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
@@ -491,23 +492,26 @@ import java.util.concurrent.TimeoutException
 			.then { h -> Handler(h.looper) }
 			.then { playbackHandler ->
 				MaxFileVolumePreparationProvider(
-					FallbackPreparedPlayableFileSourceProvider(
-						ExoPlayerPlayableFilePreparationSourceProvider(
-							this,
-							playbackHandler,
-							mainLoopHandlerExecutor,
-							mediaSourceProvider,
-							bestMatchUriProvider
+					FilePropertiesPreparationProvider(
+						FallbackPreparedPlayableFileSourceProvider(
+							ExoPlayerPlayableFilePreparationSourceProvider(
+								this,
+								playbackHandler,
+								mainLoopHandlerExecutor,
+								mediaSourceProvider,
+								bestMatchUriProvider
+							),
+							ExoPlayerPlayableFilePreparationSourceProvider(
+								this,
+								playbackHandler,
+								mainLoopHandlerExecutor,
+								mediaSourceProvider,
+								remoteFileUriProvider
+							),
 						),
-						ExoPlayerPlayableFilePreparationSourceProvider(
-							this,
-							playbackHandler,
-							mainLoopHandlerExecutor,
-							mediaSourceProvider,
-							remoteFileUriProvider
-						),
+						libraryFilePropertiesProvider,
 					),
-					maxFileVolumeProvider
+					maxFileVolumeProvider,
 				)
 			}
 	})

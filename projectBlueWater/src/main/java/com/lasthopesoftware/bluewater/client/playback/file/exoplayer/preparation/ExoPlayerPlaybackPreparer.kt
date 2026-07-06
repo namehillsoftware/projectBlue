@@ -96,10 +96,9 @@ class ExoPlayerPlaybackPreparer(
 							.eventually { mediaSource ->
 								bufferingExoPlayerProvider
 									.promiseBufferingExoPlayer(mediaSource, it)
-									.then { ep -> Pair(mediaSource, ep) }
+									.then { ep -> mediaSource to ep }
 							}
-							.eventually { pair ->
-								val (mediaSource, newBufferingExoPlayer) = pair
+							.eventually { (mediaSource, newBufferingExoPlayer) ->
 								bufferingExoPlayer = newBufferingExoPlayer
 
 								val prepareAtMillis = prepareAt.millis

@@ -11,9 +11,11 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException
+import com.lasthopesoftware.bluewater.client.playback.file.progress.ReadFileDuration
 import com.lasthopesoftware.bluewater.client.playback.file.progress.ReadFileProgress
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.policies.retries.RetryOnRejectionLazyPromise
+import com.lasthopesoftware.promises.ResolvedPromiseBox
 import com.lasthopesoftware.promises.extensions.ProgressedPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.cancellation.CancellationResponse
@@ -32,8 +34,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 	PlayingFile,
 	PlayedFile,
 	Player.Listener,
-	CancellationResponse
-{
+	CancellationResponse {
 
 	companion object {
 		private val minutesAndSecondsFormatter by lazy {
@@ -53,9 +54,10 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 		override fun respond(currentPosition: Long): Duration = Duration.millis(currentPosition)
 	}
 
-	private val fileProgressReader = AtomicReference<CloseableReadFileProgress>(PausedExoPlayerFileProgressReader(exoPlayer))
+	private val fileProgressReader =
+		AtomicReference<CloseableReadFileProgress>(PausedExoPlayerFileProgressReader(exoPlayer))
 
-	private val promisedDuration = RetryOnRejectionLazyPromise { exoPlayer.getDuration().then(LongDurationTransformer) }
+	private val promisedDuration by lazy { PlayingExoPlayerFileDurationReader(exoPlayer) }
 
 	init {
 		awaitCancellation(this)
@@ -81,7 +83,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 		get() = fileProgressReader.get().progress
 
 	override val duration: Promise<Duration>
-		get() = promisedDuration.value
+		get() = promisedDuration.duration
 
 	override fun promisePlayback(): Promise<PlayingFile> {
 		isPlaying = true
@@ -106,7 +108,9 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 					val formatter = minutesAndSecondsFormatter
 					logger.warn(
 						"The player was playing, but it transitioned to idle! " +
-							"Playback progress: " + p.toPeriod().toString(formatter) + " / " + d.toPeriod().toString(formatter) + ". ")
+							"Playback progress: " + p.toPeriod().toString(formatter) + " / " + d.toPeriod()
+							.toString(formatter) + ". "
+					)
 				}
 			}
 			.eventually { exoPlayer.getPlayWhenReady() }
@@ -121,7 +125,8 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 			}
 	}
 
-	@OptIn(UnstableApi::class) override fun onPlayerError(error: PlaybackException) {
+	@OptIn(UnstableApi::class)
+	override fun onPlayerError(error: PlaybackException) {
 		removeListener()
 		when (val cause = error.cause) {
 			is EOFException -> {
@@ -129,11 +134,13 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 				resolve(this)
 				return
 			}
+
 			is NoSuchElementException -> {
 				logger.warn("The player was unexpectedly unable to dequeue messages, completing playback", error)
 				resolve(this)
 				return
 			}
+
 			is ProtocolException -> {
 				when (cause.message) {
 					"unexpected end of stream" -> {
@@ -143,6 +150,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 					}
 				}
 			}
+
 			is ParserException -> {
 				if (cause.message.startsWith("Searched too many bytes.")) {
 					logger.warn("The stream was corrupted, completing playback", error)
@@ -150,6 +158,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 					return
 				}
 			}
+
 			is HttpDataSource.InvalidResponseCodeException -> {
 				if (cause.responseCode == 416) {
 					logger.warn("Received an error code of " + cause.responseCode + ", completing playback", cause)
@@ -183,8 +192,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 	private interface CloseableReadFileProgress : ReadFileProgress, AutoCloseable
 
 	private class PausedExoPlayerFileProgressReader(private val exoPlayer: PromisingExoPlayer) :
-		CloseableReadFileProgress
-	{
+		CloseableReadFileProgress {
 		private val promisedFileProgress = RetryOnRejectionLazyPromise {
 			exoPlayer.getCurrentPosition().then(LongDurationTransformer)
 		}
@@ -198,28 +206,64 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 	}
 
 	private class PlayingExoPlayerFileProgressReader(private val exoPlayer: PromisingExoPlayer) :
-		CloseableReadFileProgress
-	{
-		companion object {
-			private val zeroAndLong by lazy { 0L.toPromise() }
-		}
-
+		CloseableReadFileProgress {
 		@Volatile
 		private var isClosed = false
 
-		private val currentDurationPromise = AtomicReference(zeroAndLong)
+		private val currentProgressPromise = AtomicReference(0L.toPromise())
 
 		override val progress: Promise<Duration>
 			get() =
-				if (isClosed) currentDurationPromise.get().then(LongDurationTransformer)
-				else currentDurationPromise.updateAndGet { prev ->
+				if (isClosed) currentProgressPromise.get().then(LongDurationTransformer)
+				else currentProgressPromise.updateAndGet { prev ->
 					prev.cancel()
 					exoPlayer.getCurrentPosition()
 				}.then(LongDurationTransformer)
 
 		override fun close() {
 			isClosed = true
-			currentDurationPromise.get().cancel()
+			currentProgressPromise.get().cancel()
+		}
+	}
+
+	private class PlayingExoPlayerFileDurationReader(private val exoPlayer: PromisingExoPlayer) :
+		ReadFileDuration, AutoCloseable {
+		@Volatile
+		private var isClosed = false
+
+		private val currentDurationPromise = AtomicReference(ResolvedPromiseBox(PositiveDurationPromise(exoPlayer)))
+
+		override val duration: Promise<Duration>
+			get() =
+				if (isClosed) currentDurationPromise.get().originalPromise
+				else currentDurationPromise.get().resolvedPromise ?: currentDurationPromise.updateAndGet { prev ->
+					prev.run {
+						if (resolvedPromise != null) this
+						else {
+							originalPromise.cancel()
+							ResolvedPromiseBox(PositiveDurationPromise(exoPlayer))
+						}
+					}
+				}.originalPromise
+
+		override fun close() {
+			isClosed = true
+			currentDurationPromise.get().originalPromise.cancel()
+		}
+	}
+
+	private class PositiveDurationPromise(exoPlayer: PromisingExoPlayer) : Proxy<Duration>(),
+		ImmediateResponse<Duration, Unit> {
+		init {
+			val promisedDuration = exoPlayer.getDuration().then(LongDurationTransformer)
+			doCancel(promisedDuration)
+			promisedDuration.then(this)
+			proxyRejection(promisedDuration)
+		}
+
+		override fun respond(position: Duration) {
+			if (position.isLongerThan(Duration.ZERO))
+				resolve(position)
 		}
 	}
 }
