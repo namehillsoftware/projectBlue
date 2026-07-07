@@ -14,6 +14,7 @@ class TutorialManager(private val context: Context, private val tutorialCache: C
 	object KnownTutorials {
 		const val longPressListTutorial = "longPressListTutorial"
 		const val adjustNotificationInApplicationSettingsTutorial = "adjustNotificationInApplicationSettings"
+		const val droidSideLoadingWarning = "droidSideLoadingWarning"
 	}
 
 	companion object {
@@ -50,7 +51,7 @@ class TutorialManager(private val context: Context, private val tutorialCache: C
 		}
 
 	private fun promiseTutorial(tutorialKey: String): Promise<DisplayedTutorial?> =
-		promiseTableMessage<DisplayedTutorial?> {
+		promiseTableMessage {
 			RepositoryAccessHelper(context).use { h ->
 				h.beginNonExclusiveTransaction().use {
 					h.mapSql("SELECT * FROM $tableName WHERE $tutorialKeyColumn = @$tutorialKeyColumn")
