@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.progress.ReadFileProg
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.promises.ResolvedPromiseBox
+import com.lasthopesoftware.promises.UnkeptPromise
 import com.lasthopesoftware.promises.extensions.ProgressedPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.cancellation.CancellationResponse
@@ -57,7 +58,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 	private val fileProgressReader =
 		AtomicReference<CloseableReadFileProgress>(PausedExoPlayerFileProgressReader(exoPlayer))
 
-	private val promisedDuration by lazy { PlayingExoPlayerFileDurationReader(exoPlayer) }
+	private val promisedDuration = PlayingExoPlayerFileDurationReader(exoPlayer)
 
 	init {
 		awaitCancellation(this)
@@ -231,7 +232,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 		@Volatile
 		private var isClosed = false
 
-		private val currentDurationPromise = AtomicReference(ResolvedPromiseBox(PositiveDurationPromise(exoPlayer)))
+		private val currentDurationPromise = AtomicReference(ResolvedPromiseBox(UnkeptPromise.instance<Duration>()))
 
 		override val duration: Promise<Duration>
 			get() =
@@ -255,8 +256,9 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 	private class PositiveDurationPromise(exoPlayer: PromisingExoPlayer) : Proxy<Duration>(),
 		ImmediateResponse<Duration, Unit> {
 		init {
-			val promisedDuration = exoPlayer.getDuration().then(LongDurationTransformer)
-			doCancel(promisedDuration)
+			val promisedDuration = exoPlayer.getDuration()
+				.also(::doCancel)
+				.then(LongDurationTransformer)
 			promisedDuration.then(this)
 			proxyRejection(promisedDuration)
 		}
