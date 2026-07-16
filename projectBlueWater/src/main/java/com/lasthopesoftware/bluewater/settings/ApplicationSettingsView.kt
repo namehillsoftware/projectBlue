@@ -3,6 +3,7 @@
 package com.lasthopesoftware.bluewater.settings
 
 import VerticalHeaderScaffold
+import android.content.Intent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -58,6 +59,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalResources
@@ -67,6 +69,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
@@ -93,6 +96,7 @@ import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.toState
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.lasthopesoftware.resources.strings.GetStringResources
 import com.mikepenz.markdown.m2.Markdown
 import kotlinx.coroutines.flow.first
 
@@ -224,10 +228,11 @@ fun ThemeSettingsSection(
 
 @Composable
 fun AboutApplication(
+	stringResources: GetStringResources,
 	playbackService: ControlPlaybackService,
 ) {
 	SettingsSection(
-		headerText = stringResource(id = R.string.title_activity_about, stringResource(R.string.app_name)),
+		headerText = stringResources.aboutTitle,
 		headerModifier = standardRowModifier,
 		modifier = Modifier.fillMaxWidth(),
 	) {
@@ -236,6 +241,43 @@ fun AboutApplication(
 			versionCode = BuildConfig.VERSION_CODE,
 			modifier = Modifier.fillMaxWidth()
 		)
+	}
+
+	SettingsSection(
+		headerText = stringResource(id = R.string.keep_android_open),
+		headerModifier = standardRowModifier,
+		modifier = Modifier.fillMaxWidth(),
+	) {
+		Markdown(stringResource(R.string.side_loading_warning))
+
+		Row(
+			modifier = Modifier.fillMaxWidth(),
+			horizontalArrangement = Arrangement.SpaceBetween,
+		) {
+			val context = LocalContext.current
+			Button(
+				onClick = {
+					context
+						.startActivity(Intent(
+							Intent.ACTION_VIEW,
+							"https://keepandroidopen.org".toUri()
+						))
+				},
+			) {
+				Text(text = stringResource(R.string.more_info))
+			}
+			Button(
+				onClick = {
+					context
+						.startActivity(Intent(
+							Intent.ACTION_VIEW,
+							"https://github.com/woheller69/FreeDroidWarn?tab=readme-ov-file#solutions".toUri()
+						))
+				},
+			) {
+				Text(text = stringResource(R.string.solutions))
+			}
+		}
 	}
 
 	SettingsSection(
@@ -269,7 +311,6 @@ fun AboutApplication(
 @Composable
 private fun SettingsList(
 	applicationSettingsViewModel: ApplicationSettingsViewModel,
-	playbackService: ControlPlaybackService,
 ) {
 	val isLoading by applicationSettingsViewModel.isLoading.subscribeAsState()
 	SettingsSection(
@@ -307,8 +348,6 @@ private fun SettingsList(
 	AudioSettingsSection(applicationSettingsViewModel)
 
 	ThemeSettingsSection(applicationSettingsViewModel)
-
-	AboutApplication(playbackService)
 }
 
 @Composable
@@ -353,6 +392,7 @@ fun ServersList(
 fun ApplicationSettingsMenu(
 	applicationSettingsViewModel: ApplicationSettingsViewModel,
 	applicationNavigation: NavigateApplication,
+	stringResources: GetStringResources,
 	selectedLibraryId: LibraryId?,
 	modifier: Modifier = Modifier,
 	onTabChange: (() -> Unit)? = null,
@@ -379,6 +419,18 @@ fun ApplicationSettingsMenu(
 			enabled = selectedTab != ApplicationSettingsViewModel.SelectedTab.ViewServers
 		)
 
+		val addServerButtonLabel = stringResource(R.string.btn_add_server)
+		ColumnMenuIcon(
+			onClick = {
+				applicationNavigation.viewNewServerSettings()
+			},
+			iconPainter = painterResource(id = R.drawable.ic_add_item_36dp),
+			contentDescription = addServerButtonLabel,
+			label = addServerButtonLabel,
+			labelMaxLines = 2,
+			modifier = modifier,
+		)
+
 		val settingsButtonLabel = stringResource(R.string.application_settings)
 		ColumnMenuIcon(
 			onClick = {
@@ -393,18 +445,6 @@ fun ApplicationSettingsMenu(
 			enabled = selectedTab != ApplicationSettingsViewModel.SelectedTab.ViewSettings
 		)
 
-		val addServerButtonLabel = stringResource(R.string.btn_add_server)
-		ColumnMenuIcon(
-			onClick = {
-				applicationNavigation.viewNewServerSettings()
-			},
-			iconPainter = painterResource(id = R.drawable.ic_add_item_36dp),
-			contentDescription = addServerButtonLabel,
-			label = addServerButtonLabel,
-			labelMaxLines = 2,
-			modifier = modifier,
-		)
-
 		val connectText = stringResource(R.string.active_server)
 		ColumnMenuIcon(
 			onClick = {
@@ -417,6 +457,20 @@ fun ApplicationSettingsMenu(
 			labelMaxLines = 2,
 			enabled = selectedLibraryId != null
 		)
+
+		val aboutLabel = stringResources.aboutTitle
+		ColumnMenuIcon(
+			onClick = {
+				selectedTab = ApplicationSettingsViewModel.SelectedTab.ViewApplicationInformation
+				onTabChange?.invoke()
+			},
+			iconPainter = painterResource(id = R.drawable.information_outline_36dp),
+			contentDescription = aboutLabel,
+			label = aboutLabel,
+			labelMaxLines = 2,
+			modifier = modifier,
+			enabled = selectedTab != ApplicationSettingsViewModel.SelectedTab.ViewApplicationInformation
+		)
 	}
 }
 
@@ -425,6 +479,7 @@ private fun ApplicationSettingsViewVertical(
 	applicationSettingsViewModel: ApplicationSettingsViewModel,
 	applicationNavigation: NavigateApplication,
 	playbackService: ControlPlaybackService,
+	stringResources: GetStringResources,
 ) {
 	val minHeaderHeight = LocalDensity.current.remember { Dimensions.appBarHeight.toPx() }
 	val headerScaler = ConsumableConnectedScaler.remember(minHeaderHeight)
@@ -502,9 +557,10 @@ private fun ApplicationSettingsViewVertical(
 					.clipToBounds()
 			) {
 				ApplicationSettingsMenu(
-					applicationSettingsViewModel,
+					applicationSettingsViewModel = applicationSettingsViewModel,
 					applicationNavigation = applicationNavigation,
 					selectedLibraryId = selectedLibraryId,
+					stringResources = stringResources,
 					modifier = Modifier
 						.graphicsLayer {
 							translationY = (menuHeightPx - expandedMenuHeightPx) * 0.5f
@@ -534,7 +590,10 @@ private fun ApplicationSettingsViewVertical(
 					)
 					ApplicationSettingsViewModel.SelectedTab.ViewSettings -> SettingsList(
 						applicationSettingsViewModel,
-						playbackService
+					)
+					ApplicationSettingsViewModel.SelectedTab.ViewApplicationInformation -> AboutApplication(
+						stringResources,
+						playbackService,
 					)
 				}
 			}
@@ -550,6 +609,7 @@ private fun BoxWithConstraintsScope.ApplicationSettingsViewHorizontal(
 	applicationSettingsViewModel: ApplicationSettingsViewModel,
 	applicationNavigation: NavigateApplication,
 	playbackService: ControlPlaybackService,
+	stringResources: GetStringResources,
 ) {
 	Row(
 		modifier = Modifier.fillMaxSize(),
@@ -585,9 +645,10 @@ private fun BoxWithConstraintsScope.ApplicationSettingsViewHorizontal(
 			)
 
 			ApplicationSettingsMenu(
-				applicationSettingsViewModel,
+				applicationSettingsViewModel = applicationSettingsViewModel,
 				applicationNavigation = applicationNavigation,
 				selectedLibraryId = selectedLibraryId,
+				stringResources = stringResources,
 				modifier = Modifier
 					.fillMaxWidth()
 					.height(expandedMenuHeight)
@@ -612,7 +673,10 @@ private fun BoxWithConstraintsScope.ApplicationSettingsViewHorizontal(
 				)
 				ApplicationSettingsViewModel.SelectedTab.ViewSettings -> SettingsList(
 					applicationSettingsViewModel,
-					playbackService
+				)
+				ApplicationSettingsViewModel.SelectedTab.ViewApplicationInformation -> AboutApplication(
+					stringResources,
+					playbackService,
 				)
 			}
 		}
@@ -624,6 +688,7 @@ fun ApplicationSettingsView(
 	applicationSettingsViewModel: ApplicationSettingsViewModel,
 	applicationNavigation: NavigateApplication,
 	playbackService: ControlPlaybackService,
+	stringResources: GetStringResources,
 ) {
 	Box(modifier = Modifier
 		.fillMaxSize()
@@ -657,11 +722,13 @@ fun ApplicationSettingsView(
 					if (maxWidth < maxHeight) ApplicationSettingsViewVertical(
 						applicationSettingsViewModel,
 						applicationNavigation,
-						playbackService
+						playbackService,
+						stringResources,
 					) else ApplicationSettingsViewHorizontal(
 						applicationSettingsViewModel,
 						applicationNavigation,
-						playbackService
+						playbackService,
+						stringResources,
 					)
 				}
 			}
