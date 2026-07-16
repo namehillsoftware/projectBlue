@@ -24,7 +24,7 @@ class ApplicationSettingsViewModel(
 ) : ViewModel(), TrackLoadedViewState, ImmediateAction
 {
 	enum class SelectedTab {
-		ViewServers, ViewSettings
+		ViewServers, ViewSettings, ViewApplicationInformation
 	}
 
 	private val mutableLibraries = MutableInteractionState(emptyList<Pair<LibraryId, String>>())

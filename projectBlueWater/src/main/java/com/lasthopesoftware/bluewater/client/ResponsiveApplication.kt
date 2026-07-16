@@ -841,6 +841,7 @@ fun ResponsiveApplication(
 							applicationSettingsViewModel = routedNavigationDependencies.applicationSettingsViewModel,
 							applicationNavigation = routedNavigationDependencies.applicationNavigation,
 							playbackService = routedNavigationDependencies.playbackServiceController,
+							stringResources = routedNavigationDependencies.stringResources,
 						)
 					}
 
