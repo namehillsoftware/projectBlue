@@ -23,6 +23,8 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
+import com.lasthopesoftware.bluewater.tutorials.AndroidOpennessWarningViewModel
+import com.lasthopesoftware.bluewater.tutorials.TutorialManager
 import com.lasthopesoftware.resources.closables.ViewModelCloseableManager
 import com.lasthopesoftware.resources.uri.DocumentUriSelector
 
@@ -132,5 +134,8 @@ class ActivityDependencies(
 			DocumentUriSelector(activitySuppliedDependencies.registeredActivityResultsLauncher),
 			activity.contentResolver
 		)
+	}
+	override val androidOpennessWarningViewModel by activity.buildViewModelLazily {
+		AndroidOpennessWarningViewModel(TutorialManager(activity))
 	}
 }

@@ -18,6 +18,7 @@ import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
+import com.lasthopesoftware.bluewater.tutorials.AndroidOpennessWarningViewModel
 
 interface EntryDependencies : ApplicationDependencies {
 	val applicationViewModel: ManageApplicationPropertyState
@@ -33,6 +34,7 @@ interface EntryDependencies : ApplicationDependencies {
 	val applicationSettingsViewModel: ApplicationSettingsViewModel
 	val hiddenSettingsViewModel: HiddenSettingsViewModel
 	val userSslCertificateProvider: ProvideUserSslCertificates
+	val androidOpennessWarningViewModel: AndroidOpennessWarningViewModel
 }
 
 @Composable

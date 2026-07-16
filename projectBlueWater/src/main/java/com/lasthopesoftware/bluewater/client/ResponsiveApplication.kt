@@ -123,6 +123,7 @@ import com.lasthopesoftware.bluewater.exceptions.UncaughtExceptionHandlerLogger
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.ViewModelInitAction
+import com.lasthopesoftware.bluewater.tutorials.AndroidOpennessWarningDialog
 import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
 import com.lasthopesoftware.promises.extensions.suspend
@@ -873,6 +874,8 @@ fun ResponsiveApplication(
 					routedNavigationDependencies.hiddenSettingsViewModel.loadApplicationSettings()
 				}
 			}
+
+			AndroidOpennessWarningDialog(entryDependencies.androidOpennessWarningViewModel)
 		}
 
 		val isCheckingConnection by connectionStatusViewModel.isGettingConnection.subscribeAsState()

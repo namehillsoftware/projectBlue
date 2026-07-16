@@ -311,7 +311,7 @@ private fun CustomHeadersList(
 						) {
 							ProvideTextStyle(MaterialTheme.typography.h5) {
 								Text(
-									text = "Edit Header",
+									text = stringResource(R.string.edit_header),
 									modifier = Modifier
 										.weight(1f)
 										.align(Alignment.CenterVertically),
@@ -342,14 +342,18 @@ private fun CustomHeadersList(
 								value = editingHeaderKey,
 								placeholder = stringResource(R.string.header),
 								onValueChange = { editingHeaderKey = it },
-								modifier = Modifier.focusRequester(fieldFocusRequester).padding(vertical = verticalPadding),
+								modifier = Modifier
+									.focusRequester(fieldFocusRequester)
+									.padding(vertical = verticalPadding),
 							)
 
 							StandardTextField(
 								value = editingHeaderValue,
 								placeholder = stringResource(R.string.value),
 								onValueChange = { editingHeaderValue = it },
-								modifier = Modifier.focusRequester(fieldFocusRequester).padding(vertical = verticalPadding),
+								modifier = Modifier
+									.focusRequester(fieldFocusRequester)
+									.padding(vertical = verticalPadding),
 							)
 						}
 
