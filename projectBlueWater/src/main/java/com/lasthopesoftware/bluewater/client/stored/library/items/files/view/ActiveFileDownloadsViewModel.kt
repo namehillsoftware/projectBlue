@@ -102,15 +102,20 @@ class ActiveFileDownloadsViewModel(
 			}
 	}
 
-	fun loadActiveDownloads(libraryId: LibraryId): Promise<*> {
+	fun loadActiveDownloads(libraryId: LibraryId? = null): Promise<*> {
 		mutableIsLoading.value = true
 		activeLibraryId = libraryId
 		return storedFileAccess
 			.promiseDownloadingFiles()
 			.then { storedFiles ->
-				mutableSyncingFilesWithState.value = storedFiles
-					.filter { sf -> sf.libraryId == libraryId.id }
-					.associate { sf -> sf.id to (sf to StoredFileJobState.Queued) }
+				val filteredStoredFiles =
+					libraryId
+						?.run {
+							storedFiles.filter { sf -> sf.libraryId == id }
+						}
+						?: storedFiles
+
+				mutableSyncingFilesWithState.value = filteredStoredFiles.associate { sf -> sf.id to (sf to StoredFileJobState.Queued) }
 			}
 			.must { _ -> mutableIsLoading.value = false }
 	}
