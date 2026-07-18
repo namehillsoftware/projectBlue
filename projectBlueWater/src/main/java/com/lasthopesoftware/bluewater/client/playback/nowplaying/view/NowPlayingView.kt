@@ -397,9 +397,9 @@ fun NowPlayingControls(
 	}
 }
 
-suspend fun LazyListState.scrollToFileIfNotScrolling(file: PositionedFile) {
+fun LazyListState.requestScrollToFileIfNotScrolling(file: PositionedFile) {
 	if (!isScrollInProgress)
-		scrollToItem(file.playlistPosition)
+		requestScrollToItem(file.playlistPosition)
 }
 
 private val collapsedControlsHeight = ProgressIndicatorDefaults.StrokeWidth + Dimensions.appBarHeight
@@ -942,6 +942,7 @@ fun <T> BoxWithConstraintsScope.NowPlayingWideView(
 					}
 
 					onDispose {
+						playlistViewModel.disableUserAutoScrolling()
 						playlistViewModel.disableSystemAutoScrolling()
 					}
 				}
