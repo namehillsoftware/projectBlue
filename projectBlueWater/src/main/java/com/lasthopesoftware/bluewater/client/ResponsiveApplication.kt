@@ -156,11 +156,20 @@ fun ScreenDimensionsScope.NavigateToBrowserLibraryDestination(
 			scopedDependencies.apply {
 				ActiveFileDownloadsView(
 					activeFileDownloadsViewModel = activeFileDownloadsViewModel,
+					applicationSettingsViewModel = applicationSettingsViewModel,
 					trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
 					applicationNavigation = applicationNavigation,
 				)
 
-				activeFileDownloadsViewModel.loadActiveDownloads(destination.libraryId)
+				DisposableEffect(destination) {
+					val promisedActiveDownloads = activeFileDownloadsViewModel.loadActiveDownloads(destination.libraryId)
+					val promisedSettings = applicationSettingsViewModel.loadSettings()
+
+					onDispose {
+						promisedActiveDownloads.cancel()
+						promisedSettings.cancel()
+					}
+				}
 			}
 		}
 

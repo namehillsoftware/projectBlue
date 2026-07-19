@@ -7,6 +7,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,10 +20,15 @@ import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Divider
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
@@ -30,8 +36,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -44,6 +52,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -81,6 +90,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListContent
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
+import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.observables.subscribeAsState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -93,48 +103,122 @@ private val boxHeight = expandedTitleHeight + appBarHeight
 @Composable
 private fun SyncMenu(
 	activeFileDownloadsViewModel: ActiveFileDownloadsViewModel,
+	applicationSettingsViewModel: ApplicationSettingsViewModel,
 	modifier: Modifier = Modifier,
 ) {
-	ListMenuRow(
-		modifier = Modifier.fillMaxWidth().then(modifier)
+	Column(
+		modifier = modifier
 	) {
-		val isSyncing by activeFileDownloadsViewModel.isSyncing.subscribeAsState()
-		val label = stringResource(
-			if (isSyncing) R.string.stop_sync_button
-			else R.string.start_sync_button
-		)
+		ListMenuRow(
+			modifier = Modifier.fillMaxWidth()
+		) {
+			Column(
+				modifier = Modifier
+					.wrapContentHeight()
+					.width(120.dp)
+					.padding(viewPaddingUnit)
+			) {
+				var expanded by remember { mutableStateOf(false) }
+				val scrollState = rememberScrollState()
 
-		val isSyncChangeEnabled by activeFileDownloadsViewModel.isSyncStateChangeEnabled.subscribeAsState()
-		MenuIcon(
-			onClick = { activeFileDownloadsViewModel.toggleSync() },
-			icon = {
-				var modifier: Modifier = Modifier.size(topMenuIconSize)
+				val libraries by applicationSettingsViewModel.libraries.subscribeAsState()
+				val activeLibraryId by activeFileDownloadsViewModel.activeLibraryId.subscribeAsState()
 
-				if (isSyncing) {
-					val infiniteTransition = rememberInfiniteTransition()
-					val angle by infiniteTransition.animateFloat(
-						initialValue = 360F,
-						targetValue = 0F,
-						animationSpec = infiniteRepeatable(
-							animation = tween(2000, easing = LinearEasing)
-						)
+				Column(
+					modifier = Modifier.clickable { expanded = true },
+					horizontalAlignment = Alignment.CenterHorizontally,
+				) {
+					Text(
+						text = libraries.firstOrNull { (id, _) -> id == activeLibraryId }?.second
+							?: stringResource(R.string.no_server),
+						overflow = TextOverflow.Ellipsis,
+						maxLines = 1,
+						modifier = Modifier.align(Alignment.Start)
 					)
 
-					modifier = modifier.graphicsLayer {
-						rotationZ = angle
+					Icon(
+						painter = painterResource(R.drawable.arrow_drop_down_24),
+						contentDescription = stringResource(R.string.view_servers),
+						modifier = Modifier.graphicsLayer {
+							rotationZ = if (expanded) 180f else 0f
+						}
+					)
+				}
+				DropdownMenu(
+					expanded = expanded,
+					onDismissRequest = { expanded = false },
+					scrollState = scrollState,
+				) {
+					DropdownMenuItem(
+						onClick = {
+							activeFileDownloadsViewModel.loadActiveDownloads()
+							expanded = false
+						}
+					) {
+						Text(
+							text = stringResource(R.string.no_server),
+							fontWeight =
+								if (activeLibraryId == null) FontWeight.Bold
+								else FontWeight.Normal,
+						)
+					}
+
+					for ((id, name) in libraries) {
+						DropdownMenuItem(
+							onClick = {
+								activeFileDownloadsViewModel.loadActiveDownloads(id)
+								expanded = false
+							}
+						) {
+							Text(
+								text = name,
+								fontWeight =
+									if (id == activeLibraryId) FontWeight.Bold
+									else FontWeight.Normal,
+							)
+						}
 					}
 				}
+			}
 
-				SyncIcon(
-					isActive = isSyncing,
-					modifier = modifier,
-					contentDescription = label,
-				)
-			},
-			label = { Text(text = label) },
-			enabled = isSyncChangeEnabled,
-			modifier = Modifier.requiredWidth(topMenuIconWidth),
-		)
+			val isSyncing by activeFileDownloadsViewModel.isSyncing.subscribeAsState()
+			val label = stringResource(
+				if (isSyncing) R.string.stop_sync_button
+				else R.string.start_sync_button
+			)
+
+			val isSyncChangeEnabled by activeFileDownloadsViewModel.isSyncStateChangeEnabled.subscribeAsState()
+			MenuIcon(
+				onClick = { activeFileDownloadsViewModel.toggleSync() },
+				icon = {
+					var modifier: Modifier = Modifier.size(topMenuIconSize)
+
+					if (isSyncing) {
+						val infiniteTransition = rememberInfiniteTransition()
+						val angle by infiniteTransition.animateFloat(
+							initialValue = 360F,
+							targetValue = 0F,
+							animationSpec = infiniteRepeatable(
+								animation = tween(2000, easing = LinearEasing)
+							)
+						)
+
+						modifier = modifier.graphicsLayer {
+							rotationZ = angle
+						}
+					}
+
+					SyncIcon(
+						isActive = isSyncing,
+						modifier = modifier,
+						contentDescription = label,
+					)
+				},
+				label = { Text(text = label) },
+				enabled = isSyncChangeEnabled,
+				modifier = Modifier.requiredWidth(topMenuIconWidth),
+			)
+		}
 	}
 }
 
@@ -148,7 +232,7 @@ fun RenderTrackHeaderItem(
 	val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 
 	DisposableEffect(storedFile.serviceId) {
-		activeFileDownloadsViewModel.activeLibraryId?.also {
+		activeFileDownloadsViewModel.activeLibraryId.value?.also {
 			fileItemViewModel.promiseUpdate(it, ServiceFile(storedFile.serviceId))
 		}
 
@@ -219,6 +303,7 @@ fun DownloadingFilesList(
 @Composable
 fun ScreenDimensionsScope.ActiveFileDownloadsView(
     activeFileDownloadsViewModel: ActiveFileDownloadsViewModel,
+	applicationSettingsViewModel: ApplicationSettingsViewModel,
     trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewFileItem>,
     applicationNavigation: NavigateApplication,
 ) {
@@ -229,7 +314,7 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 			val heightScaler = LocalDensity.current.run {
 				FullScreenScrollConnectedScaler.remember(min = appBarHeight.toPx(), max = boxHeight.toPx())
 			}
-			val topMenuHeightPx = LocalDensity.current.remember { topMenuHeight.toPx() }
+			val topMenuHeightPx = LocalDensity.current.remember { topMenuHeight.toPx() + (24.dp + viewPaddingUnit * 2).toPx() }
 			val menuHeightScaler = DeferredPreScrollConnectedScaler.remember(topMenuHeightPx, 0f)
 			val compositeScroller = remember(heightScaler) {
 				heightScaler.linkedTo(menuHeightScaler).ignoreConsumedOffset()
@@ -340,6 +425,7 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 					) {
 						SyncMenu(
 							activeFileDownloadsViewModel,
+							applicationSettingsViewModel,
 							modifier = Modifier
 								.graphicsLayer {
 									translationY = (menuHeightValue - topMenuHeightPx) * 0.5f
@@ -354,7 +440,9 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 						DownloadingFilesList(
 							activeFileDownloadsViewModel = activeFileDownloadsViewModel,
 							trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
-							modifier = Modifier.fillMaxSize().focusRequester(listFocus),
+							modifier = Modifier
+								.fillMaxSize()
+								.focusRequester(listFocus),
 							headerHeight = headerHeight
 						)
 					}
@@ -393,7 +481,10 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 						}
 					}
 
-					SyncMenu(activeFileDownloadsViewModel)
+					SyncMenu(
+						activeFileDownloadsViewModel,
+						applicationSettingsViewModel,
+					)
 				}
 
 				if (isLoading) {

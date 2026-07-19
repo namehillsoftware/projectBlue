@@ -34,9 +34,9 @@ class ActiveFileDownloadsViewModel(
 	private val mutableIsSyncing = MutableInteractionState(false)
 	private val mutableIsSyncStateChangeEnabled = MutableInteractionState(false)
 	private val mutableSyncingFilesWithState = MutableInteractionState(emptyMap<Int, Pair<StoredFile, StoredFileJobState>>())
+	private val mutableActiveLibraryId = MutableInteractionState<LibraryId?>(null)
 
-	var activeLibraryId: LibraryId? = null
-		private set
+	val activeLibraryId = mutableActiveLibraryId.asInteractionState()
 
 	val isSyncing = mutableIsSyncing.asInteractionState()
 	val isSyncStateChangeEnabled = mutableIsSyncStateChangeEnabled.asInteractionState()
@@ -104,7 +104,7 @@ class ActiveFileDownloadsViewModel(
 
 	fun loadActiveDownloads(libraryId: LibraryId? = null): Promise<*> {
 		mutableIsLoading.value = true
-		activeLibraryId = libraryId
+		mutableActiveLibraryId.value = libraryId
 		return storedFileAccess
 			.promiseDownloadingFiles()
 			.then { storedFiles ->
@@ -149,7 +149,7 @@ class ActiveFileDownloadsViewModel(
 					}
 					?.toPromise()
 					?: storedFileAccess.promiseStoredFile(storedFileId).then { storedFile ->
-						if (storedFile != null && storedFile.libraryId == activeLibraryId?.id) {
+						if (storedFile != null && storedFile.libraryId == activeLibraryId.value?.id) {
 							mutableSyncingFilesWithState.value += storedFile.id to (storedFile to state)
 						}
 					}

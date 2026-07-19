@@ -176,4 +176,5 @@
     <string name="keep_android_open">Keep Android Open!</string>
     <string name="more_info">More Info</string>
     <string name="solutions">Solutions</string>
+    <string name="no_server">No server</string>
 </resources>
