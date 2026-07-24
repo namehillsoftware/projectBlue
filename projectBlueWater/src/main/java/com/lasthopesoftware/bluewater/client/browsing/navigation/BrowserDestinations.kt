@@ -18,6 +18,9 @@ data object NewConnectionSettingsScreen : Destination
 @Parcelize
 data object HiddenSettingsScreen : Destination
 
+@Parcelize
+data object AllDownloadsScreen : Destination
+
 sealed interface ConnectingDestination : Destination
 
 @Parcelize

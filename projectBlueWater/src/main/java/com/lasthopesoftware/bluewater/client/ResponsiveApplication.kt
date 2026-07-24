@@ -81,6 +81,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostV
 import com.lasthopesoftware.bluewater.client.browsing.items.list.LoadedItemListView
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibrarySearchScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.AllDownloadsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowsedFileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryDestination
@@ -813,6 +814,38 @@ fun ResponsiveApplication(
 					}
 				}
 
+				is AllDownloadsScreen -> {
+					LocalViewModelStoreOwner.current
+						?.let { viewModelStoreOwner ->
+							ScopedViewModelRegistry(
+								reusedViewModelDependencies,
+								permissionsDependencies,
+								viewModelStoreOwner,
+							)
+						}
+						?.registerBackNav()
+						?.apply {
+							PaddedSystemScreenBox {
+								ActiveFileDownloadsView(
+									activeFileDownloadsViewModel = activeFileDownloadsViewModel,
+									applicationSettingsViewModel = applicationSettingsViewModel,
+									trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
+									applicationNavigation = applicationNavigation,
+								)
+
+								DisposableEffect(destination) {
+									val promisedActiveDownloads = activeFileDownloadsViewModel.loadActiveDownloads()
+									val promisedSettings = applicationSettingsViewModel.loadSettings()
+
+									onDispose {
+										promisedActiveDownloads.cancel()
+										promisedSettings.cancel()
+									}
+								}
+							}
+						}
+				}
+
 				is ActiveLibraryDownloadsScreen -> {
 					routedNavigationDependencies.apply {
 						LaunchedEffect(Unit) {
@@ -856,6 +889,7 @@ fun ResponsiveApplication(
 
 					routedNavigationDependencies.applicationSettingsViewModel.loadSettings()
 				}
+
 				is NewConnectionSettingsScreen -> {
 					LocalViewModelStoreOwner.current
 						?.let { viewModelStoreOwner ->

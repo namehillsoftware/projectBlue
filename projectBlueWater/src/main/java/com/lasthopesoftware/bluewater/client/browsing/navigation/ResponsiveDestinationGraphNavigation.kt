@@ -44,21 +44,31 @@ class ResponsiveDestinationGraphNavigation(
 		navigateToBrowserDestination(SearchScreen(libraryId, searchQuery))
 	}.toPromise()
 
+	override fun viewAllDownloads(): Promise<Unit> = coroutineScope.launch {
+		navController.popUpTo { it is ApplicationSettingsScreen }
+		bringBrowserIntoView()
+		navController.navigate(AllDownloadsScreen)
+	}.toPromise()
+
 	override fun viewApplicationSettings() = coroutineScope.launch {
 		navController.popUpTo { it is ApplicationSettingsScreen }
+		bringBrowserIntoView()
 	}.toPromise()
 
 	override fun viewHiddenSettings(): Promise<Unit> = coroutineScope.launch {
+		bringBrowserIntoView()
 		navController.navigate(HiddenSettingsScreen)
 	}.toPromise()
 
 	override fun viewNewServerSettings() = coroutineScope.launch {
 		navController.popUpTo { it is ApplicationSettingsScreen }
+		bringBrowserIntoView()
 
 		navController.navigate(NewConnectionSettingsScreen)
 	}.toPromise()
 
 	override fun viewServerSettings(libraryId: LibraryId) = coroutineScope.launch {
+		bringBrowserIntoView()
 		navController.navigate(ConnectionSettingsScreen(libraryId))
 	}.toPromise()
 
@@ -142,14 +152,14 @@ class ResponsiveDestinationGraphNavigation(
 	private suspend fun navigateToBrowserDestination(destination: BrowserLibraryDestination) {
 		val libraryId = destination.libraryId
 
-		bringBrowserIntoView(libraryId)
+		ensureBrowserIsOnStack(libraryId)
+		bringBrowserIntoView()
 
 		if (libraryNavController.peek()?.destination != destination)
 			libraryNavController.navigate(destination)
 	}
 
-	private suspend fun bringBrowserIntoView(libraryId: LibraryId) {
-		ensureBrowserIsOnStack(libraryId)
+	private suspend fun bringBrowserIntoView() {
 		with (draggableState) {
 			if (currentValue > ResponsiveState.Browser) {
 				animateTo(

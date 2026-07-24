@@ -88,6 +88,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconWidth
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledActiveDownloadsButton
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
@@ -457,6 +458,11 @@ fun ApplicationSettingsMenu(
 			label = connectText,
 			labelMaxLines = 2,
 			enabled = selectedLibraryId != null
+		)
+
+		LabelledActiveDownloadsButton(
+			applicationNavigation = applicationNavigation,
+			modifier = modifier
 		)
 
 		val aboutLabel = stringResources.aboutTitle

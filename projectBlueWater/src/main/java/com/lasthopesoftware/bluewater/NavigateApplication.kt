@@ -17,6 +17,8 @@ interface NavigateApplication {
 
 	fun viewActiveLibrary() = Unit.toPromise()
 
+	fun viewAllDownloads() = Unit.toPromise()
+
 	fun viewActiveDownloads() = Unit.toPromise()
 
 	fun searchActiveLibrary(searchQuery: String): Promise<Unit> = Unit.toPromise()
