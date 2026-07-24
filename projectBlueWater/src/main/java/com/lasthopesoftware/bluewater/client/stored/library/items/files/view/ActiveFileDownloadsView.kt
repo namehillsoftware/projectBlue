@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -87,6 +88,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackTitleItemView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListContentType
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
@@ -224,17 +226,14 @@ private fun SyncMenu(
 
 @Composable
 fun RenderTrackHeaderItem(
-	activeFileDownloadsViewModel: ActiveFileDownloadsViewModel,
 	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewFileItem>,
 	storedFile: StoredFile,
 	isActive: Boolean
 ) {
 	val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 
-	DisposableEffect(storedFile.serviceId) {
-		activeFileDownloadsViewModel.activeLibraryId.value?.also {
-			fileItemViewModel.promiseUpdate(it, ServiceFile(storedFile.serviceId))
-		}
+	DisposableEffect(fileItemViewModel, storedFile.libraryId, storedFile.serviceId) {
+		fileItemViewModel.promiseUpdate(LibraryId(storedFile.libraryId), ServiceFile(storedFile.serviceId))
 
 		onDispose {
 			fileItemViewModel.reset()
@@ -253,11 +252,11 @@ fun RenderTrackHeaderItem(
 fun DownloadingFilesList(
 	activeFileDownloadsViewModel: ActiveFileDownloadsViewModel,
 	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewFileItem>,
+	lazyListState: LazyListState,
 	modifier: Modifier = Modifier,
 	headerHeight: Dp = 0.dp,
 ) {
 	val files by activeFileDownloadsViewModel.syncingFiles.subscribeAsState()
-	val lazyListState = rememberLazyListState()
 
 	LazyColumn(
 		state = lazyListState,
@@ -287,7 +286,6 @@ fun DownloadingFilesList(
 			{ _, (f, _) -> f.id },
 			contentType = { _, _ -> ItemListContentType.File }) { i, (f, s) ->
 			RenderTrackHeaderItem(
-				activeFileDownloadsViewModel,
 				trackHeadlineViewModelProvider,
 				f,
 				s == StoredFileJobState.Downloading
@@ -310,13 +308,14 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 	ControlSurface {
 		val isLoading by activeFileDownloadsViewModel.isLoading.subscribeAsState()
 
+		val lazyListState = rememberLazyListState()
 		if (maxWidth < Dimensions.twoColumnThreshold) {
-			val heightScaler = LocalDensity.current.run {
-				FullScreenScrollConnectedScaler.remember(min = appBarHeight.toPx(), max = boxHeight.toPx())
-			}
+			val appBarHeightPx = LocalDensity.current.remember { appBarHeight.toPx() }
+			val boxHeightPx = LocalDensity.current.remember { boxHeight.toPx() }
+			val heightScaler = FullScreenScrollConnectedScaler.remember(min = appBarHeightPx, max = boxHeightPx)
 			val topMenuHeightPx = LocalDensity.current.remember { topMenuHeight.toPx() + (24.dp + viewPaddingUnit * 2).toPx() }
 			val menuHeightScaler = DeferredPreScrollConnectedScaler.remember(topMenuHeightPx, 0f)
-			val compositeScroller = remember(heightScaler) {
+			val compositeScroller = remember(heightScaler, menuHeightScaler) {
 				heightScaler.linkedTo(menuHeightScaler).ignoreConsumedOffset()
 			}
 
@@ -440,6 +439,7 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 						DownloadingFilesList(
 							activeFileDownloadsViewModel = activeFileDownloadsViewModel,
 							trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
+							lazyListState = lazyListState,
 							modifier = Modifier
 								.fillMaxSize()
 								.focusRequester(listFocus),
@@ -493,6 +493,7 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 					DownloadingFilesList(
 						activeFileDownloadsViewModel = activeFileDownloadsViewModel,
 						trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
+						lazyListState = lazyListState,
 						modifier = Modifier.fillMaxSize(),
 					)
 				}
