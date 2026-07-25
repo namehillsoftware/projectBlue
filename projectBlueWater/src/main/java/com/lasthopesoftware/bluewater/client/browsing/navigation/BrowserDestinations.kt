@@ -62,6 +62,9 @@ class FileDetailsFromNowPlayingScreen(
 	val positionedFile: PositionedFile,
 ) : LibraryDestination
 
+@Parcelize
+class DownloadsScreen(override val libraryId: LibraryId) : LibraryDestination
+
 sealed interface BrowserLibraryDestination : LibraryDestination
 
 @Parcelize
@@ -69,9 +72,6 @@ data class LibraryScreen(override val libraryId: LibraryId) : BrowserLibraryDest
 
 @Parcelize
 data class ItemScreen(override val libraryId: LibraryId, val item: IItem) : BrowserLibraryDestination
-
-@Parcelize
-class DownloadsScreen(override val libraryId: LibraryId) : BrowserLibraryDestination
 
 @Parcelize
 class FilePropertySearchScreen(override val libraryId: LibraryId, val filePropertyFilter: FileProperty? = null) : BrowserLibraryDestination

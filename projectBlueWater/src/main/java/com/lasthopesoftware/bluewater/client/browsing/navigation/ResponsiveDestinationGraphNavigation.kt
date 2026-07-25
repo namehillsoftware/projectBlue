@@ -73,7 +73,8 @@ class ResponsiveDestinationGraphNavigation(
 	}.toPromise()
 
 	override fun viewActiveDownloads(libraryId: LibraryId) = coroutineScope.launch {
-		navigateToBrowserDestination(DownloadsScreen(libraryId))
+		bringBrowserIntoView()
+		navController.navigate(DownloadsScreen(libraryId))
 	}.toPromise()
 
 	override fun viewLibrary(libraryId: LibraryId) = coroutineScope.launch {
