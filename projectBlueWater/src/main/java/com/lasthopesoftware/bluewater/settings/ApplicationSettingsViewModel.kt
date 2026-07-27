@@ -2,10 +2,9 @@ package com.lasthopesoftware.bluewater.settings
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
-import com.lasthopesoftware.bluewater.client.browsing.library.access.LookupLibraryName
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryListState
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.ProvideLibrarySettings
 import com.lasthopesoftware.bluewater.client.stored.sync.ScheduleSyncs
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
@@ -17,17 +16,15 @@ import com.namehillsoftware.handoff.promises.response.ImmediateAction
 
 class ApplicationSettingsViewModel(
 	private val applicationSettingsRepository: HoldApplicationSettings,
-	private val librarySettingsProvider: ProvideLibrarySettings,
-	private val libraryNameLookup: LookupLibraryName,
+	private val libraryListState: LibraryListState,
 	receiveMessages: RegisterForApplicationMessages,
 	private val syncScheduler: ScheduleSyncs,
-) : ViewModel(), TrackLoadedViewState, ImmediateAction
+) : ViewModel(), TrackLoadedViewState, ImmediateAction, LibraryListState by libraryListState
 {
 	enum class SelectedTab {
 		ViewServers, ViewSettings, ViewApplicationInformation
 	}
 
-	private val mutableLibraries = MutableInteractionState(emptyList<Pair<LibraryId, String>>())
 	private val mutableIsLoading = MutableInteractionState(false)
 	private val mutableChosenLibraryId = MutableInteractionState<LibraryId?>(null)
 	private val mutableIsSyncOnPowerOnly = MutableInteractionState(false)
@@ -42,7 +39,6 @@ class ApplicationSettingsViewModel(
 	val isPeakLevelNormalizeEditable = isVolumeLevelingEnabled
 	val isPeakLevelNormalizeEnabled = mutableIsPeakLevelNormalizeEnabled.asInteractionState()
 	val chosenLibraryId = mutableChosenLibraryId.asInteractionState()
-	val libraries = mutableLibraries.asInteractionState()
 	val theme = mutableTheme.asInteractionState()
 	val selectedTab = MutableInteractionState(SelectedTab.ViewServers)
 	override val isLoading = mutableIsLoading.asInteractionState()
@@ -71,21 +67,7 @@ class ApplicationSettingsViewModel(
 				mutableChosenLibraryId.value = s.chosenLibraryId.takeIf { it > -1 }?.let(::LibraryId)
 			}
 
-		val promisedLibrariesUpdate = librarySettingsProvider
-			.promiseAllLibrarySettings()
-			.eventually {
-				Promise.whenAll(
-					it.mapNotNull { l ->
-						l.libraryId
-							?.let { libraryId ->
-								libraryNameLookup
-									.promiseLibraryName(libraryId)
-									.then { n -> Pair(libraryId, n ?: "") }
-							}
-					}
-				)
-			}
-			.then { it -> mutableLibraries.value = it.sortedBy { it.first.id } }
+		val promisedLibrariesUpdate = libraryListState.loadLibraries()
 
 		return Promise
 			.whenAll(promisedSimpleValuesUpdate, promisedLibrariesUpdate)

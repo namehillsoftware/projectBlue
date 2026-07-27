@@ -698,18 +698,18 @@ private fun ResponsiveLibraryView(
 			PaddedSystemScreenBox {
 				ActiveFileDownloadsView(
 					activeFileDownloadsViewModel = activeFileDownloadsViewModel,
-					applicationSettingsViewModel = applicationSettingsViewModel,
+					libraryListState = libraryListState,
 					trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
 					applicationNavigation = applicationNavigation,
 				)
 
 				DisposableEffect(destination) {
 					val promisedActiveDownloads = activeFileDownloadsViewModel.loadActiveDownloads(destination.libraryId)
-					val promisedSettings = applicationSettingsViewModel.loadSettings()
+					val promisedLibraries = libraryListState.loadLibraries()
 
 					onDispose {
 						promisedActiveDownloads.cancel()
-						promisedSettings.cancel()
+						promisedLibraries.cancel()
 					}
 				}
 			}
@@ -828,18 +828,18 @@ fun ResponsiveApplication(
 							PaddedSystemScreenBox {
 								ActiveFileDownloadsView(
 									activeFileDownloadsViewModel = activeFileDownloadsViewModel,
-									applicationSettingsViewModel = applicationSettingsViewModel,
+									libraryListState = libraryListState,
 									trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
 									applicationNavigation = applicationNavigation,
 								)
 
 								DisposableEffect(destination) {
 									val promisedActiveDownloads = activeFileDownloadsViewModel.loadActiveDownloads()
-									val promisedSettings = applicationSettingsViewModel.loadSettings()
+									val promisedLibraries = libraryListState.loadLibraries()
 
 									onDispose {
 										promisedActiveDownloads.cancel()
-										promisedSettings.cancel()
+										promisedLibraries.cancel()
 									}
 								}
 							}

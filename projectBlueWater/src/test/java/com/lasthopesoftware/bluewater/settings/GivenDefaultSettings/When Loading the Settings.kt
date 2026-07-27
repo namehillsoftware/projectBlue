@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.settings.GivenDefaultSettings
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
-import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -19,9 +19,9 @@ class `When Loading the Settings` {
 				every { promiseApplicationSettings() } returns ApplicationSettings().toPromise()
 			},
 			mockk {
-				every { promiseAllLibrarySettings() } returns Promise(emptyList())
+				every { libraries } returns MutableInteractionState(emptyList())
+				every { loadLibraries() } returns Unit.toPromise()
 			},
-			mockk(),
 			RecordingApplicationMessageBus(),
 			mockk(),
 		)

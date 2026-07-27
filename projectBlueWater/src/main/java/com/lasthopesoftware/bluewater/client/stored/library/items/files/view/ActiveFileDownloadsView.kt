@@ -88,11 +88,11 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackTitleItemView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListContentType
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryListState
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
-import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.observables.subscribeAsState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -105,7 +105,7 @@ private val boxHeight = expandedTitleHeight + appBarHeight
 @Composable
 private fun SyncMenu(
 	activeFileDownloadsViewModel: ActiveFileDownloadsViewModel,
-	applicationSettingsViewModel: ApplicationSettingsViewModel,
+	libraryListState: LibraryListState,
 	modifier: Modifier = Modifier,
 ) {
 	Column(
@@ -123,7 +123,7 @@ private fun SyncMenu(
 				var expanded by remember { mutableStateOf(false) }
 				val scrollState = rememberScrollState()
 
-				val libraries by applicationSettingsViewModel.libraries.subscribeAsState()
+				val libraries by libraryListState.libraries.subscribeAsState()
 				val activeLibraryId by activeFileDownloadsViewModel.activeLibraryId.subscribeAsState()
 
 				Column(
@@ -301,7 +301,7 @@ fun DownloadingFilesList(
 @Composable
 fun ScreenDimensionsScope.ActiveFileDownloadsView(
     activeFileDownloadsViewModel: ActiveFileDownloadsViewModel,
-	applicationSettingsViewModel: ApplicationSettingsViewModel,
+	libraryListState: LibraryListState,
     trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewFileItem>,
     applicationNavigation: NavigateApplication,
 ) {
@@ -424,7 +424,7 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 					) {
 						SyncMenu(
 							activeFileDownloadsViewModel,
-							applicationSettingsViewModel,
+							libraryListState,
 							modifier = Modifier
 								.graphicsLayer {
 									translationY = (menuHeightValue - topMenuHeightPx) * 0.5f
@@ -483,7 +483,7 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 
 					SyncMenu(
 						activeFileDownloadsViewModel,
-						applicationSettingsViewModel,
+						libraryListState,
 					)
 				}
 
