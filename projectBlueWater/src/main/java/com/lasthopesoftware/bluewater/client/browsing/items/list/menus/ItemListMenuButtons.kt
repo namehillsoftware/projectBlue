@@ -36,6 +36,25 @@ fun LabelledActiveDownloadsButton(
 }
 
 @Composable
+fun LabelledActiveDownloadsButton(
+	applicationNavigation: NavigateApplication,
+	modifier: Modifier = Modifier,
+	focusRequester: FocusRequester? = null,
+) {
+	ColumnMenuIcon(
+		onClick = {
+			applicationNavigation.viewAllDownloads()
+		},
+		iconPainter = painterResource(id = R.drawable.ic_water),
+		contentDescription = stringResource(id = R.string.activeDownloads),
+		label = stringResource(id = R.string.downloads), // Use shortened version for button size
+		labelMaxLines = 1,
+		modifier = modifier,
+		focusRequester = focusRequester,
+	)
+}
+
+@Composable
 fun LabelledSearchButton(
 	itemListViewModel: ItemListViewModel,
 	applicationNavigation: NavigateApplication,

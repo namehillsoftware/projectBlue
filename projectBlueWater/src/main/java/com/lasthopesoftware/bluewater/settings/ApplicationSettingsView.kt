@@ -88,6 +88,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconWidth
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledActiveDownloadsButton
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
@@ -353,10 +354,11 @@ private fun SettingsList(
 @Composable
 fun ServersList(
 	applicationNavigation: NavigateApplication,
-	libraries: List<Pair<LibraryId, String>>,
+	applicationSettingsViewModel: ApplicationSettingsViewModel,
 	selectedLibraryId: LibraryId?
 ) {
 	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
+	val libraries by applicationSettingsViewModel.libraries.subscribeAsState()
 
 	for ((libraryId, name) in libraries) {
 		Row(
@@ -458,6 +460,11 @@ fun ApplicationSettingsMenu(
 			enabled = selectedLibraryId != null
 		)
 
+		LabelledActiveDownloadsButton(
+			applicationNavigation = applicationNavigation,
+			modifier = modifier
+		)
+
 		val aboutLabel = stringResources.aboutTitle
 		ColumnMenuIcon(
 			onClick = {
@@ -503,7 +510,6 @@ private fun ApplicationSettingsViewVertical(
 			}
 	}
 
-	val libraries by applicationSettingsViewModel.libraries.subscribeAsState()
 	val selectedLibraryId by applicationSettingsViewModel.chosenLibraryId.subscribeAsState()
 
 	VerticalHeaderScaffold(
@@ -585,7 +591,7 @@ private fun ApplicationSettingsViewVertical(
 				when (selectedTab) {
 					ApplicationSettingsViewModel.SelectedTab.ViewServers -> ServersList(
 						applicationNavigation,
-						libraries,
+						applicationSettingsViewModel,
 						selectedLibraryId,
 					)
 					ApplicationSettingsViewModel.SelectedTab.ViewSettings -> SettingsList(
@@ -615,7 +621,6 @@ private fun BoxWithConstraintsScope.ApplicationSettingsViewHorizontal(
 		modifier = Modifier.fillMaxSize(),
 		horizontalArrangement = Arrangement.Start,
 	) {
-		val libraries by applicationSettingsViewModel.libraries.subscribeAsState()
 		val selectedLibraryId by applicationSettingsViewModel.chosenLibraryId.subscribeAsState()
 
 		Column(
@@ -668,7 +673,7 @@ private fun BoxWithConstraintsScope.ApplicationSettingsViewHorizontal(
 			when (selectedTab) {
 				ApplicationSettingsViewModel.SelectedTab.ViewServers -> ServersList(
 					applicationNavigation,
-					libraries,
+					applicationSettingsViewModel,
 					selectedLibraryId,
 				)
 				ApplicationSettingsViewModel.SelectedTab.ViewSettings -> SettingsList(

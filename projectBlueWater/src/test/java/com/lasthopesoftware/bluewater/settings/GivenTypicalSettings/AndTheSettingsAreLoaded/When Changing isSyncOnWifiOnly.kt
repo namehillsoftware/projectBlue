@@ -1,7 +1,8 @@
 package com.lasthopesoftware.bluewater.settings.GivenTypicalSettings.AndTheSettingsAreLoaded
 
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -36,18 +37,20 @@ class `When Changing isSyncOnWifiOnly` {
 					Promise(settings)
 				}
 			},
-            mockk {
-				every { promiseAllLibrarySettings() } returns Promise(
-					listOf(
-						LibrarySettings(libraryId = LibraryId(363)),
-						LibrarySettings(libraryId = LibraryId(579)),
+			LibraryListViewModel(
+				mockk {
+					every { promiseAllLibraries() } returns Promise(
+						listOf(
+							Library(id = 363),
+							Library(id = 579),
+						)
 					)
-				)
-			},
-			mockk {
-				every { promiseLibraryName(LibraryId(363)) } returns "D6UtT4d9w".toPromise()
-				every { promiseLibraryName(LibraryId(579)) } returns "GM4m9F9g2".toPromise()
-			},
+				},
+				mockk {
+					every { promiseLibraryName(LibraryId(363)) } returns "D6UtT4d9w".toPromise()
+					every { promiseLibraryName(LibraryId(579)) } returns "GM4m9F9g2".toPromise()
+				},
+			),
 			RecordingApplicationMessageBus(),
 			mockk {
 				every { scheduleSync() } answers {

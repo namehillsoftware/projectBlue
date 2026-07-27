@@ -1,7 +1,8 @@
 package com.lasthopesoftware.bluewater.settings.GivenTypicalSettings.AndTheSettingsAreLoaded
 
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -37,20 +38,22 @@ class `When Changing the theme` {
 					Promise(settings)
 				}
 			},
-            mockk {
-				every { promiseAllLibrarySettings() } returns Promise(
-					listOf(
-						LibrarySettings(libraryId = LibraryId(585)),
-						LibrarySettings(libraryId = LibraryId(686)),
-						LibrarySettings(libraryId = LibraryId(797)),
+			LibraryListViewModel(
+				mockk {
+					every { promiseAllLibraries() } returns Promise(
+						listOf(
+							Library(id = 585),
+							Library(id = 686),
+							Library(id = 797),
+						)
 					)
-				)
-			},
-			mockk {
-				every { promiseLibraryName(LibraryId(585)) } returns "R9yt8fKe".toPromise()
-				every { promiseLibraryName(LibraryId(686)) } returns "7aqNFmn".toPromise()
-				every { promiseLibraryName(LibraryId(797)) } returns "MHcdrd3nR".toPromise()
-			},
+				},
+				mockk {
+					every { promiseLibraryName(LibraryId(585)) } returns "R9yt8fKe".toPromise()
+					every { promiseLibraryName(LibraryId(686)) } returns "7aqNFmn".toPromise()
+					every { promiseLibraryName(LibraryId(797)) } returns "MHcdrd3nR".toPromise()
+				},
+			),
 			RecordingApplicationMessageBus(),
 			mockk {
 				every { scheduleSync() } answers {

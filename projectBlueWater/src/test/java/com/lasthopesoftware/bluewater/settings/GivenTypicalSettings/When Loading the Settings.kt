@@ -1,7 +1,8 @@
 package com.lasthopesoftware.bluewater.settings.GivenTypicalSettings
 
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -29,22 +30,24 @@ class `When Loading the Settings` {
 					)
 				)
 			},
-			mockk {
-				every { promiseAllLibrarySettings() } returns Promise(
-					listOf(
-						LibrarySettings(libraryId = LibraryId(504)),
-						LibrarySettings(libraryId = LibraryId(395)),
-						LibrarySettings(libraryId = LibraryId(304)),
-						LibrarySettings(libraryId = LibraryId(661)),
+			LibraryListViewModel(
+				mockk {
+					every { promiseAllLibraries() } returns Promise(
+						listOf(
+							Library(id = 504),
+							Library(id = 395),
+							Library(id = 304),
+							Library(id = 661),
+						)
 					)
-				)
-			},
-			mockk {
-				every { promiseLibraryName(LibraryId(504)) } returns "RJvwnHp8".toPromise()
-				every { promiseLibraryName(LibraryId(395)) } returns "sJF83GATo".toPromise()
-				every { promiseLibraryName(LibraryId(304)) } returns "dNiotMiP".toPromise()
-				every { promiseLibraryName(LibraryId(661)) } returns "Adutlms5vK7".toPromise()
-			},
+				},
+				mockk {
+					every { promiseLibraryName(LibraryId(504)) } returns "RJvwnHp8".toPromise()
+					every { promiseLibraryName(LibraryId(395)) } returns "sJF83GATo".toPromise()
+					every { promiseLibraryName(LibraryId(304)) } returns "dNiotMiP".toPromise()
+					every { promiseLibraryName(LibraryId(661)) } returns "Adutlms5vK7".toPromise()
+				},
+			),
 			RecordingApplicationMessageBus(),
 			mockk(),
 		)

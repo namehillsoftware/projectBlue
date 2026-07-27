@@ -14,5 +14,5 @@ abstract class CloseableHandlerThread(name: String?, priority: Int):
 {
 	override fun promiseClose(): Promise<Unit> =
 		if (isInterrupted) quit().toPromise().unitResponse()
-		else ThreadPools.compute.preparePromise { quitSafely(); Unit }
+		else ThreadPools.compute.preparePromise { quitSafely() }
 }

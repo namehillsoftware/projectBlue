@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRemoval
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryViewModel
@@ -115,11 +116,17 @@ class ActivityDependencies(
 		)
 	}
 
+	override val libraryListState by activity.buildViewModelLazily {
+		LibraryListViewModel(
+			libraryProvider,
+			libraryNameLookup,
+		)
+	}
+
 	override val applicationSettingsViewModel by activity.buildViewModelLazily {
 		ApplicationSettingsViewModel(
 			applicationSettings,
-			librarySettingsProvider,
-			libraryNameLookup,
+			libraryListState,
 			messageBus,
 			syncScheduler,
 		)

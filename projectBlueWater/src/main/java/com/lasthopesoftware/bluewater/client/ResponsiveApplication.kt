@@ -81,6 +81,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostV
 import com.lasthopesoftware.bluewater.client.browsing.items.list.LoadedItemListView
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibrarySearchScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.AllDownloadsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowsedFileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryDestination
@@ -150,18 +151,6 @@ fun ScreenDimensionsScope.NavigateToBrowserLibraryDestination(
 
 		is ItemScreen -> {
 			LoadedItemListView(scopedDependencies, destination.libraryId, destination.item)
-		}
-
-		is DownloadsScreen -> {
-			scopedDependencies.apply {
-				ActiveFileDownloadsView(
-					activeFileDownloadsViewModel = activeFileDownloadsViewModel,
-					trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
-					applicationNavigation = applicationNavigation,
-				)
-
-				activeFileDownloadsViewModel.loadActiveDownloads(destination.libraryId)
-			}
 		}
 
 		is FilePropertySearchScreen, is SearchScreen -> {
@@ -704,6 +693,27 @@ private fun ResponsiveLibraryView(
 				viewModel.loadLibrary(destination.libraryId)
 			}
 		}
+
+		is DownloadsScreen -> {
+			PaddedSystemScreenBox {
+				ActiveFileDownloadsView(
+					activeFileDownloadsViewModel = activeFileDownloadsViewModel,
+					libraryListState = libraryListState,
+					trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
+					applicationNavigation = applicationNavigation,
+				)
+
+				DisposableEffect(destination) {
+					val promisedActiveDownloads = activeFileDownloadsViewModel.loadActiveDownloads(destination.libraryId)
+					val promisedLibraries = libraryListState.loadLibraries()
+
+					onDispose {
+						promisedActiveDownloads.cancel()
+						promisedLibraries.cancel()
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -804,6 +814,38 @@ fun ResponsiveApplication(
 					}
 				}
 
+				is AllDownloadsScreen -> {
+					LocalViewModelStoreOwner.current
+						?.let { viewModelStoreOwner ->
+							ScopedViewModelRegistry(
+								reusedViewModelDependencies,
+								permissionsDependencies,
+								viewModelStoreOwner,
+							)
+						}
+						?.registerBackNav()
+						?.apply {
+							PaddedSystemScreenBox {
+								ActiveFileDownloadsView(
+									activeFileDownloadsViewModel = activeFileDownloadsViewModel,
+									libraryListState = libraryListState,
+									trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
+									applicationNavigation = applicationNavigation,
+								)
+
+								DisposableEffect(destination) {
+									val promisedActiveDownloads = activeFileDownloadsViewModel.loadActiveDownloads()
+									val promisedLibraries = libraryListState.loadLibraries()
+
+									onDispose {
+										promisedActiveDownloads.cancel()
+										promisedLibraries.cancel()
+									}
+								}
+							}
+						}
+				}
+
 				is ActiveLibraryDownloadsScreen -> {
 					routedNavigationDependencies.apply {
 						LaunchedEffect(Unit) {
@@ -847,6 +889,7 @@ fun ResponsiveApplication(
 
 					routedNavigationDependencies.applicationSettingsViewModel.loadSettings()
 				}
+
 				is NewConnectionSettingsScreen -> {
 					LocalViewModelStoreOwner.current
 						?.let { viewModelStoreOwner ->
