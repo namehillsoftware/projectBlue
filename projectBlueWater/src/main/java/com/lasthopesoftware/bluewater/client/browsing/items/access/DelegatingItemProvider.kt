@@ -7,7 +7,7 @@ import com.lasthopesoftware.policies.ExecutionPolicies
 import com.namehillsoftware.handoff.promises.Promise
 
 class DelegatingItemProvider(private val inner: ProvideItems, policies: ExecutionPolicies) : ProvideItems {
-	private val promiseItemsDelegate = policies.applyPolicy<LibraryId, KeyedIdentifier?, List<IItem>>(inner::promiseItems)
+	private val promiseItemsDelegate = policies.applyPolicy(inner::promiseItems)
 
 	override fun promiseItems(libraryId: LibraryId, itemId: KeyedIdentifier?): Promise<List<IItem>> =
 		promiseItemsDelegate(libraryId, itemId)

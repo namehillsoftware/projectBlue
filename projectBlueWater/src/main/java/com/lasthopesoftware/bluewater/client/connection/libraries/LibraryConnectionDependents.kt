@@ -29,7 +29,7 @@ import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectio
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
 import com.lasthopesoftware.policies.caching.CachePromiseFunctions
 import com.lasthopesoftware.policies.caching.CachingPolicyFactory
-import com.lasthopesoftware.policies.caching.LruPromiseCache
+import com.lasthopesoftware.policies.caching.LruCachePolicy
 import com.lasthopesoftware.policies.caching.TimedExpirationPromiseCache
 import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
 import com.lasthopesoftware.policies.retries.RecursivePromiseRetryHandler
@@ -52,7 +52,8 @@ interface LibraryConnectionDependents {
 class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryConnectionDependents {
 	companion object {
 		private val revisionExpirationTime by lazy { Duration.standardSeconds(30) }
-		private const val maxLibraryFiles = 10
+		private const val maxCachedLibraryFiles = 10
+		private const val maxCachedLibraryItems = 20
 	}
 
 	private val guaranteedLibraryConnectionProvider by lazy { GuaranteedLibraryConnectionProvider(application.libraryConnectionProvider) }
@@ -102,7 +103,8 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 	override val itemProvider: ProvideItems by lazy {
 		CachedItemProvider(
 			ItemProvider(guaranteedLibraryConnectionProvider),
-			revisionProvider
+			revisionProvider,
+			LruCachePolicy(maxCachedLibraryItems),
 		)
 	}
 
@@ -110,10 +112,7 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 		RevisionCachedLibraryFileProvider(
 			LibraryFileProvider(application.libraryConnectionProvider),
 			revisionProvider,
-			object : CachingPolicyFactory() {
-				override fun <Input : Any, Output> getCache(): CachePromiseFunctions<Input, Output> =
-					LruPromiseCache(maxLibraryFiles)
-			}
+			LruCachePolicy(maxCachedLibraryFiles),
 		)
 	}
 
