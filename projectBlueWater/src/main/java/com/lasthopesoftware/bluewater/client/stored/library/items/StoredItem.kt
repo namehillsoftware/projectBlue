@@ -16,6 +16,7 @@ class StoredItem : IdentifiableEntity, IEntityCreator, IEntityUpdater {
 
 	// unique with library id
 	var serviceId = ""
+	var itemName = ""
 	var itemType: ItemType? = null
 
 	constructor()
