@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.view
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.FakeStoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileMessage
@@ -17,7 +18,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
-class ActiveDownloads {
+class `Stored files view model` {
 	@Nested
 	inner class `given libraries` {
 		private val libraryId = 28
@@ -28,18 +29,16 @@ class ActiveDownloads {
 			private val otherLibraryIdFileIds = listOf(266, 687)
 
 			private val services by lazy {
-				ActiveFileDownloadsViewModel(
-					mockk {
-						every { promiseDownloadingFiles() } returns Promise(
-							listOf(
-								StoredFile(),
-								StoredFile().setLibraryId(libraryId).setId(497),
-								StoredFile().setLibraryId(libraryId).setId(939),
-							) + otherLibraryIdFileIds.map { id ->
-								StoredFile().setLibraryId(otherLibraryId.id).setId(id)
-							}
-						)
-					},
+				StoredFilesViewModel(
+					FakeStoredFileAccess(
+						*(arrayOf(
+							StoredFile(),
+							StoredFile().setLibraryId(libraryId).setId(497),
+							StoredFile().setLibraryId(libraryId).setId(939),
+						) + otherLibraryIdFileIds.map { id ->
+							StoredFile().setLibraryId(otherLibraryId.id).setId(id)
+						})
+					),
 					RecordingApplicationMessageBus(),
 					mockk {
 						every { promiseIsSyncing() } returns false.toPromise()
@@ -61,10 +60,17 @@ class ActiveDownloads {
 			fun `then the loaded files are correct`() {
 				assertThat(services.syncingFiles.value.size).isEqualTo(5)
 			}
+
+			@Test
+			fun `then the stored files count is correct`() {
+				assertThat(services.allFilesCount.value).isEqualTo(5)
+			}
+
 		}
 	}
 
-	class `given a typical library` {
+	@Nested
+	inner class `given a typical library` {
 
 		private val libraryId = 809
 
@@ -72,26 +78,25 @@ class ActiveDownloads {
 		inner class `and files are downloading` {
 			@Nested
 			inner class `when loading files` {
-				val downloadedFileId = 939
+				val eventuallyDownloadedFileId = 939
+				val alreadyDownloadedFileId = 275
 				val faultyWriteFileId = 665
 				val faultyReadFileId = 368
 				val requeuedFileId = 228
 				private val downloadingFileIds = listOf(148, 132)
-				private val otherLibraryId = LibraryId(469)
-				private val otherLibraryIdFileIds = listOf(553, 379, 961)
 
 				private val services by lazy {
 					val messageBus = RecordingApplicationMessageBus()
 
 					Pair(
 						messageBus,
-						ActiveFileDownloadsViewModel(
+						StoredFilesViewModel(
 							mockk {
-								every { promiseDownloadingFiles() } returns Promise(
+								every { promiseAllStoredFiles(LibraryId(libraryId)) } returns Promise(
 									listOf(
 										StoredFile(),
 										StoredFile().setLibraryId(libraryId).setId(497),
-										StoredFile().setLibraryId(libraryId).setId(939),
+										StoredFile().setLibraryId(libraryId).setId(eventuallyDownloadedFileId),
 										StoredFile().setLibraryId(libraryId).setId(853),
 										StoredFile().setLibraryId(libraryId).setId(148),
 										StoredFile().setLibraryId(libraryId).setId(faultyReadFileId),
@@ -102,10 +107,11 @@ class ActiveDownloads {
 										StoredFile().setLibraryId(libraryId).setId(faultyWriteFileId),
 										StoredFile().setLibraryId(libraryId).setId(43),
 										StoredFile().setLibraryId(libraryId).setId(requeuedFileId),
-									) + otherLibraryIdFileIds.map { id ->
-										StoredFile().setLibraryId(otherLibraryId.id).setId(id)
-									}
+										StoredFile().setLibraryId(libraryId).setId(alreadyDownloadedFileId).setIsDownloadComplete(true)
+									)
 								)
+
+								every { promiseAllStoredFilesCount(LibraryId(libraryId)) } returns 44.toPromise()
 							},
 							messageBus,
 							mockk {
@@ -128,13 +134,13 @@ class ActiveDownloads {
 						.toCloseable()
 						.use {
 							vm.loadActiveDownloads(LibraryId(libraryId)).toExpiringFuture().get()
-							messageBus.sendMessage(StoredFileMessage.FileDownloading(downloadedFileId))
+							messageBus.sendMessage(StoredFileMessage.FileDownloading(eventuallyDownloadedFileId))
 							messageBus.sendMessage(StoredFileMessage.FileDownloading(requeuedFileId))
 							for (id in downloadingFileIds) {
 								messageBus.sendMessage(StoredFileMessage.FileDownloading(id))
 							}
 							messageBus.sendMessage(StoredFileMessage.FileDownloading(faultyWriteFileId))
-							messageBus.sendMessage(StoredFileMessage.FileDownloaded(downloadedFileId))
+							messageBus.sendMessage(StoredFileMessage.FileDownloaded(eventuallyDownloadedFileId))
 							messageBus.sendMessage(StoredFileMessage.FileWriteError(faultyWriteFileId))
 							messageBus.sendMessage(StoredFileMessage.FileDownloading(faultyReadFileId))
 							messageBus.sendMessage(StoredFileMessage.FileReadError(faultyReadFileId))
@@ -145,6 +151,16 @@ class ActiveDownloads {
 				@Test
 				fun `then the view is not loading`() {
 					assertThat(services.second.isLoading.value).isFalse
+				}
+
+				@Test
+				fun `then the stored files count is correct`() {
+					assertThat(services.second.allFilesCount.value).isEqualTo(13)
+				}
+
+				@Test
+				fun `then the synced files are correct`() {
+					assertThat(services.second.syncedFiles.value.map { it.id }).isEqualTo(listOf(alreadyDownloadedFileId, eventuallyDownloadedFileId))
 				}
 
 				@Test

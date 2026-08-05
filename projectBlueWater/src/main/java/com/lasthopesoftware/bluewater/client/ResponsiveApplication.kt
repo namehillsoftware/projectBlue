@@ -119,7 +119,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.minimumMen
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.playlistControlAlpha
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsView
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.StoredFilesView
 import com.lasthopesoftware.bluewater.exceptions.UncaughtExceptionHandlerLogger
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
@@ -696,15 +696,15 @@ private fun ResponsiveLibraryView(
 
 		is DownloadsScreen -> {
 			PaddedSystemScreenBox {
-				ActiveFileDownloadsView(
-					activeFileDownloadsViewModel = activeFileDownloadsViewModel,
+				StoredFilesView(
+					storedFilesViewModel = storedFilesViewModel,
 					libraryListState = libraryListState,
 					trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
 					applicationNavigation = applicationNavigation,
 				)
 
 				DisposableEffect(destination) {
-					val promisedActiveDownloads = activeFileDownloadsViewModel.loadActiveDownloads(destination.libraryId)
+					val promisedActiveDownloads = storedFilesViewModel.loadActiveDownloads(destination.libraryId)
 					val promisedLibraries = libraryListState.loadLibraries()
 
 					onDispose {
@@ -826,15 +826,15 @@ fun ResponsiveApplication(
 						?.registerBackNav()
 						?.apply {
 							PaddedSystemScreenBox {
-								ActiveFileDownloadsView(
-									activeFileDownloadsViewModel = activeFileDownloadsViewModel,
+								StoredFilesView(
+									storedFilesViewModel = storedFilesViewModel,
 									libraryListState = libraryListState,
 									trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
 									applicationNavigation = applicationNavigation,
 								)
 
 								DisposableEffect(destination) {
-									val promisedActiveDownloads = activeFileDownloadsViewModel.loadActiveDownloads()
+									val promisedActiveDownloads = storedFilesViewModel.loadActiveDownloads()
 									val promisedLibraries = libraryListState.loadLibraries()
 
 									onDispose {

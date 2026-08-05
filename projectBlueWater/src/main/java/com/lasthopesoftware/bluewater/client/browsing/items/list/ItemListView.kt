@@ -109,10 +109,10 @@ import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.LoadItemData
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledActiveDownloadsButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSearchButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSettingsButton
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSyncedFilesButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
@@ -427,7 +427,7 @@ fun ItemListMenu(
 			modifier = modifier,
 		)
 
-		LabelledActiveDownloadsButton(
+		LabelledSyncedFilesButton(
 			loadedLibraryState = itemListViewModel,
 			applicationNavigation = applicationNavigation,
 			modifier = modifier,

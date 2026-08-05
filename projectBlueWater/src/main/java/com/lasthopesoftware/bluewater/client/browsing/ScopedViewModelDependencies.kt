@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.search.SearchFi
 import com.lasthopesoftware.bluewater.client.browsing.items.LoadItemData
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.StoredFilesViewModel
 import com.lasthopesoftware.bluewater.shared.android.UndoStack
 
 /**
@@ -19,7 +19,7 @@ interface ScopedViewModelDependencies : ReusedViewModelDependencies {
 	val itemListViewModel: ItemListViewModel
 	val fileListViewModel: FileListViewModel
 	val itemDataLoader: LoadItemData
-	val activeFileDownloadsViewModel: ActiveFileDownloadsViewModel
+	val storedFilesViewModel: StoredFilesViewModel
 	val searchFilesViewModel: SearchFilesViewModel
 	val librarySettingsViewModel: LibrarySettingsViewModel
 	val fileDetailsViewModel: FileDetailsViewModel

@@ -31,17 +31,35 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 	override fun promiseStoredFile(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> =
 		getStoredFileTask(libraryId, serviceFile)
 
-	override fun promiseAllStoredFiles(libraryId: LibraryId): Promise<Collection<StoredFile>> =
+	override fun promiseAllStoredFiles(libraryId: LibraryId?): Promise<Collection<StoredFile>> =
 		promiseTableMessage {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginNonExclusiveTransaction().use {
-					repositoryAccessHelper
-						.mapSql("$selectFromStoredFiles WHERE $libraryIdColumnName = @$libraryIdColumnName")
-						.addParameter(libraryIdColumnName, libraryId.id)
+					libraryId?.run {
+						repositoryAccessHelper
+							.mapSql("$selectFromStoredFiles WHERE $libraryIdColumnName = @$libraryIdColumnName")
+							.addParameter(libraryIdColumnName, libraryId.id)
+							.fetch()
+					} ?: repositoryAccessHelper
+						.mapSql(selectFromStoredFiles)
 						.fetch()
 				}
 			}
 		}
+
+	override fun promiseAllStoredFilesCount(libraryId: LibraryId?): Promise<Int> = promiseTableMessage {
+		RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+			repositoryAccessHelper.beginNonExclusiveTransaction().use {
+				var sql = "SELECT COUNT(*) FROM $tableName"
+				sql += libraryId?.let { " WHERE $libraryIdColumnName = @$libraryIdColumnName" } ?: ""
+				val command = repositoryAccessHelper
+					.mapSql(sql)
+					.addParameter(libraryIdColumnName, libraryId?.id)
+				val returnedCount = command.fetchFirstOrNull<Int>()
+				returnedCount ?: 0
+			}
+		}
+	}
 
 	override fun promiseDanglingFiles(): Promise<Collection<StoredFile>> =
 		promiseTableMessage {
@@ -130,5 +148,6 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 	companion object {
 		private val logger by lazyLogger<StoredFileAccess>()
 		private const val selectFromStoredFiles = "SELECT * FROM $tableName"
+		private const val selectCountFromStoredFiles = "SELECT COUNT(*) FROM $tableName"
 	}
 }

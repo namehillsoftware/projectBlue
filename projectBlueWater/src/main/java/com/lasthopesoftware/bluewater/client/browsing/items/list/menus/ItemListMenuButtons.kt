@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.LoadItemData
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 
 @Composable
-fun LabelledActiveDownloadsButton(
+fun LabelledSyncedFilesButton(
 	loadedLibraryState: LoadedLibraryState,
 	applicationNavigation: NavigateApplication,
 	modifier: Modifier = Modifier,
@@ -27,8 +27,8 @@ fun LabelledActiveDownloadsButton(
 			}
 		},
 		iconPainter = painterResource(id = R.drawable.ic_water),
-		contentDescription = stringResource(id = R.string.activeDownloads),
-		label = stringResource(id = R.string.downloads), // Use shortened version for button size
+		contentDescription = stringResource(id = R.string.synced_files),
+		label = stringResource(id = R.string.synced), // Use shortened version for button size
 		labelMaxLines = 1,
 		modifier = modifier,
 		focusRequester = focusRequester,
@@ -36,7 +36,7 @@ fun LabelledActiveDownloadsButton(
 }
 
 @Composable
-fun LabelledActiveDownloadsButton(
+fun LabelledSyncedFilesButton(
 	applicationNavigation: NavigateApplication,
 	modifier: Modifier = Modifier,
 	focusRequester: FocusRequester? = null,
@@ -46,8 +46,8 @@ fun LabelledActiveDownloadsButton(
 			applicationNavigation.viewAllDownloads()
 		},
 		iconPainter = painterResource(id = R.drawable.ic_water),
-		contentDescription = stringResource(id = R.string.activeDownloads),
-		label = stringResource(id = R.string.downloads), // Use shortened version for button size
+		contentDescription = stringResource(id = R.string.synced_files),
+		label = stringResource(id = R.string.synced), // Use shortened version for button size
 		labelMaxLines = 1,
 		modifier = modifier,
 		focusRequester = focusRequester,

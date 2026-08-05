@@ -16,15 +16,18 @@ import com.lasthopesoftware.observables.MutableInteractionState
 import com.lasthopesoftware.observables.mapNotNull
 import com.lasthopesoftware.promises.extensions.regardless
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicReference
 
-class ActiveFileDownloadsViewModel(
+class StoredFilesViewModel(
 	private val storedFileAccess: AccessStoredFiles,
 	applicationMessages: RegisterForApplicationMessages,
 	private val scheduler: ScheduleSyncs,
 ) : ViewModel(), TrackLoadedViewState {
+
+	private val autoCloseableManager = AutoCloseableManager().also(::addCloseable)
 
 	@Volatile
 	private var isPartiallyUpdating = false
@@ -41,33 +44,89 @@ class ActiveFileDownloadsViewModel(
 	val isSyncing = mutableIsSyncing.asInteractionState()
 	val isSyncStateChangeEnabled = mutableIsSyncStateChangeEnabled.asInteractionState()
 
-	val syncingFiles = LiftedInteractionState(
-		mutableSyncingFilesWithState
-			.mapNotNull()
-			.filter { !isPartiallyUpdating }
-			.map { m ->
-				val downloadingArray = ArrayList<Pair<StoredFile, StoredFileJobState>>()
-				val returnList = LinkedList<Pair<StoredFile, StoredFileJobState>>()
-				val addedFiles = HashSet<Int>(m.values.size)
+	val syncingFiles by lazy {
+		autoCloseableManager.manage(
+			LiftedInteractionState(
+				mutableSyncingFilesWithState
+					.mapNotNull()
+					.filter { !isPartiallyUpdating }
+					.map { m ->
+						val downloadingArray = ArrayList<Pair<StoredFile, StoredFileJobState>>()
+						val returnList = LinkedList<Pair<StoredFile, StoredFileJobState>>()
+						val addedFiles = HashSet<Int>(m.values.size)
 
-				for ((k, p) in m) {
-					val (f, s) = p
-					if (!addedFiles.add(f.id)) continue
-					if (s == StoredFileJobState.Downloading) downloadingArray.add(p)
-					else returnList.add(p)
-				}
+						for ((k, p) in m) {
+							val (f, s) = p
+							if (f.isDownloadComplete || s == StoredFileJobState.Downloaded) continue
+							if (!addedFiles.add(f.id)) continue
+							if (s == StoredFileJobState.Downloading) downloadingArray.add(p)
+							else returnList.add(p)
+						}
 
-				returnList.addAll(0, downloadingArray)
-				returnList
-			},
-		emptyList()
-	)
+						returnList.addAll(0, downloadingArray)
+						returnList
+					},
+				mutableSyncingFilesWithState
+					.value
+					.let { m ->
+						val downloadingArray = ArrayList<Pair<StoredFile, StoredFileJobState>>()
+						val returnList = LinkedList<Pair<StoredFile, StoredFileJobState>>()
+						val addedFiles = HashSet<Int>(m.values.size)
+
+						for ((k, p) in m) {
+							val (f, s) = p
+							if (f.isDownloadComplete || s == StoredFileJobState.Downloaded) continue
+							if (!addedFiles.add(f.id)) continue
+							if (s == StoredFileJobState.Downloading) downloadingArray.add(p)
+							else returnList.add(p)
+						}
+
+						returnList.addAll(0, downloadingArray)
+						returnList
+					}
+			)
+		)
+	}
+
+	val syncedFiles by lazy {
+		autoCloseableManager.manage(
+			LiftedInteractionState(
+				mutableSyncingFilesWithState
+					.mapNotNull()
+					.filter { !isPartiallyUpdating }
+					.map { m ->
+						m.values
+							.asSequence()
+							.filter { (f, s) -> f.isDownloadComplete || s == StoredFileJobState.Downloaded }
+							.map { (f, s) -> f }
+							.toList()
+					},
+				mutableSyncingFilesWithState.value.values
+					.asSequence()
+					.filter { (f, s) -> f.isDownloadComplete || s == StoredFileJobState.Downloaded }
+					.map { (f, s) -> f }
+					.toList()
+			)
+		)
+	}
+
+	val allFilesCount by lazy {
+		autoCloseableManager.manage(
+			LiftedInteractionState(
+				mutableSyncingFilesWithState
+					.mapNotNull()
+					.filter { !isPartiallyUpdating }
+					.map { m -> m.size },
+				mutableSyncingFilesWithState.value.size
+			)
+		)
+	}
 
 	override val isLoading = mutableIsLoading.asInteractionState()
 
 	init {
 		addCloseable(applicationMessages.registerReceiver { message: StoredFileMessage.FileDownloaded ->
-			mutableSyncingFilesWithState.value -= message.storedFileId
+			updateStoredFileState(message.storedFileId, StoredFileJobState.Downloaded)
 		})
 
 		addCloseable(applicationMessages.registerReceiver { message: StoredFileMessage.FileQueued ->
@@ -105,8 +164,9 @@ class ActiveFileDownloadsViewModel(
 	fun loadActiveDownloads(libraryId: LibraryId? = null): Promise<*> {
 		mutableIsLoading.value = true
 		mutableActiveLibraryId.value = libraryId
+
 		return storedFileAccess
-			.promiseDownloadingFiles()
+			.promiseAllStoredFiles(libraryId)
 			.then { storedFiles ->
 				val filteredStoredFiles =
 					libraryId
@@ -115,7 +175,8 @@ class ActiveFileDownloadsViewModel(
 						}
 						?: storedFiles
 
-				mutableSyncingFilesWithState.value = filteredStoredFiles.associate { sf -> sf.id to (sf to StoredFileJobState.Queued) }
+				mutableSyncingFilesWithState.value = filteredStoredFiles
+					.associate { sf -> sf.id to (sf to if (!sf.isDownloadComplete) StoredFileJobState.Queued else StoredFileJobState.Downloaded) }
 			}
 			.must { _ -> mutableIsLoading.value = false }
 	}
@@ -150,6 +211,9 @@ class ActiveFileDownloadsViewModel(
 					?.toPromise()
 					?: storedFileAccess.promiseStoredFile(storedFileId).then { storedFile ->
 						if (storedFile != null && storedFile.libraryId == activeLibraryId.value?.id) {
+							isPartiallyUpdating = true
+							mutableSyncingFilesWithState.value -= storedFile.id
+							isPartiallyUpdating = false
 							mutableSyncingFilesWithState.value += storedFile.id to (storedFile to state)
 						}
 					}
