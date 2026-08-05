@@ -435,7 +435,7 @@ fun ItemListMenu(
 	}
 }
 
-private class NavigationFocusRefs {
+class MenuListNavigationFocusRefs {
 	val listFocus: FocusRequester = FocusRequester()
 	val menuFocus: FocusRequester = FocusRequester()
 }
@@ -459,7 +459,7 @@ private fun ItemListView(
 	onScrollProgress: (Float) -> Unit,
 	modifier: Modifier = Modifier,
 	headerHeight: Dp = 0.dp,
-	navigationFocusRefs: NavigationFocusRefs? = null,
+	menuListNavigationFocusRefs: MenuListNavigationFocusRefs? = null,
 ) {
 	BoxWithConstraints(modifier = modifier) {
 		val isLoading by itemDataLoader.isLoading.subscribeAsState()
@@ -521,7 +521,7 @@ private fun ItemListView(
 				.focusProperties {
 					onEnter = {
 						menuFocusBackAction?.close()
-						menuFocusBackAction = navigationFocusRefs?.run {
+						menuFocusBackAction = menuListNavigationFocusRefs?.run {
 							undoBackStack.addAction {
 								onScrollProgress(0f)
 								menuFocus.requestFocus().toPromise()
@@ -544,7 +544,7 @@ private fun ItemListView(
 					visibleAlpha = .4f,
 					knobCornerRadius = 1.dp,
 				)
-			val listFocus = navigationFocusRefs?.listFocus
+			val listFocus = menuListNavigationFocusRefs?.listFocus
 			if (listFocus != null)
 				modifier = modifier.focusRequester(listFocus)
 			LazyColumn(
@@ -731,7 +731,7 @@ fun ScreenDimensionsScope.ItemListView(
 		val itemValue by itemListViewModel.itemValue.subscribeAsState()
 		if (maxWidth < Dimensions.twoColumnThreshold) {
 
-			val navigationFocusRefs = remember { NavigationFocusRefs() }
+			val menuListNavigationFocusRefs = remember { MenuListNavigationFocusRefs() }
 			VerticalHeaderScaffold(
 				header = {
 					val titleHeightValue by titleHeightScaler.valueState
@@ -864,9 +864,9 @@ fun ScreenDimensionsScope.ItemListView(
 								}
 								.focusGroup()
 								.focusProperties {
-									down = navigationFocusRefs.listFocus
+									down = menuListNavigationFocusRefs.listFocus
 								},
-							menuFocus = navigationFocusRefs.menuFocus,
+							menuFocus = menuListNavigationFocusRefs.menuFocus,
 						)
 					}
 				},
@@ -888,7 +888,7 @@ fun ScreenDimensionsScope.ItemListView(
 						{ _, p -> labeledAnchors.firstOrNull { (_, lp) -> p == lp }?.let { (s, _) -> Text(s) } },
 						anchoredScrollConnectionDispatcher::progressTo,
 						headerHeight = overhangHeight,
-						navigationFocusRefs = navigationFocusRefs,
+						menuListNavigationFocusRefs = menuListNavigationFocusRefs,
 					)
 				},
 				modifier = Modifier
