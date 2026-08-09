@@ -57,7 +57,7 @@ inline fun <T : Any, S : InteractionState<T>> S.subscribeAsState(
 ): State<T> {
 	val state = remember { mutableStateOf(value) }
 	DisposableEffect(this) {
-		val disposable = onEach().subscribe()
+		val disposable = onEach().subscribe { state.value = it }
 		onDispose { disposable.dispose() }
 	}
 	return state
