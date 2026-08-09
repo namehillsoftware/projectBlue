@@ -88,7 +88,7 @@ import com.lasthopesoftware.bluewater.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.topMenuIconWidth
 import com.lasthopesoftware.bluewater.android.ui.theme.Dimensions.viewPaddingUnit
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledActiveDownloadsButton
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSyncedFilesButton
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
@@ -460,7 +460,7 @@ fun ApplicationSettingsMenu(
 			enabled = selectedLibraryId != null
 		)
 
-		LabelledActiveDownloadsButton(
+		LabelledSyncedFilesButton(
 			applicationNavigation = applicationNavigation,
 			modifier = modifier
 		)

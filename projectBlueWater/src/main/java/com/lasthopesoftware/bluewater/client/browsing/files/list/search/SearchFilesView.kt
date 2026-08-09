@@ -97,8 +97,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackTitleItemV
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListContentType
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledActiveDownloadsButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSettingsButton
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSyncedFilesButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
@@ -246,7 +246,7 @@ private fun SearchFilesMenu(
 			enabled = isFileControlsEnabled,
 		)
 
-		LabelledActiveDownloadsButton(
+		LabelledSyncedFilesButton(
 			loadedLibraryState = searchFilesViewModel,
 			applicationNavigation = applicationNavigation,
 			modifier = modifier,

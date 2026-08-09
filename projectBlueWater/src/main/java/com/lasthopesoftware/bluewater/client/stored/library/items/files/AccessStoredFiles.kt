@@ -8,7 +8,8 @@ import com.namehillsoftware.handoff.promises.Promise
 interface AccessStoredFiles {
 	fun promiseStoredFile(storedFileId: Int): Promise<StoredFile?>
 	fun promiseStoredFile(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?>
-	fun promiseAllStoredFiles(libraryId: LibraryId): Promise<Collection<StoredFile>>
+	fun promiseAllStoredFiles(libraryId: LibraryId? = null): Promise<Collection<StoredFile>>
+	fun promiseAllStoredFilesCount(libraryId: LibraryId? = null): Promise<Int>
 	fun promiseDanglingFiles(): Promise<Collection<StoredFile>>
 	fun promiseDownloadingFiles(): Promise<List<StoredFile>>
 	fun deleteStoredFile(storedFile: StoredFile): Promise<Unit>

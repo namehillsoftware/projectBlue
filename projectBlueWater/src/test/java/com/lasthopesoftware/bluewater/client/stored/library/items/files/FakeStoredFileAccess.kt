@@ -13,6 +13,15 @@ class FakeStoredFileAccess(vararg initialStoredFiles: Pair<LibraryId, ServiceFil
 
 	val storedFiles = ConcurrentHashMap<Int, StoredFile>()
 
+	constructor(vararg initialStoredFiles: StoredFile) : this(*emptyArray<Pair<LibraryId, ServiceFile>>()) {
+		for (sf in initialStoredFiles) {
+			sf.setId(storedFileCounter.getAndIncrement())
+			storedFiles[sf.id] = sf
+		}
+	}
+
+	constructor() : this(*emptyArray<Pair<LibraryId, ServiceFile>>())
+
 	init {
 	    for ((libraryId, serviceFile) in initialStoredFiles)
 			promiseNewStoredFile(libraryId, serviceFile)
@@ -25,8 +34,12 @@ class FakeStoredFileAccess(vararg initialStoredFiles: Pair<LibraryId, ServiceFil
 
     override fun promiseStoredFile(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> =
 		storedFiles.values.firstOrNull { sf -> sf.libraryId == libraryId.id && sf.serviceId == serviceFile.key }.toPromise()
-	override fun promiseAllStoredFiles(libraryId: LibraryId): Promise<Collection<StoredFile>> =
-		storedFiles.values.filter { it.libraryId == libraryId.id }.toPromise()
+
+	override fun promiseAllStoredFiles(libraryId: LibraryId?): Promise<Collection<StoredFile>> =
+		(libraryId?.run { storedFiles.values.filter { it.libraryId == id } } ?: storedFiles.values).toPromise()
+
+	override fun promiseAllStoredFilesCount(libraryId: LibraryId?): Promise<Int> =
+		(libraryId?.run { storedFiles.values.filter { it.libraryId == id } }?.count() ?: storedFiles.count()).toPromise()
 
 	override fun promiseDownloadingFiles(): Promise<List<StoredFile>> =
 		storedFiles.values.filter { sf -> !sf.isDownloadComplete }.toPromise()

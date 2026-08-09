@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.AggregateItemViewMod
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.StoredFilesViewModel
 import com.lasthopesoftware.bluewater.shared.android.UndoStackApplicationNavigation
 import com.lasthopesoftware.bluewater.shared.android.ViewModelUndoStack
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
@@ -46,8 +46,8 @@ class ScopedViewModelRegistry(
 		)
 	}
 
-	override val activeFileDownloadsViewModel by viewModelStoreOwner.buildViewModelLazily {
-        ActiveFileDownloadsViewModel(
+	override val storedFilesViewModel by viewModelStoreOwner.buildViewModelLazily {
+        StoredFilesViewModel(
             storedFileAccess,
             registerForApplicationMessages,
             syncScheduler,

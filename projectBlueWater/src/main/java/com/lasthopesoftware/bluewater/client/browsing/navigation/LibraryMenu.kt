@@ -202,13 +202,13 @@ fun LibraryMenu(
 				) {
 					Icon(
 						painter = painterResource(id = R.drawable.ic_water),
-						contentDescription = stringResource(id = R.string.activeDownloads),
+						contentDescription = stringResource(id = R.string.synced_files),
 						modifier = Modifier.iconModifier(this)
 					)
 				}
 
 				Text(
-					text = stringResource(R.string.activeDownloads),
+					text = stringResource(R.string.synced_files),
 				)
 			}
 

@@ -40,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,6 +65,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.android.ui.calculateSummaryColumnWidth
 import com.lasthopesoftware.bluewater.android.ui.components.BackButton
+import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.DeferredPreScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.FullScreenScrollConnectedScaler
 import com.lasthopesoftware.bluewater.android.ui.components.GradientSide
@@ -94,18 +96,27 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
+import com.lasthopesoftware.observables.mapNotNull
 import com.lasthopesoftware.observables.subscribeAsState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 private val expandedTitleHeight = Dimensions.expandedTitleHeight
 private val appBarHeight = Dimensions.appBarHeight
 private val boxHeight = expandedTitleHeight + appBarHeight
 
+enum class ActiveFileView {
+	ActiveDownloads,
+	SyncedFiles
+}
+
 @Composable
 private fun SyncMenu(
-	activeFileDownloadsViewModel: ActiveFileDownloadsViewModel,
+	storedFilesViewModel: StoredFilesViewModel,
 	libraryListState: LibraryListState,
+	activeFileView: ActiveFileView,
+	onActiveFileViewChanged: (ActiveFileView) -> Unit,
 	modifier: Modifier = Modifier,
 ) {
 	Column(
@@ -124,7 +135,7 @@ private fun SyncMenu(
 				val scrollState = rememberScrollState()
 
 				val libraries by libraryListState.libraries.subscribeAsState()
-				val activeLibraryId by activeFileDownloadsViewModel.activeLibraryId.subscribeAsState()
+				val activeLibraryId by storedFilesViewModel.activeLibraryId.subscribeAsState()
 
 				Column(
 					modifier = Modifier.clickable { expanded = true },
@@ -153,7 +164,7 @@ private fun SyncMenu(
 				) {
 					DropdownMenuItem(
 						onClick = {
-							activeFileDownloadsViewModel.loadActiveDownloads()
+							storedFilesViewModel.loadActiveDownloads()
 							expanded = false
 						}
 					) {
@@ -168,7 +179,7 @@ private fun SyncMenu(
 					for ((id, name) in libraries) {
 						DropdownMenuItem(
 							onClick = {
-								activeFileDownloadsViewModel.loadActiveDownloads(id)
+								storedFilesViewModel.loadActiveDownloads(id)
 								expanded = false
 							}
 						) {
@@ -183,15 +194,12 @@ private fun SyncMenu(
 				}
 			}
 
-			val isSyncing by activeFileDownloadsViewModel.isSyncing.subscribeAsState()
-			val label = stringResource(
-				if (isSyncing) R.string.stop_sync_button
-				else R.string.start_sync_button
-			)
+			val isSyncing by storedFilesViewModel.isSyncing.subscribeAsState()
+			val label = stringResource(if (isSyncing) R.string.stop_sync_button else R.string.start_sync_button)
 
-			val isSyncChangeEnabled by activeFileDownloadsViewModel.isSyncStateChangeEnabled.subscribeAsState()
+			val isSyncChangeEnabled by storedFilesViewModel.isSyncStateChangeEnabled.subscribeAsState()
 			MenuIcon(
-				onClick = { activeFileDownloadsViewModel.toggleSync() },
+				onClick = { storedFilesViewModel.toggleSync() },
 				icon = {
 					var modifier: Modifier = Modifier.size(topMenuIconSize)
 
@@ -220,6 +228,30 @@ private fun SyncMenu(
 				enabled = isSyncChangeEnabled,
 				modifier = Modifier.requiredWidth(topMenuIconWidth),
 			)
+
+			ColumnMenuIcon(
+				onClick = {
+					onActiveFileViewChanged(ActiveFileView.SyncedFiles)
+				},
+				iconPainter = painterResource(id = R.drawable.select_library_36dp),
+				contentDescription = stringResource(id = R.string.synced_files),
+				label = stringResource(id = R.string.synced), // Use shortened version for button size
+				labelMaxLines = 1,
+				enabled = activeFileView != ActiveFileView.SyncedFiles,
+				modifier = Modifier.requiredWidth(topMenuIconWidth),
+			)
+
+			ColumnMenuIcon(
+				onClick = {
+					onActiveFileViewChanged(ActiveFileView.ActiveDownloads)
+				},
+				iconPainter = painterResource(id = R.drawable.ic_water),
+				contentDescription = stringResource(id = R.string.syncing_files),
+				label = stringResource(id = R.string.syncing), // Use shortened version for button size
+				labelMaxLines = 1,
+				enabled = activeFileView != ActiveFileView.ActiveDownloads,
+				modifier = Modifier.requiredWidth(topMenuIconWidth),
+			)
 		}
 	}
 }
@@ -228,7 +260,7 @@ private fun SyncMenu(
 fun RenderTrackHeaderItem(
 	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewFileItem>,
 	storedFile: StoredFile,
-	isActive: Boolean
+	isActive: Boolean = false
 ) {
 	val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 
@@ -250,13 +282,17 @@ fun RenderTrackHeaderItem(
 
 @Composable
 fun DownloadingFilesList(
-	activeFileDownloadsViewModel: ActiveFileDownloadsViewModel,
+	storedFilesViewModel: StoredFilesViewModel,
 	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewFileItem>,
 	lazyListState: LazyListState,
 	modifier: Modifier = Modifier,
 	headerHeight: Dp = 0.dp,
 ) {
-	val files by activeFileDownloadsViewModel.syncingFiles.subscribeAsState()
+	val files by storedFilesViewModel
+		.syncingFiles
+		.subscribeAsState {
+			mapNotNull().debounce(1, TimeUnit.SECONDS)
+		}
 
 	LazyColumn(
 		state = lazyListState,
@@ -297,16 +333,66 @@ fun DownloadingFilesList(
 	}
 }
 
+@Composable
+fun SyncedFilesList(
+	storedFilesViewModel: StoredFilesViewModel,
+	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewFileItem>,
+	lazyListState: LazyListState,
+	modifier: Modifier = Modifier,
+	headerHeight: Dp = 0.dp,
+) {
+	val files by storedFilesViewModel.syncedFiles.subscribeAsState {
+		mapNotNull().debounce(1, TimeUnit.SECONDS)
+	}
+
+	LazyColumn(
+		state = lazyListState,
+		contentPadding = PaddingValues(top = headerHeight),
+		modifier = modifier,
+	) {
+		item(contentType = ItemListContentType.Header) {
+			Box(
+				modifier = Modifier
+					.padding(viewPaddingUnit)
+					.height(48.dp)
+			) {
+				ProvideTextStyle(MaterialTheme.typography.h5) {
+					val allFilesCount by storedFilesViewModel.allFilesCount.subscribeAsState()
+					Text(
+						text = stringResource(R.string.files_ratio, files.size, allFilesCount),
+						fontWeight = FontWeight.Bold,
+						modifier = Modifier
+							.padding(viewPaddingUnit)
+							.align(Alignment.CenterStart)
+					)
+				}
+			}
+		}
+
+		itemsIndexed(
+			files,
+			{ _, f -> f.id },
+			contentType = { _, _ -> ItemListContentType.File }) { i, f ->
+			RenderTrackHeaderItem(trackHeadlineViewModelProvider, f)
+
+			if (i < files.lastIndex)
+				Divider()
+		}
+	}
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 @Composable
-fun ScreenDimensionsScope.ActiveFileDownloadsView(
-    activeFileDownloadsViewModel: ActiveFileDownloadsViewModel,
+fun ScreenDimensionsScope.StoredFilesView(
+	storedFilesViewModel: StoredFilesViewModel,
 	libraryListState: LibraryListState,
-    trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewFileItem>,
-    applicationNavigation: NavigateApplication,
+	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewFileItem>,
+	applicationNavigation: NavigateApplication,
 ) {
 	ControlSurface {
-		val isLoading by activeFileDownloadsViewModel.isLoading.subscribeAsState()
+		var activeView by rememberSaveable { mutableStateOf(ActiveFileView.SyncedFiles) }
+
+		val isLoading by storedFilesViewModel.isLoading.subscribeAsState()
 
 		val lazyListState = rememberLazyListState()
 		if (maxWidth < Dimensions.twoColumnThreshold) {
@@ -353,7 +439,7 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 
 							ProvideTextStyle(MaterialTheme.typography.h5) {
 								val startPadding by rememberTitleStartPadding(heightScaler.progressState)
-								val header = stringResource(id = R.string.activeDownloads)
+								val header = stringResource(id = R.string.synced_files)
 								MarqueeText(
 									text = header,
 									overflow = TextOverflow.Ellipsis,
@@ -366,7 +452,9 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 							}
 
 							// Always draw box to help the collapsing toolbar measure minimum size
-							Box(modifier = Modifier.height(appBarHeight).fillMaxWidth()) {
+							Box(modifier = Modifier
+								.height(appBarHeight)
+								.fillMaxWidth()) {
 								BackButton(
 									applicationNavigation::navigateUp,
 									Modifier
@@ -423,8 +511,10 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 							.clipToBounds()
 					) {
 						SyncMenu(
-							activeFileDownloadsViewModel,
+							storedFilesViewModel,
 							libraryListState,
+							activeFileView = activeView,
+							onActiveFileViewChanged = { v -> activeView = v },
 							modifier = Modifier
 								.graphicsLayer {
 									translationY = (menuHeightValue - topMenuHeightPx) * 0.5f
@@ -433,11 +523,19 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 					}
 				},
 				content = { headerHeight ->
-					if (isLoading) {
-						ListLoading(modifier = Modifier.fillMaxSize())
-					} else {
-						DownloadingFilesList(
-							activeFileDownloadsViewModel = activeFileDownloadsViewModel,
+					when {
+						isLoading -> ListLoading(modifier = Modifier.fillMaxSize())
+						activeView == ActiveFileView.ActiveDownloads -> DownloadingFilesList(
+							storedFilesViewModel = storedFilesViewModel,
+							trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
+							lazyListState = lazyListState,
+							modifier = Modifier
+								.fillMaxSize()
+								.focusRequester(listFocus),
+							headerHeight = headerHeight
+						)
+						else -> SyncedFilesList(
+							storedFilesViewModel = storedFilesViewModel,
 							trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
 							lazyListState = lazyListState,
 							modifier = Modifier
@@ -455,7 +553,7 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 			Row(
 				modifier = Modifier.fillMaxSize(),
 			) {
-				val menuWidth = this@ActiveFileDownloadsView.calculateSummaryColumnWidth()
+				val menuWidth = this@StoredFilesView.calculateSummaryColumnWidth()
 				Column(
 					modifier = Modifier.width(menuWidth),
 				) {
@@ -467,7 +565,7 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 							modifier = Modifier.padding(topRowOuterPadding)
 						)
 
-						val header = stringResource(id = R.string.activeDownloads)
+						val header = stringResource(id = R.string.synced_files)
 
 						ProvideTextStyle(MaterialTheme.typography.h5) {
 							Text(
@@ -482,19 +580,28 @@ fun ScreenDimensionsScope.ActiveFileDownloadsView(
 					}
 
 					SyncMenu(
-						activeFileDownloadsViewModel,
+						storedFilesViewModel,
 						libraryListState,
+						activeFileView = activeView,
+						onActiveFileViewChanged = { v -> activeView = v },
 					)
 				}
 
-				if (isLoading) {
-					ListLoading(modifier = Modifier.fillMaxSize())
-				} else {
-					DownloadingFilesList(
-						activeFileDownloadsViewModel = activeFileDownloadsViewModel,
+				when {
+					isLoading -> ListLoading(modifier = Modifier.fillMaxSize())
+					activeView == ActiveFileView.ActiveDownloads -> DownloadingFilesList(
+						storedFilesViewModel = storedFilesViewModel,
 						trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
 						lazyListState = lazyListState,
-						modifier = Modifier.fillMaxSize(),
+						modifier = Modifier
+							.fillMaxSize(),
+					)
+					else -> SyncedFilesList(
+						storedFilesViewModel = storedFilesViewModel,
+						trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
+						lazyListState = lazyListState,
+						modifier = Modifier
+							.fillMaxSize(),
 					)
 				}
 			}

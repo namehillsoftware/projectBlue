@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">project blue</string>
     <string name="app_logo">%1$s logo</string>
-    <string name="downloads">Downloads</string>
+    <string name="syncing">Syncing</string>
     <string name="company_name">Name Hill Software</string>
     <string name="copyright_year">2015</string>
     <string name="settings">Settings</string>
@@ -113,7 +113,9 @@
     <string name="no">No</string>
     <string name="kill_playback">Kill Active Playback Engine</string>
     <string name="readOnlyConnection">Read-only Connection</string>
-    <string name="activeDownloads">Active Downloads</string>
+    <string name="syncing_files">Syncing Files</string>
+    <string name="synced">Synced</string>
+    <string name="synced_files">Synced Files</string>
     <string name="edit_now_playing_list">Edit Now Playing</string>
     <string name="finish_edit_now_playing_list">Finish Editing Now Playing</string>
     <string name="edit_file_properties">Edit File Properties</string>
@@ -177,4 +179,5 @@
     <string name="more_info">More Info</string>
     <string name="solutions">Solutions</string>
     <string name="no_server">No server</string>
+    <string name="files_ratio">%1$s/%2$s files</string>
 </resources>
