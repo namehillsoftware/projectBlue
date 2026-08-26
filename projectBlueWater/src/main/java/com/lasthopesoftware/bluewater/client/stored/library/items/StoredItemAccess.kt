@@ -11,9 +11,9 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemHelp
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.repository.fetch
 import com.lasthopesoftware.bluewater.repository.fetchFirstOrNull
+import com.lasthopesoftware.bluewater.repository.insert
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.querydroid.SqLiteAssistants
 
 class StoredItemAccess(private val context: Context) : AccessStoredItems {
 	override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier): Promise<Boolean> =
@@ -25,8 +25,8 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 
 	override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean): Promise<Unit> {
 		val inferredItem = inferItem(item)
-		return if (enable) enableItemSync(libraryId, inferredItem, StoredItemHelpers.getListType(inferredItem))
-		else disableItemSync(libraryId, inferredItem, StoredItemHelpers.getListType(inferredItem))
+		return if (enable) enableItemSync(libraryId, inferredItem, inferredItem.storedItemType)
+		else disableItemSync(libraryId, inferredItem, inferredItem.storedItemType)
 	}
 
 	override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean): Promise<Unit> {
@@ -37,8 +37,7 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 	override fun isItemMarkedForSync(libraryId: LibraryId, itemId: KeyedIdentifier): Promise<Boolean> =
 		promiseTableMessage {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-				isItemMarkedForSync(
-					repositoryAccessHelper,
+				repositoryAccessHelper.isItemMarkedForSync(
 					libraryId,
 					itemId,
 					itemId.storedItemType,
@@ -50,11 +49,10 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 		promiseTableMessage {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				val inferredItem = inferItem(item)
-				isItemMarkedForSync(
-					repositoryAccessHelper,
+				repositoryAccessHelper.isItemMarkedForSync(
 					libraryId,
 					inferredItem,
-					StoredItemHelpers.getListType(inferredItem)
+					inferredItem.storedItemType
 				)
 			}
 		}
@@ -72,35 +70,41 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 			}
 		}
 
+	override fun updateStoredItemMetadata(libraryId: LibraryId, item: IItem): Promise<Unit> = promiseTableMessage {
+		RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+			val inferredItem = inferItem(item)
+			repositoryAccessHelper.updateStoredItemMetadata(libraryId, inferredItem)
+		}
+	}
+
 	private fun enableItemSync(libraryId: LibraryId, item: IItem, itemType: ItemType) =
 		promiseTableMessage<Unit> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-				if (!isItemMarkedForSync(repositoryAccessHelper, libraryId, item, itemType))
-					repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
-						repositoryAccessHelper
-							.mapSql(storedItemInsertSql)
-							.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
-							.addParameter(StoredItem.serviceIdColumnName, item.key)
-							.addParameter(StoredItem.itemTypeColumnName, itemType)
-							.execute()
-						closeableTransaction.setTransactionSuccessful()
-					}
+				if (!repositoryAccessHelper.isItemMarkedForSync(libraryId, item, itemType))
+					repositoryAccessHelper.insert(
+						StoredItem.tableName,
+						StoredItem(
+							libraryId = libraryId.id,
+							serviceId = item.key,
+							itemType = itemType,
+							itemName = item.value,
+						),
+					)
 			}
 		}
 
 	private fun enableItemSync(libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType) =
 		promiseTableMessage<Unit> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-				if (!isItemMarkedForSync(repositoryAccessHelper, libraryId, item, itemType))
-					repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
-						repositoryAccessHelper
-							.mapSql(storedItemInsertSql)
-							.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
-							.addParameter(StoredItem.serviceIdColumnName, item.id)
-							.addParameter(StoredItem.itemTypeColumnName, itemType)
-							.execute()
-						closeableTransaction.setTransactionSuccessful()
-					}
+				if (!repositoryAccessHelper.isItemMarkedForSync(libraryId, item, itemType))
+					repositoryAccessHelper.insert(
+						StoredItem.tableName,
+						StoredItem(
+							libraryId = libraryId.id,
+							serviceId = item.id,
+							itemType = itemType,
+						),
+					)
 			}
 		}
 
@@ -157,22 +161,14 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 		}
 
 	companion object {
-		private val storedItemInsertSql by lazy {
-			SqLiteAssistants.InsertBuilder.fromTable(StoredItem.tableName)
-				.addColumn(StoredItem.libraryIdColumnName)
-				.addColumn(StoredItem.serviceIdColumnName)
-				.addColumn(StoredItem.itemTypeColumnName)
-				.buildQuery()
-		}
+		private fun RepositoryAccessHelper.isItemMarkedForSync(libraryId: LibraryId, item: IItem, itemType: ItemType): Boolean =
+			getStoredItem(libraryId, item, itemType) != null
 
-		private fun isItemMarkedForSync(helper: RepositoryAccessHelper, libraryId: LibraryId, item: IItem, itemType: ItemType): Boolean =
-			getStoredItem(helper, libraryId, item, itemType) != null
+		private fun RepositoryAccessHelper.isItemMarkedForSync(libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType): Boolean =
+			this.getStoredItem(libraryId, item, itemType) != null
 
-		private fun isItemMarkedForSync(helper: RepositoryAccessHelper, libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType): Boolean =
-			getStoredItem(helper, libraryId, item, itemType) != null
-
-		private fun getStoredItem(helper: RepositoryAccessHelper, libraryId: LibraryId, item: IItem, itemType: ItemType): StoredItem? =
-			helper.mapSql("""
+		private fun RepositoryAccessHelper.getStoredItem(libraryId: LibraryId, item: IItem, itemType: ItemType): StoredItem? =
+			mapSql("""
 					SELECT * FROM ${StoredItem.tableName}
 					WHERE ${StoredItem.serviceIdColumnName} = @${StoredItem.serviceIdColumnName}
 					AND ${StoredItem.libraryIdColumnName} = @${StoredItem.libraryIdColumnName}
@@ -182,8 +178,8 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 				.addParameter(StoredItem.itemTypeColumnName, itemType)
 				.fetchFirstOrNull()
 
-		private fun getStoredItem(helper: RepositoryAccessHelper, libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType): StoredItem? =
-			helper.mapSql("""
+		private fun RepositoryAccessHelper.getStoredItem(libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType): StoredItem? =
+			mapSql("""
 					SELECT * FROM ${StoredItem.tableName}
 					WHERE ${StoredItem.serviceIdColumnName} = @${StoredItem.serviceIdColumnName}
 					AND ${StoredItem.libraryIdColumnName} = @${StoredItem.libraryIdColumnName}
@@ -193,10 +189,25 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 				.addParameter(StoredItem.itemTypeColumnName, itemType)
 				.fetchFirstOrNull()
 
+		private fun RepositoryAccessHelper.updateStoredItemMetadata(libraryId: LibraryId, item: IItem) =
+			mapSql(
+				"""
+				UPDATE ${StoredItem.tableName}
+				SET ${StoredItem.itemNameColumnName} = @${StoredItem.itemNameColumnName}
+				WHERE ${StoredItem.serviceIdColumnName} = @${StoredItem.serviceIdColumnName}
+				AND ${StoredItem.libraryIdColumnName} = @${StoredItem.libraryIdColumnName}
+				AND ${StoredItem.itemTypeColumnName} = @${StoredItem.itemTypeColumnName}
+				""")
+				.addParameter(StoredItem.itemNameColumnName, item.value)
+				.addParameter(StoredItem.serviceIdColumnName, item.key)
+				.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
+				.addParameter(StoredItem.itemTypeColumnName, item.storedItemType)
+				.execute()
+
 		private fun inferItem(item: IItem): IItem {
 			if (item is Item) {
 				val playlist = item.playlistId
-				if (playlist != null) return Playlist(playlist.id)
+				if (playlist != null) return Playlist(playlist.id, item.value)
 			}
 			return item
 		}

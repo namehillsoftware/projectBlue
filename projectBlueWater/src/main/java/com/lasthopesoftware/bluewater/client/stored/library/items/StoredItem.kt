@@ -10,21 +10,20 @@ import com.namehillsoftware.querydroid.SqLiteAssistants
 import com.namehillsoftware.querydroid.SqLiteCommand
 
 @Keep
-class StoredItem : IdentifiableEntity, IEntityCreator, IEntityUpdater {
-	override var id = 0
-	var libraryId = 0
-
+data class StoredItem(
+	override var id: Int = 0,
+	var libraryId: Int = 0,
 	// unique with library id
-	var serviceId = ""
-	var itemName = ""
-	var itemType: ItemType? = null
+	var serviceId: String = "",
+	var itemType: ItemType? = null,
+	var itemName: String? = null,
+) : IdentifiableEntity, IEntityCreator, IEntityUpdater {
 
-	constructor()
-
-	constructor(libraryId: Int, serviceId: String, itemType: ItemType) {
+	constructor(libraryId: Int, serviceId: String, itemType: ItemType, itemName: String? = null) : this() {
 		this.libraryId = libraryId
 		this.serviceId = serviceId
 		this.itemType = itemType
+		this.itemName = itemName
 	}
 
 	override fun onCreate(db: SQLiteDatabase) = db.execSQL(createTableSql)
@@ -57,6 +56,10 @@ class StoredItem : IdentifiableEntity, IEntityCreator, IEntityUpdater {
 			db.execSQL("DROP TABLE `$tableName`")
 			db.execSQL("ALTER TABLE `$tempTableName` RENAME TO `$tableName`")
 		}
+
+		if (oldVersion < 24) {
+			db.execSQL("ALTER TABLE `$tableName` ADD COLUMN `$itemNameColumnName` VARCHAR")
+		}
 	}
 
 	@Keep
@@ -87,7 +90,15 @@ class StoredItem : IdentifiableEntity, IEntityCreator, IEntityUpdater {
 		const val serviceIdColumnName = "serviceId"
 		const val libraryIdColumnName = "libraryId"
 		const val itemTypeColumnName = "itemType"
-		private const val createTableSql = "CREATE TABLE IF NOT EXISTS `StoredItems` (`id` INTEGER PRIMARY KEY AUTOINCREMENT , `itemType` VARCHAR , `libraryId` INTEGER , `serviceId` VARCHAR , UNIQUE (`itemType`,`libraryId`,`serviceId`) ) "
+		const val itemNameColumnName = "itemName"
+		private const val createTableSql =
+			"""CREATE TABLE IF NOT EXISTS `$tableName`(
+				`id` INTEGER PRIMARY KEY AUTOINCREMENT ,
+				`$itemTypeColumnName` VARCHAR,
+				`$libraryIdColumnName` INTEGER,
+				`$serviceIdColumnName` VARCHAR,
+				`$itemNameColumnName` VARCHAR,
+				UNIQUE (`$itemTypeColumnName`,`$libraryIdColumnName`,`$serviceIdColumnName`) ) """
 
 		private fun storedItemsInsertStatement(tableName: String) = SqLiteAssistants.InsertBuilder
 			.fromTable(tableName)
