@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.FreshestR
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFreshLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
+import com.lasthopesoftware.bluewater.client.browsing.items.access.BroadcastingItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.access.DelegatingItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
@@ -102,7 +103,10 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 
 	override val itemProvider: ProvideItems by lazy {
 		CachedItemProvider(
-			ItemProvider(guaranteedLibraryConnectionProvider),
+			BroadcastingItemProvider(
+				ItemProvider(guaranteedLibraryConnectionProvider),
+				application.sendApplicationMessages,
+			),
 			revisionProvider,
 			LruCachePolicy(maxCachedLibraryItems),
 		)

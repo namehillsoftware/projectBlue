@@ -38,20 +38,6 @@ fun <T, S : MutableInteractionState<T>> S.subscribeAsMutableState(
 }
 
 @Composable
-inline fun <T, S : InteractionState<T>, R : Any> S.subscribeAsState(
-	crossinline transform: (T) -> R,
-	noinline onEach: (S.() -> Observable<R>)? = null,
-): State<R> {
-	val onEach = onEach ?: { mapNotNull().map { transform(it) } }
-	val state = remember { mutableStateOf(transform(value)) }
-	DisposableEffect(this) {
-		val disposable = onEach().subscribe()
-		onDispose { disposable.dispose() }
-	}
-	return state
-}
-
-@Composable
 inline fun <T : Any, S : InteractionState<T>> S.subscribeAsState(
 	crossinline onEach: S.() -> Observable<T>,
 ): State<T> {

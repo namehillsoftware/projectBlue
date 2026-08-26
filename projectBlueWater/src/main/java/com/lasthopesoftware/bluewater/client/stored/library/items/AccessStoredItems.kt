@@ -13,4 +13,5 @@ interface AccessStoredItems {
     fun isItemMarkedForSync(libraryId: LibraryId, itemId: KeyedIdentifier): Promise<Boolean>
 	fun promiseStoredItems(libraryId: LibraryId): Promise<Collection<StoredItem>>
 	fun disableAllLibraryItems(libraryId: LibraryId): Promise<Unit>
+	fun updateStoredItemMetadata(libraryId: LibraryId, item: IItem): Promise<Unit>
 }
