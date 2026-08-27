@@ -101,7 +101,7 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 		)
 	}
 
-	override val itemProvider: ProvideItems by lazy {
+	override val itemProvider by lazy {
 		CachedItemProvider(
 			BroadcastingItemProvider(
 				ItemProvider(guaranteedLibraryConnectionProvider),

@@ -55,7 +55,7 @@ open class FakeStoredItemAccess(vararg initialStoredItems: StoredItem) : AccessS
 	}
 
 	override fun promiseStoredItems(libraryId: LibraryId): Promise<Collection<StoredItem>> {
-		return Promise(inMemoryStoredItems.toList())
+		return Promise(inMemoryStoredItems.filter { s -> s.libraryId == libraryId.id })
 	}
 
 	override fun disableAllLibraryItems(libraryId: LibraryId): Promise<Unit> {
