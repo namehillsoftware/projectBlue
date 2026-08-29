@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items
 
+import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
@@ -7,7 +9,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
-class `Viewing synced items` {
+class `Viewing stored items` {
 
 	@Nested
 	inner class `Given stored items` {
@@ -52,7 +54,7 @@ class `Viewing synced items` {
 			}
 
 			private val mut by lazy {
-				SyncedItemsListViewModel(FakeStoredItemAccess(*storedItems))
+				StoredItemsListViewModel(FakeStoredItemAccess(*storedItems))
 			}
 
 			@BeforeAll
@@ -61,8 +63,16 @@ class `Viewing synced items` {
 			}
 
 			@Test
+			fun `then the loaded library id is correct`() {
+				assertThat(mut.loadedLibraryId).isEqualTo(LibraryId(libraryId))
+			}
+
+			@Test
 			fun `then only expected items are loaded`() {
-				assertThat(mut.storedItems.value).isEqualTo(expectedStoredItems)
+				assertThat(mut.items.value).isEqualTo(expectedStoredItems.map {
+					if (it.itemType != StoredItem.ItemType.PLAYLIST) Item(it.serviceId, it.itemName)
+					else Playlist(it.serviceId, it.itemName)
+				})
 			}
 		}
 	}
