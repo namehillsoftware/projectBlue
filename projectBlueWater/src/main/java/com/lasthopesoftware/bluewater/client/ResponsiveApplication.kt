@@ -77,7 +77,10 @@ import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.search.SearchFilesView
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LibraryFilePropertiesDependentsRegistry
+import com.lasthopesoftware.bluewater.client.browsing.items.LocalItem
+import com.lasthopesoftware.bluewater.client.browsing.items.StoredLocalItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.LoadedItemListView
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibrarySearchScreen
@@ -102,6 +105,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.ResponsiveDesti
 import com.lasthopesoftware.bluewater.client.browsing.navigation.RoutedNavigationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SearchScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SearchedFileDetailsScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.StoredItemsScreen
 import com.lasthopesoftware.bluewater.client.browsing.registerBackNav
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
@@ -150,7 +154,52 @@ fun ScreenDimensionsScope.NavigateToBrowserLibraryDestination(
 		}
 
 		is ItemScreen -> {
-			LoadedItemListView(scopedDependencies, destination.libraryId, destination.item)
+			if (destination.item !is LocalItem) LoadedItemListView(scopedDependencies, destination.libraryId, destination.item)
+			else when (destination.item) {
+				is StoredLocalItem -> scopedDependencies.apply {
+					ItemListView(
+						itemListViewModel = storedItemsListViewModel,
+						fileListViewModel = fileListViewModel,
+						itemDataLoader = storedItemsListViewModel,
+						nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
+						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+						trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+						childItemViewModelProvider = reusableChildItemViewModelProvider,
+						applicationNavigation = applicationNavigation,
+						playbackLibraryItems = playbackLibraryItems,
+						playbackServiceController = playbackServiceController,
+						stringResources = stringResources,
+						undoBackStack = undoBackStackBuilder,
+					)
+
+					ViewModelInitAction {
+						storedItemsListViewModel.loadItem(destination.libraryId)
+					}
+				}
+			}
+		}
+
+		is StoredItemsScreen -> {
+			scopedDependencies.apply {
+				ItemListView(
+					itemListViewModel = storedItemsListViewModel,
+					fileListViewModel = fileListViewModel,
+					itemDataLoader = storedItemsListViewModel,
+					nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
+					itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+					trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+					childItemViewModelProvider = reusableChildItemViewModelProvider,
+					applicationNavigation = applicationNavigation,
+					playbackLibraryItems = playbackLibraryItems,
+					playbackServiceController = playbackServiceController,
+					stringResources = stringResources,
+					undoBackStack = undoBackStackBuilder,
+				)
+
+				ViewModelInitAction {
+					storedItemsListViewModel.loadItem(destination.libraryId)
+				}
+			}
 		}
 
 		is FilePropertySearchScreen, is SearchScreen -> {

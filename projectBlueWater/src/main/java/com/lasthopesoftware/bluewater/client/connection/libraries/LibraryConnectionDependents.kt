@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.access.BroadcastingI
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.access.DelegatingItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.access.LocalItemEnrichingProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemPlayback
 import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
@@ -103,9 +104,12 @@ class LibraryConnectionRegistry(application: ApplicationDependencies) : LibraryC
 
 	override val itemProvider by lazy {
 		CachedItemProvider(
-			BroadcastingItemProvider(
-				ItemProvider(guaranteedLibraryConnectionProvider),
-				application.sendApplicationMessages,
+			LocalItemEnrichingProvider(
+				BroadcastingItemProvider(
+					ItemProvider(guaranteedLibraryConnectionProvider),
+					application.sendApplicationMessages,
+				),
+				application.stringResources,
 			),
 			revisionProvider,
 			LruCachePolicy(maxCachedLibraryItems),

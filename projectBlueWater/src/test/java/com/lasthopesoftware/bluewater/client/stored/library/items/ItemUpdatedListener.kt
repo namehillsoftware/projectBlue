@@ -41,9 +41,3 @@ class ItemUpdatedListener {
 	}
 }
 
-class StoredItemUpdatedListener(private val accessStoredItems: AccessStoredItems) : (ItemUpdated) -> Unit {
-	override fun invoke(p1: ItemUpdated) {
-		val (libraryId, item) = p1
-		accessStoredItems.updateStoredItemMetadata(libraryId, item)
-	}
-}

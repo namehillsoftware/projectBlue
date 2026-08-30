@@ -41,6 +41,7 @@ class StringResources(private val context: Context): GetStringResources {
 	override val end by lazyString(R.string.end)
 	override val testConnection by lazyString(R.string.test_connection)
 	override val saveAndTestConnection by lazyString(R.string.save_and_test_connection)
+	override val syncedItems by lazyString(R.string.synced_items)
 
 	private fun lazyString(@StringRes stringResourceId: Int) = lazy { context.getString(stringResourceId) }
 }

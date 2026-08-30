@@ -76,7 +76,7 @@ fun LabelledSyncButton(
 	val isSynced by fileListViewModel.isSynced.subscribeAsState()
 	val syncButtonLabel =
 		if (!isSynced) stringResource(id = R.string.btn_sync_item)
-		else stringResource(id = R.string.files_synced)
+		else stringResource(id = R.string.syncing_files)
 	var syncColor = if (isSynced) MaterialTheme.colors.primary else LocalControlColor.current
 	if (!enabled)
 		syncColor = syncColor.copy(alpha = SharedAlphas.disabledAlpha)

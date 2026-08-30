@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.android.ui.components.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.client.browsing.files.list.LoadedLibraryState
 import com.lasthopesoftware.bluewater.client.browsing.items.LoadItemData
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewState
 
 @Composable
 fun LabelledSyncedFilesButton(
@@ -56,7 +56,7 @@ fun LabelledSyncedFilesButton(
 
 @Composable
 fun LabelledSearchButton(
-	itemListViewModel: ItemListViewModel,
+	itemListViewModel: ItemListViewState,
 	applicationNavigation: NavigateApplication,
 	modifier: Modifier = Modifier,
 ) {

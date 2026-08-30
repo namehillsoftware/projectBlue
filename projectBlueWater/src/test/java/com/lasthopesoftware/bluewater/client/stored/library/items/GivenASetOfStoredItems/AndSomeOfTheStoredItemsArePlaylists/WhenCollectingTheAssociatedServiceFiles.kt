@@ -15,7 +15,6 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.util.Random
-import java.util.concurrent.TimeUnit
 
 class WhenCollectingTheAssociatedServiceFiles {
 	companion object {
@@ -25,6 +24,8 @@ class WhenCollectingTheAssociatedServiceFiles {
 			val ceiling = random.nextInt(10000 - floor) + floor
 			return (floor..ceiling).map { ServiceFile(it.toString()) }
 		}
+
+		private const val libraryId = 5
 	}
 
 	private val firstItemExpectedFiles = givenARandomCollectionOfFiles()
@@ -34,10 +35,10 @@ class WhenCollectingTheAssociatedServiceFiles {
 
 	private val collectedFiles by lazy {
 		val storedItemAccess = FakeStoredItemAccess(
-			StoredItem(1, "1", StoredItem.ItemType.ITEM),
-			StoredItem(1, "2", StoredItem.ItemType.ITEM),
-			StoredItem(1, "3", StoredItem.ItemType.ITEM),
-			StoredItem(1, "5", StoredItem.ItemType.PLAYLIST)
+			StoredItem(libraryId, "1", StoredItem.ItemType.ITEM),
+			StoredItem(libraryId, "2", StoredItem.ItemType.ITEM),
+			StoredItem(libraryId, "3", StoredItem.ItemType.ITEM),
+			StoredItem(libraryId, "5", StoredItem.ItemType.PLAYLIST)
 		)
 
 		val fileProvider = mockk<ProvideLibraryFiles>().apply {
@@ -49,8 +50,9 @@ class WhenCollectingTheAssociatedServiceFiles {
 		}
 
 		StoredItemServiceFileCollector(storedItemAccess, fileProvider)
-			.promiseServiceFilesToSync(LibraryId(5))
-			.toExpiringFuture()[1, TimeUnit.SECONDS]
+			.promiseServiceFilesToSync(LibraryId(libraryId))
+			.toExpiringFuture()
+			.get()
 	}
 
 	@Test
