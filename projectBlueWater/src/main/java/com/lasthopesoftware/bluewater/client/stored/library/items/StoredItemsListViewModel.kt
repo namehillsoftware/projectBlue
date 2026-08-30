@@ -1,18 +1,24 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items
 
 import androidx.lifecycle.ViewModel
-import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.LoadItemData
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewState
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.observables.LiftedInteractionState
 import com.lasthopesoftware.observables.MutableInteractionState
+import com.lasthopesoftware.observables.StaticInteractionState
 import com.lasthopesoftware.observables.mapNotNull
+import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 
 class StoredItemsListViewModel(
-	private val storedItemAccess: AccessStoredItems
-) : ViewModel(), TrackLoadedViewState {
+	private val storedItemAccess: AccessStoredItems,
+	stringResources: GetStringResources,
+) : ViewModel(), ItemListViewState, LoadItemData {
 
 	companion object {
 		private val viewableItemTypes = setOf(StoredItem.ItemType.ITEM, StoredItem.ItemType.PLAYLIST)
@@ -22,7 +28,8 @@ class StoredItemsListViewModel(
 	private val mutableIsLoading = MutableInteractionState(false)
 
 	override val isLoading = mutableIsLoading.asInteractionState()
-	val items by lazy {
+	override val itemValue = StaticInteractionState(stringResources.syncedItems)
+	override val items by lazy {
 		LiftedInteractionState(
 			mutableStoredItems.mapNotNull().map { items ->
 				items.map {
@@ -34,10 +41,12 @@ class StoredItemsListViewModel(
 		).also(::addCloseable)
 	}
 
-	var loadedLibraryId: LibraryId? = null
+	override val loadedItem: IItem? = null
+
+	override var loadedLibraryId: LibraryId? = null
 		private set
 
-	fun loadItems(libraryId: LibraryId): Promise<Unit> {
+	override fun loadItem(libraryId: LibraryId, item: IItem?): Promise<Unit> {
 		mutableIsLoading.value = true
 		return storedItemAccess
 			.promiseStoredItems(libraryId)
@@ -48,5 +57,10 @@ class StoredItemsListViewModel(
 				loadedLibraryId = libraryId
 			}
 			.must { _ -> mutableIsLoading.value = false }
+	}
+
+	override fun promiseRefresh(): Promise<Unit> {
+		val libraryId = loadedLibraryId ?: return Unit.toPromise()
+		return loadItem(libraryId)
 	}
 }

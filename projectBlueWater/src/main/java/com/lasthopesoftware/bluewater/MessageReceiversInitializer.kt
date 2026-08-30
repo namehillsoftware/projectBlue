@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.no
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobbleDroidProxy
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobbleDroidProxy
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.ScrobbleIntentProvider
+import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemUpdatedListener
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.StoragePermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestedBroadcaster
@@ -66,6 +67,8 @@ class MessageReceiversInitializer : Initializer<Unit> {
 			)
 
 			registerForApplicationMessages.registerReceiver(SyncItemStateChangedListener(syncScheduler))
+
+			registerForApplicationMessages.registerReceiver(StoredItemUpdatedListener(storedItemAccess))
 		}
 	}
 

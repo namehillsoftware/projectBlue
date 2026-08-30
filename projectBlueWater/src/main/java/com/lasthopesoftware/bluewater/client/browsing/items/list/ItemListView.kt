@@ -183,7 +183,7 @@ fun RenderTrackTitleItem(
     position: Int,
     serviceFile: ServiceFile,
     trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
-    itemListViewModel: ItemListViewModel,
+    itemListViewModel: ItemListViewState,
     nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
     applicationNavigation: NavigateApplication,
     fileListViewModel: FileListViewModel,
@@ -252,7 +252,7 @@ fun RenderTrackTitleItem(
 @Composable
 fun ChildItem(
     item: IItem,
-    itemListViewModel: ItemListViewModel,
+    itemListViewModel: ItemListViewState,
     applicationNavigation: NavigateApplication,
     childItemViewModelProvider: PooledCloseablesViewModel<ReusableChildItemViewModel>,
     itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
@@ -367,7 +367,7 @@ fun ChildItem(
 
 @Composable
 fun ItemListMenu(
-	itemListViewModel: ItemListViewModel,
+	itemListViewModel: ItemListViewState,
 	fileListViewModel: FileListViewModel,
 	itemDataLoader: LoadItemData,
 	applicationNavigation: NavigateApplication,
@@ -442,7 +442,7 @@ class MenuListNavigationFocusRefs {
 
 @Composable
 private fun ItemListView(
-	itemListViewModel: ItemListViewModel,
+	itemListViewModel: ItemListViewState,
 	fileListViewModel: FileListViewModel,
 	itemDataLoader: LoadItemData,
 	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
@@ -624,7 +624,7 @@ private fun ItemListView(
 
 @Composable
 fun ScreenDimensionsScope.ItemListView(
-    itemListViewModel: ItemListViewModel,
+    itemListViewModel: ItemListViewState,
     fileListViewModel: FileListViewModel,
 	itemDataLoader: LoadItemData,
 	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,

@@ -300,7 +300,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 			.setPriority(NotificationCompat.PRIORITY_MIN)
 			.setCategory(NotificationCompat.CATEGORY_PROGRESS)
-		notifyBuilder.setContentTitle(context.getText(R.string.title_sync_files))
+		notifyBuilder.setContentTitle(context.getText(R.string.syncing_files))
 		notifyBuilder.setContentText(notificationText)
 		val syncNotification = notifyBuilder.build()
 		val serviceType =

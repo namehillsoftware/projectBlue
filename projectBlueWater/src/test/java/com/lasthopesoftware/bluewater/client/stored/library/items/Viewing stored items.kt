@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.resources.strings.FakeStringResources
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Nested
@@ -54,17 +55,30 @@ class `Viewing stored items` {
 			}
 
 			private val mut by lazy {
-				StoredItemsListViewModel(FakeStoredItemAccess(*storedItems))
+				StoredItemsListViewModel(
+					FakeStoredItemAccess(*storedItems),
+					FakeStringResources(syncedItems = "nh3Y3jZhNn")
+				)
 			}
 
 			@BeforeAll
 			fun act() {
-				mut.loadItems(LibraryId(libraryId)).toExpiringFuture().get()
+				mut.loadItem(LibraryId(libraryId)).toExpiringFuture().get()
 			}
 
 			@Test
 			fun `then the loaded library id is correct`() {
 				assertThat(mut.loadedLibraryId).isEqualTo(LibraryId(libraryId))
+			}
+
+			@Test
+			fun `then the loaded item is correct`() {
+				assertThat(mut.loadedItem).isNull()
+			}
+
+			@Test
+			fun `then the item name is correct`() {
+				assertThat(mut.itemValue.value).isEqualTo("nh3Y3jZhNn")
 			}
 
 			@Test

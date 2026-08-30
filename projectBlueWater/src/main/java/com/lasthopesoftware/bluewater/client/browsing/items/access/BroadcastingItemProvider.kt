@@ -10,9 +10,9 @@ import com.namehillsoftware.handoff.promises.Promise
 data class ItemUpdated(val libraryId: LibraryId, val item: IItem) : ApplicationMessage
 
 class BroadcastingItemProvider(
-	private val inner: ProvideItems,
+	private val inner: ProvideFreshItems,
 	private val applicationMessageBus: SendApplicationMessages,
-) : ProvideItems {
+) : ProvideFreshItems, ProvideItems {
 	override fun promiseItems(libraryId: LibraryId, itemId: KeyedIdentifier?): Promise<List<IItem>> =
 		inner
 			.promiseItems(libraryId, itemId)
