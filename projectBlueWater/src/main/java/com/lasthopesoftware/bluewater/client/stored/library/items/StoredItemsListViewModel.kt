@@ -7,6 +7,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.LoadItemData
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewState
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.observables.LiftedInteractionState
 import com.lasthopesoftware.observables.MutableInteractionState
 import com.lasthopesoftware.observables.StaticInteractionState
@@ -18,6 +20,7 @@ import com.namehillsoftware.handoff.promises.Promise
 class StoredItemsListViewModel(
 	private val storedItemAccess: AccessStoredItems,
 	stringResources: GetStringResources,
+	applicationMessages: RegisterForApplicationMessages,
 ) : ViewModel(), ItemListViewState, LoadItemData {
 
 	companion object {
@@ -43,18 +46,30 @@ class StoredItemsListViewModel(
 
 	override val loadedItem: IItem? = null
 
+	@Volatile
 	override var loadedLibraryId: LibraryId? = null
 		private set
 
+	init {
+		addCloseable(
+			applicationMessages.registerReceiver { e: SyncItemStateChanged ->
+				if (e.libraryId == loadedLibraryId)
+					loadItem(e.libraryId)
+			}
+		)
+	}
+
 	override fun loadItem(libraryId: LibraryId, item: IItem?): Promise<Unit> {
 		mutableIsLoading.value = true
+		loadedLibraryId = libraryId
 		return storedItemAccess
 			.promiseStoredItems(libraryId)
 			.then { items ->
-				mutableStoredItems.value = items.filter {
-					viewableItemTypes.contains(it.itemType)
+				if (loadedLibraryId == libraryId) {
+					mutableStoredItems.value = items.filter {
+						viewableItemTypes.contains(it.itemType)
+					}
 				}
-				loadedLibraryId = libraryId
 			}
 			.must { _ -> mutableIsLoading.value = false }
 	}
