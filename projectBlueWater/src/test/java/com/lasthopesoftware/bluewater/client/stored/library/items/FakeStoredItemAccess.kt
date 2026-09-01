@@ -31,7 +31,8 @@ open class FakeStoredItemAccess(vararg initialStoredItems: StoredItem) : AccessS
 			StoredItem(
 				libraryId.id,
 				item.key,
-				item.storedItemType
+				item.storedItemType,
+				item.value,
 			)
 		) else inMemoryStoredItems.removeAll(findMatchingItems(libraryId, item))
 		return Unit.toPromise()

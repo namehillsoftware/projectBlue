@@ -114,6 +114,7 @@ class ScopedViewModelRegistry(
 		StoredItemsListViewModel(
 			storedItemAccess,
 			stringResources,
+			registerForApplicationMessages,
 		)
 	}
 
