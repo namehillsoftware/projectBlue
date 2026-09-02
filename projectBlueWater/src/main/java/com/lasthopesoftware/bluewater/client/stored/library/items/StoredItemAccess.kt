@@ -78,7 +78,7 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 	}
 
 	private fun enableItemSync(libraryId: LibraryId, item: IItem, itemType: ItemType) =
-		promiseTableMessage<Unit> {
+		promiseTableMessage {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				if (!repositoryAccessHelper.isItemMarkedForSync(libraryId, item, itemType))
 					repositoryAccessHelper.insert(
@@ -94,7 +94,7 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 		}
 
 	private fun enableItemSync(libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType) =
-		promiseTableMessage<Unit> {
+		promiseTableMessage {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				if (!repositoryAccessHelper.isItemMarkedForSync(libraryId, item, itemType))
 					repositoryAccessHelper.insert(
@@ -109,7 +109,7 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 		}
 
 	private fun disableItemSync(libraryId: LibraryId, item: IItem, itemType: ItemType) =
-		promiseTableMessage<Unit> {
+		promiseTableMessage {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					repositoryAccessHelper
@@ -130,7 +130,7 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 		}
 
 	private fun disableItemSync(libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType) =
-		promiseTableMessage<Unit> {
+		promiseTableMessage {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					repositoryAccessHelper

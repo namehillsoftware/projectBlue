@@ -5,7 +5,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewMod
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
+import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
@@ -17,15 +18,6 @@ import org.junit.jupiter.api.Test
 class WhenSyncingTheItem {
 
 	private val viewModel by lazy {
-		val storedItemAccess = mockk<AccessStoredItems>().apply {
-			var isItemMarkedForSync = true
-			every { toggleSync(LibraryId(707), ItemId("501"), false) } answers {
-				isItemMarkedForSync = false
-				Unit.toPromise()
-			}
-			every { isItemMarkedForSync(LibraryId(707), Item("501", "observe")) } answers { isItemMarkedForSync.toPromise() }
-		}
-
 		FileListViewModel(
 			mockk {
 				every { promiseFiles(LibraryId(707), ItemId("501")) } returns listOf(
@@ -34,9 +26,10 @@ class WhenSyncingTheItem {
 					ServiceFile("102"),
 					ServiceFile("890"),
 				).toPromise()
-			}
-			,
-            storedItemAccess,
+			},
+			FakeStoredItemAccess(
+				StoredItem(libraryId = 707, "501", StoredItem.ItemType.ITEM, "observe")
+			),
 		)
 	}
 
