@@ -1,7 +1,9 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items
 
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
+import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemHelpers.storedItemType
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -27,6 +29,7 @@ open class FakeStoredItemAccess(vararg initialStoredItems: StoredItem) : AccessS
 	}
 
 	override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean): Promise<Unit> {
+		val item = inferItem(item)
 		if (enable) inMemoryStoredItems.add(
 			StoredItem(
 				libraryId.id,
@@ -79,5 +82,13 @@ open class FakeStoredItemAccess(vararg initialStoredItems: StoredItem) : AccessS
 	private fun findMatchingItems(libraryId: LibraryId, item: KeyedIdentifier, type: StoredItem.ItemType): List<StoredItem> {
 		return inMemoryStoredItems
 			.filter { i -> i.libraryId == libraryId.id && i.serviceId == item.id && i.itemType === type }
+	}
+
+	private fun inferItem(item: IItem): IItem {
+		if (item is Item) {
+			val playlist = item.playlistId
+			if (playlist != null) return Playlist(playlist.id, item.value)
+		}
+		return item
 	}
 }
