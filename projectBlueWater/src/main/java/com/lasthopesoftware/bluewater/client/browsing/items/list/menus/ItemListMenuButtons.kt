@@ -27,8 +27,8 @@ fun LabelledSyncedFilesButton(
 			}
 		},
 		iconPainter = painterResource(id = R.drawable.ic_water),
-		contentDescription = stringResource(id = R.string.synced_files),
-		label = stringResource(id = R.string.synced), // Use shortened version for button size
+		contentDescription = stringResource(id = R.string.downloads),
+		label = stringResource(id = R.string.downloads),
 		labelMaxLines = 1,
 		modifier = modifier,
 		focusRequester = focusRequester,
@@ -46,8 +46,8 @@ fun LabelledSyncedFilesButton(
 			applicationNavigation.viewAllDownloads()
 		},
 		iconPainter = painterResource(id = R.drawable.ic_water),
-		contentDescription = stringResource(id = R.string.synced_files),
-		label = stringResource(id = R.string.synced), // Use shortened version for button size
+		contentDescription = stringResource(id = R.string.downloads),
+		label = stringResource(id = R.string.downloads), // Use shortened version for button size
 		labelMaxLines = 1,
 		modifier = modifier,
 		focusRequester = focusRequester,

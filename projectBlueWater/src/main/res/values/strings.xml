@@ -113,7 +113,7 @@
     <string name="readOnlyConnection">Read-only Connection</string>
     <string name="syncing_files">Syncing Files</string>
     <string name="synced">Synced</string>
-    <string name="synced_files">Synced Files</string>
+    <string name="files_synced">Files Synced</string>
     <string name="synced_items">Synced Items</string>
     <string name="edit_now_playing_list">Edit Now Playing</string>
     <string name="finish_edit_now_playing_list">Finish Editing Now Playing</string>
@@ -179,4 +179,6 @@
     <string name="solutions">Solutions</string>
     <string name="no_server">No server</string>
     <string name="files_ratio">%1$s/%2$s files</string>
+    <string name="downloads">Downloads</string>
+    <string name="downloaded">Downloaded</string>
 </resources>
