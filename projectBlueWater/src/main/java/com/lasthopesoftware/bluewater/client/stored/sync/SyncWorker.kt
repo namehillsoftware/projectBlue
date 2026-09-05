@@ -52,6 +52,7 @@ import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFi
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
@@ -77,6 +78,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 {
 	companion object {
 		private const val notificationId = 23
+		private val logger by lazyLogger<SyncWorker>()
 	}
 
 	private val applicationDependencies by lazy { context.applicationDependencies }
@@ -252,7 +254,14 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 	private var activePromisedNotification = Unit.toPromise()
 
 	final override fun startWork(): ListenableFuture<Result> =
-		doWork().then { _ -> Result.success() }.toListenableFuture()
+		doWork()
+			.then(
+				{ _ -> Result.success() },
+				{ e ->
+					logger.error("An error occurred during sync.", e)
+					Result.failure()
+				})
+			.toListenableFuture()
 
 	final override fun onStopped() = cancellationProxy.cancellationRequested()
 
