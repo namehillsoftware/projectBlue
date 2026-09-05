@@ -67,7 +67,6 @@
     <string name="tutorial_long_click_menu">Long click on an item to see a menu with additional actions available.</string>
     <string name="lbl_details">%1$s details</string>
     <string name="btn_sync_item">Sync Files</string>
-    <string name="files_synced">Syncing Files</string>
     <string name="btn_add_server">Add Server</string>
     <string name="btn_add_header">Add Header</string>
     <string name="lbl_sync_path">Custom Sync Path</string>
@@ -77,7 +76,6 @@
     <string name="rbPublicLocation">Public Music Location</string>
     <string name="rbCustomLocation">Custom:</string>
     <string name="lbl_use_existing_music">Use existing music on device for playback and sync</string>
-    <string name="title_sync_files">Syncing files</string>
     <string name="lbl_sync_local_connection">Sync only on local connections</string>
     <string name="select_view_title">Select view</string>
     <string name="screen_is_off">Screen Off</string>
@@ -116,6 +114,7 @@
     <string name="syncing_files">Syncing Files</string>
     <string name="synced">Synced</string>
     <string name="synced_files">Synced Files</string>
+    <string name="synced_items">Synced Items</string>
     <string name="edit_now_playing_list">Edit Now Playing</string>
     <string name="finish_edit_now_playing_list">Finish Editing Now Playing</string>
     <string name="edit_file_properties">Edit File Properties</string>

@@ -18,14 +18,10 @@ class StateChangeBroadcastingStoredItemAccess(private val inner: AccessStoredIte
 	override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean): Promise<Unit> =
 		inner
 			.toggleSync(libraryId, item, enable)
-			.then { _ ->
-				sendApplicationMessages.sendMessage(
-					SyncItemStateChanged(libraryId, item.itemId, enable)
-				)
-			}
+			.then { sendApplicationMessages.sendMessage(SyncItemStateChanged(libraryId, item.itemId, enable)) }
 
 	override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean): Promise<Unit> =
 		inner
 			.toggleSync(libraryId, itemId, enable)
-			.then { _ -> sendApplicationMessages.sendMessage(SyncItemStateChanged(libraryId, itemId, enable)) }
+			.then { sendApplicationMessages.sendMessage(SyncItemStateChanged(libraryId, itemId, enable)) }
 }

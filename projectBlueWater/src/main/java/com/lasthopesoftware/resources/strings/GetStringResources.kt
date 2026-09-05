@@ -1,7 +1,10 @@
 package com.lasthopesoftware.resources.strings
 
 interface GetStringResources {
-	val permissionsNeededLaunchSettings: String
+    val syncedItems: String
+		get() = ""
+
+    val permissionsNeededLaunchSettings: String
 		get() = ""
 
 	val permissionsNeeded: String

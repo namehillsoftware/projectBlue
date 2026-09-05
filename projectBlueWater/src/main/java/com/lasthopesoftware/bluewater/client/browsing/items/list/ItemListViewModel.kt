@@ -20,7 +20,7 @@ class ItemListViewModel(
 	private val itemProvider: ProvideItems,
 	messageBus: RegisterForApplicationMessages,
 	private val libraryNameLookup: LookupLibraryName,
-) : ViewModel(), TrackLoadedViewState, LoadedLibraryState, LoadItemData {
+) : ViewModel(), ItemListViewState, TrackLoadedViewState, LoadedLibraryState, LoadItemData {
 
 	private val activityLaunchingReceiver = messageBus.registerReceiver { event : ActivityLaunching ->
 		mutableIsLoading.value = event != ActivityLaunching.HALTED // Only show the item list view again when launching error'ed for some reason
@@ -29,13 +29,13 @@ class ItemListViewModel(
 	private val mutableIsLoading = MutableInteractionState(true)
 	private val mutableItemValue = MutableInteractionState("")
 
-	var loadedItem: IItem? = null
+	override var loadedItem: IItem? = null
 		private set
 	override var loadedLibraryId: LibraryId? = null
 		private set
 
-	val itemValue = mutableItemValue.asInteractionState()
-	val items = mutableItems.asInteractionState()
+	override val itemValue = mutableItemValue.asInteractionState()
+	override val items = mutableItems.asInteractionState()
 	override val isLoading = mutableIsLoading.asInteractionState()
 
 	override fun onCleared() {

@@ -29,4 +29,6 @@ abstract class FakeDeferredStoredItemAccess : AccessStoredItems {
 	override fun promiseStoredItems(libraryId: LibraryId): Promise<Collection<StoredItem>> {
 		return Promise { m -> messenger = m }
 	}
+
+	override fun updateStoredItemMetadata(libraryId: LibraryId, item: IItem) = Unit.toPromise()
 }

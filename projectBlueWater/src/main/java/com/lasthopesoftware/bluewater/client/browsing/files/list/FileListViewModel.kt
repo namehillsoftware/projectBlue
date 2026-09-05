@@ -82,10 +82,10 @@ class FileListViewModel(
 
 	fun toggleSync(): Promise<Unit> = loadedLibraryId
 		?.let { libraryId ->
-			loadedItem?.let { (it as? Item)?.playlistId ?: it.itemId }?.let { key ->
+			loadedItem?.let {
 				val isSynced = !mutableIsSynced.value
 				storedItemAccess
-					.toggleSync(libraryId, key, isSynced)
+					.toggleSync(libraryId, it, isSynced)
 					.then { _ -> mutableIsSynced.value = isSynced }
 			}
 		}

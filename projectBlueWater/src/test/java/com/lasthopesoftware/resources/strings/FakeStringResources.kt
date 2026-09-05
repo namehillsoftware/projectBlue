@@ -17,4 +17,5 @@ class FakeStringResources(
     override val errorConnectingTryAgain: String = "",
     override val connected: String = "",
     override val subsonic: String = "",
+    override val syncedItems: String = "",
 ) : GetStringResources
