@@ -1,4 +1,4 @@
-FROM gradle:9.5.0-jdk17
+FROM gradle:9.6.0-jdk17
 
 # Install system dependencies
 RUN apt-get update -qq && apt-get install -qq -y --no-install-recommends \

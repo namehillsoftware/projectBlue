@@ -11,6 +11,44 @@ plugins {
 
 apply plugin: 'kotlin-parcelize'
 
+def gitVersionTagProvider = providers.provider {
+	try {
+		def gitDescribe = providers.exec {
+			it.ignoreExitValue = true
+			commandLine("git", "describe")
+		}.standardOutput.asText.get().trim()
+
+		def latestTag = providers.exec {
+			it.ignoreExitValue = true
+			commandLine("git", "describe", "--abbrev=0")
+		}.standardOutput.asText.get().trim()
+
+		if (gitDescribe != latestTag) {
+			return latestTag + "-SNAPSHOT"
+		}
+
+		return gitDescribe
+	} catch (ignored) {
+		return "0.0.1"
+	}
+}
+
+def gitVersionCodeProvider = providers.provider {
+	// should result in the same value as running
+	// git rev-list <checked out branch name> | wc -l
+	def initialVersionCode = 3761 // the initial version code before tags were used to increment version code
+
+	try {
+		def numberOfReleases = providers.exec {
+			it.ignoreExitValue = true
+			commandLine("sh", "-c", "git tag | wc -l")
+		}.standardOutput.asText.get() as Integer
+		return numberOfReleases + initialVersionCode
+	} catch (ignored) {
+		return initialVersionCode
+	}
+}
+
 def androidKeyStorePassword = hasProperty('androidKeyStorePassword') ? androidKeyStorePassword : null
 def hasKeyStorePassword = { androidKeyStorePassword != null && !androidKeyStorePassword.isEmpty() }
 if (!hasKeyStorePassword()) {
@@ -39,8 +77,8 @@ android {
     defaultConfig {
         minSdkVersion 23
         targetSdkVersion 37
-		versionName gitVersion()
-		base.archivesName = "project-blue-" + gitVersion()
+		versionName gitVersionTagProvider.get()
+		base.archivesName = "project-blue-" + gitVersionTagProvider.get()
 	}
 
 	signingConfigs {
@@ -111,7 +149,7 @@ android {
 
     defaultConfig {
 
-		versionCode getGeneratedVersionCode()
+		versionCode gitVersionCodeProvider.get()
 		testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 		vectorDrawables {
 			useSupportLibrary true
@@ -148,44 +186,6 @@ android {
 tasks.withType(KotlinCompile).configureEach {
 	compilerOptions {
 		freeCompilerArgs.add("-opt-in=kotlin.RequiresOptIn")
-	}
-}
-
-def gitVersion() {
-	try {
-		def gitDescribe = providers.exec {
-			it.ignoreExitValue = true
-			commandLine("git", "describe")
-		}.standardOutput.asText.get().trim()
-
-		def latestTag = providers.exec {
-			it.ignoreExitValue = true
-			commandLine("git", "describe", "--abbrev=0")
-		}.standardOutput.asText.get().trim()
-
-		if (gitDescribe != latestTag) {
-			return latestTag + "-SNAPSHOT"
-		}
-
-		return gitDescribe
-	} catch (ignored) {
-		return "0.0.1"
-	}
-}
-
-def getGeneratedVersionCode() {
-    // should result in the same value as running
-    // git rev-list <checked out branch name> | wc -l
-    def initialVersionCode = 3761 // the initial version code before tags were used to increment version code
-
-	try {
-		def numberOfReleases = providers.exec {
-			it.ignoreExitValue = true
-			commandLine("sh", "-c", "git tag | wc -l")
-		}.standardOutput.asText.get() as Integer
-		return numberOfReleases + initialVersionCode
-	} catch (ignored) {
-		return initialVersionCode
 	}
 }
 

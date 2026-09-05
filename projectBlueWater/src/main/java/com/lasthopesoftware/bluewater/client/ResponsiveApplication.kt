@@ -123,7 +123,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.minimumMen
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.playlistControlAlpha
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.StoredFilesView
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.DownloadsView
 import com.lasthopesoftware.bluewater.exceptions.UncaughtExceptionHandlerLogger
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
@@ -745,7 +745,7 @@ private fun ResponsiveLibraryView(
 
 		is DownloadsScreen -> {
 			PaddedSystemScreenBox {
-				StoredFilesView(
+				DownloadsView(
 					storedFilesViewModel = storedFilesViewModel,
 					libraryListState = libraryListState,
 					trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
@@ -875,7 +875,7 @@ fun ResponsiveApplication(
 						?.registerBackNav()
 						?.apply {
 							PaddedSystemScreenBox {
-								StoredFilesView(
+								DownloadsView(
 									storedFilesViewModel = storedFilesViewModel,
 									libraryListState = libraryListState,
 									trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,

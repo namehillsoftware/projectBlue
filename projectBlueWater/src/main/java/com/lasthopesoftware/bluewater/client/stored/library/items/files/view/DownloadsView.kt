@@ -197,6 +197,7 @@ private fun SyncMenu(
 			val isSyncing by storedFilesViewModel.isSyncing.subscribeAsState()
 			val label = stringResource(if (isSyncing) R.string.stop_sync_button else R.string.start_sync_button)
 
+			val modifier = Modifier.requiredWidth(topMenuIconWidth)
 			val isSyncChangeEnabled by storedFilesViewModel.isSyncStateChangeEnabled.subscribeAsState()
 			MenuIcon(
 				onClick = { storedFilesViewModel.toggleSync() },
@@ -226,7 +227,7 @@ private fun SyncMenu(
 				},
 				label = { Text(text = label) },
 				enabled = isSyncChangeEnabled,
-				modifier = Modifier.requiredWidth(topMenuIconWidth),
+				modifier = modifier,
 			)
 
 			ColumnMenuIcon(
@@ -234,11 +235,11 @@ private fun SyncMenu(
 					onActiveFileViewChanged(ActiveFileView.SyncedFiles)
 				},
 				iconPainter = painterResource(id = R.drawable.select_library_36dp),
-				contentDescription = stringResource(id = R.string.synced_files),
-				label = stringResource(id = R.string.synced), // Use shortened version for button size
+				contentDescription = stringResource(id = R.string.downloaded),
+				label = stringResource(id = R.string.downloaded), // Use shortened version for button size
 				labelMaxLines = 1,
 				enabled = activeFileView != ActiveFileView.SyncedFiles,
-				modifier = Modifier.requiredWidth(topMenuIconWidth),
+				modifier = modifier,
 			)
 
 			ColumnMenuIcon(
@@ -246,11 +247,11 @@ private fun SyncMenu(
 					onActiveFileViewChanged(ActiveFileView.ActiveDownloads)
 				},
 				iconPainter = painterResource(id = R.drawable.ic_water),
-				contentDescription = stringResource(id = R.string.syncing_files),
+				contentDescription = stringResource(id = R.string.syncing),
 				label = stringResource(id = R.string.syncing), // Use shortened version for button size
 				labelMaxLines = 1,
 				enabled = activeFileView != ActiveFileView.ActiveDownloads,
-				modifier = Modifier.requiredWidth(topMenuIconWidth),
+				modifier = modifier,
 			)
 		}
 	}
@@ -383,7 +384,7 @@ fun SyncedFilesList(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Composable
-fun ScreenDimensionsScope.StoredFilesView(
+fun ScreenDimensionsScope.DownloadsView(
 	storedFilesViewModel: StoredFilesViewModel,
 	libraryListState: LibraryListState,
 	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewFileItem>,
@@ -439,7 +440,7 @@ fun ScreenDimensionsScope.StoredFilesView(
 
 							ProvideTextStyle(MaterialTheme.typography.h5) {
 								val startPadding by rememberTitleStartPadding(heightScaler.progressState)
-								val header = stringResource(id = R.string.synced_files)
+								val header = stringResource(id = R.string.downloads)
 								MarqueeText(
 									text = header,
 									overflow = TextOverflow.Ellipsis,
@@ -553,7 +554,7 @@ fun ScreenDimensionsScope.StoredFilesView(
 			Row(
 				modifier = Modifier.fillMaxSize(),
 			) {
-				val menuWidth = this@StoredFilesView.calculateSummaryColumnWidth()
+				val menuWidth = this@DownloadsView.calculateSummaryColumnWidth()
 				Column(
 					modifier = Modifier.width(menuWidth),
 				) {
@@ -565,7 +566,7 @@ fun ScreenDimensionsScope.StoredFilesView(
 							modifier = Modifier.padding(topRowOuterPadding)
 						)
 
-						val header = stringResource(id = R.string.synced_files)
+						val header = stringResource(id = R.string.downloads)
 
 						ProvideTextStyle(MaterialTheme.typography.h5) {
 							Text(
