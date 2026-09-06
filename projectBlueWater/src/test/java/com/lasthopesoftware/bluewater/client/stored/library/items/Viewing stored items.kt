@@ -61,7 +61,10 @@ class `Viewing stored items` {
 					storedItemAccess,
 					StoredItemsListViewModel(
 						storedItemAccess,
-						FakeStringResources(syncedItems = "nh3Y3jZhNn"),
+						FakeStringResources(
+							syncedItems = "nh3Y3jZhNn",
+							unknownItem = "Not yet known",
+						),
 						applicationMessageBus,
 					),
 				)
@@ -73,6 +76,7 @@ class `Viewing stored items` {
 				vm.loadItem(LibraryId(libraryId)).toExpiringFuture().get()
 				items.toggleSync(LibraryId(753), ItemId("148"), true)
 				items.toggleSync(LibraryId(libraryId), Item("148", "R3lkZfN"), true)
+				items.toggleSync(LibraryId(libraryId), Playlist("VWtT55FxCKN"), true)
 				items.toggleSync(LibraryId(libraryId), ItemId("WrQ2hUO7"), false)
 			}
 
@@ -94,7 +98,12 @@ class `Viewing stored items` {
 			@Test
 			fun `then only expected items are loaded`() {
 				assertThat(mut.second.items.value)
-					.isEqualTo(listOf(Playlist("o2ivG3Jec", "Urnaper"), Item("148", "R3lkZfN")))
+					.isEqualTo(listOf(
+						Playlist("o2ivG3Jec", "Urnaper"),
+						Item("148", "R3lkZfN"),
+						Playlist("VWtT55FxCKN", "Not yet known"),
+					)
+				)
 			}
 		}
 	}

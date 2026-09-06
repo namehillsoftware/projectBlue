@@ -36,11 +36,14 @@ class StoredItemsListViewModel(
 		LiftedInteractionState(
 			mutableStoredItems.mapNotNull().map { items ->
 				items.map {
-					if (it.itemType != StoredItem.ItemType.PLAYLIST) Item(it.serviceId, it.itemName)
-					else Playlist(it.serviceId, it.itemName)
+					if (it.itemType != StoredItem.ItemType.PLAYLIST) Item(it.serviceId, it.itemName ?: stringResources.unknownItem)
+					else Playlist(it.serviceId, it.itemName ?: stringResources.unknownItem)
 				}
 			},
-			emptyList()
+			mutableStoredItems.value.map {
+				if (it.itemType != StoredItem.ItemType.PLAYLIST) Item(it.serviceId, it.itemName ?: stringResources.unknownItem)
+				else Playlist(it.serviceId, it.itemName ?: stringResources.unknownItem)
+			}
 		).also(::addCloseable)
 	}
 
