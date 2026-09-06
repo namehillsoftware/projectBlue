@@ -108,4 +108,7 @@ interface GetStringResources {
 
 	val end: String
 		get() = ""
+
+	val unknownItem: String
+		get() = ""
 }
