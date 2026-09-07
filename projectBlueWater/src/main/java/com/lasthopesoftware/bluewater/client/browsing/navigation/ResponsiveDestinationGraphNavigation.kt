@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.navigation.isNotEmpty
 import com.lasthopesoftware.navigation.peek
-import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import dev.olshevski.navigation.reimagined.NavController
@@ -94,29 +93,33 @@ class ResponsiveDestinationGraphNavigation(
 		}.toPromise()
 	}
 
-	override fun navigateUp() = coroutineScope.async {
+	override fun navigateUp(): Promise<Boolean> {
 		if (navController.peek()?.destination is BrowserLibraryDestination) {
-			with (draggableState) {
+			with(draggableState) {
 				if (currentValue > ResponsiveState.Browser) {
-					// Navigate Up will only return to the Browser state
-					animateTo(
-						if (anchors.hasPositionFor(ResponsiveState.Split)) ResponsiveState.Split
-						else ResponsiveState.Browser
-					)
-					return@async true
+					return coroutineScope.async {
+						// Navigate Up will only return to the Browser state
+						animateTo(
+							if (anchors.hasPositionFor(ResponsiveState.Split)) ResponsiveState.Split
+							else ResponsiveState.Browser
+						)
+						true
+					}.toPromise()
 				}
 			}
 
 			if (libraryNavController.pop() && libraryNavController.isNotEmpty()) {
-				return@async true
+				return true.toPromise()
 			}
 		}
 
-		(navController.pop() && navController.isNotEmpty()) || inner.navigateUp().suspend()
-	}.toPromise()
+		if (navController.pop() && navController.isNotEmpty()) return true.toPromise()
 
-	override fun backOut() = coroutineScope.async {
-		if (itemListMenuBackPressedHandler.hideAllMenus()) return@async true
+		return inner.navigateUp()
+	}
+
+	override fun backOut(): Promise<Boolean> {
+		if (itemListMenuBackPressedHandler.hideAllMenus()) return true.toPromise()
 
 		if (navController.peek()?.destination is BrowserLibraryDestination) {
 			if (draggableState.currentValue > ResponsiveState.Split) {
@@ -130,14 +133,17 @@ class ResponsiveDestinationGraphNavigation(
 						it != draggableState.currentValue && draggableState.anchors.hasPositionFor(it)
 					}
 					?.let {
-						draggableState.animateTo(it)
+						coroutineScope.async {
+							draggableState.animateTo(it)
+							true
+						}.toPromise()
 					}
-				if (animatedToPreviousState != null) return@async true
+				if (animatedToPreviousState != null) return animatedToPreviousState
 			}
 		}
 
-		navigateUp().suspend()
-	}.toPromise()
+		return navigateUp()
+	}
 
 	private fun navigateToBrowserDestination(destination: BrowserLibraryDestination): Promise<Unit> {
 		val libraryId = destination.libraryId
