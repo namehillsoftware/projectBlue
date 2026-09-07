@@ -32,78 +32,67 @@ class ResponsiveDestinationGraphNavigation(
     private val itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler
 ) : NavigateApplication by inner {
 
-	override fun launchSearch(libraryId: LibraryId) = coroutineScope.launch {
+	override fun launchSearch(libraryId: LibraryId) =
 		navigateToBrowserDestination(FilePropertySearchScreen(libraryId))
-	}.toPromise()
 
-	override fun search(libraryId: LibraryId, filePropertyFilter: FileProperty): Promise<Unit> = coroutineScope.launch {
+	override fun search(libraryId: LibraryId, filePropertyFilter: FileProperty): Promise<Unit> =
 		navigateToBrowserDestination(FilePropertySearchScreen(libraryId, filePropertyFilter))
-	}.toPromise()
 
-	override fun search(libraryId: LibraryId, searchQuery: String): Promise<Unit> = coroutineScope.launch {
+	override fun search(libraryId: LibraryId, searchQuery: String): Promise<Unit> =
 		navigateToBrowserDestination(SearchScreen(libraryId, searchQuery))
-	}.toPromise()
 
-	override fun viewAllDownloads(): Promise<Unit> = coroutineScope.launch {
+	override fun viewAllDownloads(): Promise<Unit> {
 		navController.popUpTo { it is ApplicationSettingsScreen }
-		bringBrowserIntoView()
-		navController.navigate(AllDownloadsScreen)
-	}.toPromise()
+		return bringBrowserIntoView().then { navController.navigate(AllDownloadsScreen) }
+	}
 
-	override fun viewApplicationSettings() = coroutineScope.launch {
+	override fun viewApplicationSettings(): Promise<Unit> {
 		navController.popUpTo { it is ApplicationSettingsScreen }
-		bringBrowserIntoView()
-	}.toPromise()
+		return bringBrowserIntoView()
+	}
 
-	override fun viewHiddenSettings(): Promise<Unit> = coroutineScope.launch {
-		bringBrowserIntoView()
-		navController.navigate(HiddenSettingsScreen)
-	}.toPromise()
+	override fun viewHiddenSettings(): Promise<Unit> =
+		bringBrowserIntoView().then { navController.navigate(HiddenSettingsScreen) }
 
-	override fun viewNewServerSettings() = coroutineScope.launch {
+	override fun viewNewServerSettings(): Promise<Unit> {
 		navController.popUpTo { it is ApplicationSettingsScreen }
-		bringBrowserIntoView()
+		return bringBrowserIntoView().then { navController.navigate(NewConnectionSettingsScreen) }
+	}
 
-		navController.navigate(NewConnectionSettingsScreen)
-	}.toPromise()
+	override fun viewServerSettings(libraryId: LibraryId): Promise<Unit> =
+		bringBrowserIntoView().then { navController.navigate(ConnectionSettingsScreen(libraryId)) }
 
-	override fun viewServerSettings(libraryId: LibraryId) = coroutineScope.launch {
-		bringBrowserIntoView()
-		navController.navigate(ConnectionSettingsScreen(libraryId))
-	}.toPromise()
+	override fun viewActiveDownloads(libraryId: LibraryId): Promise<Unit> =
+		bringBrowserIntoView().then { navController.navigate(DownloadsScreen(libraryId)) }
 
-	override fun viewActiveDownloads(libraryId: LibraryId) = coroutineScope.launch {
-		bringBrowserIntoView()
-		navController.navigate(DownloadsScreen(libraryId))
-	}.toPromise()
+	override fun viewLibrary(libraryId: LibraryId): Promise<Unit> =
+		if (libraryNavController.peek()?.destination?.libraryId != libraryId) navigateToBrowserDestination(LibraryScreen(libraryId))
+		else Unit.toPromise()
 
-	override fun viewLibrary(libraryId: LibraryId) = coroutineScope.launch {
-		if (libraryNavController.peek()?.destination?.libraryId != libraryId)
-			navigateToBrowserDestination(LibraryScreen(libraryId))
-	}.toPromise()
+	override fun viewItem(libraryId: LibraryId, item: IItem) = navigateToBrowserDestination(ItemScreen(libraryId, item))
 
-	override fun viewItem(libraryId: LibraryId, item: IItem) = coroutineScope.launch {
-		navigateToBrowserDestination(ItemScreen(libraryId, item))
-	}.toPromise()
-
-	override fun viewFileDetails(libraryId: LibraryId, searchQuery: String, positionedFile: PositionedFile) = coroutineScope.launch {
+	override fun viewFileDetails(libraryId: LibraryId, searchQuery: String, positionedFile: PositionedFile): Promise<Unit> {
 		navController.navigate(SearchedFileDetailsScreen(libraryId, searchQuery, positionedFile))
-	}.toPromise()
+		return Unit.toPromise()
+	}
 
-	override fun viewFileDetails(libraryId: LibraryId, item: IItem?, positionedFile: PositionedFile) = coroutineScope.launch {
+	override fun viewFileDetails(libraryId: LibraryId, item: IItem?, positionedFile: PositionedFile): Promise<Unit> {
 		navController.navigate(BrowsedFileDetailsScreen(libraryId, item, positionedFile))
-	}.toPromise()
+		return Unit.toPromise()
+	}
 
-	override fun viewNowPlayingFileDetails(libraryId: LibraryId, positionedFile: PositionedFile) = coroutineScope.launch {
+	override fun viewNowPlayingFileDetails(libraryId: LibraryId, positionedFile: PositionedFile): Promise<Unit> {
 		navController.navigate(FileDetailsFromNowPlayingScreen(libraryId, positionedFile))
-	}.toPromise()
+		return Unit.toPromise()
+	}
 
-	override fun viewNowPlaying(libraryId: LibraryId) = coroutineScope.launch {
+	override fun viewNowPlaying(libraryId: LibraryId): Promise<Unit> {
 		ensureBrowserIsOnStack(libraryId)
-
-		if (draggableState.currentValue < ResponsiveState.NowPlaying)
-			draggableState.animateTo(ResponsiveState.NowPlaying)
-	}.toPromise()
+		return coroutineScope.launch {
+			if (draggableState.currentValue < ResponsiveState.NowPlaying)
+				draggableState.animateTo(ResponsiveState.NowPlaying)
+		}.toPromise()
+	}
 
 	override fun navigateUp() = coroutineScope.async {
 		if (navController.peek()?.destination is BrowserLibraryDestination) {
@@ -150,24 +139,27 @@ class ResponsiveDestinationGraphNavigation(
 		navigateUp().suspend()
 	}.toPromise()
 
-	private suspend fun navigateToBrowserDestination(destination: BrowserLibraryDestination) {
+	private fun navigateToBrowserDestination(destination: BrowserLibraryDestination): Promise<Unit> {
 		val libraryId = destination.libraryId
 
 		ensureBrowserIsOnStack(libraryId)
-		bringBrowserIntoView()
-
-		if (libraryNavController.peek()?.destination != destination)
-			libraryNavController.navigate(destination)
+		return bringBrowserIntoView()
+			.then {
+				if (libraryNavController.peek()?.destination != destination)
+					libraryNavController.navigate(destination)
+			}
 	}
 
-	private suspend fun bringBrowserIntoView() {
-		with (draggableState) {
+	private fun bringBrowserIntoView(): Promise<Unit> {
+		return with (draggableState) {
 			if (currentValue > ResponsiveState.Browser) {
-				animateTo(
-					if (anchors.hasPositionFor(ResponsiveState.Split)) ResponsiveState.Split
-					else ResponsiveState.Browser
-				)
-			}
+				coroutineScope.launch {
+					animateTo(
+						if (anchors.hasPositionFor(ResponsiveState.Split)) ResponsiveState.Split
+						else ResponsiveState.Browser
+					)
+				}.toPromise()
+			} else Unit.toPromise()
 		}
 	}
 
