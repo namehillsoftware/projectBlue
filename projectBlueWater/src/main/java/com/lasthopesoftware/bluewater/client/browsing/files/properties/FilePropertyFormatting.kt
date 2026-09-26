@@ -46,7 +46,7 @@ private val minutesAndSecondsFormatter by lazy {
 
 private val excelEpoch by lazy { DateTime(1899, 12, 30, 0, 0) }
 
-private val dateTimeProperties by lazy {
+val dateTimeProperties by lazy {
 	setOf(
 		NormalizedFileProperties.LastPlayed,
 		NormalizedFileProperties.LastPlayedAlbum,

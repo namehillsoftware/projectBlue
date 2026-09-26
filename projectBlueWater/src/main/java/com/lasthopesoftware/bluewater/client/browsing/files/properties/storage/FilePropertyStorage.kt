@@ -43,7 +43,9 @@ class FilePropertyStorage(
 
 	private fun RemoteLibraryAccess.promiseFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> =
 		promiseFilePropertyUpdate(serviceFile, property, value, isFormatted)
-			.cancelBackThen { it, _ ->
+			.cancelBackThen { _, cs ->
+				if (cs.isCancelled) return@cancelBackThen
+
 				urlKeyProvider
 					.promiseUrlKey(libraryId, serviceFile)
 					.eventually { maybeUrlKey ->
@@ -64,6 +66,5 @@ class FilePropertyStorage(
 							e
 						)
 					}
-				it
 			}
 }
