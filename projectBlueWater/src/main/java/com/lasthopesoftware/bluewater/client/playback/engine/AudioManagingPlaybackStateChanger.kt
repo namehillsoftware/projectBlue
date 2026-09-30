@@ -1,9 +1,12 @@
 package com.lasthopesoftware.bluewater.client.playback.engine
 
 import android.media.AudioManager
-import androidx.media.AudioAttributesCompat
-import androidx.media.AudioFocusRequestCompat
-import androidx.media.AudioManagerCompat
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C.AUDIO_CONTENT_TYPE_MUSIC
+import androidx.media3.common.C.USAGE_MEDIA
+import androidx.media3.common.audio.AudioFocusRequestCompat
+import androidx.media3.common.audio.AudioManagerCompat
+import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.errors.PlaybackResourceNotAvailableInTimeException
@@ -16,6 +19,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
 
+@UnstableApi
 class AudioManagingPlaybackStateChanger(
 	private val innerPlaybackState: ChangePlaybackState,
 	private val systemInducedPlaybackState: ChangePlaybackStateForSystem,
@@ -33,10 +37,11 @@ class AudioManagingPlaybackStateChanger(
 	private val lazyAudioRequest = lazy {
 		AudioFocusRequestCompat
 			.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN)
-			.setAudioAttributes(AudioAttributesCompat.Builder()
-				.setContentType(AudioAttributesCompat.CONTENT_TYPE_MUSIC)
-				.setUsage(AudioAttributesCompat.USAGE_MEDIA)
-				.build())
+			.setAudioAttributes(
+				AudioAttributes.Builder()
+					.setContentType(AUDIO_CONTENT_TYPE_MUSIC)
+					.setUsage(USAGE_MEDIA)
+					.build())
 			.setOnAudioFocusChangeListener(this)
 			.setWillPauseWhenDucked(false)
 			.build()

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.audiomanagement.GivenAPlayingPlaybackEngine.AndAudioFocusIsTemporarilyLost.AndRegained
 
 import android.media.AudioManager
-import androidx.media.AudioFocusRequestCompat
+import androidx.media3.common.audio.AudioFocusRequestCompat
 import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlaybackStateChanger
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackState
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackStateForSystem

@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.audiomanagement.GivenAHaltedPlaybackEngine.AndAudioFocusCannotGrant
 
-import androidx.media.AudioFocusRequestCompat
+import androidx.media3.common.audio.AudioFocusRequestCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlaybackStateChanger

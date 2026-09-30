@@ -22,32 +22,23 @@ class FreshestRevisionFilePropertiesProvider(
 	private inner class ProxiedFileProperties(private val libraryId: LibraryId, private val serviceFile: ServiceFile) :
 		Promise.Proxy<LookupFileProperties>() {
 		init {
+			val promisedUrlKey = urlKeys.promiseUrlKey(libraryId, serviceFile).also(::doCancel)
+			val promisedRevision = checkRevisions.promiseRevision(libraryId).also(::doCancel)
 			proxy(
-				urlKeys
-					.promiseGuaranteedUrlKey(libraryId, serviceFile)
+				inner
+					.promiseFileProperties(libraryId, serviceFile)
 					.also(::doCancel)
-					.eventually { urlKeyHolder ->
-						if (isCancelled) promiseFilePropertiesCancelled(libraryId, serviceFile)
-						else checkRevisions
-							.promiseRevision(libraryId)
-							.also(::doCancel)
-							.eventually { revision ->
-								urlKeyHolder
-									.let(filePropertiesContainerProvider::getFilePropertiesContainer)
-									?.takeIf { it.properties.allProperties.any() && revision == it.revision }
-									?.properties
-									?.toPromise()
-									?: inner
-										.promiseFileProperties(libraryId, serviceFile)
-										.also(::doCancel)
-										.then { properties ->
-											filePropertiesContainerProvider.putFilePropertiesContainer(
-												urlKeyHolder,
-												FilePropertiesContainer(revision, properties)
-											)
-											properties
-										}
-							}
+					.eventually { properties ->
+						promisedUrlKey.eventually({ urlKeyHolder ->
+							if (urlKeyHolder == null || isCancelled) properties.toPromise()
+							else promisedRevision.then({ revision ->
+								filePropertiesContainerProvider.putFilePropertiesContainer(
+									urlKeyHolder,
+									FilePropertiesContainer(revision, properties)
+								)
+								properties
+							}, { properties })
+						}, { properties.toPromise() })
 					}
 			)
 		}

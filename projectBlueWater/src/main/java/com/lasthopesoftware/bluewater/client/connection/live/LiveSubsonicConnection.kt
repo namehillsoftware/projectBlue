@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.Fi
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LookupFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.dateTimeProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -48,6 +49,7 @@ import com.lasthopesoftware.resources.strings.parseJson
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
+import org.joda.time.DateTime
 import java.io.IOException
 import java.net.URL
 import java.util.concurrent.CancellationException
@@ -74,6 +76,9 @@ class LiveSubsonicConnection(
 	}
 
 	private object KnownFileProperties {
+		const val track = "track"
+		const val discNumber = "discNumber"
+		const val size = "size"
 		const val title = "title"
 		const val id = "id"
 		const val artist = "artist"
@@ -82,7 +87,9 @@ class LiveSubsonicConnection(
 		const val peakGain = "trackPeak"
 		const val userRating = "userRating"
 		const val playCount = "playCount"
+		const val played = "played"
 		const val duration = "duration"
+		const val genre = "genre"
 	}
 
 	private val promisedRootItem by lazy {
@@ -129,8 +136,10 @@ class LiveSubsonicConnection(
 
 	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<LookupFileProperties> = FilePropertiesPromise(serviceFile)
 
-	override fun promiseFilePropertyUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> =
-		promiseSubsonicResponse<Response>("setRating", "id=${serviceFile.key}", "rating=$value").unitResponse()
+	override fun promiseFilePropertyUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> {
+		if (property != NormalizedFileProperties.Rating) throw IllegalArgumentException(property)
+		return promiseSubsonicResponse<Response>("setRating", "id=${serviceFile.key}", "rating=$value").unitResponse()
+	}
 
 	override fun promiseItems(itemId: KeyedIdentifier?): Promise<List<IItem>> = when (itemId) {
 		null -> promisedRootItem
@@ -270,7 +279,12 @@ class LiveSubsonicConnection(
 					NormalizedFileProperties.PeakLevel to KnownFileProperties.peakGain,
 					NormalizedFileProperties.Rating to KnownFileProperties.userRating,
 					NormalizedFileProperties.NumberPlays to KnownFileProperties.playCount,
+					NormalizedFileProperties.LastPlayed to KnownFileProperties.played,
 					NormalizedFileProperties.Duration to KnownFileProperties.duration,
+					NormalizedFileProperties.Genre to KnownFileProperties.genre,
+					NormalizedFileProperties.FileSize to KnownFileProperties.size,
+					NormalizedFileProperties.Track to KnownFileProperties.track,
+					NormalizedFileProperties.DiscNumber to KnownFileProperties.discNumber,
 				)
 			}
 
@@ -283,8 +297,14 @@ class LiveSubsonicConnection(
 			filePropertiesMap.keys.map { knownToNormalized[it] ?: it }.toSet()
 		}
 
-		override fun getValue(name: String): String? =
-			filePropertiesMap[normalizedToKnown[name] ?: name] ?: filePropertiesMap[name.lowercase()]
+		override fun getValue(name: String): String? {
+			var property = filePropertiesMap[normalizedToKnown[name] ?: name] ?: filePropertiesMap[name.lowercase()]
+			if (property != null && dateTimeProperties.contains(name)) {
+				property = (DateTime.parse(property).millis / 1000.0).toString()
+			}
+
+			return property
+		}
 
 		override fun isEditable(name: String): Boolean = name == NormalizedFileProperties.Rating
 

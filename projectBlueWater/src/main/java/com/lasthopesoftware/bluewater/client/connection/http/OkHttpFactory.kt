@@ -45,7 +45,6 @@ import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import kotlin.text.Charsets.UTF_8
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
@@ -74,7 +73,7 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 				chain.proceed(requestBuilder.build())
 			}
 			.cache(null)
-			.readTimeout(1.minutes)
+			.readTimeout(30.seconds)
 			.retryOnConnectionFailure(false)
 			.dispatcher(dispatcher)
 			.build()

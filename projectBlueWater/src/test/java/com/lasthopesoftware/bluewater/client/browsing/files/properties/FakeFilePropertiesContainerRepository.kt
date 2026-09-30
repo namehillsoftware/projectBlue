@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.repositor
 import com.lasthopesoftware.bluewater.client.connection.url.UrlKeyHolder
 
 open class FakeFilePropertiesContainerRepository : IFilePropertiesContainerRepository {
-	private val storage = HashMap<UrlKeyHolder<ServiceFile>, ContainVersionedFileProperties>()
+	val storage = HashMap<UrlKeyHolder<ServiceFile>, ContainVersionedFileProperties>()
 	override fun getFilePropertiesContainer(key: UrlKeyHolder<ServiceFile>): ContainVersionedFileProperties? {
 		return storage[key]
 	}

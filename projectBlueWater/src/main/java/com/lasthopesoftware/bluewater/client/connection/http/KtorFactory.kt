@@ -106,7 +106,7 @@ class KtorFactory(private val context: Context) : ProvideHttpPromiseClients {
 			})
 
 			install(HttpTimeout) {
-				requestTimeoutMillis = 1.minutes.inWholeMilliseconds
+				requestTimeoutMillis = 30.seconds.inWholeMilliseconds
 			}
 		}
 	}
