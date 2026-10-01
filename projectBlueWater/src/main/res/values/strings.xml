@@ -182,4 +182,5 @@
     <string name="downloads">Downloads</string>
     <string name="downloaded">Downloaded</string>
     <string name="unknown_item">Unknown Item</string>
+    <string name="rating_value">Rating value</string>
 </resources>

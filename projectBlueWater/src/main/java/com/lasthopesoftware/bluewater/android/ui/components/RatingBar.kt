@@ -16,24 +16,25 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.navigable
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun RatingBar(
 	rating: Int,
 	modifier: Modifier = Modifier,
 	color: Color = Color.Yellow,
 	backgroundColor: Color = Color.Gray,
+	min: Int = 1,
+	max: Int = 5,
 	onRatingSelected: ((Int) -> Unit)? = null
 ) {
 	BoxWithConstraints(modifier = modifier) {
@@ -44,7 +45,7 @@ fun RatingBar(
 				.align(Alignment.Center),
 			horizontalArrangement = Arrangement.spacedBy(1.dp),
 		) {
-			for (r in 1..5) {
+			for (r in min..max) {
 				var starModifier: Modifier = Modifier
 				if (onRatingSelected != null) {
 					starModifier = starModifier
@@ -57,19 +58,21 @@ fun RatingBar(
 
 				Box(modifier = starModifier) {
 					Image(
-						painter = painterResource(id = R.drawable.ic_star_36),
+						painter = painterResource(id = if (r > 0) R.drawable.ic_star_36 else R.drawable.remove_item_36dp),
 						colorFilter = ColorFilter.tint(if (r > rating) backgroundColor else color),
-						contentDescription = "Rating value",
+						contentDescription = stringResource(R.string.rating_value),
 						contentScale = ContentScale.Fit,
+						alignment = Alignment.BottomCenter,
 						modifier = Modifier.requiredSize(this@BoxWithConstraints.maxHeight),
 					)
 
-					if (r > rating) {
+					if (r > rating && r > 0) {
 						Image(
 							painter = painterResource(id = R.drawable.ic_star_border_36),
 							colorFilter = ColorFilter.tint(color),
-							contentDescription = "Rating value",
+							contentDescription = stringResource(R.string.rating_value),
 							contentScale = ContentScale.Fit,
+							alignment = Alignment.BottomCenter,
 							modifier = Modifier.requiredSize(this@BoxWithConstraints.maxHeight),
 						)
 					}
