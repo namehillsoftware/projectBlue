@@ -234,7 +234,7 @@ private fun FileRating(viewModel: FileDetailsState, mediaStylePalette: MediaStyl
 		rating = rating,
 		color = mediaStylePalette.primaryTextColor,
 		backgroundColor = mediaStylePalette.primaryTextColor.copy(.1f),
-		modifier = modifier
+		modifier = modifier,
 	)
 }
 
@@ -439,6 +439,7 @@ private fun FileDetailsEditor(
 									rating = ratingValue,
 									color = palette.primaryTextColor,
 									backgroundColor = palette.primaryTextColor.copy(.1f),
+									min = 0,
 									modifier = Modifier
 										.height(36.dp)
 										.align(Alignment.Center)
