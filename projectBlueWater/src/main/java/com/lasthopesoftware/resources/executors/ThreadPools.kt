@@ -5,7 +5,6 @@ import com.lasthopesoftware.promises.extensions.preparePromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import java.util.concurrent.Executor
-import java.util.concurrent.Executors
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.ForkJoinWorkerThread
 import java.util.concurrent.atomic.AtomicInteger
@@ -30,6 +29,15 @@ object ThreadPools {
 		)
 	}
 
+	private val database by lazy {
+		ForkJoinPool(
+			Runtime.getRuntime().availableProcessors(),
+			NamedThreadPoolFactory("database"),
+			UncaughtExceptionHandlerLogger,
+			true
+		)
+	}
+
 	val compute by lazy {
 		ForkJoinPool(
 			Runtime.getRuntime().availableProcessors(),
@@ -40,8 +48,6 @@ object ThreadPools {
 	}
 
 	val exceptionsLogger: Executor by lazy { CachedSingleThreadExecutor("exceptionsLogger") }
-
-	private val database by lazy { Executors.newCachedThreadPool() }
 
 	fun <T> promiseTableMessage(messageWriter: CancellableMessageWriter<T>): Promise<T> =
 		database.preparePromise(messageWriter)

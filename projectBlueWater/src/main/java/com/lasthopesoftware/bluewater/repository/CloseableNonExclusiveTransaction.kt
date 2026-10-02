@@ -6,10 +6,10 @@ import java.util.concurrent.locks.ReadWriteLock
 
 class CloseableNonExclusiveTransaction internal constructor(private val sqLiteDatabase: SQLiteDatabase, databaseSynchronization: ReadWriteLock) : Closeable, ITransactionSuccessSetter {
 
-	private val readLock = databaseSynchronization.readLock()
+//	private val readLock = databaseSynchronization.readLock()
 
 	init {
-		readLock.lock()
+//		readLock.lock()
 		sqLiteDatabase.beginTransactionNonExclusive()
 	}
 
@@ -19,6 +19,6 @@ class CloseableNonExclusiveTransaction internal constructor(private val sqLiteDa
 
 	override fun close() {
 		sqLiteDatabase.endTransaction()
-		readLock.unlock()
+//		readLock.unlock()
 	}
 }
