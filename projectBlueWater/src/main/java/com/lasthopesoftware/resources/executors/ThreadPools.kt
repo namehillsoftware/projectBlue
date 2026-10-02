@@ -29,6 +29,15 @@ object ThreadPools {
 		)
 	}
 
+	private val database by lazy {
+		ForkJoinPool(
+			Runtime.getRuntime().availableProcessors(),
+			NamedThreadPoolFactory("database"),
+			UncaughtExceptionHandlerLogger,
+			true
+		)
+	}
+
 	val compute by lazy {
 		ForkJoinPool(
 			Runtime.getRuntime().availableProcessors(),
@@ -41,5 +50,5 @@ object ThreadPools {
 	val exceptionsLogger: Executor by lazy { CachedSingleThreadExecutor("exceptionsLogger") }
 
 	fun <T> promiseTableMessage(messageWriter: CancellableMessageWriter<T>): Promise<T> =
-		io.preparePromise(messageWriter)
+		database.preparePromise(messageWriter)
 }
