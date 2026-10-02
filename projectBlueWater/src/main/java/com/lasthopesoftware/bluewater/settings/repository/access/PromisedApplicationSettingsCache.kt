@@ -1,33 +1,29 @@
 package com.lasthopesoftware.bluewater.settings.repository.access
 
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
+import com.lasthopesoftware.bluewater.shared.updateAndGetIfNull
+import com.lasthopesoftware.bluewater.shared.updateAndGetNotNull
 import com.lasthopesoftware.promises.ResolvedPromiseBox
 import com.namehillsoftware.handoff.promises.Promise
+import java.util.concurrent.atomic.AtomicReference
 
 object PromisedApplicationSettingsCache : CachePromisedApplicationSettings {
-	private val sync = Any()
 
 	@Volatile
-	private var promisedApplicationSettings: ResolvedPromiseBox<ApplicationSettings, Promise<ApplicationSettings>>? = null
+	private var promisedApplicationSettings = AtomicReference<ResolvedPromiseBox<ApplicationSettings, Promise<ApplicationSettings>>?>(null)
 
 	override fun getOrSetCachedSettings(factory: () -> Promise<ApplicationSettings>): Promise<ApplicationSettings> =
-		promisedApplicationSettings
+		promisedApplicationSettings.get()
 			?.resolvedPromise
-			?: synchronized(sync) {
-				promisedApplicationSettings
-					?.run {
-						resolvedPromise ?: forwardResolution {
-							synchronized(sync) {
-								if (promisedApplicationSettings === this) promisedApplicationSettings = null
-								getOrSetCachedSettings(factory)
-							}
-						}
+			?: promisedApplicationSettings.get()
+				?.run {
+					resolvedPromise ?: forwardResolution {
+						promisedApplicationSettings.compareAndSet(this, null)
+						getOrSetCachedSettings(factory)
 					}
-					?: factory().also { promisedApplicationSettings = ResolvedPromiseBox(it) }
-			}
+				}
+				?: promisedApplicationSettings.updateAndGetIfNull { it ?: ResolvedPromiseBox(factory()) }.originalPromise
 
 	override fun setAndGetCachedSettings(updater: (Promise<ApplicationSettings>?) -> Promise<ApplicationSettings>): Promise<ApplicationSettings> =
-		synchronized(sync) {
-			updater(promisedApplicationSettings?.originalPromise).also { promisedApplicationSettings = ResolvedPromiseBox(it) }
-		}
+		promisedApplicationSettings.updateAndGetNotNull { ResolvedPromiseBox(updater(it?.originalPromise)) }.originalPromise
 }

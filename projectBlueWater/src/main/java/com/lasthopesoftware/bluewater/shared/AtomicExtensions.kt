@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.shared
 
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.UnaryOperator
 
 fun <T> AtomicReference<T>.updateIfDifferent(newValue: T): Boolean {
 	return updateConditionally({ it != newValue }) { newValue }
@@ -22,4 +23,20 @@ inline fun <T> AtomicReference<T>.update(factory: (T) -> T) {
 inline fun <T> AtomicReference<T>.tryUpdate(factory: (T) -> T): Boolean {
 	val prev = get()
 	return compareAndSet(prev, factory(prev))
+}
+
+fun <T> AtomicReference<T?>.updateAndGetIfNull(factory: UnaryOperator<T?>): T {
+	var value = get()
+	while (value == null) {
+		value = updateAndGet(factory)
+	}
+	return value
+}
+
+fun <T> AtomicReference<T?>.updateAndGetNotNull(factory: UnaryOperator<T?>): T {
+	var value: T?
+	do {
+		value = updateAndGet(factory)
+	} while (value == null)
+	return value
 }
