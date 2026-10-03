@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing
 
 import androidx.lifecycle.ViewModelStoreOwner
+import com.lasthopesoftware.bluewater.LoggingApplicationNavigation
 import com.lasthopesoftware.bluewater.client.browsing.files.details.BrowsedFileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.details.NowPlayingFileDetailsViewModel
@@ -121,6 +122,8 @@ class ScopedViewModelRegistry(
 	override val undoBackStackBuilder by viewModelStoreOwner.buildViewModelLazily { ViewModelUndoStack() }
 
 	override val applicationNavigation by lazy {
-		UndoStackApplicationNavigation(undoBackStackBuilder, reusedViewModelDependencies.applicationNavigation)
+		LoggingApplicationNavigation(
+			UndoStackApplicationNavigation(undoBackStackBuilder, reusedViewModelDependencies.applicationNavigation)
+		)
 	}
 }

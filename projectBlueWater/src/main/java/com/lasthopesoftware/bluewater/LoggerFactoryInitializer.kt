@@ -92,7 +92,7 @@ class LoggerFactoryInitializer : Initializer<ILoggerFactory> {
 		// add the newly created appenders to the root logger;
 		// qualify Logger to disambiguate from org.slf4j.Logger
 		val rootLogger = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME) as Logger
-		rootLogger.level = Level.WARN
+		rootLogger.level = Level.INFO
 		rootLogger.addAppender(logcatAppender)
 		if (isLoggingToFile && Environment.MEDIA_MOUNTED == Environment.getExternalStorageState() && context.getExternalFilesDir(null) != null) {
 			val asyncAppender = AsyncAppender()
