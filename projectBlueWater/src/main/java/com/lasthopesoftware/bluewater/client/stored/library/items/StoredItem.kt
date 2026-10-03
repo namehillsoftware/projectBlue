@@ -55,6 +55,7 @@ data class StoredItem(
 
 			db.execSQL("DROP TABLE `$tableName`")
 			db.execSQL("ALTER TABLE `$tempTableName` RENAME TO `$tableName`")
+			return
 		}
 
 		if (oldVersion < 24) {
