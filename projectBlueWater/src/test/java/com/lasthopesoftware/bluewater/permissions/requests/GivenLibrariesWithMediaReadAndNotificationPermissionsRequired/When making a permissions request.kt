@@ -34,6 +34,7 @@ class `When making a permissions request` {
 				every { isNotificationsPermissionNotGranted } returns true
 				every { isForegroundMediaServicePermissionNotGranted } returns true
 				every { isForegroundDataServicePermissionNotGranted } returns false
+				every { isLocalNetworkAccessNotGranted } returns false
 			}
 		)
 	}

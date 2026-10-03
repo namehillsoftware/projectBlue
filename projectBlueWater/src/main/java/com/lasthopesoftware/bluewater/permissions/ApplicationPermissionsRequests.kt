@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.permissions
 import android.Manifest
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.ProvideLibrarySettings
-import com.lasthopesoftware.bluewater.permissions.read.ProvideReadPermissionsRequirements
+import com.lasthopesoftware.bluewater.permissions.read.ProvideRequiredLibraryPermissions
 import com.lasthopesoftware.bluewater.shared.android.permissions.CheckOsPermissions
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.promises.extensions.unitResponse
@@ -11,7 +11,7 @@ import com.namehillsoftware.handoff.promises.Promise
 
 class ApplicationPermissionsRequests(
 	private val librarySettingsProvider: ProvideLibrarySettings,
-	private val applicationReadPermissionsRequirementsProvider: ProvideReadPermissionsRequirements,
+	private val applicationReadPermissionsRequirementsProvider: ProvideRequiredLibraryPermissions,
 	private val permissionsManager: ManagePermissions,
 	private val checkOsPermissions: CheckOsPermissions,
 ) : RequestApplicationPermissions {
@@ -19,7 +19,7 @@ class ApplicationPermissionsRequests(
 		librarySettingsProvider
 			.promiseAllLibrarySettings()
 			.eventually { libraries ->
-				val permissionsToRequest = HashSet<String>(4)
+				val permissionsToRequest = HashSet<String>(6)
 				for (library in libraries) {
 					if (!permissionsToRequest.contains(Manifest.permission.READ_MEDIA_AUDIO) && applicationReadPermissionsRequirementsProvider.isReadMediaPermissionsRequiredForLibrary(library))
 						permissionsToRequest.add(Manifest.permission.READ_MEDIA_AUDIO)
@@ -37,6 +37,10 @@ class ApplicationPermissionsRequests(
 
 				if (checkOsPermissions.isForegroundDataServicePermissionNotGranted) {
 					permissionsToRequest.add(Manifest.permission.FOREGROUND_SERVICE_DATA_SYNC)
+				}
+
+				if (checkOsPermissions.isLocalNetworkAccessNotGranted) {
+					permissionsToRequest.add(Manifest.permission.ACCESS_LOCAL_NETWORK)
 				}
 
 				permissionsManager.requestPermissions(permissionsToRequest.toList())

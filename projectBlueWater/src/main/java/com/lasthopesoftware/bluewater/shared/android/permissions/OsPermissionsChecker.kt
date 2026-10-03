@@ -26,6 +26,10 @@ class OsPermissionsChecker(private val context: Context) : CheckOsPermissions {
 		get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
 			&& !isPermissionGranted(Manifest.permission.FOREGROUND_SERVICE_DATA_SYNC)
 
+	override val isLocalNetworkAccessNotGranted: Boolean
+		get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN &&
+			!isPermissionGranted(Manifest.permission.ACCESS_LOCAL_NETWORK)
+
 	private fun isPermissionGranted(permission: String) =
 		ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
 }
