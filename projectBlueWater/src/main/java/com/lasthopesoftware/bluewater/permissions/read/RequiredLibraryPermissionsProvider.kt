@@ -5,9 +5,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySe
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.isReadPermissionsRequired
 import com.lasthopesoftware.bluewater.shared.android.permissions.CheckOsPermissions
 
-class ApplicationReadPermissionsRequirementsProvider(
+class RequiredLibraryPermissionsProvider(
 	private val storageReadPermissionArbitratorForOs: CheckOsPermissions
-) : ProvideReadPermissionsRequirements {
+) : ProvideRequiredLibraryPermissions {
 
 	override fun isReadPermissionsRequiredForLibrary(librarySettings: LibrarySettings): Boolean =
 		Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU

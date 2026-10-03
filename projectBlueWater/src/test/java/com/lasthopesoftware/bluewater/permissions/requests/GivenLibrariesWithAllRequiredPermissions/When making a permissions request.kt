@@ -33,6 +33,7 @@ class `When making a permissions request` {
 				every { isNotificationsPermissionNotGranted } returns true
 				every { isForegroundMediaServicePermissionNotGranted } returns false
 				every { isForegroundDataServicePermissionNotGranted } returns true
+				every { isLocalNetworkAccessNotGranted } returns true
 			}
 		)
 	}
@@ -50,7 +51,8 @@ class `When making a permissions request` {
 			Manifest.permission.READ_MEDIA_AUDIO,
 			Manifest.permission.READ_EXTERNAL_STORAGE,
 			Manifest.permission.POST_NOTIFICATIONS,
-			Manifest.permission.FOREGROUND_SERVICE_DATA_SYNC
+			Manifest.permission.FOREGROUND_SERVICE_DATA_SYNC,
+			Manifest.permission.ACCESS_LOCAL_NETWORK,
 		)
 	}
 }

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.permissions.read.GivenLibraryNotRequestingStorageReadPermissions
 
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
-import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
+import com.lasthopesoftware.bluewater.permissions.read.RequiredLibraryPermissionsProvider
 import com.lasthopesoftware.bluewater.shared.android.permissions.CheckOsPermissions
 import io.mockk.every
 import io.mockk.mockk
@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test
 
 class WhenNotGrantingOsPermissions {
 	private val isPermissionRequired by lazy {
-		val applicationReadPermissionsRequirementsProvider = ApplicationReadPermissionsRequirementsProvider(
+		val applicationReadPermissionsRequirementsProvider = RequiredLibraryPermissionsProvider(
             mockk<CheckOsPermissions> {
 				every { isReadPermissionGranted } returns false
 			}

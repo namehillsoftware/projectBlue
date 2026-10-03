@@ -24,7 +24,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
-import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
+import com.lasthopesoftware.bluewater.permissions.read.RequiredLibraryPermissionsProvider
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
@@ -68,7 +68,7 @@ class EntryActivity :
 		val osPermissionChecker = OsPermissionsChecker(applicationContext)
 		ApplicationPermissionsRequests(
 			browserViewDependencies.librarySettingsProvider,
-			ApplicationReadPermissionsRequirementsProvider(osPermissionChecker),
+			RequiredLibraryPermissionsProvider(osPermissionChecker),
 			this,
 			osPermissionChecker
 		)

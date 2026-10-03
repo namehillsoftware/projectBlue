@@ -4,7 +4,7 @@ import android.os.Build
 import androidx.annotation.ChecksSdkIntAtLeast
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.LibrarySettings
 
-interface ProvideReadPermissionsRequirements {
+interface ProvideRequiredLibraryPermissions {
     fun isReadPermissionsRequiredForLibrary(librarySettings: LibrarySettings): Boolean
 
 	@ChecksSdkIntAtLeast(api = Build.VERSION_CODES.TIRAMISU)
