@@ -65,9 +65,11 @@ class ActivityDependencies(
 	override val storedFileAccess by lazy { StoredFileAccess(applicationContext) }
 
 	override val applicationNavigation by lazy {
-		ActivityApplicationNavigation(
-			activity,
-			intentBuilder,
+		LoggingApplicationNavigation(
+			ActivityApplicationNavigation(
+				activity,
+				intentBuilder,
+			)
 		)
 	}
 

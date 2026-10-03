@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.lasthopesoftware.bluewater.LoggingApplicationNavigation
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.ui.ScreenDimensionsScope
 import com.lasthopesoftware.bluewater.android.ui.SlideOutState
@@ -800,13 +801,15 @@ fun ResponsiveApplication(
 	val browserNavController = rememberNavController<BrowserLibraryDestination>(emptyList())
 	val coroutineScope = rememberCoroutineScope()
 	val destinationGraphNavigation = remember(entryDependencies, responsiveState, navController, browserNavController, coroutineScope) {
-		ResponsiveDestinationGraphNavigation(
-			entryDependencies.applicationNavigation,
-			responsiveState,
-			navController,
-			browserNavController,
-			coroutineScope,
-			entryDependencies.itemListMenuBackPressedHandler
+		LoggingApplicationNavigation(
+			ResponsiveDestinationGraphNavigation(
+				entryDependencies.applicationNavigation,
+				responsiveState,
+				navController,
+				browserNavController,
+				coroutineScope,
+				entryDependencies.itemListMenuBackPressedHandler
+			)
 		)
 	}
 

@@ -98,7 +98,6 @@ class FileDetailsViewModel(
 	override fun onCleared() {
 		propertyUpdateRegistrations.close()
 		coverArt.close()
-		super.onCleared()
 	}
 
 	override fun load(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Unit> {

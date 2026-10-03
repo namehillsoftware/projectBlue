@@ -13,6 +13,7 @@ import androidx.core.view.WindowCompat
 import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
+import com.lasthopesoftware.bluewater.LoggingApplicationNavigation
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.android.ui.ProjectBlueComposableApplication
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
@@ -66,7 +67,9 @@ import java.io.IOException
 	}
 
 	private val activityApplicationNavigation by lazy {
-		ActivityApplicationNavigation(this, localApplicationDependencies.intentBuilder)
+		LoggingApplicationNavigation(
+			ActivityApplicationNavigation(this, localApplicationDependencies.intentBuilder)
+		)
 	}
 
 	private val connectionStatusViewModel by buildViewModelLazily {
