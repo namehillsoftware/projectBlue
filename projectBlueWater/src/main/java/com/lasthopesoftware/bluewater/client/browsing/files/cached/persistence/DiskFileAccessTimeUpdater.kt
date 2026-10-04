@@ -5,6 +5,7 @@ import android.database.SQLException
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.Date
@@ -22,7 +23,9 @@ class DiskFileAccessTimeUpdater(private val context: Context) : UpdateDiskFileAc
 
 	private fun doFileAccessedUpdate(cachedFileId: Long) {
 		val updateTime = System.currentTimeMillis()
-		logger.info("Updating accessed time on cached file with ID $cachedFileId to " + Date(updateTime))
+		if (DebugFlag.isDebugCompilation) {
+			logger.debug("Updating accessed time on cached file with ID {} to {}", cachedFileId, Date(updateTime))
+		}
 		RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 			try {
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
