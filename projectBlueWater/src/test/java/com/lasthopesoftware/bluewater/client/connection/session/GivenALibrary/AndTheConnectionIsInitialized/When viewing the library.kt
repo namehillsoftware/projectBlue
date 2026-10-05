@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.AndTheConnectionIsInitialized
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.LibrarySelectionNavigation
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -30,7 +29,7 @@ class `When viewing the library` {
 				}
 			},
 			mockk {
-				every { selectBrowserLibrary(any()) } answers { Library(id = firstArg<LibraryId>().id).toPromise() }
+				every { selectBrowserLibrary(any()) } answers { firstArg<LibraryId>().toPromise() }
 			},
 			mockk {
 				every { initializeConnection(any()) } returns false.toPromise()

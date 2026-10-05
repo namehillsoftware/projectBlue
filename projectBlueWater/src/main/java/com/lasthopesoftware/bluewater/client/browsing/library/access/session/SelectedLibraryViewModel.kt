@@ -2,9 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.library.access.session
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.observables.MutableInteractionState
 import com.namehillsoftware.handoff.promises.Promise
 
@@ -33,11 +31,11 @@ class SelectedLibraryViewModel(
 			}
 	}
 
-	override fun selectBrowserLibrary(libraryId: LibraryId): Promise<Library> =
+	override fun selectBrowserLibrary(libraryId: LibraryId): Promise<LibraryId> =
 		libraryBrowserSelection
 			.selectBrowserLibrary(libraryId)
 			.then {
-				mutableSelectedLibraryId.value = it.libraryId
+				mutableSelectedLibraryId.value = it
 				it
 			}
 }

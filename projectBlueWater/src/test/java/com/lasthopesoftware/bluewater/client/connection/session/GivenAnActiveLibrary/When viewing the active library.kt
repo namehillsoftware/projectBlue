@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.connection.session.GivenAnActiveLibrary
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.LibrarySelectionNavigation
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -31,7 +30,7 @@ class `When viewing the active library` {
 			},
 			mockk {
 				every { promiseSelectedLibraryId() } returns LibraryId(libraryId).toPromise()
-				every { selectBrowserLibrary(any()) } answers { Library(id = firstArg<LibraryId>().id).toPromise() }
+				every { selectBrowserLibrary(any()) } answers { firstArg<LibraryId>().toPromise() }
 			},
 			mockk {
 				every { initializeConnection(any()) } returns false.toPromise()
