@@ -85,30 +85,30 @@ class LoggingApplicationNavigation(private val inner: NavigateApplication) : Nav
 	}
 
 	private inline fun logNavigation(destination: String, action: (NavigateApplication) -> Promise<Unit>): Promise<Unit> {
-		logger.info("Navigating to {}.", destination)
+		logger.debug("Navigating to {}.", destination)
 		return action(inner).must(ImmediateAction{
-			logger.info("Navigation to {} finished.", destination)
+			logger.debug("Navigation to {} finished.", destination)
 		})
 	}
 
 	private inline fun <ParamOne> logNavigation(destination: String, param: ParamOne, action: (NavigateApplication, ParamOne) -> Promise<Unit>): Promise<Unit> {
-		logger.info("Navigating to {}({}).", destination, param)
+		logger.debug("Navigating to {}({}).", destination, param)
 		return action(inner, param).must(ImmediateAction{
-			logger.info("Navigation to {}({}) finished.", destination, param)
+			logger.debug("Navigation to {}({}) finished.", destination, param)
 		})
 	}
 
 	private inline fun <ParamOne, ParamTwo> logNavigation(destination: String, paramOne: ParamOne, paramTwo: ParamTwo, action: (NavigateApplication, ParamOne, ParamTwo) -> Promise<Unit>): Promise<Unit> {
-		logger.info("Navigating to {}({}, {}).", destination, paramOne, paramTwo)
+		logger.debug("Navigating to {}({}, {}).", destination, paramOne, paramTwo)
 		return action(inner, paramOne, paramTwo).must(ImmediateAction{
-			logger.info("Navigation to {}({}, {}) finished.", destination, paramOne, paramTwo)
+			logger.debug("Navigation to {}({}, {}) finished.", destination, paramOne, paramTwo)
 		})
 	}
 
 	private inline fun <ParamOne, ParamTwo, ParamThree> logNavigation(destination: String, paramOne: ParamOne, paramTwo: ParamTwo, paramThree: ParamThree, action: (NavigateApplication, ParamOne, ParamTwo, ParamThree) -> Promise<Unit>): Promise<Unit> {
-		logger.info("Navigating to {}({}, {}, {}).", destination, paramOne, paramTwo, paramThree)
+		logger.debug("Navigating to {}({}, {}, {}).", destination, paramOne, paramTwo, paramThree)
 		return action(inner, paramOne, paramTwo, paramThree).must(ImmediateAction{
-			logger.info("Navigation to {}({}, {}, {}) finished.", destination, paramOne, paramTwo, paramThree)
+			logger.debug("Navigation to {}({}, {}, {}) finished.", destination, paramOne, paramTwo, paramThree)
 		})
 	}
 }
