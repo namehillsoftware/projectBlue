@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.navigation
 
+import com.lasthopesoftware.bluewater.LoggingApplicationNavigation
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
@@ -23,10 +24,12 @@ class RoutedNavigationDependencies(
 	}
 
 	override val applicationNavigation by lazy {
-		LibrarySelectionNavigation(
-			innerNavigation,
-			selectedLibraryViewModel,
-			connectionStatusViewModel,
+		LoggingApplicationNavigation(
+			LibrarySelectionNavigation(
+				innerNavigation,
+				selectedLibraryViewModel,
+				connectionStatusViewModel,
+			)
 		)
 	}
 

@@ -87,25 +87,25 @@ class DiskFileCache(
 
 						val returnFile = File(fileName)
 
-						logger.info("Checking if " + cachedFile.fileName + " exists.")
+						logger.debug("Checking if {} exists.", cachedFile.fileName)
 
 						when {
 							!returnFile.exists() -> {
-								logger.warn("Cached file `" + cachedFile.fileName + "` doesn't exist! Removing from database.")
+								logger.warn("Cached file `{}` doesn't exist! Removing from database.", cachedFile.fileName)
 
 								deleteCachedFile(cachedFile.id)
 								null
 							}
 							// Remove the cached file and return null if it's past its expired time
 							expirationTime > -1 && cachedFile.createdTime < System.currentTimeMillis() - expirationTime -> {
-								logger.info("Cached file $uniqueKey expired. Deleting.")
+								logger.debug("Cached file {} expired. Deleting.", uniqueKey)
 
 								promiseDeletedFile(cachedFile, returnFile)
 								null
 							}
 							else -> {
 								diskFileAccessTimeUpdater.promiseFileAccessedUpdate(cachedFile)
-								logger.info("Returning cached file $uniqueKey")
+								logger.debug("Returning cached file {}", uniqueKey)
 								returnFile
 							}
 						}
@@ -122,7 +122,7 @@ class DiskFileCache(
 			.eventually { isDeleted ->
 				if (isDeleted) deleteCachedFile(cachedFile.id)
 				else {
-					logger.warn("Unable to delete cached file " + file.absolutePath)
+					logger.warn("Unable to delete cached file {}", file.absolutePath)
 					Promise(-1L)
 				}
 			}
@@ -133,13 +133,15 @@ class DiskFileCache(
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				try {
 					repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
-						logger.info("Deleting cached file with id $cachedFileId")
-						if (logger.isDebugEnabled) logger.debug("Cached file count: " + getTotalCachedFileCount(repositoryAccessHelper))
+						logger.debug("Deleting cached file with id {}", cachedFileId)
+						if (logger.isDebugEnabled)
+							logger.debug("Cached file count: {}", getTotalCachedFileCount(repositoryAccessHelper))
 						val executionResult = repositoryAccessHelper
 							.mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id")
 							.addParameter("id", cachedFileId)
 							.execute()
-						if (logger.isDebugEnabled) logger.debug("Cached file count: " + getTotalCachedFileCount(repositoryAccessHelper))
+						if (logger.isDebugEnabled)
+							logger.debug("Cached file count: {}", getTotalCachedFileCount(repositoryAccessHelper))
 						closeableTransaction.setTransactionSuccessful()
 						executionResult
 					}

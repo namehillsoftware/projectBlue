@@ -44,7 +44,6 @@ class ActivityDependencies(
 		BrowserLibrarySelection(
 			applicationSettings,
 			messageBus,
-			libraryProvider,
 		)
 	}
 
@@ -65,9 +64,11 @@ class ActivityDependencies(
 	override val storedFileAccess by lazy { StoredFileAccess(applicationContext) }
 
 	override val applicationNavigation by lazy {
-		ActivityApplicationNavigation(
-			activity,
-			intentBuilder,
+		LoggingApplicationNavigation(
+			ActivityApplicationNavigation(
+				activity,
+				intentBuilder,
+			)
 		)
 	}
 
@@ -102,7 +103,7 @@ class ActivityDependencies(
 		)
 	}
 
-	override val selectedLibraryViewModel: SelectedLibraryViewModel by activity.buildViewModelLazily {
+	override val selectedLibraryViewModel by activity.buildViewModelLazily {
 		SelectedLibraryViewModel(
 			selectedLibraryIdProvider,
 			libraryBrowserSelection,

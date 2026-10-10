@@ -4,9 +4,7 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.TrackSelectedLibrary
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
@@ -45,38 +43,38 @@ class LibrarySelectionNavigation(
 	override fun viewLibrary(libraryId: LibraryId): Promise<Unit> =
 		selectLibrary(libraryId) { l ->
 			connectionStatus
-				.initializeConnection(l.libraryId)
+				.initializeConnection(l)
 				.cancelBackEventually {
-					if (it) inner.viewLibrary(l.libraryId)
+					if (it) inner.viewLibrary(l)
 					else inner.viewApplicationSettings()
 				}
 		}
 
 	override fun viewItem(libraryId: LibraryId, item: IItem): Promise<Unit> =
-		selectLibrary(libraryId) { inner.viewItem(it.libraryId, item) }
+		selectLibrary(libraryId) { inner.viewItem(it, item) }
 
 	override fun launchSearch(libraryId: LibraryId): Promise<Unit> =
-		selectLibrary(libraryId) { inner.launchSearch(it.libraryId) }
+		selectLibrary(libraryId) { inner.launchSearch(it) }
 
 	override fun search(libraryId: LibraryId, filePropertyFilter: FileProperty): Promise<Unit> =
-		selectLibrary(libraryId) { inner.search(it.libraryId, filePropertyFilter) }
+		selectLibrary(libraryId) { inner.search(it, filePropertyFilter) }
 
 	override fun search(libraryId: LibraryId, searchQuery: String): Promise<Unit> =
-		selectLibrary(libraryId) { inner.search(it.libraryId, searchQuery) }
+		selectLibrary(libraryId) { inner.search(it, searchQuery) }
 
 	override fun viewFileDetails(libraryId: LibraryId, searchQuery: String, positionedFile: PositionedFile): Promise<Unit> =
-		selectLibrary(libraryId) { inner.viewFileDetails(it.libraryId, searchQuery, positionedFile) }
+		selectLibrary(libraryId) { inner.viewFileDetails(it, searchQuery, positionedFile) }
 
 	override fun viewFileDetails(libraryId: LibraryId, item: IItem?, positionedFile: PositionedFile): Promise<Unit> =
-		selectLibrary(libraryId) { inner.viewFileDetails(it.libraryId, item, positionedFile) }
+		selectLibrary(libraryId) { inner.viewFileDetails(it, item, positionedFile) }
 
 	override fun viewNowPlaying(libraryId: LibraryId): Promise<Unit> =
-		selectLibrary(libraryId) { inner.viewNowPlaying(it.libraryId) }
+		selectLibrary(libraryId) { inner.viewNowPlaying(it) }
 
 	override fun viewActiveDownloads(libraryId: LibraryId): Promise<Unit> =
-		selectLibrary(libraryId) { inner.viewActiveDownloads(it.libraryId) }
+		selectLibrary(libraryId) { inner.viewActiveDownloads(it) }
 
-	private fun selectLibrary(libraryId: LibraryId, onLibrarySelected: PromisedResponse<Library, Unit>) =
+	private fun selectLibrary(libraryId: LibraryId, onLibrarySelected: PromisedResponse<LibraryId, Unit>) =
 		selectedLibraryViewModel
 			.selectBrowserLibrary(libraryId)
 			.eventually(onLibrarySelected)

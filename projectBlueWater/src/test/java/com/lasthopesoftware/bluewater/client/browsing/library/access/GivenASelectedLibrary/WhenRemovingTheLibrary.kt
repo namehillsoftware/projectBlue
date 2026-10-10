@@ -46,7 +46,7 @@ class WhenRemovingTheLibrary {
 		every { selectBrowserLibrary.selectBrowserLibrary(any()) } answers {
 			libraryProvider.promiseLibrary(firstArg()).then { l ->
 				selectedLibraryId = l?.libraryId
-				l
+				l?.libraryId
 			}
 		}
 
