@@ -29,11 +29,16 @@ object PromiseMachines {
 		}
 
 		override fun next(): Promise<Resolution> =
-			function(currentValue, this)
-				.also {
-					it.then(this)
-					proxyRejection(it)
-				}
+			try {
+				function(currentValue, this)
+					.also {
+						it.then(this)
+						proxyRejection(it)
+					}
+			} catch (t: Throwable) {
+				reject(t)
+				this
+			}
 
 		override fun respond(resolution: Resolution) {
 			currentValue = resolution
