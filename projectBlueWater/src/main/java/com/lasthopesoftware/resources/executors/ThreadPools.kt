@@ -4,7 +4,6 @@ import com.lasthopesoftware.bluewater.exceptions.UncaughtExceptionHandlerLogger
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
-import java.util.concurrent.Executor
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.ForkJoinWorkerThread
 import java.util.concurrent.atomic.AtomicInteger
@@ -37,8 +36,6 @@ object ThreadPools {
 			true
 		)
 	}
-
-	val exceptionsLogger: Executor by lazy { CachedSingleThreadExecutor("exceptionsLogger") }
 
 	fun <T> promiseTableMessage(messageWriter: CancellableMessageWriter<T>): Promise<T> =
 		io.preparePromise(messageWriter)
