@@ -16,7 +16,6 @@ import com.lasthopesoftware.observables.MutableInteractionState
 import com.lasthopesoftware.promises.PromiseDelay
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
-import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
@@ -132,11 +131,7 @@ class ReusableFileViewModel(
 					// Finally, always resolve the parent promise
 					resolve(Unit)
 				}
-				.excuse { e ->
-					ThreadPools
-						.exceptionsLogger
-						.execute { handleError(e) }
-				}
+				.excuse(::handleError)
 
 			cancellationProxy.doCancel(promisedUrlKey)
 			cancellationProxy.doCancel(filePropertiesPromise)
@@ -164,7 +159,7 @@ class ReusableFileViewModel(
 				}
 			}
 
-			logger.error("An error occurred getting the file properties for the file with ID " + serviceFile.key, e)
+			logger.error("An error occurred getting the file properties for the file with ID ${serviceFile.key}", e)
 		}
 
 		private val isNotCurrentServiceFile: Boolean
