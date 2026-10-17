@@ -6,7 +6,6 @@ import com.lasthopesoftware.resources.io.PromisingReadableStream
 import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
-import java.io.ByteArrayInputStream
 
 class HttpStreamedResponse : ImmediateResponse<HttpResponse?, PromisingReadableStream>,
     PromisingReadableStream {
@@ -19,7 +18,7 @@ class HttpStreamedResponse : ImmediateResponse<HttpResponse?, PromisingReadableS
 		byteStream = response
 			?.takeIf { it.code != 404 }
 			?.run { body }
-			?: PromisingReadableStreamWrapper(ByteArrayInputStream(emptyByteArray))
+			?: PromisingReadableStreamWrapper(emptyByteArray.inputStream(), null)
 
 		return this
 	}
