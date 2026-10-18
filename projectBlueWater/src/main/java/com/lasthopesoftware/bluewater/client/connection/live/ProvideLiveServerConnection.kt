@@ -10,4 +10,4 @@ interface ProvideLiveServerConnection {
 }
 
 inline fun <Resolution> Promise<LiveServerConnection?>.eventuallyFromDataAccess(crossinline factory: (RemoteLibraryAccess?) -> Promise<Resolution>): Promise<Resolution> =
-	cancelBackEventually { it?.dataAccess.let(factory) }
+	cancelBackEventually { factory(it?.dataAccess) }
