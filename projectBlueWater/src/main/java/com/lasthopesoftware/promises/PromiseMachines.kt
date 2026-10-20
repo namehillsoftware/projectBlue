@@ -47,11 +47,7 @@ object PromiseMachines {
 		}
 	}
 
-	abstract class ContinuableMachine<Resolution> : Promise.Proxy<Resolution>(), Continuable<Resolution> {
-		fun start() {
-			proxyResult(next())
-		}
-	}
+	abstract class ContinuableMachine<Resolution> : Promise.Proxy<Resolution>(), Continuable<Resolution>
 
 	interface Continuable<Resolution> {
 		fun next(): Promise<Resolution>

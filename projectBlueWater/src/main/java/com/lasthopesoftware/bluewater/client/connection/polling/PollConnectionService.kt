@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
+import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.android.intents.getIntent
 import com.lasthopesoftware.bluewater.android.intents.makePendingIntentImmutable
@@ -15,7 +16,6 @@ import com.lasthopesoftware.bluewater.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
@@ -50,7 +50,7 @@ class PollConnectionService : LifecycleService() {
 	private val binder by lazy { GenericBinder(this) }
 
 	private val channelConfiguration by lazy { SharedChannelProperties(this) }
-	private val notificationManager by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
+	private val notificationManager by lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
 	private val notificationsConfiguration by lazy {
 		val notificationChannelActivator =
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManager)
@@ -62,7 +62,7 @@ class PollConnectionService : LifecycleService() {
 
 	private val notificationController by lazyScoped { NotificationsController(this, notificationManager) }
 
-	private val libraryConnectionProvider by lazy { ConnectionSessionManager.get(this) }
+	private val libraryConnectionProvider by lazy { applicationDependencies.connectionSessions }
 
 	private val libraryConnectionPoller by lazy {
 		LibraryConnectionPollingSessions(

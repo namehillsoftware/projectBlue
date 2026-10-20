@@ -16,7 +16,7 @@ class StoredFileDownloader(private val libraryConnections: ProvideLibraryConnect
 		libraryConnections
 			.promiseLibraryConnection(libraryId)
 			.eventuallyFromDataAccess {
-				(it?.promiseFile(ServiceFile(storedFile.serviceId)))
+				it?.promiseFile(ServiceFile(storedFile.serviceId))
 					.keepPromise { PromisingReadableStreamWrapper(emptyByteArray.inputStream(), null) }
 			}
 }
