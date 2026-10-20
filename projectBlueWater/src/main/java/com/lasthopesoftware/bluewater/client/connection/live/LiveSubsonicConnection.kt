@@ -175,11 +175,10 @@ class LiveSubsonicConnection(
 
 	override fun promiseServerVersion(): Promise<SemanticVersion?> = ServerVersionPromise()
 
-	override fun promiseFile(serviceFile: ServiceFile): Promise<PromisingReadableStream> = Promise.Proxy { cp ->
+	override fun promiseFile(serviceFile: ServiceFile): Promise<PromisingReadableStream> =
 		httpClient
-			.eventually { it.promiseResponse(getFileUrl(serviceFile)).also(cp::doCancel) }
-			.then(HttpStreamedResponse())
-	}
+			.eventually { it.promiseResponse(getFileUrl(serviceFile)) }
+			.cancelBackThen(HttpStreamedResponse())
 
 	override fun promiseImageBytes(serviceFile: ServiceFile): Promise<ByteArray> = promiseResponse("getCoverArt", "id=${serviceFile.key}")
 		.cancelBackEventually { httpResponse ->
@@ -252,7 +251,7 @@ class LiveSubsonicConnection(
 	}
 
 	private inline fun <reified T> HttpResponse.promiseSubsonicResponse(): Promise<T?> = bodyString
-		.eventually {
+		.cancelBackEventually {
 			ThreadPools.compute.preparePromise { cs ->
 				val json = JsonParser.parseString(it).asJsonObject.get("subsonic-response")
 					?: throw NonStandardResponseException()
@@ -314,16 +313,17 @@ class LiveSubsonicConnection(
 	}
 
 	private inner class FilePropertiesPromise(private val serviceFile: ServiceFile) :
-		Promise.Proxy<LookupFileProperties>()
+		Promise.Proxy<LookupFileProperties>(),
+		PromisedResponse<HashMap<String, String>, LookupFileProperties>
 	{
 		init {
 			proxy(
 				promiseResponse("getSong", "id=${serviceFile.key}")
 					.also(::doCancel)
-					.eventually({ httpResponse ->
+					.eventually({httpResponse ->
 						httpResponse
 							.bodyString
-							.eventually { b ->
+							.cancelBackEventually { b ->
 								ThreadPools.compute.preparePromise { cs ->
 									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
 									val subsonicResponse = JsonParser.parseString(b).asJsonObject.get("subsonic-response")
@@ -356,22 +356,23 @@ class LiveSubsonicConnection(
 							}
 					}, ::handleException)
 					.also(::doCancel)
-					.eventually({ props ->
-						promiseResponse(
-							"getLyrics",
-							"artist=${props[KnownFileProperties.artist]}",
-							"title=${props[KnownFileProperties.title]}"
-						)
-							.also(::doCancel)
-							.promiseSubsonicResponse<LyricsResponse>()
-							.also(::doCancel)
-							.then { l ->
-								props[NormalizedFileProperties.Lyrics] = l?.lyrics?.value ?: ""
-								SubsonicFilePropertiesLookup(props)
-							}
-					}, ::handleException)
+					.eventually(this, ::handleException)
 			)
 		}
+
+		override fun promiseResponse(props: HashMap<String, String>): Promise<LookupFileProperties> =
+			promiseResponse(
+				"getLyrics",
+				"artist=${props[KnownFileProperties.artist]}",
+				"title=${props[KnownFileProperties.title]}"
+			)
+				.also(::doCancel)
+				.promiseSubsonicResponse<LyricsResponse>()
+				.also(::doCancel)
+				.then { l ->
+					props[NormalizedFileProperties.Lyrics] = l?.lyrics?.value ?: ""
+					SubsonicFilePropertiesLookup(props)
+				}
 
 		fun <T> handleException(rejection: Throwable): Promise<T> =
 			if (isCancelled && rejection is IOException && rejection.isOkHttpCanceled()) {
@@ -403,8 +404,7 @@ class LiveSubsonicConnection(
 
 	private inner class RootIndexPromise :
 		Promise.Proxy<List<IItem>>(),
-		PromisedResponse<IndexesResponse?, List<IItem>>
-	{
+		PromisedResponse<IndexesResponse?, List<IItem>> {
 		init {
 			proxy(
 				promiseResponse("getIndexes")
@@ -415,15 +415,17 @@ class LiveSubsonicConnection(
 			)
 		}
 
-		override fun promiseResponse(response: IndexesResponse?): Promise<List<IItem>> = ThreadPools.compute.preparePromise { cs ->
-			response?.indexes?.index?.flatMap {
-				it.artist.map { artist ->
-					if (cs.isCancelled) throw itemParsingCancelledException()
+		override fun promiseResponse(response: IndexesResponse?): Promise<List<IItem>> = response?.indexes?.index?.run {
+				ThreadPools.compute.preparePromise { cs ->
+					flatMap {
+						it.artist.map { artist ->
+							if (cs.isCancelled) throw itemParsingCancelledException()
 
-					Item(artist.id, artist.name, playlistId = null)
+							Item(artist.id, artist.name, playlistId = null) as IItem
+						}
+					}
 				}
-			} ?: emptyList()
-		}
+			}.keepPromise(::emptyList)
 
 		private fun itemParsingCancelledException() = CancellationException("Item parsing was cancelled.")
 	}
