@@ -36,7 +36,6 @@ import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.cancelBackThen
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.preparePromise
-import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.closables.eventuallyUse
 import com.lasthopesoftware.resources.closables.thenUse
 import com.lasthopesoftware.resources.executors.ThreadPools
@@ -53,6 +52,7 @@ import org.joda.time.DateTime
 import java.io.IOException
 import java.net.URL
 import java.util.concurrent.CancellationException
+import java.util.concurrent.atomic.AtomicInteger
 
 class LiveSubsonicConnection(
 	private val subsonicConnectionDetails: SubsonicConnectionDetails,
@@ -117,6 +117,8 @@ class LiveSubsonicConnection(
 		serverHttpDataSource.promiseDataSourceFactory(subsonicConnectionDetails)
 	}
 
+	private val localRevision = AtomicInteger()
+
 	override fun <T> getConnectionKey(key: T): UrlKeyHolder<T> = UrlKeyHolder(subsonicConnectionDetails.baseUrl, key)
 
 	override fun getFileUrl(serviceFile: ServiceFile): URL =
@@ -138,7 +140,10 @@ class LiveSubsonicConnection(
 
 	override fun promiseFilePropertyUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> {
 		if (property != NormalizedFileProperties.Rating) throw IllegalArgumentException(property)
-		return promiseSubsonicResponse<Response>("setRating", "id=${serviceFile.key}", "rating=$value").unitResponse()
+		return promiseSubsonicResponse<Response>("setRating", "id=${serviceFile.key}", "rating=$value")
+			.cancelBackThen { _, _ ->
+				localRevision.incrementAndGet()
+			}
 	}
 
 	override fun promiseItems(itemId: KeyedIdentifier?): Promise<List<IItem>> = when (itemId) {
@@ -229,6 +234,8 @@ class LiveSubsonicConnection(
 			}
 
 			if (responseCode !in 200..<300) throw HttpResponseException(responseCode)
+
+			localRevision.incrementAndGet()
 		}
 	}
 
@@ -399,7 +406,8 @@ class LiveSubsonicConnection(
 			)
 		}
 
-		override fun respond(resolution: IndexesLastModifiedResponse?): Long? = resolution?.indexes?.lastModified
+		override fun respond(resolution: IndexesLastModifiedResponse?): Long =
+			resolution?.indexes?.lastModified?.let { it + localRevision.get() } ?: localRevision.get().toLong()
 	}
 
 	private inner class RootIndexPromise :
