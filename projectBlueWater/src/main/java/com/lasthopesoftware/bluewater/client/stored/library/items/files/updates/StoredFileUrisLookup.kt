@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.external
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.HaveExternalContent
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LookupSyncDirectory
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.uri.toURI
 import com.namehillsoftware.handoff.promises.Promise
@@ -72,6 +73,6 @@ class StoredFileUrisLookup(
 							relativePath = fileProperties.localExternalRelativeFileDirectory
 						)
 					)
-				}
+				}.keepPromise()
 			}
 }
