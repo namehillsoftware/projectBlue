@@ -35,6 +35,8 @@ import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.cancelBackThen
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.preparePromise
+import com.lasthopesoftware.promises.extensions.thenThrow
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.closables.eventuallyUse
 import com.lasthopesoftware.resources.closables.thenUse
 import com.lasthopesoftware.resources.executors.ThreadPools
@@ -262,12 +264,23 @@ class LiveSubsonicConnection(
 	}
 
 	private inline fun <reified T> promiseSubsonicResponse(path: String, vararg params: String): Promise<T?> {
-		return Promise.Proxy { cp ->
-			promiseResponse(path, *params)
-				.also(cp::doCancel)
-				.promiseStringBody()
-				.also(cp::doCancel)
-				.promiseSubsonicResponse()
+		return object : Promise.Proxy<T?>(), PromisedResponse<HttpResponse, HttpResponse> {
+			init {
+				proxy(
+					promiseResponse(path, *params)
+						.also(::doCancel)
+						.eventually(this)
+						.promiseStringBody()
+						.also(::doCancel)
+						.promiseSubsonicResponse()
+				)
+			}
+
+			override fun promiseResponse(r: HttpResponse): Promise<HttpResponse> = when {
+				isCancelled -> r.promiseClose().thenThrow(parsingCancelledException())
+				r.code !in 200..<300 -> r.promiseClose().thenThrow(HttpResponseException(r.code))
+				else  -> r.toPromise()
+			}
 		}
 	}
 
@@ -280,9 +293,12 @@ class LiveSubsonicConnection(
 				throw SubsonicServerException(jsonTranslator.parseJson<ErrorResponse>(json))
 			}
 
-			if (!cs.isCancelled) jsonTranslator.parseJson<T>(json) else null
+			if (!cs.isCancelled) jsonTranslator.parseJson<T>(json)
+			else throw parsingCancelledException()
 		}
 	}
+
+	private fun parsingCancelledException() = CancellationException("Parsing cancelled.")
 
 	private class SubsonicFilePropertiesLookup(
 		private val filePropertiesMap: MutableMap<String, String>
