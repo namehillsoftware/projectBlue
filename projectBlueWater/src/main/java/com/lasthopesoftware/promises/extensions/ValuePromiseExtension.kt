@@ -88,6 +88,8 @@ fun Job.toPromise(): Promise<Unit> = PromiseJob(this)
 
 fun <T> Deferred<T>.toPromise(): Promise<T> = PromiseDeferred(this)
 
+fun <T> Promise<*>.thenThrow(t: Throwable): Promise<T> = then(ThrowableResponse(t))
+
 @Suppress("UNCHECKED_CAST")
 fun <T> T.toPromise(): Promise<T> = when (this) {
 	null -> Promise.empty()
@@ -152,6 +154,12 @@ class UnitResponse<Resolution> private constructor() : ImmediateResponse<Resolut
 		private val singleUnitResponse by lazy { UnitResponse<Any>() }
 		@Suppress("UNCHECKED_CAST")
 		fun <Resolution> respond(): UnitResponse<Resolution> = singleUnitResponse as UnitResponse<Resolution>
+	}
+}
+
+private class ThrowableResponse<R, T>(private val exception: Throwable) : ImmediateResponse<R, T> {
+	override fun respond(resolution: R?): T? {
+		throw exception
 	}
 }
 

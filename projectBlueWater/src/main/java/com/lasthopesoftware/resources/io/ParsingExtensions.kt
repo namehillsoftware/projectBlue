@@ -17,6 +17,9 @@ import kotlin.coroutines.cancellation.CancellationException
 
 inline fun <reified T> Gson.fromJson(value: String): T? = fromJson(value, T::class.java)
 
+/**
+ * Parses the string body and closes the response.
+ */
 fun Promise<HttpResponse>.promiseStringBody(): Promise<String> = eventually(HttpStringBodyResponse)
 fun Promise<String>.promiseXmlDocument(): Promise<Document> = eventually(ParsedXmlDocumentResponse)
 fun Promise<HttpResponse>.promiseStandardResponse(): Promise<StandardResponse> = HttpParsedStandardResponse(this)
