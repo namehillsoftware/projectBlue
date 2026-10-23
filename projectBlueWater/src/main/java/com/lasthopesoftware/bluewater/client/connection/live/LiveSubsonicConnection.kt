@@ -20,7 +20,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.client.connection.requests.ProvideHttpPromiseServerClients
-import com.lasthopesoftware.bluewater.client.connection.requests.bodyString
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addParams
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.addPath
 import com.lasthopesoftware.bluewater.client.connection.url.UrlBuilder.withSubsonicApi
@@ -42,6 +41,7 @@ import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.InvalidResponseCodeException
 import com.lasthopesoftware.resources.io.NonStandardResponseException
 import com.lasthopesoftware.resources.io.PromisingReadableStream
+import com.lasthopesoftware.resources.io.promiseStringBody
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.lasthopesoftware.resources.strings.TranslateJson
 import com.lasthopesoftware.resources.strings.parseJson
@@ -60,8 +60,7 @@ class LiveSubsonicConnection(
 	private val serverHttpDataSource: ProvideServerHttpDataSource<SubsonicConnectionDetails>,
 	private val jsonTranslator: TranslateJson,
 	private val stringResources: GetStringResources,
-) : LiveServerConnection, RemoteLibraryAccess
-{
+) : LiveServerConnection, RemoteLibraryAccess {
 	companion object {
 		private val logger by lazyLogger<LiveSubsonicConnection>()
 
@@ -103,10 +102,14 @@ class LiveSubsonicConnection(
 
 	private val subsonicApiUrl by lazy { subsonicConnectionDetails.baseUrl.withSubsonicApi().addParams("f=json") }
 
-	private val httpClient by RetryOnRejectionLazyPromise { httpPromiseClients.promiseServerClient(subsonicConnectionDetails) }
+	private val httpClient by RetryOnRejectionLazyPromise {
+		httpPromiseClients.promiseServerClient(
+			subsonicConnectionDetails
+		)
+	}
 
 	private val cachedVersion by RetryOnRejectionLazyPromise {
-		PingViewPromise().cancelBackThen { r, _ ->
+		pingViewPromise().cancelBackThen { r, _ ->
 			r?.version?.split(".")?.let {
 				SemanticVersion(it[0].toInt(), it[1].toInt(), it[2].toInt())
 			}
@@ -136,9 +139,15 @@ class LiveSubsonicConnection(
 
 	override fun promiseIsConnectionPossible(): Promise<Boolean> = ConnectionPossiblePromise()
 
-	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<LookupFileProperties> = FilePropertiesPromise(serviceFile)
+	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<LookupFileProperties> =
+		FilePropertiesPromise(serviceFile)
 
-	override fun promiseFilePropertyUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> {
+	override fun promiseFilePropertyUpdate(
+		serviceFile: ServiceFile,
+		property: String,
+		value: String,
+		isFormatted: Boolean
+	): Promise<Unit> {
 		if (property != NormalizedFileProperties.Rating) throw IllegalArgumentException(property)
 		return promiseSubsonicResponse<Response>("setRating", "id=${serviceFile.key}", "rating=$value")
 			.cancelBackThen { _, _ ->
@@ -162,15 +171,16 @@ class LiveSubsonicConnection(
 			}
 		}
 
-	override fun promiseStoredPlaylist(playlistPath: String, playlist: List<ServiceFile>): Promise<*> = RootPlaylistsPromise()
-		.cancelBackEventually { playlists ->
-			val existingPlaylistId = playlists.firstOrNull { it.value == playlistPath }?.itemId
-			promiseSubsonicResponse<Response>(
-				"createPlaylist",
-				existingPlaylistId?.id?.let { "playlistId=$it" } ?: "name=$playlistPath",
-				*playlist.map { "songId=${it.key}" }.toTypedArray()
-			)
-		}
+	override fun promiseStoredPlaylist(playlistPath: String, playlist: List<ServiceFile>): Promise<*> =
+		RootPlaylistsPromise()
+			.cancelBackEventually { playlists ->
+				val existingPlaylistId = playlists.firstOrNull { it.value == playlistPath }?.itemId
+				promiseSubsonicResponse<Response>(
+					"createPlaylist",
+					existingPlaylistId?.id?.let { "playlistId=$it" } ?: "name=$playlistPath",
+					*playlist.map { "songId=${it.key}" }.toTypedArray()
+				)
+			}
 
 	override fun promiseIsReadOnly(): Promise<Boolean> =
 		promiseSubsonicResponse<UserResponse>("getUser", "username=${subsonicConnectionDetails.userName}")
@@ -185,15 +195,17 @@ class LiveSubsonicConnection(
 			.eventually { it.promiseResponse(getFileUrl(serviceFile)) }
 			.cancelBackThen(HttpStreamedResponse())
 
-	override fun promiseImageBytes(serviceFile: ServiceFile): Promise<ByteArray> = promiseResponse("getCoverArt", "id=${serviceFile.key}")
-		.cancelBackEventually { httpResponse ->
-			httpResponse.body.eventuallyUse { it.promiseReadAllBytes() }
-		}
+	override fun promiseImageBytes(serviceFile: ServiceFile): Promise<ByteArray> =
+		promiseResponse("getCoverArt", "id=${serviceFile.key}")
+			.cancelBackEventually { httpResponse ->
+				httpResponse.body.eventuallyUse { it.promiseReadAllBytes() }
+			}
 
-	override fun promiseImageBytes(itemId: ItemId): Promise<ByteArray> = promiseResponse("getCoverArt", "id=${itemId.id}")
-		.cancelBackEventually { httpResponse ->
-			httpResponse.body.eventuallyUse { it.promiseReadAllBytes() }
-		}
+	override fun promiseImageBytes(itemId: ItemId): Promise<ByteArray> =
+		promiseResponse("getCoverArt", "id=${itemId.id}")
+			.cancelBackEventually { httpResponse ->
+				httpResponse.body.eventuallyUse { it.promiseReadAllBytes() }
+			}
 
 	override fun promiseFileStringList(itemId: ItemId?): Promise<String> = itemId
 		?.let(::promiseFiles)
@@ -208,8 +220,9 @@ class LiveSubsonicConnection(
 		?.cancelBackEventually(FileStringListUtilities::promiseShuffledSerializedFileStringList)
 		.keepPromise("")
 
-	override fun promiseShuffledFileStringList(playlistId: PlaylistId): Promise<String> = PlaylistFilesPromise(playlistId)
-		.cancelBackEventually(FileStringListUtilities::promiseShuffledSerializedFileStringList)
+	override fun promiseShuffledFileStringList(playlistId: PlaylistId): Promise<String> =
+		PlaylistFilesPromise(playlistId)
+			.cancelBackEventually(FileStringListUtilities::promiseShuffledSerializedFileStringList)
 
 	override fun promiseFiles(): Promise<List<ServiceFile>> = Promise(emptyList())
 
@@ -241,35 +254,35 @@ class LiveSubsonicConnection(
 
 	override fun promiseRevision(): Promise<Long?> = RevisionPromise()
 
+	private fun pingViewPromise() = promiseSubsonicResponse<Response>("ping.view")
+
 	private fun promiseResponse(path: String, vararg params: String): Promise<HttpResponse> {
 		val url = subsonicApiUrl.addPath(path).addParams(*params)
 		return httpClient.eventually { it.promiseResponse(url) }
 	}
 
 	private inline fun <reified T> promiseSubsonicResponse(path: String, vararg params: String): Promise<T?> {
-		val url = subsonicApiUrl.addPath(path).addParams(*params)
-		return httpClient
-			.eventually { it.promiseResponse(url) }
-			.cancelBackEventually { it.promiseSubsonicResponse() }
-	}
-
-	private inline fun <reified T> Promise<HttpResponse>.promiseSubsonicResponse(): Promise<T?> = eventually { r ->
-		r.promiseSubsonicResponse<T>()
-	}
-
-	private inline fun <reified T> HttpResponse.promiseSubsonicResponse(): Promise<T?> = bodyString
-		.cancelBackEventually {
-			ThreadPools.compute.preparePromise { cs ->
-				val json = JsonParser.parseString(it).asJsonObject.get("subsonic-response")
-					?: throw NonStandardResponseException()
-
-				if (json.asJsonObject.get("status")?.asString == "failed") {
-					throw SubsonicServerException(jsonTranslator.parseJson<ErrorResponse>(json))
-				}
-
-				if (!cs.isCancelled) jsonTranslator.parseJson<T>(json) else null
-			}
+		return Promise.Proxy { cp ->
+			promiseResponse(path, *params)
+				.also(cp::doCancel)
+				.promiseStringBody()
+				.also(cp::doCancel)
+				.promiseSubsonicResponse()
 		}
+	}
+
+	private inline fun <reified T> Promise<String>.promiseSubsonicResponse(): Promise<T?> = eventually {
+		ThreadPools.compute.preparePromise { cs ->
+			val json = JsonParser.parseString(it).asJsonObject.get("subsonic-response")
+				?: throw NonStandardResponseException()
+
+			if (json.asJsonObject.get("status")?.asString == "failed") {
+				throw SubsonicServerException(jsonTranslator.parseJson<ErrorResponse>(json))
+			}
+
+			if (!cs.isCancelled) jsonTranslator.parseJson<T>(json) else null
+		}
+	}
 
 	private class SubsonicFilePropertiesLookup(
 		private val filePropertiesMap: MutableMap<String, String>
@@ -327,40 +340,37 @@ class LiveSubsonicConnection(
 			proxy(
 				promiseResponse("getSong", "id=${serviceFile.key}")
 					.also(::doCancel)
-					.eventually({httpResponse ->
-						httpResponse
-							.bodyString
-							.cancelBackEventually { b ->
-								ThreadPools.compute.preparePromise { cs ->
+					.promiseStringBody()
+					.eventually({ b ->
+						ThreadPools.compute.preparePromise { cs ->
+							if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
+							val subsonicResponse = JsonParser.parseString(b).asJsonObject.get("subsonic-response")
+
+							if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
+							val song = subsonicResponse?.asJsonObject?.get("song")
+
+							if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
+							val elements = song?.asJsonObject?.asMap() ?: emptyMap()
+
+							val returnElements = elements
+								.mapNotNull { (k, v) ->
 									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-									val subsonicResponse = JsonParser.parseString(b).asJsonObject.get("subsonic-response")
-
-									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-									val song = subsonicResponse?.asJsonObject?.get("song")
-
-									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-									val elements = song?.asJsonObject?.asMap() ?: emptyMap()
-
-									val returnElements = elements
-										.mapNotNull { (k, v) ->
-											if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-											if (v.isJsonPrimitive) k to v.asString else null
-										}
-										.toMap(HashMap<String, String>())
-
-									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-
-									elements[KnownFileProperties.replayGain]?.asJsonObject
-										?.asMap()
-										?.mapNotNull { (k, v) ->
-											if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-											if (v.isJsonPrimitive) k to v.asString else null
-										}
-										?.let(returnElements::putAll)
-
-									returnElements
+									if (v.isJsonPrimitive) k to v.asString else null
 								}
-							}
+								.toMap(HashMap<String, String>())
+
+							if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
+
+							elements[KnownFileProperties.replayGain]?.asJsonObject
+								?.asMap()
+								?.mapNotNull { (k, v) ->
+									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
+									if (v.isJsonPrimitive) k to v.asString else null
+								}
+								?.let(returnElements::putAll)
+
+							returnElements
+						}
 					}, ::handleException)
 					.also(::doCancel)
 					.eventually(this, ::handleException)
@@ -368,13 +378,11 @@ class LiveSubsonicConnection(
 		}
 
 		override fun promiseResponse(props: HashMap<String, String>): Promise<LookupFileProperties> =
-			promiseResponse(
+			promiseSubsonicResponse<LyricsResponse>(
 				"getLyrics",
 				"artist=${props[KnownFileProperties.artist]}",
 				"title=${props[KnownFileProperties.title]}"
 			)
-				.also(::doCancel)
-				.promiseSubsonicResponse<LyricsResponse>()
 				.also(::doCancel)
 				.then { l ->
 					props[NormalizedFileProperties.Lyrics] = l?.lyrics?.value ?: ""
@@ -398,9 +406,7 @@ class LiveSubsonicConnection(
 	{
 		init {
 			proxy(
-				promiseResponse("getIndexes")
-					.also(::doCancel)
-					.promiseSubsonicResponse<IndexesLastModifiedResponse>()
+				promiseSubsonicResponse<IndexesLastModifiedResponse>("getIndexes")
 					.also(::doCancel)
 					.then(this)
 			)
@@ -415,9 +421,7 @@ class LiveSubsonicConnection(
 		PromisedResponse<IndexesResponse?, List<IItem>> {
 		init {
 			proxy(
-				promiseResponse("getIndexes")
-					.also(::doCancel)
-					.promiseSubsonicResponse<IndexesResponse>()
+				promiseSubsonicResponse<IndexesResponse>("getIndexes")
 					.also(::doCancel)
 					.eventually(this)
 			)
@@ -444,12 +448,10 @@ class LiveSubsonicConnection(
 	{
 		init {
 			proxy(
-				promiseResponse(
+				promiseSubsonicResponse<DirectoryRoot>(
 					"getMusicDirectory",
 					"id=${itemId.id}"
 				)
-					.also(::doCancel)
-					.promiseSubsonicResponse<DirectoryRoot>()
 					.also(::doCancel)
 					.eventually(this)
 			)
@@ -472,9 +474,7 @@ class LiveSubsonicConnection(
 	{
 		init {
 			proxy(
-				promiseResponse("getPlaylists")
-					.also(::doCancel)
-					.promiseSubsonicResponse<PlaylistsResponse>()
+				promiseSubsonicResponse<PlaylistsResponse>("getPlaylists")
 					.also(::doCancel)
 					.eventually(this)
 			)
@@ -497,12 +497,7 @@ class LiveSubsonicConnection(
 	{
 		init {
 			proxy(
-				promiseResponse(
-					"getMusicDirectory",
-					"id=${itemId.id}"
-				)
-					.also(::doCancel)
-					.promiseSubsonicResponse<DirectoryRoot>()
+				promiseSubsonicResponse<DirectoryRoot>("getMusicDirectory", "id=${itemId.id}")
 					.also(::doCancel)
 					.eventually(this)
 			)
@@ -525,12 +520,7 @@ class LiveSubsonicConnection(
 	{
 		init {
 			proxy(
-				promiseResponse(
-					"getPlaylist",
-					"id=${playlistId.id}"
-				)
-					.also(::doCancel)
-					.promiseSubsonicResponse<PlaylistResponse>()
+				promiseSubsonicResponse<PlaylistResponse>("getPlaylist", "id=${playlistId.id}")
 					.also(::doCancel)
 					.eventually(this)
 			)
@@ -553,13 +543,11 @@ class LiveSubsonicConnection(
 	{
 		init {
 			proxy(
-				promiseResponse(
+				promiseSubsonicResponse<Search2Response>(
 					"search2.view",
 					"query=$query",
 					"albumCount=0",
 					"songCount=1000")
-					.also(::doCancel)
-					.promiseSubsonicResponse<Search2Response>()
 					.also(::doCancel)
 					.eventually(this)
 			)
@@ -579,7 +567,7 @@ class LiveSubsonicConnection(
 	private inner class ConnectionPossiblePromise : Promise.Proxy<Boolean>() {
 		init {
 			proxy(
-				PingViewPromise()
+				pingViewPromise()
 					.also(::doCancel)
 					.then(
 						{ it?.status == "ok" },
@@ -602,22 +590,6 @@ class LiveSubsonicConnection(
 						}
 					)
 			)
-		}
-	}
-
-	private inner class PingViewPromise : Promise.Proxy<Response>(), PromisedResponse<HttpResponse, Response?> {
-		init {
-			proxy(
-				promiseResponse("ping.view")
-					.also(::doCancel)
-					.eventually(this)
-			)
-		}
-
-		override fun promiseResponse(response: HttpResponse): Promise<Response?> {
-			if (response.code != 200) throw InvalidResponseCodeException(response.code)
-
-			return response.promiseSubsonicResponse<Response>()
 		}
 	}
 
