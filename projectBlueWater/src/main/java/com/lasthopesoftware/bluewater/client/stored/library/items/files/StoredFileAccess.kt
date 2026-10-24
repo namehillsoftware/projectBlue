@@ -21,6 +21,11 @@ import com.namehillsoftware.handoff.promises.Promise
 
 class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 
+	companion object {
+		private val logger by lazyLogger<StoredFileAccess>()
+		private const val selectFromStoredFiles = "SELECT * FROM $tableName"
+	}
+
 	override fun promiseStoredFile(storedFileId: Int): Promise<StoredFile?> =
 		promiseTableMessage {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
@@ -144,10 +149,4 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 				}
 			}
 		}
-
-	companion object {
-		private val logger by lazyLogger<StoredFileAccess>()
-		private const val selectFromStoredFiles = "SELECT * FROM $tableName"
-		private const val selectCountFromStoredFiles = "SELECT COUNT(*) FROM $tableName"
-	}
 }

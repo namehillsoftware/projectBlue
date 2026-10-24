@@ -30,7 +30,7 @@ class StoredFilesPruner(
 		val promisedServiceFilesToKeep = serviceFilesToSyncCollector.promiseServiceFilesToSync(libraryId)
 		return promisedServiceFilesToKeep
 			.eventually { serviceFilesToKeep ->
-				promisedStoredFiles.eventually((PruneFilesTask(serviceFilesToKeep)))
+				promisedStoredFiles.eventually(PruneFilesTask(serviceFilesToKeep))
 			}
 	}
 

@@ -29,11 +29,16 @@ object PromiseMachines {
 		}
 
 		override fun next(): Promise<Resolution> =
-			function(currentValue, this)
-				.also {
-					it.then(this)
-					proxyRejection(it)
-				}
+			try {
+				function(currentValue, this)
+					.also {
+						it.then(this)
+						proxyRejection(it)
+					}
+			} catch (t: Throwable) {
+				reject(t)
+				this
+			}
 
 		override fun respond(resolution: Resolution) {
 			currentValue = resolution
@@ -42,11 +47,7 @@ object PromiseMachines {
 		}
 	}
 
-	abstract class ContinuableMachine<Resolution> : Promise.Proxy<Resolution>(), Continuable<Resolution> {
-		fun start() {
-			proxyResult(next())
-		}
-	}
+	abstract class ContinuableMachine<Resolution> : Promise.Proxy<Resolution>(), Continuable<Resolution>
 
 	interface Continuable<Resolution> {
 		fun next(): Promise<Resolution>
