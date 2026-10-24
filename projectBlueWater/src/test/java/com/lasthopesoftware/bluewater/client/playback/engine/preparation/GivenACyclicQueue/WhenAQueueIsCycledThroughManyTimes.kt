@@ -26,7 +26,7 @@ class WhenAQueueIsCycledThroughManyTimes {
 		val bufferingPlaybackQueuesProvider = CyclicalFileQueueProvider()
 		val queue = PreparedPlayableFileQueue(
 			FakePlaybackQueueConfiguration(),
-			{ _, file, _ -> Promise(fileActionMap[file]) },
+			{ _, file, _ -> Promise(fileActionMap.getValue(file)) },
 			bufferingPlaybackQueuesProvider.provideQueue(LibraryId(311), serviceFiles, 0)
 		)
 
@@ -40,7 +40,7 @@ class WhenAQueueIsCycledThroughManyTimes {
 	fun act() {
 		val (_, queue) = mut
 
-		for (i in 0 until expectedNumberAbsolutePromises) {
+		repeat(expectedNumberAbsolutePromises) {
 			val positionedPlaybackFilePromise = queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
 			if (positionedPlaybackFilePromise != null) ++returnedPromiseCount
 		}
@@ -63,14 +63,14 @@ class WhenAQueueIsCycledThroughManyTimes {
 		assertThat(returnedPromiseCount).isEqualTo(expectedNumberAbsolutePromises)
     }
 
-    private class MockResolveAction : MessengerOperator<PreparedPlayableFile> {
+    private class MockResolveAction : MessengerOperator<PreparedPlayableFile?> {
 		companion object {
 			private val resolvedFile by lazy { FakePreparedPlayableFile(FakeBufferingPlaybackHandler()) }
 		}
 
 		var preparedTimes = 0
 
-        override fun send(messenger: Messenger<PreparedPlayableFile>) {
+        override fun send(messenger: Messenger<PreparedPlayableFile?>) {
 			++preparedTimes
             messenger.sendResolution(resolvedFile)
         }

@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.settings.GivenTypicalSettings.AndTheSettingsAreLoaded
 
+import androidx.work.Operation
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -55,7 +56,7 @@ class `When Changing isSyncOnWifiOnly` {
 			mockk {
 				every { scheduleSync() } answers {
 					isSyncScheduled = true
-					Promise.empty()
+					Promise(mockk<Operation>())
 				}
 			}
 		)

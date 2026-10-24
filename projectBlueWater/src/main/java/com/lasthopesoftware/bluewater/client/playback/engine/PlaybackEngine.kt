@@ -168,13 +168,13 @@ class PlaybackEngine(
 	override fun skipToNext(): Promise<Pair<LibraryId, PositionedFile>?> = promiseActiveNowPlaying().eventually {
 		it?.run {
 			changePosition(getNextPosition(playlistPosition, playlist), Duration.ZERO)
-		}
+		}.keepPromise()
 	}
 
 	override fun skipToPrevious(): Promise<Pair<LibraryId, PositionedFile>?> = promiseActiveNowPlaying().eventually {
 		it?.run {
 			changePosition(getPreviousPosition(playlistPosition), Duration.ZERO)
-		}
+		}.keepPromise()
 	}
 
 	override fun changePosition(
@@ -282,7 +282,7 @@ class PlaybackEngine(
 
 						copy(playlist = newPlaylist, playlistPosition = newPosition)
 					}
-				}
+				}.keepPromise()
 			}
 			.then(::updatePreparedFileQueueUsingState)
 	}

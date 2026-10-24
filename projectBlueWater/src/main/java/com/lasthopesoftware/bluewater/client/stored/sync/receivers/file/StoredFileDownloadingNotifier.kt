@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileMessage
 import com.lasthopesoftware.bluewater.client.stored.sync.notifications.PostSyncNotification
 import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class StoredFileDownloadingNotifier(
@@ -23,7 +24,7 @@ class StoredFileDownloadingNotifier(
 
 	override fun receive(storedFileId: Int): Promise<Unit> {
 		return storedFileAccess.promiseStoredFile(storedFileId)
-			.eventually { storedFile -> storedFile?.run { notifyOfFileDownload(this) } }
+			.eventually { storedFile -> storedFile?.run { notifyOfFileDownload(this) }.keepPromise(Unit) }
 	}
 
 	override fun acceptedEvents(): Collection<Class<out StoredFileMessage>> =

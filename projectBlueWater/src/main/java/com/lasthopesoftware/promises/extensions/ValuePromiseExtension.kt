@@ -92,7 +92,7 @@ fun <T> Promise<*>.thenThrow(t: Throwable): Promise<T> = then(ThrowableResponse(
 
 @Suppress("UNCHECKED_CAST")
 fun <T> T.toPromise(): Promise<T> = when (this) {
-	null -> Promise.empty()
+	null -> Promise.empty<T?>() as Promise<T>
 	is Unit -> toPromise() as Promise<T>
 	is Int -> toPromise() as Promise<T>
 	is Long -> toPromise() as Promise<T>

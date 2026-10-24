@@ -5,6 +5,7 @@ import com.lasthopesoftware.policies.retries.RetryPromises
 import com.lasthopesoftware.promises.PromiseDelay
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
+import io.ktor.utils.io.CancellationException
 import org.joda.time.Duration
 import java.io.IOException
 
@@ -40,7 +41,7 @@ class ConnectionLostRetryHandler(private val innerHandler: RetryPromises) : Retr
 					timeToWait = timeToWait.multipliedBy(2)
 					ProxiedRetry(originalTimeToWait, error, promiseFactory)
 				}
-				else -> Promise(error)
+				else -> Promise(error ?: IllegalStateException("Retry failed without an error"))
 			}
 		}
 	}
@@ -51,7 +52,7 @@ class ConnectionLostRetryHandler(private val innerHandler: RetryPromises) : Retr
 		private val promiseFactory: (Throwable?) -> Promise<T>
 	) : Promise.Proxy<T>(), PromisedResponse<Any?, T> {
 		init {
-			if (isCancelled) reject(error)
+			if (isCancelled) reject(error ?: CancellationException("Retry cancelled"))
 			else proxy(
 				PromiseDelay
 					.delay<Any?>(timeToWait)

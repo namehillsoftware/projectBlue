@@ -22,7 +22,7 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Continua
 
 	constructor(rejection: Throwable) : super(rejection)
 
-	constructor(messengerOperator: MessengerOperator<Resolution>?) : super(messengerOperator)
+	constructor(messengerOperator: MessengerOperator<Resolution>) : super(messengerOperator)
 	protected constructor()
 
 	init {

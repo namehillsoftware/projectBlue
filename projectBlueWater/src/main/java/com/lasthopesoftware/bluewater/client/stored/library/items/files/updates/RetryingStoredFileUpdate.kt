@@ -30,7 +30,7 @@ class RetryingStoredFileUpdate(
 				}
 				inner.promiseStoredFileUpdate(libraryId, serviceFile)
 			} else {
-				Promise(error)
+				Promise(error ?: IllegalStateException("Retry failed without an error"))
 			}
 		}
 	}

@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredIt
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -31,7 +32,7 @@ class WhenRemovingTheLibrary {
 			StoredItem(14, "5", StoredItem.ItemType.ITEM)
 		)
 		val libraryStorage = mockk<ManageLibraries>()
-		every { libraryStorage.removeLibrary(libraryId) } returns Promise.empty()
+		every { libraryStorage.removeLibrary(libraryId) } returns Unit.toPromise()
 
 		val libraryIdentifierProvider = mockk<ProvideSelectedLibraryId>()
 		every { libraryIdentifierProvider.promiseSelectedLibraryId() } returns Promise(libraryId)

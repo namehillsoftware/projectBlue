@@ -1,23 +1,23 @@
 package com.lasthopesoftware.bluewater.shared.promises.extensions
 
+import com.lasthopesoftware.bluewater.shared.NullBox
 import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.promises.Promise
 
 open class DeferredPromise<Resolution> : Promise<Resolution>, CancellationResponse {
-    val resolution: Resolution?
-    val error: Throwable?
+    val resolution: NullBox<Resolution>?
+	lateinit var error: Throwable
 
 	var isCancelled = false
 		private set
 
     constructor(resolution: Resolution) {
-        this.resolution = resolution
-        error = null
+        this.resolution = NullBox(resolution)
     }
 
-    constructor(error: Throwable?) {
-        resolution = null
+    constructor(error: Throwable) {
         this.error = error
+		resolution = null
     }
 
 	init {
@@ -25,7 +25,7 @@ open class DeferredPromise<Resolution> : Promise<Resolution>, CancellationRespon
 	}
 
     fun resolve() {
-        if (resolution != null) resolve(resolution)
+        if (resolution != null) resolve(resolution.value)
 		else reject(error)
     }
 

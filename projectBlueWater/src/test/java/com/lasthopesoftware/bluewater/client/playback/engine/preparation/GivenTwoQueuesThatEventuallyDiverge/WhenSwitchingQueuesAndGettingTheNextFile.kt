@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakePreparedPla
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.PositionedFileQueue
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -40,7 +41,7 @@ class WhenSwitchingQueuesAndGettingTheNextFile {
 			{ _, _, _ -> Promise<PreparedPlayableFile?>(FakePreparedPlayableFile(FakeBufferingPlaybackHandler())) },
 			originalFileQueue)
 	}
-	private val playedFiles = ArrayList<PositionedPlayableFile>()
+	private val playedFiles = ArrayList<PositionedPlayableFile?>()
 	private val expectedPositionedPlayableFile = listOf(
 		PositionedPlayableFile(3, mockk(), NoTransformVolumeManager(), ServiceFile("3")),
 		PositionedPlayableFile(4, mockk(), NoTransformVolumeManager(), ServiceFile("4")),
@@ -69,15 +70,15 @@ class WhenSwitchingQueuesAndGettingTheNextFile {
 			.promiseNextPreparedPlaybackFile(Duration.ZERO)
 			?.eventually { file ->
 				playedFiles.add(file)
-				queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
+				queue.promiseNextPreparedPlaybackFile(Duration.ZERO).keepPromise()
 			}
 			?.eventually { file ->
 				playedFiles.add(file)
-				queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
+				queue.promiseNextPreparedPlaybackFile(Duration.ZERO).keepPromise()
 			}
 			?.eventually { file ->
 				playedFiles.add(file)
-				queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
+				queue.promiseNextPreparedPlaybackFile(Duration.ZERO).keepPromise()
 			}
 			?.then { file ->
 				playedFiles.add(file)
