@@ -34,7 +34,7 @@ class AudioManagingPlaybackStateChanger(
 		private val audioFocusTimeout by lazy { Duration.standardSeconds(10) }
 	}
 
-	private val lazyAudioRequest = lazy {
+	private val lazyAudioRequest by lazy {
 		AudioFocusRequestCompat
 			.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN)
 			.setAudioAttributes(
@@ -48,7 +48,7 @@ class AudioManagingPlaybackStateChanger(
 	}
 
 	private val audioFocusSync = Any()
-	private var audioFocusPromise: Promise<AudioFocusRequestCompat> = Promise.empty()
+	private var audioFocusPromise: Promise<AudioFocusRequestCompat?> = Promise.empty()
 	private var isPlaying = false
 
 	override fun startPlaylist(libraryId: LibraryId, playlist: List<ServiceFile>, playlistPosition: Int): Promise<Unit> {
@@ -116,7 +116,7 @@ class AudioManagingPlaybackStateChanger(
 	private fun getAudioFocusWithTimeout(): Promise<AudioFocusRequestCompat> {
 		val audioFocusGranted = AtomicBoolean()
 		val promisedAudioFocus = audioFocus
-			.promiseAudioFocus(lazyAudioRequest.value)
+			.promiseAudioFocus(lazyAudioRequest)
 			.cancelBackThen { compat, signal ->
 				audioFocusGranted.set(!signal.isCancelled)
 				compat

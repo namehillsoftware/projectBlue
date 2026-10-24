@@ -6,6 +6,9 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.emptyByteArray
+import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -20,7 +23,7 @@ class WhenProcessingTheJob {
 			mockk {
 				every { promiseOutputStream(any()) } returns Promise.empty()
 			},
-			mockk { every { promiseDownload(any(), any()) } returns Promise.empty() },
+			mockk { every { promiseDownload(any(), any()) } returns PromisingReadableStreamWrapper(emptyByteArray.inputStream(), null).toPromise() },
 			mockk(),
 		)
 		storedFileJobProcessor

@@ -67,7 +67,7 @@ class FakeHttpConnection(
 		} catch (e: IOException) {
 			Promise(e)
 		} catch (e: RuntimeException) {
-			Promise(e.cause)
+			Promise(e.cause ?: IllegalStateException("Bad"))
 		}
 	}
 

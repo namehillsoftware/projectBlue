@@ -91,7 +91,7 @@ class NowPlayingFileDetailsViewModel(
 		mutableIsLoading.value = false
 	}
 
-	override fun promiseAction(): Promise<*>? =
+	override fun promiseAction(): Promise<*> =
 		activeLibraryId?.let(::loadIsInPosition).keepPromise()
 
 	override fun respond(nowPlaying: NowPlaying?) {

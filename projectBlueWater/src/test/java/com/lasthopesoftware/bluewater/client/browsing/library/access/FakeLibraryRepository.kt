@@ -27,7 +27,7 @@ open class FakeLibraryRepository(vararg libraries: Library) : ProvideLibraries, 
 	}
 
 	override fun updateNowPlaying(values: LibraryNowPlayingValues): Promise<Unit> = synchronized(sync) {
-		val library = libraries[values.id] ?: return Promise.empty()
+		val library = libraries[values.id] ?: return Unit.toPromise()
 		with (values) {
 			library.copy(
 				nowPlayingId = nowPlayingId,
