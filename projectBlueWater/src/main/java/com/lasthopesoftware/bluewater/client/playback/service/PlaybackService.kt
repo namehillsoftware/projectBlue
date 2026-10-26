@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.service
 
 import android.annotation.SuppressLint
+import android.app.ForegroundServiceStartNotAllowedException
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -302,9 +303,15 @@ import java.util.concurrent.TimeoutException
 			try {
 				ContextCompat.startForegroundService(this, intent)
 			} catch (e: IllegalStateException) {
-				logger.warn("An illegal state exception occurred while trying to start the service", e)
+				if (Build.VERSION.SDK_INT >= 31 && e is ForegroundServiceStartNotAllowedException) {
+					logger.warn("The foreground service did not start correctly", e)
+				} else {
+					logger.warn("An illegal state exception occurred while trying to start the service", e)
+				}
 			} catch (e: SecurityException) {
 				logger.warn("A security exception occurred while trying to start the service", e)
+			} catch (t: Throwable) {
+				logger.error("An unexpected exception occurred while starting the service", t)
 			}
 		}
 	}
