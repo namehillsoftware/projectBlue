@@ -289,22 +289,20 @@ class LiveSubsonicConnection(
 	private inline fun <reified T> Promise<String>.promiseSubsonicResponse(): Promise<T?> = eventually {
 		ThreadPools.compute.preparePromise { cs ->
 			if (cs.isCancelled) throw parsingCancelledException()
-			StringReader(it).use { sr ->
+			val json = StringReader(it).use { sr ->
 				if (cs.isCancelled) throw parsingCancelledException()
 				JsonReader(sr).use { jr ->
 					if (cs.isCancelled) throw parsingCancelledException()
-
-					val json = JsonParser.parseReader(jr).asJsonObject.get("subsonic-response")
-						?: throw NonStandardResponseException()
-
-					if (json.asJsonObject.get("status")?.asString == "failed") {
-						throw SubsonicServerException(jsonTranslator.parseJson<ErrorResponse>(json))
-					}
-
-					if (!cs.isCancelled) jsonTranslator.parseJson<T>(json)
-					else throw parsingCancelledException()
+					JsonParser.parseReader(jr).asJsonObject.get("subsonic-response")
 				}
+			} ?: throw NonStandardResponseException()
+
+			if (json.asJsonObject.get("status")?.asString == "failed") {
+				throw SubsonicServerException(jsonTranslator.parseJson<ErrorResponse>(json))
 			}
+
+			if (!cs.isCancelled) jsonTranslator.parseJson<T>(json)
+			else throw parsingCancelledException()
 		}
 	}
 
@@ -370,38 +368,38 @@ class LiveSubsonicConnection(
 					.eventually({ b ->
 						ThreadPools.compute.preparePromise { cs ->
 							if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-							StringReader(b).use { sr ->
+							val subsonicResponse = StringReader(b).use { sr ->
 								if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
 								JsonReader(sr).use { jr ->
 									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-									val subsonicResponse = JsonParser.parseReader(jr).asJsonObject.get("subsonic-response")
-
-									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-									val song = subsonicResponse?.asJsonObject?.get("song")
-
-									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-									val elements = song?.asJsonObject?.asMap() ?: emptyMap()
-
-									val returnElements = elements
-										.mapNotNull { (k, v) ->
-											if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-											if (v.isJsonPrimitive) k to v.asString else null
-										}
-										.toMap(HashMap<String, String>(elements.size))
-
-									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-
-									elements[KnownFileProperties.replayGain]?.asJsonObject
-										?.asMap()
-										?.mapNotNull { (k, v) ->
-											if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-											if (v.isJsonPrimitive) k to v.asString else null
-										}
-										?.let(returnElements::putAll)
-
-									returnElements
+									JsonParser.parseReader(jr).asJsonObject.get("subsonic-response")
 								}
 							}
+
+							if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
+							val song = subsonicResponse?.asJsonObject?.get("song")
+
+							if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
+							val elements = song?.asJsonObject?.asMap() ?: emptyMap()
+
+							val returnElements = elements
+								.mapNotNull { (k, v) ->
+									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
+									if (v.isJsonPrimitive) k to v.asString else null
+								}
+								.toMap(HashMap<String, String>(elements.size + 4))
+
+							if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
+
+							elements[KnownFileProperties.replayGain]?.asJsonObject
+								?.asMap()
+								?.mapNotNull { (k, v) ->
+									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
+									if (v.isJsonPrimitive) k to v.asString else null
+								}
+								?.let(returnElements::putAll)
+
+							returnElements
 						}
 					}, ::handleException)
 					.also(::doCancel)
