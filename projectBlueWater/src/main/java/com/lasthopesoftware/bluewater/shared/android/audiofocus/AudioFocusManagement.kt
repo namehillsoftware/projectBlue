@@ -16,7 +16,6 @@ class AudioFocusManagement(private val audioManager: AudioManager) : ControlAudi
 		AudioManagerCompat.abandonAudioFocusRequest(audioManager, audioFocusRequest)
 	}
 
-	@UnstableApi
 	private class AudioFocusPromise(audioFocusRequest: AudioFocusRequestCompat, private val audioManager: AudioManager) : Promise<AudioFocusRequestCompat>(), AudioManager.OnAudioFocusChangeListener, CancellationResponse {
 		private val innerAudioFocusChangeListener = audioFocusRequest.onAudioFocusChangeListener
 		private val delegatingAudioFocusRequest = audioFocusRequest.buildUpon()

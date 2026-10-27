@@ -91,6 +91,7 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSetting
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.AudioFocusManagement
+import com.lasthopesoftware.bluewater.shared.android.audiofocus.UnableToGrantAudioFocusException
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.NotificationBuilderProducer
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
@@ -739,8 +740,8 @@ import java.util.concurrent.TimeoutException
 			Promise
 				.whenAny(promisedIntentHandling, timeoutResponse)
 				.excuse { e ->
-					// Kill the service if it doesn't start in time.
-					if (e is PlaybackStartingTimeoutException) stop()
+					// Kill the service if it doesn't start in time or the app can't get audio focus.
+					if (e is PlaybackStartingTimeoutException || e is UnableToGrantAudioFocusException) stop()
 				}
 		}
 
