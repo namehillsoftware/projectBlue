@@ -2,6 +2,8 @@ package com.lasthopesoftware.resources.closables
 
 import com.lasthopesoftware.promises.extensions.instead
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.response.EventualAction
+import com.namehillsoftware.handoff.promises.response.ImmediateAction
 
 interface PromisingCloseable {
 	fun promiseClose(): Promise<Unit>
@@ -9,15 +11,27 @@ interface PromisingCloseable {
 
 inline fun <T : AutoCloseable, Result> T.eventuallyUse(usage: (T) -> Promise<Result>): Promise<Result> {
 	val use = usage(this)
-	return Promise.Proxy {
-		use.also(it::doCancel).must(::close)
+	return object : Promise.Proxy<Result>(), ImmediateAction {
+		init {
+			proxy(use)
+			use.must(this)
+		}
+
+		override fun act() {
+			close()
+		}
 	}
 }
 
 inline fun <T : PromisingCloseable, Result> T.eventuallyUse(usage: (T) -> Promise<Result>): Promise<Result> {
 	val use = usage(this)
-	return Promise.Proxy {
-		use.also(it::doCancel).inevitably { promiseClose() }
+	return object : Promise.Proxy<Result>(), EventualAction {
+		init {
+			proxy(use)
+			use.inevitably(this)
+		}
+
+		override fun promiseAction(): Promise<*> = promiseClose()
 	}
 }
 
