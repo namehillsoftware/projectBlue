@@ -63,7 +63,7 @@ class DiskFileCachePersistence(
 						else promiseFilePathUpdate(it).eventually(diskFileAccessTimeUpdater::promiseFileAccessedUpdate)
 					}
 					?: promiseTableMessage<Unit> {
-						logger.info("File with unique key $uniqueKey doesn't exist. Creating...")
+						logger.debug("File with unique key $uniqueKey doesn't exist. Creating...")
 						try {
 							RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 								try {

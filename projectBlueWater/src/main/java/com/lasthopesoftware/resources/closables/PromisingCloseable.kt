@@ -1,5 +1,6 @@
 package com.lasthopesoftware.resources.closables
 
+import com.lasthopesoftware.promises.extensions.instead
 import com.namehillsoftware.handoff.promises.Promise
 
 interface PromisingCloseable {
@@ -27,7 +28,7 @@ inline fun <T : PromisingCloseable, Result> Promise<T>.eventuallyUse(crossinline
 inline fun <T : PromisingCloseable, Result> T.thenUse(usage: (T) -> Result): Promise<Result> =
 	try {
 		val use = usage(this)
-		promiseClose().then { use }
+		promiseClose().instead(use)
 	} catch (e: Throwable) {
-		promiseClose().then { throw e }
+		promiseClose().instead(e)
 	}

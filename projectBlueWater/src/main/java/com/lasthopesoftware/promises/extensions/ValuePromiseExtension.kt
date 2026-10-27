@@ -34,12 +34,6 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-infix fun <Resolution, Response> Promise<Resolution>.then(response: ImmediateResponse<Resolution, Response>): Promise<Response> =
-	this.then(response)
-
-infix fun <Resolution, Response> Promise<Resolution>.excuse(response: ImmediateResponse<Throwable, Response>): Promise<Response> =
-	this.excuse(response)
-
 fun <Resolution> Executor.preparePromise(messageWriter: CancellableMessageWriter<Resolution>) = QueuedCancellablePromise(messageWriter, this)
 
 // ListenableFuture has unique cancellation characteristics in that it overrides cancellation handling of the underlying
@@ -88,7 +82,9 @@ fun Job.toPromise(): Promise<Unit> = PromiseJob(this)
 
 fun <T> Deferred<T>.toPromise(): Promise<T> = PromiseDeferred(this)
 
-fun <T> Promise<*>.thenThrow(t: Throwable): Promise<T> = then(ThrowableResponse(t))
+fun <Response> Promise<*>.instead(response: Response): Promise<Response> = then(CapturedResponse(response))
+
+fun <T> Promise<*>.instead(t: Throwable): Promise<T> = then(CapturedThrowableResponse(t))
 
 @Suppress("UNCHECKED_CAST")
 fun <T> T.toPromise(): Promise<T> = when (this) {
@@ -157,8 +153,12 @@ class UnitResponse<Resolution> private constructor() : ImmediateResponse<Resolut
 	}
 }
 
-private class ThrowableResponse<R, T>(private val exception: Throwable) : ImmediateResponse<R, T> {
-	override fun respond(resolution: R?): T? {
+private class CapturedResponse<R, T>(private val response: T) : ImmediateResponse<R, T> {
+	override fun respond(resolution: R): T = response
+}
+
+private class CapturedThrowableResponse<R, T>(private val exception: Throwable) : ImmediateResponse<R, T> {
+	override fun respond(resolution: R): T {
 		throw exception
 	}
 }

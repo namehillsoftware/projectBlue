@@ -34,9 +34,9 @@ import com.lasthopesoftware.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.cancelBackThen
+import com.lasthopesoftware.promises.extensions.instead
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.preparePromise
-import com.lasthopesoftware.promises.extensions.thenThrow
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.closables.eventuallyUse
 import com.lasthopesoftware.resources.closables.thenUse
@@ -279,8 +279,8 @@ class LiveSubsonicConnection(
 			}
 
 			override fun promiseResponse(r: HttpResponse): Promise<HttpResponse> = when {
-				isCancelled -> r.promiseClose().thenThrow(parsingCancelledException())
-				r.code !in 200..<300 -> r.promiseClose().thenThrow(HttpResponseException(r.code))
+				isCancelled -> r.promiseClose().instead(parsingCancelledException())
+				r.code !in 200..<300 -> r.promiseClose().instead(HttpResponseException(r.code))
 				else  -> r.toPromise()
 			}
 		}
