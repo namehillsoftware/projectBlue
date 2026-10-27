@@ -289,14 +289,16 @@ class LiveSubsonicConnection(
 	private inline fun <reified T> Promise<String>.promiseSubsonicResponse(): Promise<T?> = eventually {
 		ThreadPools.compute.preparePromise { cs ->
 			if (cs.isCancelled) throw parsingCancelledException()
-			val json = StringReader(it).use { sr ->
+			StringReader(it).use { sr ->
 				if (cs.isCancelled) throw parsingCancelledException()
 				JsonReader(sr).use { jr ->
 					if (cs.isCancelled) throw parsingCancelledException()
 					JsonParser.parseReader(jr).asJsonObject.get("subsonic-response")
 				}
 			} ?: throw NonStandardResponseException()
-
+		}
+	}.cancelBackEventually { json ->
+		ThreadPools.compute.preparePromise { cs ->
 			if (json.asJsonObject.get("status")?.asString == "failed") {
 				throw SubsonicServerException(jsonTranslator.parseJson<ErrorResponse>(json))
 			}
@@ -368,14 +370,18 @@ class LiveSubsonicConnection(
 					.eventually({ b ->
 						ThreadPools.compute.preparePromise { cs ->
 							if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-							val subsonicResponse = StringReader(b).use { sr ->
+							StringReader(b).use { sr ->
 								if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
 								JsonReader(sr).use { jr ->
 									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
 									JsonParser.parseReader(jr).asJsonObject.get("subsonic-response")
 								}
 							}
-
+						}
+					}, ::handleException)
+					.also(::doCancel)
+					.eventually { subsonicResponse ->
+						ThreadPools.compute.preparePromise { cs ->
 							if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
 							val song = subsonicResponse?.asJsonObject?.get("song")
 
@@ -401,7 +407,7 @@ class LiveSubsonicConnection(
 
 							returnElements
 						}
-					}, ::handleException)
+					}
 					.also(::doCancel)
 					.eventually(this, ::handleException)
 			)
