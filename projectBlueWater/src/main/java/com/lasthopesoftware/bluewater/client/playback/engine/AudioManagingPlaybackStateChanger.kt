@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.playback.volume.IVolumeManagement
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.ControlAudioFocus
 import com.lasthopesoftware.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.promises.extensions.cancelBackThen
+import com.lasthopesoftware.promises.extensions.regardless
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
@@ -34,7 +35,7 @@ class AudioManagingPlaybackStateChanger(
 		private val audioFocusTimeout by lazy { Duration.standardSeconds(10) }
 	}
 
-	private val lazyAudioRequest by lazy {
+	private val audioRequest by lazy {
 		AudioFocusRequestCompat
 			.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN)
 			.setAudioAttributes(
@@ -104,19 +105,17 @@ class AudioManagingPlaybackStateChanger(
 		abandonAudioFocus()
 	}
 
-	private fun getNewAudioFocusRequest(): Promise<AudioFocusRequestCompat> =
+	private fun getNewAudioFocusRequest(): Promise<AudioFocusRequestCompat?> =
 		synchronized(audioFocusSync) {
 			abandonAudioFocus()
-				.eventually(
-					{ getAudioFocusWithTimeout() },
-					{ getAudioFocusWithTimeout() })
+				.regardless(::promiseAudioFocusWithTimeout)
 				.also { audioFocusPromise = it }
 		}
 
-	private fun getAudioFocusWithTimeout(): Promise<AudioFocusRequestCompat> {
+	private fun promiseAudioFocusWithTimeout(): Promise<AudioFocusRequestCompat?> {
 		val audioFocusGranted = AtomicBoolean()
 		val promisedAudioFocus = audioFocus
-			.promiseAudioFocus(lazyAudioRequest)
+			.promiseAudioFocus(audioRequest)
 			.cancelBackThen { compat, signal ->
 				audioFocusGranted.set(!signal.isCancelled)
 				compat
