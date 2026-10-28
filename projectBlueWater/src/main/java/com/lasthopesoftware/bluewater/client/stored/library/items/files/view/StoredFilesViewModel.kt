@@ -18,7 +18,6 @@ import com.lasthopesoftware.promises.extensions.regardless
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import com.namehillsoftware.handoff.promises.Promise
-import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicReference
 
 class StoredFilesViewModel(
@@ -52,7 +51,7 @@ class StoredFilesViewModel(
 					.filter { !isPartiallyUpdating }
 					.map { m ->
 						val downloadingArray = ArrayList<Pair<StoredFile, StoredFileJobState>>()
-						val returnList = LinkedList<Pair<StoredFile, StoredFileJobState>>()
+						val returnList = ArrayList<Pair<StoredFile, StoredFileJobState>>(m.values.size)
 						val addedFiles = HashSet<Int>(m.values.size)
 
 						for ((k, p) in m) {
@@ -70,7 +69,7 @@ class StoredFilesViewModel(
 					.value
 					.let { m ->
 						val downloadingArray = ArrayList<Pair<StoredFile, StoredFileJobState>>()
-						val returnList = LinkedList<Pair<StoredFile, StoredFileJobState>>()
+						val returnList = ArrayList<Pair<StoredFile, StoredFileJobState>>(m.values.size)
 						val addedFiles = HashSet<Int>(m.values.size)
 
 						for ((k, p) in m) {
