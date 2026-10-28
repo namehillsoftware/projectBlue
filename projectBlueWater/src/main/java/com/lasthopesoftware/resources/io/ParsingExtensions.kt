@@ -1,6 +1,9 @@
 package com.lasthopesoftware.resources.io
 
 import com.google.gson.Gson
+import com.google.gson.JsonElement
+import com.google.gson.JsonParser
+import com.google.gson.stream.JsonReader
 import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.bluewater.client.connection.requests.bodyString
 import com.lasthopesoftware.bluewater.shared.StandardResponse
@@ -13,7 +16,8 @@ import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.parser.Parser
-import kotlin.coroutines.cancellation.CancellationException
+import java.io.StringReader
+import java.util.concurrent.CancellationException
 
 inline fun <reified T> Gson.fromJson(value: String): T? = fromJson(value, T::class.java)
 
@@ -22,6 +26,7 @@ inline fun <reified T> Gson.fromJson(value: String): T? = fromJson(value, T::cla
  */
 fun Promise<HttpResponse>.promiseStringBody(): Promise<String> = eventually(HttpStringBodyResponse)
 fun Promise<String>.promiseXmlDocument(): Promise<Document> = eventually(ParsedXmlDocumentResponse)
+fun Promise<String>.promiseJson(): Promise<JsonElement?> = eventually(ParsedJsonDocumentResponse)
 fun Promise<HttpResponse>.promiseStandardResponse(): Promise<StandardResponse> = HttpParsedStandardResponse(this)
 
 object HttpStringBodyResponse : PromisedResponse<HttpResponse, String> {
@@ -33,6 +38,19 @@ object ParsedXmlDocumentResponse : PromisedResponse<String, Document> {
 		if (cs.isCancelled) throw xmlParsingCancelledException()
 
 		Jsoup.parse(xmlString, Parser.xmlParser())
+	}
+}
+
+object ParsedJsonDocumentResponse : PromisedResponse<String, JsonElement?> {
+	override fun promiseResponse(jsonString: String): Promise<JsonElement?> = ThreadPools.compute.preparePromise { cs ->
+		if (cs.isCancelled) throw jsonParsingCancelledException()
+		StringReader(jsonString).use { sr ->
+			if (cs.isCancelled) throw jsonParsingCancelledException()
+			JsonReader(sr).use { jr ->
+				if (cs.isCancelled) throw jsonParsingCancelledException()
+				JsonParser.parseReader(jr)
+			}
+		}
 	}
 }
 
@@ -59,3 +77,4 @@ object ParsedStandardDocumentResponse : PromisedResponse<Document, StandardRespo
 }
 
 private fun xmlParsingCancelledException() = CancellationException("XML parsing was cancelled.")
+private fun jsonParsingCancelledException() = CancellationException("JSON parsing was cancelled.")

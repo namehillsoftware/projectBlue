@@ -2,8 +2,6 @@ package com.lasthopesoftware.bluewater.client.connection.live
 
 import androidx.annotation.Keep
 import androidx.media3.datasource.DataSource
-import com.google.gson.JsonParser
-import com.google.gson.stream.JsonReader
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
@@ -44,6 +42,7 @@ import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.InvalidResponseCodeException
 import com.lasthopesoftware.resources.io.NonStandardResponseException
 import com.lasthopesoftware.resources.io.PromisingReadableStream
+import com.lasthopesoftware.resources.io.promiseJson
 import com.lasthopesoftware.resources.io.promiseStringBody
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.lasthopesoftware.resources.strings.TranslateJson
@@ -53,7 +52,6 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import org.joda.time.DateTime
 import java.io.IOException
-import java.io.StringReader
 import java.net.URL
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicInteger
@@ -286,27 +284,19 @@ class LiveSubsonicConnection(
 		}
 	}
 
-	private inline fun <reified T> Promise<String>.promiseSubsonicResponse(): Promise<T?> = eventually {
-		ThreadPools.compute.preparePromise { cs ->
-			if (cs.isCancelled) throw parsingCancelledException()
-			StringReader(it).use { sr ->
-				if (cs.isCancelled) throw parsingCancelledException()
-				JsonReader(sr).use { jr ->
-					if (cs.isCancelled) throw parsingCancelledException()
-					JsonParser.parseReader(jr).asJsonObject.get("subsonic-response")
-				}
-			} ?: throw NonStandardResponseException()
-		}
-	}.cancelBackEventually { json ->
-		ThreadPools.compute.preparePromise { cs ->
-			if (json.asJsonObject.get("status")?.asString == "failed") {
-				throw SubsonicServerException(jsonTranslator.parseJson<ErrorResponse>(json))
-			}
+	private inline fun <reified T> Promise<String>.promiseSubsonicResponse(): Promise<T?> =
+		promiseJson()
+			.cancelBackEventually { json ->
+				ThreadPools.compute.preparePromise { cs ->
+					val response = json?.asJsonObject?.get("subsonic-response") ?: throw NonStandardResponseException()
+					if (response.asJsonObject.get("status")?.asString == "failed") {
+						throw SubsonicServerException(jsonTranslator.parseJson<ErrorResponse>(json))
+					}
 
-			if (!cs.isCancelled) jsonTranslator.parseJson<T>(json)
-			else throw parsingCancelledException()
-		}
-	}
+					if (!cs.isCancelled) jsonTranslator.parseJson<T>(response)
+					else throw parsingCancelledException()
+				}
+			}
 
 	private fun parsingCancelledException() = CancellationException("Parsing cancelled.")
 
@@ -367,23 +357,14 @@ class LiveSubsonicConnection(
 				promiseResponse("getSong", "id=${serviceFile.key}")
 					.also(::doCancel)
 					.promiseStringBody()
-					.eventually({ b ->
-						ThreadPools.compute.preparePromise { cs ->
-							if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-							StringReader(b).use { sr ->
-								if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-								JsonReader(sr).use { jr ->
-									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-									JsonParser.parseReader(jr).asJsonObject.get("subsonic-response")
-								}
-							}
-						}
-					}, ::handleException)
+					.promiseJson()
 					.also(::doCancel)
-					.eventually { subsonicResponse ->
+					.eventually { json ->
 						ThreadPools.compute.preparePromise { cs ->
+							val subsonicResponse = json?.asJsonObject?.get("subsonic-response") ?: throw NonStandardResponseException()
+
 							if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-							val song = subsonicResponse?.asJsonObject?.get("song")
+							val song = subsonicResponse.asJsonObject?.get("song")
 
 							if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
 							val elements = song?.asJsonObject?.asMap() ?: emptyMap()
