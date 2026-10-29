@@ -1,5 +1,5 @@
 package com.lasthopesoftware.resources
 
-import com.google.gson.Gson
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
-val gson by lazy { Gson() }
+val jackson by lazy { jacksonObjectMapper() }

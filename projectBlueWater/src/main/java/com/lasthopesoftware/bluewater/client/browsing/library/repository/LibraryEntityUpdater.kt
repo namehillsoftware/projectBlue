@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.browsing.library.repository
 import android.database.sqlite.SQLiteDatabase
 import android.util.Base64
 import androidx.annotation.Keep
-import com.google.gson.Gson
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.ServerType
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.connectionSettingsColumn
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.createTableSql
@@ -21,14 +20,14 @@ import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMed
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
 import com.lasthopesoftware.bluewater.repository.fetch
 import com.lasthopesoftware.resources.emptyByteArray
-import com.lasthopesoftware.resources.io.fromJson
+import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
+import com.lasthopesoftware.resources.strings.parseJson
 import com.namehillsoftware.querydroid.SqLiteAssistants
 import com.namehillsoftware.querydroid.SqLiteCommand
 
-@OptIn(ExperimentalStdlibApi::class)
 object LibraryEntityUpdater : IEntityUpdater {
 
-	private val gson by lazy { Gson() }
+	private val json = JsonEncoderDecoder
 
 	override fun onUpdate(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
 		if (oldVersion < 5) {
@@ -199,7 +198,7 @@ object LibraryEntityUpdater : IEntityUpdater {
 					SyncedFileLocation.INTERNAL -> com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation.INTERNAL
 					null -> null
 				},
-				connectionSettings = gson.toJson(
+				connectionSettings = json.toJson(
 					StoredMediaCenterConnectionSettings(
 						accessCode = accessCode ?: "",
 						userName = userName,
@@ -248,7 +247,7 @@ object LibraryEntityUpdater : IEntityUpdater {
 				isUsingExistingFiles = isUsingExistingFiles,
 				serverType = ServerType.MediaCenter.name,
 				syncedFileLocation = syncedFileLocation,
-				connectionSettings = gson.toJson(
+				connectionSettings = json.toJson(
 					StoredMediaCenterConnectionSettings(
 						accessCode = accessCode ?: "",
 						userName = userName,
@@ -277,7 +276,7 @@ object LibraryEntityUpdater : IEntityUpdater {
 		var connectionSettings: String? = null
 
 		fun toLibrary(): Library {
-			val connectionSettings = connectionSettings?.let { gson.fromJson<Version18ConnectionSettings>(it) }
+			val connectionSettings = connectionSettings?.let { json.parseJson<Version18ConnectionSettings>(it) }
 
 			return Library(
 				id = id,
@@ -289,7 +288,7 @@ object LibraryEntityUpdater : IEntityUpdater {
 				isUsingExistingFiles = isUsingExistingFiles,
 				serverType = serverType?.name,
 				syncedFileLocation = connectionSettings?.syncedFileLocation,
-				connectionSettings = gson.toJson(
+				connectionSettings = json.toJson(
 					StoredMediaCenterConnectionSettings(
 						accessCode = connectionSettings?.accessCode,
 						userName = connectionSettings?.userName,

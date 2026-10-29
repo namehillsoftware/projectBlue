@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.settings.StoredMed
 import com.lasthopesoftware.bluewater.client.browsing.library.settings.access.LibrarySettingsAccess
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
-import com.lasthopesoftware.resources.gson
+import com.lasthopesoftware.resources.jackson
 import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -68,7 +68,7 @@ class `When saving the library settings` {
 				isUsingExistingFiles = false,
 				serverType = Library.ServerType.MediaCenter.name,
 				syncedFileLocation = SyncedFileLocation.EXTERNAL,
-				connectionSettings = gson.toJson(
+				connectionSettings = jackson.writeValueAsString(
 					StoredMediaCenterConnectionSettings(
 						accessCode = "nol6ZCLE",
 						macAddress = "vOfUFH8a",

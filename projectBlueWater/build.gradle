@@ -222,12 +222,12 @@ dependencies {
 	implementation libs.handoff
 	implementation libs.rxjava
 	implementation libs.lazy.j
+	implementation libs.jackson
 	implementation libs.jsoup
 	implementation libs.okio
 	implementation libs.okhttp
 	implementation libs.querydroid
 	implementation libs.reimagined
-	implementation libs.gson
 	implementation libs.kotlinx.coroutines.rx3
 	implementation libs.androidx.compose.ui.tooling
 	testCompileOnly libs.junit

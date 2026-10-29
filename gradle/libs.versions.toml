@@ -8,9 +8,9 @@ commonsIo = "2.22.0"
 compose = "1.12.1"
 coreKtx = "1.19.1"
 desugar_jdk_libs = "2.1.5"
-gson = "2.15.0"
 guava = "33.7.2-android"
 handoff = "0.31.1"
+jacksonKotlin = "3.2.4"
 jodaTime = "2.15.1"
 jsoup = "1.23.2"
 junit = "4.13.2"
@@ -66,9 +66,9 @@ androidx-work-runtime = { module = "androidx.work:work-runtime", version.ref = "
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertjCore" }
 commons-io = { module = "commons-io:commons-io", version.ref = "commonsIo" }
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
-gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 handoff = { module = "com.namehillsoftware:handoff", version.ref = "handoff" }
+jackson = { module = "tools.jackson.module:jackson-module-kotlin", version.ref = "jacksonKotlin" }
 joda-time = { module = "joda-time:joda-time", version.ref = "jodaTime" }
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 junit = { module = "junit:junit", version.ref = "junit" }

@@ -42,9 +42,9 @@ import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.InvalidResponseCodeException
 import com.lasthopesoftware.resources.io.NonStandardResponseException
 import com.lasthopesoftware.resources.io.PromisingReadableStream
-import com.lasthopesoftware.resources.io.promiseJson
 import com.lasthopesoftware.resources.io.promiseStringBody
 import com.lasthopesoftware.resources.strings.GetStringResources
+import com.lasthopesoftware.resources.strings.JsonEncoderDecoder.promiseJson
 import com.lasthopesoftware.resources.strings.TranslateJson
 import com.lasthopesoftware.resources.strings.parseJson
 import com.namehillsoftware.handoff.promises.Promise
@@ -288,9 +288,9 @@ class LiveSubsonicConnection(
 		promiseJson()
 			.cancelBackEventually { json ->
 				ThreadPools.compute.preparePromise { cs ->
-					val response = json?.asJsonObject?.get("subsonic-response") ?: throw NonStandardResponseException()
-					if (response.asJsonObject.get("status")?.asString == "failed") {
-						throw SubsonicServerException(jsonTranslator.parseJson<ErrorResponse>(json))
+					val response = json?.get("subsonic-response") ?: throw NonStandardResponseException()
+					if (response.get("status")?.stringValue() == "failed") {
+						throw SubsonicServerException(json.get("error")?.let { jsonTranslator.parseJson<ErrorResponse>(it) })
 					}
 
 					if (!cs.isCancelled) jsonTranslator.parseJson<T>(response)
@@ -361,30 +361,34 @@ class LiveSubsonicConnection(
 					.also(::doCancel)
 					.eventually { json ->
 						ThreadPools.compute.preparePromise { cs ->
-							val subsonicResponse = json?.asJsonObject?.get("subsonic-response") ?: throw NonStandardResponseException()
+							val subsonicResponse = json?.get("subsonic-response") ?: throw NonStandardResponseException()
 
 							if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-							val song = subsonicResponse.asJsonObject?.get("song")
+							val song = subsonicResponse.get("song")
 
 							if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-							val elements = song?.asJsonObject?.asMap() ?: emptyMap()
+							val propsObject = song?.asObject()
+							val elements = propsObject?.properties() ?: emptySet()
 
 							val returnElements = elements
 								.mapNotNull { (k, v) ->
 									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-									if (v.isJsonPrimitive) k to v.asString else null
+									if (v.isValueNode) k to v.asString() else null
 								}
 								.toMap(HashMap<String, String>(elements.size + 4))
 
 							if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
 
-							elements[KnownFileProperties.replayGain]?.asJsonObject
-								?.asMap()
-								?.mapNotNull { (k, v) ->
-									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-									if (v.isJsonPrimitive) k to v.asString else null
-								}
-								?.let(returnElements::putAll)
+							if (propsObject != null) {
+								propsObject[KnownFileProperties.replayGain]
+									?.asObject()
+									?.properties()
+									?.mapNotNull { (k, v) ->
+										if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
+										if (v.isValueNode) k to v.asString() else null
+									}
+									?.let(returnElements::putAll)
+							}
 
 							returnElements
 						}
@@ -631,8 +635,8 @@ class LiveSubsonicConnection(
 	@Keep
 	private class NamedItem(
 		val id: String,
-		val name: String,
-		val isDir: Boolean,
+		val name: String = "",
+		val isDir: Boolean = false,
 	)
 
 	@Keep
@@ -703,8 +707,8 @@ class LiveSubsonicConnection(
 	@Keep
 	@Suppress("unused")
 	private class ErrorResponse(
-		val code: Int,
-		val message: String,
+		val code: Int = -1,
+		val message: String = "",
 	)
 
 	@Keep
