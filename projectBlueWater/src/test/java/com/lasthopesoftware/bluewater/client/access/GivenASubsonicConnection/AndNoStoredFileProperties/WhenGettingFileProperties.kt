@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KeyFileProperty
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.LookupFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
@@ -20,11 +21,13 @@ import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.DateTime
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.util.concurrent.TimeUnit
 
 class WhenGettingFileProperties {
-	private val fileProperties by lazy {
-		val connection = LiveSubsonicConnection(
+	private val connection by lazy {
+		LiveSubsonicConnection(
 			SubsonicConnectionDetails(TestUrl, "2QbKsOo", "rIuUXpsY"),
 			FakeHttpConnectionProvider(
 				FakeHttpConnection(
@@ -55,11 +58,16 @@ class WhenGettingFileProperties {
             JsonEncoderDecoder,
 			mockk(),
 		)
+	}
 
-		connection
+	private var fileProperties: LookupFileProperties? = null
+
+	@BeforeAll
+	fun act() {
+		fileProperties = connection
 			.promiseFileProperties(ServiceFile("c6c3585f823f4c5093fada347ccd0239"))
 			.toExpiringFuture()
-			.get()
+			.get(20, TimeUnit.MINUTES)
 	}
 
     @Test
