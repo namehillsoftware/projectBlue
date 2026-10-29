@@ -30,7 +30,7 @@ class WhenTheQueueIsStarted {
 		val queue = PreparedPlayableFileQueue(
 			FakePlaybackQueueConfiguration(),
 			{ _, file, _ ->
-				Promise(fileActionMap[file])
+				Promise(fileActionMap.getValue(file))
 			},
 			bufferingPlaybackQueuesProvider.provideQueue(LibraryId(682), serviceFiles, startPosition)
 		)

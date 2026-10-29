@@ -20,17 +20,17 @@ class BestMatchUriProvider(
             .promiseUri(libraryId, serviceFile)
             .eventually { storedFileUri ->
 				storedFileUri
-					?.toPromise()
+					?.toPromise<Uri?>()
 					?: libraryProvider
 						.promiseLibrary(libraryId)
 						.eventually { library ->
 							when {
-								library == null -> Promise.empty()
+								library == null -> Promise.empty<Uri?>()
 								!library.isUsingExistingFiles -> remoteFileUriProvider.promiseUri(libraryId, serviceFile)
 								else -> mediaFileUriProvider
 									.promiseUri(libraryId, serviceFile)
 									.eventually { mediaFileUri ->
-										mediaFileUri?.toPromise() ?: remoteFileUriProvider.promiseUri(libraryId, serviceFile)
+										mediaFileUri?.toPromise<Uri?>() ?: remoteFileUriProvider.promiseUri(libraryId, serviceFile)
 									}
 							}
 						}

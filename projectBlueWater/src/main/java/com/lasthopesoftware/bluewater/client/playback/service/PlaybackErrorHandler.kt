@@ -44,9 +44,9 @@ class PlaybackErrorHandler(
 
 	private val errorLatch by lazy { TimedCountdownLatch(numberOfErrors, errorLatchResetDuration) }
 	private val disconnectionLatch by lazy { TimedCountdownLatch(numberOfDisconnects, disconnectResetDuration) }
-	private val connectionRegainedListener by lazy { ImmediateResponse<LiveServerConnection, Unit> { resetPlaybackService.resetPlaylistManager() } }
+	private val connectionRegainedListener by lazy { ImmediateResponse<LiveServerConnection?, Unit> { resetPlaybackService.resetPlaylistManager() } }
 	private val onPollingCancelledListener by lazy {
-		ImmediateResponse<Throwable?, Unit> { e ->
+		ImmediateResponse<Throwable, Unit> { e ->
 			if (e is CancellationException) {
 				serviceControl.stop()
 			}
@@ -89,7 +89,7 @@ class PlaybackErrorHandler(
 
 		selectedLibraryIdProvider
 			.promiseSelectedLibraryId()
-			.then { libraryId ->
+			.then<Unit> { libraryId ->
 				libraryId
 					?.let(pollConnectionServiceProxy::pollConnection)
 					?.then(connectionRegainedListener, onPollingCancelledListener)

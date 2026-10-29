@@ -28,7 +28,7 @@ class WhenTheQueueIsConsumed {
 		val bufferingPlaybackQueuesProvider = CompletingFileQueueProvider()
 		val queue = PreparedPlayableFileQueue(
 			FakePlaybackQueueConfiguration(),
-			{ _, file, _ -> Promise(fileActionMap[file]) },
+			{ _, file, _ -> Promise(fileActionMap.getValue(file)) },
 			bufferingPlaybackQueuesProvider.provideQueue(LibraryId(libraryId), serviceFiles, 0)
 		)
 		Pair(fileActionMap, queue)

@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackErrorHandler
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -30,7 +31,7 @@ class `When handling the error` {
 			mockk {
 				every { resume() } answers {
 					isResumed = true
-					Promise.empty()
+					Unit.toPromise()
 				}
 			},
 			mockk(),

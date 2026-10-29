@@ -24,7 +24,7 @@ class PromiseDelay<Response> private constructor(private val delay: Duration) : 
 	}
 
 	@Suppress("UNCHECKED_CAST")
-	override fun prepareMessage(cancellationSignal: CancellationSignal?): Response = null as Response
+	override fun prepareMessage(cancellationSignal: CancellationSignal): Response = null as Response
 
 	override fun cancellationRequested() {
 		future.cancel(false)

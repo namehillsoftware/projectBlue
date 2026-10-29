@@ -63,6 +63,6 @@ class FakeStoredFileAccess(vararg initialStoredFiles: Pair<LibraryId, ServiceFil
 	}
 
 	override fun promiseDanglingFiles(): Promise<Collection<StoredFile>> {
-        return Promise.empty()
+        return Promise(emptyList())
     }
 }

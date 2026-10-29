@@ -21,7 +21,7 @@ class WhenBroadcastingTheFileProgress {
 		val trackPositionBroadcaster = TrackPositionBroadcaster(appMessageBus, mockk())
 		trackPositionBroadcaster.observeUpdates(object : PlayingFile {
 			override fun promisePause(): Promise<PlayableFile> {
-				return Promise.empty()
+				return mockk<PlayableFile>().toPromise()
 			}
 
 			override fun promisePlayedFile(): ProgressedPromise<Duration, PlayedFile> {
