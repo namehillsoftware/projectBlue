@@ -2,16 +2,24 @@ package com.lasthopesoftware.resources.strings
 
 import com.google.gson.Gson
 import com.google.gson.JsonElement
+import com.google.gson.reflect.TypeToken
+import java.io.Reader
 
 object JsonEncoderDecoder : TranslateJson {
-	private val threadLocalGson by lazy { Gson() }
+	private val gson by lazy { Gson() }
 
 	override fun <T> parseJson(jsonElement: JsonElement, cls: Class<T>): T? =
-		threadLocalGson.fromJson(jsonElement, cls)
+		gson.fromJson(jsonElement, cls)
+
+	override fun <T> parseJson(reader: Reader, cls: Class<T>): T? =
+		gson.fromJson(reader, cls)
 
 	override fun <T> parseJson(json: String, cls: Class<T>): T? =
-		threadLocalGson.fromJson(json, cls)
+		gson.fromJson(json, cls)
+
+	override fun <T> parseJson(json: String, typeToken: TypeToken<T>): T? =
+		gson.fromJson(json, typeToken)
 
 	override fun <T> toJson(obj: T): String =
-		threadLocalGson.toJson(obj) ?: ""
+		gson.toJson(obj) ?: ""
 }

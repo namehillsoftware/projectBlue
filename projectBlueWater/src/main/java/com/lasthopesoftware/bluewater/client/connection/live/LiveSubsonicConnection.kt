@@ -2,6 +2,8 @@ package com.lasthopesoftware.bluewater.client.connection.live
 
 import androidx.annotation.Keep
 import androidx.media3.datasource.DataSource
+import com.google.gson.JsonElement
+import com.google.gson.annotations.SerializedName
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
@@ -42,7 +44,6 @@ import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.InvalidResponseCodeException
 import com.lasthopesoftware.resources.io.NonStandardResponseException
 import com.lasthopesoftware.resources.io.PromisingReadableStream
-import com.lasthopesoftware.resources.io.promiseJson
 import com.lasthopesoftware.resources.io.promiseStringBody
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.lasthopesoftware.resources.strings.TranslateJson
@@ -285,16 +286,18 @@ class LiveSubsonicConnection(
 	}
 
 	private inline fun <reified T> Promise<String>.promiseSubsonicResponse(): Promise<T?> =
-		promiseJson()
-			.cancelBackEventually { json ->
+			cancelBackEventually { b ->
 				ThreadPools.compute.preparePromise { cs ->
-					val response = json?.asJsonObject?.get("subsonic-response") ?: throw NonStandardResponseException()
-					if (response.asJsonObject.get("status")?.asString == "failed") {
-						throw SubsonicServerException(jsonTranslator.parseJson<ErrorResponse>(json))
+					if (cs.isCancelled) throw parsingCancelledException()
+
+					val response = jsonTranslator.parseJson<SubsonicResponse<Response>>(b)?.subsonicResponse ?: throw NonStandardResponseException()
+
+					if (response.status == "failed") {
+						throw SubsonicServerException(jsonTranslator.parseJson<SubsonicResponse<SubsonicError>>(b)?.subsonicResponse?.error)
 					}
 
-					if (!cs.isCancelled) jsonTranslator.parseJson<T>(response)
-					else throw parsingCancelledException()
+					if (cs.isCancelled) throw parsingCancelledException()
+					jsonTranslator.parseJson<SubsonicResponse<T>>(b)?.subsonicResponse
 				}
 			}
 
@@ -350,51 +353,42 @@ class LiveSubsonicConnection(
 
 	private inner class FilePropertiesPromise(private val serviceFile: ServiceFile) :
 		Promise.Proxy<LookupFileProperties>(),
-		PromisedResponse<HashMap<String, String>, LookupFileProperties>
+		PromisedResponse<MutableMap<String, String>, LookupFileProperties>
 	{
 		init {
 			proxy(
-				promiseResponse("getSong", "id=${serviceFile.key}")
+				promiseSubsonicResponse<SongResponse>("getSong", "id=${serviceFile.key}")
 					.also(::doCancel)
-					.promiseStringBody()
-					.promiseJson()
-					.also(::doCancel)
-					.eventually { json ->
+					.eventually({ response ->
 						ThreadPools.compute.preparePromise { cs ->
-							val subsonicResponse = json?.asJsonObject?.get("subsonic-response") ?: throw NonStandardResponseException()
+							val returnMap = mutableMapOf<String, String>()
+							for ((k, v) in response?.song ?: return@preparePromise returnMap) {
+								if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
 
-							if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-							val song = subsonicResponse.asJsonObject?.get("song")
-
-							if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-							val elements = song?.asJsonObject?.asMap() ?: emptyMap()
-
-							val returnElements = elements
-								.mapNotNull { (k, v) ->
-									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-									if (v.isJsonPrimitive) k to v.asString else null
+								if (v.isJsonPrimitive) {
+									returnMap[k] = v.asString
+									continue
 								}
-								.toMap(HashMap<String, String>(elements.size + 4))
 
-							if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-
-							elements[KnownFileProperties.replayGain]?.asJsonObject
-								?.asMap()
-								?.mapNotNull { (k, v) ->
-									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-									if (v.isJsonPrimitive) k to v.asString else null
+								if (k == KnownFileProperties.replayGain) {
+									for ((ik, iv) in v.asJsonObject.asMap()) {
+										if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
+										if (iv.isJsonPrimitive) {
+											returnMap[ik] = iv.asString
+										}
+									}
 								}
-								?.let(returnElements::putAll)
+							}
 
-							returnElements
+							returnMap
 						}
-					}
+					}, ::handleException)
 					.also(::doCancel)
 					.eventually(this, ::handleException)
 			)
 		}
 
-		override fun promiseResponse(props: HashMap<String, String>): Promise<LookupFileProperties> =
+		override fun promiseResponse(props: MutableMap<String, String>): Promise<LookupFileProperties> =
 			promiseSubsonicResponse<LyricsResponse>(
 				"getLyrics",
 				"artist=${props[KnownFileProperties.artist]}",
@@ -623,7 +617,13 @@ class LiveSubsonicConnection(
 	}
 
 	@Keep
-	private open class Response(
+	private class SubsonicResponse<T>(
+		@SerializedName("subsonic-response")
+		val subsonicResponse: T
+	)
+
+	@Keep
+	private class Response(
 		val status: String,
 		val version: String,
 	)
@@ -708,6 +708,11 @@ class LiveSubsonicConnection(
 	)
 
 	@Keep
+	private class SubsonicError(
+		val error: ErrorResponse
+	)
+
+	@Keep
 	private class UserDetailsResponse(
 		val adminRole: Boolean,
 		val commentRole: Boolean,
@@ -726,6 +731,11 @@ class LiveSubsonicConnection(
 	@Keep
 	private class Search2Response(
 		val searchResult2: Search2ResponseItems,
+	)
+
+	@Keep
+	private class SongResponse(
+		val song: Map<String, JsonElement>
 	)
 
 	@Suppress("unused")
