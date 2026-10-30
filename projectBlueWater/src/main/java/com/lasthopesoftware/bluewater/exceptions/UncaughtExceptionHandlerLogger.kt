@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.exceptions
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.exceptions.isOkHttpCanceled
 import com.lasthopesoftware.exceptions.isSocketClosedException
-import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.rejections.UnhandledRejectionsReceiver
 import org.slf4j.LoggerFactory
 import java.io.IOException
@@ -26,9 +25,7 @@ object UncaughtExceptionHandlerLogger : Thread.UncaughtExceptionHandler, Unhandl
 
 	override fun newUnhandledRejection(rejection: Throwable) {
 		if (reportException(rejection)) {
-			ThreadPools.exceptionsLogger.execute {
-				logger.warn("An asynchronous exception has not yet been handled", rejection)
-			}
+			logger.warn("An asynchronous exception has not yet been handled", rejection)
 		}
 	}
 

@@ -10,7 +10,6 @@ import com.lasthopesoftware.resources.emptyByteArray
 import com.lasthopesoftware.resources.io.PromisingReadableStream
 import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
 import com.namehillsoftware.handoff.promises.Promise
-import java.io.ByteArrayInputStream
 
 class StoredFileDownloader(private val libraryConnections: ProvideLibraryConnections) : DownloadStoredFiles {
 	override fun promiseDownload(libraryId: LibraryId, storedFile: StoredFile): Promise<PromisingReadableStream> =
@@ -18,6 +17,6 @@ class StoredFileDownloader(private val libraryConnections: ProvideLibraryConnect
 			.promiseLibraryConnection(libraryId)
 			.eventuallyFromDataAccess {
 				it?.promiseFile(ServiceFile(storedFile.serviceId))
-					.keepPromise { PromisingReadableStreamWrapper(ByteArrayInputStream(emptyByteArray)) }
+					.keepPromise { PromisingReadableStreamWrapper(emptyByteArray.inputStream(), null) }
 			}
 }

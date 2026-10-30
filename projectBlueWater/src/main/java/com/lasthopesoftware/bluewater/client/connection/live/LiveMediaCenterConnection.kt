@@ -32,6 +32,7 @@ import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.exceptions.isOkHttpCanceled
 import com.lasthopesoftware.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.promises.extensions.cancelBackEventually
+import com.lasthopesoftware.promises.extensions.cancelBackThen
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.preparePromise
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -208,12 +209,9 @@ class LiveMediaCenterConnection(
 	override fun promiseServerVersion(): Promise<SemanticVersion?> = cachedServerVersionPromise
 
 	override fun promiseFile(serviceFile: ServiceFile): Promise<PromisingReadableStream> =
-		Promise.Proxy { cp ->
-			httpClient
-				.eventually { it.promiseResponse(getFileUrl(serviceFile)) }
-				.also(cp::doCancel)
-				.then(HttpStreamedResponse())
-		}
+		httpClient
+			.eventually { it.promiseResponse(getFileUrl(serviceFile)) }
+			.cancelBackThen(HttpStreamedResponse())
 
 	override fun promiseImageBytes(serviceFile: ServiceFile): Promise<ByteArray> =
 		Promise.Proxy { cp ->
@@ -295,7 +293,7 @@ class LiveMediaCenterConnection(
 						response.thenUse {
 							val responseCode = it.code
 							logger.debug("api/v1/File/Played responded with a response code of {}", responseCode)
-							if (responseCode < 200 || responseCode >= 300) throw HttpResponseException(responseCode)
+							if (responseCode !in 200..<300) throw HttpResponseException(responseCode)
 						}
 					}
 				else FilePropertiesPlayStatsUpdatePromise(serviceFile)
@@ -509,13 +507,10 @@ class LiveMediaCenterConnection(
 							.then { r -> r.isSuccessful }
 					}
 				}
-				.then(
-					::resolve,
-					{ e ->
-						logger.error("Error checking connection at URL {}.", mediaCenterConnectionDetails.baseUrl, e)
-						resolve(false)
-					}
-				)
+				.then(::resolve) { e ->
+					logger.error("Error checking connection at URL {}.", mediaCenterConnectionDetails.baseUrl, e)
+					resolve(false)
+				}
 				.also(cancellationProxy::doCancel)
 		}
 
@@ -523,8 +518,7 @@ class LiveMediaCenterConnection(
 			return response
 				.eventuallyUse { r -> r.bodyString }
 				.then {
-					if (cancellationSignal.isCancelled) false
-					else try {
+					!cancellationSignal.isCancelled && try {
 						Jsoup.parse(it, Parser.xmlParser()).toStandardResponse().isStatusOk
 					} catch (e: NonStandardResponseException) {
 						logger.warn("Non standard response received.", e)

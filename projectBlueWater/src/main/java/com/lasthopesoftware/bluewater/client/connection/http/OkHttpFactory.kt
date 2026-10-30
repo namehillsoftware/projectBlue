@@ -207,7 +207,6 @@ class OkHttpFactory(private val context: Context) : ProvideHttpPromiseClients {
 				.configureForStreaming()
 				.build()
 
-		@OptIn(ExperimentalStdlibApi::class)
 		private fun getOkHttpClient(subsonicConnectionDetails: SubsonicConnectionDetails): OkHttpClient {
 			val addedParams = with(subsonicConnectionDetails) {
 				arrayOf(

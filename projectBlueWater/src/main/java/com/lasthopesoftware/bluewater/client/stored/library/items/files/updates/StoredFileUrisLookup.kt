@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePrope
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.fileNameParts
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.localExternalRelativeFileDirectory
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.localExternalRelativeFilePathAsMp3
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.LookupFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.SyncedFileLocation
@@ -31,48 +30,53 @@ class StoredFileUrisLookup(
 ) : GetStoredFileUris {
 
 	override fun promiseStoredFileUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<URI?> =
-		libraryFileProperties
-			.promiseFileProperties(libraryId, serviceFile)
-			.eventually { fileProperties ->
-				librarySettingsProvider
-					.promiseLibrarySettings(libraryId)
-					.eventually { l ->
-						when (l?.syncedFileLocation) {
-							SyncedFileLocation.INTERNAL -> promiseLocalFileUri(libraryId, fileProperties)
-							SyncedFileLocation.EXTERNAL -> promiseExternalUri(libraryId, serviceFile, fileProperties)
-							else -> Promise.empty()
-						}
-					}
+		librarySettingsProvider
+			.promiseLibrarySettings(libraryId)
+			.eventually { l ->
+				when (l?.syncedFileLocation) {
+					SyncedFileLocation.INTERNAL -> promiseLocalFileUri(libraryId, serviceFile)
+					SyncedFileLocation.EXTERNAL -> promiseExternalUri(libraryId, serviceFile)
+					else -> Promise.empty()
+				}
 			}
 
-	private fun promiseLocalFileUri(libraryId: LibraryId, fileProperties: LookupFileProperties): Promise<URI?> =
+	private fun promiseLocalFileUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<URI?> =
 		lookupSyncDirectory
 			.promiseSyncDirectory(libraryId)
-			.then { syncDir ->
+			.eventually { syncDir ->
 				syncDir
 					?.path
 					?.let { fullPath ->
-						fileProperties
-							.localExternalRelativeFilePathAsMp3
-							?.let { mp3 ->
-									FilenameUtils.concat(fullPath, mp3)
+						libraryFileProperties
+							.promiseFileProperties(libraryId, serviceFile)
+							.then { fileProperties ->
+								fileProperties
+									.localExternalRelativeFilePathAsMp3
+									?.let { mp3 ->
+										FilenameUtils.concat(fullPath, mp3)
+									}
+									?: fullPath
 							}
-							?: fullPath
 					}
-					?.let { File(it).toURI() }
+					?.then { File(it).toURI() }
+					.keepPromise()
 			}
 
-	private fun promiseExternalUri(libraryId: LibraryId, serviceFile: ServiceFile, fileProperties: LookupFileProperties): Promise<URI?> =
+	private fun promiseExternalUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<URI?> =
 		mediaFileUriProvider
 			.promiseUri(libraryId, serviceFile)
 			.eventually { existingUri ->
-				existingUri?.toURI()?.toPromise() ?: fileProperties.fileNameParts?.let {
-					externalContent.promiseNewContentUri(
-						ExternalMusicContent(
-							displayName = fileProperties.baseFileNameAsMp3,
-							relativePath = fileProperties.localExternalRelativeFileDirectory
-						)
-					)
-				}.keepPromise()
+				existingUri?.toURI()?.toPromise() ?: libraryFileProperties
+					.promiseFileProperties(libraryId, serviceFile)
+					.eventually { fileProperties ->
+						fileProperties.fileNameParts?.let {
+							externalContent.promiseNewContentUri(
+								ExternalMusicContent(
+									displayName = fileProperties.baseFileNameAsMp3,
+									relativePath = fileProperties.localExternalRelativeFileDirectory
+								)
+							)
+						}.keepPromise()
+					}
 			}
 }

@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.service
 
 import android.annotation.SuppressLint
+import android.app.ForegroundServiceStartNotAllowedException
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -90,6 +91,7 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSetting
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.AudioFocusManagement
+import com.lasthopesoftware.bluewater.shared.android.audiofocus.UnableToGrantAudioFocusException
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.NotificationBuilderProducer
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
@@ -302,9 +304,15 @@ import java.util.concurrent.TimeoutException
 			try {
 				ContextCompat.startForegroundService(this, intent)
 			} catch (e: IllegalStateException) {
-				logger.warn("An illegal state exception occurred while trying to start the service", e)
+				if (Build.VERSION.SDK_INT >= 31 && e is ForegroundServiceStartNotAllowedException) {
+					logger.warn("The foreground service did not start correctly", e)
+				} else {
+					logger.warn("An illegal state exception occurred while trying to start the service", e)
+				}
 			} catch (e: SecurityException) {
 				logger.warn("A security exception occurred while trying to start the service", e)
+			} catch (t: Throwable) {
+				logger.error("An unexpected exception occurred while starting the service", t)
 			}
 		}
 	}
@@ -732,8 +740,8 @@ import java.util.concurrent.TimeoutException
 			Promise
 				.whenAny(promisedIntentHandling, timeoutResponse)
 				.excuse { e ->
-					// Kill the service if it doesn't start in time.
-					if (e is PlaybackStartingTimeoutException) stop()
+					// Kill the service if it doesn't start in time or the app can't get audio focus.
+					if (e is PlaybackStartingTimeoutException || e is UnableToGrantAudioFocusException) stop()
 				}
 		}
 

@@ -4,22 +4,24 @@ import com.lasthopesoftware.bluewater.client.connection.requests.HttpResponse
 import com.lasthopesoftware.resources.emptyByteArray
 import com.lasthopesoftware.resources.io.PromisingReadableStream
 import com.lasthopesoftware.resources.io.PromisingReadableStreamWrapper
+import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.response.ImmediateResponse
-import java.io.ByteArrayInputStream
+import com.namehillsoftware.handoff.promises.response.ImmediateCancellableResponse
+import io.ktor.utils.io.CancellationException
 
-class HttpStreamedResponse : ImmediateResponse<HttpResponse?, PromisingReadableStream>,
-    PromisingReadableStream {
-	private var savedResponse: HttpResponse? = null
+class HttpStreamedResponse : ImmediateCancellableResponse<HttpResponse, PromisingReadableStream>,
+    PromisingReadableStream, (HttpResponse, CancellationSignal) -> PromisingReadableStream {
 	private lateinit var byteStream: PromisingReadableStream
 
-	override fun respond(response: HttpResponse?): PromisingReadableStream {
-		savedResponse = response
+	override fun invoke(response: HttpResponse, cancellationSignal: CancellationSignal): PromisingReadableStream =
+		respond(response, cancellationSignal)
 
-		byteStream = response
-			?.takeIf { it.code != 404 }
-			?.run { body }
-			?: PromisingReadableStreamWrapper(ByteArrayInputStream(emptyByteArray))
+	override fun respond(response: HttpResponse, cancellationSignal: CancellationSignal): PromisingReadableStream {
+		if (cancellationSignal.isCancelled) throw CancellationException("Streamed response cancelled.")
+
+		byteStream =
+			if (response.code != 404) response.body
+			else PromisingReadableStreamWrapper(emptyByteArray.inputStream(), null)
 
 		return this
 	}

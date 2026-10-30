@@ -11,10 +11,12 @@ import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.observables.observeBufferedProgress
 import com.lasthopesoftware.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.closables.eventuallyUse
 import com.lasthopesoftware.resources.io.PromisingWritableStream
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import io.reactivex.rxjava3.core.Observable
 import java.io.IOException
 import java.util.concurrent.CancellationException
@@ -26,6 +28,9 @@ class StoredFileJobProcessor(
 ) : ProcessStoredFileJobs {
 
 	companion object {
+		private const val cancelledDownloadMarker = -830
+		private const val unreadableDownloadMarker = -975
+
 		private val logger by lazyLogger<StoredFileJobProcessor>()
 
 		private fun getCancelledStoredFileJobResult(storedFile: StoredFile): StoredFileJobStatus =
@@ -43,33 +48,10 @@ class StoredFileJobProcessor(
 			}
 	}
 
-	private fun PromisingWritableStream.promiseDownload(libraryId: LibraryId, storedFile: StoredFile): Promise<StoredFileJobStatus> = Promise.Proxy { cp ->
-		val promisedDownload = storedFiles
-			.promiseDownload(libraryId, storedFile)
-			.also(cp::doCancel)
-
-		promisedDownload.eventuallyUse { s ->
-			if (cp.isCancelled) getCancelledStoredFileJobResult(storedFile).toPromise()
-			else promiseCopyFrom(s)
-				.also(cp::doCancel)
-				.eventually { downloadedBytes ->
-					if (downloadedBytes > 0) updateStoredFiles.markStoredFileAsDownloaded(storedFile)
-					else storedFile.toPromise()
-				}
-				.then { sf ->
-					StoredFileJobStatus(
-						sf,
-						if (sf.isDownloadComplete) StoredFileJobState.Downloaded
-						else StoredFileJobState.Queued
-					)
-				}
-		}
-	}
-
 	private inner class StoredFileDownloadPromise(
 		private val libraryId: LibraryId,
 		private val storedFile: StoredFile,
-	) : ProgressingPromiseProxy<StoredFileJobStatus, Unit>() {
+	) : ProgressingPromiseProxy<StoredFileJobStatus, Unit>(), PromisedResponse<PromisingWritableStream?, Int> {
 		init {
 			proxy(promiseProgressingDownload())
 		}
@@ -79,44 +61,63 @@ class StoredFileJobProcessor(
 			Unit.toPromise()
 		} else storedFileFileProvider
 			.promiseOutputStream(storedFile)
-			.eventually { outputStream ->
-				outputStream
-					?.eventuallyUse { writableStream ->
-						if (isCancelled) {
-							getCancelledStoredFileJobResult(storedFile).toPromise()
-						} else {
-							reportProgress(StoredFileJobStatus(storedFile, StoredFileJobState.Downloading))
-
-							writableStream.promiseDownload(libraryId, storedFile).also(::doCancel)
-						}
-					}
-					?.then(::reportProgress) { error ->
-						val status = when (error) {
-							is CancellationException -> getCancelledStoredFileJobResult(storedFile)
-							is StoredFileReadException -> StoredFileJobStatus(storedFile, StoredFileJobState.Unreadable)
-
-							is IOException -> {
-								logger.error("Error writing file!", error)
-								StoredFileJobStatus(storedFile, StoredFileJobState.Queued)
-							}
-
-							is StoredFileJobException -> throw error
-							else -> throw StoredFileJobException(storedFile, error)
-						}
-
-						reportProgress(status)
-					}
-					?: storedFile.run {
-						reportProgress(
+			.eventually(this)
+			.eventually({ downloadedBytes ->
+				if (downloadedBytes > 0) {
+					updateStoredFiles
+						.markStoredFileAsDownloaded(storedFile)
+						.then { sf ->
 							StoredFileJobStatus(
-								storedFile,
-								if (isDownloadComplete) StoredFileJobState.Downloaded
-								else StoredFileJobState.Unreadable
+								sf,
+								if (sf.isDownloadComplete) StoredFileJobState.Downloaded
+								else StoredFileJobState.Queued
 							)
-						)
-
-						Unit.toPromise()
+						}
+				} else StoredFileJobStatus(
+					storedFile,
+					when {
+						storedFile.isDownloadComplete -> StoredFileJobState.Downloaded
+						downloadedBytes == cancelledDownloadMarker -> StoredFileJobState.Cancelled
+						downloadedBytes == unreadableDownloadMarker -> StoredFileJobState.Unreadable
+						else -> StoredFileJobState.Queued
 					}
+				).toPromise()
+			}) { error ->
+				val status = when (error) {
+					is CancellationException -> getCancelledStoredFileJobResult(storedFile)
+					is StoredFileReadException -> StoredFileJobStatus(storedFile, StoredFileJobState.Unreadable)
+
+					is IOException -> {
+						logger.error("Error writing file!", error)
+						StoredFileJobStatus(storedFile, StoredFileJobState.Queued)
+					}
+
+					is StoredFileJobException -> throw error
+					else -> throw StoredFileJobException(storedFile, error)
+				}
+
+				status.toPromise()
 			}
+			.then(::reportProgress)
+
+		override fun promiseResponse(outputStream: PromisingWritableStream?): Promise<Int> =
+			outputStream
+				?.eventuallyUse { writableStream ->
+					if (isCancelled) {
+						cancelledDownloadMarker.toPromise()
+					} else {
+						reportProgress(StoredFileJobStatus(storedFile, StoredFileJobState.Downloading))
+
+						val promisedDownload = storedFiles
+							.promiseDownload(libraryId, storedFile)
+							.also(::doCancel)
+
+						promisedDownload.eventuallyUse { s ->
+							if (isCancelled) cancelledDownloadMarker.toPromise()
+							else writableStream.promiseCopyFrom(s)
+						}
+					}
+				}
+				.keepPromise(unreadableDownloadMarker)
 	}
 }

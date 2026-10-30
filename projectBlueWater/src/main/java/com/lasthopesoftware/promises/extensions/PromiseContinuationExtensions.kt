@@ -8,11 +8,8 @@ import com.namehillsoftware.handoff.promises.response.PromisedResponse
 inline fun <T, P> Promise<T>.cancelBackEventually(crossinline response: (T) -> Promise<P>): Promise<P> =
 	object : Promise.Proxy<P>(), PromisedResponse<T, P> {
 		init {
-			proxy(
-				this@cancelBackEventually
-					.also(::doCancel)
-					.eventually(this)
-			)
+			doCancel(this@cancelBackEventually)
+			proxy(this@cancelBackEventually.eventually(this))
 		}
 
 		override fun promiseResponse(resolution: T): Promise<P> = response(resolution)
@@ -21,11 +18,8 @@ inline fun <T, P> Promise<T>.cancelBackEventually(crossinline response: (T) -> P
 inline fun <T, P> Promise<T>.cancelBackThen(crossinline response: (T, CancellationSignal) -> P): Promise<P> =
 	object : Promise.Proxy<P>(), ImmediateCancellableResponse<T, P> {
 		init {
-			proxy(
-				this@cancelBackThen
-					.also(::doCancel)
-					.then(this)
-			)
+			doCancel(this@cancelBackThen)
+			proxy(this@cancelBackThen.then(this))
 		}
 
 		override fun respond(resolution: T, c: CancellationSignal): P = response(resolution, c)
