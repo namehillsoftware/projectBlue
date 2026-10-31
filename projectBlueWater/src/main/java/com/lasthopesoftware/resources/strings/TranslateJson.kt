@@ -2,8 +2,8 @@ package com.lasthopesoftware.resources.strings
 
 import com.google.gson.JsonElement
 import com.google.gson.reflect.TypeToken
-import io.ktor.util.collections.ConcurrentMap
 import java.io.Reader
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
@@ -15,7 +15,7 @@ interface TranslateJson {
 	fun <T> parseJson(reader: Reader, cls: Class<T>): T?
 }
 
-val kTypeTokenMap = ConcurrentMap<KType, TypeToken<*>>()
+val kTypeTokenMap = ConcurrentHashMap<KType, TypeToken<*>>()
 
 @Suppress("UNCHECKED_CAST")
 inline fun <reified T> TranslateJson.parseJson(json: String): T? {

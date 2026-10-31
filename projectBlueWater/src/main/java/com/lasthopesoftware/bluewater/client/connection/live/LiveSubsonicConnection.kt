@@ -293,7 +293,7 @@ class LiveSubsonicConnection(
 					val response = jsonTranslator.parseJson<SubsonicResponse<Response>>(b)?.subsonicResponse ?: throw NonStandardResponseException()
 
 					if (response.status == "failed") {
-						throw SubsonicServerException(jsonTranslator.parseJson<SubsonicResponse<ErrorResponse>>(b)?.subsonicResponse)
+						throw SubsonicServerException(jsonTranslator.parseJson<SubsonicResponse<SubsonicError>>(b)?.subsonicResponse?.error)
 					}
 
 					if (cs.isCancelled) throw parsingCancelledException()
@@ -705,6 +705,11 @@ class LiveSubsonicConnection(
 	private class ErrorResponse(
 		val code: Int,
 		val message: String,
+	)
+
+	@Keep
+	private class SubsonicError(
+		val error: ErrorResponse
 	)
 
 	@Keep
