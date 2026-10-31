@@ -2,11 +2,16 @@ package com.lasthopesoftware.resources.strings
 
 import com.google.gson.Gson
 import com.google.gson.JsonElement
+import com.google.gson.memory.MemoryBanks
+import com.google.gson.memory.StringBuilderBank
 import com.google.gson.reflect.TypeToken
 import java.io.Reader
 
 object JsonEncoderDecoder : TranslateJson {
-	private val gson by lazy { Gson() }
+	private val gson by lazy {
+		MemoryBanks.setStringBuilderBank(StringBuilderBank())
+		Gson()
+	}
 
 	override fun <T> parseJson(jsonElement: JsonElement, cls: Class<T>): T? =
 		gson.fromJson(jsonElement, cls)

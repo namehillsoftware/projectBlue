@@ -190,6 +190,7 @@ tasks.withType(KotlinCompile).configureEach {
 }
 
 dependencies {
+	implementation fileTree(dir: 'libs', include: ['*.aar', '*.jar'], exclude: [])
 	coreLibraryDesugaring libs.desugar.jdk.libs
 
 	debugImplementation libs.androidx.compose.ui.test.manifest
@@ -227,7 +228,7 @@ dependencies {
 	implementation libs.okhttp
 	implementation libs.querydroid
 	implementation libs.reimagined
-	implementation libs.gson
+//	implementation libs.gson
 	implementation libs.kotlinx.coroutines.rx3
 	implementation libs.androidx.compose.ui.tooling
 	testCompileOnly libs.junit
