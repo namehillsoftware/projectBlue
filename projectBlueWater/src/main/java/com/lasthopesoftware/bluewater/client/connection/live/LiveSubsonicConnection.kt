@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.live
 
 import androidx.annotation.Keep
 import androidx.media3.datasource.DataSource
+import com.google.gson.annotations.SerializedName
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.lasthopesoftware.bluewater.BuildConfig
@@ -44,7 +45,6 @@ import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.InvalidResponseCodeException
 import com.lasthopesoftware.resources.io.NonStandardResponseException
 import com.lasthopesoftware.resources.io.PromisingReadableStream
-import com.lasthopesoftware.resources.io.promiseJson
 import com.lasthopesoftware.resources.io.promiseStringBody
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.lasthopesoftware.resources.strings.TranslateJson
@@ -288,16 +288,18 @@ class LiveSubsonicConnection(
 	}
 
 	private inline fun <reified T> Promise<String>.promiseSubsonicResponse(): Promise<T?> =
-		promiseJson()
-			.cancelBackEventually { json ->
+			cancelBackEventually { b ->
 				ThreadPools.compute.preparePromise { cs ->
-					val response = json?.asJsonObject?.get("subsonic-response") ?: throw NonStandardResponseException()
-					if (response.asJsonObject.get("status")?.asString == "failed") {
-						throw SubsonicServerException(jsonTranslator.parseJson<ErrorResponse>(json))
+					if (cs.isCancelled) throw parsingCancelledException()
+
+					val response = jsonTranslator.parseJson<SubsonicResponse<Response>>(b)?.subsonicResponse ?: throw NonStandardResponseException()
+
+					if (response.status == "failed") {
+						throw SubsonicServerException(jsonTranslator.parseJson<SubsonicResponse<ErrorResponse>>(b)?.subsonicResponse)
 					}
 
-					if (!cs.isCancelled) jsonTranslator.parseJson<T>(response)
-					else throw parsingCancelledException()
+					if (cs.isCancelled) throw parsingCancelledException()
+					jsonTranslator.parseJson<SubsonicResponse<T>>(b)?.subsonicResponse
 				}
 			}
 
@@ -666,11 +668,22 @@ class LiveSubsonicConnection(
 		override fun respond(resolution: Throwable?): SemanticVersion? = null
 	}
 
+	private interface SubsonicResponseBase {
+		val status: String
+		val version: String
+	}
+
 	@Keep
-	private open class Response(
-		val status: String,
-		val version: String,
+	private class SubsonicResponse<T>(
+		@SerializedName("subsonic-response")
+		val subsonicResponse: T
 	)
+
+	@Keep
+	private class Response(
+		override val status: String,
+		override val version: String,
+	) : SubsonicResponseBase
 
 	@Keep
 	private class NamedItem(

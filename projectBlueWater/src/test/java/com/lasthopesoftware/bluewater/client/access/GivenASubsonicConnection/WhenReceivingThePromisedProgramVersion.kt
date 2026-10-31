@@ -14,6 +14,7 @@ import com.lasthopesoftware.resources.PassThroughHttpResponse
 import com.lasthopesoftware.resources.strings.JsonEncoderDecoder
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random.Default.nextInt
@@ -24,7 +25,7 @@ class WhenReceivingThePromisedProgramVersion {
 		SemanticVersion(nextInt(), nextInt(), nextInt())
 	}
 
-	private val version by lazy {
+	private val connection by lazy {
 		val httpConnection = FakeHttpConnection().apply {
 			mapResponse(TestUrl.withSubsonicApi().addPath("ping.view").addParams("f=json")) {
 				PassThroughHttpResponse(
@@ -35,15 +36,20 @@ class WhenReceivingThePromisedProgramVersion {
 			}
 		}
 
-		val connection = LiveSubsonicConnection(
+		LiveSubsonicConnection(
 			SubsonicConnectionDetails(TestUrl, "hi5ZMj3i", "7O1rsa2Yl"),
 			FakeHttpConnectionProvider(httpConnection),
 			mockk(),
             JsonEncoderDecoder,
 			mockk(),
 		)
+	}
 
-		connection.promiseServerVersion().toExpiringFuture()[100, TimeUnit.MILLISECONDS]
+	private var version: SemanticVersion? = null
+
+	@BeforeAll
+	fun act() {
+		version = connection.promiseServerVersion().toExpiringFuture()[100, TimeUnit.MINUTES]
 	}
 
 	@Test
