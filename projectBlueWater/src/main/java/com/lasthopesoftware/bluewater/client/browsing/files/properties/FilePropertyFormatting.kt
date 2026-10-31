@@ -44,7 +44,7 @@ private val minutesAndSecondsFormatter by lazy {
 		.toFormatter()
 }
 
-private val excelEpoch by lazy { DateTime(1899, 12, 30, 0, 0) }
+val excelEpoch by lazy { DateTime(1899, 12, 30, 0, 0) }
 
 val dateTimeProperties by lazy {
 	setOf(
