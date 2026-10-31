@@ -17,9 +17,6 @@ interface TranslateJson {
 
 val kTypeTokenMap = ConcurrentMap<KType, TypeToken<*>>()
 
-inline fun <reified T> TranslateJson.parseJson(jsonElement: JsonElement): T? = parseJson(jsonElement, T::class.java)
-inline fun <reified T> TranslateJson.parseJson(reader: Reader): T? = parseJson(reader, T::class.java)
-
 @Suppress("UNCHECKED_CAST")
 inline fun <reified T> TranslateJson.parseJson(json: String): T? {
 	val kType = typeOf<T>()

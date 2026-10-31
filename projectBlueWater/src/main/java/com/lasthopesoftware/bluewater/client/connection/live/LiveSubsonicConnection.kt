@@ -2,9 +2,8 @@ package com.lasthopesoftware.bluewater.client.connection.live
 
 import androidx.annotation.Keep
 import androidx.media3.datasource.DataSource
+import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
-import com.google.gson.stream.JsonReader
-import com.google.gson.stream.JsonToken
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
@@ -54,7 +53,6 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import org.joda.time.DateTime
 import java.io.IOException
-import java.io.StringReader
 import java.net.URL
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicInteger
@@ -359,80 +357,30 @@ class LiveSubsonicConnection(
 	{
 		init {
 			proxy(
-				promiseResponse("getSong", "id=${serviceFile.key}")
+				promiseSubsonicResponse<SongResponse>("getSong", "id=${serviceFile.key}")
 					.also(::doCancel)
-					.promiseStringBody()
-					.eventually({ b ->
+					.eventually({ response ->
 						ThreadPools.compute.preparePromise { cs ->
-							if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-							StringReader(b).use { sr ->
+							val returnMap = mutableMapOf<String, String>()
+							for ((k, v) in response?.song ?: return@preparePromise returnMap) {
 								if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-								JsonReader(sr).use { jr ->
-									if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-									val returnMap = mutableMapOf<String, String>()
-									when {
-										!jr.hasNext() -> returnMap
-										jr.peek() != JsonToken.BEGIN_OBJECT -> returnMap
-										jr.run { beginObject(); !hasNext() } -> returnMap
-										cs.isCancelled -> throw filePropertiesCancellationException(serviceFile)
-										jr.peek() != JsonToken.NAME -> returnMap
-										jr.nextName() != "subsonic-response" -> returnMap
-										cs.isCancelled -> throw filePropertiesCancellationException(serviceFile)
-										!jr.hasNext() -> returnMap
-										jr.peek() != JsonToken.BEGIN_OBJECT -> returnMap
-										jr.run { beginObject(); !hasNext() } -> returnMap
-										cs.isCancelled -> throw filePropertiesCancellationException(serviceFile)
-										jr.run {
-											while (jr.hasNext()) {
-												if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-												if (jr.peek() == JsonToken.NAME) {
-													if (jr.nextName() == "song") return@run false
-													continue
-												}
-												jr.skipValue()
-											}
-											// no song found
-											true
-										} -> returnMap
-										jr.peek() != JsonToken.BEGIN_OBJECT -> returnMap
-										jr.run { beginObject(); !hasNext() } -> returnMap
-										cs.isCancelled -> throw filePropertiesCancellationException(serviceFile)
-										else -> jr.run {
-											var currentKey = ""
-											while (jr.hasNext()) {
-												if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-												when (jr.peek()) {
-													JsonToken.NAME -> currentKey = jr.nextName()
-													JsonToken.BOOLEAN -> returnMap[currentKey] = jr.nextBoolean().toString()
-													JsonToken.STRING, JsonToken.NUMBER -> returnMap[currentKey] = jr.nextString()
-													JsonToken.BEGIN_ARRAY -> jr.skipValue()
-													JsonToken.BEGIN_OBJECT -> {
-														if (currentKey == KnownFileProperties.replayGain) {
-															jr.beginObject()
-															while (jr.hasNext()) {
-																if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
-																when (jr.peek()) {
-																	JsonToken.NAME -> currentKey = jr.nextName()
-																	JsonToken.NUMBER -> returnMap[currentKey] = jr.nextString()
-																	else -> jr.skipValue()
-																}
-															}
 
-															if (jr.peek() == JsonToken.END_OBJECT) jr.endObject()
-														} else {
-															jr.skipValue()
-														}
-													}
-													JsonToken.END_OBJECT -> break
-													JsonToken.END_DOCUMENT -> break
-													else -> jr.skipValue()
-												}
-											}
-											returnMap
+								if (v.isJsonPrimitive) {
+									returnMap[k] = v.asString
+									continue
+								}
+
+								if (k == KnownFileProperties.replayGain) {
+									for ((ik, iv) in v.asJsonObject.asMap()) {
+										if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
+										if (iv.isJsonPrimitive) {
+											returnMap[ik] = iv.asString
 										}
 									}
 								}
 							}
+
+							returnMap
 						}
 					}, ::handleException)
 					.also(::doCancel)
@@ -668,11 +616,6 @@ class LiveSubsonicConnection(
 		override fun respond(resolution: Throwable?): SemanticVersion? = null
 	}
 
-	private interface SubsonicResponseBase {
-		val status: String
-		val version: String
-	}
-
 	@Keep
 	private class SubsonicResponse<T>(
 		@SerializedName("subsonic-response")
@@ -681,9 +624,9 @@ class LiveSubsonicConnection(
 
 	@Keep
 	private class Response(
-		override val status: String,
-		override val version: String,
-	) : SubsonicResponseBase
+		val status: String,
+		val version: String,
+	)
 
 	@Keep
 	private class NamedItem(
@@ -783,6 +726,11 @@ class LiveSubsonicConnection(
 	@Keep
 	private class Search2Response(
 		val searchResult2: Search2ResponseItems,
+	)
+
+	@Keep
+	private class SongResponse(
+		val song: Map<String, JsonElement>
 	)
 
 	@Suppress("unused")
