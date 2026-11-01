@@ -87,7 +87,7 @@ class StoredFileJobProcessor(
 					is CancellationException -> getCancelledStoredFileJobResult(storedFile)
 					is StoredFileReadException -> StoredFileJobStatus(storedFile, StoredFileJobState.Unreadable)
 
-					is IOException -> {
+					is IOException, is OutOfMemoryError -> {
 						logger.error("Error writing file!", error)
 						StoredFileJobStatus(storedFile, StoredFileJobState.Queued)
 					}
@@ -108,14 +108,13 @@ class StoredFileJobProcessor(
 					} else {
 						reportProgress(StoredFileJobStatus(storedFile, StoredFileJobState.Downloading))
 
-						val promisedDownload = storedFiles
+						storedFiles
 							.promiseDownload(libraryId, storedFile)
 							.also(::doCancel)
-
-						promisedDownload.eventuallyUse { s ->
-							if (isCancelled) cancelledDownloadMarker.toPromise()
-							else writableStream.promiseCopyFrom(s)
-						}
+							.eventuallyUse { s ->
+								if (isCancelled) cancelledDownloadMarker.toPromise()
+								else writableStream.promiseCopyFrom(s)
+							}
 					}
 				}
 				.keepPromise(unreadableDownloadMarker)
