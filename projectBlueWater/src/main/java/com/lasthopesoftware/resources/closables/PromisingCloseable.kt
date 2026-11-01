@@ -10,11 +10,14 @@ interface PromisingCloseable {
 }
 
 inline fun <T : AutoCloseable, Result> T.eventuallyUse(usage: (T) -> Promise<Result>): Promise<Result> {
-	val use = usage(this)
+	val result = runCatching { usage(this) }
 	return object : Promise.Proxy<Result>(), ImmediateAction {
 		init {
-			proxy(use)
-			use.must(this)
+			result
+				.onSuccess { use ->
+					proxy(use.also(::doCancel).must(this))
+				}
+				.onFailure(::reject)
 		}
 
 		override fun act() {
@@ -24,11 +27,14 @@ inline fun <T : AutoCloseable, Result> T.eventuallyUse(usage: (T) -> Promise<Res
 }
 
 inline fun <T : PromisingCloseable, Result> T.eventuallyUse(usage: (T) -> Promise<Result>): Promise<Result> {
-	val use = usage(this)
+	val result = runCatching { usage(this) }
 	return object : Promise.Proxy<Result>(), EventualAction {
 		init {
-			proxy(use)
-			use.inevitably(this)
+			result
+				.onSuccess { use ->
+					proxy(use.also(::doCancel).inevitably(this))
+				}
+				.onFailure(::reject)
 		}
 
 		override fun promiseAction(): Promise<*> = promiseClose()
