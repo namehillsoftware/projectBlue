@@ -6,5 +6,6 @@ import org.joda.time.Duration
 class TimedExpirationPromiseCache<Input : Any, Output>(expireAfter: Duration) :
 	GuavaPromiseCache<Input, Output>(
 		CacheBuilder.newBuilder()
+			.softValues()
 			.expireAfterWrite(java.time.Duration.ofMillis(expireAfter.millis))
 			.build())
