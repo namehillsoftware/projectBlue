@@ -10,6 +10,7 @@ object FilePropertyCache : IFilePropertiesContainerRepository {
 	private val propertiesCache by lazy {
 		CacheBuilder.newBuilder()
 			.maximumSize(maxSize)
+			.softValues()
 			.build<UrlKeyHolder<ServiceFile>, ContainVersionedFileProperties>()
 	}
 

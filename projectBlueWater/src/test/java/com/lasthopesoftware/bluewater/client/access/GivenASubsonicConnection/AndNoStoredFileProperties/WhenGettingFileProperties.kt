@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.KeyFilePr
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.LookupFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.NormalizedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ReadOnlyFileProperty
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.getFormattedValue
 import com.lasthopesoftware.bluewater.client.connection.SubsonicConnectionDetails
 import com.lasthopesoftware.bluewater.client.connection.live.LiveSubsonicConnection
 import com.lasthopesoftware.bluewater.client.connection.requests.FakeHttpConnection
@@ -146,6 +147,11 @@ class WhenGettingFileProperties {
 				FilePropertyType.Integer,
 			)
 		)
+	}
+
+	@Test
+	fun `then the normalized and formatted date is correct`() {
+		assertThat(fileProperties?.date?.getFormattedValue()).isEqualTo("2007")
 	}
 
 	@Test

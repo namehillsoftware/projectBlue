@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.settings.repository
 
 import android.database.sqlite.SQLiteDatabase
 import androidx.annotation.Keep
-import com.google.gson.Gson
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.features.ApplicationFeatureConfiguration
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
@@ -18,14 +17,16 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEnt
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isVolumeLevelingEnabledColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.tableName
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.themeColumn
+import com.lasthopesoftware.resources.strings.TranslateJson
 import com.namehillsoftware.querydroid.SqLiteAssistants
 import com.namehillsoftware.querydroid.SqLiteCommand
 
 private const val playbackEngineTypeNameColumn = "playbackEngineTypeName"
 
-class ApplicationSettingsUpdater(private val applicationSettingsMigrator: ApplicationSettingsMigrator) : IEntityUpdater {
-	private val gson by lazy { Gson() }
-
+class ApplicationSettingsUpdater(
+	private val applicationSettingsMigrator: ApplicationSettingsMigrator,
+	private val jsonTranslator: TranslateJson
+) : IEntityUpdater {
 	override fun onUpdate(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
 		fun removeIsUsingCustomCaching(db: SQLiteDatabase) {
 			val tempTableName = "${tableName}_12"
@@ -96,7 +97,7 @@ class ApplicationSettingsUpdater(private val applicationSettingsMigrator: Applic
 
 			SqLiteCommand(db, "UPDATE $tempTableName SET $applicationFeatureConfigurationColumn = @$applicationFeatureConfigurationColumn")
 				.addParameter(
-					applicationFeatureConfigurationColumn, gson.toJson(
+					applicationFeatureConfigurationColumn, jsonTranslator.toJson(
 						ApplicationFeatureConfiguration(
 							playbackEngineType = oldApplicationSettings?.playbackEngineTypeName?.let(PlaybackEngineType::valueOf)
 								?: PlaybackEngineType.ExoPlayer

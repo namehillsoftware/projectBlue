@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.client.connection.PacketSender
 import com.lasthopesoftware.bluewater.client.connection.libraries.DelegatingLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
+import com.lasthopesoftware.bluewater.client.connection.libraries.RateLimitedFilePropertiesDependencies
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfoXmlRequest
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerLookup
@@ -57,6 +58,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.policies.caching.PermanentCachePolicy
+import com.lasthopesoftware.policies.ratelimiting.RateLimitingExecutionPolicy
 import com.lasthopesoftware.promises.extensions.toListenableFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
@@ -121,7 +123,12 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		}
 	}
 
-	private val libraryConnectionDependents by lazy { LibraryConnectionRegistry(applicationDependencies) }
+	private val libraryConnectionDependents by lazy {
+		RateLimitedFilePropertiesDependencies(
+			RateLimitingExecutionPolicy(Runtime.getRuntime().availableProcessors().coerceAtMost(6)),
+			LibraryConnectionRegistry(applicationDependencies),
+		)
+	}
 	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus() }
 	private val storedFileAccess by lazy { StoredFileAccess(context) }
 	private val readPermissionArbitratorForOs by lazy { OsPermissionsChecker(context) }

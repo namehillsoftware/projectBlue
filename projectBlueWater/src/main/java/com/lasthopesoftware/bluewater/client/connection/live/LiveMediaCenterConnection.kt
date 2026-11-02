@@ -414,7 +414,7 @@ class LiveMediaCenterConnection(
 							.getElementsByTag("item")
 							.firstOrNull()
 							?.children()
-							?.associateTo(HashMap()) { el ->
+							?.associateTo(map) { el ->
 								if (cancellationSignal.isCancelled) {
 									reject(filePropertiesCancellationException(serviceFile))
 									return
@@ -423,7 +423,6 @@ class LiveMediaCenterConnection(
 								val name = el.attr("Name")
 								Pair(name, el.wholeOwnText())
 							}
-							?.toMap(map)
 
 						MediaCenterFilePropertiesLookup(map)
 					}

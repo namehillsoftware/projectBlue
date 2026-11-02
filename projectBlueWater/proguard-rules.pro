@@ -39,7 +39,7 @@
 
 -keepclassmembers class ch.qos.logback.core.rolling.helper.* { <init>(); }
 -keepclassmembers class ch.qos.logback.classic.pattern.* { <init>(); }
--keepclassmembers class com.namehillsoftware.handoff.** { *; }
+-keepclasseswithmembernames class com.namehillsoftware.handoff.** { *; }
 -keep class com.google.common.cache.** { *; }
 -keepclassmembers class com.google.common.cache.LocalCache$Strength {
     public static **[] values();
