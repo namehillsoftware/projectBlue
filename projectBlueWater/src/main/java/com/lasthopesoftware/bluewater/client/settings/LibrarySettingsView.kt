@@ -54,6 +54,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -93,7 +94,6 @@ import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.emptyByteArray
 import com.lasthopesoftware.resources.strings.GetStringResources
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -232,6 +232,27 @@ private fun LabelledSaveAndConnectButton(
 	)
 }
 
+@Composable
+private fun PasswordField(
+	password: String,
+	onPasswordChange: (String) -> Unit
+) {
+	var isPasswordShown by rememberSaveable { mutableStateOf(false) }
+	StandardTextField(
+		placeholder = stringResource(R.string.lbl_password),
+		value = password,
+		onValueChange = onPasswordChange,
+		visualTransformation = if (!isPasswordShown) PasswordVisualTransformation() else VisualTransformation.None,
+		keyboardOptions = KeyboardOptions(keyboardType = if (!isPasswordShown) KeyboardType.Password else KeyboardType.PasswordVisible),
+		trailingIcon = {
+			Icon(
+				painterResource(if (!isPasswordShown) R.drawable.outline_password_2_off_24 else R.drawable.outline_password_2_24),
+				contentDescription = if (!isPasswordShown) "Show password" else "Hide password",
+				modifier = Modifier.navigable(onClick = { isPasswordShown = !isPasswordShown })
+			)
+		}
+	)
+}
 
 @Composable
 private fun RemoveServerConfirmationDialog(
@@ -487,13 +508,7 @@ private fun LibrarySettingsList(
 
 			SpacedOutRow {
 				var passwordState by password.subscribeAsMutableState()
-				StandardTextField(
-					placeholder = stringResource(R.string.lbl_password),
-					value = passwordState,
-					onValueChange = { passwordState = it },
-					visualTransformation = PasswordVisualTransformation(),
-					keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-				)
+				PasswordField(passwordState) { passwordState = it }
 			}
 
 			SpacedOutRow {
@@ -753,13 +768,7 @@ private fun LibrarySettingsList(
 
 			SpacedOutRow {
 				var passwordState by password.subscribeAsMutableState()
-				StandardTextField(
-					placeholder = stringResource(R.string.lbl_password),
-					value = passwordState,
-					onValueChange = { passwordState = it },
-					visualTransformation = PasswordVisualTransformation(),
-					keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-				)
+				PasswordField(passwordState) { passwordState = it }
 			}
 
 			SpacedOutRow {
@@ -1108,7 +1117,6 @@ private fun LibrarySettingsMenu(
 	}
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun ScreenDimensionsScope.LibrarySettingsView(
 	librarySettingsViewModel: LibrarySettingsViewModel,

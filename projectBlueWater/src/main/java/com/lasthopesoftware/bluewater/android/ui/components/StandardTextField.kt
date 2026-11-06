@@ -25,6 +25,7 @@ fun StandardTextField(
 	enabled: Boolean = true,
 	visualTransformation: VisualTransformation = VisualTransformation.None,
 	keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+	trailingIcon: @Composable (() -> Unit)? = null,
 ) {
 	val focusManager = LocalFocusManager.current
 	TextField(
@@ -48,6 +49,7 @@ fun StandardTextField(
 		keyboardOptions = keyboardOptions.copy(imeAction = ImeAction.Next),
 		keyboardActions = KeyboardActions(
 			onNext = { focusManager.moveFocus(FocusDirection.Down) }
-		)
+		),
+		trailingIcon = trailingIcon,
 	)
 }

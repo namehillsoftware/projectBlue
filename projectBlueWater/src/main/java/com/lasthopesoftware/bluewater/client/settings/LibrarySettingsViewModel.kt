@@ -391,7 +391,7 @@ class LibrarySettingsViewModel(
 		private val mutableSslStringCertificate =
 			MutableInteractionState(defaultMediaCenterConnectionSettings.sslCertificateFingerprint ?: "")
 
-		private val hasSslCertificateObserver = lazy {
+		private val hasSslCertificateObserver by lazy {
 			autoCloseables.manage(LiftedInteractionState(sslCertificateFingerprint.map { it.value.any() }, false))
 		}
 
@@ -404,7 +404,7 @@ class LibrarySettingsViewModel(
 		val sslCertificateFingerprint = MutableInteractionState(mutableSslStringCertificate.value.hexToByteArray())
 		val macAddress = MutableInteractionState(defaultMediaCenterConnectionSettings.macAddress ?: "")
 		val hasSslCertificate
-			get() = hasSslCertificateObserver.value as InteractionState<Boolean>
+			get() = hasSslCertificateObserver as InteractionState<Boolean>
 
 		init {
 			autoCloseables.manage(
@@ -474,7 +474,7 @@ class LibrarySettingsViewModel(
 		private val mutableSslStringCertificate =
 			MutableInteractionState(defaultSubsonicConnectionSettings.sslCertificateFingerprint ?: "")
 
-		private val hasSslCertificateObserver = lazy {
+		private val hasSslCertificateObserver by lazy {
 			autoCloseables.manage(LiftedInteractionState(sslCertificateFingerprint.map { it.value.any() }, false))
 		}
 
@@ -485,7 +485,7 @@ class LibrarySettingsViewModel(
 		val sslCertificateFingerprint = MutableInteractionState(mutableSslStringCertificate.value.hexToByteArray())
 		val macAddress = MutableInteractionState(defaultSubsonicConnectionSettings.macAddress ?: "")
 		val hasSslCertificate
-			get() = hasSslCertificateObserver.value as InteractionState<Boolean>
+			get() = hasSslCertificateObserver as InteractionState<Boolean>
 
 		init {
 			autoCloseables.manage(
