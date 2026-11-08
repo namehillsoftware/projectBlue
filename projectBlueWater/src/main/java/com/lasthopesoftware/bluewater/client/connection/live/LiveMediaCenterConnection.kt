@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.live
 
 import android.os.Build
-import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.HttpDataSource
 import com.lasthopesoftware.bluewater.client.access.RemoteLibraryAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
@@ -126,7 +126,7 @@ class LiveMediaCenterConnection(
 					"AndroidVersion=${Build.VERSION.RELEASE}"
 				)
 
-	override fun promiseDataSourceFactory(): Promise<DataSource.Factory> = promisedDataSourceFactory
+	override fun promiseDataSourceFactory(): Promise<HttpDataSource.Factory> = promisedDataSourceFactory
 
 	override val dataAccess: RemoteLibraryAccess
 		get() = this

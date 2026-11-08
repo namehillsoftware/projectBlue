@@ -64,7 +64,6 @@ class BufferingExoPlayer(
 
 	override fun prepareMessage(cancellationSignal: CancellationSignal) {
 		mediaSource.addEventListener(handlerExecutor.handler, this)
-		exoPlayer.addListener(this)
 	}
 
 	override fun run() {
