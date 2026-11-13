@@ -34,6 +34,7 @@ import com.lasthopesoftware.bluewater.client.connection.http.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideProgressingLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.live.RetryingDataSourceServerConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerInfoXmlRequest
 import com.lasthopesoftware.bluewater.client.connection.lookup.ServerLookup
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
@@ -258,17 +259,19 @@ object ApplicationDependenciesContainer {
 					connectionSettingsLookup,
 					ServerAlarm(serverLookup, activeNetwork, ServerWakeSignal(PacketSender())),
 					CachedDataSourceServerConnectionProvider(
-						LiveServerConnectionProvider(
-							activeNetwork,
-							Base64Encoder,
-							serverLookup,
-							connectionSettingsLookup,
-							mediaCenterHttpClients,
-							mediaCenterDataFactories,
-							subsonicHttpClients,
-							subsonicDataFactories,
-                            JsonEncoderDecoder,
-							stringResources,
+						RetryingDataSourceServerConnectionProvider(
+							LiveServerConnectionProvider(
+								activeNetwork,
+								Base64Encoder,
+								serverLookup,
+								connectionSettingsLookup,
+								mediaCenterHttpClients,
+								mediaCenterDataFactories,
+								subsonicHttpClients,
+								subsonicDataFactories,
+								JsonEncoderDecoder,
+								stringResources,
+							)
 						),
 						audioCacheStreamSupplier,
 					),

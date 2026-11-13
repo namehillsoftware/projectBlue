@@ -13,13 +13,15 @@ import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.extractor.mp3.Mp3Extractor
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideGuaranteedLibraryConnections
+import com.lasthopesoftware.promises.extensions.cancelBackEventually
 import com.lasthopesoftware.promises.extensions.cancelBackThen
 import com.lasthopesoftware.resources.uri.IoCommon
 import com.namehillsoftware.handoff.promises.Promise
 
 @UnstableApi class MediaSourceProvider(
 	private val context: Context,
-	private val remoteDataSourceFactory: ProvideRemoteDataSourceFactory
+	private val connectionProvider: ProvideGuaranteedLibraryConnections
 ) : SpawnMediaSources {
 
 	companion object {
@@ -41,8 +43,9 @@ import com.namehillsoftware.handoff.promises.Promise
 		when {
 			IoCommon.fileUriScheme.equals(uri.scheme, ignoreCase = true) -> promisedFileExtractorFactory
 			IoCommon.contentUriScheme.equals(uri.scheme, ignoreCase = true) -> promisedContentExtractorFactory
-			else -> remoteDataSourceFactory
-				.promiseRemoteDataSourceFactory(libraryId)
+			else -> connectionProvider
+				.promiseLibraryConnection(libraryId)
+				.cancelBackEventually { c -> c.promiseDataSourceFactory() }
 				.cancelBackThen { cacheDataSourceFactory, _ ->
 					val factory = ProgressiveMediaSource.Factory(cacheDataSourceFactory, extractorsFactory)
 					factory.setLoadErrorHandlingPolicy(

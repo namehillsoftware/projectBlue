@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.live
 
 import androidx.annotation.Keep
-import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.HttpDataSource
 import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
 import com.lasthopesoftware.bluewater.BuildConfig
@@ -155,7 +155,7 @@ class LiveSubsonicConnection(
 				"maxBitRate=$bitrate",
 			)
 
-	override fun promiseDataSourceFactory(): Promise<DataSource.Factory> = promisedDataSourceFactory
+	override fun promiseDataSourceFactory(): Promise<HttpDataSource.Factory> = promisedDataSourceFactory
 
 	override val dataAccess = this
 

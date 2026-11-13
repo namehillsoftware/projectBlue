@@ -3,9 +3,8 @@ package com.lasthopesoftware.bluewater.client.playback.caching.datasource
 import android.net.Uri
 import androidx.media3.common.C
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
-import androidx.media3.datasource.TransferListener
+import androidx.media3.datasource.HttpDataSource
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheWritableStream
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.SupplyCacheStreams
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -26,9 +25,9 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 @UnstableApi class EntireFileCachedDataSource(
 	private val libraryId: LibraryId,
-	private val innerDataSource: DataSource,
+	private val innerDataSource: HttpDataSource,
 	private val cacheStreamSupplier: SupplyCacheStreams
-) : DataSource {
+) : HttpDataSource by innerDataSource {
 
 	companion object {
 		private val logger by lazyLogger<EntireFileCachedDataSource>()
@@ -37,8 +36,6 @@ import java.util.concurrent.ConcurrentLinkedQueue
 	private var expectedFileSize = C.LENGTH_UNSET.toLong()
 	private var downloadBytes = 0L
 	private var cacheWriter: CacheWriter? = null
-
-	override fun addTransferListener(transferListener: TransferListener) = innerDataSource.addTransferListener(transferListener)
 
 	override fun open(dataSpec: DataSpec): Long {
 		downloadBytes = 0
@@ -172,7 +169,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 					}
 					.eventually { os ->
 						os?.promiseFlush()
-							?.eventually { os.commitToCache().inevitably { os.promiseClose() }?.then { _ -> os }.keepPromise() }
+							?.eventually { os.commitToCache().inevitably { os.promiseClose() }.then { _ -> os }.keepPromise() }
 							.keepPromise()
 					}
 			}
@@ -193,11 +190,11 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 	@UnstableApi class Factory(
 		private val libraryId: LibraryId,
-		private val httpDataSourceFactory: DataSource.Factory,
+		private val httpDataSourceFactory: HttpDataSource.Factory,
 		private val cacheStreamSupplier: SupplyCacheStreams
-	) : DataSource.Factory {
+	) : HttpDataSource.Factory by httpDataSourceFactory {
 
-		override fun createDataSource(): DataSource = EntireFileCachedDataSource(
+		override fun createDataSource(): HttpDataSource = EntireFileCachedDataSource(
 			libraryId,
 			httpDataSourceFactory.createDataSource(),
 			cacheStreamSupplier

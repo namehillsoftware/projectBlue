@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.caching.datasource
 
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.HttpDataSource
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.SupplyCacheStreams
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.live.LiveServerConnection
@@ -14,20 +14,21 @@ import com.namehillsoftware.handoff.promises.Promise
 // ExoPlayer doesn't give us a good way to bundle a library ID in with a DataSpec request for the cache, so we will
 // instead pass the library in through the constructor. This will make for some awkward object construction, but overhead
 // should still be minimal.
+@UnstableApi
 class CachedDataSourceServerConnection(
 	private val libraryId: LibraryId,
 	private val inner: LiveServerConnection,
 	private val cacheStreamSupplier: SupplyCacheStreams,
 ) : LiveServerConnection by inner {
 	@OptIn(UnstableApi::class)
-	private val dataSourceFactory: Promise<DataSource.Factory> by lazy {
+	private val dataSourceFactory: Promise<HttpDataSource.Factory> by lazy {
 		inner.promiseDataSourceFactory()
 			.then { factory ->
 				EntireFileCachedDataSource.Factory(libraryId, factory, cacheStreamSupplier)
 			}
 	}
 
-	override fun promiseDataSourceFactory(): Promise<DataSource.Factory> =
+	override fun promiseDataSourceFactory(): Promise<HttpDataSource.Factory> =
 		dataSourceFactory
 }
 
@@ -35,6 +36,7 @@ class CachedDataSourceServerConnectionProvider(
 	private val liveServerConnections: ProvideLiveServerConnection,
 	private val cacheStreamSupplier: SupplyCacheStreams
 ) : ProvideLiveServerConnection {
+	@OptIn(UnstableApi::class)
 	override fun promiseLiveServerConnection(libraryId: LibraryId): Promise<LiveServerConnection?> =
 		liveServerConnections
 			.promiseLiveServerConnection(libraryId)

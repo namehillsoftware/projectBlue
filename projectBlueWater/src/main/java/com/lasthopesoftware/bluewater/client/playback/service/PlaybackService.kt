@@ -67,7 +67,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlaybackQueueConfiguration
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.MediaSourceProvider
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.RemoteDataSourceFactoryProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.QueueProviders
 import com.lasthopesoftware.bluewater.client.playback.file.properties.FilePropertiesPreparationProvider
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider
@@ -491,7 +490,7 @@ import java.util.concurrent.TimeoutException
 	private val mediaSourceProvider by lazy {
 		MediaSourceProvider(
 			this,
-			RemoteDataSourceFactoryProvider(playbackServiceDependencies.guaranteedLibraryConnectionProvider),
+			playbackServiceDependencies.guaranteedLibraryConnectionProvider,
 		)
 	}
 

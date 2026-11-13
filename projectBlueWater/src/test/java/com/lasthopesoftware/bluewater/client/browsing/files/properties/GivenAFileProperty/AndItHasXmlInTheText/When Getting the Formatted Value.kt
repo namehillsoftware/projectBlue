@@ -38,8 +38,8 @@ Some more valid text... la di da...""")
 
 	@Test
 	fun `then the formatted value is correct`() {
-		assertThat(formattedValue).isEqualTo("""
-Some valid text
+		assertThat(formattedValue).isEqualTo(
+"""Some valid text
 
 Woo hoo
 

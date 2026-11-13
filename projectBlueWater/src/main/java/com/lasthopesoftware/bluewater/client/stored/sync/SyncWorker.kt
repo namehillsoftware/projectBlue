@@ -24,7 +24,6 @@ import com.lasthopesoftware.bluewater.client.connection.lookup.ServerLookup
 import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
-import com.lasthopesoftware.bluewater.client.playback.caching.datasource.CachedDataSourceServerConnectionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.SyncLibraryConnectionSettings
 import com.lasthopesoftware.bluewater.client.stored.library.items.DelegatingStoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredFilesCounter
@@ -101,20 +100,17 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 				LibraryConnectionProvider(
 					connectionSettingsLookup,
 					ServerAlarm(serverLookup, activeNetwork, ServerWakeSignal(PacketSender())),
-					CachedDataSourceServerConnectionProvider(
-						LiveServerConnectionProvider(
-							activeNetwork,
-							Base64Encoder,
-							serverLookup,
-							connectionSettingsLookup,
-							mediaCenterHttpClients,
-							mediaCenterDataFactories,
-							subsonicHttpClients,
-							subsonicDataFactories,
-                            JsonEncoderDecoder,
-							stringResources,
-						),
-						audioCacheStreamSupplier,
+					LiveServerConnectionProvider(
+						activeNetwork,
+						Base64Encoder,
+						serverLookup,
+						connectionSettingsLookup,
+						mediaCenterHttpClients,
+						mediaCenterDataFactories,
+						subsonicHttpClients,
+						subsonicDataFactories,
+						JsonEncoderDecoder,
+						stringResources,
 					),
 					AlarmConfiguration.standard
 				),
