@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRev
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
-import kotlin.coroutines.cancellation.CancellationException
 
 class FreshestRevisionFilePropertiesProvider(
 	private val inner: ProvideFreshLibraryFileProperties,
@@ -19,7 +18,7 @@ class FreshestRevisionFilePropertiesProvider(
 	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<LookupFileProperties> =
 		ProxiedFileProperties(libraryId, serviceFile)
 
-	private inner class ProxiedFileProperties(private val libraryId: LibraryId, private val serviceFile: ServiceFile) :
+	private inner class ProxiedFileProperties(libraryId: LibraryId, serviceFile: ServiceFile) :
 		Promise.Proxy<LookupFileProperties>() {
 		init {
 			val promisedUrlKey = urlKeys.promiseUrlKey(libraryId, serviceFile).also(::doCancel)
@@ -43,10 +42,4 @@ class FreshestRevisionFilePropertiesProvider(
 			)
 		}
 	}
-
-	private fun <T> promiseFilePropertiesCancelled(libraryId: LibraryId, serviceFile: ServiceFile) =
-		Promise<T>(FilePropertiesCancellationException(libraryId, serviceFile))
-
-	private class FilePropertiesCancellationException(libraryId: LibraryId, serviceFile: ServiceFile) :
-		CancellationException("Getting file properties cancelled for $libraryId and $serviceFile.")
 }

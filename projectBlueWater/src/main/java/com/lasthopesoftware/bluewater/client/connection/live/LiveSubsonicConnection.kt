@@ -424,7 +424,7 @@ class LiveSubsonicConnection(
 
 		override fun prepareMessage(cs: CancellationSignal): MutableMap<String, String> {
 			val response = songResponse ?: return mutableMapOf()
-			val returnMap = HashMap<String, String>(response.song.size)
+			val returnMap = HashMap<String, String>(response.song.size + 1)
 			for ((k, v) in response.song) {
 				if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
 
@@ -435,7 +435,7 @@ class LiveSubsonicConnection(
 
 					// Be generous but don't allow abuse
 					if (string.length > 2000) continue
-					returnMap[k] = string
+					returnMap[k.intern()] = string
 					continue
 				}
 
@@ -443,7 +443,7 @@ class LiveSubsonicConnection(
 					for ((ik, iv) in v.asJsonObject.asMap()) {
 						if (cs.isCancelled) throw filePropertiesCancellationException(serviceFile)
 						if (iv.isJsonPrimitive) {
-							returnMap[ik] = iv.asString
+							returnMap[ik.intern()] = iv.asString
 						}
 					}
 				}

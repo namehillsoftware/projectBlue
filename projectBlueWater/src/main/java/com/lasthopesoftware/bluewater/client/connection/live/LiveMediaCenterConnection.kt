@@ -421,7 +421,7 @@ class LiveMediaCenterConnection(
 								}
 
 								val name = el.attr("Name")
-								Pair(name, el.wholeOwnText())
+								Pair(name.intern(), el.wholeOwnText())
 							}
 
 						MediaCenterFilePropertiesLookup(map)
